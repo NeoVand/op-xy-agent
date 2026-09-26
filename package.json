@@ -46,8 +46,11 @@
 		"vitest-browser-svelte": "^2.1.1"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "0.128.0",
 		"@fontsource-variable/red-hat-mono": "^5.3.0",
 		"@fontsource-variable/work-sans": "^5.3.0",
+		"idb": "^8.0.3",
+		"minisearch": "^7.2.0",
 		"zod": "^4.6.5"
 	}
 }
