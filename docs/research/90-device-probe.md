@@ -111,6 +111,29 @@ recipe (raw PCM + METADATA SET) can't be assumed to work; a PUT test would be ex
 read-only lead: see which TE SysEx commands **Field Kit** sends to the OP-XY (it greets the device and
 switches it into MTP mode over SysEx; `30-presets-samples.md` §6.1).
 
+## Session 1 runbook (owner present, ≈20–30 min)
+
+Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers
+refer to `20-midi-control.md` §11. **Before starting, the owner creates a new empty project** so no
+existing work is touched; stock COM settings.
+
+| Step       | Owner does                           | We send (`spike.py …`)                                            | Observe                                           | Risk            |
+| ---------- | ------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------- | --------------- |
+| 1 (#3)     | press play, stop, play-while-playing | `listen 12`                                                       | `FA`/`FC`/`FB`/`F2`? clock `F8` while playing?    | safe            |
+| 2 (#11)    | watch transport                      | `raw FA`, then `raw FC`                                           | does playback follow?                             | audible         |
+| 3 (#16)    | read the tempo                       | `cc 1 80 60`, `cc 1 80 0`, `cc 1 80 127`                          | BPM shown → CC80 scaling; owner restores tempo    | state (scratch) |
+| 4 (#15)    | watch track 1                        | `cc 1 9 127 0 1 64 0`                                             | mute polarity/threshold                           | state (scratch) |
+| 5          | watch mixer                          | `cc 1 7 20 100`                                                   | volume response                                   | state (scratch) |
+| 6 (#17)    | read groove                          | `cc 1 81 63 64`                                                   | which value = no groove                           | state (scratch) |
+| 7 (#10)    | listen, drum track 1                 | `note 1 53 55 57 60 62 64`                                        | which keys sound; octave mapping                  | audible         |
+| 8 (#24)    | watch the screen                     | `rk 5`, `rk 2` (and `--ch 16`)                                    | do remote keys work on 1.1.33?                    | UI              |
+| 9 (#25/26) | watch the screen                     | `rk 7`, `rk 10`; `rkcombo 55 2`                                   | encoder-click keys; shift combos; shift not stuck | UI              |
+| 10 (#23)   | watch                                | `cc 1 102 2`, `cc 1 104 127`, `cc 1 105 127`                      | CC102/104/105 meaning                             | UI/audible      |
+| 11 (#14)   | —                                    | `note` without off via `raw 92 3C 40`, then `cc 3 123 0`; `panic` | notes silenced                                    | audible         |
+| 12         | play a pattern                       | `ffmpeg -f avfoundation -i ":OP-XY" -t 5 captures/usb-audio.wav`  | USB audio capture works; levels                   | safe            |
+| 13 (#32)   | COM → M4 (MTP), later M4 to exit     | `usbdesc.py`, `listen 3`                                          | MTP interface class/PID; MIDI port gone?          | safe            |
+| 14         | (only if approved + backup)          | FILE PUT plan in `30-presets-samples.md` §6.4                     | where the file appears; then DELETE               | **writes**      |
+
 ## Pending device tests (need the owner or a state change)
 
 1. ~~Firmware version~~ — owner reports **OS 1.1.33** (2026-09-26).
