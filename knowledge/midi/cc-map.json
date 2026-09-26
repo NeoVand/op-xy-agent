@@ -565,9 +565,17 @@
 			"id": "global.tempo",
 			"name": "tempo",
 			"range": [0, 127],
-			"semantics": "0-127 to BPM; scaling unconfirmed (7-bit resolution either way)",
-			"confidence": "conflicting",
-			"source": ["TE-MIDI", "MIDIGUIDE", "REACT-MAP", "STEMBOUNCE", "VIBE-CHANGELOG", "VIBE-TEMPO"],
+			"semantics": "BPM = 2 × value, clamped by the device to 40–220 (values 0–20 → 40, 110–127 → 220); 2-BPM resolution. Verified 2026-09-26: 0/32/60/64/96/127 → 40/64/120/128/192/220 BPM (device clock + metronome page)",
+			"confidence": "verified",
+			"source": [
+				"TE-MIDI",
+				"MIDIGUIDE",
+				"REACT-MAP",
+				"STEMBOUNCE",
+				"VIBE-CHANGELOG",
+				"VIBE-TEMPO",
+				"PROBE"
+			],
 			"sideEffect": "project",
 			"channel": "any",
 			"existence": "official",
@@ -586,7 +594,9 @@
 					"note": "code comment: 'calibrated slope of 2 BPM per unit'"
 				}
 			],
-			"probe": "docs/research/20-midi-control.md#11 test 16"
+			"probe": "docs/research/20-midi-control.md#11 test 16",
+			"verifiedOn": "1.1.33",
+			"verifiedScaling": "bpm-over-2"
 		},
 		{
 			"cc": 81,
@@ -694,33 +704,36 @@
 			"id": "track.select",
 			"name": "track select",
 			"range": [0, 15],
-			"semantics": "0-7 -> tracks 1-8, 8-15 -> aux tracks 9-16",
-			"confidence": "community",
-			"source": ["SHEET", "MIDIGUIDE"],
+			"semantics": "0-7 -> tracks 1-8 (zero-based; verified: value 2 selected track 3, 0 selected track 1), 8-15 -> aux tracks 9-16 (aux untested)",
+			"confidence": "verified",
+			"source": ["SHEET", "MIDIGUIDE", "PROBE"],
 			"sideEffect": "ui",
-			"channel": [1]
+			"channel": [1],
+			"verifiedOn": "1.1.33"
 		},
 		{
 			"cc": 104,
 			"id": "transport.playCc",
 			"name": "play",
 			"range": [0, 127],
-			"semantics": "any value starts playback; may be firmware dependent - prefer 0xFA",
-			"confidence": "community",
-			"source": ["SHEET", "MIDIGUIDE", "STEMBOUNCE"],
+			"semantics": "value 127 starts playback (verified; the device then sends FA); 0xFA does the same",
+			"confidence": "verified",
+			"source": ["SHEET", "MIDIGUIDE", "STEMBOUNCE", "PROBE"],
 			"sideEffect": "transport",
-			"channel": "any"
+			"channel": "any",
+			"verifiedOn": "1.1.33"
 		},
 		{
 			"cc": 105,
 			"id": "transport.stopCc",
 			"name": "stop",
 			"range": [0, 127],
-			"semantics": "any value stops playback; prefer 0xFC",
-			"confidence": "community",
-			"source": ["SHEET", "MIDIGUIDE", "STEMBOUNCE"],
+			"semantics": "value 127 stops playback (verified; the device then sends FC); 0xFC does the same",
+			"confidence": "verified",
+			"source": ["SHEET", "MIDIGUIDE", "STEMBOUNCE", "PROBE"],
 			"sideEffect": "transport",
-			"channel": "any"
+			"channel": "any",
+			"verifiedOn": "1.1.33"
 		},
 		{
 			"cc": 106,
@@ -729,10 +742,10 @@
 			"range": [0, 127],
 			"semantics": "value = key index 0-71, see knowledge/midi/remote-keys.json",
 			"confidence": "community-verified",
-			"source": ["DAWLESS-CC106", "SHEET", "XYF-CC106"],
+			"source": ["DAWLESS-CC106", "SHEET", "XYF-CC106", "PROBE"],
 			"sideEffect": "destructive",
 			"channel": [1],
-			"notes": "firmware dependent; only channel 1 ever used"
+			"notes": "firmware dependent; only channel 1 ever used; NO EFFECT on OS 1.1.33 (verified 2026-09-26: keys 2 and 51 on channels 1 and 16)"
 		},
 		{
 			"cc": 107,
@@ -741,9 +754,10 @@
 			"range": [0, 127],
 			"semantics": "releases the key pressed with CC106 of the same value; the older 'view tempo page' reading is key-up of index 1",
 			"confidence": "community-verified",
-			"source": ["DAWLESS-CC106", "SHEET", "XYF-CC106", "MIDIGUIDE"],
+			"source": ["DAWLESS-CC106", "SHEET", "XYF-CC106", "MIDIGUIDE", "PROBE"],
 			"sideEffect": "ui",
-			"channel": [1]
+			"channel": [1],
+			"notes": "NO EFFECT on OS 1.1.33 (verified 2026-09-26: keys 2 and 51 on channels 1 and 16)"
 		}
 	],
 	"perTrack": [
@@ -765,16 +779,26 @@
 			"name": "track mute",
 			"lane": "mixer",
 			"range": [0, 127],
-			"semantics": "0 = unmuted, 1-127 = muted; mutes affect notes, not audio (tails ring out)",
-			"confidence": "community-verified",
-			"source": ["TE-MIDI", "TE-MIX", "MIDIGUIDE", "STEMX", "STEMBOUNCE", "OPXYSTEMS", "LAUNCHPAD"],
+			"semantics": "0 = unmuted, 1-127 = muted (a level, not a toggle: 1 and 64 mute; verified on track 1); mutes affect notes, not audio (tails ring out)",
+			"confidence": "verified",
+			"source": [
+				"TE-MIDI",
+				"TE-MIX",
+				"MIDIGUIDE",
+				"STEMX",
+				"STEMBOUNCE",
+				"OPXYSTEMS",
+				"LAUNCHPAD",
+				"PROBE"
+			],
 			"sideEffect": "scene",
 			"channel": "1-16",
 			"values": {
 				"unmute": 0,
 				"mute": 127
 			},
-			"existence": "official"
+			"existence": "official",
+			"verifiedOn": "1.1.33"
 		},
 		{
 			"cc": 10,

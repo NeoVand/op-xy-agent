@@ -16,7 +16,7 @@
 			"bytes": "B0 6B vv"
 		},
 		"channelObserved": 1,
-		"otherChannels": "untested",
+		"otherChannels": "channel 16 tested on 1.1.33: no effect (neither did channel 1)",
 		"transport": "USB-C (dawless: aux/multi-out port is output-only)",
 		"semantics": "true down/up pair; CC106 alone leaves the key held; CC106 twice re-triggers (no toggle)",
 		"tapTiming": "500 ms hold works reliably for most keys (dawless); 200 ms used by opxy-reactive probe",
@@ -55,9 +55,10 @@
 			"source": ["REACT-SRC"]
 		},
 		{
-			"firmware": "1.1.33 (owner's unit)",
-			"status": "unknown - probe required (listed as pending in docs/research/90-device-probe.md)",
-			"source": ["PROBE"]
+			"firmware": "1.1.33 (owner's unit, tested 2026-09-26)",
+			"status": "not working: CC106/107 with keys 2 (instrument) and 51 (play) on channels 1 and 16 had no effect (docs/research/90-device-probe.md)",
+			"source": ["PROBE"],
+			"confidence": "verified"
 		}
 	],
 	"derivedRelations": {

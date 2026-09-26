@@ -140,10 +140,18 @@ export interface CcRisk {
 	readonly reason: string | null;
 }
 
-/** Tempo scalings proposed for CC80 (conflicting sources, calibrate on the device). */
+/** Tempo scalings proposed for CC80 by the community sources. */
 export const TEMPO_SCALINGS = ['linear-40-220', 'bpm-over-2'] as const;
 /** A CC80 tempo scaling. */
 export type TempoScaling = (typeof TEMPO_SCALINGS)[number];
+/**
+ * The scaling the device actually uses: BPM = 2 × value, clamped by the device to 40–220 (verified
+ * on OS 1.1.33, 2026-09-26, docs/research/90-device-probe.md — CC80 0/32/60/64/96/127 gave
+ * 40/64/120/128/192/220 BPM). 2-BPM resolution; values 20–110 are the useful range.
+ */
+export const TEMPO_SCALING_VERIFIED: TempoScaling = 'bpm-over-2';
+/** Tempo range the device clamps CC80 to. */
+export const CC80_TEMPO_RANGE = { min: 40, max: 220 } as const;
 
 /** How a semantic value maps onto the 7-bit CC value. */
 export type ValueMapping =
@@ -310,13 +318,18 @@ function mappingFor(param: string, entry: CcParamEntry): ValueMapping {
 			return { kind: 'enum', values: MIDI_CHANNEL_VALUES, thresholds: null };
 		case 'global.groove':
 			return { kind: 'centered', center: 63 };
-		case 'global.tempo':
+		case 'global.tempo': {
+			// A scaling verified on the device wins over the community candidates.
+			const verified = entry.verifiedScaling as TempoScaling | undefined;
 			return {
 				kind: 'tempo',
-				scalings: (entry.candidates as { id: string }[] | undefined)?.map(
-					(c) => c.id as TempoScaling
-				) ?? [...TEMPO_SCALINGS]
+				scalings: verified
+					? [verified]
+					: ((entry.candidates as { id: string }[] | undefined)?.map(
+							(c) => c.id as TempoScaling
+						) ?? [...TEMPO_SCALINGS])
 			};
+		}
 		case 'scene.select':
 		case 'scene.selectDelayed':
 			return { kind: 'index', first: 1, count: 99 };
@@ -635,7 +648,7 @@ function requireInt(target: CcTarget, value: number): number {
  * - index: the human number (scene 1–99, track 1–16, project 0–127)
  * - enum: one of `mapping.values`; needs known thresholds unless `assumeEvenBuckets` is set
  * - trigger: anything (the value is ignored)
- * - tempo: not supported here — use {@link tempoToCc} with a calibrated scaling
+ * - tempo: BPM (40–220), encoded with the verified scaling (see {@link tempoToCc})
  * @throws {CcMapError}
  */
 export function encodeCcValue(
@@ -683,24 +696,24 @@ export function encodeCcValue(
 		case 'trigger':
 			return mapping.value;
 		case 'tempo':
-			throw new CcMapError(
-				`${target.param}: use tempoToCc(bpm, scaling) with a calibrated scaling`
-			);
+			if (typeof value !== 'number') {
+				throw new CcMapError(`${target.param}: expected a BPM number, got ${String(value)}`);
+			}
+			return tempoToCc(value);
 	}
 }
 
 /**
- * CC80 value for a tempo under one of the proposed scalings (the device test in
- * docs/research/20-midi-control.md §11 T16 decides which is right).
- * @throws {CcMapError} when the tempo is outside what that scaling can express
+ * CC80 value for a tempo. Defaults to the scaling verified on the device (BPM = 2 × value); odd
+ * tempos round to the nearest value the device can show. `linear-40-220` is kept only to reason
+ * about third-party material that assumed it.
+ * @throws {CcMapError} when the tempo is outside 40–220 BPM (what the device accepts)
  */
-export function tempoToCc(bpm: number, scaling: TempoScaling): number {
+export function tempoToCc(bpm: number, scaling: TempoScaling = TEMPO_SCALING_VERIFIED): number {
 	if (!Number.isFinite(bpm)) throw new CcMapError(`tempo must be a number, got ${bpm}`);
-	if (scaling === 'linear-40-220') {
-		if (bpm < 40 || bpm > 220) throw new CcMapError(`linear-40-220 covers 40-220 BPM, got ${bpm}`);
-		return Math.round(((bpm - 40) * 127) / 180);
-	}
-	if (bpm < 0 || bpm > 254) throw new CcMapError(`bpm-over-2 covers 0-254 BPM, got ${bpm}`);
+	const { min, max } = CC80_TEMPO_RANGE;
+	if (bpm < min || bpm > max) throw new CcMapError(`CC80 covers ${min}-${max} BPM, got ${bpm}`);
+	if (scaling === 'linear-40-220') return Math.round(((bpm - 40) * 127) / 180);
 	return Math.round(bpm / 2);
 }
 
@@ -708,9 +721,10 @@ export function tempoToCc(bpm: number, scaling: TempoScaling): number {
  * Tempo that a CC80 value means under a scaling.
  * @throws {CcMapError} for values outside 0–127
  */
-export function ccToTempo(value: number, scaling: TempoScaling): number {
+export function ccToTempo(value: number, scaling: TempoScaling = TEMPO_SCALING_VERIFIED): number {
 	if (!Number.isInteger(value) || value < 0 || value > 127) {
 		throw new CcMapError(`CC value must be an integer 0-127, got ${value}`);
 	}
-	return scaling === 'linear-40-220' ? 40 + (value * 180) / 127 : value * 2;
+	if (scaling === 'linear-40-220') return 40 + (value * 180) / 127;
+	return Math.min(CC80_TEMPO_RANGE.max, Math.max(CC80_TEMPO_RANGE.min, value * 2));
 }

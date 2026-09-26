@@ -271,16 +271,17 @@ describe('resolveCc: global parameters', () => {
 		expect(listGlobalCcs().every((t) => t.scope === 'global' && t.track === null)).toBe(true);
 	});
 
-	it('sends tempo on any channel with a conflicting, uncalibrated scaling', () => {
+	it('sends tempo on any channel with the scaling verified on the device', () => {
 		const tempo = resolveCc({ param: 'global.tempo' });
 		expect(tempo).toMatchObject({
 			cc: 80,
 			channel: 0,
 			acceptedChannels: 'any',
-			confidence: 'conflicting',
-			mapping: { kind: 'tempo', scalings: ['linear-40-220', 'bpm-over-2'] }
+			confidence: 'verified',
+			mapping: { kind: 'tempo', scalings: ['bpm-over-2'] }
 		});
-		expect(() => encodeCcValue(tempo, 120)).toThrow(/use tempoToCc/);
+		expect(encodeCcValue(tempo, 120)).toBe(60);
+		expect(() => encodeCcValue(tempo, 'fast')).toThrow(/BPM number/);
 		expect(resolveCc({ param: 'global.groove' }).mapping).toEqual({ kind: 'centered', center: 63 });
 	});
 
@@ -425,7 +426,12 @@ describe('values', () => {
 		expect(tempoToCc(120, 'bpm-over-2')).toBe(60);
 		expect(ccToTempo(60, 'bpm-over-2')).toBe(120);
 		expect(() => tempoToCc(30, 'linear-40-220')).toThrow(/40-220/);
-		expect(() => tempoToCc(300, 'bpm-over-2')).toThrow(/0-254/);
+		expect(() => tempoToCc(300, 'bpm-over-2')).toThrow(/40-220/);
+		// verified on OS 1.1.33: BPM = 2 × value, clamped to 40–220 (docs/research/90-device-probe.md)
+		expect([0, 32, 60, 64, 96, 127].map((v) => ccToTempo(v))).toEqual([40, 64, 120, 128, 192, 220]);
+		expect(tempoToCc(128)).toBe(64);
+		expect(tempoToCc(121)).toBe(61);
+		expect(() => tempoToCc(39)).toThrow(/40-220/);
 		expect(() => tempoToCc(NaN, 'bpm-over-2')).toThrow(CcMapError);
 		expect(() => ccToTempo(128, 'bpm-over-2')).toThrow(CcMapError);
 	});

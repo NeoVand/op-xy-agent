@@ -36,6 +36,17 @@ nothing here has been checked on 1.1.33 yet — that is what the probe plan in �
 
 ## 1. TL;DR
 
+> **Verified on the owner's OP-XY, OS 1.1.33, device session 1 (2026-09-26)** — details in
+> `90-device-probe.md`; these override anything below that disagrees:
+>
+> - Stock COM MIDI settings: clock **in**, notes **both**, other **both**, active track channel 1,
+>   echo **off**. With clock **in** the device sends no transport and no clock.
+> - Clock **both**: `FA` per play press (restart = another `FA`), `FC` on stop, no `FB`/`F2`, `F8`
+>   runs continuously even while stopped. Incoming `FA`/`FC` start/stop playback.
+> - **CC80: BPM = 2 × value, clamped 40–220** (T16 resolved). **CC9: 0 = unmuted, 1–127 = muted**
+>   (level, not toggle). **CC104 = play, CC105 = stop, CC102 = track select (zero-based)**.
+> - **CC106/107 remote keys: no effect on 1.1.33** (channels 1 and 16; keys 2 and 51).
+
 1. **The official CC table is tiny**: CC7 volume, CC9 mute, CC10 pan, CC46 "track parameters" on
    channels 1–16; CC80 tempo, CC81 groove, CC82 delayed scene, CC83/84 prev/next scene, CC85 scene,
    CC86 project on _any_ channel; CC90 EQ on channels 1–4; all 0–127 [TE-MIDI]. Everything else

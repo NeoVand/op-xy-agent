@@ -102,13 +102,13 @@ describe('remote keys by firmware', () => {
 			[null, null, 'reported-broken'],
 			['1.1.4', 'up-to', 'works'],
 			['1.1.21', 'exact', 'unverified'],
-			['1.1.33', 'exact', 'unknown']
+			['1.1.33', 'exact', 'reported-broken']
 		]);
 	});
 
-	it('says remote keys are unknown on the reference firmware 1.1.33', () => {
+	it('says remote keys do not work on the reference firmware 1.1.33 (verified on the device)', () => {
 		const status = remoteKeyStatusAt('1.1.33');
-		expect(status).toMatchObject({ version: '1.1.33', status: 'unknown', exact: true });
+		expect(status).toMatchObject({ version: '1.1.33', status: 'reported-broken', exact: true });
 		expect(status.evidence.map((o) => o.version)).toEqual([
 			'1.0.21',
 			'1.0.21',
