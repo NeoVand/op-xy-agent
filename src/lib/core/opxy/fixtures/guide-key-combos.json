@@ -1,0 +1,611 @@
+{
+	"$comment": "Every key combo from docs/research/40-official-docs.md §4 (95 rows, in document order): `cell` is the raw Keys column, `exprs` the same combos in the canonical key grammar (src/lib/core/opxy/keys.ts), `note` records what the normalisation moved out of the grammar. keys.spec.ts checks this file against the markdown and parses every expression.",
+	"source": "docs/research/40-official-docs.md#4-key-combos-replica-how-to-data",
+	"rows": [
+		{
+			"section": "System, modes, tracks",
+			"action": "Show battery level on the meter",
+			"cell": "`hold com`",
+			"exprs": ["hold com"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Enter a main mode",
+			"cell": "`instrument` / `auxiliary` / `arrange` / `mix`",
+			"exprs": ["instrument", "auxiliary", "arrange", "mix"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Switch module page",
+			"cell": "`M1`…`M4`",
+			"exprs": ["M1…M4"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Show a page's extra (shift-layer) parameters",
+			"cell": "`hold shift`",
+			"exprs": ["hold shift"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Select track",
+			"cell": "`T1`…`T8`",
+			"exprs": ["T1…T8"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Pick preset / sample pack / engine for a track",
+			"cell": "`shift + Tn`",
+			"exprs": ["shift + Tn"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Link up to 4 tracks",
+			"cell": "`Tn + Tm (+ …)` (hold the leading track)",
+			"exprs": ["Tn + Tm"],
+			"note": "keep holding the leading track key and press up to three others (\"(+ …)\")"
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Toggle instrument/aux tracks in arrange or mix",
+			"cell": "`arrange` (in arrange) / `mix` (in mix)",
+			"exprs": ["arrange", "mix"],
+			"note": "press the mode key again while already in that mode"
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Undo (one level)",
+			"cell": "`shift + record`",
+			"exprs": ["shift + record"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Octave down/up (keyboard)",
+			"cell": "`[-]` / `[+]`",
+			"exprs": ["[-]", "[+]"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Stop, then stop again to silence all",
+			"cell": "`stop` → `stop`",
+			"exprs": ["stop → stop"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Play from start (second press)",
+			"cell": "`play` → `play`",
+			"exprs": ["play → play"]
+		},
+		{
+			"section": "System, modes, tracks",
+			"action": "Tap tempo",
+			"cell": "`tempo` (tap repeatedly)",
+			"exprs": ["tempo"],
+			"note": "tap repeatedly"
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Step-enter last played note",
+			"cell": "`key` → `step n`",
+			"exprs": ["key → step n"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Enter a chord on a step",
+			"cell": "`key + key + … + step n`, or `step n + keys`",
+			"exprs": ["keys + step n", "step n + keys"],
+			"note": "\"key + key + …\" = hold one or more keyboard keys"
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Inspect / edit a step's notes",
+			"cell": "`hold step n`; `step n + key` toggles that note",
+			"exprs": ["hold step n", "step n + key"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Extend note length (press again: full/overlap)",
+			"cell": "`step n + step m`",
+			"exprs": ["step n + step m"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Nudge step off-grid (needs quantise < 100)",
+			"cell": "`step n + [-]/[+]`",
+			"exprs": ["step n + [-]/[+]"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "View/sequence one sound only",
+			"cell": "`key + record`, or `key + step n`",
+			"exprs": ["key + record", "key + step n"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Shift (rotate) the track's sequence",
+			"cell": "`Tn + [-]/[+]`",
+			"exprs": ["Tn + [-]/[+]"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Parameter lock",
+			"cell": "`step n + turn E1…E4`",
+			"exprs": ["step n + turn E1…E4"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Copy / paste a step",
+			"cell": "`hold step n` (copy) → release → `step m` (empty)",
+			"exprs": ["hold step n → step m"],
+			"note": "release the held step between the two; step m must be empty"
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Clear track",
+			"cell": "`record + stop` (hold until LEDs fill)",
+			"exprs": ["record + hold stop"],
+			"note": "\"hold until LEDs fill\" written as a hold on the last key"
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Sequence octave (synth) / semitone (drum)",
+			"cell": "`shift + [-]/[+]`",
+			"exprs": ["shift + [-]/[+]"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Live record",
+			"cell": "`record + play`",
+			"exprs": ["record + play"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Overdub while playing / automate a knob",
+			"cell": "`hold record` (+ `turn E1…E4`)",
+			"exprs": ["hold record", "record + turn E1…E4"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Latch record mode",
+			"cell": "`record + play` while playing",
+			"exprs": ["record + play"],
+			"note": "while playing"
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Count-in before recording",
+			"cell": "`record + play` → `play`",
+			"exprs": ["record + play → play"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Step record (stopped); skip / back a step",
+			"cell": "`hold record` + keys; `record + [+]` / `record + [-]`",
+			"exprs": ["record + keys", "record + [+]", "record + [-]"],
+			"note": "\"hold record + keys\": every key before the last is held"
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Track scale",
+			"cell": "`bar + accidental`",
+			"exprs": ["bar + accidental"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Add / remove bar (max 4)",
+			"cell": "`bar + [+]` / `bar + [-]`",
+			"exprs": ["bar + [+]", "bar + [-]"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Duplicate current bar",
+			"cell": "`bar + shift + [+]`",
+			"exprs": ["bar + shift + [+]"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Sequence length (steps in last bar)",
+			"cell": "`bar + step n`",
+			"exprs": ["bar + step n"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Switch visible bar",
+			"cell": "`bar` (tap)",
+			"exprs": ["bar"],
+			"note": "tap"
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Quantise / note length / groove / shape (smoothing)",
+			"cell": "`bar + turn E1` / `E2` / `E3` / `E4`",
+			"exprs": ["bar + turn E1", "bar + turn E2", "bar + turn E3", "bar + turn E4"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Clear notes / p-locks / everything in pattern",
+			"cell": "`bar + M1` / `bar + M2` / `bar + M4`",
+			"exprs": ["bar + M1", "bar + M2", "bar + M4"]
+		},
+		{
+			"section": "Sequencer and bar",
+			"action": "Lock the bar screen open",
+			"cell": "`shift + bar`",
+			"exprs": ["shift + bar"]
+		},
+		{
+			"section": "Step components and players",
+			"action": "Add a step component",
+			"cell": "`shift + step n (…)` → `+ natural` (component) → `+ accidental` (value), all while holding shift",
+			"exprs": ["shift + steps → + natural → + accidental"],
+			"note": "\"→ +\" keeps shift held; \"steps\" = one or more step keys (\"step n (…)\")"
+		},
+		{
+			"section": "Step components and players",
+			"action": "Remove a step component",
+			"cell": "`shift + step n + same natural`",
+			"exprs": ["shift + step n + natural"],
+			"note": "the same natural that added the component"
+		},
+		{
+			"section": "Step components and players",
+			"action": "Open / enable player",
+			"cell": "`player` → `player`",
+			"exprs": ["player → player"]
+		},
+		{
+			"section": "Step components and players",
+			"action": "Change player type",
+			"cell": "`shift + player`",
+			"exprs": ["shift + player"]
+		},
+		{
+			"section": "Step components and players",
+			"action": "Arp speed / pattern / range / hold",
+			"cell": "`turn E1` / `E2` / `E3` / `E4`",
+			"exprs": ["turn E1", "turn E2", "turn E3", "turn E4"]
+		},
+		{
+			"section": "Step components and players",
+			"action": "Arp note length / style / glide / stereo",
+			"cell": "`shift + turn E1` / `E2` / `E3` / `E4`",
+			"exprs": ["shift + turn E1", "shift + turn E2", "shift + turn E3", "shift + turn E4"]
+		},
+		{
+			"section": "Step components and players",
+			"action": "Record a maestro chord",
+			"cell": "`shift + keys`",
+			"exprs": ["shift + keys"]
+		},
+		{
+			"section": "Step components and players",
+			"action": "Release held notes (hold player)",
+			"cell": "`stop`, or `player` to disable",
+			"exprs": ["stop", "player"]
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Choose engine (synth, drum, sampler, MIDI)",
+			"cell": "`shift + M1`",
+			"exprs": ["shift + M1"]
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Amp ↔ filter envelope",
+			"cell": "`click E1…E4` (on M2)",
+			"exprs": ["click E1…E4"],
+			"note": "on M2"
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Play mode / portamento / bend range / preset volume",
+			"cell": "`hold shift` on M2 + `turn E1…E4`",
+			"exprs": ["shift + turn E1…E4"],
+			"note": "on M2; \"hold shift + turn\" written as a chord"
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Change filter type",
+			"cell": "`shift + M3`",
+			"exprs": ["shift + M3"]
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Track sends (aux out, tape, FX I, FX II)",
+			"cell": "`hold shift` on M3 + `turn E1…E4`",
+			"exprs": ["shift + turn E1…E4"],
+			"note": "on M3"
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Change LFO type",
+			"cell": "`shift + M4`",
+			"exprs": ["shift + M4"]
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "LFO sub-functions",
+			"cell": "`click E1…E4`, or `shift + turn E1…E4`",
+			"exprs": ["click E1…E4", "shift + turn E1…E4"]
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Preset settings (mod routing, tuning)",
+			"cell": "`shift + instrument`",
+			"exprs": ["shift + instrument"]
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Scramble / copy / paste / save a track's sound",
+			"cell": "`Tn + M1` / `Tn + M2` / `Tn + M3` / `Tn + M4`",
+			"exprs": ["Tn + M1", "Tn + M2", "Tn + M3", "Tn + M4"]
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Save to the same snapshot instead of a new one",
+			"cell": "shift variant of save (1.1.17, **not in guide**)",
+			"exprs": ["shift + Tn + M4"],
+			"note": "not in the guide: the 1.1.17 changelog says to hold shift while saving (Tn + M4); the order of the held keys is unverified"
+		},
+		{
+			"section": "Instrument tracks and presets",
+			"action": "Preset browser: new / rename / delete (empty) folder",
+			"cell": "`shift + M1` / `shift + M3` / `shift + M4`",
+			"exprs": ["shift + M1", "shift + M3", "shift + M4"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Punch-in FX from any instrument track",
+			"cell": "`shift + key` (record with `record` running)",
+			"exprs": ["shift + key"],
+			"note": "records the effect when recording is running"
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Enable/select a MIDI CC on external MIDI",
+			"cell": "`shift + turn E1…E4`",
+			"exprs": ["shift + turn E1…E4"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Aux-track sends: tape / FX I / FX II",
+			"cell": "`shift + turn E2` / `E3` / `E4`",
+			"exprs": ["shift + turn E2", "shift + turn E3", "shift + turn E4"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Choose the effect in a send slot",
+			"cell": "`shift + T7` (FX I) / `shift + T8` (FX II)",
+			"exprs": ["shift + T7", "shift + T8"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "FX I → FX II send",
+			"cell": "on T7: `shift + turn E4`",
+			"exprs": ["shift + turn E4"],
+			"note": "on T7 (FX I) in auxiliary mode"
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Sample from any screen; record",
+			"cell": "`sample`; `hold M1`",
+			"exprs": ["sample", "hold M1"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Leave sample mode",
+			"cell": "press the lit track button",
+			"exprs": ["Tn"],
+			"note": "the lit track key"
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Input channel",
+			"cell": "`shift + turn E1`",
+			"exprs": ["shift + turn E1"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Direction / tune / crossfade (or pan/fade) / gain",
+			"cell": "`shift + turn E1` / `E2` / `E3` / `E4`",
+			"exprs": ["shift + turn E1", "shift + turn E2", "shift + turn E3", "shift + turn E4"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Loop type",
+			"cell": "`shift + click E3`",
+			"exprs": ["shift + click E3"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Drum sampler: copy / paste / multi-select a key",
+			"cell": "`key + M2` / `key + M3` / `key + M4`",
+			"exprs": ["key + M2", "key + M3", "key + M4"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Slice the sample on a key; delete a slice",
+			"cell": "`key + M1`; `shift + key`",
+			"exprs": ["key + M1", "shift + key"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Sample library",
+			"cell": "`shift + sample`",
+			"exprs": ["shift + sample"]
+		},
+		{
+			"section": "Auxiliary, FX, sampling",
+			"action": "Browse samples for a key",
+			"cell": "`key + sample` (1.1.0, **not in guide**)",
+			"exprs": ["key + sample"],
+			"note": "changelog 1.1.0, not in the guide"
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "New / copy / paste / remove pattern",
+			"cell": "`M1` / `M2` / `M3` / `M4` (in arrange)",
+			"exprs": ["M1", "M2", "M3", "M4"],
+			"note": "in arrange"
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Move between patterns / mute track",
+			"cell": "`turn E4` / `click E4`",
+			"exprs": ["turn E4", "click E4"]
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Sound link on/off",
+			"cell": "`turn E3` or `click E3`",
+			"exprs": ["turn E3", "click E3"]
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Choose link source pattern",
+			"cell": "`turn E4` (select) → `shift + turn/click E3`",
+			"exprs": ["turn E4 → shift + turn E3", "turn E4 → shift + click E3"]
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Select scene 1–9 / 10–99",
+			"cell": "`shift + accidental`; `shift + d#` → digits on accidentals",
+			"exprs": ["shift + accidental", "shift + accidental 0 → accidentals"],
+			"note": "d# is the last accidental, printed \"0\""
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Clone / copy / paste / reset scene",
+			"cell": "`shift + M1` / `M2` / `M3` / `M4`",
+			"exprs": ["shift + M1", "shift + M2", "shift + M3", "shift + M4"]
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Queue next scene (delayed switch)",
+			"cell": "`shift + play` → `accidental`",
+			"exprs": ["shift + play → accidental"]
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Enter song mode",
+			"cell": "`shift + arrange` (in arrange)",
+			"exprs": ["shift + arrange"],
+			"note": "in arrange"
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Add scenes to song order",
+			"cell": "`shift + accidentals`",
+			"exprs": ["shift + accidentals"]
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Clear song order / navigate / delete scene",
+			"cell": "`shift + M1` / `shift + M2, M3` / `shift + M4`",
+			"exprs": ["shift + M1", "shift + M2", "shift + M3", "shift + M4"],
+			"note": "\"shift + M2, M3\" = navigate back and forward"
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Select song; copy / paste song",
+			"cell": "`shift + natural`; then `M2` / `M3`",
+			"exprs": ["shift + natural", "shift + natural → M2", "shift + natural → M3"]
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Cue a future scene while playing",
+			"cell": "`shift + [-]/[+]`",
+			"exprs": ["shift + [-]/[+]"]
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Mute / unmute track",
+			"cell": "`shift + Tn` (in mix); shortcut `instrument + Tn` / `auxiliary + Tn`",
+			"exprs": ["shift + Tn", "instrument + Tn", "auxiliary + Tn"],
+			"note": "shift + Tn in mix; the mode-key chords are shortcuts"
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Solo track(s)",
+			"cell": "`hold Tn (…)` in mix",
+			"exprs": ["hold Tn"],
+			"note": "in mix; hold several track keys to solo several tracks"
+		},
+		{
+			"section": "Arrange, song, mix",
+			"action": "Reset EQ band / all EQ",
+			"cell": "`click E1…E3` / `click E4` (on M2)",
+			"exprs": ["click E1…E3", "click E4"],
+			"note": "on M2"
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "Project view: new / save (version) / rename / configure / delete",
+			"cell": "`hold M1` / `M2` / `M3` / `M4` / `hold M4`",
+			"exprs": ["hold M1", "M2", "M3", "M4", "hold M4"]
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "Save as",
+			"cell": "`shift + M2`",
+			"exprs": ["shift + M2"]
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "Projects folder (factory, user, templates, autosaves)",
+			"cell": "`shift + project`",
+			"exprs": ["shift + project"]
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "Tempo / groove type / swing-shuffle / metronome",
+			"cell": "`tempo` → `turn E1` / `E2` / `E3` / `E4` (`click E4` = metronome on/off)",
+			"exprs": [
+				"tempo → turn E1",
+				"tempo → turn E2",
+				"tempo → turn E3",
+				"tempo → turn E4",
+				"tempo → click E4"
+			]
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "COM: system settings / MIDI controller / devices / MTP",
+			"cell": "`com` → `M1` / `M2` / `M3` / `M4`",
+			"exprs": ["com → M1", "com → M2", "com → M3", "com → M4"]
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "Controller mode: channel / knob mode / octave keys; exit",
+			"cell": "`shift + turn E1` / `E2` / `E3`; `shift + com`",
+			"exprs": ["shift + turn E1", "shift + turn E2", "shift + turn E3", "shift + com"]
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "MTP eject",
+			"cell": "`M4` (in MTP)",
+			"exprs": ["M4"],
+			"note": "in MTP mode"
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "Enter TE boot",
+			"cell": "`hold com` while switching power on",
+			"exprs": ["com + power"],
+			"note": "hold com while switching the power on"
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "TE boot: firmware update / factory reset / function test",
+			"cell": "`T1` / `T7` / `T8`",
+			"exprs": ["T1", "T7", "T8"],
+			"note": "in TE boot"
+		},
+		{
+			"section": "Project, tempo, COM, TE boot",
+			"action": "Reset volume-pot calibration",
+			"cell": "`T8` → `M2` (or `T2`)",
+			"exprs": ["T8 → M2", "T8 → T2"]
+		}
+	]
+}

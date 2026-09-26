@@ -1,0 +1,4037 @@
+{
+	"$comment": "The OP-XY's physical controls as data: our own structuring and wording of public facts (TE's guide, product pages and drawings, community MIDI research). Not affiliated with Teenage Engineering. Positions are millimetres measured from TE's drawings (see docs/research/50-hardware-ui.md); every entry carries confidence + source keys (see `sources`). Validated by src/lib/core/opxy (zod) - run its tests after editing.",
+	"schemaVersion": 1,
+	"generated": "2026-09-26",
+	"doc": "docs/research/50-hardware-ui.md",
+	"firmware": { "reference": "1.1.33", "guide": "1.1.15" },
+	"idScheme": {
+		"pattern": "<group>.<name>, lower case; ids are stable - a rename adds an alias instead",
+		"groups": {
+			"key": "the 20 function keys: project, tempo, sample, com, instrument, auxiliary, arrange, mix, m1-m4, player, bar, record, play, stop, minus, plus, shift",
+			"track": "track keys 1-8: instrument tracks 1-8 in instrument mode, auxiliary tracks 9-16 in auxiliary mode (T1 brain ... T8 FX II)",
+			"step": "sequencer step keys 1-16",
+			"keyboard": "the 24 keyboard keys by note at the default octave with C4 = 60: f3, fs3 (F sharp 3), g3 ... e5; naturals double as step components, accidentals as digits 1-9, 0",
+			"encoder": "the endless encoders 1-4, left to right dark gray, mid gray, light gray, white (turn + click)",
+			"knob": "knob.volume (analog pot)",
+			"strip": "strip.pitchbend (front edge)",
+			"screen": "screen.main",
+			"meter": "meter.level",
+			"led": "led.charge; LED windows on keys live in their key entry (`led`)",
+			"switch": "switch.power",
+			"speaker": "speaker.internal",
+			"mic": "mic.internal",
+			"port": "port.lineOut, port.multiOut, port.midiIn, port.lineIn, port.usb",
+			"marking": "marking.tick"
+		},
+		"keyGrammarTokens": "`token` is the spelling used by the key-combo grammar (src/lib/core/opxy/keys.ts), e.g. \"shift + M1\", \"step 5 + turn E2\""
+	},
+	"conventions": {
+		"units": "millimetres",
+		"faces": {
+			"top": "plan view: origin at the body top-left (back-left) corner, x to the right (0-285), y toward the player (0-102); the power-switch tab is excluded",
+			"front": "front face: x as on the top face, y downward from the top rim",
+			"right": "right face: x from the back edge toward the player (0-102), y downward from the top rim"
+		},
+		"rect": "rect = bounds of the control; for grid controls the full pitch cell (the visible tile is inset by the tile gap), which is also the hit area",
+		"center": "center = actuator centre (keycap, knob or feature); it can differ from the tile centre (accidentals, volume)",
+		"notes": "MIDI note numbers are authoritative; names use C4 = 60 (leftmost key F3 = 53). The device names its own sample files with C3 = 60.",
+		"channels": "no channels here: see knowledge/midi/cc-map.json",
+		"legend": "legend.printed describes what is printed on the cap; the OP-XY prints no shift legends, so legend.shift describes the shift-layer function in our words"
+	},
+	"sources": {
+		"HW-NOTE": {
+			"path": "docs/research/50-hardware-ui.md",
+			"note": "our measurements, inventory and legend descriptions"
+		},
+		"MIDI-NOTE": { "path": "docs/research/20-midi-control.md" },
+		"CC-MAP": { "path": "knowledge/midi/cc-map.json" },
+		"REMOTE-KEYS": { "path": "knowledge/midi/remote-keys.json" },
+		"TE-LAYOUT": { "url": "https://teenage.engineering/guides/op-xy/layout" },
+		"TE-HW": { "url": "https://teenage.engineering/guides/op-xy/hardware-overview" },
+		"TE-TRACKS": { "url": "https://teenage.engineering/guides/op-xy/track-buttons" },
+		"TE-AUX": { "url": "https://teenage.engineering/guides/op-xy/auxiliary" },
+		"TE-HOWTO": {
+			"url": "https://teenage.engineering/guides/op-xy/how-to",
+			"note": "names track 5 as the external audio track in auxiliary mode"
+		},
+		"TE-SEQ": { "url": "https://teenage.engineering/guides/op-xy/sequencer" },
+		"TE-STEPS": { "url": "https://teenage.engineering/guides/op-xy/step-components" },
+		"TE-ARR": { "url": "https://teenage.engineering/guides/op-xy/arrange" },
+		"TE-COM": { "url": "https://teenage.engineering/guides/op-xy/com" },
+		"TE-PRODUCT": { "url": "https://teenage.engineering/products/op-xy" },
+		"TE-STORE": { "url": "https://teenage.engineering/store/op-xy" },
+		"TE-LAYOUT-SVG": {
+			"url": "https://assets.teenage.engineering/_img/6731e8d7f430b9ee1a804922_original.svg",
+			"note": "TE's full-panel line drawing; reference only, never shipped"
+		},
+		"TE-TOPDOWN": {
+			"note": "TE's orthographic top render (asset 6735138db0f88c1a719dbd38); reference only, never shipped"
+		},
+		"TE-SIDE": {
+			"url": "https://teenage.engineering/press/op-xy",
+			"note": "press image OP-XY_side.jpg; reference only"
+		},
+		"TE-PORTS": {
+			"note": "TE product image 67361db01db2feb0839f4196 (right edge); reference only"
+		},
+		"TE-GUIDE-SVG": { "note": "colours used in TE's guide illustrations; reference only" },
+		"DECK": {
+			"url": "https://github.com/kazuochi/opxy-deck",
+			"note": "MIT; opxy-controls.json controller-mode census"
+		},
+		"SOS": { "url": "https://www.soundonsound.com/reviews/teenage-engineering-op-xy" },
+		"MEHATRONIKA": { "url": "https://magazinmehatronika.com/en/teenage-engineering-op-xy-review/" }
+	},
+	"panel": {
+		"body": {
+			"width": 285,
+			"height": 102,
+			"cornerRadius": 5,
+			"officialSize": "288 x 102 x 29 mm including the 3 mm power-switch tab, 900 g",
+			"confidence": "measured",
+			"source": ["TE-LAYOUT-SVG", "TE-STORE", "HW-NOTE"]
+		},
+		"grid": {
+			"pitch": 15.5,
+			"columns": 17,
+			"rows": 6,
+			"origin": { "x": 4.41, "y": 4.39 },
+			"tileSize": 14.6,
+			"tileCornerRadius": 1.25,
+			"margins": { "left": 4.4, "top": 4.4, "bottom": 4.4, "right": 16.9 },
+			"confidence": "measured",
+			"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+		},
+		"keycap": {
+			"diameter": 9.4,
+			"heightAboveTile": 2,
+			"confidence": "measured",
+			"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+		},
+		"ledWindow": {
+			"diameter": 1.75,
+			"offset": { "x": 0, "y": -3.05 },
+			"confidence": "measured",
+			"source": ["TE-LAYOUT-SVG", "HW-NOTE"]
+		},
+		"profile": {
+			"feet": 1.9,
+			"basePlate": 2.1,
+			"chassis": 9.5,
+			"tilesAboveRim": 2.4,
+			"keycapTopAboveRim": 4.4,
+			"encoderTopAboveRim": 14.2,
+			"volumeTopAboveRim": 15.7,
+			"totalHeight": 29.2,
+			"confidence": "measured",
+			"source": ["TE-SIDE", "HW-NOTE"]
+		}
+	},
+	"colors": {
+		"body": {
+			"hex": "#26282c",
+			"role": "anodized body",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"body-rim": {
+			"hex": "#45484f",
+			"role": "chamfered rim highlight",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"tile-gap": {
+			"hex": "#08090b",
+			"role": "gap between tiles, holes",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"tile": {
+			"hex": "#2e2f32",
+			"role": "standard tile",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"keycap": {
+			"hex": "#2b2c2f",
+			"role": "standard keycap (a hair darker than its tile)",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"legend": {
+			"hex": "#ecebe7",
+			"role": "printed legends (warm off-white, verify)",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"legend-red": {
+			"hex": "#ff3a14",
+			"role": "record dot",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"step-ramp-1": {
+			"hex": "#434448",
+			"role": "steps 1-2 tile and cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"step-ramp-2": {
+			"hex": "#5a6066",
+			"role": "steps 3-4 tile and cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"step-ramp-3": {
+			"hex": "#707479",
+			"role": "steps 5-6 tile and cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"step-ramp-4": {
+			"hex": "#8e9698",
+			"role": "steps 7-8 tile and cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"step-ramp-5": {
+			"hex": "#9a9fa3",
+			"role": "steps 9-10 tile and cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"step-ramp-6": {
+			"hex": "#afafaf",
+			"role": "steps 11-12 tile and cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"step-ramp-7": {
+			"hex": "#b7b5b3",
+			"role": "steps 13-14 tile and cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"step-ramp-8": {
+			"hex": "#cecbc9",
+			"role": "steps 15-16 tile and cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"encoder-cap-dark": {
+			"hex": "#45484c",
+			"role": "encoder 1 cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "TE-LAYOUT", "HW-NOTE"]
+		},
+		"encoder-cap-mid": {
+			"hex": "#7c828c",
+			"role": "encoder 2 cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "TE-LAYOUT", "HW-NOTE"]
+		},
+		"encoder-cap-light": {
+			"hex": "#b5b5b6",
+			"role": "encoder 3 cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "TE-LAYOUT", "HW-NOTE"]
+		},
+		"encoder-cap-white": {
+			"hex": "#e9e9ea",
+			"role": "encoder 4 cap",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "TE-LAYOUT", "HW-NOTE"]
+		},
+		"encoder-dish": {
+			"hex": "#3a3c3f",
+			"role": "recessed dish around each encoder",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"knob-body": {
+			"hex": "#1e1f22",
+			"role": "knurled black knob bodies (encoders, volume)",
+			"confidence": "speculative",
+			"source": ["HW-NOTE"],
+			"note": "not sampled yet; calibrate against owner photos"
+		},
+		"screen-bezel": {
+			"hex": "#141517",
+			"role": "black glass around the active area",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"led-white": {
+			"hex": "#ffffff",
+			"role": "lit white LED (add glow)",
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"]
+		},
+		"led-red": {
+			"hex": "#ff4d00",
+			"role": "lit red LED, record and alerts",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"led-green": {
+			"hex": "#00f551",
+			"role": "charge LED",
+			"confidence": "measured",
+			"source": ["TE-PORTS", "HW-NOTE"]
+		},
+		"power-switch": {
+			"hex": "#d0cecb",
+			"role": "power switch tab",
+			"confidence": "measured",
+			"source": ["TE-PORTS", "HW-NOTE"]
+		},
+		"screen-ink": {
+			"hex": "#0f0e12",
+			"role": "screen: ink / outlines",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-white": {
+			"hex": "#f7f5f5",
+			"role": "screen: warm white",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-ramp-1": {
+			"hex": "#16161e",
+			"role": "screen 8-tone ramp, darkest",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-ramp-2": {
+			"hex": "#2f2f37",
+			"role": "screen 8-tone ramp",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-ramp-3": {
+			"hex": "#484850",
+			"role": "screen 8-tone ramp",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-ramp-4": {
+			"hex": "#616169",
+			"role": "screen 8-tone ramp",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-ramp-5": {
+			"hex": "#7a7a82",
+			"role": "screen 8-tone ramp",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-ramp-6": {
+			"hex": "#96969b",
+			"role": "screen 8-tone ramp",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-ramp-7": {
+			"hex": "#afafb4",
+			"role": "screen 8-tone ramp",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-ramp-8": {
+			"hex": "#f7f5f5",
+			"role": "screen 8-tone ramp, lightest",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-encoder-dark": {
+			"hex": "#2f2f37",
+			"role": "on-screen dot for encoder 1",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-encoder-mid": {
+			"hex": "#7a7a82",
+			"role": "on-screen dot for encoder 2",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-encoder-light": {
+			"hex": "#afafb4",
+			"role": "on-screen dot for encoder 3",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-encoder-white": {
+			"hex": "#f7f5f5",
+			"role": "on-screen dot for encoder 4 (drawn hollow)",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		},
+		"screen-red": {
+			"hex": "#e5371b",
+			"role": "screen red: recording, active pattern, alerts, p-locks",
+			"confidence": "measured",
+			"source": ["TE-GUIDE-SVG", "HW-NOTE"]
+		}
+	},
+	"controls": [
+		{
+			"id": "key.project",
+			"kind": "key",
+			"group": "function",
+			"label": "projects",
+			"aliases": ["project", "project key"],
+			"token": "project",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "fountain-pen nib pictogram",
+				"glyph": "pen-nib",
+				"shift": "projects folder (factory, user, templates, autosaves, history)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 2, "row": 1, "cols": 1, "rows": 1 },
+				"rect": { "x": 35.41, "y": 19.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 43.16, "y": 27.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 0,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 5, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#projects",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "key.tempo",
+			"kind": "key",
+			"group": "function",
+			"label": "tempo",
+			"aliases": ["metronome", "tap tempo"],
+			"token": "tempo",
+			"inputs": ["press"],
+			"legend": { "printed": "metronome pictogram", "glyph": "metronome", "shift": null },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 3, "row": 1, "cols": 1, "rows": 1 },
+				"rect": { "x": 50.91, "y": 19.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 58.66, "y": 27.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 1,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 6, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "repeated presses are tap tempo, so remote presses can change the BPM"
+			},
+			"guide": "layout#tempo",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "key.sample",
+			"kind": "key",
+			"group": "function",
+			"label": "sample",
+			"aliases": ["sampler key", "sampling"],
+			"token": "sample",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "waveform pictogram (a row of short and tall bars)",
+				"glyph": "waveform",
+				"shift": "sample library"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 16, "row": 0, "cols": 1, "rows": 1 },
+				"rect": { "x": 252.41, "y": 4.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 260.16, "y": 12.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 23,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 28, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#sample",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "key.com",
+			"kind": "key",
+			"group": "function",
+			"label": "com",
+			"aliases": ["COM", "communication"],
+			"token": "com",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "the word \"com\"",
+				"glyph": "text-com",
+				"shift": "leave controller mode (while in COM controller mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 16, "row": 1, "cols": 1, "rows": 1 },
+				"rect": { "x": 252.41, "y": 19.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 260.16, "y": 27.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 24,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 29, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "hold = battery level on the level meter; hold while powering on = TE boot"
+			},
+			"guide": "layout#com",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-HW", "TE-COM", "HW-NOTE"]
+		},
+		{
+			"id": "key.instrument",
+			"kind": "key",
+			"group": "mode",
+			"label": "instrument",
+			"aliases": ["instruments", "inst", "instrument mode"],
+			"token": "instrument",
+			"index": 1,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "sine wave over \"1-8\"",
+				"glyph": "mode-instrument",
+				"shift": "preset settings"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 0, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 4.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 12.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 2,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 7, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#main-modes",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "hold + track key = mute that instrument track"
+		},
+		{
+			"id": "key.auxiliary",
+			"kind": "key",
+			"group": "mode",
+			"label": "auxiliary",
+			"aliases": ["aux", "auxiliary mode"],
+			"token": "auxiliary",
+			"index": 2,
+			"inputs": ["press"],
+			"legend": { "printed": "jack plug over \"1-8\"", "glyph": "mode-auxiliary", "shift": null },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 1, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 19.91, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 27.66, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 3,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 8, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#main-modes",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "hold + track key = mute that auxiliary track"
+		},
+		{
+			"id": "key.arrange",
+			"kind": "key",
+			"group": "mode",
+			"label": "arrange",
+			"aliases": ["arranger", "arrange mode"],
+			"token": "arrange",
+			"index": 3,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "four chained blocks, the second one filled",
+				"glyph": "mode-arrange",
+				"shift": "song mode (while in arrange)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 2, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 35.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 43.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 4,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 9, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#main-modes",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "pressed again in arrange: toggles between instrument and auxiliary tracks"
+		},
+		{
+			"id": "key.mix",
+			"kind": "key",
+			"group": "mode",
+			"label": "mix",
+			"aliases": ["mixer", "mix mode", "mixer mode"],
+			"token": "mix",
+			"index": 4,
+			"inputs": ["press"],
+			"legend": { "printed": "bank of faders", "glyph": "mode-mix", "shift": null },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 3, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 50.91, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 58.66, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 5,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 10, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#main-modes",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "pressed again in mix: toggles between instrument and auxiliary tracks"
+		},
+		{
+			"id": "key.m1",
+			"kind": "key",
+			"group": "module",
+			"label": "M1",
+			"aliases": ["module 1", "m1"],
+			"token": "M1",
+			"index": 1,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "large digit 1",
+				"glyph": "digit-1",
+				"shift": "engine select (instrument) · clone scene (arrange) · new folder (preset browser)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 4, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 66.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 74.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 6,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 11, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "meaning depends on the screen (new/save/rename/delete in project, pattern edits in arrange); remote presses fire hold gestures instantly"
+			},
+			"guide": "layout#modules",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "sits directly under the screen quarter whose soft label it triggers"
+		},
+		{
+			"id": "key.m2",
+			"kind": "key",
+			"group": "module",
+			"label": "M2",
+			"aliases": ["module 2", "m2"],
+			"token": "M2",
+			"index": 2,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "large digit 2",
+				"glyph": "digit-2",
+				"shift": "play-mode page while held on M2 (instrument) · copy scene (arrange) · save as (project)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 5, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 81.91, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 89.66, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 7,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 12, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "meaning depends on the screen (new/save/rename/delete in project, pattern edits in arrange); remote presses fire hold gestures instantly"
+			},
+			"guide": "layout#modules",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "sits directly under the screen quarter whose soft label it triggers"
+		},
+		{
+			"id": "key.m3",
+			"kind": "key",
+			"group": "module",
+			"label": "M3",
+			"aliases": ["module 3", "m3"],
+			"token": "M3",
+			"index": 3,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "large digit 3",
+				"glyph": "digit-3",
+				"shift": "filter type (instrument) · paste scene (arrange) · rename folder (preset browser)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 6, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 97.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 105.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 8,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 13, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "meaning depends on the screen (new/save/rename/delete in project, pattern edits in arrange); remote presses fire hold gestures instantly"
+			},
+			"guide": "layout#modules",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "sits directly under the screen quarter whose soft label it triggers"
+		},
+		{
+			"id": "key.m4",
+			"kind": "key",
+			"group": "module",
+			"label": "M4",
+			"aliases": ["module 4", "m4"],
+			"token": "M4",
+			"index": 4,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "large digit 4",
+				"glyph": "digit-4",
+				"shift": "LFO type (instrument) · reset scene (arrange) · delete folder (preset browser)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 7, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 112.91, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 120.66, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 9,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 14, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "meaning depends on the screen (new/save/rename/delete in project, pattern edits in arrange); remote presses fire hold gestures instantly"
+			},
+			"guide": "layout#modules",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "sits directly under the screen quarter whose soft label it triggers"
+		},
+		{
+			"id": "track.1",
+			"kind": "key",
+			"group": "track",
+			"label": "track 1",
+			"aliases": ["T1", "track button 1", "brain", "brain track"],
+			"token": "T1",
+			"index": 1,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 1 beside a head-with-brain pictogram",
+				"glyph": "track-1",
+				"shift": "preset browser"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 8, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 128.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 136.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-TRACKS", "HW-NOTE"],
+				"notes": "active track is white for instrument tracks and red for auxiliary tracks; in mix with shift held, unmuted tracks light and muted ones go dark"
+			},
+			"midi": {
+				"remoteKey": 14,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 19, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "holding one track key while pressing another links tracks, so remote presses need care"
+			},
+			"track": {
+				"instrument": 1,
+				"auxiliary": { "track": 9, "name": "brain", "role": "brain", "alias": "T1 brain" },
+				"confidence": "official",
+				"source": ["TE-AUX", "TE-TRACKS"]
+			},
+			"guide": "layout#track-buttons",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-TRACKS", "HW-NOTE"],
+			"notes": "the digit names the instrument slot, the pictogram names the auxiliary track"
+		},
+		{
+			"id": "track.2",
+			"kind": "key",
+			"group": "track",
+			"label": "track 2",
+			"aliases": [
+				"T2",
+				"track button 2",
+				"punch-in FX",
+				"punch-in",
+				"punch in fx",
+				"punch-in fx track"
+			],
+			"token": "T2",
+			"index": 2,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 2 beside a mushroom push-button pictogram",
+				"glyph": "track-2",
+				"shift": "preset browser"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 9, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 143.91, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 151.66, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-TRACKS", "HW-NOTE"],
+				"notes": "active track is white for instrument tracks and red for auxiliary tracks; in mix with shift held, unmuted tracks light and muted ones go dark"
+			},
+			"midi": {
+				"remoteKey": 15,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 20, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "holding one track key while pressing another links tracks, so remote presses need care"
+			},
+			"track": {
+				"instrument": 2,
+				"auxiliary": {
+					"track": 10,
+					"name": "punch-in FX",
+					"role": "punchIn",
+					"alias": "T2 punch-in FX"
+				},
+				"confidence": "official",
+				"source": ["TE-AUX", "TE-TRACKS"]
+			},
+			"guide": "layout#track-buttons",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-TRACKS", "HW-NOTE"],
+			"notes": "the digit names the instrument slot, the pictogram names the auxiliary track"
+		},
+		{
+			"id": "track.3",
+			"kind": "key",
+			"group": "track",
+			"label": "track 3",
+			"aliases": [
+				"T3",
+				"track button 3",
+				"external MIDI",
+				"external midi track",
+				"midi track",
+				"ext midi"
+			],
+			"token": "T3",
+			"index": 3,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 3 beside a 5-pin DIN socket pictogram",
+				"glyph": "track-3",
+				"shift": "preset browser"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 10, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 159.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 167.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-TRACKS", "HW-NOTE"],
+				"notes": "active track is white for instrument tracks and red for auxiliary tracks; in mix with shift held, unmuted tracks light and muted ones go dark"
+			},
+			"midi": {
+				"remoteKey": 16,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 21, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "holding one track key while pressing another links tracks, so remote presses need care"
+			},
+			"track": {
+				"instrument": 3,
+				"auxiliary": {
+					"track": 11,
+					"name": "external MIDI",
+					"role": "externalMidi",
+					"alias": "T3 external MIDI"
+				},
+				"confidence": "official",
+				"source": ["TE-AUX", "TE-TRACKS"]
+			},
+			"guide": "layout#track-buttons",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-TRACKS", "HW-NOTE"],
+			"notes": "the digit names the instrument slot, the pictogram names the auxiliary track"
+		},
+		{
+			"id": "track.4",
+			"kind": "key",
+			"group": "track",
+			"label": "track 4",
+			"aliases": ["T4", "track button 4", "external CV", "external cv track", "cv track", "ext cv"],
+			"token": "T4",
+			"index": 4,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 4 with the letters \"cv\"",
+				"glyph": "track-4",
+				"shift": "preset browser"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 11, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 174.91, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 182.66, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-TRACKS", "HW-NOTE"],
+				"notes": "active track is white for instrument tracks and red for auxiliary tracks; in mix with shift held, unmuted tracks light and muted ones go dark"
+			},
+			"midi": {
+				"remoteKey": 17,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 22, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "holding one track key while pressing another links tracks, so remote presses need care"
+			},
+			"track": {
+				"instrument": 4,
+				"auxiliary": {
+					"track": 12,
+					"name": "external CV",
+					"role": "externalCv",
+					"alias": "T4 external CV"
+				},
+				"confidence": "official",
+				"source": ["TE-AUX", "TE-TRACKS"]
+			},
+			"guide": "layout#track-buttons",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-TRACKS", "HW-NOTE"],
+			"notes": "the digit names the instrument slot, the pictogram names the auxiliary track"
+		},
+		{
+			"id": "track.5",
+			"kind": "key",
+			"group": "track",
+			"label": "track 5",
+			"aliases": [
+				"T5",
+				"track button 5",
+				"external audio",
+				"external audio track",
+				"audio track",
+				"ext audio"
+			],
+			"token": "T5",
+			"index": 5,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 5 beside a jack plug over two dots",
+				"glyph": "track-5",
+				"shift": "preset browser"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 12, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 190.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 198.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-TRACKS", "HW-NOTE"],
+				"notes": "active track is white for instrument tracks and red for auxiliary tracks; in mix with shift held, unmuted tracks light and muted ones go dark"
+			},
+			"midi": {
+				"remoteKey": 18,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 23, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "holding one track key while pressing another links tracks, so remote presses need care"
+			},
+			"track": {
+				"instrument": 5,
+				"auxiliary": {
+					"track": 13,
+					"name": "external audio",
+					"role": "externalAudio",
+					"alias": "T5 external audio"
+				},
+				"confidence": "official",
+				"source": ["TE-HOWTO", "TE-TRACKS"]
+			},
+			"guide": "layout#track-buttons",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-TRACKS", "HW-NOTE"],
+			"notes": "the digit names the instrument slot, the pictogram names the auxiliary track"
+		},
+		{
+			"id": "track.6",
+			"kind": "key",
+			"group": "track",
+			"label": "track 6",
+			"aliases": ["T6", "track button 6", "tape", "tape track"],
+			"token": "T6",
+			"index": 6,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 6 beside a pair of tape reels",
+				"glyph": "track-6",
+				"shift": "preset browser"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 13, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 205.91, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 213.66, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-TRACKS", "HW-NOTE"],
+				"notes": "active track is white for instrument tracks and red for auxiliary tracks; in mix with shift held, unmuted tracks light and muted ones go dark"
+			},
+			"midi": {
+				"remoteKey": 19,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 24, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "holding one track key while pressing another links tracks, so remote presses need care"
+			},
+			"track": {
+				"instrument": 6,
+				"auxiliary": { "track": 14, "name": "tape", "role": "tape", "alias": "T6 tape" },
+				"confidence": "official",
+				"source": ["TE-AUX", "TE-TRACKS"]
+			},
+			"guide": "layout#track-buttons",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-TRACKS", "HW-NOTE"],
+			"notes": "the digit names the instrument slot, the pictogram names the auxiliary track"
+		},
+		{
+			"id": "track.7",
+			"kind": "key",
+			"group": "track",
+			"label": "track 7",
+			"aliases": ["T7", "track button 7", "FX I", "FX 1", "fx one", "send fx I"],
+			"token": "T7",
+			"index": 7,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 7 beside a boxed \"FX\" with \"I\" below",
+				"glyph": "track-7",
+				"shift": "preset browser (instrument) · choose the effect (auxiliary)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 14, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 221.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 229.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-TRACKS", "HW-NOTE"],
+				"notes": "active track is white for instrument tracks and red for auxiliary tracks; in mix with shift held, unmuted tracks light and muted ones go dark"
+			},
+			"midi": {
+				"remoteKey": 20,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 25, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "holding one track key while pressing another links tracks, so remote presses need care"
+			},
+			"track": {
+				"instrument": 7,
+				"auxiliary": { "track": 15, "name": "FX I", "role": "fx1", "alias": "T7 FX I" },
+				"confidence": "official",
+				"source": ["TE-AUX", "TE-TRACKS"]
+			},
+			"guide": "layout#track-buttons",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-TRACKS", "HW-NOTE"],
+			"notes": "the digit names the instrument slot, the pictogram names the auxiliary track"
+		},
+		{
+			"id": "track.8",
+			"kind": "key",
+			"group": "track",
+			"label": "track 8",
+			"aliases": ["T8", "track button 8", "FX II", "FX 2", "fx two", "send fx II"],
+			"token": "T8",
+			"index": 8,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 8 beside a boxed \"FX\" with \"II\" below",
+				"glyph": "track-8",
+				"shift": "preset browser (instrument) · choose the effect (auxiliary)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 15, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 236.91, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 244.66, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-TRACKS", "HW-NOTE"],
+				"notes": "active track is white for instrument tracks and red for auxiliary tracks; in mix with shift held, unmuted tracks light and muted ones go dark"
+			},
+			"midi": {
+				"remoteKey": 21,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 26, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "holding one track key while pressing another links tracks, so remote presses need care"
+			},
+			"track": {
+				"instrument": 8,
+				"auxiliary": { "track": 16, "name": "FX II", "role": "fx2", "alias": "T8 FX II" },
+				"confidence": "official",
+				"source": ["TE-AUX", "TE-TRACKS"]
+			},
+			"guide": "layout#track-buttons",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-TRACKS", "HW-NOTE"],
+			"notes": "the digit names the instrument slot, the pictogram names the auxiliary track"
+		},
+		{
+			"id": "key.player",
+			"kind": "key",
+			"group": "function",
+			"label": "players",
+			"aliases": ["player", "arpeggio", "arp"],
+			"token": "player",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "stepped dots (arpeggio pictogram)",
+				"glyph": "player",
+				"shift": "player type (arpeggio, maestro, hold)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 16, "row": 2, "cols": 1, "rows": 1 },
+				"rect": { "x": 252.41, "y": 35.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 260.16, "y": 43.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 22,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 27, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "first press opens the player page, the next toggles it"
+			},
+			"guide": "layout#players",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "step.1",
+			"kind": "key",
+			"group": "step",
+			"label": "step 1",
+			"aliases": ["step key 1"],
+			"token": "step 1",
+			"index": 1,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 0, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 4.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 12.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-1", "cap": "step-ramp-1" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 56,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 61, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.2",
+			"kind": "key",
+			"group": "step",
+			"label": "step 2",
+			"aliases": ["step key 2"],
+			"token": "step 2",
+			"index": 2,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 1, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 19.91, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 27.66, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-1", "cap": "step-ramp-1" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 57,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 62, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.3",
+			"kind": "key",
+			"group": "step",
+			"label": "step 3",
+			"aliases": ["step key 3"],
+			"token": "step 3",
+			"index": 3,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 2, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 35.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 43.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-2", "cap": "step-ramp-2" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 58,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 63, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.4",
+			"kind": "key",
+			"group": "step",
+			"label": "step 4",
+			"aliases": ["step key 4"],
+			"token": "step 4",
+			"index": 4,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 3, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 50.91, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 58.66, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-2", "cap": "step-ramp-2" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 59,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 64, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.5",
+			"kind": "key",
+			"group": "step",
+			"label": "step 5",
+			"aliases": ["step key 5"],
+			"token": "step 5",
+			"index": 5,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 4, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 66.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 74.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-3", "cap": "step-ramp-3" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 60,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 65, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.6",
+			"kind": "key",
+			"group": "step",
+			"label": "step 6",
+			"aliases": ["step key 6"],
+			"token": "step 6",
+			"index": 6,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 5, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 81.91, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 89.66, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-3", "cap": "step-ramp-3" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 61,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 66, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.7",
+			"kind": "key",
+			"group": "step",
+			"label": "step 7",
+			"aliases": ["step key 7"],
+			"token": "step 7",
+			"index": 7,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 6, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 97.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 105.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-4", "cap": "step-ramp-4" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 62,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 67, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.8",
+			"kind": "key",
+			"group": "step",
+			"label": "step 8",
+			"aliases": ["step key 8"],
+			"token": "step 8",
+			"index": 8,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 7, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 112.91, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 120.66, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-4", "cap": "step-ramp-4" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 63,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 68, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.9",
+			"kind": "key",
+			"group": "step",
+			"label": "step 9",
+			"aliases": ["step key 9"],
+			"token": "step 9",
+			"index": 9,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 8, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 128.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 136.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-5", "cap": "step-ramp-5" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 64,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 69, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.10",
+			"kind": "key",
+			"group": "step",
+			"label": "step 10",
+			"aliases": ["step key 10"],
+			"token": "step 10",
+			"index": 10,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 9, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 143.91, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 151.66, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-5", "cap": "step-ramp-5" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 65,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 70, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.11",
+			"kind": "key",
+			"group": "step",
+			"label": "step 11",
+			"aliases": ["step key 11"],
+			"token": "step 11",
+			"index": 11,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 10, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 159.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 167.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-6", "cap": "step-ramp-6" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 66,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 71, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.12",
+			"kind": "key",
+			"group": "step",
+			"label": "step 12",
+			"aliases": ["step key 12"],
+			"token": "step 12",
+			"index": 12,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 11, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 174.91, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 182.66, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-6", "cap": "step-ramp-6" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 67,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 72, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.13",
+			"kind": "key",
+			"group": "step",
+			"label": "step 13",
+			"aliases": ["step key 13"],
+			"token": "step 13",
+			"index": 13,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 12, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 190.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 198.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-7", "cap": "step-ramp-7" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 68,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 73, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.14",
+			"kind": "key",
+			"group": "step",
+			"label": "step 14",
+			"aliases": ["step key 14"],
+			"token": "step 14",
+			"index": 14,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 13, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 205.91, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 213.66, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-7", "cap": "step-ramp-7" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 69,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 74, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.15",
+			"kind": "key",
+			"group": "step",
+			"label": "step 15",
+			"aliases": ["step key 15"],
+			"token": "step 15",
+			"index": 15,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 14, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 221.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 229.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-8", "cap": "step-ramp-8" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 70,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 75, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "step.16",
+			"kind": "key",
+			"group": "step",
+			"label": "step 16",
+			"aliases": ["step key 16"],
+			"token": "step 16",
+			"index": 16,
+			"inputs": ["press"],
+			"legend": { "printed": null, "glyph": null, "shift": "select the step for step components" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 15, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 236.91, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 244.66, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "step-ramp-8", "cap": "step-ramp-8" },
+			"led": {
+				"states": ["off", "dim", "white", "red"],
+				"blinks": true,
+				"confidence": "official",
+				"source": ["TE-SEQ", "TE-STEPS", "HW-NOTE"],
+				"notes": "white = note on the step; red = recording, step-record cursor and clear-track flood; dim = step without components while shift is held; the playhead chases"
+			},
+			"midi": {
+				"remoteKey": 71,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 76, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "remote presses edit the pattern of the selected track"
+			},
+			"guide": "layout#sequencer",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"],
+			"notes": "tile and cap share one tone of an 8-step grey ramp; pairs of steps share a tone"
+		},
+		{
+			"id": "key.bar",
+			"kind": "key",
+			"group": "function",
+			"label": "bar",
+			"aliases": ["bar key", "bars"],
+			"token": "bar",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "\"1-4\" over the word \"BAR\" reversed out of a light box",
+				"glyph": "bar",
+				"shift": "lock the bar page on screen"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 16, "row": 3, "cols": 1, "rows": 1 },
+				"rect": { "x": 252.41, "y": 50.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 260.16, "y": 58.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 25,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 30, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#bar",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-SEQ", "HW-NOTE"]
+		},
+		{
+			"id": "key.record",
+			"kind": "key",
+			"group": "transport",
+			"label": "record",
+			"aliases": ["rec"],
+			"token": "record",
+			"inputs": ["press"],
+			"legend": { "printed": "solid red dot", "glyph": "record", "shift": "undo (one level)" },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 0, "row": 4, "cols": 1, "rows": 1 },
+				"rect": { "x": 4.41, "y": 66.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 12.16, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend-red" },
+			"led": null,
+			"midi": {
+				"remoteKey": 50,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 55, "reportsHold": true }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "controller mode reports true holds (127 press / 0 release)"
+			},
+			"guide": "layout#transport-controls",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "whether the red dot is an LED or red print is unknown (owner photo)"
+		},
+		{
+			"id": "key.play",
+			"kind": "key",
+			"group": "transport",
+			"label": "play",
+			"aliases": ["start"],
+			"token": "play",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "play triangle",
+				"glyph": "play",
+				"shift": "queue the next scene (then an accidental)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 1, "row": 4, "cols": 1, "rows": 1 },
+				"rect": { "x": 19.91, "y": 66.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 27.66, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 51,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 56, "reportsHold": true }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "pressed while playing restarts from the start"
+			},
+			"guide": "layout#transport-controls",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "key.stop",
+			"kind": "key",
+			"group": "transport",
+			"label": "stop",
+			"aliases": [],
+			"token": "stop",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "square filled with diagonal hatching",
+				"glyph": "stop",
+				"shift": null
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 2, "row": 4, "cols": 1, "rows": 1 },
+				"rect": { "x": 35.41, "y": 66.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 43.16, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 52,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 57, "reportsHold": true }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "pressed twice halts all notes and sound"
+			},
+			"guide": "layout#transport-controls",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "key.minus",
+			"kind": "key",
+			"group": "transport",
+			"label": "minus",
+			"aliases": ["-", "octave down", "left"],
+			"token": "[-]",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "dash",
+				"glyph": "minus",
+				"shift": "sequence octave (synth) or semitone (drum) down · cue scene (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 0, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 4.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 12.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 53,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 58, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#transport-controls",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "key.plus",
+			"kind": "key",
+			"group": "transport",
+			"label": "plus",
+			"aliases": ["+", "octave up", "right"],
+			"token": "[+]",
+			"inputs": ["press"],
+			"legend": {
+				"printed": "plus sign",
+				"glyph": "plus",
+				"shift": "sequence octave (synth) or semitone (drum) up · cue scene (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 1, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 19.91, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 27.66, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 54,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 59, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"guide": "layout#transport-controls",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "key.shift",
+			"kind": "key",
+			"group": "transport",
+			"label": "shift",
+			"aliases": [],
+			"token": "shift",
+			"inputs": ["press"],
+			"legend": { "printed": "the word \"shift\"", "glyph": "text-shift", "shift": null },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 2, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 35.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 43.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": null,
+			"midi": {
+				"remoteKey": 55,
+				"controllerMode": [
+					{ "input": "press", "message": "cc", "number": 60, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "modifier: a remote press must always be released"
+			},
+			"guide": "layout#transport-controls",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.f3",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural F3",
+			"aliases": ["key F3", "natural 1", "pulse key"],
+			"token": "key F3",
+			"index": 1,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: four dots",
+				"glyph": "sc-pulse",
+				"shift": "step component \"pulse\" (shift + step first) · song 1 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 3, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 50.91, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 58.66, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 26,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 53, "reportsHold": true }
+				],
+				"note": 53,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 53,
+				"name": "F3",
+				"type": "natural",
+				"number": 1,
+				"stepComponent": "pulse"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.fs3",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 1 (F#3)",
+			"aliases": ["key F#3", "accidental 1", "number 1"],
+			"token": "key F#3",
+			"index": 2,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 1 (\"num\" is printed on the tile, top left)",
+				"glyph": "digit-1",
+				"shift": "scene 1 (arrange) · step-component value 1"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 3, "row": 4, "cols": 1.5, "rows": 1 },
+				"rect": { "x": 50.91, "y": 66.39, "w": 23.25, "h": 15.5 },
+				"center": { "x": 66.41, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 27,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 54, "reportsHold": true }
+				],
+				"note": 54,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 54, "name": "F#3", "type": "accidental", "number": 1 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.g3",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural G3",
+			"aliases": ["key G3", "natural 2", "pulse hold key"],
+			"token": "key G3",
+			"index": 3,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: open hand",
+				"glyph": "sc-hold",
+				"shift": "step component \"pulse hold\" (shift + step first) · song 2 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 4, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 66.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 74.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 28,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 55, "reportsHold": true }
+				],
+				"note": 55,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 55,
+				"name": "G3",
+				"type": "natural",
+				"number": 2,
+				"stepComponent": "pulse hold"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.gs3",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 2 (G#3)",
+			"aliases": ["key G#3", "accidental 2", "number 2"],
+			"token": "key G#3",
+			"index": 4,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 2",
+				"glyph": "digit-2",
+				"shift": "scene 2 (arrange) · step-component value 2"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 4.5, "row": 4, "cols": 1, "rows": 1 },
+				"rect": { "x": 74.16, "y": 66.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 81.91, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 29,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 56, "reportsHold": true }
+				],
+				"note": 56,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 56, "name": "G#3", "type": "accidental", "number": 2 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.a3",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural A3",
+			"aliases": ["key A3", "natural 3", "multiply key"],
+			"token": "key A3",
+			"index": 5,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: division sign",
+				"glyph": "sc-multiply",
+				"shift": "step component \"multiply\" (shift + step first) · song 3 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 5, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 81.91, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 89.66, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 30,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 57, "reportsHold": true }
+				],
+				"note": 57,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 57,
+				"name": "A3",
+				"type": "natural",
+				"number": 3,
+				"stepComponent": "multiply"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.as3",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 3 (A#3)",
+			"aliases": ["key A#3", "accidental 3", "number 3"],
+			"token": "key A#3",
+			"index": 6,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 3",
+				"glyph": "digit-3",
+				"shift": "scene 3 (arrange) · step-component value 3"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 5.5, "row": 4, "cols": 1.5, "rows": 1 },
+				"rect": { "x": 89.66, "y": 66.39, "w": 23.25, "h": 15.5 },
+				"center": { "x": 97.41, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 31,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 58, "reportsHold": true }
+				],
+				"note": 58,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 58, "name": "A#3", "type": "accidental", "number": 3 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.b3",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural B3",
+			"aliases": ["key B3", "natural 4", "velocity key"],
+			"token": "key B3",
+			"index": 7,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: rising wedge",
+				"glyph": "sc-velocity",
+				"shift": "step component \"velocity\" (shift + step first) · song 4 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 6, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 97.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 105.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 32,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 59, "reportsHold": true }
+				],
+				"note": 59,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 59,
+				"name": "B3",
+				"type": "natural",
+				"number": 4,
+				"stepComponent": "velocity"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.c4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural C4",
+			"aliases": ["key C4", "natural 5", "ramp up key"],
+			"token": "key C4",
+			"index": 8,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: stairs going up",
+				"glyph": "sc-ramp-up",
+				"shift": "step component \"ramp up\" (shift + step first) · song 5 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 7, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 112.91, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 120.66, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 33,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 60, "reportsHold": true }
+				],
+				"note": 60,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 60,
+				"name": "C4",
+				"type": "natural",
+				"number": 5,
+				"stepComponent": "ramp up"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.cs4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 4 (C#4)",
+			"aliases": ["key C#4", "accidental 4", "number 4"],
+			"token": "key C#4",
+			"index": 9,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 4",
+				"glyph": "digit-4",
+				"shift": "scene 4 (arrange) · step-component value 4"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 7, "row": 4, "cols": 1.5, "rows": 1 },
+				"rect": { "x": 112.91, "y": 66.39, "w": 23.25, "h": 15.5 },
+				"center": { "x": 128.41, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 34,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 61, "reportsHold": true }
+				],
+				"note": 61,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 61, "name": "C#4", "type": "accidental", "number": 4 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.d4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural D4",
+			"aliases": ["key D4", "natural 6", "ramp down key"],
+			"token": "key D4",
+			"index": 10,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: stairs going down",
+				"glyph": "sc-ramp-down",
+				"shift": "step component \"ramp down\" (shift + step first) · song 6 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 8, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 128.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 136.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 35,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 62, "reportsHold": true }
+				],
+				"note": 62,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 62,
+				"name": "D4",
+				"type": "natural",
+				"number": 6,
+				"stepComponent": "ramp down"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.ds4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 5 (D#4)",
+			"aliases": ["key D#4", "accidental 5", "number 5"],
+			"token": "key D#4",
+			"index": 11,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 5",
+				"glyph": "digit-5",
+				"shift": "scene 5 (arrange) · step-component value 5"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 8.5, "row": 4, "cols": 1.5, "rows": 1 },
+				"rect": { "x": 136.16, "y": 66.39, "w": 23.25, "h": 15.5 },
+				"center": { "x": 143.91, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 36,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 63, "reportsHold": true }
+				],
+				"note": 63,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 63, "name": "D#4", "type": "accidental", "number": 5 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.e4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural E4",
+			"aliases": ["key E4", "natural 7", "random key"],
+			"token": "key E4",
+			"index": 12,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: italic letters \"rnd\"",
+				"glyph": "sc-random",
+				"shift": "step component \"random\" (shift + step first) · song 7 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 9, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 143.91, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 151.66, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 37,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 64, "reportsHold": true }
+				],
+				"note": 64,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 64,
+				"name": "E4",
+				"type": "natural",
+				"number": 7,
+				"stepComponent": "random"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.f4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural F4",
+			"aliases": ["key F4", "natural 8", "portamento key"],
+			"token": "key F4",
+			"index": 13,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: two notes joined by a glide line",
+				"glyph": "sc-portamento",
+				"shift": "step component \"portamento\" (shift + step first) · song 8 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 10, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 159.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 167.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 38,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 65, "reportsHold": true }
+				],
+				"note": 65,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 65,
+				"name": "F4",
+				"type": "natural",
+				"number": 8,
+				"stepComponent": "portamento"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.fs4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 6 (F#4)",
+			"aliases": ["key F#4", "accidental 6", "number 6"],
+			"token": "key F#4",
+			"index": 14,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 6",
+				"glyph": "digit-6",
+				"shift": "scene 6 (arrange) · step-component value 6"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 10, "row": 4, "cols": 1.5, "rows": 1 },
+				"rect": { "x": 159.41, "y": 66.39, "w": 23.25, "h": 15.5 },
+				"center": { "x": 174.91, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 39,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 66, "reportsHold": true }
+				],
+				"note": 66,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 66, "name": "F#4", "type": "accidental", "number": 6 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.g4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural G4",
+			"aliases": ["key G4", "natural 9", "bend key"],
+			"token": "key G4",
+			"index": 15,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: twin curved fins",
+				"glyph": "sc-bend",
+				"shift": "step component \"bend\" (shift + step first) · song 9 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 11, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 174.91, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 182.66, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 40,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 67, "reportsHold": true }
+				],
+				"note": 67,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 67,
+				"name": "G4",
+				"type": "natural",
+				"number": 9,
+				"stepComponent": "bend"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.gs4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 7 (G#4)",
+			"aliases": ["key G#4", "accidental 7", "number 7"],
+			"token": "key G#4",
+			"index": 16,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 7",
+				"glyph": "digit-7",
+				"shift": "scene 7 (arrange) · step-component value 7"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 11.5, "row": 4, "cols": 1, "rows": 1 },
+				"rect": { "x": 182.66, "y": 66.39, "w": 15.5, "h": 15.5 },
+				"center": { "x": 190.41, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 41,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 68, "reportsHold": true }
+				],
+				"note": 68,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 68, "name": "G#4", "type": "accidental", "number": 7 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.a4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural A4",
+			"aliases": ["key A4", "natural 10", "tonality key"],
+			"token": "key A4",
+			"index": 17,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: four-petal fan",
+				"glyph": "sc-tonality",
+				"shift": "step component \"tonality\" (shift + step first) · song 10 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 12, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 190.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 198.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 42,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 69, "reportsHold": true }
+				],
+				"note": 69,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 69,
+				"name": "A4",
+				"type": "natural",
+				"number": 10,
+				"stepComponent": "tonality"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.as4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 8 (A#4)",
+			"aliases": ["key A#4", "accidental 8", "number 8"],
+			"token": "key A#4",
+			"index": 18,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 8",
+				"glyph": "digit-8",
+				"shift": "scene 8 (arrange) · step-component value 8"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 12.5, "row": 4, "cols": 1.5, "rows": 1 },
+				"rect": { "x": 198.16, "y": 66.39, "w": 23.25, "h": 15.5 },
+				"center": { "x": 205.91, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 43,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 70, "reportsHold": true }
+				],
+				"note": 70,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 70, "name": "A#4", "type": "accidental", "number": 8 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.b4",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural B4",
+			"aliases": ["key B4", "natural 11", "jump key"],
+			"token": "key B4",
+			"index": 19,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: arrow pointing at a dot",
+				"glyph": "sc-jump",
+				"shift": "step component \"jump\" (shift + step first) · song 11 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 13, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 205.91, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 213.66, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 44,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 71, "reportsHold": true }
+				],
+				"note": 71,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 71,
+				"name": "B4",
+				"type": "natural",
+				"number": 11,
+				"stepComponent": "jump"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.c5",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural C5",
+			"aliases": ["key C5", "natural 12", "skip parameter lock key"],
+			"token": "key C5",
+			"index": 20,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: eight-spoke wheel",
+				"glyph": "sc-skip-parameter",
+				"shift": "step component \"skip parameter lock\" (shift + step first) · song 12 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 14, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 221.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 229.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 45,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 72, "reportsHold": true }
+				],
+				"note": 72,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 72,
+				"name": "C5",
+				"type": "natural",
+				"number": 12,
+				"stepComponent": "skip parameter lock"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.cs5",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 9 (C#5)",
+			"aliases": ["key C#5", "accidental 9", "number 9"],
+			"token": "key C#5",
+			"index": 21,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 9",
+				"glyph": "digit-9",
+				"shift": "scene 9 (arrange) · step-component value 9"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 14, "row": 4, "cols": 1.5, "rows": 1 },
+				"rect": { "x": 221.41, "y": 66.39, "w": 23.25, "h": 15.5 },
+				"center": { "x": 236.91, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 46,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 73, "reportsHold": true }
+				],
+				"note": 73,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 73, "name": "C#5", "type": "accidental", "number": 9 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.d5",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural D5",
+			"aliases": ["key D5", "natural 13", "skip step component key"],
+			"token": "key D5",
+			"index": 22,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: ring of radial wedges",
+				"glyph": "sc-skip-component",
+				"shift": "step component \"skip step component\" (shift + step first) · song 13 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 15, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 236.91, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 244.66, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 47,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 74, "reportsHold": true }
+				],
+				"note": 74,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 74,
+				"name": "D5",
+				"type": "natural",
+				"number": 13,
+				"stepComponent": "skip step component"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "keyboard.ds5",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "accidental 0 (D#5)",
+			"aliases": ["key D#5", "accidental 0", "number 0"],
+			"token": "key D#5",
+			"index": 23,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "digit 0",
+				"glyph": "digit-0",
+				"shift": "scenes 10-99: press, then two more accidentals (arrange) · \"random\" value for step components"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 15.5, "row": 4, "cols": 1.5, "rows": 1 },
+				"rect": { "x": 244.66, "y": 66.39, "w": 23.25, "h": 15.5 },
+				"center": { "x": 252.41, "y": 74.14 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 48,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 75, "reportsHold": true }
+				],
+				"note": 75,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": { "note": 75, "name": "D#5", "type": "accidental", "number": 0 },
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "TE-ARR", "HW-NOTE"],
+			"notes": "the cap sits on the boundary between the two naturals below it, so it is off-centre in its tile"
+		},
+		{
+			"id": "keyboard.e5",
+			"kind": "key",
+			"group": "keyboard",
+			"label": "natural E5",
+			"aliases": ["key E5", "natural 14", "skip trigger key"],
+			"token": "key E5",
+			"index": 24,
+			"inputs": ["press"],
+			"legend": {
+				"printed": "step-component icon: sun: disc with rays",
+				"glyph": "sc-skip-trigger",
+				"shift": "step component \"skip trigger\" (shift + step first) · song 14 (song mode)"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 16, "row": 5, "cols": 1, "rows": 1 },
+				"rect": { "x": 252.41, "y": 81.89, "w": 15.5, "h": 15.5 },
+				"center": { "x": 260.16, "y": 89.64 },
+				"shape": { "type": "keycap", "diameter": 9.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "tile": "tile", "cap": "keycap", "legend": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": true,
+				"confidence": "derived",
+				"source": ["TE-SEQ", "HW-NOTE"],
+				"notes": "keys light when played and show the notes of a held step; colour assumed white, red/dim unverified (owner photos, see docs/research/50-hardware-ui.md section 8)"
+			},
+			"midi": {
+				"remoteKey": 49,
+				"controllerMode": [
+					{ "input": "press", "message": "note", "number": 76, "reportsHold": true }
+				],
+				"note": 76,
+				"confidence": "community-verified",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"]
+			},
+			"keyboard": {
+				"note": 76,
+				"name": "E5",
+				"type": "natural",
+				"number": 14,
+				"stepComponent": "skip trigger"
+			},
+			"guide": "layout#keyboard",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-STEPS", "HW-NOTE"]
+		},
+		{
+			"id": "encoder.1",
+			"kind": "encoder",
+			"group": "encoder",
+			"label": "dark gray encoder",
+			"aliases": ["E1", "encoder 1", "dark gray knob", "dark grey encoder", "dark knob"],
+			"token": "E1",
+			"index": 1,
+			"inputs": ["turn", "click"],
+			"legend": {
+				"printed": null,
+				"glyph": null,
+				"shift": "turn with shift held = the page's shift-layer parameter"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 8, "row": 0, "cols": 2, "rows": 2 },
+				"rect": { "x": 128.41, "y": 4.39, "w": 31, "h": 31 },
+				"center": { "x": 143.91, "y": 19.89 },
+				"shape": {
+					"type": "encoder",
+					"dishDiameter": 17,
+					"bodyDiameter": 10,
+					"topDiameter": 8.1,
+					"capDiameter": 6.5
+				},
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE", "TE-SIDE"]
+			},
+			"colors": {
+				"dish": "encoder-dish",
+				"body": "knob-body",
+				"cap": "encoder-cap-dark",
+				"screenDot": "screen-encoder-dark"
+			},
+			"led": null,
+			"midi": {
+				"remoteKey": 10,
+				"controllerMode": [
+					{ "input": "turn", "message": "cc", "number": 1, "reportsHold": false },
+					{ "input": "click", "message": "cc", "number": 15, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "conflicting",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "controller-mode CCs are community-verified (bench census). remoteKey presses the encoder (click); no message can turn an encoder remotely. Click indices 10-13 follow from the controller-mode offset, but a 1.1.4 sweep saw no effect (context-dependent), so the remote click is disputed"
+			},
+			"guide": "layout#encoders",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "endless, detented, push to click; a tall knurled knob with a coloured cap rising from a round dish. Hold click + turn = fine adjustment on some pages"
+		},
+		{
+			"id": "encoder.2",
+			"kind": "encoder",
+			"group": "encoder",
+			"label": "mid gray encoder",
+			"aliases": ["E2", "encoder 2", "mid gray knob", "mid grey encoder", "mid knob"],
+			"token": "E2",
+			"index": 2,
+			"inputs": ["turn", "click"],
+			"legend": {
+				"printed": null,
+				"glyph": null,
+				"shift": "turn with shift held = the page's shift-layer parameter"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 10, "row": 0, "cols": 2, "rows": 2 },
+				"rect": { "x": 159.41, "y": 4.39, "w": 31, "h": 31 },
+				"center": { "x": 174.91, "y": 19.89 },
+				"shape": {
+					"type": "encoder",
+					"dishDiameter": 17,
+					"bodyDiameter": 10,
+					"topDiameter": 8.1,
+					"capDiameter": 6.5
+				},
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE", "TE-SIDE"]
+			},
+			"colors": {
+				"dish": "encoder-dish",
+				"body": "knob-body",
+				"cap": "encoder-cap-mid",
+				"screenDot": "screen-encoder-mid"
+			},
+			"led": null,
+			"midi": {
+				"remoteKey": 11,
+				"controllerMode": [
+					{ "input": "turn", "message": "cc", "number": 2, "reportsHold": false },
+					{ "input": "click", "message": "cc", "number": 16, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "conflicting",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "controller-mode CCs are community-verified (bench census). remoteKey presses the encoder (click); no message can turn an encoder remotely. Click indices 10-13 follow from the controller-mode offset, but a 1.1.4 sweep saw no effect (context-dependent), so the remote click is disputed"
+			},
+			"guide": "layout#encoders",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "endless, detented, push to click; a tall knurled knob with a coloured cap rising from a round dish. Hold click + turn = fine adjustment on some pages"
+		},
+		{
+			"id": "encoder.3",
+			"kind": "encoder",
+			"group": "encoder",
+			"label": "light gray encoder",
+			"aliases": ["E3", "encoder 3", "light gray knob", "light grey encoder", "light knob"],
+			"token": "E3",
+			"index": 3,
+			"inputs": ["turn", "click"],
+			"legend": {
+				"printed": null,
+				"glyph": null,
+				"shift": "turn with shift held = the page's shift-layer parameter"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 12, "row": 0, "cols": 2, "rows": 2 },
+				"rect": { "x": 190.41, "y": 4.39, "w": 31, "h": 31 },
+				"center": { "x": 205.91, "y": 19.89 },
+				"shape": {
+					"type": "encoder",
+					"dishDiameter": 17,
+					"bodyDiameter": 10,
+					"topDiameter": 8.1,
+					"capDiameter": 6.5
+				},
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE", "TE-SIDE"]
+			},
+			"colors": {
+				"dish": "encoder-dish",
+				"body": "knob-body",
+				"cap": "encoder-cap-light",
+				"screenDot": "screen-encoder-light"
+			},
+			"led": null,
+			"midi": {
+				"remoteKey": 12,
+				"controllerMode": [
+					{ "input": "turn", "message": "cc", "number": 3, "reportsHold": false },
+					{ "input": "click", "message": "cc", "number": 17, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "conflicting",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "controller-mode CCs are community-verified (bench census). remoteKey presses the encoder (click); no message can turn an encoder remotely. Click indices 10-13 follow from the controller-mode offset, but a 1.1.4 sweep saw no effect (context-dependent), so the remote click is disputed"
+			},
+			"guide": "layout#encoders",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "endless, detented, push to click; a tall knurled knob with a coloured cap rising from a round dish. Hold click + turn = fine adjustment on some pages"
+		},
+		{
+			"id": "encoder.4",
+			"kind": "encoder",
+			"group": "encoder",
+			"label": "white encoder",
+			"aliases": ["E4", "encoder 4", "white knob", "white encoder", "white knob"],
+			"token": "E4",
+			"index": 4,
+			"inputs": ["turn", "click"],
+			"legend": {
+				"printed": null,
+				"glyph": null,
+				"shift": "turn with shift held = the page's shift-layer parameter"
+			},
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 14, "row": 0, "cols": 2, "rows": 2 },
+				"rect": { "x": 221.41, "y": 4.39, "w": 31, "h": 31 },
+				"center": { "x": 236.91, "y": 19.89 },
+				"shape": {
+					"type": "encoder",
+					"dishDiameter": 17,
+					"bodyDiameter": 10,
+					"topDiameter": 8.1,
+					"capDiameter": 6.5
+				},
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE", "TE-SIDE"]
+			},
+			"colors": {
+				"dish": "encoder-dish",
+				"body": "knob-body",
+				"cap": "encoder-cap-white",
+				"screenDot": "screen-encoder-white"
+			},
+			"led": null,
+			"midi": {
+				"remoteKey": 13,
+				"controllerMode": [
+					{ "input": "turn", "message": "cc", "number": 4, "reportsHold": false },
+					{ "input": "click", "message": "cc", "number": 18, "reportsHold": false }
+				],
+				"note": null,
+				"confidence": "conflicting",
+				"source": ["REMOTE-KEYS", "CC-MAP", "DECK", "MIDI-NOTE"],
+				"notes": "controller-mode CCs are community-verified (bench census). remoteKey presses the encoder (click); no message can turn an encoder remotely. Click indices 10-13 follow from the controller-mode offset, but a 1.1.4 sweep saw no effect (context-dependent), so the remote click is disputed"
+			},
+			"guide": "layout#encoders",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "HW-NOTE"],
+			"notes": "endless, detented, push to click; a tall knurled knob with a coloured cap rising from a round dish. Hold click + turn = fine adjustment on some pages"
+		},
+		{
+			"id": "knob.volume",
+			"kind": "knob",
+			"group": "volume",
+			"label": "volume",
+			"aliases": ["volume knob", "main volume", "volume pot"],
+			"token": "volume",
+			"inputs": ["rotate"],
+			"legend": { "printed": "pointer dimple on the knob top", "glyph": null, "shift": null },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 2, "row": 0, "cols": 2, "rows": 1 },
+				"rect": { "x": 35.41, "y": 4.39, "w": 31, "h": 15.5 },
+				"center": { "x": 43.3, "y": 12.2 },
+				"shape": { "type": "knob", "outerDiameter": 11, "topDiameter": 7.9, "dimpleDiameter": 1.4 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE", "TE-SIDE"]
+			},
+			"colors": { "tile": "tile", "body": "knob-body" },
+			"led": null,
+			"midi": {
+				"remoteKey": null,
+				"controllerMode": [],
+				"note": null,
+				"confidence": "community-verified",
+				"source": ["DECK", "MIDI-NOTE"],
+				"notes": "hardware volume only; transmits nothing, even in controller mode"
+			},
+			"guide": "layout#volume",
+			"confidence": "official",
+			"source": ["TE-LAYOUT", "TE-HW", "HW-NOTE"],
+			"notes": "absolute analog pot in the left half of a 2 x 1 tile; rotation range about 300 degrees (verify); recalibrate in TE boot"
+		},
+		{
+			"id": "screen.main",
+			"kind": "screen",
+			"group": "display",
+			"label": "display",
+			"aliases": ["screen", "lcd"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 4, "row": 0, "cols": 4, "rows": 2 },
+				"rect": { "x": 66.41, "y": 4.39, "w": 62, "h": 31 },
+				"center": { "x": 97.41, "y": 19.89 },
+				"shape": {
+					"type": "screen",
+					"activeWidth": 55.3,
+					"activeHeight": 25.2,
+					"resolution": { "width": 480, "height": 222 },
+					"cornerRadiusPx": 9
+				},
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE", "TE-PRODUCT"]
+			},
+			"colors": { "bezel": "screen-bezel" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#hardware",
+			"confidence": "official",
+			"source": ["TE-HW", "TE-PRODUCT", "HW-NOTE"],
+			"notes": "IPS TFT flush-mounted under glass; resolution conflicts: 480 x 222 (product page) vs 480 x 220 (guide specs) - we use 222 until the owner counts pixels"
+		},
+		{
+			"id": "speaker.internal",
+			"kind": "speaker",
+			"group": "audio",
+			"label": "internal speaker",
+			"aliases": ["speaker", "speaker grille"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": "speaker-grille", "shift": null },
+			"geometry": {
+				"face": "top",
+				"grid": { "col": 0, "row": 0, "cols": 2, "rows": 2 },
+				"rect": { "x": 4.41, "y": 4.39, "w": 31, "h": 31 },
+				"center": { "x": 19.91, "y": 19.89 },
+				"shape": {
+					"type": "grille",
+					"diameter": 25,
+					"holes": 147,
+					"holeDiameter": 1.2,
+					"pitch": 2,
+					"rowCounts": [5, 11, 11, 13, 13, 13, 13, 13, 13, 13, 11, 11, 7]
+				},
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "HW-NOTE"]
+			},
+			"colors": { "grille": "body", "holes": "tile-gap" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#speaker-volume-pitchbend",
+			"confidence": "official",
+			"source": ["TE-HW", "HW-NOTE"],
+			"notes": "hole row counts need verification against a photo"
+		},
+		{
+			"id": "mic.internal",
+			"kind": "mic",
+			"group": "audio",
+			"label": "built-in microphone",
+			"aliases": ["mic", "microphone"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "top",
+				"rect": { "x": 276, "y": 11.6, "w": 1.2, "h": 1.2 },
+				"center": { "x": 276.6, "y": 12.2 },
+				"shape": { "type": "hole", "diameter": 1.2 },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "HW-NOTE"]
+			},
+			"colors": { "hole": "tile-gap" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#inputs-outputs",
+			"confidence": "official",
+			"source": ["TE-HW", "HW-NOTE"]
+		},
+		{
+			"id": "meter.level",
+			"kind": "meter",
+			"group": "indicator",
+			"label": "level meter",
+			"aliases": ["meter", "battery meter", "vu meter"],
+			"token": null,
+			"inputs": [],
+			"legend": {
+				"printed": "printed horizontal hairline crossing the LED column (the \"+\" cross)",
+				"glyph": "level-meter",
+				"shift": null
+			},
+			"geometry": {
+				"face": "top",
+				"rect": { "x": 276.1, "y": 34.5, "w": 1.2, "h": 17.5 },
+				"center": { "x": 276.7, "y": 43.25 },
+				"shape": { "type": "meter", "segments": null },
+				"confidence": "measured",
+				"source": ["TE-LAYOUT-SVG", "TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "lit": "led-white", "hairline": "legend" },
+			"led": {
+				"states": ["off", "white"],
+				"blinks": false,
+				"confidence": "derived",
+				"source": ["TE-HW", "HW-NOTE"],
+				"notes": "segment count (about 16-18) and colour unverified; shows battery while com is held"
+			},
+			"midi": null,
+			"guide": "hardware-overview#inputs-outputs",
+			"confidence": "official",
+			"source": ["TE-HW", "SOS", "HW-NOTE"],
+			"notes": "column width is a placeholder until measured"
+		},
+		{
+			"id": "strip.pitchbend",
+			"kind": "pitchbend",
+			"group": "pitchbend",
+			"label": "pitchbend",
+			"aliases": ["pitch bend", "bend strip", "pitch-bend pad"],
+			"token": "pitchbend",
+			"inputs": ["pressure"],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "front",
+				"rect": { "x": 20.1, "y": 1, "w": 31, "h": 7.5 },
+				"center": { "x": 35.6, "y": 4.75 },
+				"shape": { "type": "pill", "width": 31, "height": 7.5 },
+				"confidence": "measured",
+				"source": ["TE-SIDE", "HW-NOTE"]
+			},
+			"colors": { "pad": "keycap" },
+			"led": null,
+			"midi": {
+				"remoteKey": null,
+				"controllerMode": [],
+				"note": null,
+				"confidence": "community",
+				"source": ["CC-MAP", "MIDI-NOTE"],
+				"notes": "transmits pitch bend continuously in normal mode (coalesce it); controller-mode behaviour unknown"
+			},
+			"guide": "hardware-overview#speaker-volume-pitchbend",
+			"confidence": "official",
+			"source": ["TE-HW", "MEHATRONIKA", "HW-NOTE"],
+			"notes": "pressure-sensitive rubber pill on the front edge under the plus and shift keys: left half bends down, right half bends up; springs back; calibrate in COM system settings. Vertical position on the front face is estimated"
+		},
+		{
+			"id": "port.lineOut",
+			"kind": "port",
+			"group": "port",
+			"label": "audio output",
+			"aliases": ["line out", "headphone out", "audio out"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "right",
+				"rect": { "x": 17, "y": 1.6, "w": 6, "h": 6 },
+				"center": { "x": 20, "y": 4.6 },
+				"shape": { "type": "connector", "standard": "3.5 mm stereo jack (headset mic supported)" },
+				"confidence": "measured",
+				"source": ["TE-SIDE", "TE-PORTS", "HW-NOTE"]
+			},
+			"colors": { "opening": "tile-gap" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#inputs-outputs",
+			"confidence": "official",
+			"source": ["TE-HW", "TE-PRODUCT", "HW-NOTE"],
+			"notes": "centre measured on the side render (jack pitch about 10.3 mm); opening size is a placeholder"
+		},
+		{
+			"id": "port.multiOut",
+			"kind": "port",
+			"group": "port",
+			"label": "multi out",
+			"aliases": ["multi-out", "midi/sync out", "cv out", "sync out"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "right",
+				"rect": { "x": 27.4, "y": 1.6, "w": 6, "h": 6 },
+				"center": { "x": 30.4, "y": 4.6 },
+				"shape": {
+					"type": "connector",
+					"standard": "3.5 mm jack: midi, cv + gate, sync8/16/24 or audio"
+				},
+				"confidence": "measured",
+				"source": ["TE-SIDE", "TE-PORTS", "HW-NOTE"]
+			},
+			"colors": { "opening": "tile-gap" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#inputs-outputs",
+			"confidence": "official",
+			"source": ["TE-HW", "TE-PRODUCT", "HW-NOTE"],
+			"notes": "centre measured on the side render (jack pitch about 10.3 mm); opening size is a placeholder"
+		},
+		{
+			"id": "port.midiIn",
+			"kind": "port",
+			"group": "port",
+			"label": "midi in",
+			"aliases": ["trs midi in", "MIDI in"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "right",
+				"rect": { "x": 37.6, "y": 1.6, "w": 6, "h": 6 },
+				"center": { "x": 40.6, "y": 4.6 },
+				"shape": { "type": "connector", "standard": "3.5 mm TRS MIDI jack" },
+				"confidence": "measured",
+				"source": ["TE-SIDE", "TE-PORTS", "HW-NOTE"]
+			},
+			"colors": { "opening": "tile-gap" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#inputs-outputs",
+			"confidence": "official",
+			"source": ["TE-HW", "TE-PRODUCT", "HW-NOTE"],
+			"notes": "centre measured on the side render (jack pitch about 10.3 mm); opening size is a placeholder"
+		},
+		{
+			"id": "port.lineIn",
+			"kind": "port",
+			"group": "port",
+			"label": "audio input",
+			"aliases": ["line in", "audio in"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "right",
+				"rect": { "x": 48, "y": 1.6, "w": 6, "h": 6 },
+				"center": { "x": 51, "y": 4.6 },
+				"shape": { "type": "connector", "standard": "3.5 mm stereo jack" },
+				"confidence": "measured",
+				"source": ["TE-SIDE", "TE-PORTS", "HW-NOTE"]
+			},
+			"colors": { "opening": "tile-gap" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#inputs-outputs",
+			"confidence": "official",
+			"source": ["TE-HW", "TE-PRODUCT", "HW-NOTE"],
+			"notes": "centre measured on the side render (jack pitch about 10.3 mm); opening size is a placeholder"
+		},
+		{
+			"id": "port.usb",
+			"kind": "port",
+			"group": "port",
+			"label": "usb-c",
+			"aliases": ["USB", "USB-C port", "usb type-c"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "right",
+				"rect": { "x": 60.7, "y": 3, "w": 8.6, "h": 3.2 },
+				"center": { "x": 65, "y": 4.6 },
+				"shape": { "type": "connector", "standard": "USB-C: audio/MIDI host and device, charging" },
+				"confidence": "measured",
+				"source": ["TE-SIDE", "TE-PORTS", "HW-NOTE"]
+			},
+			"colors": { "opening": "tile-gap" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#inputs-outputs",
+			"confidence": "official",
+			"source": ["TE-HW", "TE-PRODUCT", "HW-NOTE"],
+			"notes": "centre measured on the side render; opening height is a placeholder"
+		},
+		{
+			"id": "led.charge",
+			"kind": "led",
+			"group": "indicator",
+			"label": "charge LED",
+			"aliases": ["charging led", "charge light"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "right",
+				"rect": { "x": 73.4, "y": 4, "w": 1.2, "h": 1.2 },
+				"center": { "x": 74, "y": 4.6 },
+				"shape": { "type": "hole", "diameter": 1.2 },
+				"confidence": "measured",
+				"source": ["TE-PORTS", "HW-NOTE"]
+			},
+			"colors": { "lit": "led-green" },
+			"led": {
+				"states": ["off", "green"],
+				"blinks": false,
+				"confidence": "measured",
+				"source": ["TE-PORTS", "HW-NOTE"],
+				"notes": "charging state; size and behaviour unverified"
+			},
+			"midi": null,
+			"guide": "hardware-overview#power-on-charging",
+			"confidence": "measured",
+			"source": ["TE-PORTS", "HW-NOTE"]
+		},
+		{
+			"id": "switch.power",
+			"kind": "switch",
+			"group": "power",
+			"label": "power switch",
+			"aliases": ["power", "on/off switch"],
+			"token": "power",
+			"inputs": ["toggle"],
+			"legend": { "printed": null, "glyph": null, "shift": null },
+			"geometry": {
+				"face": "right",
+				"rect": { "x": 77.05, "y": 3.1, "w": 9.9, "h": 3 },
+				"center": { "x": 82, "y": 4.6 },
+				"shape": { "type": "slider", "length": 9.9, "proud": 3 },
+				"confidence": "measured",
+				"source": ["TE-SIDE", "TE-PORTS", "HW-NOTE"]
+			},
+			"colors": { "tab": "power-switch" },
+			"led": null,
+			"midi": null,
+			"guide": "hardware-overview#power-on-charging",
+			"confidence": "official",
+			"source": ["TE-HW", "TE-STORE", "HW-NOTE"],
+			"notes": "light-grey slider tab on the right edge; flip up = on. The 3 mm tab is why the official length is 288 mm. Height on the face is a placeholder"
+		},
+		{
+			"id": "marking.tick",
+			"kind": "marking",
+			"group": "marking",
+			"label": "front edge tick",
+			"aliases": ["white tick"],
+			"token": null,
+			"inputs": [],
+			"legend": { "printed": "small white tick on the front edge", "glyph": "tick", "shift": null },
+			"geometry": {
+				"face": "front",
+				"rect": { "x": 143.4, "y": 0, "w": 1.2, "h": 2 },
+				"center": { "x": 144, "y": 1 },
+				"shape": { "type": "mark", "width": 1.2 },
+				"confidence": "measured",
+				"source": ["TE-TOPDOWN", "HW-NOTE"]
+			},
+			"colors": { "mark": "legend" },
+			"led": null,
+			"midi": null,
+			"guide": null,
+			"confidence": "measured",
+			"source": ["TE-TOPDOWN", "HW-NOTE"],
+			"notes": "in line with the dark gray encoder axis and accidental 5, visible from above and below; purpose unknown; height is a placeholder"
+		}
+	]
+}
