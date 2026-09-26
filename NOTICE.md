@@ -15,6 +15,14 @@ trademarks of their owner and are used here only to describe compatibility.
 Every ported file names its source in a header comment. Projects without a licence (for example
 `jshph/opxy-reactive`, `benjaminr/mcp-koii`) were read for facts only; none of their code is used.
 
+## Replica artwork
+
+The replica's geometry and its key legends and icons are derived from the full-panel line drawing in
+Teenage Engineering's public [OP-XY guide](https://teenage.engineering/guides/op-xy/layout)
+(`scripts/build-replica-art.mjs` → `src/lib/replica/art.generated.ts`), with the OP–XY wordmarks
+removed. Used with the maintainer's understanding that TE supports this project; the artwork is kept
+swappable ([DECISIONS D9](docs/DECISIONS.md)).
+
 ## Fonts
 
 | Font                                                                   | Licence                   | Use                               |
