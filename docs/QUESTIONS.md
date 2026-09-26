@@ -14,11 +14,11 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    photo, macro shots of LEDs/meter, screens that the guide doesn't illustrate, a few caliper
    measurements). Your photos could be committed if you agree.
 4. **App name.** Keep "OP-XY Agent" or pick something else?
-5. **Hosting.** GitHub Pages from `main` (like MIDI Lab), or somewhere else?
-6. **Licence.** MIT for this repo (simple, compatible with the MIT code we port)? MIDI Lab has no
-   licence file; porting its code here means relicensing your own code under this repo's licence.
 
 ## Answered
+
+- 2026-09-26 — **Licence?** MIT (MIDI Lab code ported here is relicensed under MIT by its owner). → D7.
+- 2026-09-26 — **Hosting?** GitHub Pages from `main` via Actions → https://neovand.github.io/op-xy-agent/. → D8.
 
 - 2026-09-26 — **Harness?** Own harness on `@anthropic-ai/sdk`, Deep Agents–shaped. → D4.
 - 2026-09-26 — **Replica rendering?** SVG only (no 3D). → D5.

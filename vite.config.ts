@@ -13,7 +13,10 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter(),
+			// fallback: unknown paths get the SPA shell (GitHub Pages serves 404.html)
+			adapter: adapter({ fallback: '404.html' }),
+			// GitHub Pages serves the site under /<repo>; CI sets BASE_PATH, local dev leaves it empty
+			paths: { base: (process.env.BASE_PATH ?? '') as '' | `/${string}` },
 			alias: { $knowledge: 'knowledge' }
 		})
 	],

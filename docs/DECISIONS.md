@@ -63,3 +63,17 @@ consequences. Superseded entries stay, marked as such.
 - **Decision (owner):** draw the device faithfully but without Teenage Engineering or OP-XY wordmarks
   and logos; the app refers to the device in plain text ("for the OP-XY"). Revisit if TE says yes.
 - **Consequences:** no TE logos, photos or fonts ship in the app; legends are drawn by us.
+
+## D7 — 2026-09-26 — MIT licence
+
+- **Decision (owner):** the project is MIT-licensed (`LICENSE`). Code ported from the owner's MIDI Lab
+  is relicensed under MIT by its owner. Third-party sources and attributions live in `NOTICE.md`;
+  every ported file names its source in a header comment.
+
+## D8 — 2026-09-26 — Hosting on GitHub Pages
+
+- **Decision (owner):** deploy the static build to GitHub Pages from `main` via GitHub Actions
+  (`.github/workflows/ci.yml`: check → build with `BASE_PATH=/op-xy-agent` → deploy), live at
+  https://neovand.github.io/op-xy-agent/.
+- **Consequences:** internal links use `resolve()` / `asset()` from `$app/paths`; the adapter writes a
+  `404.html` SPA fallback; deploys only happen when type check, lint, unit tests and build pass.
