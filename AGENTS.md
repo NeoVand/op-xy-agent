@@ -7,6 +7,7 @@ OpenAI realtime voice second).
 
 **After any context reset, re-read in order:** `docs/VISION.md` (north star) → `docs/PLAN.md`
 (roadmap + current phase) → `docs/research/INDEX.md` (what we know and where) → `docs/QUESTIONS.md`.
+Before writing code, read `docs/ARCHITECTURE.md` (layers, safety choke point, conventions).
 
 Where things live:
 

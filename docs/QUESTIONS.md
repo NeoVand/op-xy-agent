@@ -15,6 +15,8 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    measurements). Your photos could be committed if you agree.
 4. **App name.** Keep "OP-XY Agent" or pick something else?
 5. **Hosting.** GitHub Pages from `main` (like MIDI Lab), or somewhere else?
+6. **Licence.** MIT for this repo (simple, compatible with the MIT code we port)? MIDI Lab has no
+   licence file; porting its code here means relicensing your own code under this repo's licence.
 
 ## Answered
 
