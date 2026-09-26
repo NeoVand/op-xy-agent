@@ -94,3 +94,20 @@ consequences. Superseded entries stay, marked as such.
 - **Not reused:** `mitchivin/te-opxy` (Three.js replica) has no licence and its author did not publish
   the source, so its code and models stay reference-only unless its author grants permission; the
   replica is SVG-only anyway (D5).
+
+## D10 — 2026-09-26 — Our own OP-XY UI simulator instead of firmware emulation
+
+- **Context:** the owner asked whether we could decompile the firmware and run a full simulator so the
+  replica's screen shows exactly what the device shows. All public firmware is AES-encrypted with a
+  device-held key and a signature trailer (`research/60-firmware.md`); recovering the key would need a
+  hardware attack on the owner's unit, and there is no usable emulator for the dual-Blackfin + DSP
+  platform anyway.
+- **Decision:** build our own behavioural simulator of the OP-XY's user interface (modes, pages, shift
+  layers, parameter values, sequencer basics) plus a screen renderer that matches the real display,
+  derived from TE's public guide screen illustrations (their outlined text also gives us the screen
+  font; covered by D9), the manual, and checks against the owner's device. `mitchivin/te-opxy` stays
+  reference-only.
+- **Consequences:** the replica becomes a true virtual OP-XY for learning and for the agent to rehearse
+  procedures. When a device is connected the simulator syncs what the device reports (tempo, play
+  state, what the app itself sent); it cannot mirror the real screen or encoder moves, which the
+  OP-XY does not transmit. New work item "M2.5 screen & UI simulator" (`research/55-screen.md`).

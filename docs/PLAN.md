@@ -107,6 +107,13 @@ encoder, LED and label; screen renderer shell; shift layers; mirrors inbound MID
 transport); drives the device (notes, CC, remote keys if available); keyboard/touch input;
 "animate procedure" API (`animate("shift + M1")`) used by the manual and the agent.
 
+### M2.5 — Screen & UI simulator (D10)
+
+Our own behavioural simulator of the OP-XY interface (modes, pages, shift layers, parameters) and a
+screen renderer matching the real 480 × 222 display, built from TE's guide screen illustrations (and
+the screen font extracted from them), the manual and device checks. Firmware emulation is impossible
+(encrypted). The replica becomes a virtual OP-XY; connected, it syncs tempo/play state/sent-state.
+
 ### M3 — Agent v1: teach + control
 
 - Keys screen (provider detected by key prefix; stored locally; never sent anywhere but the provider).
