@@ -4,12 +4,18 @@
 > Decisions: [`DECISIONS.md`](DECISIONS.md). Questions for the owner: [`QUESTIONS.md`](QUESTIONS.md).
 > Update the **Status** block whenever a milestone moves.
 
-## Status (2026-09-26)
+## Status (2026-09-26, evening)
 
-- **Current phase: M0 research — complete.** Research notes 10–90 are written; the device speaks
-  Web MIDI + TE SysEx (GREET, FILE INIT/LIST) on OS 1.1.33.
-- **Decided:** own harness on `@anthropic-ai/sdk` (D4), SVG-only replica (D5), neutral branding (D6).
-- **Next:** M1 foundations (no device writes) → device spike session with the owner.
+- **M0 research: done.** **M1 foundations: done** — core MIDI/TE-SysEx/OP-XY data (1,042 tests), design
+  system + shell, device layer (Web MIDI, single send choke point, GREET session, mirror, monitor) and
+  `/lab`; verified by the owner on the live site: connect, play/stop, mute work on the real OP-XY.
+- **M2 replica: built** from TE's panel drawing (D9; 0.02 mm fit, all 588 paths), `/replica` dev page.
+  In progress: replica ⇄ device bridge on the home page.
+- **In progress:** M3 conductor agent (Anthropic SDK harness, tools, approvals, undo, chat UI) and M4
+  manual tooling + exemplar units (then a fan-out to write ~170 units).
+- **Device session 1 facts:** CC80 = 2 × BPM (40–220), CC9 level mute, CC102/104/105 work, remote keys
+  CC106/107 dead on 1.1.33, USB audio capture works, MTP (vendor class, PID 0x0021) readable from our own
+  code, `.xy` header bumped on 1.1.33 (`09 14 07 86`).
 
 ## What the research changed
 
