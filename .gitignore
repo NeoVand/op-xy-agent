@@ -32,3 +32,7 @@ test-results
 /research/ui-reference/
 # Verbatim TE manual scrape — kept local until redistribution is cleared (see docs/QUESTIONS.md)
 /knowledge/official/
+
+# Python
+__pycache__/
+*.pyc

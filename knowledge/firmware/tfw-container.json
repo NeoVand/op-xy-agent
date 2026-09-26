@@ -1,0 +1,78 @@
+{
+	"$comment": "Layout of Teenage Engineering .tfw firmware containers as seen in all 22 public OP-XY builds (OS 1.0.9 to 1.1.33) and OP-1 field builds. Derived by us; offsets are file offsets. See docs/research/60-firmware.md. Parser: scripts/firmware-inventory.py.",
+	"fields": [
+		{ "offset": "0x00", "size": 4, "name": "outer_magic", "value": "BA BE CA FE" },
+		{
+			"offset": "0x04",
+			"size": 1,
+			"name": "outer_type",
+			"value": "0x00 (sent to the device as DFU 'firmware_type')"
+		},
+		{
+			"offset": "0x05",
+			"size": 2,
+			"name": "outer_crc",
+			"encoding": "CRC-16/XMODEM (poly 0x1021, init 0, no reflection) over file[0x40:], big-endian"
+		},
+		{
+			"offset": "0x07",
+			"size": 8,
+			"name": "outer_version",
+			"encoding": "4 x u16 BE: major, minor, patch, build (build 0 = omitted)"
+		},
+		{
+			"offset": "0x0F",
+			"size": 4,
+			"name": "outer_sku",
+			"encoding": "u32 BE bitfield: family = bits 14-23, kind = bits 10-13 (0 = 'AS'), member = bits 0-9 -> OP-XY 00 08 40 01 = TE033AS001"
+		},
+		{ "offset": "0x13", "size": 45, "name": "outer_reserved", "value": "zero" },
+		{ "offset": "0x40", "size": 4, "name": "inner_magic", "value": "BE EF CA FE" },
+		{ "offset": "0x44", "size": 1, "name": "inner_type", "value": "0x01 (OP-1 field and OP-XY)" },
+		{
+			"offset": "0x45",
+			"size": 4,
+			"name": "inner_body_size",
+			"encoding": "u32 BE = file length - 0x80"
+		},
+		{
+			"offset": "0x49",
+			"size": 2,
+			"name": "inner_crc",
+			"encoding": "CRC-16/XMODEM over file[0x80:], big-endian"
+		},
+		{ "offset": "0x4B", "size": 8, "name": "inner_version", "encoding": "same as outer_version" },
+		{ "offset": "0x53", "size": 4, "name": "inner_reserved", "value": "zero" },
+		{ "offset": "0x57", "size": 4, "name": "inner_sku", "encoding": "same as outer_sku" },
+		{
+			"offset": "0x84",
+			"size": 1,
+			"name": "key_index",
+			"value": "0x00 on every OP-XY build; OP-1 field <= 1.1.5 had 0xFF (the old OP-Z key per community research), >= 1.1.6 has 0x00"
+		},
+		{ "offset": "0xF0", "size": 16, "name": "iv", "value": "random per build (AES IV)" },
+		{ "offset": "0x100", "size": 4, "name": "plaintext_size", "encoding": "u32 LE" },
+		{
+			"offset": "0x380",
+			"size": "ceil16(plaintext_size)",
+			"name": "ciphertext",
+			"value": "AES, block mode with padding to 16 bytes (CBC most likely); uniform bytes, no plaintext"
+		},
+		{
+			"offset": "0x380 + ceil16(plaintext_size)",
+			"size": 256,
+			"name": "trailer",
+			"value": "opaque, uniform (probably an RSA-2048-sized signature or wrapped key)"
+		}
+	],
+	"all_other_bytes_below_0x380": "zero",
+	"update_paths": {
+		"te_boot_mass_storage": "hold COM while powering on -> TE Boot -> press track 1 -> copy the whole .tfw to the USB disk -> eject",
+		"midi_dfu": "TE update utility sends file[0x40:] (inner header + body) in TE SysEx DFU chunks; see te-sysex.json cmd 3"
+	},
+	"prior_art": [
+		"seajaysec/ep-unity (EP-series .tfw: same outer/inner headers and CRC-16/XMODEM, first identified by Charles Vestal; EP payload is an MCUboot encrypted image, unlike the OP-XY)",
+		"op-forums user _bt (OP-1 field: IV at 0xF0, blob at 0x380, key index at 0x84)",
+		"wmealing (EP-133 .tfw entropy analysis)"
+	]
+}

@@ -1,0 +1,139 @@
+{
+	"$comment": "Teenage Engineering 'TE SysEx' vocabulary as used by TE's own web apps (update utility, EP sample tool), re-derived by us from their public JavaScript on 2026-09-26. OP-XY support per command is UNVERIFIED unless noted. Safety classes are our policy, not TE's. See docs/research/60-firmware.md.",
+	"sources": [
+		"https://teenage.engineering/apps/update (assets/index-C4sb_ae6.js)",
+		"https://teenage.engineering/apps/ep-sample-tool (assets/index-C1wBjhTa.js)",
+		"docs/research/90-device-probe.md (identity reply of the owner's OP-XY)"
+	],
+	"manufacturer_id": [0, 32, 118],
+	"opxy": {
+		"sku": "TE033AS001",
+		"sysex_device_id": 33,
+		"identity_reply_observed": "F0 7E 21 06 02 00 20 76 21 00 01 00 00 00 00 00 F7",
+		"identity_family": 33,
+		"identity_member": 1,
+		"identity_version_bytes": "zero on OS 1.1.33 (use GREET os_version instead)",
+		"listed_in_te_update_utility": true
+	},
+	"identity": {
+		"request": "F0 7E 7F 06 01 F7",
+		"reply_length": 17,
+		"decode": {
+			"device_id": "reply[2] (used as byte 4 of every TE SysEx frame to this device)",
+			"manufacturer": "reply[5..7] == 00 20 76",
+			"family": "reply[8] | reply[9] << 7",
+			"member": "reply[10] | reply[11] << 7",
+			"sku": "'TE' + pad3(family) + 'AS' + pad3(member)"
+		},
+		"updater_retry": "10 tries, 500 ms apart (5 s total) per new MIDI output port"
+	},
+	"frame": {
+		"request": "F0 00 20 76 <device_id> 40 <0x40|0x20|(rid>>7 & 0x1F)> <rid & 0x7F> <cmd> <packed7 payload> F7",
+		"response": "F0 00 20 76 <device_id> 40 <0x20|(rid>>7 & 0x1F)> <rid & 0x7F> <cmd> <status> <packed7 payload> F7",
+		"byte5_protocol_marker": 64,
+		"byte5_debug_log_marker": 51,
+		"debug_log_frame": "F0 00 20 76 <device_id> 33 <ASCII log text> F7 (device firmware log line; EP community: stop all traffic when these appear)",
+		"flags": { "BIT_IS_REQUEST": 64, "BIT_REQUEST_ID_AVAILABLE": 32 },
+		"request_id": "12-bit, per output port; TE starts at random 0..4094 and increments mod 4096",
+		"status_byte": "responses only; sits OUTSIDE the packed7 payload",
+		"unsolicited": "frames without BIT_REQUEST_ID_AVAILABLE are events (e.g. EP FILE events)",
+		"timeouts_ms": { "default": 20000, "dfu_chunk": 500, "dfu_exit": 1000 }
+	},
+	"packed7": {
+		"description": "groups of up to 7 raw bytes -> 1 flag byte + 7 data bytes; flag bit i = high bit of raw byte i (bit 0 = first byte)",
+		"encoded_length": "n + ceil(n / 7)",
+		"example": { "raw": "07 D0 00 2C", "encoded": "02 07 50 00 2C" }
+	},
+	"status": {
+		"0": "ok",
+		"1": "error",
+		"2": "command not found",
+		"3": "bad request",
+		"16-63": "command-specific error",
+		">=64": "command-specific success / in progress (request stays open, timeout re-armed)",
+		"error_payload": "packed7 ASCII reason string"
+	},
+	"commands": [
+		{
+			"cmd": 1,
+			"name": "GREET",
+			"payload": "none",
+			"response": "ASCII 'key:value;key:value;...' with keys chip_id, mode (normal|bootloader|test), os_version, product, serial, sku, sw_version, base_sku",
+			"used_by": "update utility on every device detection",
+			"safety": "read-only (candidate first probe; needs owner approval before first use)",
+			"opxy_support": "expected (OP-XY is a listed update-utility device) but not yet observed by us"
+		},
+		{
+			"cmd": 2,
+			"name": "ECHO",
+			"payload": "arbitrary bytes",
+			"response": "the same bytes",
+			"safety": "read-only link test",
+			"opxy_support": "unknown"
+		},
+		{
+			"cmd": 3,
+			"name": "DFU",
+			"safety": "FORBIDDEN - firmware update / reboot to bootloader. Block at the transport layer.",
+			"subcommands": {
+				"1": "ENTER: [01, 01 (ENTER_MIDI), 00, C8] reboots into TE Boot in MIDI-DFU mode",
+				"2": "BEGIN: [02, version(8, BE16x4), B0 (BEGIN_APP=176), sku(4, BE), size(4, BE = file length - 64), firmware_type(1)]; response bytes 0-1 = device max message size (BE)",
+				"3": "CHUNK: [03, chunk_no % 256, raw bytes of file[64:] ...]; chunk = ceil(max_msg * 7/8) - 12 (default 235)",
+				"4": "PERFORM: [04]; progress replies (status >= 64): data[0] = percent, ASCII '[step]' after it",
+				"5": "EXIT: [05]; reply data[0] * 3 = seconds to wait for reboot (default 60)"
+			},
+			"notes": "If BEGIN is rejected with status 3 (bad request) the updater reboots the unit into TE Boot with ENTER, waits for it to re-appear with mode:bootloader, then retries BEGIN. A BEGIN reply whose first byte is 0x40 is logged as 'performing update in app'."
+		},
+		{
+			"cmd": 5,
+			"name": "FILE",
+			"safety": "LIST/GET/INFO/METADATA_GET are read-only; PUT/DELETE/METADATA_SET/MOVE/PLAYBACK change state (owner approval, backups first)",
+			"opxy_support": "unknown - the OP-XY uses MTP for files; only EP-series use is documented",
+			"subcommands": {
+				"1": "INIT: [01, flags (1 = subscribe to events), max_response_len u32]; response: [?, chunk_size u32]",
+				"2": "PUT: [02, 00, flags, file_id u16, parent_id u16, size u32, name, 00] then [02, 01, page u16, data...]; empty page = EOF",
+				"3": "GET: [03, 00, file_id u16, offset u32] then [03, 01, page u16]; open response: [file_id u16, flags, size u32, name, 00]",
+				"4": "LIST: [04, page u16, node_id u16]; response: [page u16] + repeated [node_id u16, flags u8, size u32, name, 00]",
+				"5": "PLAYBACK: [05, action (1 start, 2 stop), file_id u16, offset u32, length u32]",
+				"6": "DELETE: [06, file_id u16]",
+				"7": "METADATA: [07, 01 SET, file_id u16, json, 00] | [07, 02 GET, file_id u16, page u16, key?, 00] | [07, 04 SET_PAGED, 00 init | 01 data, ...]",
+				"11": "INFO: [0B, file_id u16]; response [node_id u16, parent_id u16, flags u8, size u32, name, 00]",
+				"12": "MOVE: [0C, file_id u16, parent_id u16, new_file_id u16]"
+			},
+			"node_flags": {
+				"file": 1,
+				"dir": 2,
+				"read": 4,
+				"write": 8,
+				"delete": 16,
+				"move": 32,
+				"playback": 64
+			},
+			"events": {
+				"3": "METADATA_UPDATED",
+				"8": "FILE_ADDED",
+				"9": "FILE_UPDATED",
+				"10": "FILE_DELETED",
+				"13": "FILE_MOVED"
+			},
+			"integers": "big-endian"
+		},
+		{
+			"cmd": 6,
+			"name": "SETTINGS",
+			"subcommands": {
+				"1": "INIT: [01, 03, E8] (1000); status 0 means the device supports settings (update utility then shows a 'settings' panel)",
+				"2": "GET_ALL: [02, page u16]; each reply: 2 bytes then NUL-terminated JSON text; concatenate pages until an empty one; JSON = {settings:[{desc, settings:[{id, desc, value, range?:{min,max,step}, choices?}]}]}",
+				"3": "SET: [03, id u16, JSON-encoded value as ASCII, 00]"
+			},
+			"safety": "INIT/GET_ALL read-only in intent (INIT is sent automatically by the update utility); SET changes device settings -> owner approval",
+			"opxy_support": "unknown - high-value to test (would expose device settings as typed JSON)"
+		},
+		{
+			"cmd": 127,
+			"name": "PRODUCT_SPECIFIC",
+			"safety": "unknown - never send",
+			"notes": "defined in TE's client library, unused by both web apps"
+		}
+	]
+}

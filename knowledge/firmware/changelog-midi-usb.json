@@ -1,0 +1,275 @@
+{
+	"$comment": "OP-XY OS changelog items that matter to a MIDI/USB controller app, paraphrased in our own words from https://teenage.engineering/downloads/op-xy (read 2026-09-26). Not exhaustive for other areas. Behaviour flags are for firmware-aware logic: if device_os < version, assume the old behaviour.",
+	"items": [
+		{
+			"version": "1.0.9",
+			"date": "2024-11-14",
+			"area": "mtp",
+			"summary": "MTP transfers made more stable."
+		},
+		{
+			"version": "1.0.9",
+			"date": "2024-11-14",
+			"area": "midi-trs",
+			"summary": "Several TRS MIDI bugs fixed."
+		},
+		{
+			"version": "1.0.13",
+			"date": "2024-12-05",
+			"area": "settings",
+			"summary": "Pitch-bend tuning added to system settings."
+		},
+		{
+			"version": "1.0.15",
+			"date": "2024-12-18",
+			"area": "midi-track",
+			"summary": "The 'external' engine/track type is renamed 'midi'; LFOs now work on MIDI-only tracks."
+		},
+		{
+			"version": "1.0.15",
+			"date": "2024-12-18",
+			"area": "midi-out",
+			"summary": "Pitch bend is forwarded to linked tracks; arpeggio notes are no longer sent to linked tracks."
+		},
+		{
+			"version": "1.0.15",
+			"date": "2024-12-18",
+			"area": "midi-echo",
+			"summary": "The MIDI echo setting is now respected for linked notes."
+		},
+		{
+			"version": "1.0.21",
+			"date": "2025-01-16",
+			"area": "usb-midi",
+			"summary": "Fixed USB MIDI occasionally stopping."
+		},
+		{
+			"version": "1.0.21",
+			"date": "2025-01-16",
+			"area": "mtp",
+			"summary": "Files can be moved over MTP."
+		},
+		{
+			"version": "1.0.21",
+			"date": "2025-01-16",
+			"area": "midi-sync",
+			"summary": "Clock-related system settings reworked."
+		},
+		{
+			"version": "1.0.25",
+			"date": "2025-02-03",
+			"area": "storage",
+			"summary": "Fixed data corruption with more than 4 GB of user data (known issue since 1.0.15)."
+		},
+		{
+			"version": "1.0.29",
+			"date": "2025-02-25",
+			"area": "release",
+			"summary": "WITHDRAWN (marked unavailable): files larger than 64 KB copied off the unit over MTP could be corrupted; backups made on 1.0.29 may be damaged. Fixed in 1.0.32."
+		},
+		{
+			"version": "1.0.29",
+			"date": "2025-02-25",
+			"area": "midi-sync",
+			"summary": "MIDI clock in and out over BLE; incoming transport is relayed to other connected MIDI devices; incoming sync handling improved."
+		},
+		{
+			"version": "1.0.29",
+			"date": "2025-02-25",
+			"area": "sysex",
+			"summary": "A crash triggered by certain SysEx messages was fixed (older firmware may crash on unexpected SysEx)."
+		},
+		{
+			"version": "1.0.29",
+			"date": "2025-02-25",
+			"area": "midi-trs",
+			"summary": "TRS MIDI out no longer stops after unplugging/replugging."
+		},
+		{
+			"version": "1.0.29",
+			"date": "2025-02-25",
+			"area": "sampling",
+			"summary": "Channel choice added when sampling from line-in and USB audio."
+		},
+		{
+			"version": "1.0.29",
+			"date": "2025-02-25",
+			"area": "mtp",
+			"summary": "More characters allowed in MTP file names."
+		},
+		{
+			"version": "1.0.32",
+			"date": "2025-03-11",
+			"area": "mtp",
+			"summary": "MTP export corruption from 1.0.29 fixed."
+		},
+		{
+			"version": "1.0.36",
+			"date": "2025-03-21",
+			"area": "ui",
+			"summary": "Holding COM shows battery status."
+		},
+		{
+			"version": "1.0.38",
+			"date": "2025-04-01",
+			"area": "midi-track",
+			"summary": "A mute popup appears when a muted MIDI track sends CC."
+		},
+		{
+			"version": "1.0.40",
+			"date": "2025-05-06",
+			"area": "midi-cc",
+			"summary": "Fixed a crash caused by repeated project-load requests sent via MIDI CC (so a CC can request a project load; rate-limit such requests)."
+		},
+		{
+			"version": "1.0.40",
+			"date": "2025-05-06",
+			"area": "midi-trs",
+			"summary": "MIDI clock lag over TRS fixed."
+		},
+		{
+			"version": "1.0.40",
+			"date": "2025-05-06",
+			"area": "usb-host",
+			"summary": "USB hub support improved."
+		},
+		{
+			"version": "1.0.45",
+			"date": "2025-06-27",
+			"area": "midi-trs",
+			"summary": "TRS MIDI clock timing fix."
+		},
+		{
+			"version": "1.0.45",
+			"date": "2025-06-27",
+			"area": "midi-track",
+			"summary": "CC values of external/MIDI patches are saved properly and excluded from scrambling."
+		},
+		{
+			"version": "1.0.45",
+			"date": "2025-06-27",
+			"area": "mtp",
+			"summary": "MTP mode exits faster; folders can no longer be moved between root folders; empty folders deletable."
+		},
+		{
+			"version": "1.0.45",
+			"date": "2025-06-27",
+			"area": "usb",
+			"summary": "Miscellaneous USB fixes."
+		},
+		{
+			"version": "1.0.50",
+			"date": "2025-08-26",
+			"area": "midi-out",
+			"summary": "MIDI out no longer stops after MIDI clock arrives on the same port."
+		},
+		{
+			"version": "1.0.50",
+			"date": "2025-08-26",
+			"area": "midi-in",
+			"summary": "Filtered-out pitch bend is no longer recorded."
+		},
+		{
+			"version": "1.0.50",
+			"date": "2025-08-26",
+			"area": "midi-track",
+			"summary": "Synth parameters survive M1-browsing to the MIDI engine and back; better defaults when selecting the MIDI engine."
+		},
+		{
+			"version": "1.1.0",
+			"date": "2025-10-15",
+			"area": "midi-cc",
+			"summary": "New MIDI command for delayed scene switching (details in the online guide)."
+		},
+		{
+			"version": "1.1.0",
+			"date": "2025-10-15",
+			"area": "storage",
+			"summary": "Projects could not be saved above 4 GB due to a wrong disk-usage check; fixed."
+		},
+		{
+			"version": "1.1.3",
+			"date": "2026-02-10",
+			"area": "midi-track",
+			"summary": "A MIDI track can act as the duck-LFO source."
+		},
+		{
+			"version": "1.1.15",
+			"date": "2026-07-01",
+			"area": "limits",
+			"summary": "Patterns per track raised from 9 to 16; project templates; deeper user folder structures."
+		},
+		{
+			"version": "1.1.15",
+			"date": "2026-07-01",
+			"area": "midi-in",
+			"summary": "MIDI monitor added to the system menu (useful for verifying what our app sends)."
+		},
+		{
+			"version": "1.1.15",
+			"date": "2026-07-01",
+			"area": "com",
+			"summary": "COM device list and device popup reworked."
+		},
+		{
+			"version": "1.1.15",
+			"date": "2026-07-01",
+			"area": "mtp",
+			"summary": "MTP more robust and faster; UTF-8 file names."
+		},
+		{
+			"version": "1.1.15",
+			"date": "2026-07-01",
+			"area": "midi-track",
+			"summary": "MIDI engine fixes: program-change p-locks work; scrambling no longer biases the first CC low; no mute popup for inactive MIDI tracks."
+		},
+		{
+			"version": "1.1.15",
+			"date": "2026-07-01",
+			"area": "ble",
+			"summary": "BLE advertising reliability fix."
+		},
+		{
+			"version": "1.1.15",
+			"date": "2026-07-01",
+			"area": "midi-in",
+			"summary": "New sustain-pedal behaviour (holds notes until pedal up)."
+		},
+		{
+			"version": "1.1.25",
+			"date": "2026-08-19",
+			"area": "usb",
+			"summary": "The audio-only USB interface mode no longer shows as disconnected."
+		},
+		{
+			"version": "1.1.25",
+			"date": "2026-08-19",
+			"area": "midi-trs",
+			"summary": "Notes are sent on TRS MIDI reliably while clocked from incoming TRS MIDI."
+		},
+		{
+			"version": "1.1.25",
+			"date": "2026-08-19",
+			"area": "midi-out",
+			"summary": "Stopping the hold player now sends a normal note-off with release."
+		},
+		{
+			"version": "1.1.32",
+			"date": "2026-09-01",
+			"area": "usb",
+			"summary": "Unit sometimes failed to start while connected to USB; fixed."
+		},
+		{
+			"version": "1.1.32",
+			"date": "2026-09-01",
+			"area": "midi-track",
+			"summary": "Arpeggio no longer changes the MIDI engine's parameter."
+		},
+		{
+			"version": "1.1.33",
+			"date": "2026-09-02",
+			"area": "sequencer",
+			"summary": "Fixed: parameter locks could not be added to empty steps."
+		}
+	]
+}

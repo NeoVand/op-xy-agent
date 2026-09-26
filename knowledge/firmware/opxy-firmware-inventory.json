@@ -1,0 +1,664 @@
+{
+	"source": "https://teenage.engineering/downloads/op-xy",
+	"releases_json": "https://teenage.engineering/_software/releases.json",
+	"latest_in_releases_json": {
+		"sku": "TE033AS001",
+		"version": "1.1.33",
+		"fw_url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_33.tfw"
+	},
+	"builds": [
+		{
+			"version": "1.0.9",
+			"date": "2024-11-14",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_9.tfw",
+			"size": 97541216,
+			"last_modified": "Thu, 14 Nov 2024 15:49:56 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "d358",
+				"version": "1.0.9",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97541088,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "923a",
+				"version": "1.0.9",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "8f96be4c1613065480e52a35a4b1dc1d",
+			"plaintext_size": 97540057,
+			"ciphertext_size": 97540064,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true,
+			"sha256": "d66fc1d3c413f907aabe4b043121cc73a9945012ddcadcd3c15caaaae19c133e",
+			"outer_crc_ok": true,
+			"inner_crc_ok": true
+		},
+		{
+			"version": "1.0.13",
+			"date": "2024-12-05",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_13.tfw",
+			"size": 97551760,
+			"last_modified": "Thu, 05 Dec 2024 10:38:10 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "af70",
+				"version": "1.0.13",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97551632,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "55df",
+				"version": "1.0.13",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "806d6be4f6b1a74b4222eb10a681b45e",
+			"plaintext_size": 97550593,
+			"ciphertext_size": 97550608,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.15",
+			"date": "2024-12-18",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_15.tfw",
+			"size": 97563216,
+			"last_modified": "Wed, 18 Dec 2024 13:41:04 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "7060",
+				"version": "1.0.15",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97563088,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "84f5",
+				"version": "1.0.15",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "cf02bb540612d2110e30835b71e541d1",
+			"plaintext_size": 97562063,
+			"ciphertext_size": 97562064,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.21",
+			"date": "2025-01-16",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_21.tfw",
+			"size": 97563456,
+			"last_modified": "Thu, 16 Jan 2025 15:05:19 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "911e",
+				"version": "1.0.21",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97563328,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "4b73",
+				"version": "1.0.21",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "b65e2b0191b482f32cb1f15ceb9f596c",
+			"plaintext_size": 97562296,
+			"ciphertext_size": 97562304,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.25",
+			"date": "2025-02-03",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_25.tfw",
+			"size": 97493264,
+			"last_modified": "Mon, 03 Feb 2025 09:39:14 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "e188",
+				"version": "1.0.25",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97493136,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "ae01",
+				"version": "1.0.25",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "761e9753151760eb2852e263fb4c5eda",
+			"plaintext_size": 97492099,
+			"ciphertext_size": 97492112,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.29",
+			"date": "2025-02-25",
+			"linked_on_downloads_page": false,
+			"withdrawn": true,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_29.tfw",
+			"size": 97520320,
+			"last_modified": "Tue, 25 Feb 2025 13:49:40 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "44c4",
+				"version": "1.0.29",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97520192,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "c039",
+				"version": "1.0.29",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "559fe2b91b4978d9929bcb958fe34b88",
+			"plaintext_size": 97519158,
+			"ciphertext_size": 97519168,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.32",
+			"date": "2025-03-11",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_32.tfw",
+			"size": 97525440,
+			"last_modified": "Tue, 11 Mar 2025 11:45:50 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "9e4a",
+				"version": "1.0.32",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97525312,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "29c9",
+				"version": "1.0.32",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "5a4bdf9cf70c2a58c02dceb54eaad8ed",
+			"plaintext_size": 97524279,
+			"ciphertext_size": 97524288,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.36",
+			"date": "2025-03-21",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_36.tfw",
+			"size": 97525968,
+			"last_modified": "Fri, 21 Mar 2025 08:52:51 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "453a",
+				"version": "1.0.36",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97525840,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "01ac",
+				"version": "1.0.36",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "74b7e7be8e756a619aeb097c98884fbe",
+			"plaintext_size": 97524809,
+			"ciphertext_size": 97524816,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.38",
+			"date": "2025-04-01",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_38.tfw",
+			"size": 97528672,
+			"last_modified": "Tue, 01 Apr 2025 11:45:58 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "1d57",
+				"version": "1.0.38",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97528544,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "db7a",
+				"version": "1.0.38",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "ce5232f98d531448e8776975c23a91ae",
+			"plaintext_size": 97527518,
+			"ciphertext_size": 97527520,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.40",
+			"date": "2025-05-06",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_40.tfw",
+			"size": 97529056,
+			"last_modified": "Tue, 06 May 2025 08:49:11 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "946a",
+				"version": "1.0.40",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97528928,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "42ad",
+				"version": "1.0.40",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "fb9609198a0b937d67cea7f445cf993d",
+			"plaintext_size": 97527896,
+			"ciphertext_size": 97527904,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.45",
+			"date": "2025-06-27",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_45.tfw",
+			"size": 97534224,
+			"last_modified": "Fri, 27 Jun 2025 07:27:12 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "1291",
+				"version": "1.0.45",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97534096,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "9cdb",
+				"version": "1.0.45",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "9c8f18ad82a02a3e3317719d3775b1e6",
+			"plaintext_size": 97533063,
+			"ciphertext_size": 97533072,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.0.50",
+			"date": "2025-08-26",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_0_50.tfw",
+			"size": 97541200,
+			"last_modified": "Tue, 26 Aug 2025 08:44:56 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "f032",
+				"version": "1.0.50",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97541072,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "ff80",
+				"version": "1.0.50",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "3b8c431696e2dfbe960bfc5985f54e61",
+			"plaintext_size": 97540041,
+			"ciphertext_size": 97540048,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.1.0",
+			"date": "2025-10-15",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_0.tfw",
+			"size": 97553600,
+			"last_modified": "Wed, 15 Oct 2025 07:56:28 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "ad2b",
+				"version": "1.1.0",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97553472,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "c869",
+				"version": "1.1.0",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "0f63258e3aac134d340826dfa80cfc21",
+			"plaintext_size": 97552447,
+			"ciphertext_size": 97552448,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true,
+			"sha256": "01bb6b235e95d84454d57102398ca2a96c00c4a31fd068cb487f2cd4979642f8",
+			"outer_crc_ok": true,
+			"inner_crc_ok": true
+		},
+		{
+			"version": "1.1.3",
+			"date": "2026-02-10",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_3.tfw",
+			"size": 97556608,
+			"last_modified": "Tue, 10 Feb 2026 09:33:07 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "862c",
+				"version": "1.1.3",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97556480,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "1bb9",
+				"version": "1.1.3",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "e7e82eb42244c1bf5d1e34f5dc94081a",
+			"plaintext_size": 97555447,
+			"ciphertext_size": 97555456,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.1.4",
+			"date": "2026-02-17",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_4.tfw",
+			"size": 97556688,
+			"last_modified": "Mon, 16 Feb 2026 12:28:54 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "44fd",
+				"version": "1.1.4",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97556560,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "9fa0",
+				"version": "1.1.4",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "000345a8890f6f88e43e93d3f2f3a4ec",
+			"plaintext_size": 97555524,
+			"ciphertext_size": 97555536,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.1.15",
+			"date": "2026-07-01",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_15.tfw",
+			"size": 97696832,
+			"last_modified": "Wed, 01 Jul 2026 09:35:10 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "9b08",
+				"version": "1.1.15",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97696704,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "3eba",
+				"version": "1.1.15",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "2bfe152bd89f2b4f8058587246414625",
+			"plaintext_size": 97695679,
+			"ciphertext_size": 97695680,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true,
+			"sha256": "fb91b5884a626d77d8fee16fbdc7611802de86409c91f9ba3a56bf58a870da41",
+			"outer_crc_ok": true,
+			"inner_crc_ok": true
+		},
+		{
+			"version": "1.1.17",
+			"date": "2026-07-05",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_17.tfw",
+			"size": 97698560,
+			"last_modified": "Sun, 05 Jul 2026 15:26:20 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "5cbb",
+				"version": "1.1.17",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97698432,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "846b",
+				"version": "1.1.17",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "f3b47db42d667ee124ce7a5c30cb76f2",
+			"plaintext_size": 97697403,
+			"ciphertext_size": 97697408,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.1.18",
+			"date": "2026-07-06",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_18.tfw",
+			"size": 97699424,
+			"last_modified": "Mon, 06 Jul 2026 09:21:48 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "64f0",
+				"version": "1.1.18",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97699296,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "e539",
+				"version": "1.1.18",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "30631fe6fe99bc421de01e9b771c30ca",
+			"plaintext_size": 97698267,
+			"ciphertext_size": 97698272,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.1.21",
+			"date": "2026-07-11",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_21.tfw",
+			"size": 97701232,
+			"last_modified": "Sat, 11 Jul 2026 16:45:53 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "90d0",
+				"version": "1.1.21",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97701104,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "f59e",
+				"version": "1.1.21",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "5f3e63b6fa0acc5dbb6757e82d9fa0dc",
+			"plaintext_size": 97700078,
+			"ciphertext_size": 97700080,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.1.25",
+			"date": "2026-08-19",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_25.tfw",
+			"size": 97701536,
+			"last_modified": "Wed, 19 Aug 2026 09:39:33 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "5424",
+				"version": "1.1.25",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97701408,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "ea92",
+				"version": "1.1.25",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "c32bdfc3bad12cef3b4d8b6877558aaa",
+			"plaintext_size": 97700377,
+			"ciphertext_size": 97700384,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true
+		},
+		{
+			"version": "1.1.32",
+			"date": "2026-09-01",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_32.tfw",
+			"size": 97707920,
+			"last_modified": "Tue, 01 Sep 2026 13:01:19 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "8256",
+				"version": "1.1.32",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97707792,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "0846",
+				"version": "1.1.32",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "8c0dbea2bbb537425c314b0b65845fab",
+			"plaintext_size": 97706762,
+			"ciphertext_size": 97706768,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true,
+			"sha256": "2a8f4eb19735bfb84ca0e5fb7458c0eb0f1dd23a0e69975e673be967127a37c7",
+			"outer_crc_ok": true,
+			"inner_crc_ok": true
+		},
+		{
+			"version": "1.1.33",
+			"date": "2026-09-02",
+			"linked_on_downloads_page": true,
+			"withdrawn": false,
+			"url": "https://teenage.engineering/_software/op-xy/opxy_firmware_1_1_33.tfw",
+			"size": 97707984,
+			"last_modified": "Wed, 02 Sep 2026 12:01:55 GMT",
+			"outer": {
+				"type": 0,
+				"crc16_xmodem_of_0x40_to_end": "5900",
+				"version": "1.1.33",
+				"sku": "TE033AS001"
+			},
+			"inner": {
+				"type": 1,
+				"body_size_be32": 97707856,
+				"body_size_matches_len_minus_0x80": true,
+				"crc16_xmodem_of_0x80_to_end": "50a6",
+				"version": "1.1.33",
+				"sku": "TE033AS001"
+			},
+			"key_index_0x84": 0,
+			"iv_0xf0": "daa772fd6478eedbeb978cca61937ebf",
+			"plaintext_size": 97706817,
+			"ciphertext_size": 97706832,
+			"trailer_size": 256,
+			"other_header_bytes_zero": true,
+			"sha256": "b9fd56529e4833d4f30d9b28a63866d4fb361fd0d046b04e7ecca9be7da77139",
+			"outer_crc_ok": true,
+			"inner_crc_ok": true
+		}
+	]
+}
