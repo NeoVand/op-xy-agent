@@ -94,8 +94,9 @@ probe scripts, decisions D1–D3, index. Remaining: owner decisions in `QUESTION
 
 ### M2 — Replica v1
 
-Pixel-accurate, interactive **SVG** digital twin (D5; one mm geometry model; screen on a canvas at
-480 × 222; no TE logos per D6): every key,
+Pixel-accurate, interactive **SVG** digital twin (D5), **built from TE's own guide line drawing**
+(D9: segment the 740 × 265 panel SVG into per-control shapes keyed by `controls.json`), screen on a
+canvas at 480 × 222, no wordmarks (D6): every key,
 encoder, LED and label; screen renderer shell; shift layers; mirrors inbound MIDI (notes, clock,
 transport); drives the device (notes, CC, remote keys if available); keyboard/touch input;
 "animate procedure" API (`animate("shift + M1")`) used by the manual and the agent.

@@ -10,12 +10,12 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    `research/30-presets-samples.md`. Approve when ready.
 2. **Device spike session** (changes live state, all reversible): CC probes (tempo, mute, volume,
    scene), remote keys CC106/107, transport/clock, USB audio capture, MTP mode. Schedule when ready.
-3. **Photos & measurements** for the replica: checklist in `research/50-hardware-ui.md` §8 (top-down
-   photo, macro shots of LEDs/meter, screens that the guide doesn't illustrate, a few caliper
-   measurements). Your photos could be committed if you agree.
-4. **App name.** Keep "OP-XY Agent" or pick something else?
+3. **App name.** Keep "OP-XY Agent" or pick something else?
 
 ## Answered
+
+- 2026-09-26 — **Photos for the replica?** Not needed: build it from TE's guide SVGs (the full-panel
+  drawing has every legend and icon). → D9.
 
 - 2026-09-26 — **Licence?** MIT (MIDI Lab code ported here is relicensed under MIT by its owner). → D7.
 - 2026-09-26 — **Hosting?** GitHub Pages from `main` via Actions → https://neovand.github.io/op-xy-agent/. → D8.

@@ -77,3 +77,20 @@ consequences. Superseded entries stay, marked as such.
   https://neovand.github.io/op-xy-agent/.
 - **Consequences:** internal links use `resolve()` / `asset()` from `$app/paths`; the adapter writes a
   `404.html` SPA fallback; deploys only happen when type check, lint, unit tests and build pass.
+
+## D9 — 2026-09-26 — Build the replica from TE's own guide drawings
+
+- **Context:** the owner pointed out that TE's online guide already contains everything the replica
+  needs: a full-panel vector line drawing (`research/ui-reference/guide-svg/layout/001_*.svg`,
+  viewBox 740 × 265, 588 paths — every key, legend, number, icon, the speaker grille, volume knob,
+  encoders and screen outline) plus ~470 more SVG illustrations, including screen pages. Photos and
+  caliper measurements are not needed.
+- **Decision (owner):** derive the replica's geometry and its legend/icon artwork from these guide
+  SVGs (TE is supportive of the project; the owner's call). We segment the drawing into per-control
+  shapes keyed by `knowledge/opxy/controls.json` ids and restyle them (materials, LEDs, press
+  states) in our own SVG components. Guide screen illustrations are the reference for our screen
+  renderer. Attribution goes in `NOTICE.md`; the artwork stays swappable. D6 still holds for the
+  "OP–XY"/TE wordmarks (left off until TE says yes).
+- **Not reused:** `mitchivin/te-opxy` (Three.js replica) has no licence and its author did not publish
+  the source, so its code and models stay reference-only unless its author grants permission; the
+  replica is SVG-only anyway (D5).
