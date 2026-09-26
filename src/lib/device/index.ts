@@ -15,4 +15,5 @@ export * from './describe';
 export * from './expect';
 export * from './clock-follower';
 export * from './stack';
+export * from './context';
 export { browserAccessEnvironment, browserClock, browserFrames, browserTimers } from './env';

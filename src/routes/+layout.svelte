@@ -6,10 +6,12 @@
 	import workSansLatin from '@fontsource-variable/work-sans/files/work-sans-latin-wght-normal.woff2?url';
 	import { onMount } from 'svelte';
 	import { asset } from '$app/paths';
+	import { browserDeviceOptions, createDeviceStack, setDeviceStack } from '$lib/device';
+	import type { SessionPhase } from '$lib/device';
 	import { Theme, setTheme } from '$lib/ui/theme.svelte';
 	import AppHeader from '$lib/ui/shell/AppHeader.svelte';
 	import StatusBar from '$lib/ui/shell/StatusBar.svelte';
-	import { ShellStatus, setShellStatus } from '$lib/ui/shell/status.svelte';
+	import { ShellStatus, setShellStatus, type MidiState } from '$lib/ui/shell/status.svelte';
 
 	let { children } = $props();
 
@@ -19,9 +21,47 @@
 	const status = new ShellStatus();
 	setShellStatus(status);
 
+	// One device stack for the whole app. Building it touches no browser API (safe to prerender);
+	// MIDI access is only requested when the user presses connect.
+	const device = createDeviceStack(browserDeviceOptions());
+	setDeviceStack(device);
+
+	const CONNECTING: readonly SessionPhase[] = [
+		'requesting-access',
+		'waiting-for-device',
+		'opening',
+		'identifying',
+		'greeting'
+	];
+
+	// The status bar reflects the session: what is connected and what the device reported.
+	const midi = $derived.by((): MidiState => {
+		const { phase } = device.session;
+		if (phase === 'ready') return 'connected';
+		if (phase === 'error') return 'error';
+		return CONNECTING.includes(phase) ? 'connecting' : 'idle';
+	});
+	const deviceName = $derived(
+		device.session.phase === 'ready'
+			? (device.session.info?.product?.toLowerCase() ?? 'op-xy')
+			: null
+	);
+	const firmware = $derived(
+		device.session.firmware?.osVersion ? `os ${device.session.firmware.osVersion}` : null
+	);
+	// "mirroring" only when device events (its clock) confirm what the app shows.
+	const view = $derived(
+		device.session.phase === 'ready' && device.mirror.clockOut ? 'mirroring' : 'simulated'
+	);
+
 	onMount(() => {
 		theme.sync();
 		status.detect();
+		const stop = device.start();
+		return () => {
+			stop();
+			void device.session.disconnect();
+		};
 	});
 </script>
 
@@ -38,13 +78,7 @@
 	<main id="main" class="main" tabindex="-1">
 		{@render children()}
 	</main>
-	<StatusBar
-		midi={status.midi}
-		device={status.device}
-		firmware={status.firmware}
-		view={status.view}
-		webMidi={status.webMidi}
-	/>
+	<StatusBar {midi} device={deviceName} {firmware} {view} webMidi={status.webMidi} />
 </div>
 
 <style>

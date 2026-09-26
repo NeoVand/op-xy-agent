@@ -42,7 +42,7 @@ instead of one run-on line.
 			connecting: 'connecting',
 			connected: device ?? 'connected',
 			live: 'writing to device',
-			error: 'connection lost'
+			error: 'not connected'
 		}[midi]
 	);
 

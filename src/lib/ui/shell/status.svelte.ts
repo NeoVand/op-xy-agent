@@ -1,7 +1,7 @@
 /**
- * What the app shell displays about the device connection (status bar, stage). The device layer will
- * feed this later; for now it only knows whether the browser supports Web MIDI. Detecting support
- * reads `navigator` and never requests MIDI access, so it cannot prompt or touch a device.
+ * Browser capabilities the app shell needs before any device is involved: whether Web MIDI exists.
+ * Detecting support reads `navigator` and never requests MIDI access, so it cannot prompt or touch a
+ * device. Connection state comes from the device layer's session (see src/routes/+layout.svelte).
  */
 import { createContext } from 'svelte';
 
@@ -14,10 +14,6 @@ export type WebMidiSupport = 'unknown' | 'available' | 'unavailable';
 /** Reactive shell status. Create one in the root layout and share it with {@link setShellStatus}. */
 export class ShellStatus {
 	webMidi: WebMidiSupport = $state('unknown');
-	midi: MidiState = $state('idle');
-	device: string | null = $state(null);
-	firmware: string | null = $state(null);
-	view: 'simulated' | 'mirroring' = $state('simulated');
 
 	/** Check Web MIDI support. Call in the browser (onMount); pass a navigator stub in tests. */
 	detect(nav: Navigator = navigator): void {

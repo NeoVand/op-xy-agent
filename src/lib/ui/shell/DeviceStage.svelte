@@ -18,9 +18,11 @@ provides `onconnect`.
 		onconnect?: () => void;
 		/** Whether this browser can talk Web MIDI at all; `unknown` before hydration. */
 		webMidi?: 'unknown' | 'available' | 'unavailable';
+		/** Replaces the connect copy under the device, e.g. with the connected device's card. */
+		plate?: Snippet;
 	}
 
-	let { children, onconnect, webMidi = 'unknown' }: Props = $props();
+	let { children, onconnect, webMidi = 'unknown', plate }: Props = $props();
 
 	const uid = $props.id();
 	const canConnect = $derived(Boolean(onconnect) && webMidi !== 'unavailable');
@@ -35,7 +37,9 @@ provides `onconnect`.
 		{/if}
 	</div>
 
-	{#if !children}
+	{#if plate}
+		<div class="stage__plate">{@render plate()}</div>
+	{:else if !children}
 		<div class="stage__plate">
 			<div class="stage__copy">
 				<h1 class="stage__title">connect your <span class="whitespace-nowrap">op-xy</span></h1>

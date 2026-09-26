@@ -4,7 +4,6 @@ Connecting asks for Web MIDI with SysEx, then runs the read-only probe (identity
 Everything sent from here goes through the device transport and its safety policy.
 -->
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { Button, Led, Legend, Panel, Readout, type LedState } from '$lib/ui';
 	import type { MidiMessage } from '$lib/core/midi/messages';
@@ -17,8 +16,7 @@ Everything sent from here goes through the device transport and its safety polic
 		type CcTarget
 	} from '$lib/core/opxy';
 	import {
-		browserDeviceOptions,
-		createDeviceStack,
+		getDeviceStack,
 		type PlaySource,
 		type ProbeStatus,
 		type SessionPhase
@@ -26,18 +24,10 @@ Everything sent from here goes through the device transport and its safety polic
 	import LabFiles from './LabFiles.svelte';
 	import LabMonitor from './LabMonitor.svelte';
 
-	// Safe during prerendering: building the stack touches no browser API and requests nothing.
-	// MIDI access is only requested when the connect key is pressed.
-	const stack = createDeviceStack(browserDeviceOptions());
+	// The app-wide device stack: the root layout creates and starts it, so the lab and the rest of the
+	// app share one connection and one transport. MIDI access is requested only on connect.
+	const stack = getDeviceStack();
 	const { access, session, mirror, monitor, transport } = stack;
-
-	onMount(() => {
-		const stop = stack.start();
-		return () => {
-			stop();
-			void session.disconnect();
-		};
-	});
 
 	const TRACKS = [1, 2, 3, 4, 5, 6, 7, 8];
 	const tempoTarget = resolveCc({ param: 'global.tempo' });
