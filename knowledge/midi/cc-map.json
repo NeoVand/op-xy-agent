@@ -1,0 +1,2495 @@
+{
+	"$comment": "Our own structuring of OP-XY MIDI facts. Not affiliated with Teenage Engineering. Every entry has confidence + source keys (see `sources`). Channels are 1-based; values 7-bit unless noted.",
+	"schemaVersion": 1,
+	"generated": "2026-09-26",
+	"doc": "docs/research/20-midi-control.md",
+	"firmware": {
+		"deviceOfRecord": {
+			"os_version": "1.1.33",
+			"hw_rev": "2",
+			"sku": "TE033AS001",
+			"source": ["PROBE"]
+		},
+		"latestPublic": "1.1.33 (2026-09-02)",
+		"sourcesSpan": "1.0.x - 1.1.21",
+		"verifiedOnDevice": [
+			"USB/port enumeration (one in/out pair named OP-XY)",
+			"idle unit sends nothing",
+			"identity reply",
+			"TE SysEx GREET/ECHO/FILE; SETTINGS absent",
+			"MIDI echo default on (foreign SysEx echoed, TE frames not)"
+		],
+		"note": "CC/notes/transport/remote keys NOT yet verified on 1.1.33; see doc section 11"
+	},
+	"related": [
+		"knowledge/firmware/te-sysex.json",
+		"knowledge/firmware/changelog-midi-usb.json",
+		"knowledge/midi/xy-format-cc-map.json",
+		"knowledge/midi/remote-keys.json"
+	],
+	"confidenceLevels": {
+		"verified": "observed on the owner's OP-XY (OS 1.1.33, 2026-09-26) by the lead agent's read-only probe (docs/research/90-device-probe.md)",
+		"official": "stated on teenage.engineering (guide, MIDI reference, changelog, TE updater code)",
+		"community-verified": ">=2 independent community sources, or tooling clearly run against hardware",
+		"community": "one community source (or several that copy each other); plausible, unconfirmed",
+		"derived": "inferred by us from structural consistency across sources; testable prediction",
+		"speculative": "educated guess; treat as unknown until probed",
+		"conflicting": "sources disagree; see candidates/notes"
+	},
+	"sideEffects": {
+		"none": "no state change",
+		"ui": "navigation/selection only",
+		"audible": "sound only",
+		"transport": "starts/stops playback",
+		"scene": "active scene / mix state (stored in scenes)",
+		"project": "project data (autosave may persist it)",
+		"destructive": "may load/create/delete data or trigger arbitrary UI actions"
+	},
+	"sources": {
+		"PROBE": {
+			"path": "docs/research/90-device-probe.md",
+			"note": "lead agent's read-only probe of the owner's unit, OS 1.1.33, 2026-09-26"
+		},
+		"FW": {
+			"path": "docs/research/60-firmware.md",
+			"note": "section 4: TE SysEx protocol at byte level"
+		},
+		"TE-SYSEX-JSON": {
+			"path": "knowledge/firmware/te-sysex.json"
+		},
+		"XYF-CCMAP-JSON": {
+			"path": "knowledge/midi/xy-format-cc-map.json",
+			"note": "sibling research on xy-format's CC map"
+		},
+		"TE-MIDI": {
+			"url": "https://teenage.engineering/guides/op-xy/midi-references",
+			"snapshot": "research/web/te-guides_op-xy_midi-references.html"
+		},
+		"TE-COM": {
+			"url": "https://teenage.engineering/guides/op-xy/com",
+			"snapshot": "research/web/te-guides_op-xy_com.html"
+		},
+		"TE-AUX": {
+			"url": "https://teenage.engineering/guides/op-xy/auxiliary",
+			"snapshot": "research/web/te-guides_op-xy_auxiliary.html"
+		},
+		"TE-DL": {
+			"url": "https://teenage.engineering/downloads/op-xy",
+			"snapshot": "research/web/te-downloads_op-xy.html",
+			"note": "firmware changelog"
+		},
+		"TE-REL": {
+			"url": "https://teenage.engineering/_software/releases.json",
+			"snapshot": "research/web/te-software-releases.json"
+		},
+		"TE-UPD": {
+			"url": "https://teenage.engineering/apps/update",
+			"snapshot": "research/web/te-apps-update/index-C4sb_ae6.js",
+			"note": "TE Web MIDI updater bundle (SysEx protocol)"
+		},
+		"TE-INST": {
+			"url": "https://teenage.engineering/guides/op-xy/instrument",
+			"snapshot": "research/web/te-guides_op-xy_instrument.html"
+		},
+		"TE-SYN": {
+			"url": "https://teenage.engineering/guides/op-xy/synth-engines",
+			"snapshot": "research/web/te-guides_op-xy_synth-engines.html"
+		},
+		"TE-FX": {
+			"url": "https://teenage.engineering/guides/op-xy/fx",
+			"snapshot": "research/web/te-guides_op-xy_fx.html"
+		},
+		"TE-MIX": {
+			"url": "https://teenage.engineering/guides/op-xy/mix",
+			"snapshot": "research/web/te-guides_op-xy_mix.html"
+		},
+		"TE-ARR": {
+			"url": "https://teenage.engineering/guides/op-xy/arrange",
+			"snapshot": "research/web/te-guides_op-xy_arrange.html"
+		},
+		"TE-PROJ": {
+			"url": "https://teenage.engineering/guides/op-xy/project",
+			"snapshot": "research/web/te-guides_op-xy_project.html"
+		},
+		"TE-TEMPO": {
+			"url": "https://teenage.engineering/guides/op-xy/tempo",
+			"snapshot": "research/web/te-guides_op-xy_tempo.html"
+		},
+		"TE-LAYOUT": {
+			"url": "https://teenage.engineering/guides/op-xy/layout",
+			"snapshot": "research/web/te-guides_op-xy_layout.html"
+		},
+		"GUIDE-MD": {
+			"path": "research/repos/gravitinos_opxy-tutor/manuals/op-xy-guide.md"
+		},
+		"REACT-DESIGN": {
+			"url": "https://github.com/jshph/opxy-reactive/blob/master/DESIGN.md",
+			"path": "research/repos/jshph_opxy-reactive/DESIGN.md"
+		},
+		"REACT-AGENT": {
+			"url": "https://github.com/jshph/opxy-reactive/blob/master/AGENT.md",
+			"path": "research/repos/jshph_opxy-reactive/AGENT.md"
+		},
+		"REACT-MAP": {
+			"path": "research/repos/jshph_opxy-reactive/maps/opxy-1.1.21.json"
+		},
+		"REACT-SRC": {
+			"path": "research/repos/jshph_opxy-reactive/src/"
+		},
+		"VIBE-SPEC": {
+			"url": "https://github.com/kmorrill/op-xy-vibing/blob/main/docs/opxyloop-1.0.md",
+			"path": "research/repos/kmorrill_op-xy-vibing/docs/opxyloop-1.0.md"
+		},
+		"VIBE-ENGINE": {
+			"path": "research/repos/kmorrill_op-xy-vibing/conductor/midi_engine.py"
+		},
+		"VIBE-OUT": {
+			"path": "research/repos/kmorrill_op-xy-vibing/conductor/midi_out.py"
+		},
+		"VIBE-SERVER": {
+			"path": "research/repos/kmorrill_op-xy-vibing/conductor/conductor_server.py"
+		},
+		"VIBE-TEMPO": {
+			"path": "research/repos/kmorrill_op-xy-vibing/conductor/tempo_map.py"
+		},
+		"VIBE-CHANGELOG": {
+			"path": "research/repos/kmorrill_op-xy-vibing/CHANGELOG.md"
+		},
+		"VIBE-HUMAN": {
+			"path": "research/repos/kmorrill_op-xy-vibing/docs/op-xy-non-automatable-human-control.md"
+		},
+		"VIBE-MUSIC": {
+			"path": "research/repos/kmorrill_op-xy-vibing/musical-coding-assistant.md"
+		},
+		"GEN-MAIN": {
+			"path": "research/repos/kmorrill_op-xy-generator/main.js"
+		},
+		"GEN-INDEX": {
+			"path": "research/repos/kmorrill_op-xy-generator/index.html"
+		},
+		"GEN-DRUM": {
+			"path": "research/repos/kmorrill_op-xy-generator/generation/drum.js"
+		},
+		"XYF-CCMAP": {
+			"url": "https://github.com/kmorrill/xy-format/blob/main/docs/reference/opxy_midi_cc_map.md",
+			"path": "research/repos/kmorrill_xy-format/docs/reference/opxy_midi_cc_map.md"
+		},
+		"XYF-PLOCK-LOG": {
+			"path": "research/repos/kmorrill_xy-format/docs/logs/2026-02-13_midi_cc_plock_discovery.md"
+		},
+		"XYF-PLOCKS": {
+			"path": "research/repos/kmorrill_xy-format/docs/format/plocks.md"
+		},
+		"XYF-WRITER": {
+			"path": "research/repos/kmorrill_xy-format/xy/image_writer.py"
+		},
+		"XYF-SPATIAL": {
+			"path": "research/repos/kmorrill_xy-format/tools/analyze_spatial_variance.py"
+		},
+		"XYF-CC106": {
+			"path": "research/repos/kmorrill_xy-format/tools/analysis/cc106_keys.py"
+		},
+		"XYF-CC86": {
+			"path": "research/repos/kmorrill_xy-format/tools/analysis/cc86_select.py"
+		},
+		"XYF-CAP16": {
+			"path": "research/repos/kmorrill_xy-format/tools/capture_16pat.py"
+		},
+		"XYF-PROJCFG": {
+			"path": "research/repos/kmorrill_xy-format/docs/logs/2026-06-13_project_config_inspection.md"
+		},
+		"XYF-AUX-LOGS": {
+			"path": "research/repos/kmorrill_xy-format/docs/logs/2026-06-1[45]_*_probe.md"
+		},
+		"XYF-DRUMPATHS": {
+			"path": "research/repos/kmorrill_xy-format/docs/format/drum_sample_paths.md"
+		},
+		"XYF-IMGMAP": {
+			"path": "research/repos/kmorrill_xy-format/docs/format/decoded_image_map.md"
+		},
+		"XYF-LEGACY": {
+			"path": "research/repos/kmorrill_xy-format/docs/logs/2026-02-13_agents_legacy_snapshot.md"
+		},
+		"DAWLESS-CC106": {
+			"url": "https://github.com/kmorrill/dawless-reference/blob/main/devices/teenage-engineering/op-xy/cc106-remote-keys.md",
+			"snapshot": "research/web/dawless-reference/cc106-remote-keys.md"
+		},
+		"DAWLESS-README": {
+			"url": "https://github.com/kmorrill/dawless-reference/blob/main/devices/teenage-engineering/op-xy/README.md",
+			"snapshot": "research/web/dawless-reference/README.md",
+			"note": "low reliability (mixes OP-Z facts)"
+		},
+		"DAWLESS-DRUM": {
+			"snapshot": "research/web/dawless-reference/drum-note-map.md"
+		},
+		"DAWLESS-LIMITS": {
+			"snapshot": "research/web/dawless-reference/device-limits.md"
+		},
+		"SHEET": {
+			"url": "https://docs.google.com/spreadsheets/d/1zRCaETkKXG4sMAbXxMcYvS4RCCAOrMtmAxHE4lVH8CU",
+			"snapshot": "research/web/community-cc-sheet-gid*.csv",
+			"note": "community 'OP-XY MIDI CC Reference' (transcribes a TE chart); tabs Sheet1-4 + 'CC 106/107'"
+		},
+		"MIDIGUIDE": {
+			"url": "https://github.com/pencilresearch/midi/blob/main/Teenage%20Engineering/OP-XY.csv",
+			"snapshot": "research/web/midi-guide/OP-XY.csv",
+			"license": "CC-BY-SA-4.0"
+		},
+		"DECK-CENSUS": {
+			"url": "https://github.com/kazuochi/opxy-deck/blob/main/opxy-controls.json",
+			"path": "research/repos/kazuochi_opxy-deck/opxy-controls.json"
+		},
+		"DECK-SCHEMA": {
+			"path": "research/repos/kazuochi_opxy-deck/MAPPING-SCHEMA.md"
+		},
+		"DECK-BRIDGE": {
+			"path": "research/repos/kazuochi_opxy-deck/opxy-bridge.swift"
+		},
+		"KOII": {
+			"path": "research/repos/benjaminr_mcp-koii/koii_server.py"
+		},
+		"LAUNCHPAD": {
+			"path": "research/repos/buba447_LaunchpadPrefs-OPXY/OPXY_Performance.syx",
+			"note": "decoded by hand; README.md describes the pads"
+		},
+		"STEMBOUNCE": {
+			"path": "research/repos/om3opr_stembounce/src/core/midi.ts",
+			"also": [
+				"research/repos/om3opr_stembounce/src/devices/op-xy.ts",
+				"research/repos/om3opr_stembounce/README.md"
+			]
+		},
+		"OPXYSTEMS": {
+			"path": "research/repos/mofongo_opxy-stems/index.html"
+		},
+		"STEMX": {
+			"path": "research/repos/gobelinor_stem-extractor/src/engine/",
+			"license": "PolyForm-Noncommercial-1.0.0 (facts only)"
+		},
+		"EPSYSEX": {
+			"url": "https://github.com/kmorrill/ep-series-sysex/blob/main/docs/sysex-protocol.md",
+			"snapshot": "research/web/ep-series-sysex/sysex-protocol.md"
+		},
+		"DRUMUTIL": {
+			"path": "research/repos/YYUUGGOO_OP-XY-Drum-Utility/patch.json"
+		},
+		"DRUMTOOL": {
+			"path": "research/repos/buba447_opxy-drum-tool/index.html"
+		}
+	},
+	"channels": {
+		"defaults": [
+			{
+				"channel": 1,
+				"track": 1,
+				"kind": "instrument",
+				"role": "drum 1",
+				"defaultEngine": "drum",
+				"confidence": "community-verified",
+				"source": ["TE-MIDI", "SHEET", "DAWLESS-CC106", "XYF-PLOCK-LOG", "STEMBOUNCE", "STEMX"],
+				"notes": "defaultEngine/role describe a fresh default project; user-changeable"
+			},
+			{
+				"channel": 2,
+				"track": 2,
+				"kind": "instrument",
+				"role": "drum 2",
+				"defaultEngine": "drum",
+				"confidence": "community-verified",
+				"source": ["TE-MIDI", "SHEET", "DAWLESS-CC106", "XYF-PLOCK-LOG", "STEMBOUNCE", "STEMX"],
+				"notes": "defaultEngine/role describe a fresh default project; user-changeable"
+			},
+			{
+				"channel": 3,
+				"track": 3,
+				"kind": "instrument",
+				"role": "bass",
+				"defaultEngine": "prism",
+				"confidence": "community-verified",
+				"source": ["TE-MIDI", "SHEET", "DAWLESS-CC106", "XYF-PLOCK-LOG", "STEMBOUNCE", "STEMX"],
+				"notes": "defaultEngine/role describe a fresh default project; user-changeable"
+			},
+			{
+				"channel": 4,
+				"track": 4,
+				"kind": "instrument",
+				"role": "keys / pluck",
+				"defaultEngine": "epiano",
+				"confidence": "community-verified",
+				"source": ["TE-MIDI", "SHEET", "DAWLESS-CC106", "XYF-PLOCK-LOG", "STEMBOUNCE", "STEMX"],
+				"notes": "defaultEngine/role describe a fresh default project; user-changeable"
+			},
+			{
+				"channel": 5,
+				"track": 5,
+				"kind": "instrument",
+				"role": "lead",
+				"defaultEngine": "dissolve",
+				"confidence": "community-verified",
+				"source": ["TE-MIDI", "SHEET", "DAWLESS-CC106", "XYF-PLOCK-LOG", "STEMBOUNCE", "STEMX"],
+				"notes": "defaultEngine/role describe a fresh default project; user-changeable"
+			},
+			{
+				"channel": 6,
+				"track": 6,
+				"kind": "instrument",
+				"role": "pluck / soft pluck",
+				"defaultEngine": "hardsync",
+				"confidence": "community-verified",
+				"source": ["TE-MIDI", "SHEET", "DAWLESS-CC106", "XYF-PLOCK-LOG", "STEMBOUNCE", "STEMX"],
+				"notes": "defaultEngine/role describe a fresh default project; user-changeable"
+			},
+			{
+				"channel": 7,
+				"track": 7,
+				"kind": "instrument",
+				"role": "pads / strings",
+				"defaultEngine": "axis",
+				"confidence": "community-verified",
+				"source": ["TE-MIDI", "SHEET", "DAWLESS-CC106", "XYF-PLOCK-LOG", "STEMBOUNCE", "STEMX"],
+				"notes": "defaultEngine/role describe a fresh default project; user-changeable"
+			},
+			{
+				"channel": 8,
+				"track": 8,
+				"kind": "instrument",
+				"role": "pads",
+				"defaultEngine": "multisampler",
+				"confidence": "community-verified",
+				"source": ["TE-MIDI", "SHEET", "DAWLESS-CC106", "XYF-PLOCK-LOG", "STEMBOUNCE", "STEMX"],
+				"notes": "defaultEngine/role describe a fresh default project; user-changeable"
+			},
+			{
+				"channel": 9,
+				"track": 9,
+				"kind": "auxiliary",
+				"auxIndex": 1,
+				"role": "brain",
+				"description": "key/scale detection + live transpose of routed tracks",
+				"confidence": "community-verified",
+				"source": ["TE-AUX", "SHEET", "REACT-DESIGN"]
+			},
+			{
+				"channel": 10,
+				"track": 10,
+				"kind": "auxiliary",
+				"auxIndex": 2,
+				"role": "punchIn",
+				"description": "punch-in FX; keyboard notes trigger 24 momentary effects",
+				"confidence": "community-verified",
+				"source": ["TE-AUX", "SHEET", "REACT-DESIGN"]
+			},
+			{
+				"channel": 11,
+				"track": 11,
+				"kind": "auxiliary",
+				"auxIndex": 3,
+				"role": "externalMidi",
+				"description": "external MIDI track: channel/bank/program + 8 CC slots + LFO",
+				"confidence": "community-verified",
+				"source": ["TE-AUX", "SHEET", "REACT-DESIGN"]
+			},
+			{
+				"channel": 12,
+				"track": 12,
+				"kind": "auxiliary",
+				"auxIndex": 4,
+				"role": "externalCv",
+				"description": "CV on tip / gate on ring of the multi-out",
+				"confidence": "community-verified",
+				"source": ["TE-AUX", "SHEET", "REACT-DESIGN"]
+			},
+			{
+				"channel": 13,
+				"track": 13,
+				"kind": "auxiliary",
+				"auxIndex": 5,
+				"role": "externalAudio",
+				"description": "audio input (mic/headset/line/usb/main) + aux-out routing",
+				"confidence": "community-verified",
+				"source": ["TE-AUX", "SHEET", "REACT-DESIGN"]
+			},
+			{
+				"channel": 14,
+				"track": 14,
+				"kind": "auxiliary",
+				"auxIndex": 6,
+				"role": "tape",
+				"description": "tape looper: pitch/speed/length/mix",
+				"confidence": "community-verified",
+				"source": ["TE-AUX", "SHEET", "REACT-DESIGN"]
+			},
+			{
+				"channel": 15,
+				"track": 15,
+				"kind": "auxiliary",
+				"auxIndex": 7,
+				"role": "fx1",
+				"description": "send FX slot I (default delay)",
+				"confidence": "community-verified",
+				"source": ["TE-AUX", "SHEET", "REACT-DESIGN"]
+			},
+			{
+				"channel": 16,
+				"track": 16,
+				"kind": "auxiliary",
+				"auxIndex": 8,
+				"role": "fx2",
+				"description": "send FX slot II (default reverb)",
+				"confidence": "community-verified",
+				"source": ["TE-AUX", "SHEET", "REACT-DESIGN"]
+			}
+		],
+		"activeTrackChannel": {
+			"semantics": "notes received on this channel play the currently selected track (in addition to normal routing)",
+			"default": 1,
+			"defaultConfidence": "community",
+			"recommendation": "move it off channels 1-8 to a channel the agent never sends on (all 16 map to tracks) or off if offered",
+			"confidence": "official",
+			"source": ["TE-COM", "REACT-DESIGN", "GEN-INDEX"]
+		},
+		"projectTrackChannels": {
+			"location": "project -> M4 config -> midi",
+			"values": "per track T1-T16: off | 1-16 (stored 0xFF off, 0x00-0x0F)",
+			"freshProjectDefault": "all off (firmware 1.1.4 capture)",
+			"semantics": "output channel for a track's sequenced notes; effect on receive routing unknown",
+			"confidence": "community",
+			"source": ["TE-PROJ", "XYF-PROJCFG", "REACT-DESIGN"]
+		},
+		"mtpExclusive": {
+			"semantics": "MIDI unavailable while the device is in MTP mode; the normal-mode USB descriptor has no MTP interface",
+			"confidence": "community",
+			"source": ["XYF-CC86", "PROBE"]
+		},
+		"usb": {
+			"vid": "0x2367",
+			"pid": "0x8021",
+			"interfaces": "UAC1 audio in + out, one USB-MIDI streaming interface",
+			"webMidiPorts": {
+				"input": "OP-XY",
+				"output": "OP-XY",
+				"count": 1
+			},
+			"confidence": "verified",
+			"source": ["PROBE"]
+		},
+		"echo": {
+			"default": "on",
+			"foreignSysexEchoed": true,
+			"teFramesEchoed": false,
+			"channelMessages": "untested",
+			"consequence": "input handlers must drop echoes of our own output; never forward input to output",
+			"confidence": "verified",
+			"source": ["PROBE", "FW"]
+		}
+	},
+	"laneModel": {
+		"description": "Per-track CC numbers address encoder lanes in module order. dark/mid/light/white = the four encoders.",
+		"confidence": "derived",
+		"source": ["TE-INST", "TE-AUX", "XYF-WRITER", "XYF-AUX-LOGS", "SHEET"],
+		"pages": [
+			{
+				"page": "M1",
+				"dark": 12,
+				"mid": 13,
+				"light": 14,
+				"white": 15,
+				"confidence": "community-verified"
+			},
+			{
+				"page": "M1+shift (engine params 5-8?)",
+				"dark": 16,
+				"mid": 17,
+				"light": 18,
+				"white": 19,
+				"confidence": "speculative"
+			},
+			{
+				"page": "M2 (amp envelope)",
+				"dark": 20,
+				"mid": 21,
+				"light": 22,
+				"white": 23,
+				"confidence": "community-verified"
+			},
+			{
+				"page": "M2 alt (filter envelope; click an encoder)",
+				"dark": 24,
+				"mid": 25,
+				"light": 26,
+				"white": 27,
+				"confidence": "community-verified"
+			},
+			{
+				"page": "M2+shift (play mode page)",
+				"dark": 28,
+				"mid": 29,
+				"light": 30,
+				"white": 31,
+				"confidence": "community-verified"
+			},
+			{
+				"page": "M3 (filter)",
+				"dark": 32,
+				"mid": 33,
+				"light": 34,
+				"white": 35,
+				"confidence": "community-verified"
+			},
+			{
+				"page": "M3+shift (track sends)",
+				"dark": 36,
+				"mid": 37,
+				"light": 38,
+				"white": 39,
+				"confidence": "community-verified"
+			},
+			{
+				"page": "M4 (LFO)",
+				"dark": 40,
+				"mid": 41,
+				"light": 42,
+				"white": 43,
+				"confidence": "derived"
+			}
+		],
+		"mixer": {
+			"level": 7,
+			"pan": 10,
+			"mute": 9
+		}
+	},
+	"global": [
+		{
+			"cc": 80,
+			"id": "global.tempo",
+			"name": "tempo",
+			"range": [0, 127],
+			"semantics": "0-127 to BPM; scaling unconfirmed (7-bit resolution either way)",
+			"confidence": "conflicting",
+			"source": ["TE-MIDI", "MIDIGUIDE", "REACT-MAP", "STEMBOUNCE", "VIBE-CHANGELOG", "VIBE-TEMPO"],
+			"sideEffect": "project",
+			"channel": "any",
+			"existence": "official",
+			"candidates": [
+				{
+					"id": "linear-40-220",
+					"formula": "bpm = 40 + v * 180 / 127",
+					"inverse": "v = round((bpm - 40) * 127 / 180)",
+					"source": ["MIDIGUIDE", "REACT-MAP", "STEMBOUNCE", "VIBE-CHANGELOG"]
+				},
+				{
+					"id": "bpm-over-2",
+					"formula": "bpm = 2 * v",
+					"inverse": "v = round(bpm / 2)",
+					"source": ["VIBE-TEMPO"],
+					"note": "code comment: 'calibrated slope of 2 BPM per unit'"
+				}
+			],
+			"probe": "docs/research/20-midi-control.md#11 test 16"
+		},
+		{
+			"cc": 81,
+			"id": "global.groove",
+			"name": "groove amount",
+			"range": [0, 127],
+			"semantics": "centred control; 63 = no groove (midi.guide); clockwise of centre = swing, counter-clockwise = shuffle (guide)",
+			"confidence": "community",
+			"source": ["TE-MIDI", "TE-TEMPO", "MIDIGUIDE"],
+			"sideEffect": "project",
+			"channel": "any",
+			"existence": "official"
+		},
+		{
+			"cc": 82,
+			"id": "scene.selectDelayed",
+			"name": "scene (delayed switch)",
+			"range": [0, 98],
+			"semantics": "0-98 -> scene 1-99, switches after the next bar (community); command added in 1.1.0",
+			"confidence": "community",
+			"source": ["TE-MIDI", "TE-DL", "MIDIGUIDE"],
+			"sideEffect": "scene",
+			"channel": "any",
+			"existence": "official"
+		},
+		{
+			"cc": 83,
+			"id": "scene.previous",
+			"name": "previous scene",
+			"range": [0, 127],
+			"semantics": "trigger; value semantics unknown",
+			"confidence": "official",
+			"source": ["TE-MIDI"],
+			"sideEffect": "scene",
+			"channel": "any"
+		},
+		{
+			"cc": 84,
+			"id": "scene.next",
+			"name": "next scene",
+			"range": [0, 127],
+			"semantics": "trigger; value semantics unknown",
+			"confidence": "official",
+			"source": ["TE-MIDI"],
+			"sideEffect": "scene",
+			"channel": "any"
+		},
+		{
+			"cc": 85,
+			"id": "scene.select",
+			"name": "scene (immediate)",
+			"range": [0, 98],
+			"semantics": "0-98 -> scene 1-99 immediately (0 = scene 1)",
+			"confidence": "community-verified",
+			"source": ["TE-MIDI", "LAUNCHPAD", "STEMBOUNCE", "MIDIGUIDE"],
+			"sideEffect": "scene",
+			"channel": "any",
+			"caution": "UI rule: switching to an empty scene duplicates the current scene (TE-ARR); unknown for MIDI - target existing scenes only"
+		},
+		{
+			"cc": 86,
+			"id": "project.load",
+			"name": "project",
+			"range": [0, 127],
+			"semantics": "0-127 -> loads the project whose filename carries that 3-digit number: prefix per xy-format test tool, suffix per midi.guide/opxy-reactive",
+			"confidence": "conflicting",
+			"source": ["TE-MIDI", "XYF-CC86", "MIDIGUIDE", "REACT-MAP", "TE-DL"],
+			"sideEffect": "destructive",
+			"channel": "any",
+			"existence": "official",
+			"caution": "loads another project; repeated requests crashed firmware before 1.0.40; never automate"
+		},
+		{
+			"cc": 90,
+			"id": "master.eq",
+			"name": "master EQ",
+			"range": [0, 127],
+			"semantics": "band selected by channel",
+			"confidence": "official",
+			"source": ["TE-MIDI", "TE-MIX", "LAUNCHPAD", "MIDIGUIDE", "REACT-DESIGN"],
+			"sideEffect": "project",
+			"channel": [1, 2, 3, 4],
+			"perChannel": {
+				"1": {
+					"band": "low",
+					"confidence": "community-verified"
+				},
+				"2": {
+					"band": "mid",
+					"confidence": "community-verified"
+				},
+				"3": {
+					"band": "high",
+					"confidence": "community-verified"
+				},
+				"4": {
+					"band": "blend",
+					"confidence": "conflicting",
+					"note": "official lists channel 4; opxy-reactive reports no working CC for blend"
+				}
+			}
+		},
+		{
+			"cc": 102,
+			"id": "track.select",
+			"name": "track select",
+			"range": [0, 15],
+			"semantics": "0-7 -> tracks 1-8, 8-15 -> aux tracks 9-16",
+			"confidence": "community",
+			"source": ["SHEET", "MIDIGUIDE"],
+			"sideEffect": "ui",
+			"channel": [1]
+		},
+		{
+			"cc": 104,
+			"id": "transport.playCc",
+			"name": "play",
+			"range": [0, 127],
+			"semantics": "any value starts playback; may be firmware dependent - prefer 0xFA",
+			"confidence": "community",
+			"source": ["SHEET", "MIDIGUIDE", "STEMBOUNCE"],
+			"sideEffect": "transport",
+			"channel": "any"
+		},
+		{
+			"cc": 105,
+			"id": "transport.stopCc",
+			"name": "stop",
+			"range": [0, 127],
+			"semantics": "any value stops playback; prefer 0xFC",
+			"confidence": "community",
+			"source": ["SHEET", "MIDIGUIDE", "STEMBOUNCE"],
+			"sideEffect": "transport",
+			"channel": "any"
+		},
+		{
+			"cc": 106,
+			"id": "ui.keyDown",
+			"name": "remote key down",
+			"range": [0, 127],
+			"semantics": "value = key index 0-71, see knowledge/midi/remote-keys.json",
+			"confidence": "community-verified",
+			"source": ["DAWLESS-CC106", "SHEET", "XYF-CC106"],
+			"sideEffect": "destructive",
+			"channel": [1],
+			"notes": "firmware dependent; only channel 1 ever used"
+		},
+		{
+			"cc": 107,
+			"id": "ui.keyUp",
+			"name": "remote key up",
+			"range": [0, 127],
+			"semantics": "releases the key pressed with CC106 of the same value; the older 'view tempo page' reading is key-up of index 1",
+			"confidence": "community-verified",
+			"source": ["DAWLESS-CC106", "SHEET", "XYF-CC106", "MIDIGUIDE"],
+			"sideEffect": "ui",
+			"channel": [1]
+		}
+	],
+	"perTrack": [
+		{
+			"cc": 7,
+			"id": "track.level",
+			"name": "track volume / level",
+			"lane": "mixer",
+			"range": [0, 127],
+			"semantics": "0-127",
+			"confidence": "official",
+			"source": ["TE-MIDI", "TE-MIX"],
+			"sideEffect": "project",
+			"channel": "1-16"
+		},
+		{
+			"cc": 9,
+			"id": "track.mute",
+			"name": "track mute",
+			"lane": "mixer",
+			"range": [0, 127],
+			"semantics": "0 = unmuted, 1-127 = muted; mutes affect notes, not audio (tails ring out)",
+			"confidence": "community-verified",
+			"source": ["TE-MIDI", "TE-MIX", "MIDIGUIDE", "STEMX", "STEMBOUNCE", "OPXYSTEMS", "LAUNCHPAD"],
+			"sideEffect": "scene",
+			"channel": "1-16",
+			"values": {
+				"unmute": 0,
+				"mute": 127
+			},
+			"existence": "official"
+		},
+		{
+			"cc": 10,
+			"id": "track.pan",
+			"name": "track pan",
+			"lane": "mixer",
+			"range": [0, 127],
+			"semantics": "0-127, centred (64 ~ centre, community)",
+			"confidence": "official",
+			"source": ["TE-MIDI", "MIDIGUIDE"],
+			"sideEffect": "project",
+			"channel": "1-16"
+		},
+		{
+			"cc": 46,
+			"id": "track.parameters",
+			"name": "track parameters",
+			"range": [0, 127],
+			"semantics": "undocumented; probe before use",
+			"confidence": "official",
+			"source": ["TE-MIDI"],
+			"sideEffect": "project",
+			"channel": "1-16",
+			"notes": "existence official, semantics unknown"
+		}
+	],
+	"trackTypes": {
+		"instrument": {
+			"tracks": [1, 2, 3, 4, 5, 6, 7, 8],
+			"appliesToEngines": [
+				"axis",
+				"dissolve",
+				"drum",
+				"epiano",
+				"hardsync",
+				"multisampler",
+				"organ",
+				"prism",
+				"sampler",
+				"simple",
+				"wavetable",
+				"midi"
+			],
+			"deviceEvidence": "xy-format hold-record sweeps: CC7,10,12-15,20-41 on ch1-8 all stored as p-locks (unnamed 121-125) - receipt and ordering verified, labels from chart/guide",
+			"params": [
+				{
+					"cc": 12,
+					"id": "track.engine.p1",
+					"name": "engine param 1",
+					"lane": "M1.dark",
+					"range": [0, 127],
+					"semantics": "engine-resolved, see engines.*.p1",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 13,
+					"id": "track.engine.p2",
+					"name": "engine param 2",
+					"lane": "M1.mid",
+					"range": [0, 127],
+					"semantics": "engine-resolved",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 14,
+					"id": "track.engine.p3",
+					"name": "engine param 3",
+					"lane": "M1.light",
+					"range": [0, 127],
+					"semantics": "engine-resolved",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 15,
+					"id": "track.engine.p4",
+					"name": "engine param 4",
+					"lane": "M1.white",
+					"range": [0, 127],
+					"semantics": "engine-resolved",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 16,
+					"id": "track.engine.p5",
+					"name": "engine param 5?",
+					"lane": "M1+shift.dark",
+					"range": [0, 127],
+					"semantics": "p-lock id gap 0x64-0x6A and 8 stored engine params suggest M1+shift lanes; untested",
+					"confidence": "speculative",
+					"source": ["XYF-PLOCKS", "XYF-WRITER"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 17,
+					"id": "track.engine.p6",
+					"name": "engine param 6?",
+					"lane": "M1+shift.mid",
+					"range": [0, 127],
+					"semantics": "p-lock id gap 0x64-0x6A and 8 stored engine params suggest M1+shift lanes; untested",
+					"confidence": "speculative",
+					"source": ["XYF-PLOCKS", "XYF-WRITER"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 18,
+					"id": "track.engine.p7",
+					"name": "engine param 7?",
+					"lane": "M1+shift.light",
+					"range": [0, 127],
+					"semantics": "p-lock id gap 0x64-0x6A and 8 stored engine params suggest M1+shift lanes; untested",
+					"confidence": "speculative",
+					"source": ["XYF-PLOCKS", "XYF-WRITER"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 19,
+					"id": "track.engine.p8",
+					"name": "engine param 8?",
+					"lane": "M1+shift.white",
+					"range": [0, 127],
+					"semantics": "p-lock id gap 0x64-0x6A and 8 stored engine params suggest M1+shift lanes; untested",
+					"confidence": "speculative",
+					"source": ["XYF-PLOCKS", "XYF-WRITER"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 20,
+					"id": "track.ampEnv.attack",
+					"name": "amp attack",
+					"lane": "M2.dark",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 21,
+					"id": "track.ampEnv.decay",
+					"name": "amp decay",
+					"lane": "M2.mid",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 22,
+					"id": "track.ampEnv.sustain",
+					"name": "amp sustain",
+					"lane": "M2.light",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 23,
+					"id": "track.ampEnv.release",
+					"name": "amp release",
+					"lane": "M2.white",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 24,
+					"id": "track.filterEnv.attack",
+					"name": "filter env attack",
+					"lane": "M2alt.dark",
+					"range": [0, 127],
+					"semantics": "M2 alternate page (click an encoder to switch amp/filter envelope)",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCKS", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 25,
+					"id": "track.filterEnv.decay",
+					"name": "filter env decay",
+					"lane": "M2alt.mid",
+					"range": [0, 127],
+					"semantics": "M2 alternate page (click an encoder to switch amp/filter envelope)",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCKS", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 26,
+					"id": "track.filterEnv.sustain",
+					"name": "filter env sustain",
+					"lane": "M2alt.light",
+					"range": [0, 127],
+					"semantics": "M2 alternate page (click an encoder to switch amp/filter envelope)",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCKS", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 27,
+					"id": "track.filterEnv.release",
+					"name": "filter env release",
+					"lane": "M2alt.white",
+					"range": [0, 127],
+					"semantics": "M2 alternate page (click an encoder to switch amp/filter envelope)",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCKS", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 28,
+					"id": "track.voice.playMode",
+					"name": "play mode poly/mono/legato",
+					"lane": "M2+shift.dark",
+					"range": [0, 127],
+					"semantics": "3-state enum; bucket thresholds unknown",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-WRITER", "XYF-SPATIAL", "TE-INST", "MIDIGUIDE"],
+					"sideEffect": "project",
+					"values": ["poly", "mono", "legato"],
+					"notes": "resolves the opxy-reactive 'CC28-31 conflict' in favour of the official chart"
+				},
+				{
+					"cc": 29,
+					"id": "track.voice.portamento",
+					"name": "portamento",
+					"lane": "M2+shift.mid",
+					"range": [0, 127],
+					"semantics": "0 = off, 1-127 = amount (midi.guide)",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-WRITER", "XYF-SPATIAL", "TE-INST", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 30,
+					"id": "track.voice.bendRange",
+					"name": "pitch-bend range",
+					"lane": "M2+shift.light",
+					"range": [0, 127],
+					"semantics": "off, 1-7 semitones, octave (midi.guide: 9 states); thresholds unknown",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-WRITER", "XYF-SPATIAL", "TE-INST", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 31,
+					"id": "track.voice.presetVolume",
+					"name": "preset (engine) volume",
+					"lane": "M2+shift.white",
+					"range": [0, 127],
+					"semantics": "independent of CC7 track level",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-WRITER", "XYF-SPATIAL", "TE-INST", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 32,
+					"id": "track.filter.cutoff",
+					"name": "filter cutoff",
+					"lane": "M3.dark",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 33,
+					"id": "track.filter.resonance",
+					"name": "resonance",
+					"lane": "M3.mid",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 34,
+					"id": "track.filter.envAmount",
+					"name": "filter envelope amount",
+					"lane": "M3.light",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 35,
+					"id": "track.filter.keyTracking",
+					"name": "key tracking",
+					"lane": "M3.white",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 36,
+					"id": "track.send.ext",
+					"name": "send to ext (aux out / external audio output)",
+					"lane": "M3+shift.dark",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "TE-INST", "XYF-WRITER", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 37,
+					"id": "track.send.tape",
+					"name": "send to tape",
+					"lane": "M3+shift.mid",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "TE-INST", "XYF-WRITER", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 38,
+					"id": "track.send.fx1",
+					"name": "send to FX I",
+					"lane": "M3+shift.light",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "TE-INST", "XYF-WRITER", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 39,
+					"id": "track.send.fx2",
+					"name": "send to FX II",
+					"lane": "M3+shift.white",
+					"range": [0, 127],
+					"confidence": "community-verified",
+					"source": ["SHEET", "TE-INST", "XYF-WRITER", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 40,
+					"id": "track.lfo.k1",
+					"name": "LFO knob 1 (speed / source)",
+					"lane": "M4.dark",
+					"range": [0, 127],
+					"semantics": "lane model: speed (random/tremolo/value), source (element/duck); chart label 'LFO destination' (synth) / 'LFO shape' (aux)",
+					"confidence": "conflicting",
+					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 41,
+					"id": "track.lfo.k2",
+					"name": "LFO knob 2 (amount)",
+					"lane": "M4.mid",
+					"range": [0, 127],
+					"semantics": "lane model: amount (tremolo: vibrato amount); chart label 'LFO parameter/envelope' / 'LFO onset/dest'",
+					"confidence": "conflicting",
+					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 42,
+					"id": "track.lfo.k3",
+					"name": "LFO knob 3 (destination)",
+					"lane": "M4.light",
+					"range": [0, 127],
+					"semantics": "midi.guide 'LFO parameter 3'; lane model: destination (tremolo: volume, duck: hold)",
+					"confidence": "community",
+					"source": ["MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 43,
+					"id": "track.lfo.k4",
+					"name": "LFO knob 4 (parameter)",
+					"lane": "M4.white",
+					"range": [0, 127],
+					"semantics": "midi.guide 'LFO parameter 4'; lane model: parameter (tremolo: envelope, duck: release)",
+					"confidence": "community",
+					"source": ["MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST"],
+					"sideEffect": "project"
+				}
+			],
+			"noKnownCc": [
+				"filter type",
+				"LFO type",
+				"engine/preset selection",
+				"preset settings (tuning, velocity sensitivity, mod routing, width, high-pass)",
+				"master saturator",
+				"master group levels/compressor/level"
+			],
+			"noKnownCcSource": ["VIBE-HUMAN", "TE-MIX", "TE-INST"]
+		},
+		"brain": {
+			"tracks": [9],
+			"channelDefault": 9,
+			"params": [
+				{
+					"cc": 12,
+					"id": "brain.mode",
+					"name": "manual/auto key detection?",
+					"lane": "M1.dark",
+					"range": [0, 127],
+					"semantics": "M1 dark",
+					"confidence": "derived",
+					"source": ["TE-AUX"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 13,
+					"id": "brain.key",
+					"name": "key?",
+					"lane": "M1.mid",
+					"range": [0, 127],
+					"semantics": "M1 mid; stored as 12 buckets",
+					"confidence": "derived",
+					"source": ["TE-AUX", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 14,
+					"id": "brain.scale",
+					"name": "scale?",
+					"lane": "M1.light",
+					"range": [0, 127],
+					"semantics": "M1 light; 7 buckets major..locrian",
+					"confidence": "derived",
+					"source": ["TE-AUX", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 15,
+					"id": "brain.link",
+					"name": "link channel",
+					"lane": "M1.white",
+					"range": [0, 127],
+					"semantics": "M1 white: link an instrument track to brain",
+					"confidence": "community",
+					"source": ["SHEET", "MIDIGUIDE", "TE-AUX"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 40,
+					"id": "brain.lfo.k1",
+					"name": "chart: LFO shape",
+					"range": [0, 127],
+					"semantics": "guide shows no M4 on brain; doubtful",
+					"confidence": "community",
+					"source": ["SHEET"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 41,
+					"id": "brain.lfo.k2",
+					"name": "chart: LFO onset/dest",
+					"range": [0, 127],
+					"semantics": "doubtful",
+					"confidence": "community",
+					"source": ["SHEET"],
+					"sideEffect": "project"
+				}
+			]
+		},
+		"punchIn": {
+			"tracks": [10],
+			"channelDefault": 10,
+			"params": [
+				{
+					"cc": 40,
+					"id": "punchIn.lfo.k1",
+					"name": "chart: LFO shape",
+					"range": [0, 127],
+					"semantics": "doubtful",
+					"confidence": "community",
+					"source": ["SHEET"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 41,
+					"id": "punchIn.lfo.k2",
+					"name": "chart: LFO onset/dest",
+					"range": [0, 127],
+					"semantics": "doubtful",
+					"confidence": "community",
+					"source": ["SHEET"],
+					"sideEffect": "project"
+				}
+			],
+			"notes": {
+				"semantics": "notes on ch10 trigger punch-in FX; lower octave -> percussion group, upper octave -> melodic group",
+				"observedNotes": [55, 60, 61, 62, 63, 70],
+				"confidence": "community-verified",
+				"source": ["LAUNCHPAD", "TE-AUX"],
+				"keyMapping": "key index = note - 53 (speculative)"
+			}
+		},
+		"externalMidi": {
+			"tracks": [11],
+			"channelDefault": 11,
+			"params": [
+				{
+					"cc": 12,
+					"id": "midiTrack.channel",
+					"name": "outgoing MIDI channel",
+					"lane": "M1.dark",
+					"range": [0, 127],
+					"semantics": "16 buckets, channel = index + 1",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-AUX-LOGS", "XYF-PLOCK-LOG"],
+					"sideEffect": "project",
+					"values": "16 buckets"
+				},
+				{
+					"cc": 13,
+					"id": "midiTrack.bank",
+					"name": "bank",
+					"lane": "M1.mid",
+					"range": [0, 127],
+					"semantics": "129 buckets: off, 1-128 (not every bucket reachable with 7 bits)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 14,
+					"id": "midiTrack.program",
+					"name": "program",
+					"lane": "M1.light",
+					"range": [0, 127],
+					"semantics": "129 buckets: off, 1-128",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 20,
+					"id": "midiTrack.slot1.value",
+					"name": "CC slot 1 value",
+					"lane": "M2.dark",
+					"range": [0, 127],
+					"semantics": "M2 knobs; slot table stored in these lanes",
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 21,
+					"id": "midiTrack.slot2.value",
+					"name": "CC slot 2 value",
+					"lane": "M2.mid",
+					"range": [0, 127],
+					"semantics": "M2 knobs; slot table stored in these lanes",
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 22,
+					"id": "midiTrack.slot3.value",
+					"name": "CC slot 3 value",
+					"lane": "M2.light",
+					"range": [0, 127],
+					"semantics": "M2 knobs; slot table stored in these lanes",
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 23,
+					"id": "midiTrack.slot4.value",
+					"name": "CC slot 4 value",
+					"lane": "M2.white",
+					"range": [0, 127],
+					"semantics": "M2 knobs; slot table stored in these lanes",
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 28,
+					"id": "midiTrack.slot1.number",
+					"name": "CC slot 1 number/on",
+					"lane": "M2+shift.dark",
+					"range": [0, 127],
+					"semantics": "M2+shift knobs",
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 29,
+					"id": "midiTrack.slot2.number",
+					"name": "CC slot 2 number/on",
+					"lane": "M2+shift.mid",
+					"range": [0, 127],
+					"semantics": "M2+shift knobs",
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 30,
+					"id": "midiTrack.slot3.number",
+					"name": "CC slot 3 number/on",
+					"lane": "M2+shift.light",
+					"range": [0, 127],
+					"semantics": "M2+shift knobs",
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 31,
+					"id": "midiTrack.slot4.number",
+					"name": "CC slot 4 number/on",
+					"lane": "M2+shift.white",
+					"range": [0, 127],
+					"semantics": "M2+shift knobs",
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 32,
+					"id": "midiTrack.slot5.value",
+					"name": "CC slot 5 value",
+					"lane": "M3.dark",
+					"range": [0, 127],
+					"semantics": "chart: 'send cc value' (M3 knobs)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 33,
+					"id": "midiTrack.slot6.value",
+					"name": "CC slot 6 value",
+					"lane": "M3.mid",
+					"range": [0, 127],
+					"semantics": "chart: 'send cc value' (M3 knobs)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 34,
+					"id": "midiTrack.slot7.value",
+					"name": "CC slot 7 value",
+					"lane": "M3.light",
+					"range": [0, 127],
+					"semantics": "chart: 'send cc value' (M3 knobs)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 35,
+					"id": "midiTrack.slot8.value",
+					"name": "CC slot 8 value",
+					"lane": "M3.white",
+					"range": [0, 127],
+					"semantics": "chart: 'send cc value' (M3 knobs)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 36,
+					"id": "midiTrack.slot5.number",
+					"name": "CC slot 5 number/on",
+					"lane": "M3+shift.dark",
+					"range": [0, 127],
+					"semantics": "chart: 'which cc' (M3+shift)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 37,
+					"id": "midiTrack.slot6.number",
+					"name": "CC slot 6 number/on",
+					"lane": "M3+shift.mid",
+					"range": [0, 127],
+					"semantics": "chart: 'which cc' (M3+shift)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 38,
+					"id": "midiTrack.slot7.number",
+					"name": "CC slot 7 number/on",
+					"lane": "M3+shift.light",
+					"range": [0, 127],
+					"semantics": "chart: 'which cc' (M3+shift)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 39,
+					"id": "midiTrack.slot8.number",
+					"name": "CC slot 8 number/on",
+					"lane": "M3+shift.white",
+					"range": [0, 127],
+					"semantics": "chart: 'which cc' (M3+shift)",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 40,
+					"id": "midiTrack.lfo.k1",
+					"name": "LFO speed",
+					"lane": "M4.dark",
+					"range": [0, 127],
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 41,
+					"id": "midiTrack.lfo.k2",
+					"name": "LFO amount",
+					"lane": "M4.mid",
+					"range": [0, 127],
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 42,
+					"id": "midiTrack.lfo.k3",
+					"name": "LFO destination (off/cc1/cc2...)",
+					"lane": "M4.light",
+					"range": [0, 127],
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 43,
+					"id": "midiTrack.lfo.k4",
+					"name": "LFO parameter",
+					"lane": "M4.white",
+					"range": [0, 127],
+					"confidence": "derived",
+					"source": ["XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				}
+			],
+			"notes": "opxy-reactive maps CC32-39 as 'user CC 1-8' (REACT-MAP) - contradicts the chart's value/number split"
+		},
+		"externalCv": {
+			"tracks": [12],
+			"channelDefault": 12,
+			"params": [
+				{
+					"cc": 32,
+					"id": "cv.hp",
+					"name": "HP cutoff",
+					"range": [0, 127],
+					"semantics": "midi.guide only; doubtful for a CV track",
+					"confidence": "community",
+					"source": ["MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 35,
+					"id": "cv.lp",
+					"name": "LP cutoff",
+					"range": [0, 127],
+					"semantics": "midi.guide only; doubtful",
+					"confidence": "community",
+					"source": ["MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 37,
+					"id": "cv.send.tape",
+					"name": "send to tape",
+					"range": [0, 127],
+					"semantics": "midi.guide only; doubtful",
+					"confidence": "community",
+					"source": ["MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 38,
+					"id": "cv.send.fx1",
+					"name": "send to FX I",
+					"range": [0, 127],
+					"semantics": "midi.guide only; doubtful",
+					"confidence": "community",
+					"source": ["MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 39,
+					"id": "cv.send.fx2",
+					"name": "send to FX II",
+					"range": [0, 127],
+					"semantics": "midi.guide only; doubtful",
+					"confidence": "community",
+					"source": ["MIDIGUIDE"],
+					"sideEffect": "project"
+				}
+			]
+		},
+		"externalAudio": {
+			"tracks": [13],
+			"channelDefault": 13,
+			"params": [
+				{
+					"cc": 12,
+					"id": "audioIn.source",
+					"name": "input source",
+					"lane": "M1.dark",
+					"range": [0, 127],
+					"semantics": "mic, headset, line, usb, main",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-AUX-LOGS", "TE-AUX", "XYF-PLOCK-LOG"],
+					"sideEffect": "project",
+					"values": ["mic", "headset", "line", "usb", "main"]
+				},
+				{
+					"cc": 13,
+					"id": "audioIn.drive",
+					"name": "drive",
+					"lane": "M1.mid",
+					"range": [0, 127],
+					"semantics": "analog inputs only",
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 15,
+					"id": "audioIn.mix",
+					"name": "mix into main output",
+					"lane": "M1.white",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 32,
+					"id": "audioIn.hp",
+					"name": "HP cutoff",
+					"lane": "M3.dark",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 35,
+					"id": "audioIn.lp",
+					"name": "LP cutoff",
+					"lane": "M3.white",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 37,
+					"id": "audioIn.send.tape",
+					"name": "send to tape",
+					"lane": "M3+shift.mid",
+					"range": [0, 127],
+					"semantics": "guide: shift + mid gray",
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 38,
+					"id": "audioIn.send.fx1",
+					"name": "send to FX I",
+					"lane": "M3+shift.light",
+					"range": [0, 127],
+					"semantics": "guide: shift + light gray",
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 39,
+					"id": "audioIn.send.fx2",
+					"name": "send to FX II",
+					"lane": "M3+shift.white",
+					"range": [0, 127],
+					"semantics": "guide: shift + white",
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project"
+				}
+			],
+			"notes": "M1 light 'level' is stored in the track-level lane, so level = CC7 (derived from XYF-AUX-LOGS); CC14 has no chart entry"
+		},
+		"tape": {
+			"tracks": [14],
+			"channelDefault": 14,
+			"params": [
+				{
+					"cc": 12,
+					"id": "tape.pitch",
+					"name": "pitch ('x speed')",
+					"lane": "M1.dark",
+					"range": [0, 127],
+					"semantics": "x1 default ... x10",
+					"confidence": "community-verified",
+					"source": ["SHEET", "XYF-AUX-LOGS", "XYF-PLOCK-LOG"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 13,
+					"id": "tape.speed",
+					"name": "speed",
+					"lane": "M1.mid",
+					"range": [0, 127],
+					"semantics": "100% centre; 50%-200%",
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 14,
+					"id": "tape.length",
+					"name": "length",
+					"lane": "M1.light",
+					"range": [0, 127],
+					"semantics": "guide M1 light = length; chart says 'key scale' (likely mis-transcription)",
+					"confidence": "conflicting",
+					"source": ["TE-AUX", "XYF-AUX-LOGS", "SHEET"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 15,
+					"id": "tape.mix",
+					"name": "mix",
+					"lane": "M1.white",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 32,
+					"id": "tape.hp",
+					"name": "HP cutoff",
+					"lane": "M3.dark",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 35,
+					"id": "tape.lp",
+					"name": "LP cutoff",
+					"lane": "M3.white",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 38,
+					"id": "tape.send.fx1",
+					"name": "send to FX I",
+					"lane": "M3+shift.light",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 39,
+					"id": "tape.send.fx2",
+					"name": "send to FX II",
+					"lane": "M3+shift.white",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project"
+				}
+			]
+		},
+		"fx": {
+			"tracks": [15, 16],
+			"channelDefault": [15, 16],
+			"params": [
+				{
+					"cc": 12,
+					"id": "fx.p1",
+					"name": "effect param 1",
+					"lane": "M1.dark",
+					"range": [0, 127],
+					"semantics": "effect-resolved, see fxEngines",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 13,
+					"id": "fx.p2",
+					"name": "effect param 2",
+					"lane": "M1.mid",
+					"range": [0, 127],
+					"semantics": "effect-resolved",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 14,
+					"id": "fx.p3",
+					"name": "effect param 3",
+					"lane": "M1.light",
+					"range": [0, 127],
+					"semantics": "effect-resolved",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 15,
+					"id": "fx.p4",
+					"name": "effect param 4",
+					"lane": "M1.white",
+					"range": [0, 127],
+					"semantics": "effect-resolved",
+					"confidence": "community",
+					"source": ["SHEET", "XYF-CCMAP"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 32,
+					"id": "fx.hp",
+					"name": "HP cutoff",
+					"lane": "M3.dark",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 35,
+					"id": "fx.lp",
+					"name": "LP cutoff",
+					"lane": "M3.white",
+					"range": [0, 127],
+					"confidence": "community",
+					"source": ["SHEET", "MIDIGUIDE"],
+					"sideEffect": "project"
+				},
+				{
+					"cc": 39,
+					"id": "fx.sendToFx2",
+					"name": "FX I -> FX II send (channel 15 only)",
+					"lane": "M3+shift.white",
+					"range": [0, 127],
+					"semantics": "guide: in FX I, shift + white",
+					"confidence": "community",
+					"source": ["SHEET", "TE-AUX"],
+					"sideEffect": "project",
+					"channel": [15]
+				}
+			]
+		},
+		"_common": {
+			"ccs": [7, 9, 10, 40, 41, 42, 43],
+			"note": "CC7/9/10 on every aux track (official); LFO lanes on tracks with an M4 LFO (derived)",
+			"evidence": "CC12 and CC40 receipt on aux tracks verified by xy-format p-lock capture (unnamed 126)"
+		}
+	},
+	"engines": {
+		"axis": {
+			"p1": "tone",
+			"p2": "ratio",
+			"p3": "shape",
+			"p4": "tremolo",
+			"confidence": "official",
+			"source": ["TE-SYN"],
+			"notes": "ratio display 0-50 detune, 51-100 ascending fifths"
+		},
+		"dissolve": {
+			"p1": "swarm",
+			"p2": "am",
+			"p3": "fm",
+			"p4": "detune",
+			"confidence": "official",
+			"source": ["TE-SYN"]
+		},
+		"epiano": {
+			"p1": "tone",
+			"p2": "texture",
+			"p3": "punch",
+			"p4": "tine",
+			"confidence": "official",
+			"source": ["TE-SYN", "TE-DL"],
+			"notes": "1.1.25: 'fix: incorrect parameter names on epiano screen'"
+		},
+		"hardsync": {
+			"p1": "freq",
+			"p2": "sub",
+			"p3": "noise",
+			"p4": "lowcut",
+			"confidence": "official",
+			"source": ["TE-SYN"]
+		},
+		"organ": {
+			"p1": "type",
+			"p2": "bass",
+			"p3": "tremolo amount",
+			"p4": "tremolo speed",
+			"confidence": "official",
+			"source": ["TE-SYN"]
+		},
+		"prism": {
+			"p1": "shape",
+			"p2": "ratio",
+			"p3": "detune",
+			"p4": "stereo",
+			"confidence": "official",
+			"source": ["TE-SYN"]
+		},
+		"simple": {
+			"p1": "shape",
+			"p2": "pw",
+			"p3": "noise",
+			"p4": "stereo",
+			"confidence": "official",
+			"source": ["TE-SYN"]
+		},
+		"wavetable": {
+			"p1": "table",
+			"p2": "position",
+			"p3": "warp",
+			"p4": "drift",
+			"confidence": "official",
+			"source": ["TE-SYN"],
+			"notes": "9 wavetables"
+		},
+		"drum": {
+			"p1": "tune",
+			"p2": "sample start",
+			"p3": "sample end",
+			"p4": "play mode",
+			"confidence": "community",
+			"source": ["REACT-MAP", "XYF-IMGMAP"],
+			"notes": "whether CC12-15 act on the selected drum key or all keys is unknown"
+		},
+		"sampler": {
+			"p1": "sample start",
+			"p2": "loop start",
+			"p3": "loop end",
+			"p4": "sample end",
+			"confidence": "community",
+			"source": ["REACT-MAP"]
+		},
+		"multisampler": {
+			"p1": "sample start",
+			"p2": "loop start",
+			"p3": "loop end",
+			"p4": "sample end",
+			"confidence": "community",
+			"source": ["REACT-MAP"]
+		},
+		"midi": {
+			"p1": "midi channel",
+			"p2": "bank",
+			"p3": "program",
+			"p4": null,
+			"confidence": "official",
+			"source": ["TE-SYN", "TE-AUX"],
+			"notes": "renamed from 'external' in 1.0.15; CC slots behave like the external MIDI aux track (derived)"
+		}
+	},
+	"fxEngines": {
+		"chorus": {
+			"p1": "rate",
+			"p2": "depth",
+			"p3": "feedback",
+			"p4": "stereo",
+			"confidence": "official",
+			"source": ["TE-FX"]
+		},
+		"delay": {
+			"p1": "size",
+			"p2": "amount",
+			"p3": "fine",
+			"p4": "dry",
+			"confidence": "official",
+			"source": ["TE-FX", "XYF-AUX-LOGS"],
+			"notes": "size has 8 steps micro..insane; guide describes 'fine' as feedback; default on FX I"
+		},
+		"distortion": {
+			"p1": "drive",
+			"p2": "amount",
+			"p3": "low cut",
+			"p4": "high cut",
+			"confidence": "official",
+			"source": ["TE-FX"]
+		},
+		"lofi": {
+			"p1": "rate",
+			"p2": "bits",
+			"p3": "quality",
+			"p4": "drift",
+			"confidence": "official",
+			"source": ["TE-FX"]
+		},
+		"phaser": {
+			"p1": "frequency",
+			"p2": "depth",
+			"p3": "rate",
+			"p4": "feedback",
+			"confidence": "official",
+			"source": ["TE-FX"],
+			"notes": "12-pole"
+		},
+		"reverb": {
+			"p1": "size",
+			"p2": "modulation",
+			"p3": "rate",
+			"p4": "feedback",
+			"confidence": "official",
+			"source": ["TE-FX", "XYF-AUX-LOGS"],
+			"notes": "guide describes 'rate' as tone and 'feedback' as dry/wet; default on FX II"
+		}
+	},
+	"fxTypeBytes": {
+		"delay": 0,
+		"reverb": 5,
+		"chorus": 12,
+		"phaser": 13,
+		"distortion": 14,
+		"lofi": 15,
+		"confidence": "community-verified",
+		"source": ["XYF-AUX-LOGS"],
+		"notes": ".xy storage enum; no CC selects FX type"
+	},
+	"channelVoice": [
+		{
+			"message": "noteOn/noteOff",
+			"status": "9n/8n",
+			"received": true,
+			"semantics": "ch N -> track N; velocity per preset velocity sensitivity",
+			"confidence": "community-verified",
+			"source": ["XYF-LEGACY", "STEMBOUNCE", "GEN-MAIN"]
+		},
+		{
+			"message": "drumKeys",
+			"notes": [53, 76],
+			"semantics": "24 drum keys = MIDI 53..76 (F3..E5, C4=60) left to right; sound per key is kit-dependent",
+			"confidence": "community-verified",
+			"source": ["DRUMUTIL", "DRUMTOOL", "XYF-DRUMPATHS", "VIBE-ENGINE", "DAWLESS-DRUM"],
+			"dissent": {
+				"claim": "48-71",
+				"source": ["DAWLESS-LIMITS", "XYF-CAP16"]
+			},
+			"exampleKitMap": {
+				"kick": 53,
+				"kick_alt": 54,
+				"snare": 55,
+				"snare_alt": 56,
+				"rim": 57,
+				"clap": 58,
+				"tambourine": 59,
+				"shaker": 60,
+				"closed_hat": 61,
+				"open_hat": 62,
+				"pedal_hat": 63,
+				"low_tom": 65,
+				"crash": 66,
+				"mid_tom": 67,
+				"ride": 68,
+				"high_tom": 69,
+				"conga_low": 71,
+				"conga_high": 72,
+				"cowbell": 73,
+				"guiro": 74,
+				"metal": 75,
+				"chi": 76,
+				"confidence": "community",
+				"source": ["VIBE-SPEC", "GEN-DRUM"],
+				"caution": "one kit's layout; xy-format found kit 'pp' puts voice 23 on the low-F key (XYF-DRUMPATHS)"
+			},
+			"noteNaming": "OP-XY sample filenames use C3 = 60 (e.g. unnamed-c3-121.wav at key 60) (DRUMUTIL)"
+		},
+		{
+			"message": "pitchBend",
+			"status": "En",
+			"received": true,
+			"semantics": "14-bit, centre 8192; range per preset (CC30); recorded as per-note automation",
+			"confidence": "community-verified",
+			"source": ["XYF-LEGACY", "MIDIGUIDE", "TE-DL"]
+		},
+		{
+			"message": "channelAftertouch",
+			"status": "Dn",
+			"received": true,
+			"semantics": "target set in preset mod settings; recorded",
+			"confidence": "community-verified",
+			"source": ["XYF-LEGACY", "TE-INST"]
+		},
+		{
+			"message": "polyAftertouch",
+			"status": "An",
+			"received": null,
+			"confidence": "speculative",
+			"source": []
+		},
+		{
+			"message": "modWheel",
+			"status": "Bn 01",
+			"received": true,
+			"semantics": "target set in preset mod settings; recorded",
+			"confidence": "community-verified",
+			"source": ["XYF-LEGACY", "TE-INST"]
+		},
+		{
+			"message": "sustain",
+			"status": "Bn 40",
+			"received": true,
+			"semantics": "holds notes until pedal up (1.1.15+); not applied to arpeggio notes (1.1.17)",
+			"confidence": "official",
+			"source": ["TE-DL"]
+		},
+		{
+			"message": "allSoundOff",
+			"status": "Bn 78 00",
+			"received": null,
+			"confidence": "speculative",
+			"source": ["VIBE-OUT"],
+			"notes": "sent by tools, effect never reported"
+		},
+		{
+			"message": "allNotesOff",
+			"status": "Bn 7B 00",
+			"received": null,
+			"confidence": "speculative",
+			"source": ["VIBE-OUT", "XYF-CC86"],
+			"notes": "sent by tools, effect never reported"
+		},
+		{
+			"message": "programChange",
+			"status": "Cn",
+			"received": null,
+			"confidence": "speculative",
+			"source": ["TE-DL"],
+			"notes": "the external MIDI track sends PC (p-lockable since 1.1.15 fix)"
+		}
+	],
+	"realtime": [
+		{
+			"message": "clock",
+			"byte": "F8",
+			"deviceSends": true,
+			"deviceReceives": true,
+			"semantics": "24 ppqn while playing; OP-XY follows external clock when clock in is enabled; idle stopped unit sends nothing (no clock, no active sensing) - verified with stock settings",
+			"confidence": "community-verified",
+			"idleSilent": {
+				"confidence": "verified",
+				"source": ["PROBE"]
+			},
+			"source": ["STEMBOUNCE", "OPXYSTEMS", "STEMX", "XYF-CAP16", "REACT-DESIGN", "PROBE"]
+		},
+		{
+			"message": "start",
+			"byte": "FA",
+			"deviceSends": true,
+			"deviceReceives": true,
+			"semantics": "sent on play; received with COM->M3 page 2 'transport receive'; first F8 after FA = beat 1",
+			"confidence": "community-verified",
+			"source": ["REACT-DESIGN", "STEMBOUNCE", "OPXYSTEMS"]
+		},
+		{
+			"message": "continue",
+			"byte": "FB",
+			"deviceSends": false,
+			"deviceReceives": null,
+			"confidence": "community",
+			"source": ["REACT-DESIGN"]
+		},
+		{
+			"message": "stop",
+			"byte": "FC",
+			"deviceSends": true,
+			"deviceReceives": true,
+			"confidence": "community-verified",
+			"source": ["REACT-DESIGN", "STEMBOUNCE", "OPXYSTEMS"]
+		},
+		{
+			"message": "songPositionPointer",
+			"byte": "F2",
+			"deviceSends": false,
+			"deviceReceives": null,
+			"confidence": "community",
+			"source": ["REACT-DESIGN"]
+		},
+		{
+			"message": "transportRelay",
+			"semantics": "incoming transport relayed to other connected MIDI devices (1.0.29)",
+			"confidence": "official",
+			"source": ["TE-DL"]
+		}
+	],
+	"sysex": {
+		"detail": "byte-level protocol lives in knowledge/firmware/te-sysex.json and docs/research/60-firmware.md section 4",
+		"identityRequest": {
+			"send": "F0 7E 7F 06 01 F7",
+			"replyLength": 17,
+			"observedReply": "F0 7E 21 06 02 00 20 76 21 00 01 00 00 00 00 00 F7",
+			"decode": {
+				"deviceId": 33,
+				"manufacturer": "00 20 76",
+				"family": 33,
+				"member": 1,
+				"sku": "TE033AS001",
+				"versionBytes": "zero - use GREET"
+			},
+			"safe": true,
+			"confidence": "verified",
+			"source": ["PROBE", "TE-UPD", "FW"]
+		},
+		"teFrame": {
+			"request": "F0 00 20 76 21 40 (0x60|rid>>7&0x1F) (rid&0x7F) cmd packed7... F7",
+			"response": "F0 00 20 76 21 40 (0x20|rid_hi) rid_lo cmd status packed7... F7",
+			"debugFrame": "F0 00 20 76 21 33 <ASCII> F7 - stop all traffic",
+			"status": {
+				"0": "ok",
+				"1": "error",
+				"2": "command not found",
+				"3": "bad request",
+				"16-63": "command-specific error",
+				"64+": "command-specific success / still working"
+			},
+			"packed7": "groups of <=7 bytes preceded by a byte of their MSBs (bit0 = first byte)",
+			"confidence": "verified",
+			"source": ["PROBE", "FW", "TE-UPD", "EPSYSEX"]
+		},
+		"commands": [
+			{
+				"cmd": 1,
+				"name": "GREET",
+				"payload": [],
+				"example": "F0 00 20 76 21 40 60 01 01 F7",
+				"observed": "product:OP-XY; mode:normal; os_version:1.1.33; sw_version:1.1.33; hw_rev:2; sku:TE033AS001 (+ serial, dsp_serial)",
+				"safe": true,
+				"privacy": "serial/dsp_serial/chip_id are device identifiers - keep local",
+				"confidence": "verified",
+				"source": ["PROBE", "TE-UPD"]
+			},
+			{
+				"cmd": 2,
+				"name": "ECHO",
+				"payload": "any",
+				"observed": "round-trips arbitrary bytes",
+				"safe": true,
+				"confidence": "verified",
+				"source": ["PROBE"]
+			},
+			{
+				"cmd": 3,
+				"name": "DFU",
+				"payload": "[01 01 00 C8] = enter bootloader via MIDI; [05] = exit",
+				"safe": false,
+				"policy": "HARD-BLOCK IN TRANSPORT - never send",
+				"confidence": "official",
+				"source": ["TE-UPD", "FW"]
+			},
+			{
+				"cmd": 5,
+				"name": "FILE",
+				"observed": "INIT + LIST work; root dirs drum/ (id 1) and synth/ (id 2), both empty on the owner's unit",
+				"safe": "INIT/LIST/GET/INFO read; PUT/DELETE/MOVE/META-SET write (owner approval)",
+				"confidence": "verified",
+				"source": ["PROBE", "FW"]
+			},
+			{
+				"cmd": 6,
+				"name": "SETTINGS",
+				"observed": "status 2 'command not found'",
+				"safe": true,
+				"confidence": "verified",
+				"source": ["PROBE"]
+			},
+			{
+				"cmd": 127,
+				"name": "PRODUCT_SPECIFIC",
+				"safe": false,
+				"policy": "never send",
+				"confidence": "official",
+				"source": ["TE-UPD"]
+			}
+		],
+		"echo": {
+			"foreignSysexEchoed": true,
+			"teFramesEchoed": false,
+			"filterRule": "drop incoming TE frames whose byte 6 has the 0x40 is-request bit",
+			"confidence": "verified",
+			"source": ["PROBE", "FW"]
+		},
+		"notes": [
+			"MIDI monitor shows incoming sysex (TE-COM)",
+			"1.0.29 fixed a crash on certain sysex messages - never fuzz (TE-DL)",
+			"Web MIDI requires requestMIDIAccess({sysex:true})",
+			"Chrome 152 on macOS broke Web MIDI per TE's updater (FW)"
+		]
+	},
+	"outboundNormalMode": [
+		{
+			"what": "clock/start/stop",
+			"gate": "COM midi clock (+ M3 device clock); transport rides the clock toggle",
+			"confidence": "community-verified",
+			"source": ["REACT-DESIGN", "STEMBOUNCE"]
+		},
+		{
+			"what": "sequenced notes",
+			"gate": "project config midi out-channel per track (or midi engine / T11) + notes out",
+			"confidence": "community",
+			"source": ["REACT-DESIGN", "XYF-PROJCFG"]
+		},
+		{
+			"what": "pitch-bend strip",
+			"notes": "transmits continuously; coalesce",
+			"confidence": "community",
+			"source": ["REACT-DESIGN"]
+		},
+		{
+			"what": "instrument/aux encoder moves",
+			"sends": false,
+			"confidence": "community-verified",
+			"source": ["REACT-DESIGN", "DAWLESS-CC106"]
+		},
+		{
+			"what": "external MIDI track CCs / bank / program",
+			"confidence": "official",
+			"source": ["TE-AUX", "TE-SYN", "TE-DL"]
+		},
+		{
+			"what": "midi echo",
+			"notes": "default ON: foreign SysEx echoed, TE frames not; channel-message scope untested",
+			"confidence": "verified",
+			"source": ["PROBE", "TE-COM", "TE-DL"]
+		}
+	],
+	"controllerModeOut": {
+		"enter": "COM -> M2",
+		"exit": "shift + com",
+		"channel": "shift + dark gray (default unknown; parser example shows ch1)",
+		"knobMode": "shift + mid gray: absolute 0-127 (default) | relative two's complement (1-63 cw, 65-127 ccw)",
+		"octaveButtons": "shift + light gray enables/disables -/+",
+		"confidence": "official",
+		"source": ["TE-COM", "DECK-BRIDGE"],
+		"map": [
+			{
+				"control": "encoder turn dark/mid/light/white",
+				"type": "cc",
+				"numbers": [1, 2, 3, 4]
+			},
+			{
+				"control": "encoder click dark/mid/light/white",
+				"type": "cc",
+				"numbers": [15, 16, 17, 18],
+				"remoteKeyIndex": [10, 11, 12, 13]
+			},
+			{
+				"control": "project",
+				"type": "cc",
+				"numbers": [5],
+				"remoteKeyIndex": [0],
+				"censusName": "key_pen"
+			},
+			{
+				"control": "tempo",
+				"type": "cc",
+				"numbers": [6],
+				"remoteKeyIndex": [1],
+				"censusName": "key_metronome"
+			},
+			{
+				"control": "instrument, auxiliary, arranger, mixer",
+				"type": "cc",
+				"numbers": [7, 8, 9, 10],
+				"remoteKeyIndex": [2, 3, 4, 5],
+				"censusName": "mod1-mod4"
+			},
+			{
+				"control": "M1-M4",
+				"type": "cc",
+				"numbers": [11, 12, 13, 14],
+				"remoteKeyIndex": [6, 7, 8, 9],
+				"censusName": "mod5-mod8"
+			},
+			{
+				"control": "track 1-8",
+				"type": "cc",
+				"numbers": [19, 20, 21, 22, 23, 24, 25, 26],
+				"remoteKeyIndex": [14, 15, 16, 17, 18, 19, 20, 21],
+				"censusName": "mod9-mod16"
+			},
+			{
+				"control": "player, sample, com, bar",
+				"type": "cc",
+				"numbers": [27, 28, 29, 30],
+				"remoteKeyIndex": [22, 23, 24, 25],
+				"censusName": "key_seq, key_audio, key_com, key_bar"
+			},
+			{
+				"control": "record, play, stop",
+				"type": "cc",
+				"numbers": [55, 56, 57],
+				"remoteKeyIndex": [50, 51, 52],
+				"values": "127 press / 0 release (true hold)"
+			},
+			{
+				"control": "minus, plus, shift",
+				"type": "cc",
+				"numbers": [58, 59, 60],
+				"remoteKeyIndex": [53, 54, 55]
+			},
+			{
+				"control": "step 1-16",
+				"type": "cc",
+				"numbers": [61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76],
+				"remoteKeyIndex": [56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71]
+			},
+			{
+				"control": "keyboard low F..high E",
+				"type": "note",
+				"numbers": [
+					53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+					75, 76
+				],
+				"remoteKeyIndex": [
+					26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+					48, 49
+				]
+			},
+			{
+				"control": "volume knob",
+				"type": null,
+				"numbers": [],
+				"notes": "transmits nothing"
+			}
+		],
+		"mapConfidence": "community-verified (bench census) ; physical names via remote-key offset = derived",
+		"mapSource": ["DECK-CENSUS", "DECK-SCHEMA", "SHEET", "DAWLESS-CC106"],
+		"notes": "non-transport CC keys send press+release together (no holds); transport keys report holds"
+	},
+	"conflicts": [
+		{
+			"topic": "CC80 scaling",
+			"candidates": ["linear 40-220 BPM", "BPM = 2*v"],
+			"source": ["MIDIGUIDE", "VIBE-TEMPO"]
+		},
+		{
+			"topic": "CC86 naming",
+			"candidates": ["3-digit prefix", "3-digit suffix"],
+			"source": ["XYF-CC86", "MIDIGUIDE"]
+		},
+		{
+			"topic": "CC40/41 labels",
+			"candidates": [
+				"LFO destination / parameter (chart)",
+				"LFO knobs 1/2 = speed/amount (lane model)",
+				"LFO parameter 1/2 (midi.guide)"
+			],
+			"source": ["SHEET", "XYF-AUX-LOGS", "MIDIGUIDE"]
+		},
+		{
+			"topic": "CC90 channel 4 (blend)",
+			"candidates": ["works (official lists ch1-4)", "no working CC (opxy-reactive)"],
+			"source": ["TE-MIDI", "REACT-DESIGN"]
+		},
+		{
+			"topic": "CC28-31 identity",
+			"resolution": "official chart meanings (play mode, portamento, bend range, preset volume)",
+			"source": ["XYF-WRITER", "XYF-SPATIAL", "XYF-PLOCKS", "REACT-MAP"]
+		},
+		{
+			"topic": "xy-format CC table column shift",
+			"resolution": "'Link channel'/'LFO shape' belong to Brain, not Sample",
+			"source": ["SHEET", "XYF-CCMAP"]
+		},
+		{
+			"topic": "tape CC14",
+			"candidates": ["length (guide M1 light)", "key scale (chart)"],
+			"source": ["TE-AUX", "SHEET"]
+		},
+		{
+			"topic": "external MIDI CC32-39",
+			"candidates": ["value(32-35)/which-cc(36-39) (chart)", "user CC 1-8 (opxy-reactive)"],
+			"source": ["SHEET", "REACT-MAP"]
+		},
+		{
+			"topic": "drum base note",
+			"candidates": ["53 (F3)", "48 (C3)"],
+			"source": ["DRUMUTIL", "XYF-DRUMPATHS", "DAWLESS-LIMITS", "XYF-CAP16"]
+		},
+		{
+			"topic": "GM drum map claim",
+			"resolution": "wrong for OP-XY (musical-coding-assistant.md)",
+			"source": ["VIBE-MUSIC", "VIBE-SPEC"]
+		}
+	]
+}
