@@ -149,6 +149,13 @@ Implications:
   (`workspace.xy`), write projects/presets, then close the session to return the device to MIDI mode.
   Entering MTP still needs the owner (com → M4) unless we find Field Kit's SysEx command.
 
+## 2026-09-26 — First end-to-end test of the app (owner, Chrome, live site)
+
+The deployed `/lab` page (https://neovand.github.io/op-xy-agent/lab, device layer from
+`src/lib/device`) was tested by the owner in desktop Chrome with Web MIDI + SysEx permission: **connect
+works** (identity + GREET → OP-XY / 1.1.33 / hw rev 2 / TE033AS001, serial hidden), **play/stop and
+track mutes work from the browser**. First proof that the static web app controls the real device.
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers
