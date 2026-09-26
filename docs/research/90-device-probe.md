@@ -64,7 +64,7 @@ echoes of our own output (or the owner turns echo off in COM) to avoid feedback 
 
 ## Pending device tests (need the owner or a state change)
 
-1. Firmware version: read it from the device (COM / about screen) — owner to report. Record here.
+1. ~~Firmware version~~ — owner reports **OS 1.1.33** (2026-09-26).
 2. Enter MTP mode → `usbdesc.py` → does a class-0x06 interface appear? PID? Can Chrome WebUSB open it?
 3. Transport: send `FA`/`FC` (start/stop) — changes playback state (harmless, but announce).
 4. Clock out: press play on the device, observe `F8` stream and SPP.

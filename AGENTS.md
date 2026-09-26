@@ -13,7 +13,10 @@ Where things live:
 - `docs/research/NN-*.md` — our research notes (committed). `docs/research/90-device-probe.md` logs
   every message ever sent to the owner's device.
 - `knowledge/` — curated machine-readable data the app ships (CC maps, schemas, …).
-  `knowledge/official/` is the scraped TE manual: **git-ignored** until redistribution is cleared.
+  `knowledge/official/` is the verbatim scrape of TE's manual: **always git-ignored**, source material
+  only. The app ships **our own reworded, agent-friendly manual** (`knowledge/manual/`, see
+  `docs/DECISIONS.md` D2). Never commit or ship verbatim TE manual text.
+- Reference firmware: **OS 1.1.33** (owner's device). Decisions log: `docs/DECISIONS.md`.
 - `research/repos/` — shallow clones of community projects (git-ignored; `scripts/fetch-research.sh`).
   `research/firmware/` — public firmware downloads (git-ignored). `research/device/` — probe scripts.
 

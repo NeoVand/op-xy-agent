@@ -37,6 +37,8 @@ device.
 - **Grassroots.** TE staff are supportive but provide no files. Everything comes from public
   sources: the online guide, public firmware downloads, community reverse engineering, and probing
   our own device.
+- **Our own manual.** TE is fine with us using the manual's content if it is reworded, so we write our
+  own agent-friendly manual (committed, shipped) and keep the verbatim scrape local as source material.
 - **Never harm the device.** Read-only probes are fine; anything that changes device state
   (settings, projects, files, firmware) is announced to the user first. Never flash firmware.
 - **Deterministic core, AI on top.** The LLM produces typed musical intent; deterministic,
@@ -49,7 +51,8 @@ device.
 
 - User's OP-XY is connected over USB, stock settings. USB vendor `teenage engineering`, product
   `OP-XY`, VID `9063` (0x2367), PID `32801` (0x8021).
-- Latest public firmware: OP-XY OS 1.1.33 (2026-09-02). Online guide labelled v1.1.15.
+- Owner's device firmware: **OS 1.1.33** (latest public, 2026-09-02) — our reference firmware.
+  Online guide labelled v1.1.15, so changelog entries after 1.1.15 are manual errata.
 - Keys in `.env`: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (never commit or print).
 - Stack: SvelteKit 2 + Svelte 5 (runes) + TS + Tailwind 4, static adapter, pnpm, vitest, playwright.
 - Prior art by the user: `~/repos/midilab` (MIDI Lab course; own MIDI parser, SMF codec, synth).
