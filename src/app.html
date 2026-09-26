@@ -1,9 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="text-scale" content="scale" />
+		<meta name="color-scheme" content="dark light" />
+		<meta name="theme-color" content="#0f0e12" />
+		<script>
+			// Apply the saved theme before first paint, so there is no flash of the wrong one.
+			// The key must match THEME_STORAGE_KEY in src/lib/ui/theme.svelte.ts.
+			try {
+				var saved = localStorage.getItem('opxy:theme');
+				if (saved === 'light' || saved === 'dark') {
+					document.documentElement.dataset.theme = saved;
+					if (saved === 'light') {
+						document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f5f5');
+					}
+				}
+			} catch (e) {
+				// Storage blocked: stay on the default (dark) theme.
+			}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

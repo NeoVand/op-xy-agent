@@ -1,3 +1,231 @@
 @import 'tailwindcss';
-@plugin '@tailwindcss/forms';
+@import '../lib/ui/tokens.css';
+
+/* Forms plugin only styles elements that opt in with `form-*` classes, so its default grey borders
+ * and blue focus rings never leak into our primitives. */
+@plugin '@tailwindcss/forms' {
+	strategy: 'class';
+}
 @plugin '@tailwindcss/typography';
+
+/* Themes are driven by data-theme on <html> (set before paint in app.html), not by the OS. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+@custom-variant light (&:where([data-theme='light'], [data-theme='light'] *));
+
+/*
+ * Tailwind theme = our tokens. `inline` makes utilities reference the --xy-* variables directly, so a
+ * [data-theme] attribute on any subtree re-themes it. Tailwind's default palette, radii, shadows and
+ * heavy weights are removed on purpose: if a utility is not listed here, it is not part of the design
+ * language (see docs/DESIGN.md).
+ */
+@theme inline {
+	--color-*: initial;
+	--color-black: #000000;
+	--color-white: #ffffff;
+
+	--color-ink: var(--xy-ink);
+	--color-paper: var(--xy-paper);
+	--color-ramp-0: var(--xy-ramp-0);
+	--color-ramp-1: var(--xy-ramp-1);
+	--color-ramp-2: var(--xy-ramp-2);
+	--color-ramp-3: var(--xy-ramp-3);
+	--color-ramp-4: var(--xy-ramp-4);
+	--color-ramp-5: var(--xy-ramp-5);
+	--color-ramp-6: var(--xy-ramp-6);
+	--color-ramp-7: var(--xy-ramp-7);
+	--color-red: var(--xy-red);
+	--color-red-screen: var(--xy-red-screen);
+
+	--color-bg: var(--xy-bg);
+	--color-surface: var(--xy-surface);
+	--color-raised: var(--xy-surface-raised);
+	--color-sunken: var(--xy-surface-sunken);
+	--color-hover: var(--xy-hover);
+	--color-line: var(--xy-line);
+	--color-line-strong: var(--xy-line-strong);
+	--color-line-control: var(--xy-line-control);
+	--color-fg: var(--xy-fg);
+	--color-fg-muted: var(--xy-fg-muted);
+	--color-fg-subtle: var(--xy-fg-subtle);
+	--color-fg-faint: var(--xy-fg-faint);
+	--color-fg-inverse: var(--xy-fg-inverse);
+	--color-accent: var(--xy-accent);
+	--color-accent-text: var(--xy-accent-text);
+	--color-accent-fg: var(--xy-accent-fg);
+	--color-focus: var(--xy-focus);
+
+	--color-screen: var(--xy-scr-bg);
+	--color-screen-fg: var(--xy-scr-fg);
+	--color-screen-muted: var(--xy-scr-muted);
+	--color-screen-card: var(--xy-scr-card);
+	--color-screen-card-fg: var(--xy-scr-card-fg);
+
+	--color-mat-body: var(--xy-mat-body);
+	--color-mat-gap: var(--xy-mat-gap);
+	--color-mat-tile: var(--xy-mat-tile);
+	--color-mat-cap: var(--xy-mat-cap);
+	--color-mat-legend: var(--xy-mat-legend);
+
+	--font-*: initial;
+	--font-sans: var(--xy-font-sans);
+	--font-mono: var(--xy-font-mono);
+
+	--text-*: initial;
+	--text-2xs: var(--xy-text-2xs);
+	--text-2xs--line-height: var(--xy-leading-2xs);
+	--text-xs: var(--xy-text-xs);
+	--text-xs--line-height: var(--xy-leading-xs);
+	--text-sm: var(--xy-text-sm);
+	--text-sm--line-height: var(--xy-leading-sm);
+	--text-base: var(--xy-text-base);
+	--text-base--line-height: var(--xy-leading-base);
+	--text-lg: var(--xy-text-lg);
+	--text-lg--line-height: var(--xy-leading-lg);
+	--text-xl: var(--xy-text-xl);
+	--text-xl--line-height: var(--xy-leading-xl);
+	--text-2xl: var(--xy-text-2xl);
+	--text-2xl--line-height: var(--xy-leading-2xl);
+	--text-2xl--letter-spacing: var(--xy-tracking-display);
+	--text-3xl: var(--xy-text-3xl);
+	--text-3xl--line-height: var(--xy-leading-3xl);
+	--text-3xl--letter-spacing: var(--xy-tracking-display);
+	--text-4xl: var(--xy-text-4xl);
+	--text-4xl--line-height: var(--xy-leading-4xl);
+	--text-4xl--letter-spacing: var(--xy-tracking-display);
+	--text-5xl: var(--xy-text-5xl);
+	--text-5xl--line-height: var(--xy-leading-5xl);
+	--text-5xl--letter-spacing: var(--xy-tracking-display);
+
+	/* No bold: TE never shouts. Emphasis is size, colour or at most 500. */
+	--font-weight-*: initial;
+	--font-weight-thin: var(--xy-weight-thin);
+	--font-weight-light: var(--xy-weight-light);
+	--font-weight-normal: var(--xy-weight-regular);
+	--font-weight-medium: var(--xy-weight-medium);
+
+	--tracking-display: var(--xy-tracking-display);
+	--tracking-label: var(--xy-tracking-label);
+
+	--spacing: 0.25rem;
+	--spacing-pitch: var(--xy-pitch);
+	--spacing-gap: var(--xy-gap);
+
+	--radius-*: initial;
+	--radius-card: var(--xy-radius-card);
+	--radius-tile: var(--xy-radius-tile);
+	--radius-screen: var(--xy-radius-screen);
+	--radius-body: var(--xy-radius-body);
+	--radius-cap: var(--xy-radius-cap);
+
+	--shadow-*: initial;
+	--shadow-tile: var(--xy-shadow-tile);
+	--shadow-cap: var(--xy-shadow-cap);
+	--shadow-cap-pressed: var(--xy-shadow-cap-pressed);
+	--shadow-plate: var(--xy-shadow-plate);
+	--shadow-float: var(--xy-shadow-float);
+	--shadow-glow-white: var(--xy-glow-white);
+	--shadow-glow-red: var(--xy-glow-red);
+	--inset-shadow-*: initial;
+	--inset-shadow-recess: var(--xy-shadow-recess);
+
+	--ease-press: var(--xy-ease-press);
+	--ease-release: var(--xy-ease-release);
+	--ease-standard: var(--xy-ease-standard);
+	--ease-exit: var(--xy-ease-exit);
+	--ease-decay: var(--xy-ease-decay);
+}
+
+@layer base {
+	html {
+		background-color: var(--xy-bg);
+		color: var(--xy-fg);
+		font-family: var(--xy-font-sans);
+		font-kerning: normal;
+		font-optical-sizing: auto;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-rendering: optimizeLegibility;
+		-webkit-tap-highlight-color: transparent;
+		scrollbar-color: var(--xy-line-strong) transparent;
+	}
+
+	body {
+		min-height: 100dvh;
+		font-size: var(--xy-text-base);
+		line-height: var(--xy-leading-base);
+		font-weight: var(--xy-weight-regular);
+	}
+
+	::selection {
+		background-color: var(--xy-selection);
+		color: var(--xy-fg);
+	}
+
+	/* One focus style everywhere: a warm-white (ink on paper) ring, never red, never blue. */
+	:focus-visible {
+		outline: 2px solid var(--xy-focus);
+		outline-offset: 2px;
+	}
+
+	code,
+	kbd,
+	samp,
+	pre {
+		font-family: var(--xy-font-mono);
+		font-size: 0.92em;
+	}
+
+	a {
+		color: inherit;
+		text-decoration-color: var(--xy-line-strong);
+		text-underline-offset: 0.2em;
+		transition: text-decoration-color var(--xy-dur-quick) var(--xy-ease-standard);
+	}
+
+	a:hover {
+		text-decoration-color: currentColor;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4 {
+		font-weight: var(--xy-weight-light);
+		text-wrap: balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+}
+
+/* Long-form text (agent answers, manual pages): use `prose prose-xy`. */
+@utility prose-xy {
+	--tw-prose-body: var(--xy-fg-muted);
+	--tw-prose-headings: var(--xy-fg);
+	--tw-prose-lead: var(--xy-fg-muted);
+	--tw-prose-links: var(--xy-fg);
+	--tw-prose-bold: var(--xy-fg);
+	--tw-prose-counters: var(--xy-fg-subtle);
+	--tw-prose-bullets: var(--xy-fg-faint);
+	--tw-prose-hr: var(--xy-line);
+	--tw-prose-quotes: var(--xy-fg);
+	--tw-prose-quote-borders: var(--xy-line-strong);
+	--tw-prose-captions: var(--xy-fg-subtle);
+	--tw-prose-kbd: var(--xy-fg);
+	--tw-prose-kbd-shadows: var(--xy-line-strong);
+	--tw-prose-code: var(--xy-fg);
+	--tw-prose-pre-code: var(--xy-fg-muted);
+	--tw-prose-pre-bg: var(--xy-surface-sunken);
+	--tw-prose-th-borders: var(--xy-line-strong);
+	--tw-prose-td-borders: var(--xy-line);
+	font-family: var(--xy-font-sans);
+
+	& :where(h1, h2, h3, h4):not(:where([class~='not-prose'] *)) {
+		font-weight: var(--xy-weight-light);
+	}
+
+	& :where(strong):not(:where([class~='not-prose'] *)) {
+		font-weight: var(--xy-weight-medium);
+	}
+}

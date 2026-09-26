@@ -5,6 +5,8 @@ import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+	// Honour a PORT handed to us by the harness; fall back to Vite's default.
+	server: { port: Number(process.env.PORT) || 5173 },
 	plugins: [
 		tailwindcss(),
 		sveltekit({

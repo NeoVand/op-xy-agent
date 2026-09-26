@@ -1,0 +1,372 @@
+/*
+ * OP-XY Agent design tokens (v0).
+ *
+ * Plain CSS custom properties, framework-agnostic: use them in component <style> blocks, inline SVG
+ * and (via getComputedStyle) canvas. Tailwind utilities are mapped onto them in
+ * src/routes/layout.css. Every token is prefixed `--xy-` so it can never collide with Tailwind's
+ * own theme variables.
+ *
+ * The rules behind these numbers live in docs/DESIGN.md. In short:
+ *   - Eight greys and one red. The device's 8-tone ramp is the whole neutral system; red means
+ *     "live" (record, writing to the device, destructive) and nothing else.
+ *   - One tile = the device's 15.5 mm key pitch = 4rem. Everything snaps to 1/16 of a tile.
+ *   - Dark ("anodised") is the primary theme; light ("guide") is the paper-and-ink alternative.
+ */
+
+:root {
+	/* ---------------------------------------------------------------- palette (theme-free) */
+
+	/* The 8-tone ramp: step tiles, encoder caps and the screen's header bar all use it. */
+	--xy-ramp-0: #16161e;
+	--xy-ramp-1: #2f2f37;
+	--xy-ramp-2: #484850;
+	--xy-ramp-3: #616169;
+	--xy-ramp-4: #7a7a82;
+	--xy-ramp-5: #96969b;
+	--xy-ramp-6: #afafb4;
+	--xy-ramp-7: #f7f5f5;
+
+	/* Ink is darker than ramp-0 so the device's black screen glass (#000) still reads as glass. */
+	--xy-ink: #0f0e12;
+	--xy-paper: #f7f5f5;
+	--xy-black: #000000;
+	--xy-white: #ffffff;
+
+	/* Red, the only accent. LED/record red is orange-leaning; the screen draws a deeper red. */
+	--xy-red: #ff4d00;
+	--xy-red-screen: #e5371b;
+	/* Red that passes 4.5:1 as small text on paper (5.2:1); only the light theme needs it. */
+	--xy-red-text-on-paper: #c42e0f;
+
+	/* ---------------------------------------------------------------- device materials
+	 * Tones of the physical object, for the replica and anything that depicts hardware.
+	 * Sampled from studio renders; they do not change with the theme (the device stays black).
+	 */
+	--xy-mat-body: #26282c; /* black anodised aluminium */
+	--xy-mat-rim: #45484f; /* specular highlight on the chamfered rim */
+	--xy-mat-gap: #08090b; /* the dark recess between tiles */
+	--xy-mat-tile: #2e2f32;
+	--xy-mat-cap: #2b2c2f; /* a hair darker than its tile */
+	--xy-mat-legend: #ecebe7; /* warm off-white print */
+	--xy-mat-glass: #141517; /* screen bezel */
+	--xy-mat-switch: #d0cecb; /* the power-switch tab */
+	--xy-mat-step-1: #434448; /* step tiles, in pairs: steps 1-2 ... 15-16 */
+	--xy-mat-step-2: #5a6066;
+	--xy-mat-step-3: #707479;
+	--xy-mat-step-4: #8e9698;
+	--xy-mat-step-5: #9a9fa3;
+	--xy-mat-step-6: #afafaf;
+	--xy-mat-step-7: #b7b5b3;
+	--xy-mat-step-8: #cecbc9;
+	--xy-mat-enc-1: #45484c; /* encoder caps: dark, mid, light, white */
+	--xy-mat-enc-2: #7c828c;
+	--xy-mat-enc-3: #b5b5b6;
+	--xy-mat-enc-4: #e9e9ea;
+
+	/* ---------------------------------------------------------------- screen language
+	 * The device display is always black glass, whatever the app theme.
+	 */
+	--xy-scr-bg: var(--xy-black);
+	--xy-scr-fg: var(--xy-paper);
+	--xy-scr-muted: var(--xy-ramp-5);
+	--xy-scr-card: var(--xy-paper);
+	--xy-scr-card-fg: var(--xy-ink);
+	--xy-scr-select: var(--xy-ramp-1);
+	--xy-scr-red: var(--xy-red-screen);
+
+	/* ---------------------------------------------------------------- LEDs
+	 * Every LED is one of: off, dim, white, red. Lit LEDs glow; off LEDs are dark windows.
+	 * The per-theme values (white, dim, off, glows) live in the theme blocks below.
+	 */
+	--xy-led-red: var(--xy-red);
+
+	/* ---------------------------------------------------------------- type */
+	--xy-font-sans:
+		'Work Sans Variable', 'Work Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+		'Helvetica Neue', Arial, sans-serif;
+	--xy-font-mono:
+		'Red Hat Mono Variable', 'Red Hat Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+	/* Sizes follow the traditional typographic scale; the display steps (12, 18, 24, 36, 48, 72)
+	 * alternate perfect fifths (2:3) and fourths (3:4). Line heights sit on a 4px grid. */
+	--xy-text-2xs: 0.6875rem; /* 11 */
+	--xy-leading-2xs: 1rem;
+	--xy-text-xs: 0.75rem; /* 12 */
+	--xy-leading-xs: 1rem;
+	--xy-text-sm: 0.875rem; /* 14 */
+	--xy-leading-sm: 1.25rem;
+	--xy-text-base: 1rem; /* 16 */
+	--xy-leading-base: 1.5rem;
+	--xy-text-lg: 1.125rem; /* 18: the device screen's body size */
+	--xy-leading-lg: 1.75rem;
+	--xy-text-xl: 1.5rem; /* 24 */
+	--xy-leading-xl: 2rem;
+	--xy-text-2xl: 2.25rem; /* 36 */
+	--xy-leading-2xl: 2.5rem;
+	--xy-text-3xl: 3rem; /* 48 */
+	--xy-leading-3xl: 3.25rem;
+	--xy-text-4xl: 4.5rem; /* 72 */
+	--xy-leading-4xl: 4.5rem;
+	--xy-text-5xl: 6rem; /* 96 */
+	--xy-leading-5xl: 6rem;
+
+	/* Light at display sizes, regular for reading, medium only to rescue tiny labels. */
+	--xy-weight-thin: 250;
+	--xy-weight-light: 300;
+	--xy-weight-regular: 400;
+	--xy-weight-medium: 500;
+
+	--xy-tracking-display: -0.012em;
+	--xy-tracking-label: 0.01em;
+
+	/* ---------------------------------------------------------------- space: the tile rhythm
+	 * The OP-XY is a 17 x 6 grid of 15.5 mm tiles. One pitch = 4rem (64px at 16px root).
+	 * The gap between tiles (~0.9 mm) is 1/16 pitch = 0.25rem, Tailwind's spacing unit.
+	 */
+	--xy-pitch: 4rem;
+	--xy-gap: 0.25rem;
+	--xy-space-1: 0.25rem; /* 1/16 tile: the gap */
+	--xy-space-2: 0.5rem; /* 1/8 */
+	--xy-space-3: 0.75rem; /* 3/16 */
+	--xy-space-4: 1rem; /* 1/4 */
+	--xy-space-6: 1.5rem; /* 3/8 */
+	--xy-space-8: 2rem; /* 1/2 */
+	--xy-space-12: 3rem; /* 3/4 */
+	--xy-space-16: 4rem; /* 1 tile */
+	--xy-space-24: 6rem; /* 1.5 tiles: the wide accidental tiles */
+	--xy-space-32: 8rem; /* 2 tiles: encoders, speaker */
+
+	/* Key geometry, as fractions of a tile: keycap = 0.606, LED window = 0.113. */
+	--xy-key-lg: 4rem;
+	--xy-key-md: 3rem;
+	--xy-key-sm: 2.25rem;
+	--xy-cap-ratio: 0.606;
+	--xy-led-size: 0.4375rem;
+
+	/* ---------------------------------------------------------------- radii
+	 * Each radius comes from a physical part, so hierarchy is built in.
+	 */
+	--xy-radius-card: 0.25rem; /* white cards on the device screen */
+	--xy-radius-tile: 0.3125rem; /* 1.25 mm tile corner at tile scale: keys, inputs, chips */
+	--xy-radius-screen: 0.5rem; /* the display's rounded active area */
+	--xy-radius-body: 1.25rem; /* 5 mm body corner at tile scale: big containers only */
+	--xy-radius-cap: 999px; /* round caps; stadium when stretched by text */
+
+	/* ---------------------------------------------------------------- motion
+	 * Mechanical, not springy: keys go down instantly and come back with a tiny rebound; LEDs snap
+	 * on and decay off. Nothing floats in.
+	 */
+	--xy-dur-press: 50ms;
+	--xy-dur-release: 140ms;
+	--xy-dur-quick: 120ms;
+	--xy-dur-base: 200ms;
+	--xy-dur-slow: 360ms;
+	--xy-dur-led-on: 30ms;
+	--xy-dur-led-off: 260ms;
+	--xy-dur-step: 55ms; /* one step of a playhead chase */
+
+	--xy-ease-press: cubic-bezier(0.3, 0, 0.1, 1);
+	--xy-ease-release: cubic-bezier(0.25, 1.45, 0.5, 1);
+	--xy-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+	--xy-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+	--xy-ease-decay: cubic-bezier(0, 0, 0.2, 1);
+
+	/* ---------------------------------------------------------------- layers + layout */
+	--xy-z-raised: 10;
+	--xy-z-header: 20;
+	--xy-z-overlay: 40;
+	--xy-z-tooltip: 50;
+
+	--xy-header-h: 3.5rem;
+	--xy-status-h: 2rem;
+	--xy-agent-w: 24rem; /* 6 tiles */
+	--xy-body-aspect: 285 / 102; /* the device body, without the power-switch tab */
+}
+
+/* ==================================================================== dark: "anodised" (primary)
+ * The page is ink, panels are ramp-0, keys sit on ramp-1. Text climbs the ramp: ramp-5 is the
+ * lowest grey allowed for small text (6.5:1 on ink); ramp-4 only for large or decorative text.
+ */
+:root,
+[data-theme='dark'] {
+	color-scheme: dark;
+
+	--xy-bg: var(--xy-ink);
+	--xy-surface: var(--xy-ramp-0);
+	--xy-surface-raised: var(--xy-ramp-1);
+	--xy-surface-sunken: #0a0a0d;
+	--xy-hover: rgb(247 245 245 / 0.045);
+	--xy-line: var(--xy-ramp-1);
+	--xy-line-strong: var(--xy-ramp-2);
+	--xy-line-control: var(--xy-ramp-4); /* input borders: >= 3:1 against panels */
+
+	--xy-fg: var(--xy-ramp-7);
+	--xy-fg-muted: var(--xy-ramp-6);
+	--xy-fg-subtle: var(--xy-ramp-5);
+	--xy-fg-faint: var(--xy-ramp-4);
+	--xy-fg-inverse: var(--xy-ink);
+
+	--xy-accent: var(--xy-red);
+	--xy-accent-text: var(--xy-red);
+	--xy-accent-fg: var(--xy-ink);
+	--xy-focus: var(--xy-ramp-7);
+	--xy-selection: var(--xy-ramp-2);
+	--xy-led-white: #ffffff;
+	--xy-led-dim: #5d5d66;
+	--xy-led-off: #101014;
+	--xy-led-ring: rgb(0 0 0 / 0.55);
+	--xy-glow-white:
+		0 0 0.1875rem 0.0625rem rgb(255 255 255 / 0.7), 0 0 0.75rem rgb(255 255 255 / 0.3);
+	--xy-glow-red: 0 0 0.1875rem 0.0625rem rgb(255 77 0 / 0.75), 0 0 0.75rem rgb(255 77 0 / 0.35);
+
+	/* keys: emphasis climbs the ramp, exactly like the step row goes dark to light */
+	--xy-key-tile: var(--xy-ramp-1);
+	--xy-key-cap: #2a2a32;
+	--xy-key-cap-hover: #33333c;
+	--xy-key-cap-active: #25252c;
+	--xy-key-legend: var(--xy-mat-legend);
+
+	--xy-key-2-tile: var(--xy-ramp-4);
+	--xy-key-2-cap: var(--xy-ramp-5);
+	--xy-key-2-cap-hover: #a2a2a7;
+	--xy-key-2-cap-active: #8c8c91;
+	--xy-key-2-legend: var(--xy-ink);
+
+	--xy-key-1-tile: #d9d7d6;
+	--xy-key-1-cap: var(--xy-ramp-7);
+	--xy-key-1-cap-hover: #ffffff;
+	--xy-key-1-cap-active: #e9e7e6;
+	--xy-key-1-legend: var(--xy-ink);
+	/* Light caps cast a soft contact shadow rather than a dark outline, like the light step keys. */
+	--xy-key-1-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 -1px 1px rgb(0 0 0 / 0.06),
+		0 0 0 1px rgb(0 0 0 / 0.14), 0 1px 1px rgb(0 0 0 / 0.22), 0 2px 5px rgb(0 0 0 / 0.2);
+	--xy-key-1-shadow-pressed: inset 0 1px 2px rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.16);
+	--xy-key-2-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.35), inset 0 -1px 1px rgb(0 0 0 / 0.12),
+		0 0 0 1px rgb(0 0 0 / 0.25), 0 1px 1px rgb(0 0 0 / 0.35), 0 2px 5px rgb(0 0 0 / 0.3);
+	--xy-key-2-shadow-pressed: inset 0 1px 2px rgb(0 0 0 / 0.2), 0 0 0 1px rgb(0 0 0 / 0.3);
+
+	/* elevation: tiles are raised 2.4 mm off the plate, caps another 2 mm */
+	--xy-shadow-tile:
+		inset 0 1px 0 rgb(255 255 255 / 0.05), inset 0 -1px 0 rgb(0 0 0 / 0.25),
+		0 0 0 1px var(--xy-mat-gap);
+	--xy-shadow-cap:
+		inset 0 1px 0 rgb(255 255 255 / 0.08), inset 0 -1px 1px rgb(0 0 0 / 0.3),
+		0 0 0 1px rgb(0 0 0 / 0.42), 0 1px 1px rgb(0 0 0 / 0.5), 0 2px 5px rgb(0 0 0 / 0.42);
+	--xy-shadow-cap-pressed:
+		inset 0 1px 0 rgb(255 255 255 / 0.03), inset 0 1px 2px rgb(0 0 0 / 0.35),
+		0 0 0 1px rgb(0 0 0 / 0.5), 0 0 1px rgb(0 0 0 / 0.5);
+	--xy-shadow-recess: inset 0 1px 2px rgb(0 0 0 / 0.6), inset 0 0 0 1px rgb(0 0 0 / 0.45);
+	--xy-shadow-plate: inset 0 1px 0 rgb(255 255 255 / 0.025), 0 0 0 1px var(--xy-line);
+	--xy-shadow-float:
+		inset 0 1px 0 rgb(255 255 255 / 0.05), 0 0 0 1px rgb(0 0 0 / 0.6),
+		0 12px 32px -8px rgb(0 0 0 / 0.75), 0 2px 6px rgb(0 0 0 / 0.5);
+}
+
+/* ==================================================================== light: "guide"
+ * Paper and ink, like TE's printed guide drawings. The device screen and materials stay black.
+ */
+[data-theme='light'] {
+	color-scheme: light;
+
+	--xy-bg: var(--xy-paper);
+	--xy-surface: #ffffff;
+	--xy-surface-raised: #ffffff;
+	--xy-surface-sunken: #ecebea;
+	--xy-hover: rgb(15 14 18 / 0.045);
+	--xy-line: #e0dede;
+	--xy-line-strong: #cdcdcd;
+	--xy-line-control: #8a8a90;
+
+	--xy-fg: var(--xy-ink);
+	--xy-fg-muted: var(--xy-ramp-2);
+	--xy-fg-subtle: var(--xy-ramp-3);
+	--xy-fg-faint: var(--xy-ramp-5);
+	--xy-fg-inverse: var(--xy-paper);
+
+	--xy-accent: var(--xy-red);
+	--xy-accent-text: var(--xy-red-text-on-paper);
+	--xy-accent-fg: var(--xy-ink);
+	--xy-focus: var(--xy-ink);
+	--xy-selection: #d9d7d7;
+	/* On paper, LEDs follow the guide's drawing convention: lit = ink dot, dim = grey, off = hollow. */
+	--xy-led-white: var(--xy-ink);
+	--xy-led-dim: var(--xy-ramp-5);
+	--xy-led-off: #efeeed;
+	--xy-led-ring: rgb(15 14 18 / 0.4);
+	--xy-glow-white: 0 0 0 1px rgb(15 14 18 / 0.12);
+	--xy-glow-red: 0 0 0.25rem rgb(255 77 0 / 0.45);
+
+	--xy-key-tile: #ecebea;
+	--xy-key-cap: #ffffff;
+	--xy-key-cap-hover: #ffffff;
+	--xy-key-cap-active: #f1f0ef;
+	--xy-key-legend: var(--xy-ink);
+
+	--xy-key-2-tile: var(--xy-ramp-1);
+	--xy-key-2-cap: var(--xy-ramp-2);
+	--xy-key-2-cap-hover: #53535b;
+	--xy-key-2-cap-active: #3e3e46;
+	--xy-key-2-legend: var(--xy-paper);
+
+	--xy-key-1-tile: #000000;
+	--xy-key-1-cap: var(--xy-ink);
+	--xy-key-1-cap-hover: #25242a;
+	--xy-key-1-cap-active: #000000;
+	--xy-key-1-legend: var(--xy-paper);
+	--xy-key-1-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.6),
+		0 1px 1px rgb(15 14 18 / 0.3), 0 2px 5px rgb(15 14 18 / 0.2);
+	--xy-key-1-shadow-pressed: inset 0 1px 2px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(0 0 0 / 0.7);
+	--xy-key-2-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.14), 0 0 0 1px rgb(0 0 0 / 0.45),
+		0 1px 1px rgb(15 14 18 / 0.25), 0 2px 5px rgb(15 14 18 / 0.16);
+	--xy-key-2-shadow-pressed: inset 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(0 0 0 / 0.5);
+
+	--xy-shadow-tile: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 0 0 1px rgb(15 14 18 / 0.14);
+	--xy-shadow-cap:
+		inset 0 1px 0 rgb(255 255 255 / 0.9), 0 0 0 1px rgb(15 14 18 / 0.22),
+		0 1px 1px rgb(15 14 18 / 0.14), 0 2px 5px rgb(15 14 18 / 0.1);
+	--xy-shadow-cap-pressed: inset 0 1px 2px rgb(15 14 18 / 0.12), 0 0 0 1px rgb(15 14 18 / 0.26);
+	--xy-shadow-recess: inset 0 1px 2px rgb(15 14 18 / 0.14), inset 0 0 0 1px rgb(15 14 18 / 0.1);
+	--xy-shadow-plate: 0 0 0 1px var(--xy-line);
+	--xy-shadow-float:
+		0 0 0 1px rgb(15 14 18 / 0.1), 0 12px 32px -8px rgb(15 14 18 / 0.28),
+		0 2px 6px rgb(15 14 18 / 0.1);
+}
+
+/* ==================================================================== reduced motion
+ * Durations collapse, so state changes stay visible but nothing travels, chases or decays.
+ */
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--xy-dur-press: 0ms;
+		--xy-dur-release: 0ms;
+		--xy-dur-quick: 0ms;
+		--xy-dur-base: 0ms;
+		--xy-dur-slow: 0ms;
+		--xy-dur-led-on: 0ms;
+		--xy-dur-led-off: 0ms;
+		--xy-dur-step: 0ms;
+	}
+}
+
+/* ==================================================================== more contrast
+ * Lift the quiet greys one step and make hairlines visible when the user asks for contrast.
+ */
+@media (prefers-contrast: more) {
+	:root,
+	[data-theme='dark'] {
+		--xy-fg-subtle: var(--xy-ramp-6);
+		--xy-fg-faint: var(--xy-ramp-5);
+		--xy-line: var(--xy-ramp-3);
+		--xy-line-strong: var(--xy-ramp-4);
+	}
+	[data-theme='light'] {
+		--xy-fg-subtle: var(--xy-ramp-2);
+		--xy-fg-faint: var(--xy-ramp-3);
+		--xy-line: #a9a9ae;
+		--xy-line-strong: #7a7a82;
+	}
+}

@@ -15,6 +15,15 @@ trademarks of their owner and are used here only to describe compatibility.
 Every ported file names its source in a header comment. Projects without a licence (for example
 `jshph/opxy-reactive`, `benjaminr/mcp-koii`) were read for facts only; none of their code is used.
 
+## Fonts
+
+| Font                                                                   | Licence                   | Use                               |
+| ---------------------------------------------------------------------- | ------------------------- | --------------------------------- |
+| [Work Sans](https://github.com/weiweihuanghuang/Work-Sans) (Wei Huang) | SIL Open Font License 1.1 | all interface text                |
+| [Red Hat Mono](https://github.com/RedHatOfficial/RedHatFont) (Red Hat) | SIL Open Font License 1.1 | bytes, hex and technical readouts |
+
+Both are self-hosted through `@fontsource-variable`. Teenage Engineering's own typeface is not used.
+
 ## Facts and data
 
 Device facts come from Teenage Engineering's public guide and firmware release notes (paraphrased in
