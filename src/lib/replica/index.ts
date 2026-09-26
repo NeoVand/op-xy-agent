@@ -36,5 +36,6 @@ export {
 	type PickControl,
 	type PlanStep
 } from './animation';
+export { getReplicaState, setReplicaState } from './context';
 export { ART_SOURCE } from './art.generated';
 export type * from './art.types';

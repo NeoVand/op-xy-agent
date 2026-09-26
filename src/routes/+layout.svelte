@@ -8,6 +8,7 @@
 	import { asset } from '$app/paths';
 	import { browserDeviceOptions, createDeviceStack, setDeviceStack } from '$lib/device';
 	import type { SessionPhase } from '$lib/device';
+	import { ReplicaState, setReplicaState } from '$lib/replica';
 	import { Theme, setTheme } from '$lib/ui/theme.svelte';
 	import AppHeader from '$lib/ui/shell/AppHeader.svelte';
 	import StatusBar from '$lib/ui/shell/StatusBar.svelte';
@@ -25,6 +26,10 @@
 	// MIDI access is only requested when the user presses connect.
 	const device = createDeviceStack(browserDeviceOptions());
 	setDeviceStack(device);
+
+	// One replica state for the whole app (drawn on the home page, animated by the agent).
+	const replica = new ReplicaState();
+	setReplicaState(replica);
 
 	const CONNECTING: readonly SessionPhase[] = [
 		'requesting-access',
