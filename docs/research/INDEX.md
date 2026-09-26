@@ -1,0 +1,43 @@
+# Research index
+
+> Start here to find anything we learned. Each note is self-contained with sources. Everything was
+> gathered from public material, community reverse engineering, and read-only probes of the owner's
+> OP-XY (OS 1.1.33). Bulky third-party inputs live in git-ignored `research/` and
+> `knowledge/official/` (see `docs/DECISIONS.md` D1/D2).
+
+| # | Note | What it answers | Headline facts |
+| --- | --- | --- | --- |
+| 00 | [initial deep research](00-initial-deep-research.md) | The owner's starting brief: ecosystem survey, architecture sketch | Five control planes; reuse community work; `.xy` authoring is the breakthrough |
+| 10 | [`.xy` project format](10-xy-format.md) | How to read/write native OP-XY projects; TS port plan | 8-byte header + byte-RLE of a packed LE struct, no checksum; device-validated on 1.1.4; TS prototype 17/17 byte-exact; ~3k LOC port; corrections to upstream; 1.1.33 + 16 patterns unverified |
+| 20 | [live MIDI control](20-midi-control.md) | Every CC, channel, note, clock, remote-key, outbound message; onboarding probe; 34 device tests | Official CCs are few; the "lane model" (CC = page encoders in order) explains the per-track map; channel N = track N; receive-mostly device; CC106/107 remote keys unknown on 1.1.33 |
+| 30 | [presets & samples](30-presets-samples.md) | `patch.json` schema, sample limits, folder layout, algorithms, file transfer | see note (in progress) |
+| 40 | [official docs](40-official-docs.md) | Manual inventory, key combos, guide-vs-firmware errata, index design, **schema for our own manual** | 24 chapters, ~23.5k words, 474 SVG diagrams; 95 key combos; 9 chapters outdated for 1.1.33; ~170 reworded units planned |
+| 50 | [hardware & UI](50-hardware-ui.md) | Geometry, every control, screens, type, colours, render approach | 285 × 102 mm body on a 15.5 mm tile grid (17 × 6); 68 keys, 48 with LEDs; grey ramp + red; screen 480 × 222; SVG default + lazy Three.js from one mm model; owner photo checklist |
+| 60 | [firmware & TE SysEx](60-firmware.md) | Can we decompile? What protocol does TE's own tooling speak? | 22 builds, AES-encrypted Blackfin images (no decompiling); TE SysEx framing from TE's updater; GREET/ECHO/FILE work on the device, SETTINGS doesn't; **never send DFU** |
+| 70 | [agent harness](70-agent-harness.md) | Which harness, which models, voice, caching, BYO-key security | Deep Agents runs in-browser only with shims (438 KB gz); recommended: own harness on `@anthropic-ai/sdk` (70 KB); Opus 5.5 default; manual ≈ 45–70k tokens cached; OpenAI realtime voice works in-browser via ephemeral key |
+| 80 | [MIDI Lab patterns](80-midilab-patterns.md) | What to reuse from the owner's MIDI Lab | 34-item port list; 18 defects to fix on the way (ch16 encode, stuck notes, hidden-tab clock) |
+| 90 | [device probe log](90-device-probe.md) | Everything ever sent to the owner's device, and what it said | UAC1 audio + USB-MIDI, no MTP in normal mode; identity `00 20 76`, dev 0x21; echo of foreign SysEx; GREET → 1.1.33 / hw_rev 2; FILE root `drum/`, `synth/` |
+
+## Machine-readable knowledge (`knowledge/`, committed)
+
+| File | Contents |
+| --- | --- |
+| `knowledge/midi/cc-map.json` | Per-track-type CC map with ranges, semantics, confidence and sources |
+| `knowledge/midi/remote-keys.json` | CC106/107 remote key map (values 0–71) |
+| `knowledge/midi/xy-format-cc-map.json` | The xy-format project's CC table, restructured |
+| `knowledge/firmware/te-sysex.json` | TE SysEx commands, sub-commands, status codes, safety classes |
+| `knowledge/firmware/tfw-container.json` | `.tfw` firmware container field map |
+| `knowledge/firmware/opxy-firmware-inventory.json` | 22 public builds: dates, sizes, hashes |
+| `knowledge/firmware/changelog-midi-usb.json` | MIDI/USB/MTP-relevant changelog items (paraphrased) |
+| `knowledge/presets/patch-schema.json` | JSON Schema for `patch.json` |
+
+## Local-only inputs (git-ignored; regenerate with scripts)
+
+| Path | What | Regenerate |
+| --- | --- | --- |
+| `research/repos/` | ~40 community repos | `scripts/fetch-research.sh` |
+| `knowledge/official/` | verbatim guide (24 chapters), images + manifest, changelog, specs, chunks | `node scripts/ingest-guide.mjs` |
+| `research/firmware/` | 5 full `.tfw` builds + 22 headers | `python3 scripts/firmware-inventory.py --download 1.1.33` |
+| `research/web/` | raw HTML/JS snapshots (TE pages, updater + EP sample tool bundles) | per-note instructions |
+| `research/ui-reference/` | guide SVGs/screens, press photos, guide PDF | see `50-hardware-ui.md` |
+| `research/device/captures/` | raw probe transcripts (contain the device serial) | `research/device/*.py` |
