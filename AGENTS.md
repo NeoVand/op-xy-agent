@@ -1,3 +1,34 @@
+## OP-XY Agent — read this first
+
+An open-source, browser-only (static SvelteKit) app: a pixel-perfect interactive replica of the
+Teenage Engineering **OP-XY** plus an AI agent that answers anything from the official manual,
+teaches, and programs the real device over Web MIDI / USB. Bring-your-own API keys (Claude first,
+OpenAI realtime voice second).
+
+**After any context reset, re-read in order:** `docs/VISION.md` (north star) → `docs/PLAN.md`
+(roadmap + current phase) → `docs/research/INDEX.md` (what we know and where) → `docs/QUESTIONS.md`.
+
+Where things live:
+
+- `docs/research/NN-*.md` — our research notes (committed). `docs/research/90-device-probe.md` logs
+  every message ever sent to the owner's device.
+- `knowledge/` — curated machine-readable data the app ships (CC maps, schemas, …).
+  `knowledge/official/` is the scraped TE manual: **git-ignored** until redistribution is cleared.
+- `research/repos/` — shallow clones of community projects (git-ignored; `scripts/fetch-research.sh`).
+  `research/firmware/` — public firmware downloads (git-ignored). `research/device/` — probe scripts.
+
+Rules:
+
+- **Device safety:** read-only probes are fine; announce anything that changes device state (settings,
+  projects, files, playback) to the owner first and log it in `90-device-probe.md`. Never flash firmware
+  or send firmware-updater SysEx.
+- The LLM never writes raw bytes: it emits typed intent; deterministic, tested TS code produces MIDI,
+  `.xy` and preset files.
+- Never print or commit `.env` values (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`).
+- Code from repos without a license is reference-only; MIT code (e.g. `kmorrill/xy-format`) may be
+  ported with attribution.
+- Commit and push to `main` at milestones (pre-production).
+
 ## Project Configuration
 
 - **Language**: TypeScript
