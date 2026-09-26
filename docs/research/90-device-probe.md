@@ -92,6 +92,25 @@ Findings:
   Testing that needs a FILE PUT, which writes to the device → owner approval required. Projects are
   not visible through this interface (so far).
 
+## 2026-09-26 — FILE discovery R1/R2 (read-only; `te_sysex_probe.py discover`)
+
+Plan from `30-presets-samples.md` §6.4. Frames follow TE's EP sample tool exactly.
+
+| Sent | Purpose | Reply |
+| --- | --- | --- |
+| FILE INIT `[01 00 00 40 00 00]` | open session (no subscribe) | status 0 |
+| FILE INFO `[0B 00 0n]`, n = 0, 1, 2 | node info (parent, flags, size, name) | **status 3 "bad request"** for all three |
+| FILE METADATA GET `[07 02 00 0n 00 00]`, n = 0, 1, 2 | folder metadata (accepted formats) | **status 3 "bad request"** for all three |
+
+Afterwards FILE INIT + LIST and GREET still worked normally (no wedge).
+
+Findings: the OP-XY's FILE implementation on 1.1.33 is **not the EP-133 dialect**. INIT and LIST
+match; INFO and METADATA GET are refused (maybe different sub-command numbers or payloads, or simply
+unsupported). The INIT reply's first byte `0x0C` may be a protocol version. So the EP tool's upload
+recipe (raw PCM + METADATA SET) can't be assumed to work; a PUT test would be exploratory. Next
+read-only lead: see which TE SysEx commands **Field Kit** sends to the OP-XY (it greets the device and
+switches it into MTP mode over SysEx; `30-presets-samples.md` §6.1).
+
 ## Pending device tests (need the owner or a state change)
 
 1. ~~Firmware version~~ — owner reports **OS 1.1.33** (2026-09-26).

@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/NeoVand/op-xy-agent/knowledge/presets/patch-schema.json",
+  "title": "OP-XY preset patch.json (version 4)",
+  "description": "Authored by the op-xy-agent project from public evidence: 322 device-shipped presets and 139 paired project captures (firmware 1.1.4) plus 34 targeted preset-load probes in research/repos/kmorrill_xy-format, device-saved presets, the official TE guide, and 20+ community generators. Teenage Engineering publishes no schema. This schema describes the *canonical device shape* (what the OP-XY itself writes). Community files often leave fields out or add extra keys (e.g. `name`), so an importer should fill in defaults before validating. Rules that compare one field with another (sample.start < sample.end <= framecount, loop.start < loop.end, hikey ordering) cannot be expressed in JSON Schema and are enforced by the TypeScript validator (docs/research/30-presets-samples.md section 7). Confidence tags in descriptions: [D] device-captured or device-authored evidence, [O] official TE guide, [C] community-tool consensus, [H] hypothesis or inference.",
+  "$comment": "Primary sources: research/repos/kmorrill_xy-format/src/presets/presets/*/patch.json (factory corpus, fw 1.1.4); research/repos/kmorrill_xy-format/docs/logs/2026-06-16_preset_corpus_analysis.md; research/repos/kmorrill_xy-format/docs/logs/2026-06-17_patch_json_field_experiment.md; research/repos/kmorrill_xy-format/src/sampler-project-state/2026-06-15/presets/ (device-saved); research/web/te-guide-op-xy-sample.html; research/repos/ish-_te-opxy-patchstudio/src/utils/patchGeneration.ts. The device writes patch.json minified with keys sorted alphabetically (all 322 corpus files and both device-saved files).",
+  "type": "object",
+  "required": ["engine", "envelope", "fx", "lfo", "octave", "platform", "regions", "type", "version"],
+  "properties": {
+    "type": {
+      "description": "Engine family. Sample engines: 'drum' (drum sampler, 24 keys), 'sampler' (one-shot synth sampler, 1 region), 'multisampler' (up to 24 zones). Synth engines carry no regions. [D] for drum/sampler/axis/dissolve/epiano/hardsync/organ/prism/simple/wavetable (factory corpus). [C] for 'multisampler': emitted by every community generator and seen in device exports that op-xy-vibing observed; the fw 1.1.4 corpus has no multisampler preset. [H] for 'midi': the external-MIDI engine was renamed 'midi' in OS 1.0.15 and its patches can be saved (1.0.45 changelog), but no patch.json with this type has been seen.",
+      "enum": ["drum", "sampler", "multisampler", "axis", "dissolve", "epiano", "hardsync", "organ", "prism", "simple", "wavetable", "midi"]
+    },
+    "version": {
+      "description": "Preset schema version. All known files use 4. [D]",
+      "const": 4
+    },
+    "platform": {
+      "description": "Platform marker. [D]",
+      "const": "OP-XY"
+    },
+    "octave": {
+      "description": "Track keyboard octave offset, applied when the preset is loaded. Signed integer. Factory range -3..+2. [D] (xy-format maps it to a signed byte, track-global). Full UI range not confirmed. [H]",
+      "type": "integer",
+      "minimum": -5,
+      "maximum": 5,
+      "default": 0
+    },
+    "engine": { "$ref": "#/$defs/engine" },
+    "envelope": { "$ref": "#/$defs/envelope" },
+    "fx": { "$ref": "#/$defs/filterBlock" },
+    "lfo": { "$ref": "#/$defs/lfoBlock" },
+    "regions": {
+      "description": "Sample regions (zones). Empty for synth engines. Per-type rules are applied below.",
+      "type": "array"
+    },
+    "name": {
+      "description": "NOT written by the device. Added by OP-PatchStudio, swift-te and sf2-to-opxy. It appears to be ignored: the browser shows the .preset folder name. [C]",
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "drum" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "regions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 24,
+            "items": { "$ref": "#/$defs/drumRegion" }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "sampler" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "regions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": { "$ref": "#/$defs/tonalRegion" },
+            "$comment": "Every factory 'sampler' preset has exactly one region [D]. pytheory reports that any extra regions are ignored [C] (research/repos/kennethreitz_pytheory-opxy/opxy-preset-notes.md:37)."
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "multisampler" } }, "required": ["type"] },
+      "then": {
+        "properties": {
+          "regions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 24,
+            "items": { "$ref": "#/$defs/tonalRegion" },
+            "$comment": "'the multisampler holds a maximum of 24 zones' [O] (research/web/te-guide-op-xy-sample.html, section 18.3). The canonical order is ascending hikey (sort by hikey, not by file order). The device fills down: a zone covers the keys above the previous zone's hikey, up to and including its own hikey [O][D]."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "enum": ["axis", "dissolve", "epiano", "hardsync", "organ", "prism", "simple", "wavetable", "midi"] } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "regions": { "type": "array", "maxItems": 0 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "q15": {
+      "description": "Normalised device parameter: an integer 0..32767, where 16384 is roughly the centre. In the .xy project it is stored as q16 (value << 16), except where noted. [D]",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 32767
+    },
+    "q15Array8": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/q15" },
+      "minItems": 8,
+      "maxItems": 8
+    },
+    "modRoute": {
+      "description": "One performance-modulation route. 'amount' is signed around the centre (16383 or 16384 = 0, so values below it invert). 'target' is an encoded destination id where 0 = none. The id table is not decoded. [D] (storage) [H] (meaning)",
+      "type": "object",
+      "required": ["amount", "target"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/q15" },
+        "target": { "$ref": "#/$defs/q15" }
+      },
+      "additionalProperties": false
+    },
+    "engine": {
+      "type": "object",
+      "description": "Engine / preset-settings block. Every key is present in all 322 factory files, except 'tuning', which appears in 25. [D]",
+      "required": [
+        "bendrange", "highpass", "modulation", "params", "playmode", "portamento.amount", "portamento.type",
+        "transpose", "tuning.root", "tuning.scale", "velocity.sensitivity", "volume", "width"
+      ],
+      "properties": {
+        "params": {
+          "description": "Eight engine parameters. Synth engines: [0..3] = P1..P4, the four M1 encoders (dark, mid, light grey, white; meanings per engine in the synth-engines guide) [O][D]. [4..7] are constant [7616, 674, 3276, 8192] in every factory synth preset [D]. Sample engines: always 8 x 16384 [D]. For the tonal sampler, device probes show engine.params does NOT reach its M1 block: it stays centred (research/repos/kmorrill_xy-format/docs/logs/2026-06-15_sampler_project_state.md). [D]",
+          "$ref": "#/$defs/q15Array8"
+        },
+        "playmode": {
+          "description": "Voice mode (shift+M2, dark grey encoder). Factory: poly 258, mono 63, legato 1. [D][O]",
+          "enum": ["poly", "mono", "legato"],
+          "default": "poly"
+        },
+        "portamento.amount": { "description": "Glide time (shift+M2, mid grey). [D]", "$ref": "#/$defs/q15" },
+        "portamento.type": { "description": "Portamento curve. Values seen: 32767 (320 files) and 0 (2 files). OP-PatchStudio writes 0='linear', 32767='exponential'. [D][C]", "$ref": "#/$defs/q15" },
+        "bendrange": { "description": "Pitch-bend range (shift+M2, light grey). Factory values 8191, 9557, 13433, 13653, 19113, 28671, 32767 map to whole semitones if the range is 0..24 (or 0..48), e.g. 8191 -> 6 and 13653 -> 10 on a 0..24 scale. [D] (values) [H] (scale)", "$ref": "#/$defs/q15" },
+        "volume": { "description": "Preset volume, separate from track volume (shift+M2, white). Factory 9334..25670. [D][O]", "$ref": "#/$defs/q15" },
+        "velocity.sensitivity": { "description": "Preset-settings velocity sensitivity. [D][O]", "$ref": "#/$defs/q15" },
+        "width": { "description": "Stereo width (preset settings). Usually 0. [D][O]", "$ref": "#/$defs/q15" },
+        "highpass": { "description": "Preset-settings high-pass: a simple HPF with no resonance, separate from the M3 filter. Usually 0. [D][O]", "$ref": "#/$defs/q15" },
+        "transpose": {
+          "description": "Preset transpose in semitones. Factory values are only 0 and 12 [D]. OP-PatchStudio's UI allows -36..+36 [C]. The two raw .xy words seen fit a linear scale of about ±36 semitones [H].",
+          "type": "integer",
+          "minimum": -36,
+          "maximum": 36,
+          "default": 0
+        },
+        "tuning.root": { "description": "Tuning root. Encoded enum; seen 0, 3932, 9175. [D] (values) [H] (meaning)", "$ref": "#/$defs/q15" },
+        "tuning.scale": { "description": "Tuning table selector. Encoded enum; seen 0, 3045, 4259, 5570, 7209, 25000. The device offers 11 user tunings [O]. [D] (values) [H] (meaning)", "$ref": "#/$defs/q15" },
+        "tuning": {
+          "description": "OPTIONAL per-pitch-class tuning table: 12 floats, probably cents offsets. Seen in 25 presets, always the same table, and only when tuning.scale is 4259 or 5570. Not found in the project bytes. [D] (presence) [H] (meaning)",
+          "type": "array",
+          "items": { "type": "number", "minimum": -100, "maximum": 100 },
+          "minItems": 12,
+          "maxItems": 12
+        },
+        "modulation": {
+          "type": "object",
+          "description": "Preset-settings 'mod' page: routing for modwheel, aftertouch, pitchbend and velocity. [D][O]",
+          "required": ["aftertouch", "modwheel", "pitchbend", "velocity"],
+          "properties": {
+            "aftertouch": { "$ref": "#/$defs/modRoute" },
+            "modwheel": { "$ref": "#/$defs/modRoute" },
+            "pitchbend": { "$ref": "#/$defs/modRoute" },
+            "velocity": { "$ref": "#/$defs/modRoute" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "adsr": {
+      "type": "object",
+      "required": ["attack", "decay", "sustain", "release"],
+      "properties": {
+        "attack": { "$ref": "#/$defs/q15" },
+        "decay": { "$ref": "#/$defs/q15" },
+        "sustain": { "$ref": "#/$defs/q15" },
+        "release": { "$ref": "#/$defs/q15" }
+      },
+      "additionalProperties": false
+    },
+    "envelope": {
+      "type": "object",
+      "description": "M2 envelopes. amp = amplitude ADSR, filter = filter ADSR. Community calibration (sf2-to-opxy, one recording): attack/decay seconds ~= 0.01037 * exp(10.4687 * v/32767), so 50% is about 2 s and 100% is about 365 s. The release fit from the same study is not trustworthy. [D] (storage) [C] (curve)",
+      "required": ["amp", "filter"],
+      "properties": {
+        "amp": { "$ref": "#/$defs/adsr" },
+        "filter": { "$ref": "#/$defs/adsr" }
+      },
+      "additionalProperties": false
+    },
+    "filterBlock": {
+      "type": "object",
+      "description": "Despite the name 'fx', this is the M3 FILTER block. type <-> .xy byte: 'z lowpass'=9, 'svf'=10, 'ladder'=16, 'z hipass'=17. [D] params[0..3] = cutoff, resonance, envelope amount, key tracking (the M3 encoders) [H]. params[4..7] are probably the shift+M3 sends: aux, tape, fx I, fx II [H]. params[5] is 32767 in every sampler/drum preset and is stored as max in every capture [D]. sf2-to-opxy writes chorus -> params[6] and reverb -> params[7] [C].",
+      "required": ["active", "params", "type"],
+      "properties": {
+        "active": { "type": "boolean" },
+        "type": {
+          "description": "Filter model. These four are the only values in the corpus; the byte gaps suggest the firmware may know others. [D]",
+          "enum": ["svf", "ladder", "z lowpass", "z hipass"]
+        },
+        "params": { "$ref": "#/$defs/q15Array8" }
+      },
+      "additionalProperties": false
+    },
+    "lfoBlock": {
+      "type": "object",
+      "description": "M4 LFO. type <-> .xy byte: tremolo=0, value=1, random=2, element=3 [D]. 'duck' was added in OS 1.1.0 [O], but its JSON string is unverified [H]. params = 8 q15 values: [0] speed/source, [1] amount, [2] destination, [3] parameter, then per-type sub-functions [H, from the order of the UI encoders].",
+      "required": ["active", "params", "type"],
+      "properties": {
+        "active": { "type": "boolean" },
+        "type": { "enum": ["element", "random", "tremolo", "value", "duck"] },
+        "params": { "$ref": "#/$defs/q15Array8" }
+      },
+      "additionalProperties": false
+    },
+    "frame": {
+      "description": "Audio frame index or count (per channel) at the WAV's own sample rate. u32 in the .xy project [D].",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "midiNote": { "type": "integer", "minimum": 0, "maximum": 127 },
+    "sampleFile": {
+      "description": "File name relative to the .preset folder. No subfolders have been seen. Extension .wav or .aif/.aiff [O]. The device records it inside projects as an absolute path, /fat32/presets/<folders>/<preset>.preset/<sample> [D]. Keep names short and ASCII: xy-format's writer assumes a 72-byte path field in each project voice slot (the longest seen path is 67 bytes) [D][H].",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\:*?\"<>|]+\\.(wav|WAV|aif|AIF|aiff|AIFF)$"
+    },
+    "tonalRegion": {
+      "type": "object",
+      "description": "Region for 'sampler' (one zone) and 'multisampler' (up to 24 zones). What each key sets in the .xy voice slot: pitch.keycenter -> byte +0x00 (root); hikey -> byte +0x02 (zone top); loop flags -> byte +0x03; tune -> +0x04; gain -> +0x05; reverse -> +0x07 [D] (research/repos/kmorrill_xy-format/src/preset-load-experiments/2026-06-patch-json-fields, decoded for docs/research/30-presets-samples.md). lokey is NOT stored anywhere [D].",
+      "required": ["sample", "framecount", "hikey", "pitch.keycenter", "sample.end", "loop.start", "loop.end", "loop.crossfade", "reverse", "tune"],
+      "properties": {
+        "sample": { "$ref": "#/$defs/sampleFile" },
+        "framecount": { "description": "Total frames in the file. Factory: sample.end == framecount in 227/227 [D]. It is also the denominator for loop.crossfade.", "$ref": "#/$defs/frame" },
+        "sample.start": { "description": "OPTIONAL playback start frame (default 0). [D]", "$ref": "#/$defs/frame" },
+        "sample.end": { "description": "Playback end frame; <= framecount. [D]", "$ref": "#/$defs/frame" },
+        "loop.start": { "description": "Loop start frame. After on-device sampling the default is floor(0.2 * framecount) [D] (device-saved preset 2026-06-15 (1); 128/152 exported multisampler regions per research/repos/kmorrill_op-xy-vibing/docs/opxy-preset-patch-json.md).", "$ref": "#/$defs/frame" },
+        "loop.end": { "description": "Loop end frame (default floor(0.8 * framecount)) [D]. Whether it is inclusive or exclusive is untested. When loop end equals sample end the device behaves like 'loop off' [D] (sampler one-shot probe g-series).", "$ref": "#/$defs/frame" },
+        "loop.crossfade": { "description": "Crossfade length in FRAMES, normalised by framecount when loaded: raw = int(float32(xf * 2^31 / framecount)), clamped to 0x7FFFFFFF. The UI shows it as a percent of the whole sample [D]. Factory values run up to 272672 and sometimes exceed loop.start or the loop length [D]. Keep xf <= min(loop.start, loop.end - loop.start) [H].", "$ref": "#/$defs/frame" },
+        "loop.onrelease": { "description": "Loop-type bit 0x80. true = 'loop forever (∞)': the loop keeps running through the release. Direct sampler-edit probes label byte 0x80 'infinite', 0x00 'until release' and 0x40 'off' [D]. Missing or false together with loop.enabled missing = 'loop until release' (0x00). Factory: true in 227/227. NOTE: pytheory and sf2-to-opxy read true as 'loop until release, then play the tail'. The device evidence contradicts that.", "type": "boolean" },
+        "loop.enabled": { "description": "OPTIONAL. false sets bit 0x40 = loop OFF [D]. Absent in every factory file. true adds no bit [D]. Emit it explicitly as false for one-shot material.", "type": "boolean" },
+        "pitch.keycenter": { "description": "Root note (MIDI) of the sample. It drives the root byte; hikey does not [D].", "$ref": "#/$defs/midiNote" },
+        "hikey": { "description": "Highest key of this zone (inclusive), stored at voice byte +0x02 [D]. Factory one-shot samplers and device multisampler exports use hikey == pitch.keycenter [D][C]. For a one-zone sampler the keyboard is NOT limited by hikey (factory hikey=60 presets play above C4) [D]. Behaviour above the last zone's hikey is untested; generators set the last hikey to 127 [C].", "$ref": "#/$defs/midiNote" },
+        "lokey": { "description": "OPTIONAL and IGNORED: never stored by the device [D]. The device omits it on save; factory files write 0. Writing lokey = previous hikey + 1 is harmless.", "$ref": "#/$defs/midiNote" },
+        "reverse": { "description": "Playback direction; true = backward (byte +0x07 = 1). [D]", "type": "boolean" },
+        "tune": { "description": "Fine tune in CENTS, stored as a signed byte (4 -> +0.04, -5 -> -0.05 on screen) [D]. Factory values are always 0. The safe range is assumed to be ±99. [H]", "type": "integer", "minimum": -128, "maximum": 127 },
+        "gain": { "description": "OPTIONAL sample gain in dB. On-device range -30..+20 (sampler gain byte min 0xE2, max 0x14) [D]. Factory values -5..12. The loader writes the raw byte without clamping, so clamp before writing. [D]", "type": "integer", "minimum": -30, "maximum": 20 }
+      },
+      "additionalProperties": true
+    },
+    "drumRegion": {
+      "type": "object",
+      "description": "Drum-sampler region: one sample per key, on keys 53..76 (F3..E5 in C4=60 naming; community tools write 'F2..E4', which is C3=60 naming for the same keys). Factory kits have 23 or 24 regions and may leave keys empty [D]. Voice slot bytes: +0x00 = 0x3C + transpose (tune centre), +0x02 = hikey (key assignment), +0x03 = playmode byte, +0x06 = pan, +0x07 = reverse [D].",
+      "required": ["sample", "framecount", "hikey", "sample.end", "playmode"],
+      "properties": {
+        "sample": { "$ref": "#/$defs/sampleFile" },
+        "framecount": { "$ref": "#/$defs/frame" },
+        "sample.start": { "description": "OPTIONAL trim start (seen in one factory kit) [D]. digichain builds 'slice kits' where many regions share one WAV with different start/end windows. That is untested on device [C].", "$ref": "#/$defs/frame" },
+        "sample.end": { "$ref": "#/$defs/frame" },
+        "hikey": { "description": "Key assignment, 53..76. The xy-format adapter places voices by hikey - 53 for clean kits [D].", "type": "integer", "minimum": 53, "maximum": 76 },
+        "lokey": { "description": "Equal to hikey in every known file [D]. Apparently ignored.", "type": "integer", "minimum": 53, "maximum": 76 },
+        "pitch.keycenter": { "description": "Always 60 in factory and generated kits [D][C]. Leave it at 60; the effect of other values is untested.", "const": 60 },
+        "playmode": {
+          "description": "Per-key play mode -> byte: 'gate'=0 (UI 'key': plays while held), 'oneshot'=1, 'group'=2 (UI 'mute group' / choke), 'loop'=3 [D]. Numeric values and the string 'key' all load as 1 (oneshot) [D], so treat them as invalid. Since OS 1.0.32 the device defaults longer samples to gate [O].",
+          "enum": ["gate", "oneshot", "group", "loop"]
+        },
+        "reverse": { "type": "boolean" },
+        "transpose": { "description": "Per-key pitch in semitones, -48..+48 (xy-format writer; OP-PatchStudio UI) [D][C]. Factory values always 0.", "type": "integer", "minimum": -48, "maximum": 48, "default": 0 },
+        "tune": { "description": "Always 0 in factory kits. xy-format uses it only when transpose is absent. The unit (semitones vs cents) is unverified [H].", "type": "integer", "minimum": -48, "maximum": 48, "default": 0 },
+        "pan": { "description": "Pan -100 (L) .. +100 (R). On-device probe gives signed byte ±100 [D]. OP-PatchStudio UI uses the same range [C].", "type": "integer", "minimum": -100, "maximum": 100, "default": 0 },
+        "gain": { "description": "OPTIONAL gain in dB, -30..+20 (OP-PatchStudio UI, teopxy OP-1 mapping; the sampler gain byte has the same limits) [C][D]. Factory values 1..11.", "type": "integer", "minimum": -30, "maximum": 20 },
+        "fade.in": { "description": "Always 0 in the corpus. No mapping confirmed. [D]", "type": "integer", "minimum": 0 },
+        "fade.out": { "description": "Always 0 in the corpus. The on-device per-key 'sample fade' is 0..99 in the UI and is stored on the PREVIOUS voice slot at +0x7C [D]. Whether patch fade.out uses UI units is unverified [H].", "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    }
+  }
+}

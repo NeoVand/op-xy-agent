@@ -3,11 +3,11 @@
 Frame format and packing follow TE's own web update utility (see docs/research/60-firmware.md §4).
 SAFETY: `send()` refuses everything except GREET, ECHO, SETTINGS INIT/GET_ALL (the read-only traffic
 TE's update page sends to every device it finds) and FILE INIT (no event subscription) / FILE LIST
-(the read-only calls TE's EP sample tool makes on connect). DFU (0x03), PRODUCT_SPECIFIC (0x7F),
-SETTINGS SET and every other FILE sub-command (GET, PUT, DELETE, METADATA, MOVE, PLAYBACK) are
-hard-blocked.
+/ FILE INFO / FILE METADATA GET (the read-only calls TE's EP sample tool makes on connect). DFU
+(0x03), PRODUCT_SPECIFIC (0x7F), SETTINGS SET and every other FILE sub-command (GET, PUT, DELETE,
+METADATA SET, MOVE, PLAYBACK) are hard-blocked.
 
-Usage: uv run --with python-rtmidi python research/device/te_sysex_probe.py [greet|echo|settings|files|all]
+Usage: uv run --with python-rtmidi python research/device/te_sysex_probe.py [greet|echo|settings|files|discover|all]
 """
 
 import json
@@ -23,7 +23,8 @@ TE_FRAME = 0x40
 TE_DEBUG = 0x33
 BIT_IS_REQUEST, BIT_HAS_RID = 0x40, 0x20
 GREET, ECHO, FILE, SETTINGS = 0x01, 0x02, 0x05, 0x06
-FILE_INIT, FILE_LIST = 0x01, 0x04
+FILE_INIT, FILE_LIST, FILE_METADATA, FILE_INFO = 0x01, 0x04, 0x07, 0x0B
+FILE_METADATA_GET = 0x02
 FILE_FLAGS = {1: "file", 2: "dir", 4: "read", 8: "write", 16: "delete", 32: "move", 64: "playback"}
 SETTINGS_INIT, SETTINGS_GET_ALL = 0x01, 0x02
 STATUS = {0: "ok", 1: "error", 2: "command not found", 3: "bad request"}
@@ -59,7 +60,9 @@ def allowed(cmd: int, payload: list[int]) -> bool:
         return payload[:1] in ([SETTINGS_INIT], [SETTINGS_GET_ALL])
     if cmd == FILE:
         return (payload[:2] == [FILE_INIT, 0x00] and len(payload) == 6) or \
-               (payload[:1] == [FILE_LIST] and len(payload) == 5)
+               (payload[:1] == [FILE_LIST] and len(payload) == 5) or \
+               (payload[:1] == [FILE_INFO] and len(payload) == 3) or \
+               (payload[:2] == [FILE_METADATA, FILE_METADATA_GET] and len(payload) == 6)
     return False
 
 
@@ -148,6 +151,38 @@ def list_dir(te: "TeSysex", node: int, depth: int, max_depth: int) -> list[dict]
     return entries
 
 
+def file_info(te: "TeSysex", node: int) -> dict | None:
+    r = te.request(FILE, [FILE_INFO, node >> 8, node & 0xFF])
+    if not r or r["status"] != 0:
+        return r and {"error": r["status_text"], "detail": r["text"][:80]}
+    d = r["data"]
+    end = bytes(d[9:]).find(b"\0")
+    return {"id": (d[0] << 8) | d[1], "parent": (d[2] << 8) | d[3],
+            "flags": [n for bit, n in FILE_FLAGS.items() if d[4] & bit],
+            "size": int.from_bytes(bytes(d[5:9]), "big"),
+            "name": bytes(d[9:9 + end if end >= 0 else len(d)]).decode(errors="replace")}
+
+
+def file_metadata(te: "TeSysex", node: int) -> dict | str | None:
+    text, page = "", 0
+    while page < 64:
+        r = te.request(FILE, [FILE_METADATA, FILE_METADATA_GET, node >> 8, node & 0xFF, page >> 8, page & 0xFF])
+        if not r or r["status"] != 0:
+            return r and {"error": r["status_text"], "detail": r["text"][:80]}
+        d = r["data"]
+        if len(d) <= 2:
+            break
+        chunk = bytes(d[2:])
+        text += chunk.split(b"\0", 1)[0].decode(errors="replace")
+        page += 1
+        if d[-1] == 0:
+            break
+    try:
+        return json.loads(text) if text else {}
+    except json.JSONDecodeError:
+        return text
+
+
 def main(what: str) -> None:
     te = TeSysex()
     CAPTURES.mkdir(exist_ok=True)
@@ -189,6 +224,12 @@ def main(what: str) -> None:
             d = r["data"]
             result["file_chunk_size"] = (d[1] << 24) | (d[2] << 16) | (d[3] << 8) | d[4] if len(d) >= 5 else None
             result["tree"] = list_dir(te, 0, depth=0, max_depth=int(sys.argv[2]) if len(sys.argv) > 2 else 1)
+    if what == "discover":
+        r = te.request(FILE, [FILE_INIT, 0x00, 0x00, 0x40, 0x00, 0x00])
+        result["file_init"] = r and r["status_text"]
+        if r and r["status"] == 0:
+            for node in (0, 1, 2):
+                result[f"node{node}"] = {"info": file_info(te, node), "metadata": file_metadata(te, node)}
     (CAPTURES / f"te-sysex-{what}-{int(time.time())}.json").write_text(json.dumps({"result": result, "log": te.log}, indent=1))
     print(json.dumps(result, indent=1, default=str)[:6000])
 

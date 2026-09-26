@@ -6,8 +6,8 @@
 
 ## Status (2026-09-26)
 
-- **Current phase: M0 research — wrapping up.** Research notes 10–90 are written; the device speaks
-  Web MIDI + TE SysEx (GREET, FILE) on OS 1.1.33.
+- **Current phase: M0 research — complete.** Research notes 10–90 are written; the device speaks
+  Web MIDI + TE SysEx (GREET, FILE INIT/LIST) on OS 1.1.33.
 - **Next:** owner decisions (harness, replica rendering) → M1 foundations + device spikes.
 
 ## What the research changed
@@ -69,9 +69,8 @@ Status update here.
 
 ### M0 — Research & knowledge ✅ (wrapping up)
 
-Notes 00–90, CC/remote-key/SysEx/firmware data in `knowledge/`, manual scrape (local), probe
-scripts, decisions D1–D3. Remaining: `30-presets-samples.md`, `50-hardware-ui.md`, index, owner
-decisions.
+Notes 00–90, CC/remote-key/SysEx/firmware/patch-schema data in `knowledge/`, manual scrape (local),
+probe scripts, decisions D1–D3, index. Remaining: owner decisions in `QUESTIONS.md`.
 
 ### M1 — Foundations
 
