@@ -8,7 +8,8 @@
 
 - **Current phase: M0 research — complete.** Research notes 10–90 are written; the device speaks
   Web MIDI + TE SysEx (GREET, FILE INIT/LIST) on OS 1.1.33.
-- **Next:** owner decisions (harness, replica rendering) → M1 foundations + device spikes.
+- **Decided:** own harness on `@anthropic-ai/sdk` (D4), SVG-only replica (D5), neutral branding (D6).
+- **Next:** M1 foundations (no device writes) → device spike session with the owner.
 
 ## What the research changed
 
@@ -93,7 +94,8 @@ probe scripts, decisions D1–D3, index. Remaining: owner decisions in `QUESTION
 
 ### M2 — Replica v1
 
-Pixel-accurate, interactive digital twin (rendering approach per `50-hardware-ui.md`): every key,
+Pixel-accurate, interactive **SVG** digital twin (D5; one mm geometry model; screen on a canvas at
+480 × 222; no TE logos per D6): every key,
 encoder, LED and label; screen renderer shell; shift layers; mirrors inbound MIDI (notes, clock,
 transport); drives the device (notes, CC, remote keys if available); keyboard/touch input;
 "animate procedure" API (`animate("shift + M1")`) used by the manual and the agent.
@@ -101,7 +103,7 @@ transport); drives the device (notes, CC, remote keys if available); keyboard/to
 ### M3 — Agent v1: teach + control
 
 - Keys screen (provider detected by key prefix; stored locally; never sent anywhere but the provider).
-- Conductor harness (decision pending, see Q1) with streaming chat UI, plan (`write_todos`),
+- Conductor harness on `@anthropic-ai/sdk` (D4) with streaming chat UI, plan (`write_todos`),
   approvals sheet, revision timeline + undo, cost meter.
 - Manual Q&A: whole manual in a cached system prompt + `search_manual` with citations +
   `show_on_replica` (animated key combos).

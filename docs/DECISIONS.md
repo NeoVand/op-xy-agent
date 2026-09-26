@@ -34,3 +34,32 @@ consequences. Superseded entries stay, marked as such.
   Changelog entries after 1.1.15 are treated as manual errata.
 - **Consequences:** firmware version is first-class state in the app; the `.xy` codec and CC maps
   carry a "verified on" firmware tag.
+
+## D4 — 2026-09-26 — Our own agent harness on the Anthropic SDK
+
+- **Context:** the owner leaned toward LangChain Deep Agents. Browser tests (`research/70-agent-harness.md`)
+  showed it needs a Vite define plus a non-concurrency-safe AsyncLocalStorage shim, weighs ~438 KB gzip,
+  and fights Opus 5.5 (forced tool choice → 400, history-rewriting summarization vs. prefix-bound
+  thinking blocks).
+- **Decision (owner):** build our own small "conductor" harness on `@anthropic-ai/sdk`, shaped like
+  Deep Agents: `write_todos` planning, `task`-style subagents with isolated context (manual expert,
+  composer, sound designer, device operator), memory and skills as files — plus typed tools
+  (read/ui/propose/mutate), an approval gate, a single-flight device queue and a revision journal.
+  Claude drives all text agents; OpenAI is used for realtime voice only (it delegates to Claude).
+- **Consequences:** ~70 KB agent chunk, no polyfills, exact control over caching, thinking and
+  citations. Tools stay framework-neutral (zod) so another provider adapter can be added later.
+
+## D5 — 2026-09-26 — SVG-only replica
+
+- **Context:** research proposed one millimetre geometry model driving an SVG replica plus an optional
+  lazy Three.js 3D view (`research/50-hardware-ui.md` §6).
+- **Decision (owner):** **SVG only.** One mm-accurate geometry model renders a crisp, accessible SVG
+  device; the screen is a canvas at native resolution (480 × 222). No 3D view.
+- **Consequences:** lighter, faster, pixel-crisp, easier to animate and make accessible. Depth and
+  material come from careful SVG shading, not a 3D engine.
+
+## D6 — 2026-09-26 — Neutral branding until TE approves
+
+- **Decision (owner):** draw the device faithfully but without Teenage Engineering or OP-XY wordmarks
+  and logos; the app refers to the device in plain text ("for the OP-XY"). Revisit if TE says yes.
+- **Consequences:** no TE logos, photos or fonts ship in the app; legends are drawn by us.
