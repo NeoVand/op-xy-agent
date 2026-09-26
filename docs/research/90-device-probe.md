@@ -9,23 +9,23 @@ state is sent without telling the owner first.
 
 ### USB enumeration (`ioreg`, `system_profiler`, `usbdesc.py` — no transfers)
 
-| Field | Value |
-| --- | --- |
-| Vendor / product strings | `teenage engineering` / `OP-XY` |
-| VID / PID | `0x2367` / `0x8021` |
-| bcdUSB / bcdDevice | `0x0200` / `0x0257` (meaning of 0x0257 unknown — not obviously the OS version) |
-| Speed | High-speed, 480 Mb/s |
-| Configurations | 3, **identical interfaces**, differing only in bMaxPower: 500 mA, 100 mA, 2 mA (likely charge/power negotiation) |
-| Active configuration | 1 |
+| Field                    | Value                                                                                                            |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Vendor / product strings | `teenage engineering` / `OP-XY`                                                                                  |
+| VID / PID                | `0x2367` / `0x8021`                                                                                              |
+| bcdUSB / bcdDevice       | `0x0200` / `0x0257` (meaning of 0x0257 unknown — not obviously the OS version)                                   |
+| Speed                    | High-speed, 480 Mb/s                                                                                             |
+| Configurations           | 3, **identical interfaces**, differing only in bMaxPower: 500 mA, 100 mA, 2 mA (likely charge/power negotiation) |
+| Active configuration     | 1                                                                                                                |
 
 Interfaces (every configuration):
 
-| # | Class / subclass | Meaning | Endpoints |
-| --- | --- | --- | --- |
-| 0 | Audio / 0x01 | AudioControl (UAC1, protocol 0x00) | 0 |
-| 1 | Audio / 0x02 | AudioStreaming "Audio In" (OP-XY → host), alt1 active | 1 |
-| 2 | Audio / 0x02 | AudioStreaming "OP-XY Out" (host → OP-XY), alt1 | 2 (data + feedback) |
-| 3 | Audio / 0x03 | **MIDIStreaming** "OP-XY Midi" | 2 (bulk in/out) |
+| #   | Class / subclass | Meaning                                               | Endpoints           |
+| --- | ---------------- | ----------------------------------------------------- | ------------------- |
+| 0   | Audio / 0x01     | AudioControl (UAC1, protocol 0x00)                    | 0                   |
+| 1   | Audio / 0x02     | AudioStreaming "Audio In" (OP-XY → host), alt1 active | 1                   |
+| 2   | Audio / 0x02     | AudioStreaming "OP-XY Out" (host → OP-XY), alt1       | 2 (data + feedback) |
+| 3   | Audio / 0x03     | **MIDIStreaming** "OP-XY Midi"                        | 2 (bulk in/out)     |
 
 Implications:
 
@@ -50,12 +50,12 @@ F0 7E 21 06 02 00 20 76 21 00 01 00 00 00 00 00 F7   ← identity reply
 F0 7E 7F 06 01 F7                                     ← our own request, echoed back
 ```
 
-| Bytes | Meaning |
-| --- | --- |
-| `7E 21 06 02` | Universal non-realtime, **SysEx device ID 0x21**, identity reply |
-| `00 20 76` | Manufacturer: **Teenage Engineering** |
-| `21 00` | Family code 0x0021 (LSB first) |
-| `01 00` | Family member 0x0001 |
+| Bytes         | Meaning                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| `7E 21 06 02` | Universal non-realtime, **SysEx device ID 0x21**, identity reply                           |
+| `00 20 76`    | Manufacturer: **Teenage Engineering**                                                      |
+| `21 00`       | Family code 0x0021 (LSB first)                                                             |
+| `01 00`       | Family member 0x0001                                                                       |
 | `00 00 00 00` | Software revision — **not reported** (zeros), so firmware version must come from elsewhere |
 
 **MIDI echo is ON by default**: the device re-transmitted our SysEx. Our input handler must ignore
@@ -69,15 +69,15 @@ Frame format, packing and command numbers come from TE's own web update utility 
 on 33 random vectors before anything was sent. The script hard-blocks DFU (0x03), 0x7F, SETTINGS SET
 and every FILE sub-command other than INIT (no subscribe) and LIST.
 
-| Sent (rid varies) | Purpose | Reply | Result |
-| --- | --- | --- | --- |
-| `F0 00 20 76 21 40 7x xx 01 F7` | **GREET** (TE's updater sends this on connect) | status 0, ASCII metadata | ✅ `product:OP-XY; mode:normal; os_version:1.1.33; sw_version:1.1.33; hw_rev:2; sku:TE033AS001` (+ `serial`, `dsp_serial` — not recorded here) |
-| ECHO `DE AD BE EF 00 7F 80 FF 01` | codec round trip | status 0, identical bytes | ✅ packed-7 codec correct end to end |
-| SETTINGS INIT `[01 03 E8]` (TE's updater sends this on connect) | typed settings? | **status 2 "command not found"** | ❌ OP-XY has no SETTINGS over SysEx |
-| FILE INIT `[01 00 00 40 00 00]` (flags 0, max response 4 MiB) | filesystem over SysEx? | status 0, data `0C 00 02 00 00` | ✅ **supported**; chunk size 0x00020000 = 128 KiB (first byte 0x0C meaning unknown) |
-| FILE LIST page 0, node 0 | root listing | page 0 + 2 entries | ✅ `drum` (id 1) and `synth` (id 2), both flags dir+read+write, size 0 |
-| FILE LIST page 1, node 0 | end of root | page 1, no entries | end of listing |
-| FILE LIST page 0, node 1 / node 2 | contents of drum / synth | page 0, no entries | both **empty** on the owner's unit |
+| Sent (rid varies)                                               | Purpose                                        | Reply                            | Result                                                                                                                                         |
+| --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `F0 00 20 76 21 40 7x xx 01 F7`                                 | **GREET** (TE's updater sends this on connect) | status 0, ASCII metadata         | ✅ `product:OP-XY; mode:normal; os_version:1.1.33; sw_version:1.1.33; hw_rev:2; sku:TE033AS001` (+ `serial`, `dsp_serial` — not recorded here) |
+| ECHO `DE AD BE EF 00 7F 80 FF 01`                               | codec round trip                               | status 0, identical bytes        | ✅ packed-7 codec correct end to end                                                                                                           |
+| SETTINGS INIT `[01 03 E8]` (TE's updater sends this on connect) | typed settings?                                | **status 2 "command not found"** | ❌ OP-XY has no SETTINGS over SysEx                                                                                                            |
+| FILE INIT `[01 00 00 40 00 00]` (flags 0, max response 4 MiB)   | filesystem over SysEx?                         | status 0, data `0C 00 02 00 00`  | ✅ **supported**; chunk size 0x00020000 = 128 KiB (first byte 0x0C meaning unknown)                                                            |
+| FILE LIST page 0, node 0                                        | root listing                                   | page 0 + 2 entries               | ✅ `drum` (id 1) and `synth` (id 2), both flags dir+read+write, size 0                                                                         |
+| FILE LIST page 1, node 0                                        | end of root                                    | page 1, no entries               | end of listing                                                                                                                                 |
+| FILE LIST page 0, node 1 / node 2                               | contents of drum / synth                       | page 0, no entries               | both **empty** on the owner's unit                                                                                                             |
 
 Findings:
 
@@ -96,11 +96,11 @@ Findings:
 
 Plan from `30-presets-samples.md` §6.4. Frames follow TE's EP sample tool exactly.
 
-| Sent | Purpose | Reply |
-| --- | --- | --- |
-| FILE INIT `[01 00 00 40 00 00]` | open session (no subscribe) | status 0 |
-| FILE INFO `[0B 00 0n]`, n = 0, 1, 2 | node info (parent, flags, size, name) | **status 3 "bad request"** for all three |
-| FILE METADATA GET `[07 02 00 0n 00 00]`, n = 0, 1, 2 | folder metadata (accepted formats) | **status 3 "bad request"** for all three |
+| Sent                                                 | Purpose                               | Reply                                    |
+| ---------------------------------------------------- | ------------------------------------- | ---------------------------------------- |
+| FILE INIT `[01 00 00 40 00 00]`                      | open session (no subscribe)           | status 0                                 |
+| FILE INFO `[0B 00 0n]`, n = 0, 1, 2                  | node info (parent, flags, size, name) | **status 3 "bad request"** for all three |
+| FILE METADATA GET `[07 02 00 0n 00 00]`, n = 0, 1, 2 | folder metadata (accepted formats)    | **status 3 "bad request"** for all three |
 
 Afterwards FILE INIT + LIST and GREET still worked normally (no wedge).
 
@@ -116,7 +116,7 @@ switches it into MTP mode over SysEx; `30-presets-samples.md` §6.1).
 1. ~~Firmware version~~ — owner reports **OS 1.1.33** (2026-09-26).
 2. Enter MTP mode → `usbdesc.py` → does a class-0x06 interface appear? PID? Can Chrome WebUSB open it?
    Compare what MTP shows with the SysEx FILE tree (`drum`, `synth`).
-2b. **FILE PUT test (writes!)**: upload one small WAV (and later a `.preset` folder) into `drum` with the owner's
+   2b. **FILE PUT test (writes!)**: upload one small WAV (and later a `.preset` folder) into `drum` with the owner's
    approval, see where it appears on the device, then DELETE it. Also check FILE INFO/GET on it.
 3. Transport: send `FA`/`FC` (start/stop) — changes playback state (harmless, but announce).
 4. Clock out: press play on the device, observe `F8` stream and SPP.

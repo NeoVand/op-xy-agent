@@ -56,7 +56,7 @@ nothing outside `core` (and `$knowledge` JSON). Nothing imports `routes`.
   `// Ported from kmorrill/xy-format (MIT) xy/rle.py`. Unlicensed repos are reference-only: facts may be
   used, code may not.
 - **Style**: Prettier (tabs, single quotes, width 100) + ESLint; JSDoc on every export; comments
-  explain *why*, not *what*. Match the surrounding code.
+  explain _why_, not _what_. Match the surrounding code.
 - **Knowledge first.** Before writing device-specific logic, read the relevant `docs/research/NN-*.md`
   note; when you learn something new about the device, update the note (and the probe log if it came
   from the device).

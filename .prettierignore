@@ -7,3 +7,12 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Third-party agent skills (vendored as-is)
+/.agents/
+/.claude/
+skills-lock.json
+
+# Research inputs (git-ignored bulk) and generated data
+/research/
+/knowledge/official/

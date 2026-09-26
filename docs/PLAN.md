@@ -16,14 +16,14 @@
 The initial plan was "an agent that sends MIDI". The research turned that into five control planes,
 each with a clear job:
 
-| Plane | What it gives us | Status on the owner's 1.1.33 unit | Research |
-| --- | --- | --- | --- |
-| **Live MIDI** (notes, CC, transport, clock) | play, mix, tempo, scenes, project load, engine/filter/envelope params per track | ports present; CC map mostly community, needs probing | [20](research/20-midi-control.md) |
-| **Remote keys** (CC106/107) | press any front-panel key from the computer → the replica drives the real UI | unknown on 1.1.33 (worked ≤1.0.21 and on 1.1.4) — **spike** | [20 §7](research/20-midi-control.md) |
-| **TE SysEx** (GREET, FILE) | exact firmware version; a filesystem over MIDI with writable `drum/` and `synth/` | **verified** GREET/ECHO/FILE LIST; FILE PUT untested | [60 §4](research/60-firmware.md), [90](research/90-device-probe.md) |
-| **Native `.xy` projects** | the device's own sequencer: notes, p-locks, step components, scenes, songs | format well understood (device-validated on 1.1.4); nothing checked on 1.1.33; transfer path open | [10](research/10-xy-format.md) |
-| **Presets / samples** (`patch.json` + WAV) | AI-made drum kits and instruments | well understood; install path = FILE PUT (spike) or MTP | [30](research/30-presets-samples.md) |
-| **USB audio** | the agent can listen to what the OP-XY plays | class-compliant UAC1 input; untested | [90](research/90-device-probe.md) |
+| Plane                                       | What it gives us                                                                  | Status on the owner's 1.1.33 unit                                                                 | Research                                                            |
+| ------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Live MIDI** (notes, CC, transport, clock) | play, mix, tempo, scenes, project load, engine/filter/envelope params per track   | ports present; CC map mostly community, needs probing                                             | [20](research/20-midi-control.md)                                   |
+| **Remote keys** (CC106/107)                 | press any front-panel key from the computer → the replica drives the real UI      | unknown on 1.1.33 (worked ≤1.0.21 and on 1.1.4) — **spike**                                       | [20 §7](research/20-midi-control.md)                                |
+| **TE SysEx** (GREET, FILE)                  | exact firmware version; a filesystem over MIDI with writable `drum/` and `synth/` | **verified** GREET/ECHO/FILE LIST; FILE PUT untested                                              | [60 §4](research/60-firmware.md), [90](research/90-device-probe.md) |
+| **Native `.xy` projects**                   | the device's own sequencer: notes, p-locks, step components, scenes, songs        | format well understood (device-validated on 1.1.4); nothing checked on 1.1.33; transfer path open | [10](research/10-xy-format.md)                                      |
+| **Presets / samples** (`patch.json` + WAV)  | AI-made drum kits and instruments                                                 | well understood; install path = FILE PUT (spike) or MTP                                           | [30](research/30-presets-samples.md)                                |
+| **USB audio**                               | the agent can listen to what the OP-XY plays                                      | class-compliant UAC1 input; untested                                                              | [90](research/90-device-probe.md)                                   |
 
 Not possible: decompiling firmware (AES-encrypted Blackfin images; key only on device).
 
@@ -159,11 +159,11 @@ announced to the owner first if it changes device state.
 
 ## Risks
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Remote keys disabled on 1.1.33 | replica can't drive device menus | CC/notes for params; `.xy` for programming; show-don't-press guidance |
-| `.xy` layout changed on 1.1.33 / 16 patterns misbehave | native commit breaks | capture blank 1.1.33 project first; golden + device tests; keep ≤9 patterns until verified |
-| No project transfer over MIDI | "commit to device" needs Field Kit/MTP | guided transfer UX; WebUSB-MTP spike |
-| Web MIDI only in Chromium/Firefox (not Safari) | reach | clear browser gate; everything else still works |
-| Copyright / trademark | project health | our own manual (D2), own-drawn replica, no TE photos/fonts shipped, nominative naming |
-| LLM musical accuracy (e.g. real songs) | wrong notes | MIDI-file import path; theory validators; audition + listening loop |
+| Risk                                                   | Impact                                 | Mitigation                                                                                 |
+| ------------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Remote keys disabled on 1.1.33                         | replica can't drive device menus       | CC/notes for params; `.xy` for programming; show-don't-press guidance                      |
+| `.xy` layout changed on 1.1.33 / 16 patterns misbehave | native commit breaks                   | capture blank 1.1.33 project first; golden + device tests; keep ≤9 patterns until verified |
+| No project transfer over MIDI                          | "commit to device" needs Field Kit/MTP | guided transfer UX; WebUSB-MTP spike                                                       |
+| Web MIDI only in Chromium/Firefox (not Safari)         | reach                                  | clear browser gate; everything else still works                                            |
+| Copyright / trademark                                  | project health                         | our own manual (D2), own-drawn replica, no TE photos/fonts shipped, nominative naming      |
+| LLM musical accuracy (e.g. real songs)                 | wrong notes                            | MIDI-file import path; theory validators; audition + listening loop                        |

@@ -6,13 +6,13 @@ The project you have in mind is **technically feasible**, but the most important
 
 The OP‑XY exposes several fundamentally different computer-facing surfaces:
 
-| Control plane | What it gives the AI | Best use |
-|---|---|---|
-| **USB/BLE/TRS MIDI** | Notes, CC parameter changes, mixer control, tempo, scenes, projects, transport, clock | Immediate interaction, auditioning, live performance |
-| **Native `.xy` project files** | Actual OP‑XY patterns, notes, gates, velocities, p-locks, step components, scenes, songs, many project/track parameters | **Programming the OP‑XY's native sequencer** |
-| **`.preset` + `patch.json` + samples** | Drum kits, sampled instruments, multisamples, sample mapping | AI-generated sounds, drum kits, multisampling |
-| **MTP / Field Kit** | Transfer projects, samples and presets between computer and OP‑XY | Deployment and state acquisition |
-| **USB audio** | Stereo audio returning from the OP‑XY | Listening, analysis, validation, iterative AI production |
+| Control plane                          | What it gives the AI                                                                                                    | Best use                                                 |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **USB/BLE/TRS MIDI**                   | Notes, CC parameter changes, mixer control, tempo, scenes, projects, transport, clock                                   | Immediate interaction, auditioning, live performance     |
+| **Native `.xy` project files**         | Actual OP‑XY patterns, notes, gates, velocities, p-locks, step components, scenes, songs, many project/track parameters | **Programming the OP‑XY's native sequencer**             |
+| **`.preset` + `patch.json` + samples** | Drum kits, sampled instruments, multisamples, sample mapping                                                            | AI-generated sounds, drum kits, multisampling            |
+| **MTP / Field Kit**                    | Transfer projects, samples and presets between computer and OP‑XY                                                       | Deployment and state acquisition                         |
+| **USB audio**                          | Stereo audio returning from the OP‑XY                                                                                   | Listening, analysis, validation, iterative AI production |
 
 Teenage Engineering officially documents USB MIDI host/device and USB audio host/device support, and the COM subsystem exposes MIDI configuration, controller mode, connected-device settings and MTP file access. citeturn18view2turn18view4
 
@@ -80,21 +80,21 @@ Even older changelog entries prove that substantial remote MIDI control has exis
 
 The following should be treated as the primary official knowledge corpus:
 
-| Resource | URL | Why the agent needs it |
-|---|---|---|
-| **Current OP‑XY guide** | https://teenage.engineering/guides/op-xy | Master manual/index; currently labeled v1.1.15. citeturn18view1 |
-| **Firmware / OS changelog** | https://teenage.engineering/downloads/op-xy | **Canonical source for post-1.1.15 behavior and current 1.1.33 firmware.** citeturn18view0 |
-| **Official MIDI CC reference** | https://teenage.engineering/guides/op-xy/midi-references | Official external-control CC mapping. citeturn21view0 |
-| **COM / connectivity** | https://teenage.engineering/guides/op-xy/com | USB/BLE MIDI, MIDI settings, controller mode, MIDI monitor, MTP. citeturn18view2 |
-| **Sampling / slicing** | https://teenage.engineering/guides/op-xy/sample | Drum sampler, sample slicing, multisampler and sample library. citeturn18view3 |
-| **Sequencer** | https://teenage.engineering/guides/op-xy/sequencer | Native sequencing, recording and step concepts. The main guide links this as a core chapter. citeturn18view1 |
-| **Projects** | https://teenage.engineering/guides/op-xy/project | Project lifecycle/configuration. The main guide indexes project settings and project folders. citeturn18view1 |
-| **Workflow / patterns / scenes / songs** | https://teenage.engineering/guides/op-xy/workflow | Needed for translating requests like “make an intro, chorus and drop.” The main guide explicitly indexes patterns, scenes, songs and projects. citeturn18view1 |
-| **Auxiliary / external MIDI** | https://teenage.engineering/guides/op-xy/auxiliary | MIDI engine, eight assignable CCs, CV, audio, tape and FX tracks. citeturn21view2 |
-| **Instrument / synth architecture** | https://teenage.engineering/guides/op-xy/instrument | Engine, envelopes, filter, LFO, presets. Indexed by the master guide. citeturn18view1 |
-| **Effects** | https://teenage.engineering/guides/op-xy/fx | Needed to give the agent semantic knowledge of FX parameters. Indexed by the master guide. citeturn18view1 |
-| **Product specifications** | https://teenage.engineering/products/op-xy | Hardware I/O and broad capability overview. citeturn18view4 |
-| **Field Kit** | https://teenage.engineering/apps/field-kit | Especially relevant on macOS for device-content access; community tools also rely on it for OP‑XY preset deployment. fileciteturn12file0L2-L2 |
+| Resource                                 | URL                                                      | Why the agent needs it                                                                                                                                            |
+| ---------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Current OP‑XY guide**                  | https://teenage.engineering/guides/op-xy                 | Master manual/index; currently labeled v1.1.15. citeturn18view1                                                                                                |
+| **Firmware / OS changelog**              | https://teenage.engineering/downloads/op-xy              | **Canonical source for post-1.1.15 behavior and current 1.1.33 firmware.** citeturn18view0                                                                     |
+| **Official MIDI CC reference**           | https://teenage.engineering/guides/op-xy/midi-references | Official external-control CC mapping. citeturn21view0                                                                                                          |
+| **COM / connectivity**                   | https://teenage.engineering/guides/op-xy/com             | USB/BLE MIDI, MIDI settings, controller mode, MIDI monitor, MTP. citeturn18view2                                                                               |
+| **Sampling / slicing**                   | https://teenage.engineering/guides/op-xy/sample          | Drum sampler, sample slicing, multisampler and sample library. citeturn18view3                                                                                 |
+| **Sequencer**                            | https://teenage.engineering/guides/op-xy/sequencer       | Native sequencing, recording and step concepts. The main guide links this as a core chapter. citeturn18view1                                                   |
+| **Projects**                             | https://teenage.engineering/guides/op-xy/project         | Project lifecycle/configuration. The main guide indexes project settings and project folders. citeturn18view1                                                  |
+| **Workflow / patterns / scenes / songs** | https://teenage.engineering/guides/op-xy/workflow        | Needed for translating requests like “make an intro, chorus and drop.” The main guide explicitly indexes patterns, scenes, songs and projects. citeturn18view1 |
+| **Auxiliary / external MIDI**            | https://teenage.engineering/guides/op-xy/auxiliary       | MIDI engine, eight assignable CCs, CV, audio, tape and FX tracks. citeturn21view2                                                                              |
+| **Instrument / synth architecture**      | https://teenage.engineering/guides/op-xy/instrument      | Engine, envelopes, filter, LFO, presets. Indexed by the master guide. citeturn18view1                                                                          |
+| **Effects**                              | https://teenage.engineering/guides/op-xy/fx              | Needed to give the agent semantic knowledge of FX parameters. Indexed by the master guide. citeturn18view1                                                     |
+| **Product specifications**               | https://teenage.engineering/products/op-xy               | Hardware I/O and broad capability overview. citeturn18view4                                                                                                    |
+| **Field Kit**                            | https://teenage.engineering/apps/field-kit               | Especially relevant on macOS for device-content access; community tools also rely on it for OP‑XY preset deployment. fileciteturn12file0L2-L2                 |
 
 Teenage Engineering also provides a browser-based **MIDI firmware updater** from the downloads page, and alternatively TE Boot can expose the OP‑XY as a mass-storage device for firmware deployment. citeturn18view0
 
@@ -134,20 +134,20 @@ Teenage Engineering's current official MIDI-reference page states that the OP‑
 
 The officially documented global controls include:
 
-| MIDI CC | Function | Channel |
-|---:|---|---|
-| 7 | Track volume | 1–16 |
-| 9 | Track mute | 1–16 |
-| 10 | Track pan | 1–16 |
-| 46 | Track parameters | 1–16 |
-| 80 | Tempo | Any |
-| 81 | Groove | Any |
-| 82 | Scene, delayed switch | Any |
-| 83 | Previous scene | Any |
-| 84 | Next scene | Any |
-| 85 | Scene, immediate | Any |
-| 86 | **Project** | Any |
-| 90 | EQ | Channels 1–4 |
+| MIDI CC | Function              | Channel      |
+| ------: | --------------------- | ------------ |
+|       7 | Track volume          | 1–16         |
+|       9 | Track mute            | 1–16         |
+|      10 | Track pan             | 1–16         |
+|      46 | Track parameters      | 1–16         |
+|      80 | Tempo                 | Any          |
+|      81 | Groove                | Any          |
+|      82 | Scene, delayed switch | Any          |
+|      83 | Previous scene        | Any          |
+|      84 | Next scene            | Any          |
+|      85 | Scene, immediate      | Any          |
+|      86 | **Project**           | Any          |
+|      90 | EQ                    | Channels 1–4 |
 
 All take 0–127 values in the official table. citeturn21view0
 
@@ -227,10 +227,10 @@ The application should never expose “CC 32” to the model as its principal ab
 
 ```json
 {
-  "tool": "set_parameter",
-  "track": "bass",
-  "parameter": "filter.cutoff",
-  "value": 0.42
+	"tool": "set_parameter",
+	"track": "bass",
+	"parameter": "filter.cutoff",
+	"value": 0.42
 }
 ```
 
@@ -335,20 +335,20 @@ The ecosystem is now large enough that I would strongly advise the implementatio
 
 ### The most important projects
 
-| Project | Importance to your goal | What to take from it |
-|---|---|---|
-| **`kmorrill/xy-format`** | ★★★★★ | Native `.xy` project decoding/authoring |
-| **`kmorrill/op-xy-vibing`** | ★★★★★ | Existing AI → JSON → MIDI OP‑XY workflow |
-| **`jshph/opxy-reactive`** | ★★★★★ | Semantic MIDI abstraction + agent interface |
-| **`squarewave-studio/op-patchstudio`** | ★★★★★ | Drum/multisample preset construction and audio tools |
-| **`buba447/OPXY-Multisample-Tool`** | ★★★★☆ | Automated recording and packing of multisamples |
-| **`sixthlaw/opxy-multisampler-preset-builder`** | ★★★★☆ | Browser multisample generation and pitch detection |
-| **`aliosa27/op-xy-slicer`** | ★★★★☆ | **Transient-detect → slices → OP‑XY preset** workflow |
-| **`kennethreitz/pytheory-opxy`** | ★★★★☆ | Programmatic sound generation + reverse-engineered preset knowledge |
-| **`om3opr/stembounce`** | ★★★★☆ | MIDI + USB-audio closed-loop control |
-| **`benjaminr/mcp-koii`** | ★★★★☆ | Actual Teenage Engineering MCP implementation to adapt |
-| **`buba447/LaunchpadPrefs-OPXY`** | ★★★☆☆ | Practical proof of extensive external MIDI performance control |
-| **`kazuochi/opxy-deck`** | ★★★☆☆ | Detailed controller-mode mapping and AI-agent integration in the opposite direction |
+| Project                                         | Importance to your goal | What to take from it                                                                |
+| ----------------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------- |
+| **`kmorrill/xy-format`**                        | ★★★★★                   | Native `.xy` project decoding/authoring                                             |
+| **`kmorrill/op-xy-vibing`**                     | ★★★★★                   | Existing AI → JSON → MIDI OP‑XY workflow                                            |
+| **`jshph/opxy-reactive`**                       | ★★★★★                   | Semantic MIDI abstraction + agent interface                                         |
+| **`squarewave-studio/op-patchstudio`**          | ★★★★★                   | Drum/multisample preset construction and audio tools                                |
+| **`buba447/OPXY-Multisample-Tool`**             | ★★★★☆                   | Automated recording and packing of multisamples                                     |
+| **`sixthlaw/opxy-multisampler-preset-builder`** | ★★★★☆                   | Browser multisample generation and pitch detection                                  |
+| **`aliosa27/op-xy-slicer`**                     | ★★★★☆                   | **Transient-detect → slices → OP‑XY preset** workflow                               |
+| **`kennethreitz/pytheory-opxy`**                | ★★★★☆                   | Programmatic sound generation + reverse-engineered preset knowledge                 |
+| **`om3opr/stembounce`**                         | ★★★★☆                   | MIDI + USB-audio closed-loop control                                                |
+| **`benjaminr/mcp-koii`**                        | ★★★★☆                   | Actual Teenage Engineering MCP implementation to adapt                              |
+| **`buba447/LaunchpadPrefs-OPXY`**               | ★★★☆☆                   | Practical proof of extensive external MIDI performance control                      |
+| **`kazuochi/opxy-deck`**                        | ★★★☆☆                   | Detailed controller-mode mapping and AI-agent integration in the opposite direction |
 
 ### `kmorrill/xy-format`: the native project breakthrough
 
@@ -585,15 +585,15 @@ It explicitly curates working Teenage Engineering-specific reverse-engineering a
 
 Its OP‑XY section additionally identifies:
 
-| Project | URL | Role |
-|---|---|---|
-| OP‑XY Drum Builder | https://github.com/niekert/op-xy-drum-builder | Custom sample drum racks; its README confirms direct OP‑XY drum-preset creation. fileciteturn36file0L2-L2 |
-| SF2 → OP‑XY | https://github.com/charlesvestal/sf2-to-opxy | Converts SoundFont instruments/drums into OP‑XY presets, preserving useful mapping/envelope/loop data. fileciteturn37file0L2-L2 |
-| OP‑XY → SFZ | https://github.com/legsmechanical/opxy-to-sfz | Useful for reverse conversion/inspection. Listed by the curated directory. fileciteturn35file0L2-L2 |
-| DX7 → OP‑XY | https://github.com/cfurrow7/dx7-opxy | Converts DX7 SysEx-derived material. Listed by the curated directory. fileciteturn35file0L2-L2 |
-| Maschine → OP‑XY | https://github.com/DimaDake/maschine-multisample-to-op-xy-converter | Existing multisample conversion path. fileciteturn35file0L2-L2 |
-| Logic/GarageBand kits | https://github.com/inrainbws/logic_pro_drums_for_opxy | Sample/preset conversion source. fileciteturn35file0L2-L2 |
-| vjxy | https://vjxy.app | OP‑XY MIDI-driven visual software; useful as another MIDI integration reference. fileciteturn35file0L2-L2 |
+| Project               | URL                                                                 | Role                                                                                                                                |
+| --------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| OP‑XY Drum Builder    | https://github.com/niekert/op-xy-drum-builder                       | Custom sample drum racks; its README confirms direct OP‑XY drum-preset creation. fileciteturn36file0L2-L2                       |
+| SF2 → OP‑XY           | https://github.com/charlesvestal/sf2-to-opxy                        | Converts SoundFont instruments/drums into OP‑XY presets, preserving useful mapping/envelope/loop data. fileciteturn37file0L2-L2 |
+| OP‑XY → SFZ           | https://github.com/legsmechanical/opxy-to-sfz                       | Useful for reverse conversion/inspection. Listed by the curated directory. fileciteturn35file0L2-L2                             |
+| DX7 → OP‑XY           | https://github.com/cfurrow7/dx7-opxy                                | Converts DX7 SysEx-derived material. Listed by the curated directory. fileciteturn35file0L2-L2                                  |
+| Maschine → OP‑XY      | https://github.com/DimaDake/maschine-multisample-to-op-xy-converter | Existing multisample conversion path. fileciteturn35file0L2-L2                                                                  |
+| Logic/GarageBand kits | https://github.com/inrainbws/logic_pro_drums_for_opxy               | Sample/preset conversion source. fileciteturn35file0L2-L2                                                                       |
+| vjxy                  | https://vjxy.app                                                    | OP‑XY MIDI-driven visual software; useful as another MIDI integration reference. fileciteturn35file0L2-L2                       |
 
 `charlesvestal/sf2-to-opxy` is particularly sophisticated: it supports multisample zone selection, drum mapping, preserved loop points, envelope conversion, FX-send mapping, choke-group interpretation and calibration workflows against recordings made by the real OP‑XY. fileciteturn37file0L2-L2 That test methodology is exactly the sort of thing the new agent should borrow.
 
@@ -888,19 +888,19 @@ MCP is a good outer interface because its purpose is precisely to expose tools a
 
 The agent should receive **semantic tools**, not low-level bytes.
 
-| Tool family | Example calls |
-|---|---|
-| Device | `device.list`, `device.connect`, `device.info`, `device.capabilities`, `device.probe` |
-| MIDI | `midi.note`, `midi.chord`, `midi.cc`, `midi.panic`, `midi.start`, `midi.stop` |
-| Tracks | `track.volume`, `track.pan`, `track.mute`, `track.select` |
-| Sound | `sound.set_engine_parameter`, `sound.filter`, `sound.envelope`, `sound.send` |
-| Arrangement | `scene.select`, `scene.next`, `project.load`, `tempo.set`, `groove.set` |
-| Composition | `pattern.create`, `pattern.add_note`, `pattern.automate`, `pattern.add_component` |
+| Tool family     | Example calls                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| Device          | `device.list`, `device.connect`, `device.info`, `device.capabilities`, `device.probe`      |
+| MIDI            | `midi.note`, `midi.chord`, `midi.cc`, `midi.panic`, `midi.start`, `midi.stop`              |
+| Tracks          | `track.volume`, `track.pan`, `track.mute`, `track.select`                                  |
+| Sound           | `sound.set_engine_parameter`, `sound.filter`, `sound.envelope`, `sound.send`               |
+| Arrangement     | `scene.select`, `scene.next`, `project.load`, `tempo.set`, `groove.set`                    |
+| Composition     | `pattern.create`, `pattern.add_note`, `pattern.automate`, `pattern.add_component`          |
 | Native projects | `project.inspect`, `project.compile`, `project.validate`, `project.diff`, `project.backup` |
-| Sampling | `sample.record`, `sample.generate`, `sample.slice`, `sample.detect_transients` |
-| Presets | `preset.build_drum`, `preset.build_multisample`, `preset.validate` |
-| Storage | `files.list`, `files.push_preset`, `files.push_project`, `files.backup` |
-| Audio | `audio.record`, `audio.analyze`, `audio.bounce_stems`, `audio.compare` |
+| Sampling        | `sample.record`, `sample.generate`, `sample.slice`, `sample.detect_transients`             |
+| Presets         | `preset.build_drum`, `preset.build_multisample`, `preset.validate`                         |
+| Storage         | `files.list`, `files.push_preset`, `files.push_project`, `files.backup`                    |
+| Audio           | `audio.record`, `audio.analyze`, `audio.bounce_stems`, `audio.compare`                     |
 
 Internally only a few of those should be autonomous LLM operations.
 
@@ -908,15 +908,15 @@ For example:
 
 ```json
 {
-  "name": "pattern.add_note",
-  "arguments": {
-    "track": 3,
-    "pattern": 2,
-    "pitch": 43,
-    "step": 7,
-    "velocity": 104,
-    "gate": 0.82
-  }
+	"name": "pattern.add_note",
+	"arguments": {
+		"track": 3,
+		"pattern": 2,
+		"pitch": 43,
+		"step": 7,
+		"velocity": 104,
+		"gate": 0.82
+	}
 }
 ```
 
@@ -946,17 +946,17 @@ For example:
 
 ```json
 {
-  "role": "hihat",
-  "length": "1bar",
-  "division": "1/16",
-  "hits": [1, 3, 5, 7, 9, 11, 13, 15],
-  "velocity_curve": [83, 58, 91, 61, 86, 54, 94, 63],
-  "swing": 0.12,
-  "components": {
-    "15": {
-      "probability": 0.62
-    }
-  }
+	"role": "hihat",
+	"length": "1bar",
+	"division": "1/16",
+	"hits": [1, 3, 5, 7, 9, 11, 13, 15],
+	"velocity_curve": [83, 58, 91, 61, 86, 54, 94, 63],
+	"swing": 0.12,
+	"components": {
+		"15": {
+			"probability": 0.62
+		}
+	}
 }
 ```
 
@@ -1218,29 +1218,29 @@ same MCP tools
 
 ### Feasibility matrix for your ultimate vision
 
-| Desired capability | Feasibility now | Best mechanism |
-|---|---:|---|
-| AI plays the OP‑XY | **High** | USB MIDI |
-| AI changes volume/pan/mute | **High** | MIDI CC 7/9/10 |
-| AI controls filter/envelopes/engine parameters | **High** | MIDI CC semantic layer |
-| AI controls tempo/groove | **High** | CC80/81 |
-| AI launches scenes | **High** | CC82–85 |
-| AI loads projects | **High** | CC86 |
-| AI controls transport | **High** | MIDI realtime transport |
-| AI creates host-side sequences | **High** | `op-xy-vibing`-style conductor |
-| AI creates **native OP‑XY sequences** | **High but community/reverse-engineered** | `xy-format` |
-| AI creates p-locks | **High but community/reverse-engineered** | `xy-format` |
-| AI creates step components | **High but community/reverse-engineered** | `xy-format` |
-| AI creates scenes/song arrangements | **High but community/reverse-engineered** | `xy-format` |
-| AI creates drum presets | **High** | patch/preset builders |
-| AI creates multisamples | **High** | patch/preset builders |
-| AI automatically slices generated audio | **High off-device** | transient analysis → drum preset |
-| AI performs every native slice operation through the screen | **Experimental** | remote-key automation if firmware permits |
-| AI reads every physical knob move | **No / partial** | MIDI does not expose all normal-track encoder activity according to current reverse engineering |
-| AI reads complete internal state continuously | **Partial** | MIDI + `.xy` parsing + own sent-state cache |
-| AI obtains simultaneous native USB stems | **No known direct interface** | sequential mute/solo bounce |
-| AI hears and judges output | **High** | USB audio + analysis |
-| AI exposes everything to Claude/ChatGPT/etc. via MCP | **High** | new OP‑XY MCP layer |
+| Desired capability                                          |                           Feasibility now | Best mechanism                                                                                  |
+| ----------------------------------------------------------- | ----------------------------------------: | ----------------------------------------------------------------------------------------------- |
+| AI plays the OP‑XY                                          |                                  **High** | USB MIDI                                                                                        |
+| AI changes volume/pan/mute                                  |                                  **High** | MIDI CC 7/9/10                                                                                  |
+| AI controls filter/envelopes/engine parameters              |                                  **High** | MIDI CC semantic layer                                                                          |
+| AI controls tempo/groove                                    |                                  **High** | CC80/81                                                                                         |
+| AI launches scenes                                          |                                  **High** | CC82–85                                                                                         |
+| AI loads projects                                           |                                  **High** | CC86                                                                                            |
+| AI controls transport                                       |                                  **High** | MIDI realtime transport                                                                         |
+| AI creates host-side sequences                              |                                  **High** | `op-xy-vibing`-style conductor                                                                  |
+| AI creates **native OP‑XY sequences**                       | **High but community/reverse-engineered** | `xy-format`                                                                                     |
+| AI creates p-locks                                          | **High but community/reverse-engineered** | `xy-format`                                                                                     |
+| AI creates step components                                  | **High but community/reverse-engineered** | `xy-format`                                                                                     |
+| AI creates scenes/song arrangements                         | **High but community/reverse-engineered** | `xy-format`                                                                                     |
+| AI creates drum presets                                     |                                  **High** | patch/preset builders                                                                           |
+| AI creates multisamples                                     |                                  **High** | patch/preset builders                                                                           |
+| AI automatically slices generated audio                     |                       **High off-device** | transient analysis → drum preset                                                                |
+| AI performs every native slice operation through the screen |                          **Experimental** | remote-key automation if firmware permits                                                       |
+| AI reads every physical knob move                           |                          **No / partial** | MIDI does not expose all normal-track encoder activity according to current reverse engineering |
+| AI reads complete internal state continuously               |                               **Partial** | MIDI + `.xy` parsing + own sent-state cache                                                     |
+| AI obtains simultaneous native USB stems                    |             **No known direct interface** | sequential mute/solo bounce                                                                     |
+| AI hears and judges output                                  |                                  **High** | USB audio + analysis                                                                            |
+| AI exposes everything to Claude/ChatGPT/etc. via MCP        |                                  **High** | new OP‑XY MCP layer                                                                             |
 
 The distinction between **“High” and “High but community/reverse-engineered”** is important. `.xy` authoring is exceptionally promising, but it is not an official Teenage Engineering SDK. `xy-format` itself uses evidence tiers and device probes precisely because firmware changes can move or reinterpret binary data. fileciteturn25file0L2-L2
 
@@ -1262,40 +1262,40 @@ There are several areas where this investigation found promising evidence but no
 
 This is the corpus I would give the implementation agent before it writes the architecture.
 
-| Priority | Resource |
-|---|---|
-| **Essential** | https://teenage.engineering/downloads/op-xy |
-| **Essential** | https://teenage.engineering/guides/op-xy |
-| **Essential** | https://teenage.engineering/guides/op-xy/midi-references |
-| **Essential** | https://teenage.engineering/guides/op-xy/com |
-| **Essential** | https://teenage.engineering/guides/op-xy/sample |
-| **Essential** | https://teenage.engineering/guides/op-xy/auxiliary |
-| **Essential** | https://github.com/kmorrill/xy-format |
-| **Essential** | https://github.com/kmorrill/xy-format/blob/main/docs/parse_capability_checklist.md |
-| **Essential** | https://github.com/kmorrill/xy-format/blob/main/docs/format/decoded_image_map.md |
-| **Essential** | https://github.com/kmorrill/xy-format/blob/main/docs/engineering/authoring.md |
-| **Essential** | https://github.com/kmorrill/xy-format/blob/main/docs/reference/opxy_midi_cc_map.md |
-| **Essential** | https://github.com/kmorrill/op-xy-vibing |
-| **Essential** | https://github.com/jshph/opxy-reactive |
-| **Essential** | https://github.com/jshph/opxy-reactive/blob/master/DESIGN.md |
-| **Essential** | https://github.com/jshph/opxy-reactive/blob/master/AGENT.md |
-| **Preset/sampling** | https://github.com/squarewave-studio/op-patchstudio |
-| **Preset/sampling** | https://github.com/buba447/opxy-drum-tool |
-| **Preset/sampling** | https://github.com/buba447/OPXY-Multisample-Tool |
-| **Preset/sampling** | https://github.com/sixthlaw/opxy-multisampler-preset-builder |
-| **Preset/sampling** | https://github.com/kennethreitz/pytheory-opxy |
-| **Preset format notes** | https://github.com/kennethreitz/pytheory-opxy/blob/main/opxy-preset-notes.md |
-| **Slicing** | https://github.com/aliosa27/op-xy-slicer |
-| **Drum presets** | https://github.com/niekert/op-xy-drum-builder |
-| **Conversion reference** | https://github.com/charlesvestal/sf2-to-opxy |
-| **Audio feedback** | https://github.com/om3opr/stembounce |
-| **Audio feedback** | https://github.com/mofongo/opxy-stems |
-| **Hardware MIDI proof** | https://github.com/buba447/LaunchpadPrefs-OPXY |
-| **Controller-mode research** | https://github.com/kazuochi/opxy-deck |
-| **MCP architecture precedent** | https://github.com/benjaminr/mcp-koii |
-| **Ecosystem index** | https://github.com/bnjreece/awesome-te |
-| **Agent/manual corpus idea** | https://github.com/gravitinos/opxy-tutor |
-| **MCP specification** | https://modelcontextprotocol.io/ |
+| Priority                       | Resource                                                                           |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| **Essential**                  | https://teenage.engineering/downloads/op-xy                                        |
+| **Essential**                  | https://teenage.engineering/guides/op-xy                                           |
+| **Essential**                  | https://teenage.engineering/guides/op-xy/midi-references                           |
+| **Essential**                  | https://teenage.engineering/guides/op-xy/com                                       |
+| **Essential**                  | https://teenage.engineering/guides/op-xy/sample                                    |
+| **Essential**                  | https://teenage.engineering/guides/op-xy/auxiliary                                 |
+| **Essential**                  | https://github.com/kmorrill/xy-format                                              |
+| **Essential**                  | https://github.com/kmorrill/xy-format/blob/main/docs/parse_capability_checklist.md |
+| **Essential**                  | https://github.com/kmorrill/xy-format/blob/main/docs/format/decoded_image_map.md   |
+| **Essential**                  | https://github.com/kmorrill/xy-format/blob/main/docs/engineering/authoring.md      |
+| **Essential**                  | https://github.com/kmorrill/xy-format/blob/main/docs/reference/opxy_midi_cc_map.md |
+| **Essential**                  | https://github.com/kmorrill/op-xy-vibing                                           |
+| **Essential**                  | https://github.com/jshph/opxy-reactive                                             |
+| **Essential**                  | https://github.com/jshph/opxy-reactive/blob/master/DESIGN.md                       |
+| **Essential**                  | https://github.com/jshph/opxy-reactive/blob/master/AGENT.md                        |
+| **Preset/sampling**            | https://github.com/squarewave-studio/op-patchstudio                                |
+| **Preset/sampling**            | https://github.com/buba447/opxy-drum-tool                                          |
+| **Preset/sampling**            | https://github.com/buba447/OPXY-Multisample-Tool                                   |
+| **Preset/sampling**            | https://github.com/sixthlaw/opxy-multisampler-preset-builder                       |
+| **Preset/sampling**            | https://github.com/kennethreitz/pytheory-opxy                                      |
+| **Preset format notes**        | https://github.com/kennethreitz/pytheory-opxy/blob/main/opxy-preset-notes.md       |
+| **Slicing**                    | https://github.com/aliosa27/op-xy-slicer                                           |
+| **Drum presets**               | https://github.com/niekert/op-xy-drum-builder                                      |
+| **Conversion reference**       | https://github.com/charlesvestal/sf2-to-opxy                                       |
+| **Audio feedback**             | https://github.com/om3opr/stembounce                                               |
+| **Audio feedback**             | https://github.com/mofongo/opxy-stems                                              |
+| **Hardware MIDI proof**        | https://github.com/buba447/LaunchpadPrefs-OPXY                                     |
+| **Controller-mode research**   | https://github.com/kazuochi/opxy-deck                                              |
+| **MCP architecture precedent** | https://github.com/benjaminr/mcp-koii                                              |
+| **Ecosystem index**            | https://github.com/bnjreece/awesome-te                                             |
+| **Agent/manual corpus idea**   | https://github.com/gravitinos/opxy-tutor                                           |
+| **MCP specification**          | https://modelcontextprotocol.io/                                                   |
 
 The four repositories you originally provided are therefore only one slice of the ecosystem. The most consequential additions are **`xy-format` for native project authoring, `op-xy-vibing` for AI-assisted live composition, `opxy-reactive` for a semantic bidirectional MIDI/agent interface, `op-xy-slicer` for the exact generated-audio slicing workflow you described, and `mcp-koii` as the concrete MCP pattern to adapt**. fileciteturn8file0L2-L2 fileciteturn7file0L2-L2 fileciteturn20file0L2-L2 fileciteturn26file0L2-L2 fileciteturn17file0L2-L2
 

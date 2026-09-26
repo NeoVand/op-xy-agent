@@ -18,10 +18,10 @@ device.
 2. **An agent harness, not a chatbot.** Planning, memory, tool execution, sub-tasks (the user favours
    LangChain **Deep Agents**; skills are installed under `.agents/skills/`). It must:
    - **Teach**: answer any OP-XY question from the fully ingested, indexed official manual and
-     firmware changelog, citing sections, and show *how* on the replica ("press shift + …").
+     firmware changelog, citing sections, and show _how_ on the replica ("press shift + …").
    - **Do**: program the device — tracks, patterns, notes, p-locks, step components, scenes, songs,
-     sounds, mixer, tempo — e.g. *"program a multi-track, multi-scene arrangement of Modern Talking's
-     'Brother Louie'"* or *"Beethoven's Moonlight Sonata"*.
+     sounds, mixer, tempo — e.g. _"program a multi-track, multi-scene arrangement of Modern Talking's
+     'Brother Louie'"_ or _"Beethoven's Moonlight Sonata"_.
    - **Control live**: transport, mutes, scenes, parameters, playing notes.
 3. **Connected over USB** via Web MIDI (and whatever else USB exposes: MTP, audio). MIDI cable/BLE are
    secondary.
