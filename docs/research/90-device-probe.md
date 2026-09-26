@@ -111,6 +111,44 @@ recipe (raw PCM + METADATA SET) can't be assumed to work; a PUT test would be ex
 read-only lead: see which TE SysEx commands **Field Kit** sends to the OP-XY (it greets the device and
 switches it into MTP mode over SysEx; `30-presets-samples.md` §6.1).
 
+## 2026-09-26 — Session 1 results (owner present, scratch project, OS 1.1.33)
+
+The owner created a new empty project first (project → hold M1). Every step was announced; state was
+restored afterwards (tempo 120, track 1 unmuted and selected). Transcripts: `captures/spike-*.jsonl`.
+
+**Stock COM → system settings → midi (as found):** clock **in** (receive only), notes **both**,
+other **both**, active track channel **1**, midi echo **off**. The owner then set **clock = both**
+for the tests (still set).
+
+| #     | Test                                                     | Result                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3     | Transport out, clock = in                                | **Nothing sent** (no FA/FC/F8) — stock settings don't transmit transport or clock                                                                                                                                                                                                                                                                                                                                   |
+| 3     | Transport out, clock = both                              | Each **play** press → `FA` (a restart while playing is another `FA`); **stop** → `FC`; **no** `FB`/`F2`. **`F8` runs continuously, even while stopped** (960 ticks in 20 s = 120.0 BPM)                                                                                                                                                                                                                             |
+| 11    | Transport in (`FA`, `FC` from us)                        | ✅ starts and stops playback; the device re-transmits `FA`/`FC`                                                                                                                                                                                                                                                                                                                                                     |
+| 16    | CC80 tempo                                               | ✅ **BPM = 2 × value, clamped to 40–220** (0→40, 32→64, 60→120, 64→128, 96→192, 127→220; measured from the device clock and confirmed on the metronome page). 2-BPM resolution; values 20–110 are the useful range                                                                                                                                                                                                  |
+| 15    | CC9 mute (ch1, watched via mix + shift LEDs)             | ✅ **0 = unmuted, 1–127 = muted**; a level, not a toggle (64 while muted stays muted)                                                                                                                                                                                                                                                                                                                               |
+| 24    | CC106/107 remote keys                                    | ❌ **No effect on 1.1.33**: instrument (2) on ch1 and ch16, play (51) on ch1 — screen unchanged, no `FA`                                                                                                                                                                                                                                                                                                            |
+| 23    | CC104 / CC105                                            | ✅ **CC104 127 = play** (device sends `FA`), **CC105 127 = stop** (`FC`)                                                                                                                                                                                                                                                                                                                                            |
+| 23    | CC102                                                    | ✅ **track select, zero-based**: value 2 selected track 3 (value 0 → track 1)                                                                                                                                                                                                                                                                                                                                       |
+| 12    | USB audio capture                                        | ✅ `ffmpeg -f avfoundation -i ":OP-XY"`: 44.1 kHz / 16-bit / stereo; 8 MIDI-triggered notes on track 1 show as 8 clear bursts, silence −106 dB. **The agent can hear the device**                                                                                                                                                                                                                                   |
+| 13/32 | MTP mode (com → M4)                                      | Re-enumerates as **PID 0x0021**, 1 config, **1 interface, class 0xFF (vendor) sub 0x01 proto 0x01**, bulk IN 0x89 / bulk OUT 0x0A / interrupt IN 0x83. **MIDI ports disappear.** Class 0xFF is not WebUSB-protected and nothing on macOS claimed it                                                                                                                                                                 |
+| —     | MTP session from our own code (`mtp_list.py`, read-only) | ✅ GetDeviceInfo: `teenage engineering` / `OP-XY` / device version **`1.1.33`** / ext `microsoft.com: 1.0;`; 22 ops incl. GetObject, SendObjectInfo/SendObject, DeleteObject, MoveObject, GetPartialObject, object-prop ops (9801–9805). Storage "OP-XY" 8.59 GB (8.36 free). Tree: `projects/{user/, templates/, workspace.xy}`, `samples/user/`, `presets/{snapshot/, <a user sound pack>/}`, `how_to_import.txt` |
+| —     | MTP exit behaviour                                       | **Closing the MTP session makes the OP-XY leave MTP mode by itself** and return to MIDI                                                                                                                                                                                                                                                                                                                             |
+| —     | `workspace.xy` download (`mtp_get.py`, read-only)        | 9,534 B blank 1.1.33 project; header **`DD CC BB AA 09 14 07 86`** (1.1.4 = `09 13 03 86`, 1.1.21 = `09 13 06 86`) → **format version bumped after 1.1.21**. Upstream `inspect_xy.py` still decodes tempo/groove/preset paths; the pattern directory needs re-mapping (M6)                                                                                                                                          |
+
+Also observed: with echo **off**, the universal identity request was still sent back earlier — so
+something other than the echo setting forwards universal SysEx. Open.
+
+Implications:
+
+- Onboarding recommends **clock = both** (lets the app mirror play state and tempo).
+- The replica **cannot press device keys** on 1.1.33; it drives transport (FA/FC or CC104/105),
+  track select (CC102), tempo (CC80), mutes (CC9) and parameters by CC, and **teaches** navigation by
+  animating the keys for the user.
+- **WebUSB-MTP is viable on macOS/Linux** (vendor-class interface): read the current project
+  (`workspace.xy`), write projects/presets, then close the session to return the device to MIDI mode.
+  Entering MTP still needs the owner (com → M4) unless we find Field Kit's SysEx command.
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers

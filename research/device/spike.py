@@ -91,11 +91,14 @@ def channel(arg: str) -> int:
 
 
 def main(argv: list[str]) -> None:
+    ch_opt = 0
+    if "--ch" in argv:
+        i = argv.index("--ch")
+        ch_opt = channel(argv[i + 1])
+        argv = argv[:i] + argv[i + 2 :]  # drop the flag AND its value before reading positionals
     args = [a for a in argv if not a.startswith("--")]
     cmd, rest = args[0], args[1:]
     s = Spike()
-    ch_opt = next((channel(argv[i + 1]) for i, a in enumerate(argv) if a == "--ch"), 0)
-    rest = [a for i, a in enumerate(rest) if not (i > 0 and rest[i - 1] == "--ch")]
     print(f"[{cmd}] {' '.join(rest)}")
     if cmd == "listen":
         s.capture(float(rest[0]))
