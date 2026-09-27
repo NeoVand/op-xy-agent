@@ -207,6 +207,22 @@
 					<Led state={sound.enabled && sound.available ? 'white' : 'off'} size="sm" />
 					{sound.connected ? 'sound on this computer' : 'sound'}
 				</button>
+				{#if sound.synthReady}
+					<button
+						type="button"
+						class="sound"
+						aria-pressed={sound.newEngines}
+						onclick={() => (sound.newEngines = !sound.newEngines)}
+						{@attach tooltip(
+							sound.newEngines
+								? 'the rebuilt synth engines; switch off to hear the first versions'
+								: 'the first synth engines; switch on to hear the rebuilt ones'
+						)}
+					>
+						<Led state={sound.newEngines ? 'white' : 'off'} size="sm" />
+						new engines
+					</button>
+				{/if}
 			</p>
 		{/snippet}
 	</StageHint>

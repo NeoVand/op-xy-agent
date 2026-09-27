@@ -22,6 +22,7 @@
  * made of each event (which track is active, whether the transport runs).
  */
 import { createContext, untrack } from 'svelte';
+import type { EngineId } from '$lib/core/opxy';
 import {
 	browserClock,
 	browserTimers,
@@ -48,11 +49,16 @@ import type { AppSimulator } from './simulator.svelte';
 
 /** Where the choice made while simulated is remembered ("on" / "off"). */
 export const SOUND_STORAGE_KEY = 'opxy:sound';
+/** Where the choice between the rebuilt synth engines and the first ones is kept. */
+export const ENGINES_STORAGE_KEY = 'opxy:engines';
+/** No engines for the synth core: the first engines play everything. */
+const NO_ENGINES: ReadonlySet<EngineId> = new Set();
 
 /** The engine's chunk, loaded on first use. */
 export type SoundRuntime = typeof import('$lib/sound/runtime');
 type Engine = InstanceType<SoundRuntime['SoundEngine']>;
 type Scheduler = InstanceType<SoundRuntime['Scheduler']>;
+type SynthHost = NonNullable<Awaited<ReturnType<SoundRuntime['SynthHost']['create']>>>;
 
 /** Input that counts as the gesture browsers want before audio may start. */
 const GESTURES = ['pointerdown', 'keydown', 'touchend', 'click'] as const;
@@ -129,6 +135,11 @@ export class AppSound {
 	#here = $state(false);
 	#running = $state(false);
 	#unavailable = $state(false);
+	/** The rebuilt synth engines (remembered; off plays the first, Web Audio ones), once loaded. */
+	#newEngines = $state(true);
+	#synthReady = $state(false);
+	#synth: SynthHost | null = null;
+	#coreEngines: ReadonlySet<EngineId> = NO_ENGINES;
 
 	#context: AudioContext | null = null;
 	#loading: Promise<SoundRuntime | null> | null = null;
@@ -201,6 +212,29 @@ export class AppSound {
 		this.enabled = !this.enabled;
 	}
 
+	/**
+	 * Whether the rebuilt synth engines play (the synth core, per sample in a worklet), or the first
+	 * Web Audio ones; remembered. Notes already sounding finish as they started.
+	 */
+	get newEngines(): boolean {
+		return this.#newEngines;
+	}
+
+	set newEngines(on: boolean) {
+		this.#newEngines = on;
+		try {
+			this.#storage()?.setItem(ENGINES_STORAGE_KEY, on ? 'new' : 'first');
+		} catch {
+			// private mode or blocked storage: the choice holds for this visit
+		}
+		this.#applyEngines();
+	}
+
+	/** True once the rebuilt engines can play (their worklet has loaded). */
+	get synthReady(): boolean {
+		return this.#synthReady;
+	}
+
 	/** True while audio runs: from the first gesture until silence suspends it. */
 	get running(): boolean {
 		return this.#running;
@@ -229,6 +263,11 @@ export class AppSound {
 	start(): () => void {
 		if (this.#stop) return this.#stop;
 		this.#simulated = this.#recall();
+		try {
+			this.#newEngines = this.#storage()?.getItem(ENGINES_STORAGE_KEY) !== 'first';
+		} catch {
+			// blocked storage: the default holds
+		}
 		const stops: (() => void)[] = [
 			this.#replica.observe((event) => this.#onReplica(event)),
 			this.samples.onChange((id) => this.#measure(id))
@@ -421,8 +460,20 @@ export class AppSound {
 		if (!runtime.SynthHost) return;
 		const host = await runtime.SynthHost.create(context, runtime.synthWorklet);
 		if (!host) return;
-		if (this.#engine !== engine) host.dispose();
-		else engine.useSynth(host);
+		if (this.#engine !== engine) {
+			host.dispose();
+			return;
+		}
+		this.#synth = host;
+		this.#coreEngines = runtime.CORE_ENGINES;
+		this.#synthReady = true;
+		this.#applyEngines();
+	}
+
+	/** Hands the engine the synth core's engines, or none (the first engines play everything). */
+	#applyEngines(): void {
+		if (!this.#synth || !this.#engine) return;
+		this.#engine.useSynth(this.#synth, this.#newEngines ? this.#coreEngines : NO_ENGINES);
 	}
 
 	#close(): void {
@@ -430,6 +481,8 @@ export class AppSound {
 		this.#clearSuspend();
 		this.#engine?.dispose();
 		this.#engine = null;
+		this.#synth = null;
+		this.#synthReady = false;
 		this.#scheduler = null;
 		this.#live.clear();
 		this.#playerLive.clear();

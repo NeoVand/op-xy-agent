@@ -12,4 +12,5 @@ export {
 	type SchedulerSink
 } from './scheduler';
 export { SynthHost } from './synth/host';
+export { CORE_ENGINES } from './synth/protocol';
 export { default as synthWorklet } from './synth/worklet?worker&url';
