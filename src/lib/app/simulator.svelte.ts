@@ -44,9 +44,38 @@ export interface AppSimulatorOptions {
 	readonly tempoHysteresis?: number;
 }
 
+/** How often time moves while the page is hidden (no animation frames come then). */
+const HIDDEN_FRAME_MS = 100;
+
+interface BrowserFrame {
+	readonly raf: number;
+	readonly timer: ReturnType<typeof setTimeout>;
+}
+
+/**
+ * Animation frames while the page shows; while it is hidden (a background tab), where browsers send
+ * no frames, a timer instead, so a song keeps moving through its scenes under the sound. Whichever
+ * comes first runs the callback and cancels the other.
+ */
 const BROWSER_FRAMES: FrameClock = {
-	request: (callback) => requestAnimationFrame(callback),
-	cancel: (handle) => cancelAnimationFrame(handle as number),
+	request(callback) {
+		let done = false;
+		const run = (now: number) => {
+			if (done) return;
+			done = true;
+			cancelAnimationFrame(raf);
+			clearTimeout(timer);
+			callback(now);
+		};
+		const raf = requestAnimationFrame(run);
+		const timer = setTimeout(() => run(performance.now()), HIDDEN_FRAME_MS);
+		return { raf, timer } satisfies BrowserFrame;
+	},
+	cancel(handle) {
+		const { raf, timer } = handle as BrowserFrame;
+		cancelAnimationFrame(raf);
+		clearTimeout(timer);
+	},
 	now: () => performance.now()
 };
 
