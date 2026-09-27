@@ -6,7 +6,9 @@
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
 import type { EnvelopeView, FilterView, LfoFrame, ListFrame, ScreenFrame } from './screen/frame';
+import { ownerOf } from './areas/registry';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
+import { currentPattern, hasNotes, stepAt, STEPS_PER_BAR } from './sequencer';
 import {
 	ENGINE_LIST,
 	FILTER_TYPES,
@@ -15,6 +17,7 @@ import {
 	LFO_SYNC_STEPS,
 	LFO_TYPES,
 	PLAY_MODES,
+	AUX_NAMES,
 	clamp,
 	engineParams,
 	formatBpm,
@@ -29,21 +32,6 @@ import {
 
 /** Sixteenth steps per beat. */
 const STEPS_PER_BEAT = 4;
-
-/** Auxiliary track names by key (manual: basics/track-buttons). */
-export const AUX_NAMES = [
-	'brain',
-	'punch-in fx',
-	'external midi',
-	'external cv',
-	'external audio',
-	'tape',
-	'fx I',
-	'fx II'
-] as const;
-
-/** Mix pages M2–M4 (manual: mix/overview). */
-const MIX_PAGES = ['levels', 'eq', 'saturator', 'master'] as const;
 
 const adsr = (e: Envelope99) => ({
 	attack: e.attack / 99,
@@ -226,34 +214,27 @@ function midiCcFrame(t: TrackState, page: 2 | 3): ScreenFrame {
 	};
 }
 
-/** Strips of the mixer's current bank. */
+/** Strips of the mixer's current bank (M1; the other pages are the mixer area's). */
 function mixFrame(s: SimState): ScreenFrame {
 	const bank = s.banks.mix;
-	const page = s.pages.mix;
-	if (page !== 1) {
-		return {
-			page: 'text',
-			title: `mix · M${page} ${MIX_PAGES[page - 1]}`,
-			lines: [`master ${MIX_PAGES[page - 1]}`, 'this page is not drawn yet']
-		};
-	}
-	const step = Math.floor(s.transport.position) % 16;
 	const tracks = bank === 'instrument' ? s.tracks : s.aux;
 	return {
 		page: 'mix',
 		bank,
 		selected: bank === 'instrument' ? s.track : s.auxTrack,
 		strips: tracks.map((t) => {
-			const hit = t.steps[step];
+			const pattern = currentPattern(t.sequence);
+			const hit = hasNotes(pattern.steps[stepAt(pattern, s.transport.position)]);
 			const meter = s.transport.playing && !t.mix.muted ? (hit ? 1 : 0.25) * (t.mix.level / 99) : 0;
 			return { level: t.mix.level / 99, pan: t.mix.pan / 100, muted: t.mix.muted, meter };
 		})
 	};
 }
 
-/** What the screen shows for a state. */
+/** What the screen shows for a state: an area's page when one owns it, else the core's. */
 export function buildFrame(s: SimState): ScreenFrame {
-	if (s.sub) return { page: 'text', title: s.sub, lines: [s.sub, 'this page is not drawn yet'] };
+	const area = ownerOf(s);
+	if (area) return area.frame(s);
 	switch (s.overlay) {
 		case 'tempo': {
 			const beats = s.transport.position / STEPS_PER_BEAT;
@@ -281,15 +262,7 @@ export function buildFrame(s: SimState): ScreenFrame {
 			};
 		case 'com':
 			return { page: 'com', ...s.com };
-		case 'sample':
-		case 'players':
-		case 'bar':
-			return {
-				page: 'text',
-				title: s.overlay,
-				lines: [`${s.overlay} page`, 'this page is not drawn yet']
-			};
-		case null:
+		default:
 			break;
 	}
 	switch (s.mode) {
@@ -297,26 +270,18 @@ export function buildFrame(s: SimState): ScreenFrame {
 			return instrumentFrame(s);
 		case 'mix':
 			return mixFrame(s);
-		case 'auxiliary':
-			return {
-				page: 'text',
-				title: `auxiliary · T${s.auxTrack + 1} ${AUX_NAMES[s.auxTrack]} · M${s.pages.auxiliary}`,
-				lines: [AUX_NAMES[s.auxTrack], 'auxiliary pages are not drawn yet']
-			};
-		case 'arrange':
-			return {
-				page: 'text',
-				title: `arrange · ${s.banks.arrange} tracks`,
-				lines: ['arrange', 'scenes and songs are not drawn yet']
-			};
+		default:
+			// arrange, auxiliary and the other mix pages belong to areas; nothing lands here
+			return { page: 'text', title: s.mode, lines: [s.mode] };
 	}
 }
 
 /**
  * LED windows for a state: the active track key (white for instrument, red for auxiliary; in mix
- * with shift held, every unmuted track), the current pattern's steps with the playhead chasing
- * over them while playing, and the keyboard keys being held. Every LED key is listed, so applying
- * the map also turns off what went dark.
+ * with shift held, every unmuted track), the shown bar of the current pattern with the playhead
+ * chasing over it while playing, and the keyboard keys being held (or, while a step is held, the
+ * notes stored on it). Every LED key is listed, so applying the map also turns off what went dark.
+ * An area that owns the screen may change the map last.
  */
 export function buildLeds(s: SimState): Partial<Record<KeyId, KeyLedState>> {
 	const leds: Partial<Record<KeyId, KeyLedState>> = {};
@@ -329,16 +294,29 @@ export function buildLeds(s: SimState): Partial<Record<KeyId, KeyLedState>> {
 		if (s.mode === 'mix' && s.shift) leds[id] = tracks[i].mix.muted ? 'off' : color;
 		else leds[id] = i === active ? color : 'off';
 	}
-	const steps = tracks[active].steps;
-	const head = s.transport.playing ? Math.floor(s.transport.position) % 16 : -1;
-	for (let i = 0; i < 16; i++) {
+	const sequence = tracks[active].sequence;
+	const pattern = currentPattern(sequence);
+	const first = sequence.page * STEPS_PER_BAR;
+	const head = s.transport.playing ? stepAt(pattern, s.transport.position) : -1;
+	let heldStep: number | null = null;
+	for (let i = 0; i < STEPS_PER_BAR; i++) {
 		const id = `step.${i + 1}` as KeyId;
-		if (i === head) leds[id] = steps[i] ? 'dim' : 'white';
-		else leds[id] = steps[i] ? 'white' : 'off';
+		const index = first + i;
+		const on = index < pattern.length && hasNotes(pattern.steps[index]);
+		if (index === head) leds[id] = on ? 'dim' : 'white';
+		else leds[id] = on ? 'white' : 'off';
+		if (heldStep === null && s.held.includes(id)) heldStep = index;
 	}
-	for (const note of KEYBOARD_NOTE_NAMES) {
+	const stored =
+		heldStep === null ? null : new Set(pattern.steps[heldStep].notes.map((n) => n.note));
+	KEYBOARD_NOTE_NAMES.forEach((note, i) => {
 		const id: KeyId = `keyboard.${note}`;
-		leds[id] = s.held.includes(id) ? 'white' : 'off';
-	}
+		const lit = stored ? stored.has(53 + i) : s.held.includes(id);
+		leds[id] = lit ? 'white' : 'off';
+	});
+	ownerOf(s)?.leds?.(s, leds);
 	return leds;
 }
+
+/** Auxiliary track names by key (kept here for older imports). */
+export { AUX_NAMES };

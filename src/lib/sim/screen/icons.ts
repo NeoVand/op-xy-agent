@@ -1,8 +1,9 @@
 /**
  * Screen pictograms extracted from TE's guide screen illustrations by
- * `scripts/extract-screen-font.mjs` (knowledge/opxy/screen-icons.json; decisions D9/D10, credited
- * in NOTICE.md): the metronome, pen nib, engine illustrations, card icons and so on, as filled or
- * stroked paths in screen pixels with their original colours.
+ * `scripts/extract-screen-font.mjs` (knowledge/opxy/screen-icons.json, plus one file per area in
+ * knowledge/opxy/screen-icons/; decisions D9/D10, credited in NOTICE.md): the metronome, pen nib,
+ * engine illustrations, card icons and so on, as filled or stroked paths in screen pixels with
+ * their original colours.
  */
 import iconsJson from '$knowledge/opxy/screen-icons.json';
 import type { ScreenCtx } from './context';
@@ -47,14 +48,28 @@ interface IconsFile {
 	readonly patterns?: Readonly<Record<string, CellPattern>>;
 }
 
-const file = iconsJson as IconsFile;
-if (file.format !== 1) throw new Error(`unsupported screen icons format ${file.format}`);
+/** Each area's pictograms (`scripts/screen-art/<area>.mjs`), for the areas that have any. */
+const areaFiles = import.meta.glob<IconsFile>('../../../../knowledge/opxy/screen-icons/*.json', {
+	eager: true,
+	import: 'default'
+});
 
-/** Every icon by name. */
-export const ICONS: Readonly<Record<string, IconData>> = file.icons;
+const files = [iconsJson as IconsFile, ...Object.values(areaFiles)];
+for (const file of files) {
+	if (file.format !== 1) throw new Error(`unsupported screen icons format ${file.format}`);
+}
+
+/** Every icon by name (the core's and every area's). */
+export const ICONS: Readonly<Record<string, IconData>> = Object.assign(
+	{},
+	...files.map((file) => file.icons)
+);
 
 /** Every cell pattern by name. */
-export const PATTERNS: Readonly<Record<string, CellPattern>> = file.patterns ?? {};
+export const PATTERNS: Readonly<Record<string, CellPattern>> = Object.assign(
+	{},
+	...files.map((file) => file.patterns ?? {})
+);
 
 /**
  * Draws a cell pattern. `map` may move or recolour each lit cell (return null to leave it unlit),

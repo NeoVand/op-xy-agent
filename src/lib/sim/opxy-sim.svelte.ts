@@ -14,7 +14,10 @@
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
+import { AREAS, ownerOf } from './areas/registry';
+import type { AreaContext } from './areas/types';
 import { buildFrame, buildLeds } from './frames';
+import type { SimInput } from './input';
 import {
 	DRUM_PLAY_MODES,
 	ENGINE_LIST,
@@ -36,13 +39,12 @@ import {
 } from './params';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
 import type { ScreenFrame } from './screen/frame';
+import { STEPS_PER_BAR, currentPattern, toggleNote, toggleStep } from './sequencer';
 
-/** An input event (the replica's press / release / turn / click events fit this shape). */
-export type SimInput =
-	| { readonly type: 'press' | 'release'; readonly id: string }
-	| { readonly type: 'turn'; readonly id: string; readonly delta: number; readonly fine?: boolean }
-	| { readonly type: 'click'; readonly id: string }
-	| { readonly type: 'bend'; readonly id: string; readonly value: number };
+export type { SimInput } from './input';
+
+/** The first keyboard key's note (F3). */
+const KEYBOARD_BASE = 53;
 
 /** Options for {@link OpxySim}. */
 export interface OpxySimOptions {
@@ -78,6 +80,12 @@ export class OpxySim {
 	/** Everything the simulator knows (reactive; mutate only through {@link input}). */
 	state = $state<SimState>(defaultState());
 	readonly #now: () => number;
+	/**
+	 * Steps with notes being held, by pattern index: cleared on release unless something was edited
+	 * while they were down (a key toggled, another step pressed). Bookkeeping, never rendered.
+	 */
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	readonly #pendingClear = new Map<number, boolean>();
 
 	constructor(options: OpxySimOptions = {}) {
 		this.#now = options.now ?? (() => performance.now());
@@ -127,8 +135,31 @@ export class OpxySim {
 		this.input({ type: 'click', id: `encoder.${encoder}` });
 	}
 
-	/** Handles one input event. Unknown controls are ignored. */
+	/** What the areas work with. */
+	#context(): AreaContext {
+		return {
+			state: this.state,
+			isHeld: (id) => this.state.held.includes(id),
+			now: this.#now
+		};
+	}
+
+	/**
+	 * Handles one input event: held keys are recorded first, then every area may claim it, then the
+	 * area that owns the screen, then the core. Unknown controls are ignored.
+	 */
 	input(event: SimInput): void {
+		const s = this.state;
+		if (event.type === 'press') {
+			if (!s.held.includes(event.id)) s.held.push(event.id);
+			if (event.id === 'key.shift') s.shift = true;
+		} else if (event.type === 'release') {
+			const at = s.held.indexOf(event.id);
+			if (at >= 0) s.held.splice(at, 1);
+			if (event.id === 'key.shift') s.shift = false;
+		}
+		const ctx = this.#context();
+		if (AREAS.some((area) => area.claim?.(ctx, event))) return;
 		switch (event.type) {
 			case 'press':
 				this.#press(event.id);
@@ -156,10 +187,12 @@ export class OpxySim {
 	 * current tempo (the pendulum and meters follow it).
 	 */
 	advance(ms: number): void {
+		if (ms <= 0) return;
+		for (const area of AREAS) area.advance?.(this.state, ms);
 		const t = this.state.transport;
-		if (!t.playing || ms <= 0) return;
+		if (!t.playing) return;
 		const stepMs = 60000 / this.state.tempo.bpm / 4;
-		t.position = (t.position + ms / stepMs) % 64;
+		t.position += ms / stepMs;
 	}
 
 	// ─────────────────────────────────────────────────────────── following a device
@@ -170,7 +203,7 @@ export class OpxySim {
 	 */
 	clockTick(): void {
 		const t = this.state.transport;
-		if (t.playing) t.position = (t.position + 1 / 6) % 64;
+		if (t.playing) t.position += 1 / 6;
 	}
 
 	/** The device started (from the top, unless it continues) or stopped. */
@@ -199,11 +232,8 @@ export class OpxySim {
 
 	#press(id: string): void {
 		const s = this.state;
-		if (!s.held.includes(id)) s.held.push(id);
-		if (id === 'key.shift') {
-			s.shift = true;
-			return;
-		}
+		if (id === 'key.shift') return;
+		if (ownerOf(s)?.press?.(this.#context(), id)) return;
 		if (id in OVERLAY_KEYS) {
 			this.#overlayKey(OVERLAY_KEYS[id]);
 			return;
@@ -252,10 +282,9 @@ export class OpxySim {
 	}
 
 	#release(id: string): void {
-		const s = this.state;
-		const at = s.held.indexOf(id);
-		if (at >= 0) s.held.splice(at, 1);
-		if (id === 'key.shift') s.shift = false;
+		if (ownerOf(this.state)?.release?.(this.#context(), id)) return;
+		const step = /^step\.(\d+)$/.exec(id);
+		if (step) this.#stepReleased(Number(step[1]) - 1);
 	}
 
 	/** Leaves overlays, sub-pages and pickers. */
@@ -382,19 +411,72 @@ export class OpxySim {
 		s.sub = s.shift && s.mode !== 'mix' ? `preset browser · T${index + 1}` : null;
 	}
 
-	#stepKey(index: number): void {
-		if (index < 0 || index > 15) return;
+	/** The sequence the step keys edit (the active track of the addressed set). */
+	#sequence() {
 		const s = this.state;
-		const bank = this.#bank();
-		const steps = bank === 'instrument' ? s.tracks[s.track].steps : s.aux[s.auxTrack].steps;
-		steps[index] = !steps[index];
+		return this.#bank() === 'instrument' ? s.tracks[s.track].sequence : s.aux[s.auxTrack].sequence;
 	}
 
+	/** Notes of the keyboard keys held now. */
+	#heldNotes(): number[] {
+		return this.state.held.flatMap((id) => {
+			const i = (KEYBOARD_NOTE_NAMES as readonly string[]).indexOf(id.slice('keyboard.'.length));
+			return id.startsWith('keyboard.') && i >= 0 ? [KEYBOARD_BASE + i] : [];
+		});
+	}
+
+	/**
+	 * Step entry (manual: sequencer/step-entry): an empty step stores the chord held on the keyboard,
+	 * else the last note played; a step with notes is cleared.
+	 */
+	#stepKey(index: number): void {
+		if (index < 0 || index >= STEPS_PER_BAR) return;
+		const sequence = this.#sequence();
+		const pattern = currentPattern(sequence);
+		const at = sequence.page * STEPS_PER_BAR + index;
+		if (at >= pattern.length) return;
+		// another step pressed while one is held is an edit of the held one (extend, copy…)
+		for (const held of this.#pendingClear.keys()) this.#pendingClear.set(held, true);
+		if (pattern.steps[at].notes.length > 0) {
+			// a tap clears the step; a hold (to edit its notes) must not, so wait for the release
+			this.#pendingClear.set(at, false);
+			return;
+		}
+		const held = this.#heldNotes();
+		toggleStep(pattern, at, held.length > 0 ? held : [sequence.lastNote]);
+	}
+
+	/** A step came up: a tap on a step with notes clears it. */
+	#stepReleased(index: number): void {
+		const sequence = this.#sequence();
+		const at = sequence.page * STEPS_PER_BAR + index;
+		const edited = this.#pendingClear.get(at);
+		this.#pendingClear.delete(at);
+		if (edited === false) currentPattern(sequence).steps[at].notes = [];
+	}
+
+	/**
+	 * A keyboard key: remembered as the last note played; on sampler tracks it selects the key to
+	 * edit; with steps held it toggles its note on each of them (manual: step entry).
+	 */
 	#keyboardKey(name: string): void {
 		const index = (KEYBOARD_NOTE_NAMES as readonly string[]).indexOf(name);
 		if (index < 0) return;
 		const s = this.state;
 		const t = this.track;
+		const note = KEYBOARD_BASE + index;
+		const sequence = this.#sequence();
+		const pattern = currentPattern(sequence);
+		const heldSteps = s.held.flatMap((id) => {
+			const m = /^step\.(\d+)$/.exec(id);
+			return m ? [sequence.page * STEPS_PER_BAR + Number(m[1]) - 1] : [];
+		});
+		for (const at of heldSteps) {
+			if (at >= pattern.length) continue;
+			toggleNote(pattern, at, note);
+			if (this.#pendingClear.has(at)) this.#pendingClear.set(at, true);
+		}
+		if (heldSteps.length === 0) sequence.lastNote = note;
 		if (s.mode === 'instrument' && s.overlay === null && isSampler(t.engine)) t.drumKey = index;
 	}
 
@@ -402,7 +484,11 @@ export class OpxySim {
 
 	#turn(e: number, delta: number, fine: boolean): void {
 		const s = this.state;
-		if (s.sub) return;
+		const owner = ownerOf(s);
+		if (owner) {
+			owner.turn?.(this.#context(), e, delta, fine);
+			return;
+		}
 		if (s.picker) {
 			const size =
 				s.picker.kind === 'engine'
@@ -548,7 +634,11 @@ export class OpxySim {
 
 	#click(e: number): void {
 		const s = this.state;
-		if (s.sub) return;
+		const owner = ownerOf(s);
+		if (owner) {
+			owner.click?.(this.#context(), e);
+			return;
+		}
 		if (s.picker) {
 			if (e === 0) this.#confirmPicker();
 			return;

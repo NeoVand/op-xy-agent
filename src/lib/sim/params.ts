@@ -13,6 +13,8 @@ import {
 	CC80_TEMPO_RANGE,
 	type EngineId
 } from '$lib/core/opxy';
+import { initialAreaStates, type AreaStates } from './areas/state';
+import { emptySequence, type Sequence } from './sequencer';
 import type { FilterType, LfoType, MultiOutMode } from './screen/frame';
 
 /** The four main modes. */
@@ -160,15 +162,27 @@ export interface TrackState {
 	drumKeys: DrumKey[];
 	/** The midi engine's channel (1–16), bank (null = none) and program. */
 	midi: { channel: number; bank: number | null; program: number };
-	/** Sixteen steps of the current pattern (on/off). */
-	steps: boolean[];
+	/** Patterns, notes and the last note played (`sequencer.ts`). */
+	sequence: Sequence;
 }
 
-/** An auxiliary track (only what the mixer shows). */
+/** An auxiliary track: its mixer strip and its patterns (the aux areas keep the rest). */
 export interface AuxTrackState {
 	mix: { level: number; pan: number; muted: boolean };
-	steps: boolean[];
+	sequence: Sequence;
 }
+
+/** Auxiliary track names by key (manual: basics/track-buttons). */
+export const AUX_NAMES = [
+	'brain',
+	'punch-in fx',
+	'external midi',
+	'external cv',
+	'external audio',
+	'tape',
+	'fx I',
+	'fx II'
+] as const;
 
 /** The whole simulated device. */
 export interface SimState {
@@ -203,6 +217,8 @@ export interface SimState {
 	sub: string | null;
 	/** Last taps of the tempo key (ms), for tap tempo. */
 	taps: number[];
+	/** Each area's own state (`areas/`). */
+	areas: AreaStates;
 }
 
 /** Clamps to [min, max]. */
@@ -283,7 +299,8 @@ export function defaultTrack(engine: EngineId): TrackState {
 		drumKey: 0,
 		drumKeys: Array.from({ length: KEYBOARD_NOTE_NAMES.length }, defaultDrumKey),
 		midi: { channel: 1, bank: null, program: 1 },
-		steps: Array(16).fill(false)
+		// drum tracks store sounds (key F3 = 53 first), synths middle C
+		sequence: emptySequence(isSampler(engine) && engine === 'drum' ? 53 : 60)
 	};
 }
 
@@ -307,7 +324,7 @@ export function defaultState(): SimState {
 		tracks: defaultEngines().map(defaultTrack),
 		aux: Array.from({ length: 8 }, () => ({
 			mix: { level: 80, pan: 0, muted: false },
-			steps: Array(16).fill(false)
+			sequence: emptySequence()
 		})),
 		tempo: { bpm: 120, groove: 0, swing: 0, metronome: { level: 99, on: false } },
 		transport: { playing: false, recording: false, position: 0 },
@@ -315,7 +332,8 @@ export function defaultState(): SimState {
 		com: { advertising: false, multiOut: 'midi', charging: false },
 		picker: null,
 		sub: null,
-		taps: []
+		taps: [],
+		areas: initialAreaStates()
 	};
 }
 

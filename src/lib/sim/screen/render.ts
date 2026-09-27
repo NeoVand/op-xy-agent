@@ -2,6 +2,7 @@
  * Draws a {@link ScreenFrame} onto a screen context in design pixels (480 × 220), clipped to the
  * display's rounded corners like TE's art, and describes it in words for screen readers.
  */
+import { describeAreaFrame, drawAreaFrame } from './areas';
 import type { ScreenCtx } from './context';
 import { roundRectPath } from './draw';
 import type { ScreenFrame } from './frame';
@@ -75,6 +76,8 @@ export function renderFrame(ctx: ScreenCtx, frame: ScreenFrame, options: RenderO
 		case 'text':
 			drawText(ctx, frame);
 			break;
+		default:
+			drawAreaFrame(ctx, frame, options);
 	}
 	ctx.restore();
 }
@@ -117,5 +120,7 @@ export function describeFrame(frame: ScreenFrame): string {
 				.join(', ');
 		case 'text':
 			return [frame.title, ...frame.lines].join(', ');
+		default:
+			return describeAreaFrame(frame);
 	}
 }

@@ -6,6 +6,7 @@
  * the note says so.
  */
 import type { EngineId } from '$lib/core/opxy';
+import { AREA_SCENARIOS } from './areas/scenarios';
 import type { OpxySim } from './opxy-sim.svelte';
 import { defaultTrack, type TrackState } from './params';
 import type { PageName } from './screen/frame';
@@ -62,7 +63,8 @@ const ENGINE_LABELS = 'TE drew this page with placeholder labels; we show the en
 const PLAIN_HEADER = 'TE’s art for this engine has no grey header ramp; the other engines do.';
 
 /** Every scenario, in the guide's order. */
-export const SCENARIOS: readonly Scenario[] = [
+/** The core's scenarios. */
+const CORE_SCENARIOS: readonly Scenario[] = [
 	{
 		id: 'tempo',
 		png: 'tempo-005-tap-tempo-to-tap-the-tempo-11-1-edit-te.png',
@@ -243,3 +245,6 @@ export const SCENARIOS: readonly Scenario[] = [
 		}
 	}
 ];
+
+/** Every scenario: the core's, then each area's (`areas/<area>/scenarios.ts`). */
+export const SCENARIOS: readonly Scenario[] = [...CORE_SCENARIOS, ...AREA_SCENARIOS];

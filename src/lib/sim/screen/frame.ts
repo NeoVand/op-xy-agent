@@ -3,6 +3,7 @@
  * draws it (`render.ts`), tests snapshot it, and the agent can read it. Values are already in the
  * units a page draws (0–1 positions, display strings), so pages stay pure drawing code.
  */
+import type { AreaFrame } from '../areas/frames';
 import type { HeaderCell, SoftLabel } from './draw';
 
 /** Attack, decay and release as 0–1 of their segment's width; sustain as a 0–1 level. */
@@ -210,8 +211,9 @@ export interface TextFrame {
 	readonly lines: readonly string[];
 }
 
-/** Every page the renderer draws. */
+/** Every page the renderer draws: the core's, then the areas' (`../areas/`). */
 export type ScreenFrame =
+	| AreaFrame
 	| TempoFrame
 	| SynthFrame
 	| DrumFrame
