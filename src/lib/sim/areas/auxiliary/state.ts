@@ -145,6 +145,17 @@ export interface AuxPages {
 	half: 0 | 1;
 }
 
+/**
+ * A punch-in effect being recorded with `shift + key` from an instrument track: the step it landed
+ * on, its note, and where it started (in the punch-in pattern's steps), so it gets its length when
+ * the key comes up.
+ */
+export interface PunchTake {
+	index: number;
+	note: number;
+	start: number;
+}
+
 /** What the auxiliary area remembers. */
 export interface AuxiliaryState {
 	brain: BrainState;
@@ -157,6 +168,8 @@ export interface AuxiliaryState {
 	pages: AuxPages[];
 	/** The effect list shift + T7 / T8 opens: the slot and the highlighted effect, or null. */
 	picker: { slot: 0 | 1; index: number } | null;
+	/** Punch-in effects being recorded from instrument tracks, by keyboard key id. */
+	punchTakes: Record<string, PunchTake>;
 }
 
 /**
@@ -202,7 +215,8 @@ export function initialAuxiliary(): AuxiliaryState {
 			lfo: { speed: 3, amount: 0, destination: 0, parameter: 0 },
 			half: 0
 		})),
-		picker: null
+		picker: null,
+		punchTakes: {}
 	};
 }
 

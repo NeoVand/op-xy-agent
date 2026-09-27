@@ -7,16 +7,17 @@
  * (M4). A track without a page keeps its main page on that key (ours: the manual lists no page).
  * Routing into external audio, tape and the FX tracks is the instrument tracks' own sends (the
  * community's project files store it there), so their M3 shift layer and mix M1 show the same
- * values. Aux tracks sequence like instrument tracks: brain notes transpose, punch-in notes fire
- * effects, tape notes play clips, and the CV needle follows the note playing. `shift + key` on an
- * instrument track fires punch-in effects from anywhere, so the area claims it.
+ * values. Aux tracks sequence like instrument tracks: brain notes transpose until the next one,
+ * punch-in notes fire effects and tape notes play clips for as long as they last, and the CV needle
+ * holds the last note until the next. `shift + key` on an instrument track fires punch-in effects
+ * from anywhere, so the area claims it.
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import { LFO_SYNC_STEPS, clamp, two, type PageNumber, type SimState } from '../../params';
 import type { ListFrame, LfoFrame, ScreenFrame } from '../../screen/frame';
 import type { SoftLabel } from '../../screen/draw';
 import type { SimInput } from '../../input';
-import { currentPattern, stepAt, toggleNote } from '../../sequencer';
+import { currentPattern, recordNote, stepAt, type Pattern } from '../../sequencer';
 import type { AreaContext, SimArea } from '../types';
 import type {
 	AuxBrainFrame,
@@ -128,11 +129,40 @@ function heldKeys(s: SimState): number[] {
 /** Whether a step key is held (keyboard keys then edit the step instead of playing). */
 const stepHeld = (s: SimState) => s.held.some((id) => id.startsWith('step.'));
 
-/** Notes on an aux track's step under the playhead while playing (none when stopped). */
-function playingNotes(s: SimState, track: number): number[] {
-	if (!s.transport.playing) return [];
+/**
+ * Notes of an aux track's pattern sounding now: each from its step (micro-timing included) for as
+ * long as it lasts, so an effect held over four steps plays for four. None when stopped or while
+ * counting in.
+ */
+function soundingNotes(s: SimState, track: number): number[] {
+	const t = s.transport;
+	if (!t.playing || t.position < 0) return [];
 	const pattern = currentPattern(s.aux[track].sequence);
-	return pattern.steps[stepAt(pattern, s.transport.position)].notes.map((n) => n.note);
+	const n = pattern.length;
+	const at = t.position / pattern.scale;
+	return pattern.steps.slice(0, n).flatMap((step, i) =>
+		step.notes.flatMap((note) => {
+			const since = (((at - i - note.offset) % n) + n) % n;
+			return since < note.length ? [note.note] : [];
+		})
+	);
+}
+
+/**
+ * The note an aux track's pattern started last, at or before the playhead: the pattern loops, so
+ * it holds until the next one. A chord gives its lowest note (ours). Null when stopped, counting
+ * in or with an empty pattern.
+ */
+function latestNote(s: SimState, track: number): number | null {
+	const t = s.transport;
+	if (!t.playing || t.position < 0) return null;
+	const pattern = currentPattern(s.aux[track].sequence);
+	const at = stepAt(pattern, t.position);
+	for (let back = 0; back < pattern.length; back++) {
+		const notes = pattern.steps[(at - back + pattern.length) % pattern.length].notes;
+		if (notes.length > 0) return Math.min(...notes.map((n) => n.note));
+	}
+	return null;
 }
 
 /** Keyboard keys (0–23) of notes, where they fall on the keyboard. */
@@ -195,20 +225,12 @@ function brainKey(s: SimState, b: BrainSettings): { key: number; scale: number }
 }
 
 /**
- * The brain note in force: while playing, the latest note of the brain's pattern at or before the
- * playhead (the pattern loops, so a chord change holds until the next); else the last note played
- * on its keyboard. A chord transposes to its lowest note (ours).
+ * The brain note in force: while playing, the latest note of the brain's pattern (a chord change
+ * holds until the next); else the last note played on its keyboard. A chord transposes to its
+ * lowest note (ours).
  */
 function brainNote(s: SimState): number | null {
-	if (s.transport.playing) {
-		const pattern = currentPattern(s.aux[0].sequence);
-		const at = stepAt(pattern, s.transport.position);
-		for (let back = 0; back < pattern.length; back++) {
-			const notes = pattern.steps[(at - back + pattern.length) % pattern.length].notes;
-			if (notes.length > 0) return Math.min(...notes.map((n) => n.note));
-		}
-	}
-	return s.areas.auxiliary.brain.note;
+	return latestNote(s, 0) ?? s.areas.auxiliary.brain.note;
 }
 
 /** The settings of the pattern the brain track plays. */
@@ -342,12 +364,14 @@ function turnMidi(s: SimState, kind: Kind, e: number, delta: number): void {
 }
 
 /**
- * The CV track's pitch voltage: the note playing (while playing) or the last one played, at one
- * volt per octave with C4 at 0 V (ours: the manual gives no scaling), within the meter's ±5 V.
+ * The CV track's pitch voltage, at one volt per octave with C4 at 0 V (ours: the manual gives no
+ * scaling), within the meter's ±5 V. Pitch CV holds between notes (the gate carries on and off):
+ * a key held plays live; else, while playing, the pattern's last note holds until the next; else
+ * the last note played.
  */
 function cvVolts(s: SimState): number {
-	const playing = playingNotes(s, 3);
-	const note = playing.length > 0 ? Math.min(...playing) : s.aux[3].sequence.lastNote;
+	const live = heldKeys(s).length > 0;
+	const note = (live ? null : latestNote(s, 3)) ?? s.aux[3].sequence.lastNote;
 	return clamp((note - 60) / 12, -5, 5);
 }
 
@@ -375,8 +399,9 @@ function tapeFrame(s: SimState): AuxTapeFrame {
 		length: String(tape.length),
 		mix: two(tape.mix),
 		hits: unique(hits),
-		head: (s.transport.position % loop) / loop,
-		keys: unique([...heldKeys(s), ...keysOf(playingNotes(s, 5))]),
+		// nothing moves on the tape while counting in
+		head: (Math.max(0, s.transport.position) % loop) / loop,
+		keys: unique([...heldKeys(s), ...keysOf(soundingNotes(s, 5))]),
 		clip: tape.clip === null ? '' : String(tape.clip + 1)
 	};
 }
@@ -549,7 +574,7 @@ function auxFrame(s: SimState): ScreenFrame {
 		case 'punch':
 			return {
 				page: 'aux-punch',
-				active: unique([...heldKeys(s), ...keysOf(playingNotes(s, 1))])
+				active: unique([...heldKeys(s), ...keysOf(soundingNotes(s, 1))])
 			};
 		case 'midi': {
 			const m = aux.midi;
@@ -597,12 +622,17 @@ function auxFrame(s: SimState): ScreenFrame {
 	}
 }
 
+/** Where the playhead is in steps of the punch-in pattern (sixteenths over its track scale). */
+const punchPlayhead = (s: SimState, pattern: Pattern) => s.transport.position / pattern.scale;
+
 /**
  * The punch-in shortcut (manual: auxiliary/punch-in-fx): on an instrument track `shift + key` fires
  * that key's effect instead of playing a note (the lower octave on the track, the upper on its
- * group), and a live recording writes it to the punch-in track at the playhead. Not on a midi
- * engine track (our reading of OS 1.0.32's "not while external MIDI is in use"). Areas asked
- * earlier (a player that takes shift + keys for its chord) win.
+ * group). A live recording writes it to the punch-in track as a live note is written: on the
+ * nearest step, the rest as its offset, lasting as long as the key is held (see
+ * {@link endPunchTake}). Not on a midi engine track (our reading of OS 1.0.32's "not while
+ * external MIDI is in use"). Areas asked earlier (a player that takes shift + keys for its chord)
+ * win.
  */
 function punchShortcut(s: SimState, input: SimInput): boolean {
 	if (input.type !== 'press' || !s.shift || s.mode !== 'instrument') return false;
@@ -610,13 +640,28 @@ function punchShortcut(s: SimState, input: SimInput): boolean {
 	if (s.tracks[s.track].engine === 'midi') return false;
 	const key = keyboardIndex(input.id);
 	if (key === null || stepHeld(s)) return false;
-	if (s.transport.recording && s.transport.playing) {
+	const t = s.transport;
+	if (t.recording && t.playing && t.position >= 0) {
 		const pattern = currentPattern(s.aux[1].sequence);
-		const at = stepAt(pattern, s.transport.position);
+		const start = punchPlayhead(s, pattern);
 		const note = KEYBOARD_BASE + key;
-		if (!pattern.steps[at].notes.some((n) => n.note === note)) toggleNote(pattern, at, note);
+		const at = recordNote(pattern, start, note);
+		if (at) s.areas.auxiliary.punchTakes[input.id] = { index: at.index, note, start };
 	}
 	return true;
+}
+
+/** A recorded shortcut effect's key came up (or playback stopped): it gets the length reached. */
+function endPunchTake(s: SimState, id: string): void {
+	const takes = s.areas.auxiliary.punchTakes;
+	const take = takes[id];
+	if (!take) return;
+	delete takes[id];
+	if (!s.transport.playing) return;
+	const pattern = currentPattern(s.aux[1].sequence);
+	const note = pattern.steps[take.index]?.notes.find((n) => n.note === take.note);
+	const held = punchPlayhead(s, pattern) - take.start;
+	if (note) note.length = Math.max(0.05, Math.round(held * 100) / 100);
 }
 
 export const auxiliary: SimArea = {
@@ -624,7 +669,14 @@ export const auxiliary: SimArea = {
 	owns: (s) => s.overlay === null && s.sub === null && s.mode === 'auxiliary',
 	frame: auxFrame,
 
-	claim: (ctx: AreaContext, input: SimInput) => punchShortcut(ctx.state, input),
+	claim(ctx: AreaContext, input: SimInput): boolean {
+		const s = ctx.state;
+		if (input.type === 'release') endPunchTake(s, input.id);
+		else if (input.type === 'press' && input.id === 'key.stop') {
+			for (const id of Object.keys(s.areas.auxiliary.punchTakes)) endPunchTake(s, id);
+		}
+		return punchShortcut(s, input);
+	},
 
 	press(ctx: AreaContext, id: string): boolean {
 		const s = ctx.state;
@@ -640,8 +692,9 @@ export const auxiliary: SimArea = {
 				s.pages.auxiliary = Number(m[1]) as PageNumber;
 				return true;
 			}
-			// the keyboard auditions while choosing; any other key leaves the list and does its job
-			if (id.startsWith('keyboard.')) return false;
+			// the keyboard auditions while choosing, and an encoder's push is the start of its click
+			// (which confirms) or of a push-turn; any other key leaves the list and does its job
+			if (id.startsWith('keyboard.') || id.startsWith('encoder.')) return false;
 			if (!(fxKey && s.shift)) aux.picker = null;
 		}
 		if (fxKey && s.shift && !muting) {
@@ -654,8 +707,9 @@ export const auxiliary: SimArea = {
 		}
 		const key = keyboardIndex(id);
 		if (key !== null && !stepHeld(s)) {
-			// the brain's keyboard transposes; the tape's plays clips (manual: brain, tape)
-			if (s.auxTrack === 0) aux.brain.note = KEYBOARD_BASE + key;
+			// the brain's keyboard transposes, a chord to its lowest key as a sequenced chord does
+			// (ours); the tape's plays clips (manual: brain, tape)
+			if (s.auxTrack === 0) aux.brain.note = KEYBOARD_BASE + Math.min(...heldKeys(s));
 			else if (s.auxTrack === 5) aux.tape.clip = key;
 		}
 		return false;
@@ -738,7 +792,7 @@ export const auxiliary: SimArea = {
 	leds(s: SimState, leds): void {
 		const track = s.auxTrack;
 		if ((track !== 0 && track !== 1 && track !== 5) || stepHeld(s)) return;
-		for (const k of keysOf(playingNotes(s, track))) {
+		for (const k of keysOf(soundingNotes(s, track))) {
 			leds[`keyboard.${KEYBOARD_NOTE_NAMES[k]}` as KeyId] = 'white';
 		}
 	}
