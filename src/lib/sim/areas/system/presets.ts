@@ -172,6 +172,17 @@ export function loadPreset(s: SimState, track: number, preset: PresetEntry): voi
 	sys.trackPresets[track] = presetKey(preset);
 }
 
+/**
+ * Keeps the tracks loaded from a preset pointing at it after it is renamed or moved (`folder`:
+ * every preset of a renamed folder).
+ */
+export function rekeyTracks(keys: string[], from: string, to: string, folder = false): void {
+	keys.forEach((key, i) => {
+		if (key === from) keys[i] = to;
+		else if (folder && key.startsWith(`${from}/`)) keys[i] = `${to}/${key.slice(from.length + 1)}`;
+	});
+}
+
 /** Whether a folder takes user presets (the snapshot folder and the user's own folders). */
 export function isUserFolder(b: PresetBrowserState, folder: string): boolean {
 	return folder === SNAPSHOT_FOLDER || b.folders.includes(folder);

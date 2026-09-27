@@ -179,8 +179,13 @@ export function defaultDevices(): DeviceEntry[] {
 	return [{ name: 'computer', connected: true, wireless: false, settings: [3, 3, 3, 0, 1] }];
 }
 
-/** Characters the naming screen offers, in the order E2 turns through them (ours). */
-export const NAME_CHARACTERS = 'abcdefghijklmnopqrstuvwxyz0123456789 -.#';
+/**
+ * Characters the naming screen offers, in the order E2 turns through them: the ones names on the
+ * unit are seen to use (docs/research/30 §3.5: lowercase, digits, space, #, parentheses and -, as
+ * in the snapshot names "2026-06-15 (1)"). The order is ours; the screen font has no glyphs for
+ * the parentheses, so they draw in the fallback face.
+ */
+export const NAME_CHARACTERS = 'abcdefghijklmnopqrstuvwxyz0123456789 -#()';
 
-/** The longest name the naming screen accepts (ours; preset folders stay within 24). */
+/** The longest name the naming screen accepts (docs/research/30 §3.5: names up to 24). */
 export const NAME_MAX = 24;

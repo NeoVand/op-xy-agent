@@ -684,6 +684,30 @@ describe('system area: track sounds (manual: save-copy-scramble, save-to-same-sn
 		withTrack(s, 6, 'key.m1');
 		expect(JSON.stringify(s.state.tracks[5])).toBe(midi);
 	});
+
+	it('keeps a track pointing at its preset when the preset is renamed or moved', () => {
+		const { sim: s } = sim();
+		const keys = s.state.areas.system.trackPresets;
+		withTrack(s, 3, 'key.m4');
+		expect(keys[2]).toBe('snapshot/2026-09-26 (1)');
+		s.combo('key.shift', 'track.3');
+		s.press('key.m3');
+		expect(page(s, 'system-naming').text).toBe('2026-09-26 (1)');
+		s.turn(1, -1);
+		s.turn(2, 1);
+		s.press('key.m1');
+		expect(keys[2]).toBe('snapshot/2026-09-26 (2)');
+		// into a new folder, then the folder renamed
+		s.press('key.m1');
+		s.combo('key.shift', 'key.m1');
+		s.press('key.m1');
+		s.press('key.m2');
+		expect(keys[2]).toBe('folder 1/2026-09-26 (2)');
+		s.combo('key.shift', 'key.m3');
+		s.press('key.m4');
+		s.press('key.m1');
+		expect(keys[2]).toBe('folder/2026-09-26 (2)');
+	});
 });
 
 describe('system area: drawing', () => {

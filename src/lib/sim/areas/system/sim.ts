@@ -24,6 +24,7 @@ import {
 	cutPreset,
 	deleteFolder,
 	deletePreset,
+	findPreset,
 	highlighted,
 	loadPreset,
 	newFolder,
@@ -31,6 +32,7 @@ import {
 	pastePreset,
 	pasteSound,
 	presetKey,
+	rekeyTracks,
 	renameFolder,
 	renamePreset,
 	saveSound,
@@ -375,12 +377,19 @@ function commitName(s: SimState, name: string): string | null {
 			return renameProject(s, name);
 		case 'save-as':
 			return saveProjectAs(s, name);
-		case 'rename-preset':
-			return renamePreset(b, n.original, name);
+		case 'rename-preset': {
+			const error = renamePreset(b, n.original, name);
+			const folder = n.original.slice(0, n.original.lastIndexOf('/'));
+			if (!error) rekeyTracks(sys.trackPresets, n.original, `${folder}/${name}`);
+			return error;
+		}
 		case 'new-folder':
 			return newFolder(b, name);
-		case 'rename-folder':
-			return renameFolder(b, n.original, name);
+		case 'rename-folder': {
+			const error = renameFolder(b, n.original, name);
+			if (!error) rekeyTracks(sys.trackPresets, n.original, name, true);
+			return error;
+		}
 	}
 }
 
@@ -430,8 +439,11 @@ function presetsKey(s: SimState, id: string): boolean {
 		return true;
 	}
 	if (key === 1) cutPreset(b);
-	else if (key === 2) pastePreset(b);
-	else if (key === 3) {
+	else if (key === 2) {
+		const from = b.clipboard;
+		const moving = findPreset(b, from);
+		if (pastePreset(b) && from && moving) rekeyTracks(sys.trackPresets, from, presetKey(moving));
+	} else if (key === 3) {
 		const preset = highlighted(b);
 		if (preset?.user) {
 			sys.naming = startNaming('rename-preset', preset.name, presetKey(preset), 'presets');
