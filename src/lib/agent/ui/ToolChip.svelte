@@ -85,7 +85,7 @@ the full answer.
 
 <details class={['chip', `chip--${entry.status}`, live && 'chip--live']} open={live}>
 	<summary class="chip__row">
-		<Led state={led} blink={running ? 'fast' : false} size="sm" />
+		<Led state={led} blink={running ? 'breathe' : false} size="sm" />
 		<span class="chip__label">{entry.label}</span>
 		{#if statusWord}<span class="chip__status">{statusWord}</span>{/if}
 		{#if summary && summary !== statusWord}<span class="chip__summary">{summary}</span>{/if}

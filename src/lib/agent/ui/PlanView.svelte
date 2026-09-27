@@ -30,7 +30,7 @@ pending, blinking for the step in progress, lit when done.
 						: todo.status === 'in_progress'
 							? 'white'
 							: 'off'}
-					blink={todo.status === 'in_progress' ? 'slow' : false}
+					blink={todo.status === 'in_progress' ? 'breathe' : false}
 					size="sm"
 					label={todo.status === 'completed'
 						? 'done'

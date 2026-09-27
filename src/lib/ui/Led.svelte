@@ -1,7 +1,8 @@
 <!--
 @component
 An LED window, the device's only status light. States follow the hardware: `off`, `dim`, `white`,
-`red`, optionally blinking with a hard on/off square wave. LEDs snap on and decay off.
+`red`, optionally blinking with a hard on/off square wave (device-accurate) or breathing smoothly
+(`breathe`, for app activity rather than device state). LEDs snap on and decay off.
 
 Colour is never the only cue: pair an LED with text, or give it a `label`.
 -->
@@ -12,8 +13,8 @@ Colour is never the only cue: pair an LED with text, or give it a `label`.
 	interface Props extends Omit<HTMLAttributes<HTMLSpanElement>, 'children'> {
 		/** What the LED shows. */
 		state?: LedState;
-		/** Blink the lit state: `slow` (1 s) or `fast` (0.5 s). */
-		blink?: false | 'slow' | 'fast';
+		/** Blink the lit state: `slow` (1 s) or `fast` (0.5 s) square waves, or `breathe` (soft pulse). */
+		blink?: false | 'slow' | 'fast' | 'breathe';
 		/** Window size: `sm` 6 px, `md` 7 px (true to tile scale), `lg` 10 px. */
 		size?: 'sm' | 'md' | 'lg';
 		/** Accessible name; without it the LED is decorative. */
@@ -86,6 +87,21 @@ Colour is never the only cue: pair an LED with text, or give it a `label`.
 
 	.led[data-blink='fast'] {
 		animation: led-blink 0.5s steps(1, end) infinite;
+	}
+
+	/* A soft glow in and out: for "working" indicators, where a hard blink reads as nervous. */
+	.led[data-blink='breathe'] {
+		animation: led-breathe 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+	}
+
+	@keyframes led-breathe {
+		0%,
+		100% {
+			opacity: 0.35;
+		}
+		50% {
+			opacity: 1;
+		}
 	}
 
 	@keyframes led-blink {

@@ -31,11 +31,7 @@ this phase has taken. The clock ticks five times a second, and only while the li
 </script>
 
 <div class={['act', `act--${activity.phase}`]}>
-	<Led
-		state={alert ? 'red' : 'white'}
-		blink={activity.phase === 'approval' ? 'slow' : 'fast'}
-		size="sm"
-	/>
+	<Led state={alert ? 'red' : 'white'} blink="breathe" size="sm" />
 	<span class="act__label" aria-live="polite">{activity.label}</span>
 	{#if activity.detail}<span class="act__detail">{activity.detail}</span>{/if}
 	<span class="act__time" aria-hidden="true">{elapsed()}</span>

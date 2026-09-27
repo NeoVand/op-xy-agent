@@ -93,7 +93,7 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 						: 'dim'
 	);
 	const ledBlink = $derived(
-		booting || status === 'running' ? 'fast' : status === 'approval' ? 'slow' : false
+		booting || status === 'running' ? 'breathe' : status === 'approval' ? 'slow' : false
 	);
 	const stateText = $derived(
 		!keys.loaded
@@ -308,7 +308,7 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 						</div>
 					{:else if booting}
 						<p class="empty__status">
-							<Led state="white" blink="fast" size="sm" /> starting the agent
+							<Led state="white" blink="breathe" size="sm" /> starting the agent
 						</p>
 					{:else if bootError}
 						<p class="empty__status">

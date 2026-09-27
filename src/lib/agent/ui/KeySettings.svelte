@@ -83,7 +83,7 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 			<div class="settings__key">
 				<Led
 					state={keyStatus === 'invalid' ? 'red' : keyStatus === 'valid' ? 'white' : 'dim'}
-					blink={keyStatus === 'checking' ? 'fast' : false}
+					blink={keyStatus === 'checking' ? 'breathe' : false}
 					size="sm"
 				/>
 				<span class="settings__key-text">

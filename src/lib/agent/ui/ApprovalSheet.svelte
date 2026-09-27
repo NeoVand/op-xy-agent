@@ -48,7 +48,7 @@ asking for these kinds of change until the page reloads.
 	onkeydown={onKeyDown}
 >
 	<div class="sheet__head">
-		<Led state="red" blink="slow" size="sm" />
+		<Led state="red" blink="breathe" size="sm" />
 		<h3 class="sheet__title" id="{uid}-title">
 			{count === 1 ? 'change your op-xy?' : `make ${count} changes to your op-xy?`}
 		</h3>
