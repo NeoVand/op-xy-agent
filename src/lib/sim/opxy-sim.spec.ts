@@ -286,8 +286,32 @@ describe('OpxySim: time', () => {
 		expect(sim.leds['step.1']).toBe('white');
 		sim.press('key.tempo');
 		expect(page(sim, 'tempo').pendulum).toBeCloseTo(Math.cos(Math.PI / 2));
+		// play again during playback jumps back to the start (it does not stop)
+		sim.press('key.play');
+		expect(sim.state.transport).toMatchObject({ playing: true, position: 0 });
+		sim.advance(125);
 		sim.press('key.stop');
-		expect(sim.state.transport.position).toBe(0);
+		expect(sim.state.transport).toMatchObject({ playing: false, position: 0 });
+	});
+
+	it('follows a connected device: its start, stop, clock ticks, tempo and track', () => {
+		const sim = new OpxySim();
+		sim.follow('start');
+		for (let i = 0; i < 12; i++) sim.clockTick();
+		expect(sim.state.transport.position).toBeCloseTo(2);
+		sim.follow('stop');
+		sim.clockTick();
+		expect(sim.state.transport).toMatchObject({ playing: false, position: 0 });
+		sim.follow('continue');
+		expect(sim.state.transport.playing).toBe(true);
+		sim.setTempo(139.96);
+		expect(sim.state.tempo.bpm).toBe(140);
+		sim.setTempo(300);
+		expect(sim.state.tempo.bpm).toBe(220);
+		sim.selectTrack(4);
+		expect(sim.state.track).toBe(4);
+		sim.selectTrack(12);
+		expect(sim.state.track).toBe(4);
 	});
 });
 

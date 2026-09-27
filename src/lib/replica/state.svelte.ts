@@ -206,6 +206,7 @@ export class ReplicaState {
 	};
 	/** Listeners for every outbound event, called after the per-name ones. */
 	readonly #subscribers: ReplicaListener[] = [];
+	readonly #observers: ReplicaListener[] = [];
 	readonly #timers: Timers;
 	/** Encoder detents per revolution (for the knurl angle). */
 	readonly detentsPerTurn: number;
@@ -349,7 +350,27 @@ export class ReplicaState {
 		return () => removeFrom(this.#subscribers, listener);
 	}
 
+	/**
+	 * Hears every event from every source, teaching animations (`demo`) and mirroring (`device`)
+	 * included; returns a function that stops listening. For models of the device, such as the UI
+	 * simulator, which should show the page a demonstrated combo leads to. Nothing that sends to
+	 * the device may observe: use {@link subscribe}.
+	 */
+	observe(listener: ReplicaListener): () => void {
+		this.#observers.push(listener);
+		return () => removeFrom(this.#observers, listener);
+	}
+
 	#emit(event: ReplicaEvent): void {
+		for (const observer of [...this.#observers]) {
+			try {
+				observer(event);
+			} catch (error) {
+				queueMicrotask(() => {
+					throw error;
+				});
+			}
+		}
 		if (!EMITTING.includes(event.source)) return;
 		for (const listener of [...this.#listeners[event.type], ...this.#subscribers]) {
 			try {

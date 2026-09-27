@@ -6,9 +6,11 @@
 	import workSansLatin from '@fontsource-variable/work-sans/files/work-sans-latin-wght-normal.woff2?url';
 	import { onMount } from 'svelte';
 	import { asset } from '$app/paths';
+	import { AppSimulator, setAppSimulator } from '$lib/app';
 	import { browserDeviceOptions, createDeviceStack, setDeviceStack } from '$lib/device';
 	import type { SessionPhase } from '$lib/device';
 	import { ReplicaState, setReplicaState } from '$lib/replica';
+	import { setScreenFrameSource } from '$lib/replica/screen';
 	import { Theme, setTheme } from '$lib/ui/theme.svelte';
 	import AppHeader from '$lib/ui/shell/AppHeader.svelte';
 	import StatusBar from '$lib/ui/shell/StatusBar.svelte';
@@ -30,6 +32,12 @@
 	// One replica state for the whole app (drawn on the home page, animated by the agent).
 	const replica = new ReplicaState();
 	setReplicaState(replica);
+
+	// Its virtual OP-XY: the simulator draws the replica's screen and LEDs, and follows a connected
+	// device's tempo, transport and clock. It listens from onMount.
+	const simulator = new AppSimulator({ replica, stack: device });
+	setAppSimulator(simulator);
+	setScreenFrameSource(simulator);
 
 	const CONNECTING: readonly SessionPhase[] = [
 		'requesting-access',
@@ -63,7 +71,9 @@
 		theme.sync();
 		status.detect();
 		const stop = device.start();
+		const stopSimulator = simulator.start();
 		return () => {
+			stopSimulator();
 			stop();
 			void device.session.disconnect();
 		};

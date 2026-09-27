@@ -16,7 +16,14 @@
 
 	// Replica ⇄ device: while connected the replica's keys play the OP-XY, and what the device sends
 	// back lights the replica. Building it has no side effects; it listens from onMount.
-	const bridge = new ReplicaBridge({ replica, stack, clock: browserClock, timers: browserTimers });
+	// The simulator (root layout) runs the playhead, on the device's clock when it sends one.
+	const bridge = new ReplicaBridge({
+		replica,
+		stack,
+		clock: browserClock,
+		timers: browserTimers,
+		playhead: false
+	});
 	// What the device can't take remotely, said under the replica now and then.
 	const caption = new HintCaption({ clock: browserClock, timers: browserTimers });
 
@@ -178,7 +185,7 @@
 				{:else}
 					<Led state="dim" size="sm" />
 					<span class="line__state">simulated</span>
-					<span>the keys move, nothing is sent</span>
+					<span>the replica works like an op-xy; nothing is sent</span>
 				{/if}
 			</p>
 		{/snippet}

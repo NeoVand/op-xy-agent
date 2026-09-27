@@ -162,6 +162,35 @@ export class OpxySim {
 		t.position = (t.position + ms / stepMs) % 64;
 	}
 
+	// ─────────────────────────────────────────────────────────── following a device
+
+	/**
+	 * One MIDI clock tick from a connected OP-XY (24 per beat): while playing, the playhead moves a
+	 * sixth of a step, so the steps chase in time with the device instead of the page's clock.
+	 */
+	clockTick(): void {
+		const t = this.state.transport;
+		if (t.playing) t.position = (t.position + 1 / 6) % 64;
+	}
+
+	/** The device started (from the top, unless it continues) or stopped. */
+	follow(transport: 'start' | 'continue' | 'stop'): void {
+		const t = this.state.transport;
+		t.playing = transport !== 'stop';
+		if (transport !== 'continue') t.position = 0;
+	}
+
+	/** The device's tempo (measured from its clock, or what the app set). */
+	setTempo(bpm: number): void {
+		this.state.tempo.bpm = clamp(Math.round(bpm * 10) / 10, TEMPO_RANGE.min, TEMPO_RANGE.max);
+	}
+
+	/** The instrument track (0–7) the app selected on the device. */
+	selectTrack(index: number): void {
+		if (!Number.isInteger(index) || index < 0 || index > 7) return;
+		this.state.track = index;
+	}
+
 	// ───────────────────────────────────────────────────────────── keys
 
 	#isHeld(id: string): boolean {
@@ -208,7 +237,9 @@ export class OpxySim {
 				this.#modeKey(id === 'key.arrange' ? 'arrange' : 'mix');
 				break;
 			case 'key.play':
-				s.transport.playing = !s.transport.playing;
+				// play starts; pressed again while playing it jumps back to the start (manual: layout)
+				s.transport.playing = true;
+				s.transport.position = 0;
 				break;
 			case 'key.stop':
 				s.transport.playing = false;

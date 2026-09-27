@@ -8,8 +8,9 @@
  * other control has no remote path on OS 1.1.33 (remote keys do nothing there), so it sends nothing
  * and the bridge emits a hint saying so and what the control does on the device. A remote control
  * pressed while another key is held (shift + play, step + a note, track + track) would be a
- * different gesture on the device, so it is not sent either. Without a connection the replica is a
- * local simulation: keys move, nothing is sent.
+ * different gesture on the device, so it is not sent either. Without a connection the replica is
+ * the simulator's (`simulator.svelte.ts`): its screen shows what each key does, nothing is sent and
+ * nothing needs a hint.
  *
  * **Device → replica** (mirroring what crosses the wire, never guessing):
  * - notes the device sends light their keyboard keys while they sound (echoes of ours don't). A
@@ -397,6 +398,8 @@ export class ReplicaBridge {
 	}
 
 	#hint(hint: BridgeHint): void {
+		// Offline the simulator already shows what the key did; hints are about the device.
+		if (!this.live) return;
 		for (const listener of [...this.#hintListeners]) {
 			try {
 				listener(hint);

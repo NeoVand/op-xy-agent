@@ -254,7 +254,7 @@ describe('ReplicaBridge: replica → device', () => {
 		expect(sent()).toEqual(['90 3C 64', '90 3E 64', '80 3C 00']);
 	});
 
-	it('is a local simulation while nothing is connected', async () => {
+	it('is a local simulation while nothing is connected, without hints', async () => {
 		const { rig, replica, bridge, hints } = await setup({ connect: false });
 		expect(bridge.live).toBe(false);
 		replica.press('keyboard.c4', 'pointer');
@@ -265,14 +265,8 @@ describe('ReplicaBridge: replica → device', () => {
 		replica.setBend(0.5, 'pointer');
 		tap(replica, 'key.m3');
 		expect(rig.opxy.output.sent).toEqual([]);
-		expect(hints.map((h) => h.kind)).toEqual([
-			'offline',
-			'offline',
-			'offline',
-			'offline',
-			'not-remote'
-		]);
-		expect(hints[0].title).toBe('Nothing was sent.');
+		// the simulator's screen shows what the keys did: no hints without a device
+		expect(hints).toEqual([]);
 		await rig.time.flush();
 		expect(replica.led('track.2')).toBe('off');
 	});
