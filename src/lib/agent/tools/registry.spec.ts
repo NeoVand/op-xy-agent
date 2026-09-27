@@ -141,6 +141,7 @@ describe('the conductor tool set', () => {
 			search_manual: 'read',
 			read_manual_unit: 'read',
 			show_on_replica: 'ui',
+			read_screen: 'read',
 			write_todos: 'ui',
 			task: 'read'
 		});

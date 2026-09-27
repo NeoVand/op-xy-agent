@@ -49,6 +49,14 @@ export interface SimArea {
 	click?(ctx: AreaContext, encoder: number): void;
 	/** LED windows while the area owns the screen: change `leds` (the core's map) in place. */
 	leds?(state: SimState, leds: LedMap): void;
-	/** Time passing, always (recording counters, animations). */
+	/**
+	 * Wall-clock time passing, always, playing or not (recording counters, animations, long presses).
+	 */
 	advance?(state: SimState, ms: number): void;
+	/**
+	 * The playing transport just moved forward from `from` to `state.transport.position`
+	 * (sixteenths), by the page's clock or a connected device's MIDI clock. An area can act on the
+	 * boundaries crossed (arrange's scene ends) and set the position itself.
+	 */
+	moved?(state: SimState, from: number): void;
 }

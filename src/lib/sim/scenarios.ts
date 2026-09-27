@@ -15,8 +15,11 @@ import type { PageName } from './screen/frame';
 /** One illustration and how to reach it. */
 export interface Scenario {
 	readonly id: string;
-	/** File in research/ui-reference/guide-screens (git-ignored research input). */
-	readonly png: string;
+	/**
+	 * File in research/ui-reference/guide-screens (git-ignored research input), or null for a page
+	 * TE never drew (our own layout, shown in the bench without a comparison).
+	 */
+	readonly png: string | null;
 	readonly title: string;
 	/** The page the simulator should show. */
 	readonly page: PageName;

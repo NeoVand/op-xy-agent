@@ -145,7 +145,7 @@ describe('descriptions and scenarios', () => {
 	});
 
 	it('covers every sample guide picture but the two core M1 ones, each once', () => {
-		const pngs = scenarios.map((s) => /sample-(\d{3})/.exec(s.png)?.[1]);
+		const pngs = scenarios.map((s) => /sample-(\d{3})/.exec(s.png ?? '')?.[1]);
 		expect(pngs).toEqual([
 			'003',
 			'004',

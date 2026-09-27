@@ -1,42 +1,82 @@
-# sv
+# OP-XY Agent
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+An open-source web app for learning, playing and programming the Teenage Engineering **OP-XY**. It
+pairs an interactive replica of the hardware with an AI agent that knows the machine inside out.
 
-## Creating a project
+**[Open the app →](https://neovand.github.io/op-xy-agent/)**
 
-If you're seeing this, you've probably already done this step. Congrats!
+It is pre-production and moving fast. The roadmap is in [`docs/PLAN.md`](docs/PLAN.md) and the north
+star in [`docs/VISION.md`](docs/VISION.md).
 
-```sh
-# create a new project
-npx sv create my-app
+## What it does
+
+- **A replica you can play.** The replica is built from the panel drawing in TE's public guide, so
+  every key, encoder, LED and legend sits where it does on the device. Its screen runs our own
+  simulator of the OP-XY's interface: the four modes, M1–M4 with their shift layers, engine / filter /
+  LFO pickers, tempo, project, COM and the mixer. Pages are drawn at the display's 480 × 222 pixels
+  in the device's screen font, extracted from the guide's illustrations.
+- **Connect your OP-XY over USB.** Connection uses Web MIDI (Chrome, Edge). The replica mirrors
+  what the device plays (notes in any octave, pitch bend, transport, a clock-driven playhead). It
+  also drives the device: notes, play/stop and track select. The agent can also set the tempo and
+  mute tracks.
+- **An agent that teaches and does.** Claude answers from our own reworded manual and cites the
+  section. It shows key combos on the replica, reads the simulated screen, and controls the device.
+  Every change asks for your approval and can be undone. You can attach sheet music (photos or
+  PDFs), MIDI files or text (ABC, lyrics, notes), and the agent reads them and plays them.
+- **Bring your own key.** API keys are kept in your browser and sent only to their provider
+  (Anthropic for the agent; an OpenAI key will power voice). There is no server: the app is static
+  files.
+
+## Safety with your device
+
+Every byte sent to the device goes through one choke point with a deny-list. Firmware-update
+messages are blocked outright, and the app never writes files to the device without asking.
+Anything that changes device state is announced first. The log of everything our own tests sent to a
+real OP-XY is in [`docs/research/90-device-probe.md`](docs/research/90-device-probe.md).
+
+## Develop
+
+You need Node 24 and pnpm.
+
+```bash
+pnpm install
 ```
 
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-pnpm dlx sv@0.17.1 create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" playwright tailwindcss="plugins:typography,forms" sveltekit-adapter="adapter:static" ai-tools="ide:claude-code,other+delivery:plugin" --install pnpm .
+```bash
+pnpm dev
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+```bash
+pnpm check && pnpm lint && pnpm test:unit --run
 ```
 
-## Building
+Some research inputs are downloaded rather than committed: TE's public guide pages and pictures, and
+community repositories read for reference. The app builds without them. The knowledge scripts and
+the dev comparison bench on `/replica` need them:
 
-To create a production version of your app:
-
-```sh
-npm run build
+```bash
+scripts/fetch-research.sh
 ```
 
-You can preview the production build with `npm run preview`.
+Start with [`AGENTS.md`](AGENTS.md), which covers the rules for humans and coding agents alike, and
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), which covers the layers, the safety choke point and
+the conventions.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+| Path               | What                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| `src/lib/core/`    | pure TypeScript: MIDI, TE SysEx, the OP-XY as data, music theory                    |
+| `src/lib/device/`  | Web MIDI, the send choke point and its policy, session, mirror, scheduler           |
+| `src/lib/replica/` | the SVG replica and its screen canvas                                               |
+| `src/lib/sim/`     | the UI simulator: state, pages, areas, the screen renderer                          |
+| `src/lib/agent/`   | the agent: conductor, tools, approvals, attachments                                 |
+| `src/lib/manual/`  | our manual: loader and search                                                       |
+| `knowledge/`       | data the app ships: controls, CC map, screen font and icons, our manual (`manual/`) |
+| `docs/`            | vision, plan, decisions, architecture, research notes                               |
+
+## Credits and licence
+
+MIT, see [`LICENSE`](LICENSE). Adapted code and artwork sources are listed in [`NOTICE.md`](NOTICE.md).
+
+OP-XY Agent is an independent project, not affiliated with or endorsed by Teenage Engineering.
+"OP-XY" and "teenage engineering" are their owner's trademarks, used here only to describe
+compatibility. The manual the app ships is our own wording; TE's guide text is never committed.

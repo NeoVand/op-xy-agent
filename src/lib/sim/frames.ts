@@ -3,13 +3,14 @@
  * builds the {@link ScreenFrame} the renderer draws, converting the model's 0–99 values to the
  * units and display strings of TE's art. Pages we have not drawn yet become honest text frames.
  */
-import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
+import type { KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
 import type { EnvelopeView, FilterView, LfoFrame, ListFrame, ScreenFrame } from './screen/frame';
 import { ownerOf } from './areas/registry';
+import { soloed, trackMeter } from './areas/mixer/meters';
 import { samplerPage } from './areas/sample/m1';
+import { sequencerLeds } from './areas/sequencer/leds';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
-import { currentPattern, hasNotes, stepAt, STEPS_PER_BAR } from './sequencer';
 import {
 	ENGINE_LIST,
 	FILTER_TYPES,
@@ -158,7 +159,7 @@ function instrumentFrame(s: SimState): ScreenFrame {
 			};
 		}
 		case 2:
-			if (t.engine === 'midi') return midiCcFrame(t, 2);
+			// (a midi track's M2 and M3 are the mixer area's CC pages)
 			if (s.shift) {
 				const p = t.playMode;
 				return {
@@ -174,7 +175,6 @@ function instrumentFrame(s: SimState): ScreenFrame {
 			}
 			return { page: 'envelope', ...envelopeView(t) };
 		case 3:
-			if (t.engine === 'midi') return midiCcFrame(t, 3);
 			if (s.shift) {
 				const [aux, tape, fx1, fx2] = t.sends;
 				return {
@@ -189,29 +189,25 @@ function instrumentFrame(s: SimState): ScreenFrame {
 	}
 }
 
-/** The midi engine's M2/M3 CC pages (not drawn yet). */
-function midiCcFrame(t: TrackState, page: 2 | 3): ScreenFrame {
-	return {
-		page: 'text',
-		title: `midi · M${page} cc controls`,
-		lines: [`channel ${t.midi.channel}`, 'cc pages are not drawn yet']
-	};
-}
-
-/** Strips of the mixer's current bank (M1; the other pages are the mixer area's). */
+/**
+ * Strips of the mixer's current bank (M1; the other pages are the mixer area's). The bars thicken
+ * with each track's output while playing: a hit that falls away, silent when muted or left out of a
+ * solo (holding track keys; manual: mix/mute-solo), see `areas/mixer/meters.ts`.
+ */
 function mixFrame(s: SimState): ScreenFrame {
 	const bank = s.banks.mix;
 	const tracks = bank === 'instrument' ? s.tracks : s.aux;
+	const solo = soloed(s);
 	return {
 		page: 'mix',
 		bank,
 		selected: bank === 'instrument' ? s.track : s.auxTrack,
-		strips: tracks.map((t) => {
-			const pattern = currentPattern(t.sequence);
-			const hit = hasNotes(pattern.steps[stepAt(pattern, s.transport.position)]);
-			const meter = s.transport.playing && !t.mix.muted ? (hit ? 1 : 0.25) * (t.mix.level / 99) : 0;
-			return { level: t.mix.level / 99, pan: t.mix.pan / 100, muted: t.mix.muted, meter };
-		})
+		strips: tracks.map((t, i) => ({
+			level: t.mix.level / 99,
+			pan: t.mix.pan / 100,
+			muted: t.mix.muted,
+			meter: trackMeter(s, t, i, solo)
+		}))
 	};
 }
 
@@ -262,10 +258,11 @@ export function buildFrame(s: SimState): ScreenFrame {
 
 /**
  * LED windows for a state: the active track key (white for instrument, red for auxiliary; in mix
- * with shift held, every unmuted track), the shown bar of the current pattern with the playhead
- * chasing over it while playing, and the keyboard keys being held (or, while a step is held, the
- * notes stored on it). Every LED key is listed, so applying the map also turns off what went dark.
- * An area that owns the screen may change the map last.
+ * with shift held, every unmuted track), then the step keys and keyboard (the bar shown of the
+ * current pattern with the playhead chasing over it, held keys, a held step's notes, and whatever
+ * the sequencer gesture in progress shows: `areas/sequencer/leds.ts`). Every LED key is listed, so
+ * applying the map also turns off what went dark. An area that owns the screen may change the map
+ * last.
  */
 export function buildLeds(s: SimState): Partial<Record<KeyId, KeyLedState>> {
 	const leds: Partial<Record<KeyId, KeyLedState>> = {};
@@ -278,26 +275,7 @@ export function buildLeds(s: SimState): Partial<Record<KeyId, KeyLedState>> {
 		if (s.mode === 'mix' && s.shift) leds[id] = tracks[i].mix.muted ? 'off' : color;
 		else leds[id] = i === active ? color : 'off';
 	}
-	const sequence = tracks[active].sequence;
-	const pattern = currentPattern(sequence);
-	const first = sequence.page * STEPS_PER_BAR;
-	const head = s.transport.playing ? stepAt(pattern, s.transport.position) : -1;
-	let heldStep: number | null = null;
-	for (let i = 0; i < STEPS_PER_BAR; i++) {
-		const id = `step.${i + 1}` as KeyId;
-		const index = first + i;
-		const on = index < pattern.length && hasNotes(pattern.steps[index]);
-		if (index === head) leds[id] = on ? 'dim' : 'white';
-		else leds[id] = on ? 'white' : 'off';
-		if (heldStep === null && s.held.includes(id)) heldStep = index;
-	}
-	const stored =
-		heldStep === null ? null : new Set(pattern.steps[heldStep].notes.map((n) => n.note));
-	KEYBOARD_NOTE_NAMES.forEach((note, i) => {
-		const id: KeyId = `keyboard.${note}`;
-		const lit = stored ? stored.has(53 + i) : s.held.includes(id);
-		leds[id] = lit ? 'white' : 'off';
-	});
+	sequencerLeds(s, leds);
 	ownerOf(s)?.leds?.(s, leds);
 	return leds;
 }

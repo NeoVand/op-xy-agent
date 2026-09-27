@@ -4,8 +4,13 @@
 import { describe, expect, it } from 'vitest';
 import { createUnitSource } from '../manual-index';
 import { combineSources, type ManualSource } from '../manual-source';
-import type { AgentEnvironment, AnyTool, ToolContext, ToolResult } from './define';
-import { readManualUnitTool, searchManualTool, showOnReplicaTool } from './knowledge';
+import type { AgentEnvironment, AnyTool, ScreenReader, ToolContext, ToolResult } from './define';
+import {
+	readManualUnitTool,
+	readScreenTool,
+	searchManualTool,
+	showOnReplicaTool
+} from './knowledge';
 
 const ours = createUnitSource({
 	kind: 'manual',
@@ -35,10 +40,16 @@ const guide = createUnitSource({
 	]
 });
 
-function run(tool: AnyTool, input: unknown, manual: ManualSource): Promise<ToolResult> {
+function run(
+	tool: AnyTool,
+	input: unknown,
+	manual: ManualSource,
+	screen: ScreenReader | null = null
+): Promise<ToolResult> {
 	const env: AgentEnvironment = {
 		device: null,
 		replica: null,
+		screen,
 		manual,
 		timers: {
 			setTimeout: (callback, ms) => setTimeout(callback, ms),
@@ -117,5 +128,31 @@ describe('show_on_replica', () => {
 	it('reports that no replica is on screen', async () => {
 		const result = await run(showOnReplicaTool, { keys: 'shift + M1' }, ours);
 		expect(JSON.parse(String(result.content))).toMatchObject({ shown: false, keys: 'shift + M1' });
+	});
+});
+
+describe('read_screen', () => {
+	it("reports the replica screen's page and state", async () => {
+		const reading = {
+			page: 'lfo',
+			shows: 'value lfo: amount 0, destination syn',
+			mode: 'instrument',
+			overlay: null,
+			modulePage: 4,
+			track: 3,
+			engine: 'prism',
+			shift: false,
+			bpm: 120,
+			playing: false
+		};
+		const result = await run(readScreenTool, {}, ours, { read: () => reading });
+		expect(result.isError).toBeFalsy();
+		expect(JSON.parse(result.content as string)).toEqual(reading);
+		expect(result.summary).toBe('value lfo: amount 0, destination syn');
+	});
+
+	it('says when there is no screen', async () => {
+		const result = await run(readScreenTool, {}, ours);
+		expect(JSON.parse(result.content as string)).toMatchObject({ available: false });
 	});
 });
