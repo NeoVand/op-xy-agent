@@ -256,6 +256,28 @@ describe('punch-in fx (T2)', () => {
 		expect(describeFrame(sim.frame)).toBe('punch-in fx: percussion 1 8');
 	});
 
+	it('plays a sequenced effect for as long as its note lasts, and none while counting in', () => {
+		const sim = aux(2);
+		const pattern = currentPattern(sim.state.aux[1].sequence);
+		toggleStep(pattern, 1, [60]);
+		pattern.steps[1].notes[0].length = 3;
+		sim.press('key.play');
+		expect(page(sim, 'aux-punch').active).toEqual([]);
+		sim.advance((60000 / 120 / 4) * 3.5);
+		expect(page(sim, 'aux-punch').active).toEqual([7]);
+		expect(sim.leds['keyboard.c4']).toBe('white');
+		sim.advance(60000 / 120 / 4);
+		expect(page(sim, 'aux-punch').active).toEqual([]);
+		// a note nudged early starts before its step, and wraps round the loop
+		toggleStep(pattern, 0, [53]);
+		pattern.steps[0].notes[0].offset = -0.25;
+		sim.state.transport.position = 15.8;
+		expect(page(sim, 'aux-punch').active).toEqual([0]);
+		// counting in, nothing plays yet
+		sim.state.transport.position = -4;
+		expect(page(sim, 'aux-punch').active).toEqual([]);
+	});
+
 	it('plays sequenced effects, lighting their keys', () => {
 		const sim = aux(2);
 		toggleStep(currentPattern(sim.state.aux[1].sequence), 0, [76]);
@@ -292,6 +314,42 @@ describe('punch-in shortcut (shift + key on instrument tracks)', () => {
 		// a second press on the same step does not remove it
 		sim.combo('key.shift', 'keyboard.c4');
 		expect(steps[2].notes).toHaveLength(1);
+	});
+
+	it('records the effect on the nearest step, lasting as long as the key is held', () => {
+		const sim = new OpxySim({ now: () => 0 });
+		const step = 60000 / 120 / 4;
+		sim.press('track.3');
+		sim.press('key.play');
+		sim.combo('key.record', 'key.play');
+		sim.advance(step * 1.6);
+		shiftDown(sim);
+		sim.input({ type: 'press', id: 'keyboard.c4' });
+		shiftUp(sim);
+		sim.advance(step * 3);
+		sim.input({ type: 'release', id: 'keyboard.c4' });
+		const note = currentPattern(sim.state.aux[1].sequence).steps[2].notes[0];
+		expect(note).toMatchObject({ note: 60, length: 3 });
+		expect(note.offset).toBeCloseTo(-0.4, 9);
+		expect(sim.state.areas.auxiliary.punchTakes).toEqual({});
+	});
+
+	it('gives a take still held when playback stops the length it reached', () => {
+		const sim = new OpxySim({ now: () => 0 });
+		const step = 60000 / 120 / 4;
+		sim.press('track.3');
+		sim.press('key.play');
+		sim.combo('key.record', 'key.play');
+		shiftDown(sim);
+		sim.input({ type: 'press', id: 'keyboard.f3' });
+		sim.advance(step * 5);
+		sim.press('key.stop');
+		sim.input({ type: 'release', id: 'keyboard.f3' });
+		shiftUp(sim);
+		expect(currentPattern(sim.state.aux[1].sequence).steps[0].notes[0]).toMatchObject({
+			note: 53,
+			length: 5
+		});
 	});
 
 	it('leaves midi engine tracks and other modes alone', () => {
@@ -365,6 +423,32 @@ describe('external cv (T4)', () => {
 		sim.press('key.play');
 		expect(page(sim, 'aux-cv').volts).toBe(0.5);
 		expect(describeFrame(sim.frame)).toBe('external cv: +0.50 volts');
+	});
+
+	it('holds the pattern’s last note between steps, and a key held plays live', () => {
+		const sim = aux(4);
+		const step = 60000 / 120 / 4;
+		const pattern = currentPattern(sim.state.aux[3].sequence);
+		toggleStep(pattern, 0, [72]);
+		toggleStep(pattern, 8, [48]);
+		sim.state.aux[3].sequence.lastNote = 54;
+		sim.press('key.play');
+		sim.advance(step * 5);
+		expect(page(sim, 'aux-cv').volts).toBe(1);
+		sim.input({ type: 'press', id: 'keyboard.c5' });
+		sim.advance(step);
+		expect(page(sim, 'aux-cv').volts).toBe(1);
+		sim.input({ type: 'press', id: 'keyboard.f3' });
+		expect(page(sim, 'aux-cv').volts).toBeCloseTo(-7 / 12, 9);
+		sim.input({ type: 'release', id: 'keyboard.f3' });
+		sim.input({ type: 'release', id: 'keyboard.c5' });
+		sim.advance(step * 3);
+		expect(page(sim, 'aux-cv').volts).toBe(-1);
+		// the last note wraps round the loop into the next pass
+		sim.advance(step * 8);
+		expect(page(sim, 'aux-cv').volts).toBe(1);
+		sim.press('key.stop');
+		expect(page(sim, 'aux-cv').volts).toBeCloseTo(-7 / 12, 9);
 	});
 
 	it('draws the needle at 7° per volt about the meter’s pivot', () => {
@@ -528,6 +612,18 @@ describe('FX I and FX II (T7, T8)', () => {
 		sim.press('key.m1');
 		expect(page(sim, 'aux-fx')).toMatchObject({ slot: 'FX I', type: 'lofi' });
 		expect(page(sim, 'aux-fx').params.map((p) => p.value)).toEqual(['50', '50', '50', '50']);
+	});
+
+	it('keeps the list open through an encoder push, so its click confirms, and a push-turn scrolls', () => {
+		const sim = aux(7);
+		sim.combo('key.shift', 'track.7');
+		sim.input({ type: 'press', id: 'encoder.4' });
+		sim.input({ type: 'turn', id: 'encoder.4', delta: 3, fine: true });
+		sim.input({ type: 'release', id: 'encoder.4' });
+		expect(page(sim, 'list').columns[1].selected).toBe(4);
+		sim.press('encoder.4');
+		sim.click(4);
+		expect(page(sim, 'aux-fx')).toMatchObject({ slot: 'FX I', type: 'phaser' });
 	});
 
 	it('leaves the effect list unchanged with M2–M4 or another key', () => {
