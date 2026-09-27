@@ -17,8 +17,8 @@
   the art) and our own layouts for the rest; the virtual OP-XY plays in the browser (synth engines,
   drum kit, sampler engines, the sequencer's step components and locks, scenes, players, delay and
   reverb). A conformance suite written from TE's guide (68 sequencer cases so far) runs on the bare
-  simulator and on the app in Chromium. Open: saving the virtual project, conformance suites for the
-  other areas, the device checks in `QUESTIONS.md`.
+  simulator and on the app in Chromium. The work is kept in the browser across reloads (IndexedDB).
+  Open: conformance suites for the other areas (in progress), the device checks in `QUESTIONS.md`.
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).

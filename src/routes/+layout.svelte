@@ -6,7 +6,14 @@
 	import workSansLatin from '@fontsource-variable/work-sans/files/work-sans-latin-wght-normal.woff2?url';
 	import { onMount } from 'svelte';
 	import { asset } from '$app/paths';
-	import { AppSimulator, AppSound, setAppSimulator, setAppSound } from '$lib/app';
+	import {
+		AppSimulator,
+		AppSound,
+		SimPersistence,
+		createIdbSimStore,
+		setAppSimulator,
+		setAppSound
+	} from '$lib/app';
 	import { browserDeviceOptions, createDeviceStack, setDeviceStack } from '$lib/device';
 	import type { SessionPhase } from '$lib/device';
 	import { ReplicaState, setReplicaState } from '$lib/replica';
@@ -44,6 +51,14 @@
 	const sound = new AppSound({ simulator, replica, stack: device });
 	setAppSound(sound);
 
+	// Its work survives reloads, as a device's survives power cycles: put back from IndexedDB on
+	// mount, saved a moment after each change.
+	const persistence = new SimPersistence({
+		state: simulator.sim.state,
+		replica,
+		store: createIdbSimStore()
+	});
+
 	const CONNECTING: readonly SessionPhase[] = [
 		'requesting-access',
 		'waiting-for-device',
@@ -79,7 +94,9 @@
 		const stopSimulator = simulator.start();
 		// after the simulator: the sound reads what the simulator made of each replica event
 		const stopSound = sound.start();
+		const saving = persistence.start();
 		return () => {
+			void saving.then((stop) => stop());
 			stopSound();
 			stopSimulator();
 			stop();

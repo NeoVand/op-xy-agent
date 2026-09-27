@@ -14,7 +14,9 @@ star in [`docs/VISION.md`](docs/VISION.md).
   every key, encoder, LED and legend sits where it does on the device. Its screen runs our own
   simulator of the OP-XY's interface: the four modes, M1–M4 with their shift layers, engine / filter /
   LFO pickers, tempo, project, COM and the mixer. Pages are drawn at the display's 480 × 222 pixels
-  in the device's screen font, extracted from the guide's illustrations.
+  in the device's screen font, extracted from the guide's illustrations. It plays, too: the synth
+  engines, the drum kit and the sequencer sound in the browser, and your work is kept across
+  reloads.
 - **Connect your OP-XY over USB.** Connection uses Web MIDI (Chrome, Edge). The replica mirrors
   what the device plays (notes in any octave, pitch bend, transport, a clock-driven playhead). It
   also drives the device: notes, play/stop and track select. The agent can also set the tempo and
