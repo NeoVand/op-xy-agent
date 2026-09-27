@@ -1,0 +1,214 @@
+/**
+ * Players (manual: players/overview, arpeggio, maestro, hold): `player` opens the selected track's
+ * player page, pressed there it switches the player on or off, and `shift + player` steps through
+ * the types. The page's encoders set the arpeggio (speed, pattern, range, hold; with shift: note
+ * length, style, glide, stereo) and maestro (roll, pattern, hold). On the keyboard, while the
+ * player is on: hold keeps the notes played sounding until the next ones; maestro stores a chord
+ * entered with shift held and plays it from any key; the arpeggio runs over the held notes, and
+ * keeps running on them with its hold on. What they sound like is the sound engine's job
+ * (`sequencer-playback.ts`); the simulator shows the notes on the keyboard's LEDs.
+ */
+import type { SimState } from '../../params';
+import {
+	ARP_PATTERNS,
+	ARP_SPEEDS,
+	ARP_STYLES,
+	MAESTRO_PATTERNS,
+	PLAYER_TYPES,
+	type PlayerSettings
+} from '../../sequencer';
+import {
+	arpNoteAt,
+	arpStepLength,
+	arpeggio,
+	latchNotes,
+	maestroNotes,
+	seededRng
+} from '../../sequencer-playback';
+import type { PlayerCard, PlayerFrame } from './frames';
+import { activePattern, heldNotes, seq } from './model';
+
+/** The player of the pattern the step keys address. */
+export const playerOf = (s: SimState): PlayerSettings => activePattern(s).player;
+
+/** Note names as the brain page writes them (lowercase, "c#4"). */
+const NAMES = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'] as const;
+export const noteName = (note: number) =>
+	`${NAMES[((note % 12) + 12) % 12]}${Math.floor(note / 12) - 1}`;
+
+/** `player` (with shift: the next type). Opens the page; pressed on the page, switches on / off. */
+export function playerPress(s: SimState): void {
+	const player = playerOf(s);
+	const open = s.overlay === 'players';
+	if (s.shift) {
+		player.type = PLAYER_TYPES[(PLAYER_TYPES.indexOf(player.type) + 1) % PLAYER_TYPES.length];
+		seq(s).sustained = [];
+	} else if (open) {
+		player.on = !player.on;
+		if (!player.on) seq(s).sustained = [];
+	}
+	if (!open) {
+		s.overlay = 'players';
+		s.sub = null;
+		s.picker = null;
+	}
+}
+
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+/** Hold switched off lets go of what it kept. */
+function setHold(s: SimState, target: { hold: boolean }, on: boolean): void {
+	target.hold = on;
+	if (!on) seq(s).sustained = [];
+}
+
+/** E1–E4 on the player page. */
+export function playerTurn(s: SimState, e: number, delta: number): void {
+	const player = playerOf(s);
+	if (player.type === 'arpeggio') {
+		const a = player.arp;
+		if (s.shift) {
+			if (e === 0) a.length = clamp(a.length + delta, 1, 99);
+			else if (e === 1) a.style = clamp(a.style + delta, 0, ARP_STYLES.length - 1);
+			else if (e === 2) a.glide = clamp(a.glide + delta, 0, 99);
+			else a.stereo = clamp(a.stereo + delta, 0, 99);
+			return;
+		}
+		if (e === 0) a.speed = clamp(a.speed + delta, 0, ARP_SPEEDS.length - 1);
+		else if (e === 1) a.pattern = clamp(a.pattern + delta, 0, ARP_PATTERNS.length - 1);
+		else if (e === 2) a.range = clamp(a.range + delta, 1, 4);
+		else setHold(s, a, delta > 0);
+	} else if (player.type === 'maestro') {
+		const m = player.maestro;
+		if (e === 0) m.roll = clamp(m.roll + delta, 0, 99);
+		else if (e === 1) m.pattern = clamp(m.pattern + delta, 0, MAESTRO_PATTERNS.length - 1);
+		else if (e === 3) setHold(s, m, delta > 0);
+	}
+}
+
+/** A click on the player page: E4 flips hold (ours; the guide turns it). */
+export function playerClick(s: SimState, e: number): void {
+	const player = playerOf(s);
+	if (e !== 3) return;
+	if (player.type === 'arpeggio') setHold(s, player.arp, !player.arp.hold);
+	else if (player.type === 'maestro') setHold(s, player.maestro, !player.maestro.hold);
+}
+
+/**
+ * A keyboard key while the player is on. `heldBefore` are the notes that were already down.
+ * Returns true when the key belongs to the player alone (maestro's chord entry with shift held).
+ */
+export function playerKey(s: SimState, note: number, heldBefore: readonly number[]): boolean {
+	const player = playerOf(s);
+	if (!player.on) return false;
+	const st = seq(s);
+	switch (player.type) {
+		case 'maestro': {
+			const m = player.maestro;
+			if (s.shift) {
+				m.chord = st.chordFresh ? [note] : [...new Set([...m.chord, note])].sort((a, b) => a - b);
+				st.chordFresh = false;
+				return true;
+			}
+			st.hits += 1;
+			if (m.hold) st.sustained = maestroNotes(m.chord, note);
+			return false;
+		}
+		case 'hold':
+			st.sustained = latchNotes(st.sustained, heldBefore, note);
+			return false;
+		default:
+			if (player.arp.hold) st.sustained = latchNotes(st.sustained, heldBefore, note);
+			return false;
+	}
+}
+
+/** The notes the arpeggio runs over: the keys held, else what its hold kept. */
+function arpInput(s: SimState): number[] {
+	const held = heldNotes(s);
+	if (held.length > 0) return held;
+	return playerOf(s).arp.hold ? seq(s).sustained : [];
+}
+
+/** The notes the player sounds now (lit on the keyboard), or null when it is off. */
+export function playerNotes(s: SimState): number[] | null {
+	const player = playerOf(s);
+	if (!player.on) return null;
+	const st = seq(s);
+	const held = heldNotes(s);
+	switch (player.type) {
+		case 'hold':
+			return [...new Set([...st.sustained, ...held])];
+		case 'maestro':
+			return [
+				...new Set([...st.sustained, ...held.flatMap((n) => maestroNotes(player.maestro.chord, n))])
+			];
+		default: {
+			const input = arpInput(s);
+			const t = s.transport;
+			if (input.length === 0 || !t.playing || t.position < 0) return input;
+			const note = arpNoteAt(input, player.arp, t.position);
+			return note === null ? input : [note];
+		}
+	}
+}
+
+/** Stop, or the player switched off: every kept note goes. */
+export function releasePlayers(s: SimState): void {
+	const st = seq(s);
+	st.sustained = [];
+	st.hits = 0;
+}
+
+const onOff = (on: boolean) => (on ? 'on' : 'off');
+const two = (v: number) => String(Math.round(v)).padStart(2, '0');
+
+/** The player page. */
+export function playerFrame(s: SimState): PlayerFrame {
+	const player = playerOf(s);
+	const st = seq(s);
+	const shift = s.shift && player.type === 'arpeggio';
+	let cards: PlayerCard[] = [];
+	let run: number[] = [];
+	let at: number | null = null;
+	let marks: number[] = [];
+	let root: string | null = null;
+	if (player.type === 'arpeggio') {
+		const a = player.arp;
+		cards = shift
+			? [
+					{ label: 'length', value: two(a.length) },
+					{ label: 'style', value: ARP_STYLES[a.style] },
+					{ label: 'glide', value: two(a.glide) },
+					{ label: 'stereo', value: two(a.stereo) }
+				]
+			: [
+					{ label: 'speed', value: ARP_SPEEDS[a.speed].label },
+					{ label: 'pattern', value: ARP_PATTERNS[a.pattern] },
+					{ label: 'range', value: `${a.range} oct` },
+					{ label: 'hold', value: onOff(a.hold) }
+				];
+		const input = arpInput(s);
+		// with nothing held the picture shows the pattern over a triad
+		const notes = arpeggio(input.length > 0 ? input : [60, 64, 67], a, seededRng(1));
+		const low = Math.min(...notes);
+		run = notes.map((n) => n - low);
+		const t = s.transport;
+		if (player.on && input.length > 0 && t.playing && t.position >= 0) {
+			at = Math.floor(t.position / arpStepLength(a)) % run.length;
+		}
+	} else if (player.type === 'maestro') {
+		const m = player.maestro;
+		cards = [
+			{ label: 'roll', value: two(m.roll) },
+			{ label: 'pattern', value: MAESTRO_PATTERNS[m.pattern] },
+			{ label: '', value: '' },
+			{ label: 'hold', value: onOff(m.hold) }
+		];
+		marks = [...new Set(m.chord.map((n) => n % 12))];
+		root = m.chord.length > 0 ? noteName(Math.min(...m.chord)) : null;
+	} else {
+		marks = [...new Set([...st.sustained, ...heldNotes(s)].map((n) => n % 12))];
+	}
+	return { page: 'player', type: player.type, on: player.on, shift, cards, run, at, marks, root };
+}

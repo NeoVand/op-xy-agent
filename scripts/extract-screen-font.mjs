@@ -1380,6 +1380,9 @@ const { AREA_ART } = await import('./screen-art/index.mjs');
  * relative to the box's top-left corner. `opaque` drops the 50 % dim TE puts on a page shown under
  * a shift layer's cards (the page itself draws at full strength). `masked` also takes masked shapes
  * that overhang the box (their mask clips them), as where TE drew a whole device and masked it.
+ * Instead of `screen`, `svg` names a guide picture that is not a screen (a path under
+ * research/ui-reference/guide-svg, such as the step component key icons), read at `scale` screen
+ * pixels per SVG unit (default 1).
  */
 const ICONS = {
 	// tempo
@@ -1473,15 +1476,27 @@ function normaliseColor(c) {
 	return lower;
 }
 
+/**
+ * A guide picture that is not a screen, read at `scale` screen pixels per SVG unit. A black frame
+ * put in front stands in for a screen's (shape 0, which buildIcons skips), so the picture's own
+ * shapes keep their coordinates × `scale`. Null when the file is missing.
+ */
+function readPicture(file, scale = 1) {
+	const at = path.join(ROOT, file);
+	if (!existsSync(at)) return null;
+	const frame = `<rect x="0" y="0" width="${SCREEN.width / scale}" height="${SCREEN.height / scale}" fill="black"/>`;
+	return readScreen(readFileSync(at, 'utf8').replace(/<svg\b[^>]*>/, (open) => open + frame));
+}
+
 /** Extracts every entry of an icon table (default: the core's ICONS) from its screen. */
 export function buildIcons(screens, textShapes, table = ICONS) {
 	const byKey = new Map(screens.map((s) => [s.key, s]));
 	const icons = {};
 	const problems = [];
 	for (const [name, spec] of Object.entries(table)) {
-		const screen = byKey.get(spec.screen);
+		const screen = spec.svg ? readPicture(spec.svg, spec.scale) : byKey.get(spec.screen);
 		if (!screen) {
-			problems.push(`${name}: no screen ${spec.screen}`);
+			problems.push(`${name}: no screen ${spec.screen ?? spec.svg}`);
 			continue;
 		}
 		const [x0, y0, x1, y1] = spec.box;
