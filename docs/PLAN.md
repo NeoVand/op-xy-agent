@@ -26,8 +26,10 @@
   (`evals/agent/RESULTS.md`).
 - **Synth engines: rebuilding.** Research (`docs/research/57-synth-engines.md`) and a new synth core:
   band-limited oscillators, TPT filters and the measured envelope law, per sample in an
-  AudioWorklet, wired into the sound engine one engine at a time. The eight engine models are being built;
-  calibration against the owner's device waits for approval (`QUESTIONS.md` 5).
+  AudioWorklet, wired into the sound engine one engine at a time. prism, simple, hardsync and
+  dissolve play on it now (a "new engines" switch compares them with the first ones); epiano, axis,
+  organ and wavetable are being built. Calibration against the owner's device waits for approval
+  (`QUESTIONS.md` 5).
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).
