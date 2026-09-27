@@ -16,8 +16,11 @@ import { WavetableVoice } from './wavetable';
 
 /** One note's engine. */
 export interface EngineVoice {
-	/** The note begins at `hz` with `velocity` (1–127) and M1 `params` (0–1 each). */
-	start(hz: number, velocity: number, params: Float32Array): void;
+	/**
+	 * The note begins at `hz` with `velocity` (1–127) and M1 `params` (0–1 each), at `time` on the
+	 * core's clock (seconds; for anything that runs free of the note, like the organ's tremolo).
+	 */
+	start(hz: number, velocity: number, params: Float32Array, time?: number): void;
 	/** A control update: the pitch now (glide, bend and vibrato included) and M1 (LFO included). */
 	control(hz: number, params: Float32Array): void;
 	/** The next `n` samples, written (not added) into `left` and `right`. */

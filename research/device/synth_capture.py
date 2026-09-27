@@ -23,6 +23,7 @@ import json
 import math
 import os
 import pathlib
+import signal
 import sys
 import time
 
@@ -216,9 +217,13 @@ def main() -> None:
     folder.mkdir(parents=True, exist_ok=True)
     midi = Midi(send=True)
     recorder = None if args.no_record else Recorder()
-    # show the track on the device; its own channel carries the notes and CCs
+    # stopped from outside (a killed run), still let go of the note: the finally below runs
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(1))
+    # show the track on the device; its own channel carries the notes and CCs, starting clean
     midi.send([0xB0 | ACTIVE_CHANNEL, 102, args.track - 1])
+    midi.send([0xB0 | ch, 123, 0])
     time.sleep(0.4)
+    playing: int | None = None
     cues = []
     try:
         for take, ccs, n, hold, gap in plan:
@@ -228,13 +233,17 @@ def main() -> None:
             for note in n or notes:
                 on = recorder.frames if recorder else 0
                 midi.send([0x90 | ch, note, 100])
+                playing = note
                 time.sleep(hold or args.hold)
                 off = recorder.frames if recorder else 0
                 midi.send([0x80 | ch, note, 0])
+                playing = None
                 time.sleep(gap or args.gap)
                 cues.append({"take": take, "cc": {**NEUTRAL, **ccs}, "note": note, "on": on / RATE, "off": off / RATE})
             print(f"  {take}")
     finally:
+        if playing is not None:
+            midi.send([0x80 | ch, playing, 0])
         midi.send([0xB0 | ch, 123, 0])
         if recorder:
             time.sleep(1.0)

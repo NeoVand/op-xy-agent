@@ -211,6 +211,18 @@ Runs (appended as they happen):
    sweeps. `chcheck-1` settled it: CC12 on channel 2 changes T2's organ, and a note on channel 2
    plays T2 while T8 is selected. **Channel N reaches track N for notes and CCs**; channel 1 also
    follows the selected track for notes. The script now sends everything on the track's channel.
+5. 13:01 `organ` on T2 (correct routing) — **contaminated**: an A1 left hanging on T8 by the killed
+   wavetable run (sent on channel 1 while T8 was selected) droned at −14 dBFS through it; the
+   all-notes-off sent afterwards on channels 1–8 did not release it (a note that came in on channel
+   1 is released by channel 1 while its track is selected). `release_all` (each track selected in
+   turn, note-offs 0–127 and CC123 on channel 1 and on the track's channel) cleared it: −103 dBFS.
+   The capture script now clears its track first and releases its note when killed.
+6. 13:06 onward, the clean chain (each engine on its own track and channel, owner's settings: filter,
+   LFO, FX off, flat envelopes; CC 12–15 per take, notes A1–A6, CC123 at start and end):
+   `organ` T2 (125 notes), `wavetable` T8 (425), `prism` T3 (114), `epiano` T4 (90), then
+   dissolve T5, hardsync T6, axis T7 and long-note stereo takes of simple T1 and prism T3. The organ
+   capture fitted the new organ engine (`57-synth-engines.md`, organ): every type's partials within
+   0.1–0.2 dB.
 
 ## Session 1 runbook (owner present, ≈20–30 min)
 

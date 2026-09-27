@@ -158,7 +158,7 @@ class CoreVoice {
 		this.#curveEnd = this.#gate;
 		this.#amp.gateOn();
 		this.#fenv.gateOn();
-		this.#engine.start(v.from, v.velocity, this.#paramsNow(0));
+		this.#engine.start(v.from, v.velocity, this.#paramsNow(0), v.start);
 	}
 
 	/** M1 as 0–1, with the LFO's engine signal `lfo` (−1…1 at depth) on its parameter. */
