@@ -4,18 +4,29 @@
 > Decisions: [`DECISIONS.md`](DECISIONS.md). Questions for the owner: [`QUESTIONS.md`](QUESTIONS.md).
 > Update the **Status** block whenever a milestone moves.
 
-## Status (2026-09-26, evening)
+## Status (2026-09-26, night)
 
-- **M0 research: done.** **M1 foundations: done** — core MIDI/TE-SysEx/OP-XY data (1,042 tests), design
-  system + shell, device layer (Web MIDI, single send choke point, GREET session, mirror, monitor) and
-  `/lab`; verified by the owner on the live site: connect, play/stop, mute work on the real OP-XY.
-- **M2 replica: built** from TE's panel drawing (D9; 0.02 mm fit, all 588 paths), `/replica` dev page.
-  In progress: replica ⇄ device bridge on the home page.
-- **In progress:** M3 conductor agent (Anthropic SDK harness, tools, approvals, undo, chat UI) and M4
-  manual tooling + exemplar units (then a fan-out to write ~170 units).
-- **Device session 1 facts:** CC80 = 2 × BPM (40–220), CC9 level mute, CC102/104/105 work, remote keys
-  CC106/107 dead on 1.1.33, USB audio capture works, MTP (vendor class, PID 0x0021) readable from our own
-  code, `.xy` header bumped on 1.1.33 (`09 14 07 86`).
+- **M0 research, M1 foundations: done.** Core MIDI/TE-SysEx/OP-XY data, design system + shell, device
+  layer (Web MIDI, single send choke point, GREET session, mirror, monitor), `/lab`; verified by the
+  owner on the live site.
+- **M2 replica: done.** Built from TE's panel drawing (D9), on the home page and wired both ways:
+  keyboard → notes, play/stop, track select (CC102), pitch bend; back from the device: notes (any
+  octave), pitch bend, transport and a clock-driven playhead.
+- **M2.5 screen & UI simulator: v1 done** (renderer + `OpxySim`, pages within ~1% of TE's art).
+  Gaps: auxiliary, mix and arrange pages.
+- **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
+  tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
+  production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).
+- **M4 our manual: done.** 158 reworded units, 100% guide coverage, verbatim guard, search.
+- **Next:** T28 with the owner (track MIDI channels → notes out), then M5 composer + live playback and
+  M6 native projects. M6 starts by **reading the current project over WebUSB-MTP**: it is the only way
+  the replica can load what is on the device (steps, tempo, sounds), since the device never reports
+  its knobs or keys over MIDI.
+- **Device facts (1.1.33):** CC80 = 2 × BPM (40–220), CC9 level mute, CC102/104/105 work, remote keys
+  CC106/107 dead; with clock = both it sends FA/FC and continuous F8; notes and pitch bend go out only
+  from tracks the project gives a MIDI channel (all off in a fresh project); keys, M-keys and encoders
+  only in controller mode. USB audio capture works; MTP (vendor class, PID 0x0021) is readable from our
+  own code; the `.xy` header bumped on 1.1.33 (`09 14 07 86`).
 
 ## What the research changed
 
