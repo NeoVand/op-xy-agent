@@ -7,6 +7,7 @@ import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
 import type { EnvelopeView, FilterView, LfoFrame, ListFrame, ScreenFrame } from './screen/frame';
 import { ownerOf } from './areas/registry';
+import { soloed, trackMeter } from './areas/mixer/meters';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
 import { currentPattern, hasNotes, stepAt, STEPS_PER_BAR } from './sequencer';
 import {
@@ -214,20 +215,25 @@ function midiCcFrame(t: TrackState, page: 2 | 3): ScreenFrame {
 	};
 }
 
-/** Strips of the mixer's current bank (M1; the other pages are the mixer area's). */
+/**
+ * Strips of the mixer's current bank (M1; the other pages are the mixer area's). The bars thicken
+ * with each track's output while playing: a hit that falls away, silent when muted or left out of a
+ * solo (holding track keys; manual: mix/mute-solo), see `areas/mixer/meters.ts`.
+ */
 function mixFrame(s: SimState): ScreenFrame {
 	const bank = s.banks.mix;
 	const tracks = bank === 'instrument' ? s.tracks : s.aux;
+	const solo = soloed(s);
 	return {
 		page: 'mix',
 		bank,
 		selected: bank === 'instrument' ? s.track : s.auxTrack,
-		strips: tracks.map((t) => {
-			const pattern = currentPattern(t.sequence);
-			const hit = hasNotes(pattern.steps[stepAt(pattern, s.transport.position)]);
-			const meter = s.transport.playing && !t.mix.muted ? (hit ? 1 : 0.25) * (t.mix.level / 99) : 0;
-			return { level: t.mix.level / 99, pan: t.mix.pan / 100, muted: t.mix.muted, meter };
-		})
+		strips: tracks.map((t, i) => ({
+			level: t.mix.level / 99,
+			pan: t.mix.pan / 100,
+			muted: t.mix.muted,
+			meter: trackMeter(s, t, i, solo)
+		}))
 	};
 }
 
