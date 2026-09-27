@@ -254,7 +254,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toContain('T1 pattern 3 of 3');
 		});
 
-		it('moves a stack of patterns: the screen lifts the chosen track’s and shows the others’ edges', async () => {
+		it('opens the chosen track’s stack of patterns on the screen, and shows the others’ as edges', async () => {
 			const d = await start();
 			await d.clicks('key.arrange', track(3), NEW, NEW, NEW, NEW); // five patterns, the fifth playing
 			await d.turn(4, -2);
@@ -284,6 +284,14 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toBe('arrange, scene 1, instrument tracks, T2 pattern 1 of 1');
 		});
 
+		it('mutes an auxiliary track the same way', async () => {
+			const d = await start();
+			await d.clicks('key.arrange', 'key.arrange', track(6));
+			await d.push(4);
+			expect(d.screen()).toBe('arrange, scene 1, auxiliary tracks, tape pattern 1 of 1, muted');
+			expect(d.state.aux[5].mix.muted).toBe(true);
+		});
+
 		it('switches a track’s pattern at once while playing, the playhead keeping its place (ours)', async () => {
 			const d = await start();
 			await d.click('key.arrange');
@@ -297,14 +305,6 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect([d.led(step(9)), d.led(step(11))]).toEqual(['white', 'off']);
 			expect(d.state.transport.position).toBeGreaterThan(4);
 			await d.click('key.stop');
-		});
-
-		it('mutes an auxiliary track the same way', async () => {
-			const d = await start();
-			await d.clicks('key.arrange', 'key.arrange', track(6));
-			await d.push(4);
-			expect(d.screen()).toBe('arrange, scene 1, auxiliary tracks, tape pattern 1 of 1, muted');
-			expect(d.state.aux[5].mix.muted).toBe(true);
 		});
 	});
 
@@ -403,7 +403,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 	});
 
 	describe('16.2 edit controls', () => {
-		it('adds a pattern with M1: the new one plays at once, empty, and the step keys go dark', async () => {
+		it('adds an empty pattern with M1, which plays at once (ours): the step keys go dark', async () => {
 			const d = await start();
 			await d.click('key.arrange');
 			await sequence(d, 1, [1, 5, 9, 13]);
@@ -942,8 +942,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			await d.click('key.arrange');
 			await emptySong(d);
 			expect(d.screen()).toBe('song 1, looping: 0 scenes, cursor at 1');
-			await d.withShift(() => sceneKeys(d, 1));
-			await d.withShift(() => d.clicks(accidental(2), accidental(2), accidental(3)));
+			await d.withShift(() => d.clicks(accidental(1), accidental(2), accidental(2), accidental(3)));
 			expect(entries(d)).toEqual(['1', '2', '2', '3']);
 			expect(d.screen()).toBe('song 1, looping: 4 scenes, cursor at 5');
 			expect(page(d, 'song').count).toBe('05');
