@@ -781,6 +781,19 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 		});
 	});
 
+	describe('driver: encoders', () => {
+		it('turns in whole steps, or in fine steps pushed in (tempo: BPM, then tenths)', async () => {
+			const d = await start();
+			await d.click('key.tempo');
+			await d.turn(1, 3);
+			expect(d.state.tempo.bpm).toBe(123);
+			await d.turn(1, 4, { fine: true });
+			expect(d.state.tempo.bpm).toBeCloseTo(123.4, 9);
+			await d.turn(1, -2, { fine: true });
+			expect(d.state.tempo.bpm).toBeCloseTo(123.2, 9);
+		});
+	});
+
 	describe('9 players', () => {
 		it('opens with player, turns on with player again; shift + player changes the style', async () => {
 			const d = await start();

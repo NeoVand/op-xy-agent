@@ -8,6 +8,7 @@
 import { flushSync } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import { ReplicaState, type KeyLedState } from '$lib/replica';
+import { DRAG_PX_PER_STEP, WHEEL_PX_PER_STEP } from '$lib/replica/input';
 import type { SimState } from '$lib/sim/params';
 import type { ScreenFrame } from '$lib/sim/screen/frame';
 import { describeFrame } from '$lib/sim/screen/render';
@@ -16,8 +17,9 @@ import { FakeTime } from '../../../../test/fakes/fake-time';
 import { AppSimulator, type FrameClock } from '../simulator.svelte';
 import AppHarness from './AppHarness.svelte';
 
-/** Wheel travel per encoder detent (`WHEEL_PX_PER_STEP` in the replica's input helpers). */
-const WHEEL_PX = 40;
+/** Wheel travel and drag distance per encoder detent (the replica's input helpers). */
+const WHEEL_PX = WHEEL_PX_PER_STEP;
+const DRAG_PX = DRAG_PX_PER_STEP;
 
 export class AppDriver extends BaseDriver {
 	readonly time = new FakeTime();
@@ -111,15 +113,43 @@ export class AppDriver extends BaseDriver {
 		flushSync();
 	}
 
-	async turn(encoder: number, detents: number): Promise<void> {
-		this.#element(`encoder.${encoder}`).dispatchEvent(
-			new WheelEvent('wheel', {
+	async turn(encoder: number, detents: number, { fine = false } = {}): Promise<void> {
+		const element = this.#element(`encoder.${encoder}`);
+		if (!fine) {
+			element.dispatchEvent(
+				new WheelEvent('wheel', {
+					bubbles: true,
+					cancelable: true,
+					deltaMode: 0,
+					deltaY: -WHEEL_PX * detents
+				})
+			);
+			flushSync();
+			return;
+		}
+		// push-turn: an alt-drag, a detent per DRAG_PX of travel (up = clockwise)
+		const box = element.getBoundingClientRect();
+		const x = box.x + box.width / 2;
+		let y = box.y + box.height / 2;
+		const pointerId = this.#nextPointer++;
+		const event = (type: string) =>
+			new PointerEvent(type, {
 				bubbles: true,
 				cancelable: true,
-				deltaMode: 0,
-				deltaY: -WHEEL_PX * detents
-			})
-		);
+				pointerId,
+				isPrimary: true,
+				button: 0,
+				buttons: type === 'pointerup' ? 0 : 1,
+				altKey: true,
+				clientX: x,
+				clientY: y
+			});
+		element.dispatchEvent(event('pointerdown'));
+		for (let i = 0; i < Math.abs(detents); i++) {
+			y -= Math.sign(detents) * DRAG_PX;
+			element.dispatchEvent(event('pointermove'));
+		}
+		element.dispatchEvent(event('pointerup'));
 		flushSync();
 	}
 

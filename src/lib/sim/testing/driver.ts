@@ -79,8 +79,11 @@ export interface Driver {
 	holding(id: string, during: () => Promise<void>): Promise<void>;
 	/** Keeps the computer's Shift key down while `during` runs. */
 	withShift(during: () => Promise<void>): Promise<void>;
-	/** Turns encoder 1–4 by whole detents (positive = clockwise). */
-	turn(encoder: number, detents: number): Promise<void>;
+	/**
+	 * Turns encoder 1–4 by whole detents (positive = clockwise); `fine` turns it pushed in (the
+	 * device's push-turn, alt-drag on the replica).
+	 */
+	turn(encoder: number, detents: number, options?: { fine?: boolean }): Promise<void>;
 	/** Pushes and releases encoder 1–4 without turning it. */
 	push(encoder: number): Promise<void>;
 	/** Lets time pass: the timers run, and a playing transport moves. */
@@ -116,7 +119,7 @@ export abstract class BaseDriver implements Driver {
 	abstract down(id: string): Promise<void>;
 	abstract up(id: string): Promise<void>;
 	abstract wait(ms: number): Promise<void>;
-	abstract turn(encoder: number, detents: number): Promise<void>;
+	abstract turn(encoder: number, detents: number, options?: { fine?: boolean }): Promise<void>;
 	abstract push(encoder: number): Promise<void>;
 	abstract led(id: string): KeyLedState;
 	abstract screen(): string;
@@ -191,8 +194,11 @@ export class SimDriver extends BaseDriver {
 		this.sim.input({ type: down ? 'press' : 'release', id: 'key.shift' });
 	}
 
-	async turn(encoder: number, detents: number): Promise<void> {
-		this.sim.input({ type: 'turn', id: `encoder.${encoder}`, delta: detents });
+	async turn(encoder: number, detents: number, { fine = false } = {}): Promise<void> {
+		const id = `encoder.${encoder}`;
+		if (fine) this.sim.input({ type: 'press', id });
+		this.sim.input({ type: 'turn', id, delta: detents, fine });
+		if (fine) this.sim.input({ type: 'release', id });
 	}
 
 	async push(encoder: number): Promise<void> {
