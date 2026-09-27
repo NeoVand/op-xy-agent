@@ -5,8 +5,10 @@ import { COLORS, RAMP } from '../../screen/palette';
 import { RecordingContext } from '../../screen/recording';
 import { describeFrame, renderFrame } from '../../screen/render';
 import { MAX_PATTERNS, currentPattern, emptyPattern } from '../../sequencer';
+import { brainSettings, editBrain } from '../auxiliary/state';
+import { SCENE_LENGTH_MODES as PROJECT_LENGTH_MODES, SIGNATURES } from '../system/catalogue';
 import type { PatternsFrame } from './frames';
-import { accidentalKey, sceneLength } from './model';
+import { accidentalKey, lengthIn, lengthSettings, sceneLength } from './model';
 import { PATTERN_KEYS } from './state';
 import { previewDots } from './view';
 
@@ -154,6 +156,15 @@ describe('arrange mode: patterns (manual: arrange/patterns, arrange/overview)', 
 		expect(sim.state.mode).toBe('arrange');
 	});
 
+	it('gives a new pattern the player type of the one playing, switched off (OS 1.1.25)', () => {
+		const sim = arrange();
+		const player = currentPattern(t1(sim)).player;
+		player.type = 'hold';
+		player.on = true;
+		sim.press(key('new'));
+		expect(currentPattern(t1(sim)).player).toMatchObject({ type: 'hold', on: false });
+	});
+
 	it('shows the new pattern on the step keys (the step keys follow the pattern playing)', () => {
 		const sim = arrange();
 		sim.press('step.1');
@@ -241,6 +252,59 @@ describe('arrange mode: patterns (manual: arrange/patterns, arrange/overview)', 
 		expect(sim.state.tracks[4].mix.muted).toBe(true);
 		sim.click(4);
 		expect(sim.state.tracks[4].mix.muted).toBe(false);
+	});
+});
+
+describe('arrange mode: the brain’s settings per pattern (OS 1.0.29)', () => {
+	/** Arrange on the auxiliary tracks, the brain selected. */
+	function brain(): OpxySim {
+		const sim = arrange();
+		sim.press('key.arrange');
+		return sim;
+	}
+	const note = { note: 60, velocity: 100, length: 1, offset: 0 };
+
+	it('travel with a copied brain pattern into an empty pattern, or a new one', () => {
+		const sim = brain();
+		const aux = sim.state.areas.auxiliary;
+		aux.brain.patterns[0].key = 2;
+		sim.press(key('copy'));
+		sim.press(key('new'));
+		editBrain(aux, 1).key = 7;
+		sim.press(key('paste')); // into the empty pattern 2
+		expect(brainSettings(aux, 1).key).toBe(2);
+		sim.state.aux[0].sequence.patterns[1].steps[0].notes = [note];
+		sim.press(key('paste')); // pattern 2 has notes now: a pattern 3
+		expect(sim.state.aux[0].sequence.patterns).toHaveLength(3);
+		expect(brainSettings(aux, 2).key).toBe(2);
+	});
+
+	it('stay with every other pattern when one goes, also on those that showed the first’s', () => {
+		const sim = brain();
+		const aux = sim.state.areas.auxiliary;
+		sim.press(key('new'));
+		sim.press(key('new')); // three patterns, only the first with settings of its own
+		aux.brain.patterns[0].key = 2;
+		editBrain(aux, 1).key = 4;
+		sim.turn(4, -2);
+		sim.press(key('clear')); // pattern 1 goes
+		expect(brainSettings(aux, 0).key).toBe(4); // what was pattern 2
+		expect(brainSettings(aux, 1).key).toBe(2); // what was pattern 3, which showed the first's
+	});
+
+	it('are left alone by other tracks’ copies and removals', () => {
+		const sim = brain();
+		const aux = sim.state.areas.auxiliary;
+		aux.brain.patterns[0].key = 5;
+		sim.press('key.arrange'); // the instrument tracks
+		sim.press(key('copy'));
+		expect(sim.state.areas.arrange.clipboard.pattern?.brain).toBeNull();
+		sim.press(key('new'));
+		sim.press(key('clear'));
+		sim.press('key.arrange');
+		sim.press(key('paste')); // T1's copy onto the brain's empty pattern: no brain settings in it
+		expect(aux.brain.patterns).toHaveLength(1);
+		expect(brainSettings(aux, 0).key).toBe(5);
 	});
 });
 
@@ -363,11 +427,20 @@ describe('arrange mode: scenes (manual: arrange/scenes)', () => {
 		slow.length = 12;
 		slow.steps[0].notes = [{ note: 60, velocity: 100, length: 1, offset: 0 }];
 		expect(sceneLength(s)).toBe(48);
-		s.areas.arrange.sceneLength = 'shortest';
-		expect(sceneLength(s)).toBe(24);
-		s.areas.arrange.sceneLength = 'time signature';
-		s.areas.arrange.timeSignature = '7/8';
-		expect(sceneLength(s)).toBe(14);
+		expect(lengthIn(s, 'shortest', '4/4')).toBe(24);
+		expect(lengthIn(s, 'time signature', '7/8')).toBe(14);
+	});
+
+	it('follows the project’s settings page for the scene length mode and the time signature', () => {
+		const sim = arrange();
+		const settings = sim.state.areas.system.projectSettings;
+		expect(lengthSettings(sim.state)).toEqual({ mode: 'longest', signature: '4/4' });
+		settings.sceneLength = PROJECT_LENGTH_MODES.indexOf('time signature');
+		settings.signature = SIGNATURES.indexOf('5/4');
+		expect(lengthSettings(sim.state)).toEqual({ mode: 'time signature', signature: '5/4' });
+		expect(sceneLength(sim.state)).toBe(20);
+		settings.sceneLength = 99; // a setting arrange does not know: the default
+		expect(lengthSettings(sim.state).mode).toBe('longest');
 	});
 });
 
