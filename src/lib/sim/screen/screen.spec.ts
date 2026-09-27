@@ -256,6 +256,19 @@ describe('renderFrame (recorded draw calls)', () => {
 			'bank none'
 		);
 	});
+
+	it('names the sampler engine the M1 page belongs to', async () => {
+		const { SCENARIOS } = await import('../scenarios');
+		const { OpxySim } = await import('../opxy-sim.svelte');
+		const said = (id: string) => {
+			const sim = new OpxySim({ now: () => 0 });
+			SCENARIOS.find((s) => s.id === id)?.setup(sim);
+			return describeFrame(sim.frame);
+		};
+		expect(said('drum')).toMatch(/^drum key F3 \(shift\): tune/);
+		expect(said('sampler')).toMatch(/^sampler, root /);
+		expect(said('sample-multi')).toMatch(/^multisampler zone /);
+	});
 });
 
 describe('frameToSvg', () => {

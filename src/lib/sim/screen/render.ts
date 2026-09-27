@@ -84,6 +84,20 @@ export function renderFrame(ctx: ScreenCtx, frame: ScreenFrame, options: RenderO
 
 const pct = (v: number) => `${Math.round(v * 100)}`;
 
+/** The sampler engines' M1 page (the drum frame): what the key, the root or the zone holds. */
+function describeSampler(frame: Extract<ScreenFrame, { page: 'drum' }>): string {
+	const engine = frame.sampler?.engine ?? 'drum';
+	const layer = frame.shift ? ' (shift)' : '';
+	const empty = frame.sampler && !frame.sampler.waves ? ', empty' : '';
+	if (engine === 'sampler') {
+		return `sampler, root ${frame.sampler?.root}${layer}: tune ${frame.tune}${empty}`;
+	}
+	if (engine === 'multisampler') {
+		return `multisampler zone ${frame.key}${layer}: tune ${frame.tune}${empty}`;
+	}
+	return `drum key ${frame.key}${layer}: tune ${frame.tune}, play mode ${frame.playMode}${empty}`;
+}
+
 /** A short spoken description of what the screen shows (for `aria-live`). */
 export function describeFrame(frame: ScreenFrame): string {
 	switch (frame.page) {
@@ -92,7 +106,7 @@ export function describeFrame(frame: ScreenFrame): string {
 		case 'synth':
 			return `${frame.engine}: ${frame.header.map((c) => `${c.label} ${c.value}`).join(', ')}`;
 		case 'drum':
-			return `drum key ${frame.key}: tune ${frame.tune}, play mode ${frame.playMode}`;
+			return describeSampler(frame);
 		case 'midi':
 			return `midi: channel ${frame.channel}, bank ${frame.bank ?? 'none'}, program ${frame.program}`;
 		case 'envelope': {
