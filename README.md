@@ -24,7 +24,9 @@ star in [`docs/VISION.md`](docs/VISION.md).
 - **An agent that teaches and does.** Claude answers from our own reworded manual and cites the
   section. It shows key combos on the replica, reads the simulated screen, and controls the device.
   Every change asks for your approval and can be undone. You can attach sheet music (photos or
-  PDFs), MIDI files or text (ABC, lyrics, notes), and the agent reads them and plays them.
+  PDFs), MIDI files or text (ABC, lyrics, notes), and the agent reads them and plays them. Without
+  a device it plays the virtual OP-XY on screen, and it can program it: patterns note by note,
+  scenes and a song, which you then hear in the browser.
 - **Bring your own key.** API keys are kept in your browser and sent only to their provider
   (Anthropic for the agent; an OpenAI key will power voice). There is no server: the app is static
   files.

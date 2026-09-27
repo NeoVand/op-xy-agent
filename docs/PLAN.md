@@ -19,6 +19,11 @@
   reverb). A conformance suite written from TE's guide (68 sequencer cases so far) runs on the bare
   simulator and on the app in Chromium. The work is kept in the browser across reloads (IndexedDB).
   Open: conformance suites for the other areas (in progress), the device checks in `QUESTIONS.md`.
+- **The agent on the virtual OP-XY: done.** With no device, the live tools play the replica's
+  simulator in the browser; `write_pattern`, `read_pattern` and `write_arrangement` program its
+  patterns, scenes and song (always, since the real OP-XY takes no patterns over MIDI), undoable and
+  saved. Eval: a beat, a chord progression and a two-scene song, 3/3 exact
+  (`evals/agent/RESULTS.md`).
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).
