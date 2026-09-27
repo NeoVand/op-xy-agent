@@ -3,7 +3,8 @@
  * (Zavalishin, "The Art of VA Filter Design"): they stay stable and free of zipper noise while an
  * envelope or LFO sweeps them every sample. A state-variable filter (lowpass, bandpass, highpass;
  * the OP-XY's svf and z types) and a four-pole ladder with saturating feedback (its ladder type),
- * plus a one-pole and a DC blocker for the engines. Coefficients come from {@link prewarp}.
+ * plus a one-pole and a DC blocker for the engines, and a decimator for engines that run at twice
+ * the output's rate. Coefficients come from {@link prewarp}.
  */
 
 /** tan(π · hz / sampleRate), the prewarped gain every TPT filter here takes, capped below Nyquist. */
@@ -163,5 +164,67 @@ export class DcBlocker {
 	reset(): void {
 		this.#x1 = 0;
 		this.#y1 = 0;
+	}
+}
+
+/** A Kaiser-windowed sinc lowpass: `taps` taps, cut at `cutoff` of the rate, unity at DC. */
+function kaiserLowpass(taps: number, cutoff: number, beta: number): Float64Array {
+	// the zeroth-order modified Bessel function, by its series
+	const i0 = (x: number) => {
+		let sum = 1;
+		let term = 1;
+		for (let k = 1; k < 32; k++) {
+			term *= (x / (2 * k)) ** 2;
+			sum += term;
+		}
+		return sum;
+	};
+	const half = (taps - 1) / 2;
+	const h = new Float64Array(taps);
+	for (let i = 0; i < taps; i++) {
+		const n = i - half;
+		const r = n / half;
+		h[i] =
+			(Math.sin(2 * Math.PI * cutoff * n) / (Math.PI * n)) *
+			(i0(beta * Math.sqrt(1 - r * r)) / i0(beta));
+	}
+	const sum = h.reduce((a, b) => a + b, 0);
+	return h.map((v) => v / sum);
+}
+
+/**
+ * The decimator's lowpass, as fractions of the fast rate: flat within 0.01 dB to 0.1875 (18 kHz of
+ * 96), −0.3 dB at 0.198 (19 kHz), and at least 62 dB down from 0.25 (the output's Nyquist), past
+ * which anything would fold back into the audio. 64 taps, so no tap sits at the centre.
+ */
+const DECIMATOR = kaiserLowpass(64, 0.21875, 6);
+
+/**
+ * Halves the rate of an engine that runs at twice the output's (2× oversampling): {@link process}
+ * takes two samples and gives one, through {@link DECIMATOR}'s lowpass (a 0.33 ms delay at 48 kHz).
+ */
+export class Decimator {
+	/** The last 64 inputs, written twice over so a read never wraps. */
+	readonly #history = new Float64Array(2 * DECIMATOR.length);
+	#at = 0;
+
+	process(a: number, b: number): number {
+		const n = DECIMATOR.length;
+		const history = this.#history;
+		history[this.#at] = history[this.#at + n] = a;
+		this.#at = this.#at + 1 === n ? 0 : this.#at + 1;
+		history[this.#at] = history[this.#at + n] = b;
+		this.#at = this.#at + 1 === n ? 0 : this.#at + 1;
+		// oldest to newest from #at; the taps are symmetric, so pair them
+		let sum = 0;
+		for (let k = 0, from = this.#at, to = this.#at + n - 1; k < n / 2; k++, from++, to--) {
+			sum += DECIMATOR[k] * (history[from] + history[to]);
+		}
+		return sum;
+	}
+
+	reset(): void {
+		this.#history.fill(0);
+		this.#at = 0;
 	}
 }

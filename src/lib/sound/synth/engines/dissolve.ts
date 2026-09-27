@@ -1,278 +1,248 @@
 /**
- * dissolve: two sine carriers, a pure sine when everything is at zero, that noise eats away:
- * swarm wobbles their pitch and adds a band of noise around the note, AM and FM work at audio rate,
- * and detune spreads the two apart. Evidence and open questions:
- * `docs/research/57-synth-engines.md`, §3 (dissolve).
+ * dissolve: two sine operators, each feeding its own output back into its phase (fm) and driven
+ * into a hard clip (am), split apart in pitch (detune) and jittered by noise (swarm). Evidence and
+ * how it was fitted: `docs/research/57-synth-engines.md` §3 (dissolve), `research/device/
+ * dissolve_fit.py`.
  *
- * Established [E]:
- * - all at zero is a pure sine;
- * - two sine carriers, spread by detune up to a little under a semitone;
- * - swarm brings in filtered noise and a soft random pitch wobble;
- * - AM and FM work at audio rate and brighten it: AM adds grit and highs, FM turns it saw-like, and
- *   FM 100 with detune makes a Reese-like bass;
- * - factory presets keep FM mostly within 30–90 and swarm at 37 or below.
+ * Measured on the owner's device (2026-09-27, OS 1.1.33, `2026-09-27-132921-dissolve`):
+ * - everything at 0 is a pure sine, −14.2 dBFS on A2 and 1.5 dB lower an octave up
+ *   ({@link LEVEL_PER_OCTAVE}): the two carriers in phase at the note;
+ * - detune splits them to ±34.3 cents at full ({@link DETUNE_CENTS}), in proportion; the upper one
+ *   plays 5 dB above the lower ({@link LOWER_DB});
+ * - fm is each carrier's own feedback, y = sin(φ + β·y), with β = 0.686 · fm ({@link FEEDBACK}),
+ *   the same on every note (fitted within 0.5–1.2 dB);
+ * - am is a hard clip: y = clip(g · sin(φ + β·y)), the clipped output feeding back, with g from 1 to
+ *   2 over am on A2 and to 1.73 on A4 ({@link CLIP}: within 0.4 dB of every harmonic; no level
+ *   compensation, so it gets louder), in dB 0.63 dB less an octave up at full;
+ * - swarm jitters each carrier's pitch with its own noise, fast (most of its motion within
+ *   5–60 Hz), the spread's standard deviation 0.13 · swarm^1.6 of the note ({@link SWARM_SPREAD}),
+ *   and the level falls by up to 6 dB (part of it the two carriers drifting apart).
  *
- * Our model [I]:
- * - carriers at note × 2^(±d/2400), with d up to {@link DETUNE_CENTS} on a squared curve;
- * - swarm s gives each carrier its own smooth random wobble, s × {@link WOBBLE_CENTS} deep at
- *   1 + {@link WOBBLE_RATE}·s hertz, and adds noise band-passed around the note (Q
- *   {@link SWARM_Q}) at {@link SWARM_NOISE} × s²;
- * - FM phase-modulates each carrier by a sine at its own frequency (1:1), index up to
- *   {@link FM_INDEX} × fm². The modulator runs a quarter cycle ahead (a cosine): that gives the
- *   saw-like 1 : ⅔ : ⅓ series at moderate index, where a sine-phase one hollows out the
- *   fundamental. Swarm also jitters the modulator's phase and depth, so the timbre dissolves as
- *   the pitch wobbles; with swarm at 0 FM stays periodic;
- * - a cosine-phase 1:1 modulator puts DC in the carrier, J₁(index)·sin(phase offset); it is
- *   subtracted exactly, so notes start without a thump;
- * - AM multiplies by 1 + a·m, with m narrow-band noise centred on the note (Q {@link AM_Q}),
- *   normalized and soft-limited to ±1, and divided by 1 + a·{@link AM_DEPTH}/2 so peaks stay put;
- * - the output is the carriers' average plus the noise, centred (mono);
- * - its peaks run far above its average: drifting apart (swarm, detune) halves the carriers'
- *   power, yet they still meet in phase now and then; with its DC removed, an FM carrier swings
- *   to 1 + J₁; AM by noise adds its own crest. Pitched for the target level, those rare
- *   coincidences ease into the soft ceiling of `guard.ts` instead of passing ±1.2.
+ * Our model: the above, run at twice the output's rate and halved by a {@link Decimator}, with the
+ * clip anti-aliased by its antiderivative (ADAA) and the feedback averaged over the last two
+ * outputs (as the DX7 does), so it cannot ring at half the rate. A clip inside a feedback loop can
+ * jump (with β·g past 1 its equation has two answers), and at 1× its harmonics folded back to
+ * −41 dB on 2 kHz notes; at 2× they stay under −60 dB. The jitter is white noise through a one-pole
+ * lowpass at {@link JITTER_HZ}, per block.
  */
-import { Svf, prewarp, softClip } from '../filters';
-import { Noise, Wander } from '../noise';
-import { ceiling } from './guard';
+import { Decimator } from '../filters';
+import { Noise } from '../noise';
+import { DEVICE_GAIN_DB } from './device';
 import type { EngineVoice } from './index';
 import { Ramp, Smoothing } from './ramp';
 
-// Calibration [I]: starting values, awaiting measurement on the owner's device (57 §6).
-/** The carriers' spread at detune 1, in cents (squared curve). */
-export const DETUNE_CENTS = 90;
-/** Each carrier's pitch wobble at swarm 1, in cents. */
-export const WOBBLE_CENTS = 30;
-/** The wobble's rate is 1 + WOBBLE_RATE·swarm, in hertz. */
-export const WOBBLE_RATE = 15;
-/** Band-passed noise at swarm 1, as a peak level against the carriers' ±1. */
-export const SWARM_NOISE = 0.5;
-/** The swarm noise band's Q. */
-export const SWARM_Q = 2;
-/** FM index (radians of phase) at fm 1. */
-export const FM_INDEX = 3;
-/** How far swarm 1 jitters the modulator's phase (cycles) and its depth (fraction of the index). */
-export const FM_PHASE_JITTER = 0.15;
-export const FM_DEPTH_JITTER = 0.4;
-/** AM depth at am 1: the gain swings 1 ± AM_DEPTH. */
-export const AM_DEPTH = 1;
-/** The AM noise band's Q. */
-export const AM_Q = 8;
-/**
- * Output level: RMS ≈ 0.23 at the default M1 (swarm 49, am 52, fm 90, detune 0). Pure FM (swarm and
- * AM at 0) is louder, its carriers in phase; its DC-free peak, 1 + J₁ ≤ 1.58, reaches only 7 %
- * past the ceiling's knee, so a periodic tone passes all but untouched.
- */
-export const LEVEL = 0.68;
+const cc = (values: readonly number[]) => values.map((v) => v / 127);
 
-const TAU = 2 * Math.PI;
-/** The highest carrier rate (cycles a sample). */
+// Measured on the owner's device (2026-09-27).
+/** The upper carrier's peak on A2 (dBFS on the device), and the level's fall per octave up. */
+export const UPPER_DB = -15;
+export const LEVEL_PER_OCTAVE = -1.5;
+/** The lower carrier against the upper (dB). */
+export const LOWER_DB = -5;
+/** Each carrier's offset from the note at detune 1 (cents; linear). */
+export const DETUNE_CENTS = 34.3;
+/** The feedback β at fm 1 (linear). */
+export const FEEDBACK = 0.686;
+/** The clip's drive over am (at CC 0, 13 … 127) on A2 and on A4. */
+export const CLIP = {
+	at: cc([0, 13, 25, 38, 51, 64, 76, 89, 102, 114, 127]),
+	a2: [1, 1.054, 1.109, 1.176, 1.251, 1.337, 1.426, 1.539, 1.671, 1.812, 1.997],
+	a4: [1, 1.045, 1.091, 1.144, 1.204, 1.27, 1.337, 1.418, 1.51, 1.609, 1.727]
+} as const;
+/** swarm's pitch spread: its standard deviation over the note at swarm 1, and the curve to it. */
+export const SWARM_SPREAD = 0.13;
+export const SWARM_CURVE = 1.6;
+/** The level swarm takes off at full (dB), besides the carriers drifting apart. */
+export const SWARM_DB = -3;
+
+// Design constants.
+/** The jitter's lowpass (Hz, one pole): its motion reaches past 200 Hz, half of it below ~60 Hz. */
+const JITTER_HZ = 50;
+/** The highest carrier rate (cycles an output sample). */
 const TOP = 0.45;
-/** RMS of the uniform white noise the bands filter. */
-const WHITE_RMS = 1 / Math.sqrt(3);
 
-/** J₁(x) by its power series (x here is an FM index, at most about 5). */
-export function besselJ1(x: number): number {
-	const h = x / 2;
-	const h2 = h * h;
-	let term = h;
-	let sum = h;
-	for (let m = 1; m < 40 && Math.abs(term) > 1e-12; m++) {
-		term *= -h2 / (m * (m + 1));
-		sum += term;
-	}
-	return sum;
+/** `values` at `x` (0–1), linearly between `at`'s points. */
+function read(at: readonly number[], values: readonly number[], x: number): number {
+	if (x <= at[0]) return values[0];
+	const last = at.length - 1;
+	if (x >= at[last]) return values[last];
+	let i = 0;
+	while (x > at[i + 1]) i++;
+	return values[i] + ((values[i + 1] - values[i]) * (x - at[i])) / (at[i + 1] - at[i]);
 }
 
-/**
- * What makes white noise band-passed by an SVF (band output, Q `q`) at `hz` unit RMS: the band
- * output's power is σ²·π·hz·Q/sampleRate for white noise of power σ².
- */
-function bandNorm(hz: number, q: number, sampleRate: number): number {
-	return 1 / (WHITE_RMS * Math.sqrt((Math.PI * hz * q) / sampleRate));
+/** The clip's drive at `am` on a note at `hz`: A2's and A4's in dB, straight in octaves between
+ * them and on beyond, never under 1 (no gain). */
+export function clipDrive(am: number, hz: number): number {
+	const a2 = Math.log(read(CLIP.at, CLIP.a2, am));
+	const a4 = Math.log(read(CLIP.at, CLIP.a4, am));
+	return Math.max(1, Math.exp(a2 + ((a4 - a2) * Math.log2(hz / 110)) / 2));
 }
 
-/** One carrier with its FM modulator and its own randomness. */
+/** The hard clip's antiderivative: x²/2 inside ±1, |x| − ½ outside. */
+function clipIntegral(x: number): number {
+	const a = Math.abs(x);
+	return a <= 1 ? 0.5 * x * x : a - 0.5;
+}
+
+/** One carrier: its phase (stepped at twice the output's rate), its feedback memory, its clip's
+ * last input, and its jitter. */
 class Carrier {
 	phase = 0;
 	dt = 0;
-	/** FM index (radians) and the modulator's lead over the carrier (cycles). */
-	readonly index = new Ramp();
-	readonly lead = new Ramp(0.25);
-	/** The DC the modulation puts in, at the end of the current block and before it. */
-	dc = 0;
-	dcFrom = 0;
-	readonly wobble: Wander;
-	readonly phaseJitter: Wander;
-	readonly depthJitter: Wander;
+	y1 = 0;
+	y2 = 0;
+	x1 = 0;
+	/** The jitter: white noise through a one-pole, and the rate multiplier per block. */
+	readonly noise: Noise;
+	lp1 = 0;
+	bend = 1;
 
 	constructor(seed: number) {
-		this.wobble = new Wander(seed);
-		this.phaseJitter = new Wander(seed + 1);
-		this.depthJitter = new Wander(seed + 2);
+		this.noise = new Noise(seed);
 	}
 
-	/** Goes straight to the current targets, DC included (a note's start). */
-	settle(): void {
-		this.index.jump(this.index.target);
-		this.lead.jump(this.lead.target);
-		this.dc = this.dcFrom = besselJ1(this.index.value) * Math.sin(TAU * this.lead.value);
+	reset(): void {
+		this.phase = 0;
+		this.y1 = this.y2 = this.x1 = 0;
+		this.lp1 = 0;
+		this.bend = 1;
 	}
 }
 
 export class DissolveVoice implements EngineVoice {
-	readonly #sampleRate: number;
+	readonly #sr: number;
 	readonly #smoothing: Smoothing;
-	readonly #noise: Noise;
-	readonly #one: Carrier;
-	readonly #two: Carrier;
-	readonly #swarmBand = new Svf();
-	readonly #amBand = new Svf();
-	readonly #swarmLevel = new Ramp();
-	readonly #am = new Ramp();
-	/** The pitch and M1 of the last control update, used by the next block. */
+	readonly #upper: Carrier;
+	readonly #lower: Carrier;
+	/** The jitter's one-pole coefficient per block, and its output's scale to unit deviation. */
+	#jitterCoef = 0;
+	#jitterNorm = 1;
+	#blockSize = 0;
+	readonly #feedback = new Ramp();
+	readonly #drive = new Ramp(1);
+	readonly #gainUpper = new Ramp();
+	readonly #gainLower = new Ramp();
+	readonly #ramps = [this.#feedback, this.#drive, this.#gainUpper, this.#gainLower];
+	readonly #decimator = new Decimator();
 	#hz = 0;
-	readonly #params = new Float32Array(4);
-	#swarmNorm = 1;
-	#amNorm = 1;
+	#spread = 0;
+	#cents = 0;
 
 	constructor(sampleRate: number, seed: number) {
-		this.#sampleRate = sampleRate;
+		this.#sr = sampleRate;
 		this.#smoothing = new Smoothing(sampleRate);
-		this.#noise = new Noise(seed);
-		// distinct, reproducible streams for every random source of the voice
-		this.#one = new Carrier(seed * 8 + 1);
-		this.#two = new Carrier(seed * 8 + 5);
+		this.#upper = new Carrier(seed * 8 + 1);
+		this.#lower = new Carrier(seed * 8 + 5);
 	}
 
 	start(hz: number, _velocity: number, params: Float32Array): void {
+		this.#upper.reset();
+		this.#lower.reset();
+		this.#decimator.reset();
 		this.control(hz, params);
-		this.#one.phase = this.#two.phase = 0;
-		this.#swarmBand.reset();
-		this.#amBand.reset();
-		// the note begins at its own settings: nothing glides in
-		this.#update(0);
-		this.#one.settle();
-		this.#two.settle();
-		this.#swarmLevel.jump(this.#swarmLevel.target);
-		this.#am.jump(this.#am.target);
+		for (const ramp of this.#ramps) ramp.jump(ramp.target);
 	}
 
 	control(hz: number, params: Float32Array): void {
 		this.#hz = hz;
-		this.#params.set(params);
+		const swarm = clamp01(params[0]);
+		const am = clamp01(params[1]);
+		const fm = clamp01(params[2]);
+		const detune = clamp01(params[3]);
+		this.#feedback.target = FEEDBACK * fm;
+		this.#drive.target = clipDrive(am, hz);
+		this.#cents = DETUNE_CENTS * detune;
+		this.#spread = SWARM_SPREAD * Math.pow(swarm, SWARM_CURVE);
+		const octaves = Math.log2(hz / 110);
+		const level = Math.pow(
+			10,
+			(UPPER_DB + DEVICE_GAIN_DB + LEVEL_PER_OCTAVE * octaves + SWARM_DB * swarm) / 20
+		);
+		this.#gainUpper.target = level;
+		this.#gainLower.target = level * Math.pow(10, LOWER_DB / 20);
 	}
 
-	/** Per block (`seconds` long): the randomness moves on, and rates and targets follow. */
-	#update(seconds: number): void {
-		const params = this.#params;
-		const swarm = params[0];
-		const fm = params[2];
-		const detune = params[3];
-		const hz = this.#hz;
-		const sr = this.#sampleRate;
-		const spread = (DETUNE_CENTS * detune * detune) / 2;
-		const index = FM_INDEX * fm * fm;
-		this.#carrier(this.#one, -spread, index, swarm, seconds);
-		this.#carrier(this.#two, spread, index, swarm, seconds);
-		this.#swarmLevel.target = SWARM_NOISE * swarm * swarm;
-		this.#am.target = params[1] * AM_DEPTH;
-		const g = prewarp(hz, sr);
-		this.#swarmBand.set(g, 1 / SWARM_Q);
-		this.#amBand.set(g, 1 / AM_Q);
-		this.#swarmNorm = bandNorm(hz, SWARM_Q, sr);
-		this.#amNorm = bandNorm(hz, AM_Q, sr);
+	/** The jitter's coefficient for blocks of `n` samples (a one-pole at JITTER_HZ). */
+	#jitterFor(n: number): void {
+		if (n === this.#blockSize) return;
+		this.#blockSize = n;
+		const a = 1 - Math.exp((-2 * Math.PI * JITTER_HZ * n) / this.#sr);
+		this.#jitterCoef = a;
+		// a one-pole at coefficient a on unit-variance noise, one value a block: its variance,
+		// taken numerically once
+		let v1 = 0;
+		let power = 0;
+		const probe = new Noise(12345);
+		for (let i = 0; i < 20000; i++) {
+			v1 += a * (probe.next() * Math.sqrt(3) - v1);
+			if (i > 2000) power += v1 * v1;
+		}
+		this.#jitterNorm = 1 / Math.sqrt(power / 17999);
 	}
 
-	/** One carrier's rate and FM targets: `cents` of detune, and the swarm's wobble and jitter. */
-	#carrier(c: Carrier, cents: number, index: number, swarm: number, seconds: number): void {
-		const rate = 1 + WOBBLE_RATE * swarm;
-		const wobble = swarm * WOBBLE_CENTS * c.wobble.next(seconds, rate);
-		c.dt = Math.min((this.#hz / this.#sampleRate) * Math.pow(2, (cents + wobble) / 1200), TOP);
-		c.index.target = index * (1 + swarm * FM_DEPTH_JITTER * c.depthJitter.next(seconds, rate));
-		c.lead.target = 0.25 + swarm * FM_PHASE_JITTER * c.phaseJitter.next(seconds, rate);
+	/** One carrier's rate for the next block: the note, its detune, and its jitter. */
+	#tune(c: Carrier, cents: number): void {
+		const spread = this.#spread;
+		let bend = 1;
+		if (spread > 0) {
+			const a = this.#jitterCoef;
+			c.lp1 += a * (c.noise.next() * Math.sqrt(3) - c.lp1);
+			bend = Math.max(0.1, 1 + spread * c.lp1 * this.#jitterNorm);
+		}
+		c.bend = bend;
+		// each output sample is two steps
+		c.dt = 0.5 * Math.min((this.#hz / this.#sr) * Math.pow(2, cents / 1200) * bend, TOP);
 	}
 
 	render(left: Float32Array, right: Float32Array, n: number): void {
-		this.#update(n / this.#sampleRate);
+		this.#jitterFor(n);
+		this.#tune(this.#upper, this.#cents);
+		this.#tune(this.#lower, -this.#cents);
 		const c = this.#smoothing.coef(n);
-		const one = this.#one;
-		const two = this.#two;
-		let i1 = one.index.advance(c, n);
-		let i2 = two.index.advance(c, n);
-		let lead1 = one.lead.advance(c, n);
-		let lead2 = two.lead.advance(c, n);
-		const di1 = one.index.step;
-		const di2 = two.index.step;
-		const dLead1 = one.lead.step;
-		const dLead2 = two.lead.step;
-		// the DC to take off, exact at each block's end and linear across it
-		one.dcFrom = one.dc;
-		two.dcFrom = two.dc;
-		one.dc = besselJ1(one.index.value) * Math.sin(TAU * one.lead.value);
-		two.dc = besselJ1(two.index.value) * Math.sin(TAU * two.lead.value);
-		let dc1 = one.dcFrom;
-		let dc2 = two.dcFrom;
-		const dDc1 = (one.dc - dc1) / n;
-		const dDc2 = (two.dc - dc2) / n;
-		const fm = !(one.index.idle && two.index.idle);
-
-		let swarm = this.#swarmLevel.advance(c, n);
-		let am = this.#am.advance(c, n);
-		const dSwarm = this.#swarmLevel.step;
-		const dAm = this.#am.step;
-		// each band runs only while its level is up
-		const withSwarm = !this.#swarmLevel.idle;
-		const withAm = !this.#am.idle;
-		// AM's peak-keeping 1 / (1 + am/2), exact at the block's ends and linear across it
-		let keep = 1 / (1 + 0.5 * am);
-		const dKeep = (1 / (1 + 0.5 * this.#am.value) - keep) / n;
-		const swarmNorm = this.#swarmNorm;
-		const amNorm = this.#amNorm;
-		const white = this.#noise;
-		const swarmBand = this.#swarmBand;
-		const amBand = this.#amBand;
-
-		let p1 = one.phase;
-		let p2 = two.phase;
-		const dt1 = one.dt;
-		const dt2 = two.dt;
+		let feedback = this.#feedback.advance(c, n);
+		let drive = this.#drive.advance(c, n);
+		let gu = this.#gainUpper.advance(c, n);
+		let gl = this.#gainLower.advance(c, n);
+		const dFeedback = this.#feedback.step;
+		const dDrive = this.#drive.step;
+		const dgu = this.#gainUpper.step;
+		const dgl = this.#gainLower.step;
+		const u = this.#upper;
+		const l = this.#lower;
 		for (let i = 0; i < n; i++) {
-			p1 += dt1;
-			if (p1 >= 1) p1 -= 1;
-			p2 += dt2;
-			if (p2 >= 1) p2 -= 1;
-			let y: number;
-			if (fm) {
-				i1 += di1;
-				i2 += di2;
-				lead1 += dLead1;
-				lead2 += dLead2;
-				dc1 += dDc1;
-				dc2 += dDc2;
-				const c1 = Math.sin(TAU * p1 + i1 * Math.sin(TAU * (p1 + lead1))) - dc1;
-				const c2 = Math.sin(TAU * p2 + i2 * Math.sin(TAU * (p2 + lead2))) - dc2;
-				y = 0.5 * (c1 + c2);
-			} else {
-				y = 0.5 * (Math.sin(TAU * p1) + Math.sin(TAU * p2));
-			}
-			if (withAm || withSwarm) {
-				const w = white.next();
-				if (withAm) {
-					am += dAm;
-					keep += dKeep;
-					amBand.process(w);
-					y *= (1 + am * softClip(amBand.band * amNorm)) * keep;
-				}
-				if (withSwarm) {
-					swarm += dSwarm;
-					swarmBand.process(w);
-					y += swarm * softClip(swarmBand.band * swarmNorm);
-				}
-			}
-			left[i] = right[i] = ceiling(LEVEL * y);
+			feedback += dFeedback;
+			drive += dDrive;
+			gu += dgu;
+			gl += dgl;
+			const first =
+				gu * this.#operator(u, feedback, drive) + gl * this.#operator(l, feedback, drive);
+			const second =
+				gu * this.#operator(u, feedback, drive) + gl * this.#operator(l, feedback, drive);
+			const y = this.#decimator.process(first, second);
+			left[i] = y;
+			right[i] = y;
 		}
-		one.phase = p1;
-		two.phase = p2;
 	}
+
+	/** One carrier's next sample: sin(φ + β·(its last two outputs)/2), driven into the clip. */
+	#operator(c: Carrier, beta: number, drive: number): number {
+		c.phase += c.dt;
+		if (c.phase >= 1) c.phase -= 1;
+		const x = drive * Math.sin(2 * Math.PI * c.phase + 0.5 * beta * (c.y1 + c.y2));
+		// the clip, anti-aliased: the mean of the clipped signal between the last input and this one
+		const dx = x - c.x1;
+		const y =
+			Math.abs(dx) > 1e-6
+				? (clipIntegral(x) - clipIntegral(c.x1)) / dx
+				: Math.max(-1, Math.min(1, 0.5 * (x + c.x1)));
+		c.x1 = x;
+		c.y2 = c.y1;
+		c.y1 = y;
+		return y;
+	}
+}
+
+function clamp01(x: number): number {
+	return x < 0 ? 0 : x > 1 ? 1 : x;
 }

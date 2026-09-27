@@ -25,7 +25,8 @@
      fixed steps shown on screen as 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 [E].
    - **axis:** two-operator FM. Its ratio detunes continuously from an octave below up to unison
      over 0–50, then climbs in fifth and fourth steps; tone is a built-in resonant filter [E].
-   - **dissolve:** two sines, pure at all-zero, eaten by noise (swarm), with audio-rate AM and FM [E].
+   - **dissolve:** measured: two sines ±34 cents apart at full detune; fm is each sine's own
+     feedback, am a hard clip inside that loop, and swarm a fast random pitch jitter (§3).
    - **wavetable:** 9 tables, 8 of them named on screen (buzz, zap, basic, geometric, fibonacci,
      fractal, crush, drawbars); warp is a piecewise-linear phase distortion, and drift detunes it [E].
    - **epiano and organ:** FM, like their OP–Z ancestors [E]. The organ has 8 types drawn as
@@ -175,24 +176,42 @@ Open:
 
 ### dissolve — swarm, am, fm, detune
 
-Established:
+Established before measuring: all zero is a pure sine; two sine carriers spread by detune; swarm
+feeds noise in; AM adds grit and highs, FM turns it saw-like; FM 100 with detune gives a Reese
+bass. Presets: FM usually 30–90, swarm ≤ 37.
 
-- All zero is a pure sine.
-- Two sine carriers, spread by detune up to a little under a semitone.
-- Swarm feeds noise in: filtered noise plus a soft random pitch wobble.
-- AM and FM work at audio rate. AM adds grit and highs; FM turns it saw-like.
-- FM 100 with detune gives a Reese bass.
-- Presets: FM usually 30–90, swarm ≤ 37.
+Measured on the owner's device (2026-09-27, `2026-09-27-132921-dissolve`;
+`research/device/dissolve_fit.py`):
 
-Model [I]:
+- **Everything at 0 is a pure sine**, −14.2 dBFS on A2 and 3 dB lower on A4 (−1.5 dB an octave).
+- **detune splits two carriers to ±34.3 cents at full**, in proportion, the lower one 5 dB under
+  the upper (at 0 they sum in phase).
+- **fm is each carrier's own feedback**, y = sin(φ + β·y): β = 0.083, 0.150, 0.218 … 0.686 at CC
+  13, 25, 38 … 127, straight in fm, the same on A2 and A4 (fitted within 0.5–1.2 dB). Not a 1:1
+  modulator: a free modulator's best fits needed feedback anyway.
+- **am is a hard clip inside that loop**, y = clip(g·sin(φ + β·y)): g = 1.054, 1.109, 1.176 …
+  1.997 at CC 13, 25, 38 … 127 on A2 (within 0.1 dB of every harmonic), and less up the keyboard:
+  1.045 … 1.727 on A4 (0.63 dB less an octave up at full). Nothing makes up the level, so am gets
+  louder (+2 dB at full). With fm, the clip sits inside the loop (outside, the fit is 14 dB off).
+- **swarm jitters each carrier's pitch with its own fast noise** (most of the motion within
+  5–60 Hz): a band around the note whose width (standard deviation) is 0.13·swarm^1.6 of the note,
+  and the level falls by up to 6 dB, partly because the carriers drift apart.
 
-- Carriers at f·2^(±d/2400).
-- Swarm: band-passed noise around the note, plus independent smoothed wobble on each carrier.
-- AM by narrow-band noise centred on the note.
-- FM by a 1:1 sine whose phase and level noise jitters.
+Model: the above (`dissolve.ts`), run at twice the sample rate and halved through a 64-tap lowpass
+(`filters.ts`, `Decimator`). The clip is anti-aliased by its antiderivative. The feedback averages
+the last two outputs, as the DX7 does. With β·g past 1 the loop's equation has two answers and
+jumps; at 1× its harmonics folded back to −41 dB on 2 kHz notes, and at 2× they stay under −60 dB.
+Swarm is white noise through a one-pole at 50 Hz, a new value every 16 samples. Against the capture:
 
-Open: whether the AM and FM modulators are noise, periodic or both; the swarm noise's spectrum; the
-detune curve; the stereo placement.
+- the levels sit 6.0–6.4 dB above the device's (the 6.2 dB calibration);
+- fm, am and detune partials match within 0.1–0.5 dB;
+- FM 100 + detune 60 is within 0.6–0.8 dB;
+- AM 50 + FM 50 is within 1.3–2.1 dB (a weak 6th harmonic comes out 3–5 dB low);
+- swarm's spectrum is within a few dB across its skirt, with its width matching on A4 and narrower
+  than the device's on A2.
+
+Open: swarm at more notes (the A2 width); how the device keeps the clip's loop from aliasing on high
+notes; any stereo (the capture plays mono).
 
 ### wavetable — table, position, warp, drift
 
@@ -477,8 +496,8 @@ every voice per sample instead.
   engines: at a new track's settings they sit between −2.9 dB (epiano) and +3.8 dB (simple). The
   device session will set each engine's own level.
 - Parameters glide over about 4 ms inside the engines (`engines/ramp.ts`), so an LFO or a turned
-  encoder never clicks. hardsync and dissolve have a soft ceiling above ±1 (`engines/guard.ts`) for
-  rare aligned peaks.
+  encoder never clicks. hardsync has a soft ceiling above ±1 (`engines/guard.ts`) for rare aligned
+  peaks; dissolve's clip bounds its own carriers.
 - The budget is 24 voices in real time in one worklet thread: no allocation and no per-sample
   `pow`, `exp` or `tan`, with tables for costly shapes (`sine.ts`, a 4096-point sine within 4e-7 of
   `Math.sin`).
@@ -492,7 +511,7 @@ every voice per sample instead.
 | prism     | Measured: saw → square blend k with a −3.9 dB/k level law, then oscillator 2 narrows before oscillator 1 (to w ≈ 0.113); oscillator 2 at −2.4 dB, less at high ratios; ten ratio zones up to 1:16; detune to 15 cents; each oscillator fades with its pitch above ~2 kHz; stereo = the swept copy.                                                |
 | simple    | Saw → square blend, width 0.5 − 0.44·pw on the pulse only, the measured noise crossfade, and the measured stereo: a delayed copy per channel, a triangle sweeping it ±6.9–15.2 cents (opposite in L and R), high-passed at 815–490 Hz.                                                                                                            |
 | hardsync  | Measured: a saw synced at 1 + 7·freq times the note (linear), a sub saw at the note in phase (to 2×), a one-pole lowcut on the saws only (101 Hz–8.2 kHz), white noise at −64 dBFS/Hz after it; levels at the device's.                                                                                                                           |
-| dissolve  | Two sines ±45 cents at full detune. Swarm: independent wobble per carrier, jitter on the FM, and a noise band at Q 2. AM by narrow-band noise at the note (Q 8). FM by a 1:1 cosine-phase modulator (the saw-like series at moderate index), DC removed exactly.                                                                                  |
+| dissolve  | Measured: two sines ±34.3 cents at full detune (the lower 5 dB under), each feeding back into its own phase (fm, β to 0.686), clipped hard inside the loop (am, drive to 2 on A2, key-scaled), swarm a one-pole 50 Hz pitch jitter to 0.13 of the note; run at 2× through a 64-tap decimator.                                                     |
 | epiano    | Measured: a sine carrier phase-modulated 1:1 (tone, index to 3.05, no feedback) and 4:1 (punch, rising then fading), a soft clipper blended in (texture, drive key-scaled), tine's two straight-line decays on the index; key-scaled level.                                                                                                       |
 | axis      | Operator 2 at r × the note phase-modulates operator 1 (index 1.3) and is also heard (0.5, less at high ratios). r runs 0.5 → 1 weighted to unison below 50 (M1 49 ≈ 3 cents: a slow chorus), then steps 1…32 above, gliding over 5 ms. Shape: saw at 0, triangle at 1. Tone: a resonant lowpass 100 Hz–16 kHz. Tremolo up to 0.6 deep, 0.5–10 Hz. |
 | organ     | Measured registrations: per type, every partial (on the half-note grid, or a few cents off it) at bass 0/½/1 on A1–A5, played as sine oscillators behind a one-pole 54 Hz high-pass. Type 2's bass slides two partials. Tremolo 1 + amount·sin at 10.9 Hz × speed^0.93, free-running on the core's clock.                                         |
@@ -619,7 +638,7 @@ message logged in `90-device-probe.md`. Filter and LFO types have no CC and are 
 5. ~~Epiano's modulator ratio and waveform, and tine's law.~~ Measured (§3).
 6. Axis: whether operator 2 is audible, its FM index, and the tone filter.
 7. Wavetable: frames per table, the ninth table, the warp shape and the drift law.
-8. Dissolve's modulators (noise or periodic).
+8. ~~Dissolve's modulators (noise or periodic).~~ Measured (§3): feedback, a clip, a pitch jitter.
 9. ~~Hardsync's sub octave and waveform, and the lowcut slope.~~ Measured (§3). (Simple's stereo too.)
 10. LFO shapes per type and element's envelope source; portamento curves; bend steps.
 

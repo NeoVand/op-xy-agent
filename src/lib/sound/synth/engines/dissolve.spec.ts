@@ -1,129 +1,123 @@
-// dissolve, measured: a pure sine at all-zero, two detuned carriers beating, swarm's wobble and
-// noise band, FM's saw-like series against Bessel functions, AM's sidebands, the DC the FM leaves
-// taken off, and the bounds every engine keeps. Played straight at 48 kHz, block by block as the
-// core plays it.
+// dissolve against the device: a pure sine at 0 at the device's level, detune's two carriers at
+// ±34 cents with the lower 5 dB under, fm as each carrier's own feedback, am as a hard clip inside
+// the loop, swarm's pitch jitter spreading a band around the note, and the bounds every engine
+// keeps. Played straight at 48 kHz, block by block as the core plays it.
 import { describe, expect, it } from 'vitest';
 import { harmonicLevels, inharmonicDb, levelAt, powerSpectrum, rms } from '../analysis';
+import { DEVICE_GAIN_DB } from './device';
 import { BOUNDS, SR, clickRatios, grid, m1, play, worstInharmonic, worstPeak } from './audition';
-import { DETUNE_CENTS, DissolveVoice, FM_INDEX, LEVEL, besselJ1 } from './dissolve';
+import {
+	CLIP,
+	DETUNE_CENTS,
+	DissolveVoice,
+	FEEDBACK,
+	LOWER_DB,
+	SWARM_CURVE,
+	SWARM_SPREAD,
+	UPPER_DB
+} from './dissolve';
 
 const make = (seed: number) => new DissolveVoice(SR, seed);
 const DEFAULT = m1(49, 52, 90, 0);
+const db = (x: number) => 20 * Math.log10(x);
 
-/** Jₙ(x) by its power series. */
-function besselJ(n: number, x: number): number {
-	let term = Math.pow(x / 2, n);
-	for (let k = 2; k <= n; k++) term /= k;
-	let sum = term;
-	for (let m = 1; m < 40; m++) {
-		term *= -(x * x) / (4 * m * (m + n));
-		sum += term;
-	}
-	return sum;
-}
-
-/** Mean power per bin in `lo`–`hi` hertz, leaving out the bins near `f0`'s harmonics. */
-function between(x: Float32Array, f0: number, lo: number, hi: number): number {
-	const { power, binHz } = powerSpectrum(x, SR);
-	let sum = 0;
-	let bins = 0;
-	for (let i = Math.ceil(lo / binHz); i < hi / binHz; i++) {
-		const hz = i * binHz;
-		if (Math.abs(hz - Math.max(1, Math.round(hz / f0)) * f0) / binHz > 6) {
-			sum += power[i];
-			bins++;
+/** Harmonics 1…`count` of the carrier y = clip(g·sin(θ + β·y)), settled over many cycles. */
+function reference(beta: number, g: number, count: number): number[] {
+	const n = 2048;
+	let y = new Float64Array(n);
+	for (let i = 0; i < n; i++) y[i] = Math.sin((2 * Math.PI * i) / n);
+	for (let pass = 0; pass < 200; pass++) {
+		const next = new Float64Array(n);
+		for (let i = 0; i < n; i++) {
+			const x = g * Math.sin((2 * Math.PI * i) / n + beta * y[i]);
+			next[i] = Math.max(-1, Math.min(1, x));
 		}
+		y = next;
 	}
-	return sum / bins;
+	return Array.from({ length: count }, (_, k) => {
+		let re = 0;
+		let im = 0;
+		for (let i = 0; i < n; i++) {
+			re += y[i] * Math.cos((2 * Math.PI * (k + 1) * i) / n);
+			im += y[i] * Math.sin((2 * Math.PI * (k + 1) * i) / n);
+		}
+		return (2 * Math.hypot(re, im)) / n;
+	});
 }
 
 describe('dissolve', () => {
-	it('is a pure sine with everything at zero', () => {
-		const { left, right } = play(make(1), 220, 0.5, [0, 0, 0, 0]);
-		const h = harmonicLevels(left, SR, 220, 8);
-		expect(h[0]).toBeCloseTo(LEVEL, 2);
-		for (const v of h.slice(1)) expect(20 * Math.log10(v / h[0])).toBeLessThan(-50);
-		expect(right).toEqual(left);
+	it('is a pure sine with everything at zero, at the device’s level', () => {
+		const { left } = play(make(1), 110, 0.5, [0, 0, 0, 0]);
+		const x = left.subarray(4800, 4800 + 16384);
+		const h = harmonicLevels(x, SR, 110, 6);
+		for (let k = 1; k < 6; k++) expect(h[k] / h[0]).toBeLessThan(1e-3);
+		expect(inharmonicDb(x, SR, 110)).toBeLessThan(-80);
+		// the two carriers in phase: the upper's peak plus the lower's, 5 dB under
+		const peak = Math.pow(10, (UPPER_DB + DEVICE_GAIN_DB) / 20) * (1 + Math.pow(10, LOWER_DB / 20));
+		expect(db(h[0])).toBeCloseTo(db(peak), 1);
 	});
 
-	it('spreads two carriers with detune, which beat', () => {
-		const detune = 0.5;
-		const cents = (DETUNE_CENTS * detune * detune) / 2;
-		const [low, high] = [-cents, cents].map((c) => 220 * Math.pow(2, c / 1200));
-		const { left } = play(make(1), 220, 2, [0, 0, 0, detune]);
-		// a carrier each side of the note, half the level each
-		expect(levelAt(left, SR, low)).toBeCloseTo(LEVEL / 2, 1);
-		expect(levelAt(left, SR, high)).toBeCloseTo(LEVEL / 2, 1);
-		// the level every 10 ms, in 30 ms windows: troughs one beat apart
-		const envelope: number[] = [];
-		for (let at = 0; at + 1440 <= left.length; at += 480)
-			envelope.push(levelAt(left.subarray(at, at + 1440), SR, 220));
-		expect(Math.min(...envelope) / Math.max(...envelope)).toBeLessThan(0.1);
-		const trough = (from: number, to: number) => {
-			let best = from;
-			for (let i = from; i < to; i++) if (envelope[i] < envelope[best]) best = i;
-			return best;
-		};
-		const first = trough(0, 40);
-		const second = trough(first + 15, first + 55);
-		expect((second - first) * 0.01).toBeCloseTo(1 / (high - low), 1);
+	it('splits the carriers ±34.3 cents at full detune, the lower 5 dB under the upper', () => {
+		const { left } = play(make(1), 440, 1.5, [0, 0, 0, 1]);
+		const x = left.subarray(4800);
+		const up = levelAt(x, SR, 440 * Math.pow(2, DETUNE_CENTS / 1200));
+		const down = levelAt(x, SR, 440 * Math.pow(2, -DETUNE_CENTS / 1200));
+		expect(db(down / up)).toBeCloseTo(LOWER_DB, 0);
+		expect(levelAt(x, SR, 440)).toBeLessThan(0.05 * up);
 	});
 
-	it('swarms: noise banded around the note, and the pitch wobbling', () => {
-		const clean = play(make(1), 220, 1, [0, 0, 0, 0]).left;
-		const swarm = play(make(1), 220, 1, [0.5, 0, 0, 0]).left;
-		expect(inharmonicDb(swarm, SR, 220)).toBeGreaterThan(inharmonicDb(clean, SR, 220) + 30);
-		// the noise sits around the note, far above what reaches the upper harmonics' region
-		const full = play(make(1), 220, 1, [1, 0, 0, 0]).left;
-		expect(between(full, 220, 150, 330)).toBeGreaterThan(30 * between(full, 220, 2000, 3000));
-		// wobble: the carriers leave the note's exact frequency
-		expect(levelAt(full, SR, 220)).toBeLessThan(0.8 * levelAt(clean, SR, 220));
+	it('turns fm into each carrier’s own feedback, and am into a hard clip inside the loop', () => {
+		for (const [fm, am, hz] of [
+			[1, 0, 110],
+			[0.5, 0, 110],
+			[0, 1, 110],
+			[64 / 127, 64 / 127, 110],
+			// the device drives the clip less up the keyboard
+			[0, 1, 440],
+			[0, 64 / 127, 440]
+		]) {
+			const { left } = play(make(1), hz, 0.6, [0, am, fm, 0]);
+			const h = harmonicLevels(left.subarray(4800, 4800 + 16384), SR, hz, 6);
+			const g = (hz === 110 ? CLIP.a2 : CLIP.a4)[Math.round(am * 10)];
+			const r = reference(FEEDBACK * fm, g, 6);
+			for (let k = 1; k < 6; k++) {
+				if (r[k] / r[0] < 1e-3) continue;
+				const at = `fm ${fm} am ${am} at ${hz} Hz, h${k + 1}`;
+				expect(db(h[k] / h[0]), at).toBeCloseTo(db(r[k] / r[0]), 0);
+			}
+		}
 	});
 
-	it('turns saw-like with FM: the cosine-phase 1:1 series, periodic', () => {
-		// index 1.5: harmonic k at |J(k−1) − (−1)^k·J(k+1)|, about 1 : 0.67 : 0.33 : 0.08
-		const index = 1.5;
-		const fm = Math.sqrt(index / FM_INDEX);
-		const { left } = play(make(1), 220, 0.5, [0, 0, fm, 0]);
-		const h = harmonicLevels(left, SR, 220, 5);
-		const series = [1, 2, 3, 4].map((k) =>
-			Math.abs(besselJ(k - 1, index) - Math.pow(-1, k) * besselJ(k + 1, index))
-		);
-		for (let k = 1; k < 4; k++) expect(h[k] / h[0]).toBeCloseTo(series[k] / series[0], 2);
-		expect(inharmonicDb(left, SR, 220)).toBeLessThan(-60);
-		// and more FM, more harmonics: the fifth grows tenfold from there to the top
-		const top = harmonicLevels(play(make(1), 220, 0.5, [0, 0, 1, 0]).left, SR, 220, 5);
-		expect(top[4] / top[0]).toBeGreaterThan(10 * (h[4] / h[0]));
+	it('gets louder with am, as a clip does (no level compensation)', () => {
+		const level = (am: number) => rms(play(make(1), 220, 0.5, [0, am, 0, 0]).left, 2400);
+		// the device: +2 dB at full am
+		expect(db(level(1) / level(0))).toBeCloseTo(2, 0);
 	});
 
-	it('takes off the DC the cosine modulator leaves', () => {
-		// J₁ peaks near index 1.84: left in, the offset would be LEVEL·0.58
-		const fm = Math.sqrt(1.8412 / FM_INDEX);
-		const { left } = play(make(1), 200, 1, [0, 0, fm, 0]);
-		const mean = left.reduce((s, v) => s + v, 0) / left.length;
-		expect(Math.abs(mean)).toBeLessThan(1e-3);
-	});
-
-	it('adds grit and highs with AM: sidebands off the series and above the note', () => {
-		const pure = play(make(1), 220, 1, [0, 0, 0, 0]).left;
-		const am = play(make(1), 220, 1, [0, 1, 0, 0]).left;
-		expect(inharmonicDb(am, SR, 220)).toBeGreaterThan(inharmonicDb(pure, SR, 220) + 30);
-		// noise at the note times the carrier: a band around twice the note
-		expect(levelAt(am, SR, 440)).toBeGreaterThan(100 * levelAt(pure, SR, 440));
-	});
-
-	it('knows J₁', () => {
-		expect(besselJ1(1)).toBeCloseTo(0.4400505857, 9);
-		expect(besselJ1(1.8411838)).toBeCloseTo(0.5818652, 6);
-		expect(besselJ1(3.831706)).toBeCloseTo(0, 6);
-		expect(besselJ1(5)).toBeCloseTo(-0.3275791376, 9);
-	});
-
-	it('sits at the target level at its default M1, whatever its randomness does', () => {
-		for (const seed of [1, 2, 3, 4, 5, 6]) {
-			const { left } = play(make(seed), 220, 2, DEFAULT);
-			expect(rms(left), `seed ${seed}`).toBeGreaterThan(BOUNDS.level[0]);
-			expect(rms(left), `seed ${seed}`).toBeLessThan(BOUNDS.level[1]);
+	it('spreads a band around the note with swarm, its width 0.13·swarm^1.6 of the note', () => {
+		const hz = 440;
+		for (const swarm of [0.5, 1]) {
+			// the band's standard deviation over the note, averaged over seeds (it is random)
+			let sum = 0;
+			for (const seed of [1, 2, 3, 4]) {
+				const { left } = play(make(seed), hz, 1.5, [swarm, 0, 0, 0]);
+				const { power, binHz } = powerSpectrum(left.subarray(4800), SR);
+				let p = 0;
+				let m = 0;
+				let v = 0;
+				for (let i = Math.ceil((0.5 * hz) / binHz); i < (1.5 * hz) / binHz; i++) {
+					p += power[i];
+					m += power[i] * i * binHz;
+				}
+				m /= p;
+				for (let i = Math.ceil((0.5 * hz) / binHz); i < (1.5 * hz) / binHz; i++) {
+					v += power[i] * (i * binHz - m) ** 2;
+				}
+				sum += Math.sqrt(v / p) / hz;
+			}
+			const expected = SWARM_SPREAD * Math.pow(swarm, SWARM_CURVE);
+			expect(sum / 4 / expected, `swarm ${swarm}`).toBeGreaterThan(0.6);
+			expect(sum / 4 / expected, `swarm ${swarm}`).toBeLessThan(1.5);
 		}
 	});
 
@@ -144,9 +138,9 @@ describe('dissolve', () => {
 		}
 	});
 
-	it('stays band-limited with FM on 1–2 kHz notes', { timeout: 60_000 }, () => {
-		const settings = [0, 0.25, 0.5, 0.7, 0.78, 0.85, 1].map((fm) => [0, 0, fm, 0]);
-		const { db, at } = worstInharmonic(make, settings, BOUNDS.highNotes);
-		expect(db, at).toBeLessThan(BOUNDS.inharmonic);
+	it('stays band-limited with fm and am on 1–2 kHz notes', { timeout: 60_000 }, () => {
+		const settings = [0, 0.5, 1].flatMap((fm) => [0, 0.5, 1].map((am) => [0, am, fm, 0]));
+		const { db: worst, at } = worstInharmonic(make, settings, BOUNDS.highNotes);
+		expect(worst, at).toBeLessThan(BOUNDS.inharmonic);
 	});
 });

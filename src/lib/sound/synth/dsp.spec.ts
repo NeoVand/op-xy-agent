@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { fft, harmonicLevels, inharmonicDb, levelAt, rms, spectralDistance } from './analysis';
 import { BLEP_OVERSAMPLE, BLEP_SPAN, blepResidual } from './blep';
-import { Ladder, OnePole, Svf, prewarp } from './filters';
+import { Decimator, Ladder, OnePole, Svf, prewarp } from './filters';
 import { Noise, Wander } from './noise';
 import { NO_WRAP, Operator, Phase, Saw, ShapeOscillator, type ShapeMix } from './oscillators';
 import { WaveTable, partialsOf } from './wavetable';
@@ -258,6 +258,21 @@ describe('filters', () => {
 		const lp = new OnePole(prewarp(1000, SR));
 		const ratio = Math.tan((Math.PI * 8000) / SR) / Math.tan((Math.PI * 1000) / SR);
 		expect(through((x) => lp.process(x), 8000)).toBeCloseTo(db(1 / Math.hypot(1, ratio)), 1);
+	});
+
+	it('decimator: flat to 18 kHz of a 96 kHz input, and 60 dB down from 24 kHz', () => {
+		// a sine at `hz` sampled at twice the rate, halved: its level out (folded, if above 24 kHz)
+		const halved = (hz: number) => {
+			const decimator = new Decimator();
+			const at = (i: number) => Math.sin((Math.PI * hz * i) / SR);
+			const y = render(SR / 4, (i) => decimator.process(at(2 * i), at(2 * i + 1)));
+			return db(rms(y, 1000) * Math.SQRT2);
+		};
+		for (const hz of [100, 1000, 10000, 18000]) expect(halved(hz), `${hz} Hz`).toBeCloseTo(0, 1);
+		expect(halved(19000)).toBeGreaterThan(-0.5);
+		for (const hz of [24000, 24500, 26000, 30000, 40000, 47000]) {
+			expect(halved(hz), `${hz} Hz`).toBeLessThan(-60);
+		}
 	});
 });
 
