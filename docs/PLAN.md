@@ -24,6 +24,10 @@
   patterns, scenes and song (always, since the real OP-XY takes no patterns over MIDI), undoable and
   saved. Eval: a beat, a chord progression and a two-scene song, 3/3 exact
   (`evals/agent/RESULTS.md`).
+- **Synth engines: rebuilding.** Research (`docs/research/57-synth-engines.md`) and a new synth core:
+  band-limited oscillators, TPT filters and the measured envelope law, per sample in an
+  AudioWorklet, wired into the sound engine one engine at a time. The eight engine models are being built;
+  calibration against the owner's device waits for approval (`QUESTIONS.md` 5).
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).

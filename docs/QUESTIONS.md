@@ -19,6 +19,12 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    - How long must a lit step be held before it copies instead of coming off? (Ours: 0.5 s.)
    - Step component multiply, black key 9: 9 hits, or 3 as TE's table prints?
    - While playing: does the playhead dim a step that has notes, and light an empty one?
+5. **Synth calibration session** (changes device state: CCs and notes on a new throwaway project;
+   nothing saved, loaded or deleted). We record the OP-XY's USB audio while a script sweeps each
+   engine's four parameters, the envelopes and the filter, then fit our engines to the recordings.
+   Filter and LFO types are set by hand. Plan in `docs/research/57-synth-engines.md` §6. Approve when
+   ready, and say whether loading three test samples (impulse, noise, sine) as presets is fine for
+   the filter measurements.
 
 ## Answered
 

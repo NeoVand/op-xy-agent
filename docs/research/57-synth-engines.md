@@ -1,0 +1,551 @@
+# 57 — The OP–XY's synth engines: what they are, and how we rebuild them
+
+> Research note for the OP–XY Agent (the virtual OP–XY's sound, M2.5 follow-up). Scope: what each
+> of the eight synth engines, the filters, envelopes, LFOs and voices does inside, as far as public
+> evidence goes; the DSP models we built from it; the synth core that runs them in the browser; and
+> the measurements on the owner's device that will calibrate them. Written 2026-09-27. **Nothing
+> was sent to the device.** All text is our own wording; TE's guide is paraphrased, never quoted.
+>
+> **Confidence tags:** **[E]** established: TE's guide or staff, the device's own screen, decoded
+> device-written data, or two or more independent reports agreeing. **[I]** inferred: our model,
+> to be checked against recordings (§6).
+
+---
+
+## TL;DR
+
+1. **TE publishes no internals, and the firmware is encrypted** (`60-firmware.md`). TE's Will says
+   every OP–XY engine is new, not an evolution of the OP–1's or OP–Z's [E] (Andertons, Gear4music
+   deep dives). No OP–1, OP–1 field or OP–Z engine has the same four parameters. So the models below
+   come from TE's one-line descriptions, an oscilloscope review, TE staff demos, readings of the
+   device's screen in tutorial videos and the 322 factory presets, and they need recordings to pin
+   their constants.
+2. **What we now know per engine** (details in §3):
+   - **prism:** two oscillators with one shape (saw → square → narrow pulse), and a ratio in nine
+     fixed steps shown on screen as 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 [E].
+   - **axis:** two-operator FM. Its ratio detunes continuously from an octave below up to unison
+     over 0–50, then climbs in fifth and fourth steps; tone is a built-in resonant filter [E].
+   - **dissolve:** two sines, pure at all-zero, eaten by noise (swarm), with audio-rate AM and FM [E].
+   - **wavetable:** 9 tables, 8 of them named on screen (buzz, zap, basic, geometric, fibonacci,
+     fractal, crush, drawbars); warp is a piecewise-linear phase distortion, and drift detunes it [E].
+   - **epiano and organ:** FM, like their OP–Z ancestors [E]. The organ has 8 types drawn as
+     drawbars [E].
+   - **hardsync:** a synced saw over three octaves, a sub at the master pitch, noise and a highpass
+     "lowcut" [E].
+   - **simple:** a saw → square morph, with pulse width acting only near square [E].
+3. **Axis and epiano probably share an FM core.** All 20 of their factory presets carry the same
+   four hidden values after P1–P4 (7616, 674, 3276, 8192); every other engine stores zeros there [E].
+4. **The shared voice** (§4):
+   - Filters, in order: svf (a gentle lowpass only), ladder (the aggressive, self-oscillating 24 dB
+     one), z lowpass and z hipass. Stored type ids are 10, 16, 9 and 17 [E].
+   - Envelope times are exponential in the encoder: attack ≈ 0.0111·e^(10.39·x) s, about 2 s at
+     half and minutes at full. Two independent fits agree [E].
+   - 24 voices, at most 8 per track [E].
+5. **We rebuilt the sound as a synth core** (§5): band-limited oscillators (minBLEP) with exact hard
+   sync, TPT filters, the measured envelope law, and mipmapped wavetables. It runs sample by sample
+   in an AudioWorklet, and the same code runs in Node, where objective tests measure harmonics,
+   aliasing and filter slopes. The engine still makes every decision (play modes, glides, steals);
+   the worklet only computes the sound.
+6. **Calibration needs the owner's device** (§6): USB-audio captures of CC sweeps on a scratch
+   project, then fitting each engine's curves by spectral distance. It changes device state (CCs and
+   notes on a throwaway project), so it waits for the owner's go-ahead.
+
+---
+
+## 1. Sources
+
+TE:
+
+- Guide chapters: synth engines, instrument (envelopes, filter, LFOs, play modes, preset settings),
+  project (voices), FX, mix and auxiliary. Our reworded units are in
+  `knowledge/manual/units/instrument/`.
+- The changelog (`knowledge/official/changelog.md`, git-ignored). No engine DSP changes in 22
+  builds, apart from these:
+  - 1.0.45: "knob feel" improved for some synth settings, which may have changed curves.
+  - 1.0.50 and 1.1.15: voice-stealing and CPU limiting.
+  - 1.1.25: epiano screen names fixed; delay tied to tempo.
+- Product page: four filter types; 24-voice multitimbral; dual Blackfin processors plus a DSP
+  co-processor.
+- OP–Z reference: its organ and e-piano are 8 FM algorithms each. OP–1 field guide: LFO shapes and
+  the effects' ancestry.
+
+Reviews and demos:
+
+- **Magazin Mehatronika** (Dušan Dakić, 2025): the only review with an oscilloscope, covering every
+  engine by ear and by scope.
+- **Sound On Sound** (Simon Sherbourne, April 2025): the engines are new; three lowpass modes and one
+  highpass; only the ladder's resonance whistles.
+- **TE's Will:** Andertons deep dive (32:05–37:30) and Gear4music deep dive (15:37–20:30,
+  38:51–40:30, 44:42–47:14).
+- **r10 makes beats:** tutorials for epiano, axis, dissolve, and hardsync/organ/prism/simple/wavetable.
+  Frame grabs of the device's own screen give prism's ratio steps and the wavetable names.
+- **Other videos:** windowbed (envelopes and filters), Mo chreach! (video manual), Shimmery.mp3 (all
+  the synths).
+- **Forums:**
+  - op-forums: the attack measurement (t/31132), voices (t/30250), the CPU icon (t/28494), the
+    sidechain thread (t/28393), custom wavetables and phase distortion (Worldwave, t/29362).
+  - Elektronauts: the SVF is lowpass only; only z has two modes.
+
+Local evidence:
+
+- Factory presets decoded with `kmorrill/xy-format` (322 `patch.json` from 1.0.x, 156 presets from
+  1.1.21).
+- `charlesvestal/sf2-to-opxy`: an independent attack-time fit.
+- `55-screen.md`: envelope and LFO amounts are ±99; bend range 0 is off; the organ screen has
+  drawbar rails.
+
+Not reachable: Reddit and Gearspace blocked our tools, and loopop has no OP–XY review.
+
+## 2. How to read the models
+
+Each engine section lists what is established, our model with starting constants, and the open
+questions. The constants sit as named values at the top of each engine's module
+(`src/lib/sound/synth/engines/*.ts`) and are the knobs the calibration in §6 fits. Where the device
+presents a value as 0–100 on screen, our model takes M1 as 0–99 encoder steps ÷ 99.
+
+## 3. The engines
+
+### prism — shape, ratio, detune, stereo
+
+Established:
+
+- Two oscillators share one shape control. Shape runs saw at 0, square around the upper third, and
+  a narrower pulse at the top; the scope review sees the pulse width skew near the top.
+- Ratio steps, read from the screen, as oscillator 1 : oscillator 2: 2:1, 1:1, 2:3, 1:2, 1:3, 1:4,
+  1:6, 1:8, 1:12.
+- Detune is small and acts on oscillator 2.
+- Stereo 0 is mono; turned up, it sounds wide and phasey.
+- TE calls it subtractive-style (Moog-like basses), with supersaw and Reese sounds from detune plus
+  stereo.
+- All 8 factory presets are mono with transpose +12.
+
+Model [I]:
+
+- Oscillator 2 = oscillator 1 × R[k], with R = 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12 and k = ⌊p2·9⌋.
+- Shape blends saw → square over 0–0.8, then narrows the width from 50 % to about 27 %.
+- Detune is about 0–30 cents on a squared curve.
+- Stereo pans the two oscillators apart and adds a small left/right detune, so it widens even at
+  1:1.
+
+Open:
+
+- Which oscillator the ratio moves.
+- Where the shape curve turns, and how narrow the pulse gets.
+- Whether detune is in cents or hertz.
+- How stereo is built, whether phases reset per note, and whether prism sounds an octave low (every
+  preset is +12).
+
+### axis — tone, ratio, shape, tremolo
+
+Established:
+
+- TE: an FM engine for lush strings. Its ratio detunes over 0–50 and steps up in fifths above.
+- Scope review:
+  - two operators;
+  - ratio starts an octave below, sweeps smoothly to unison at 50, then covers about five octaves in
+    fifth and fourth jumps;
+  - tone acts like a lowpass with an unusual resonance;
+  - shape morphs between saw and triangle and tightens transients.
+- TE staff call tone a built-in filter.
+- The guide's early screen art labelled P4 as vibrato.
+- All 10 factory presets are poly, with preset width around 56 %.
+
+Model [I]:
+
+- Operator 2 at r × the note phase-modulates operator 1.
+- r runs continuously from 0.5 to 1 below 50, most of its travel near 1 (that beating is the
+  "lush"), then steps through 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32.
+- Tone is a two-pole resonant lowpass, about 100 Hz–16 kHz.
+- Tremolo depth and rate rise together.
+
+Open:
+
+- Whether operator 2 is heard directly.
+- The index, the filter's type and Q, the ratio curve, and the tremolo's waveform.
+- What the hidden values shared with epiano do.
+
+### dissolve — swarm, am, fm, detune
+
+Established:
+
+- All zero is a pure sine.
+- Two sine carriers, spread by detune up to a little under a semitone.
+- Swarm feeds noise in: filtered noise plus a soft random pitch wobble.
+- AM and FM work at audio rate. AM adds grit and highs; FM turns it saw-like.
+- FM 100 with detune gives a Reese bass.
+- Presets: FM usually 30–90, swarm ≤ 37.
+
+Model [I]:
+
+- Carriers at f·2^(±d/2400).
+- Swarm: band-passed noise around the note, plus independent smoothed wobble on each carrier.
+- AM by narrow-band noise centred on the note.
+- FM by a 1:1 sine whose phase and level noise jitters.
+
+Open: whether the AM and FM modulators are noise, periodic or both; the swarm noise's spectrum; the
+detune curve; the stereo placement.
+
+### wavetable — table, position, warp, drift
+
+Established:
+
+- 9 tables; switching tables keeps the position; everything at 0 is a sine.
+- Tables named on screen, with the wave at position 0:
+  - buzz: saw
+  - zap: saw
+  - basic: triangle → square → sine across positions
+  - geometric: sine with ripples
+  - fibonacci: sine with denser ripples
+  - fractal: a saw of smaller saws
+  - crush: a stair-stepped sine
+  - drawbars: additive
+  - The ninth was never seen.
+- Warp is drawn as a piecewise-linear phase distortion. The wave's half-cycle point moves from about
+  0.49 at warp 0 to 0.38 at 30, 0.33 at 40 and 0.26 at 62. It acts like PWM on any shape.
+- Drift slides that point over time: LFO-like when low, FM-like in the middle, synced again at the
+  top (Sound On Sound: phase modulation up to a synced audio rate).
+
+Model [I]:
+
+- **Knee:** d = 0.5 − 0.41·warp.
+- **Distortion:** PD(x) = x/2d below the knee, else ½ + (x − d)/2(1 − d). It is driven by a second
+  phase at f·(1 + δ), and the table is read at φ + PD(φw) − φw.
+- **Drift:** δ = drift³, so drift 1 gives 2f, harmonic again. Drift does nothing at warp 0.
+
+**The tables are TE's content: we design our own in the same families rather than capture theirs.**
+(D2 applies by analogy.)
+
+Open: the tables' data and frame count, the ninth table and the order, sine versus linear warp, the
+drift law, and whether phases reset per note.
+
+### epiano — tone, texture, punch, tine
+
+Established:
+
+- TE's staff: ranges from a nice electric piano to a filthy synth.
+- The OP–Z e-piano is 8 FM algorithms, and reviewers hear FM here too.
+- By ear:
+  - tone brings in a modulator that turns saw- or square-like, and high tone sounds saw-like;
+  - texture pushes the carrier from sine towards a peaky triangle;
+  - punch adds a fast-decaying higher partial;
+  - tine is how long the modulation takes to fall back to the pure carrier (0 sustains it; high tine
+    plucks).
+- 1.1.25 fixed the screen's parameter names; the CCs keep the guide's order.
+- 4 of 5 factory epiano presets switch the M3 filter off.
+
+Model [I]:
+
+- **Carrier:** a 1:1 carrier with index I(t) = Imax·tone^1.5·e^(−t/τ), where τ goes from infinite
+  (tine 0) down to about 30 ms. The modulator's own feedback moves it from sine to saw.
+- **Texture:** a shaper, sine → triangle, then folding.
+- **Punch:** a high (7–14×) partial decaying over 10–50 ms, scaled by velocity.
+
+Open: the ratio and the modulator's waveform, velocity and key scaling, and whether tine is a time or
+an amount.
+
+### organ — type, bass, tremolo amount, tremolo speed
+
+Established:
+
+- TE: transistor to church; bass adds or removes bass; the tremolo moves the volume.
+- 8 types: r10 counts eight, and the screen has drawbar rails with 8 stops.
+- The character is FM-like, as the OP–Z's 8 FM organ algorithms were, with a "tweak" control.
+- Bass depends on the type (in some it adds a sub, in others highs or detune); r10 hears 0 as the
+  most bass.
+- Brightness rises with the type number.
+- Most organ presets use the ladder filter.
+- No percussion or key click is mentioned.
+
+Model [I]:
+
+- 8 types, each a pair of band-limited drawbar tables that the bass setting crossfades.
+- Tremolo: gain 1 − d·(½ − ½·cos 2πft), with f about 0.5–15 Hz.
+- The real partial tables should come from recordings (§6).
+
+Open: each type's partials; bass per type and its direction; the tremolo's waveform and range, and
+whether it restarts per note.
+
+### hardsync — freq, sub, noise, lowcut
+
+Established:
+
+- A saw slave hard-synced to a master, freq spanning about three octaves.
+- The sub sits at the master's pitch.
+- Noise is white.
+- Lowcut is a highpass on top of M3 (TE's staff), which gives the thin sound.
+- Puny without the sub, and loud raw: presets use preset volume 24–48 %.
+
+Model [I]:
+
+- Slave at f0·2^(3·freq), reset at the exact fraction of a sample.
+- The sub is a sine at f0.
+- Noise ∝ noise².
+- A two-pole highpass from about 20 Hz to 3 kHz on the sum.
+
+Open: the slave's waveform, the ratio curve, the sub's waveform and octave, and the highpass slope.
+
+### simple — shape, pw, noise, stereo
+
+Established:
+
+- Four reviewers agree that shape goes from saw to square, and that PW does nothing at saw.
+- Stereo spreads the oscillators (plural) and sounds like a stereo phaser.
+- The preset "big square" is shape 100, PW 0, so PW 0 is the square.
+- Square basses use preset volume 11–25 %: the raw engine is hot.
+
+Model [I]:
+
+- Saw → pulse blend, width 0.5 − 0.45·pw.
+- A left/right pair detuned by a few cents × stereo.
+- White noise ∝ noise².
+
+Open: the morph curve, the PW range, how stereo is built, and the level between shapes.
+
+## 4. The shared voice
+
+**Signal chain [I]:** engine → M3 filter (per voice) → amp envelope × velocity → preset volume →
+preset highpass → width → track → sends → group → master EQ → saturator → compressor → limiter.
+
+**Filters.**
+
+Established:
+
+- Four types. Stored ids: z lowpass 9, svf 10, ladder 16, z hipass 17. The gaps may hide internal
+  types.
+- svf is lowpass only, gentle, with good resonance (about 12 dB/octave).
+- ladder is aggressive and whistles into self-oscillation (about 24 dB/octave).
+- z lowpass has praised resonance; z hipass is the only highpass.
+- Envelope amount is ±99.
+
+Our models:
+
+- svf: a TPT state-variable lowpass that never quite self-oscillates, k = 2(1 − 0.97·r^0.8).
+- ladder: a four-pole TPT ladder with saturating feedback k = 4.1·r.
+- z: a sharper two-pole, Q 0.5–25.
+- Cutoff: 20 Hz–20 kHz exponential.
+- Envelope depth: our 7-octave curve (unmeasured).
+
+**Envelopes.**
+
+- Established: attack time T ≈ 0.0111·e^(10.386·x) s for x = value/99 (op-forums t/31132). A second
+  fit gives 0.01037·e^(10.4687·x) s (sf2-to-opxy). TE draws decay and release as exponential.
+- Ours: the same law for decay and release, a 1 ms floor at 0, a linear attack, and exponential falls
+  over four time constants per "time".
+- Open: whether decay and release really follow the attack law, the attack's curvature, and whether
+  sustain is linear or in dB.
+
+**LFOs.**
+
+- Established:
+  - Types: element, random, tremolo, value, and duck (from 1.1.0).
+  - Speed runs synced to the left and free to the right.
+  - Regular destinations reset on each key; free ones don't.
+  - Value shapes: sine, square, ramp, saw. Tremolo shapes: sine, saw, exp, square, blip. Random is
+    sample-and-hold.
+- Open: element's "env" source seems to follow the filter envelope on the device, not the amp
+  envelope the guide names.
+
+**Play modes and voices.**
+
+- Established:
+  - Portamento is linear or exponential, per preset.
+  - Bend range is stepped, with 0 off.
+  - 24 voices; at most 8 per track; per-track reservations.
+  - The voice icon appears at 17 voices and blinks red on a steal.
+  - A CPU limiter cuts notes under load.
+- Stealing order [I]: released voices first, then the track's own oldest, then others (`allocator.ts`).
+
+**FX** (send effects, established parameters):
+
+| Effect     | Parameters                                                         |
+| ---------- | ------------------------------------------------------------------ |
+| chorus     | rate, depth, feedback, stereo                                      |
+| delay      | size (8 steps, micro to insane), time tied to tempo, feedback, dry |
+| distortion | drive, clipping amount, low and high cut before it                 |
+| lofi       | rate, bits, quality, drift                                         |
+| phaser     | frequency, depth, rate, feedback; 12 poles                         |
+| reverb     | size (room to cathedral), modulation, tone, mix                    |
+
+Lofi resembles the OP–1 field's "terminal" and the phaser the OP–1's "fazer" [I].
+
+## 5. The synth core (our implementation)
+
+**Why a rebuild.** The first engines were Web Audio node graphs: fixed PeriodicWaves, BiquadFilters
+and node-rate modulation. They were cheap, but they could not do true hard sync, FM with feedback,
+per-sample phase distortion or a real ladder, and they aliased and zippered. The core computes
+every voice per sample instead.
+
+**Where it runs.**
+
+- `src/lib/sound/synth/` is plain TypeScript. `worklet.ts` runs it in an AudioWorklet with eight
+  stereo outputs (one per instrument track, into the existing channel strips) and eight four-channel
+  inputs carrying each track's LFO (cutoff cents, resonance dB, engine unit, vibrato cents).
+- The same code runs in Node for tests.
+
+**Who decides what.**
+
+- The main thread's `SoundEngine` still decides everything a person hears as behaviour: play modes,
+  glides, voice stealing, releases, the scheduler's timing, the LFO and the mixer.
+- `WorkletVoice` (`host.ts`) has the Web Audio voice's surface. Each call becomes a timed message
+  (`protocol.ts`), and the core replies when a voice has died away.
+- `CORE_ENGINES` lists the engines the core plays; the rest stay on the Web Audio voices.
+
+**DSP choices.**
+
+- Oscillators get minimum-phase band-limited steps (minBLEP, 16 zero crossings): saws and pulses sit
+  about 60–90 dB below naive aliasing, and hard sync resets land at the exact sub-sample instant.
+  Triangle corners get a two-sample polynomial ramp.
+- FM operators use DX7-style averaged feedback.
+- Filters are topology-preserving transforms (Zavalishin): a Simper SVF and a four-pole ladder with
+  saturating feedback and two-times headroom.
+- Wavetables are stored per octave (512 >> l harmonics). A note reads the richest level below
+  Nyquist and fades in the next one over the top quarter of its octave.
+- Envelopes follow the measured law above. Pitch, filter and engine parameters update every 16
+  samples; oscillators, filters and amplitude run every sample.
+
+**Levels and CPU.** Engines aim at RMS ≈ 0.28 at their default M1; `CORE_GAIN` brings them level with
+the Web Audio voices. The budget is 24 voices in real time in one worklet thread: no allocation and no
+per-sample `pow`, `exp` or `tan`, with tables for costly shapes.
+
+**Tests.**
+
+- `dsp.spec.ts`: harmonic series, aliasing against naive waveforms, filter slopes, FM sidebands
+  against Bessel values.
+- `core.spec.ts`: sample-accurate starts, gates, cancels, steals, glides, filter envelope, LFO inputs.
+- `host.svelte.spec.ts`: the real worklet in Chromium through the engine.
+- One spec per engine, checking the established behaviours above.
+
+## 6. Calibration on the owner's device (pending approval)
+
+**Why.** Every [I] above is a starting point. The device is the only ground truth, and we can hear
+it: its USB audio input captures at 44.1 kHz/16-bit stereo (`90-device-probe.md`).
+
+**What it changes.** Parameter CCs and notes on a track change device state, so this runs only with
+the owner's go-ahead, on a new throwaway project, with nothing saved, loaded or deleted, and every
+message logged in `90-device-probe.md`. Filter and LFO types have no CC and are set by hand.
+
+**Rig.**
+
+- A Web MIDI script sends CC 12–15 (P1–P4), 20–27 (envelopes), 28–31 (play mode, portamento) and
+  32–35 (filter) on the track's channel, while `ffmpeg -f avfoundation -i ":OP-XY"` (or
+  getUserMedia) records.
+- A neutral track: filter open, attack 0, sustain 100, release short, LFO off, sends 0, preset width
+  and highpass 0, glide and bend off. Master EQ, saturator and compressor neutral.
+- First, map CC values to the screen's 0–100 and find prism's step edges.
+- Notes A1–A5 (A6 for aliasing), 2 s on and 0.5 s off, each twice (phase reset, randomness), plus a
+  chord.
+
+**Per engine.**
+
+- **prism:**
+  - shape 0–100 in steps of 10;
+  - all 9 ratios plus a slow ramp;
+  - detune on A2 and A4 (beat rate: cents or hertz);
+  - stereo 0–100 at detune 0 and 50 (left/right correlation);
+  - a pitch check at transpose 0.
+- **axis:**
+  - tone sweep;
+  - ratio 0–50 in steps of 5, plus a ramp over 51–100 (sideband spacing);
+  - shape sweep;
+  - tremolo sweep (rate, depth, stereo);
+  - an 8 s note for hidden vibrato.
+- **dissolve:**
+  - all 0;
+  - detune, swarm, AM and FM alone on A2 and A4;
+  - FM 100 + detune 60, and AM 50 + FM 50.
+- **wavetable:**
+  - every table at positions 0–100 in steps of 5 on A1 and A4, as single cycles to design our tables
+    after (not to ship);
+  - a slow position ramp;
+  - warp on basic;
+  - drift 0–100 at warp 50, and drift at warp 0 (expect nothing).
+- **epiano:**
+  - all 0 (a pure sine?);
+  - texture alone at tone 0;
+  - tone at tine 0;
+  - tine at tone 50;
+  - punch alone;
+  - spectrograms of the decay.
+- **organ:**
+  - each type at its zone centre × bass 0/64/127 on five octaves (harmonic tables of the sustain);
+  - the onset, for click;
+  - tremolo at five speeds;
+  - two staggered notes (phase reset).
+- **hardsync:**
+  - freq alone on A2–A4;
+  - sub alone (octave and waveform);
+  - noise with a lowcut sweep;
+  - freq at maximum on A6 (the device's own aliasing).
+- **simple:**
+  - shape 0/25/50/75/100 × pw 0/50/100;
+  - stereo 0/50/100 held 5 s (detune versus phase);
+  - a noise sweep.
+
+**Shared.**
+
+- Filters: an impulse, noise and a −18 dBFS sine as sampler presets (loading those changes device
+  state too, so announce it separately):
+  - each type × cutoff in 8 steps × resonance 0/25/50/75/90/99;
+  - the sine at three levels (saturation);
+  - envelope amount ±99 in 5 steps;
+  - key tracking 0/50/99.
+- Envelopes: on a saw, attack, decay (sustain 0) and release at 0, 14, 28, 42, 56 and 71 (one long
+  check at 85); sustain in 5 steps.
+- LFOs and play modes:
+  - tremolo shapes, rates and depths on the pure-sine epiano;
+  - value LFO on a resonant cutoff;
+  - portamento in both styles;
+  - bend at each range;
+  - mono versus legato.
+- Voices: 9 long notes on one track, then 25 across tracks (which one drops, clicks).
+- FX: an impulse through each effect. Delay: 8 sizes × 3 times at 120 BPM. Reverb: RT60 by size and
+  tone. Chorus and phaser: rates and notches. Distortion: its curve. Lofi: on a 1 kHz sine.
+- A/B references: factory presets playing a fixed phrase:
+  - prism: nt-ribeye;
+  - axis: nt-woody;
+  - dissolve: nt-cold brew;
+  - wavetable: nt-tall drink;
+  - epiano: keys/jeans, bass/jacket;
+  - organ: organ/chorale, organ/manual;
+  - hardsync: bass/corduroy, lead/runway;
+  - simple: bass/big square, pluck/deep luck.
+
+**Fitting.**
+
+- Render our engine at each captured setting.
+- Minimise `spectralDistance` (third-octave log spectra, level-normalised) plus the difference in
+  `harmonicLevels` over each model's named constants.
+- Fit envelope times on the RMS envelopes.
+- Keep the captures local (git-ignored `research/device/captures/`) and commit only the fitted
+  constants and the scripts.
+
+## 7. Open questions, in order of audible impact
+
+1. Envelope decay and release laws; sustain linear or dB (every patch uses them).
+2. Filter slopes, resonance curves and envelope depth per type.
+3. Prism's shape curve, stereo mechanism and octave; the ratio step edges.
+4. The organ's 8 types (partials) and its bass control per type.
+5. Epiano's modulator ratio and waveform, and tine's law.
+6. Axis: whether operator 2 is audible, its FM index, and the tone filter.
+7. Wavetable: frames per table, the ninth table, the warp shape and the drift law.
+8. Dissolve's modulators (noise or periodic).
+9. Hardsync's sub octave and waveform, and the lowcut slope; simple's stereo.
+10. LFO shapes per type and element's envelope source; portamento curves; bend steps.
+
+## 8. File map
+
+| Path                                 | What                                                          |
+| ------------------------------------ | ------------------------------------------------------------- |
+| `src/lib/sound/synth/analysis.ts`    | FFT, harmonic levels, aliasing and spectral-distance measures |
+| `src/lib/sound/synth/blep.ts`        | minBLEP table and buffer, polyBLAMP                           |
+| `src/lib/sound/synth/oscillators.ts` | phase, saw, shape blend (hard-syncable), FM operator          |
+| `src/lib/sound/synth/filters.ts`     | TPT SVF, ladder, one-pole, DC blocker, soft clip              |
+| `src/lib/sound/synth/adsr.ts`        | envelopes on the measured law                                 |
+| `src/lib/sound/synth/wavetable.ts`   | mipmapped tables from partials or cycles                      |
+| `src/lib/sound/synth/noise.ts`       | seeded white noise, smooth random                             |
+| `src/lib/sound/synth/engines/*.ts`   | the eight engines (one module each)                           |
+| `src/lib/sound/synth/core.ts`        | voices, filters per type, scheduling, the render loop         |
+| `src/lib/sound/synth/protocol.ts`    | messages, constants, `CORE_ENGINES`                           |
+| `src/lib/sound/synth/worklet.ts`     | the AudioWorklet processor                                    |
+| `src/lib/sound/synth/host.ts`        | the worklet node, LFO wiring, `WorkletVoice`                  |
+| `src/lib/sound/engine.ts`            | the engine: hands core engines' notes to `WorkletVoice`s      |
