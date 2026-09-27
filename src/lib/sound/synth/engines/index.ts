@@ -5,6 +5,10 @@
  */
 import type { EngineId } from '$lib/core/opxy';
 import { ShapeOscillator, type ShapeMix } from '../oscillators';
+import { AxisVoice } from './axis';
+import { EpianoVoice } from './epiano';
+import { OrganVoice } from './organ';
+import { WavetableVoice } from './wavetable';
 
 /** One note's engine. */
 export interface EngineVoice {
@@ -39,7 +43,16 @@ class Placeholder implements EngineVoice {
 
 /** A new voice of `engine`; `seed` makes its randomness (drift, noise) differ note by note. */
 export function createEngine(engine: EngineId, sampleRate: number, seed: number): EngineVoice {
-	void engine;
-	void seed;
-	return new Placeholder(sampleRate);
+	switch (engine) {
+		case 'axis':
+			return new AxisVoice(sampleRate, seed);
+		case 'epiano':
+			return new EpianoVoice(sampleRate);
+		case 'organ':
+			return new OrganVoice(sampleRate);
+		case 'wavetable':
+			return new WavetableVoice(sampleRate);
+		default:
+			return new Placeholder(sampleRate);
+	}
 }
