@@ -3,7 +3,8 @@
 > Research note for the OP–XY Agent (milestone M2.5, decisions D9 and D10). Scope: what the OP–XY's
 > 480 × 222 display shows and how we reproduce it without the firmware. That covers the pixel grid,
 > colours, type, pictograms, layout patterns, a page catalogue and the UI state machine our simulator
-> implements. Written 2026-09-26. **Nothing was sent to the device.** All text is our own wording.
+> implements. Written 2026-09-26, updated 2026-09-27 when the areas landed. **Nothing was sent to
+> the device.** All text is our own wording.
 > The measurements come from TE's public guide screen illustrations, which live in the git-ignored
 > `research/ui-reference/guide-svg/` and `guide-screens/` (fetched by `scripts/fetch-research.sh`).
 >
@@ -36,11 +37,15 @@
    (canvas in the app, a recording mock in Node tests, an SVG context for previews). A declarative
    `ScreenFrame` goes in, one page comes out.
 6. **Simulator.** `OpxySim` (`src/lib/sim/opxy-sim.svelte.ts`) turns the replica's press, release,
-   turn and click events into frames and LED states. It covers the four modes; the tempo, project and
-   COM pages; M1–M4 with shift layers; the engine, filter and LFO pickers; tap tempo; transport; and
-   mute. It follows the manual (§7).
-7. **Accuracy.** A pixel comparison against the art gives a mean absolute difference under 1 % on 17
-   of 22 illustrated states. The other five are explained in §8.
+   turn and click events into frames and LED states. The core keeps the modes, tracks, transport,
+   tempo and the instrument pages; six **areas** (`src/lib/sim/areas/`) cover the rest: system
+   (power, project, COM, presets), sample (sampling, slicer, library, sampler pages), sequencer (bar
+   menu, step components, locks, recording, players), mixer (M1–M4), arrange (patterns, scenes,
+   songs) and auxiliary (the eight aux tracks). It follows the manual (§7) and is pinned by a
+   conformance suite written from TE's guide (§10).
+7. **Accuracy.** The comparison tool puts 53 of TE's illustrated states side by side with ours: 35
+   are within 1 % mean absolute difference, most of the rest for reasons in TE's own pictures (§8).
+   Pages TE never drew use our layouts in its visual language.
 
 ---
 
@@ -196,24 +201,27 @@ Status key: **exact** = drawn from TE's art, compared in §8; **reconstructed** 
 only dimmed under a shift layer, so it was rebuilt from that; **ours** = no art, our layout; **text**
 = a named placeholder (`TextFrame`) until we have art or a photo.
 
-| Mode / page                                                       | Base layer                                        | Shift layer                      | Status                                     |
-| ----------------------------------------------------------------- | ------------------------------------------------- | -------------------------------- | ------------------------------------------ |
-| tempo (any mode)                                                  | BPM, groove, swing, metronome                     | —                                | exact                                      |
-| project (any mode)                                                | name, usage icons, new/save/rename/config         | M2: save as                      | exact; sub-pages text                      |
-| com (any mode)                                                    | device + adv, multi-out, charge                   | —                                | exact; system/ctrl/devices/mtp text        |
-| instrument M1, synth                                              | header + engine picture (8 engines)               | picker: shift + M1 engine list   | exact (axis/simple/organ header, §9)       |
-| instrument M1, drum                                               | tune, key, play mode + lanes                      | direction, pan, fade, gain       | shift exact; main layer ours               |
-| instrument M1, sampler / multisampler                             | tune, root + lanes                                | same as drum                     | close (no loop markers)                    |
-| instrument M1, midi                                               | channel, bank, program                            | —                                | exact                                      |
-| instrument M2                                                     | amp / filter envelope (click swaps)               | play mode cards                  | shift exact; base reconstructed            |
-| instrument M3                                                     | filter graph                                      | send cards; shift + M3 type list | shift exact; base reconstructed            |
-| instrument M4                                                     | value, random, tremolo, duck, element             | shift + M4 type list             | exact                                      |
-| mix M1                                                            | eight strips, pan of the selected                 | shift: LEDs show unmuted tracks  | exact (meters differ at rest)              |
-| mix M2–M4                                                         | EQ, saturator, master                             | —                                | text                                       |
-| auxiliary M1–M4                                                   | brain, punch-in, ext midi/cv/audio, tape, FX I/II | —                                | text                                       |
-| arrange                                                           | scenes, songs                                     | —                                | text                                       |
-| sample, players, bar                                              | —                                                 | —                                | text                                       |
-| preset browser (shift + Tn), preset settings (shift + instrument) | lists                                             | —                                | text (list art exists: instrument-103/118) |
+| Mode / page                                                       | Base layer                                        | Shift layer                      | Status                                       |
+| ----------------------------------------------------------------- | ------------------------------------------------- | -------------------------------- | -------------------------------------------- |
+| tempo (any mode)                                                  | BPM, groove, swing, metronome                     | —                                | exact                                        |
+| project (any mode)                                                | name, usage icons, new/save/rename/config         | M2: save as                      | exact; sub-pages text                        |
+| com (any mode)                                                    | device + adv, multi-out, charge                   | —                                | exact; system/ctrl/devices/mtp text          |
+| instrument M1, synth                                              | header + engine picture (8 engines)               | picker: shift + M1 engine list   | exact (axis/simple/organ header, §9)         |
+| instrument M1, drum                                               | tune, key, play mode + lanes                      | direction, pan, fade, gain       | shift exact; main layer ours                 |
+| instrument M1, sampler / multisampler                             | tune, root + lanes                                | same as drum                     | close (no loop markers)                      |
+| instrument M1, midi                                               | channel, bank, program                            | —                                | exact                                        |
+| instrument M2                                                     | amp / filter envelope (click swaps)               | play mode cards                  | shift exact; base reconstructed              |
+| instrument M3                                                     | filter graph                                      | send cards; shift + M3 type list | shift exact; base reconstructed              |
+| instrument M4                                                     | value, random, tremolo, duck, element             | shift + M4 type list             | exact                                        |
+| mix M1                                                            | eight strips, pan of the selected                 | shift: LEDs show unmuted tracks  | exact (meters differ at rest)                |
+| mix M2–M4                                                         | EQ, saturator, master                             | —                                | ours (no art)                                |
+| midi M2 / M3                                                      | CC sets I and II                                  | —                                | ours (no art)                                |
+| auxiliary M1–M4                                                   | brain, punch-in, ext midi/cv/audio, tape, FX I/II | effect list (shift + T7/T8)      | exact (8 pictures); routing/filter/LFO ours  |
+| arrange                                                           | tracks and patterns, scenes, songs                | scene keys, queue                | exact (3 pictures)                           |
+| sample (key, record, slicer, library)                             | record pages, slicer modes, library               | channel (shift + E1)             | exact (11 pictures)                          |
+| bar menu, step components, players, lock view                     | bars, scale, length, components, arp/maestro/hold | player's second layer            | ours (no art)                                |
+| project folder, settings, COM sub-pages, boot                     | lists, devices, controller, MTP                   | —                                | exact (7 pictures); naming/confirm/boot ours |
+| preset browser (shift + Tn), preset settings (shift + instrument) | lists                                             | —                                | exact (instrument-103/118)                   |
 
 ## 7. UI state machine (manual)
 
@@ -276,63 +284,86 @@ hardsync, T7 axis, T8 multisampler. Engine values are 80 as in TE's art (dissolv
 80/80/00/00). The envelopes are TE's M2 art, play mode is poly / off / 1 semitone / 44, the filter is
 svf fully open, and the metronome is off at full level.
 
+**Areas and time.** Everything past the core pages lives in an area (`src/lib/sim/areas/types.ts`):
+the areas are asked in turn (system, sample, sequencer, mixer, arrange, auxiliary) whether they own
+the screen, every input goes to each area's `claim` first (for gestures that start anywhere, such
+as holding `bar` or `shift` + a key on the punch-in track), and the owner handles the rest before
+the core. Time comes in two kinds: `advance(ms)` is wall-clock time, always, for timers (holds,
+flashing LEDs, the record countdown, the boot screen); `moved(from)` follows the transport as it
+moves, by the page's clock, the sound's audio clock or a connected OP-XY's MIDI clock, so arrange
+changes scenes on the same beat whichever clock drives it.
+
 ## 8. Accuracy against the art (measured)
 
-`src/lib/sim/scenarios.ts` puts a fresh simulator into the state each illustration shows. We rendered
-the frame through the SVG context at 2× and compared it with the guide SVG re-framed to its screen
-(also 2×), as the mean absolute difference in luminance. The /replica page shows the same comparison
-live in dev.
+Every drawn page has a scenario (`src/lib/sim/scenarios.ts` and each area's `scenarios.ts`) that puts
+a fresh simulator into the state a guide picture shows. `scripts/compare-screens.mjs` renders it at
+2×, aligns it with TE's guide PNG within ±3 px and reports the mean absolute luminance difference; it
+writes a comparison sheet per scenario (ours, TE's, the difference). The /replica page shows the
+same comparison live in dev (`?guide=<id>`). Scenarios for pages TE never drew have `png: null`.
 
-| State  | MAD    | State    | MAD    | State     | MAD    |
-| ------ | ------ | -------- | ------ | --------- | ------ |
-| prism  | 0.08 % | hardsync | 0.08 % | wavetable | 0.12 % |
-| duck   | 0.21 % | element  | 0.24 % | tremolo   | 0.39 % |
-| tempo  | 0.40 % | dissolve | 0.43 % | midi      | 0.47 % |
-| com    | 0.50 % | epiano   | 0.52 % | value     | 0.55 % |
-| organ  | 0.56 % | project  | 0.61 % | play mode | 0.70 % |
-| random | 0.71 % | sends    | 1.03 % | mix       | 1.51 % |
-| drum   | 1.65 % | sampler  | 2.25 % | simple    | 3.99 % |
-| axis   | 4.00 % |          |        |           |        |
+| State            | MAD    | State              | MAD    | State          | MAD    |
+| ---------------- | ------ | ------------------ | ------ | -------------- | ------ |
+| aux-midi         | 0.09 % | wavetable          | 0.12 % | aux-audio      | 0.10 % |
+| aux-cv           | 0.18 % | sample-drum-record | 0.18 % | duck           | 0.21 % |
+| element          | 0.24 % | aux-fx             | 0.27 % | sample-library | 0.28 % |
+| sampler          | 0.32 % | prism              | 0.35 % | arrange-song   | 0.38 % |
+| tremolo          | 0.39 % | sample-file        | 0.41 % | tempo          | 0.44 % |
+| sample-key       | 0.48 % | aux-brain          | 0.54 % | project-config | 0.54 % |
+| organ            | 0.55 % | value              | 0.55 % | aux-punch      | 0.59 % |
+| arrange-tracks   | 0.61 % | project            | 0.61 % | project-folder | 0.63 % |
+| random           | 0.69 % | playmode           | 0.70 % | midi           | 0.73 % |
+| com              | 0.80 % | preset-browser     | 0.80 % | sends          | 0.84 % |
+| dissolve         | 0.87 % | project-usage      | 0.88 % | com-devices    | 0.95 % |
+| preset-settings  | 0.97 % | aux-tape           | 0.98 % | arrange-scenes | 1.11 % |
+| hardsync         | 1.31 % | sample-tap         | 1.51 % | epiano         | 1.54 % |
+| sample-transient | 1.56 % | sample-slice       | 1.63 % | mix            | 1.70 % |
+| drum             | 1.75 % | sample-even        | 1.98 % | sample-multi   | 2.06 % |
+| aux-brain-song   | 2.08 % | com-mtp            | 2.41 % | com-controller | 2.59 % |
+| sample-multi-rec | 3.36 % | simple             | 3.94 % | axis           | 4.25 % |
+| com-system       | 5.58 % | sample-lib-keys    | 7.43 % |                |        |
 
-Known causes: sends follows the manual's FX order (TE's drawing stacks FX II above FX I); mix meters
-are thin at rest while the art shows tracks playing; drum and sampler use a stand-in waveform;
-axis and simple keep the grey header ramp, which their art lacks. The epiano, axis and organ headers
-carry the engines' real parameter names where TE's art has placeholders, and the LFO parameter card
-names the real destination parameter.
+Known causes above 1 %: TE's PNG for some pictures is slightly scaled or offset (com-controller and
+com-mtp are 0.60 % and 0.50 % against the SVG cropped to the screen; drum, sample-even,
+sample-multi and sample-multi-record measure 0.20–0.55 % that way); com-system's picture is filled
+with placeholder rows; sample-library-keys dims the page to annotate it; aux-brain-song and
+arrange-scenes use TE's later, lighter palette; axis and simple keep the grey header ramp their
+art lacks; the slicer pages show a stand-in waveform; epiano's and hardsync's headers carry the
+engines' real parameter names; mix meters are thin at rest where the art shows tracks playing.
 
-## 9. Gaps: where a phone photo of the real screen would settle it
+## 9. Gaps: where the real screen would settle it
 
-The guide has no art for these, or the art disagrees with the manual. One photo each would do:
+TE's guide has no art for these, or the art disagrees with the manual. A look at the unit settles
+each (read-only; the list for the owner is in `docs/QUESTIONS.md`):
 
-1. **M2 envelopes and M3 filter without shift.** Ours are reconstructed from the dimmed layers.
-2. **Drum and synth sampler main layer** (tune, start, end, play mode; loop markers). Also a real
-   sample's waveform scale.
-3. **Engine headers.** Is the grey ramp there on axis, organ and simple? How does organ show its
-   values?
-4. **Mix M2–M4** (EQ, saturator, master) and the mixer during playback (meter scaling).
-5. **Auxiliary pages:** brain, punch-in FX, external MIDI/CV/audio, tape and the five FX types
-   (auxiliary-004 … 130 art exists for some; not drawn yet).
-6. **Arrange, bar, players, step components, sample record.**
-7. **Pickers:** the engine, filter-type and LFO-type lists, the preset browser and preset settings
-   (list art exists; the pickers' own layout is our guess), plus the rename keyboard.
-8. **Boot screen, the metronome with the click off, and every groove abbreviation** (only "SH" is
-   known).
-9. **COM multi-out.** Which modes sit on the four stops, and whether sync shows its rate.
-10. **Rows 221–222.** Confirm that the panel's two extra rows are blank.
+1. **Our layouts:** mix M2–M4, the midi engine's CC pages, the bar menu, step components, players,
+   the lock view, the auxiliary routing / filter / LFO pages, naming, confirm, boot and history.
+2. **Soft-key order:** arrange's patterns page and the projects folder (TE's text puts new / load on
+   M1, its art the reverse; we follow the text).
+3. **M2 envelopes and M3 filter without shift.** Reconstructed from the dimmed layers.
+4. **Engine headers.** Is the grey ramp there on axis, organ and simple?
+5. **Playback LEDs.** Does the playhead dim a step with notes and light an empty one?
+6. **Groove abbreviations** (only "SH" is known) and the metronome with the click off.
+7. **Glyphs** TE's art never shows: `%`, `(` and `)` draw in the fallback face.
+8. **Rows 221–222.** Confirm that the panel's two extra rows are blank.
 
 ## 10. Where things live
 
-| Path                                 | What                                                                                                    |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `scripts/extract-screen-font.mjs`    | font + icon + pattern extraction (`--check`, `--runs`, `--instances`)                                   |
-| `knowledge/opxy/screen-font.json`    | 63 glyphs, metrics, kerning, ligatures, coverage                                                        |
-| `knowledge/opxy/screen-icons.json`   | 49 pictograms, dissolve's cell pattern                                                                  |
-| `src/lib/sim/screen/`                | renderer: context, palette, font, icons, draw helpers, pages, `renderFrame`, recording and SVG contexts |
-| `src/lib/sim/params.ts`, `frames.ts` | the model and state → frame / LEDs                                                                      |
-| `src/lib/sim/opxy-sim.svelte.ts`     | `OpxySim`: input, frame, LEDs, time                                                                     |
-| `src/lib/sim/scenarios.ts`           | states that reproduce the guide art                                                                     |
-| `src/lib/replica/Screen.svelte`      | draws frames (lazy-loaded renderer), text fallback                                                      |
-| `src/routes/replica/`                | simulator wiring, dev compare card (`?guide=<id>`)                                                      |
+| Path                                                 | What                                                                                                    |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `scripts/extract-screen-font.mjs`                    | font + icon + pattern extraction (`--check`, `--runs`, `--instances`)                                   |
+| `scripts/screen-art/<area>.mjs`                      | each area's icon table for the extraction                                                               |
+| `knowledge/opxy/screen-font.json`                    | 63 glyphs, metrics, kerning, ligatures, coverage                                                        |
+| `knowledge/opxy/screen-icons.json`, `screen-icons/`  | the core's pictograms and dissolve's pattern; one icon file per area                                    |
+| `scripts/compare-screens.mjs`, `compare_screens.py`  | every scenario against TE's guide PNG: MAD and comparison sheets (§8)                                   |
+| `src/lib/sim/screen/`                                | renderer: context, palette, font, icons, draw helpers, pages, `renderFrame`, recording and SVG contexts |
+| `src/lib/sim/params.ts`, `frames.ts`                 | the core model and state → frame / LEDs                                                                 |
+| `src/lib/sim/areas/<area>/`                          | each area's state, frames, input (`sim.ts`), drawing and scenarios; `registry.ts` orders them           |
+| `src/lib/sim/sequencer.ts`, `sequencer-playback.ts`  | patterns, steps, components, locks; what a step plays and how the playhead walks                        |
+| `src/lib/sim/opxy-sim.svelte.ts`                     | `OpxySim`: input, frame, LEDs, time (`advance`: timers; `moved`: transport)                             |
+| `src/lib/sim/conformance/`, `src/lib/sim/testing/`   | conformance cases written from TE's guide, run by `SimDriver` (Node) and `AppDriver` (the app, browser) |
+| `src/lib/app/simulator.svelte.ts`, `sound.svelte.ts` | the app's virtual OP-XY (page clock, LEDs, device clock) and its sound (`src/lib/sound/`)               |
+| `src/lib/replica/Screen.svelte`                      | draws frames (lazy-loaded renderer), text fallback                                                      |
+| `src/routes/replica/`                                | the dev bench: simulator wiring, compare card (`?guide=<id>`)                                           |
 
 ## Sources
 

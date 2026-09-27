@@ -4,7 +4,7 @@
 > Decisions: [`DECISIONS.md`](DECISIONS.md). Questions for the owner: [`QUESTIONS.md`](QUESTIONS.md).
 > Update the **Status** block whenever a milestone moves.
 
-## Status (2026-09-26, night)
+## Status (2026-09-27)
 
 - **M0 research, M1 foundations: done.** Core MIDI/TE-SysEx/OP-XY data, design system + shell, device
   layer (Web MIDI, single send choke point, GREET session, mirror, monitor), `/lab`; verified by the
@@ -12,8 +12,13 @@
 - **M2 replica: done.** Built from TE's panel drawing (D9), on the home page and wired both ways:
   keyboard → notes, play/stop, track select (CC102), pitch bend; back from the device: notes (any
   octave), pitch bend, transport and a clock-driven playhead.
-- **M2.5 screen & UI simulator: v1 done** (renderer + `OpxySim`, pages within ~1% of TE's art).
-  Gaps: auxiliary, mix and arrange pages.
+- **M2.5 screen & UI simulator: done.** The core plus six areas (system, sample, sequencer, mixer,
+  arrange, auxiliary) cover every page TE's guide draws (35 of 53 illustrated states within 1 % of
+  the art) and our own layouts for the rest; the virtual OP-XY plays in the browser (synth engines,
+  drum kit, sampler engines, the sequencer's step components and locks, scenes, players, delay and
+  reverb). A conformance suite written from TE's guide (68 sequencer cases so far) runs on the bare
+  simulator and on the app in Chromium. Open: saving the virtual project, conformance suites for the
+  other areas, the device checks in `QUESTIONS.md`.
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).
