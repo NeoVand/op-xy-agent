@@ -1,0 +1,149 @@
+/**
+ * ADSR envelopes on Web Audio parameters, with the same curve worked out in plain maths. A
+ * sequenced note's length is known when it is scheduled, so its whole envelope goes on at once and
+ * nothing has to be cancelled. Held notes (live keys), steals and the transport stopping release
+ * from wherever the curve is: through `cancelAndHoldAtTime` where the browser has it, else by
+ * setting the level the maths says the curve has reached.
+ */
+import type { Adsr } from './mapping';
+
+/** The part of AudioParam an envelope uses (a recording fake in tests). */
+export interface ParamLike {
+	setValueAtTime(value: number, time: number): unknown;
+	linearRampToValueAtTime(value: number, time: number): unknown;
+	exponentialRampToValueAtTime(value: number, time: number): unknown;
+	setTargetAtTime(target: number, time: number, timeConstant: number): unknown;
+	cancelScheduledValues(time: number): unknown;
+	cancelAndHoldAtTime?(time: number): unknown;
+}
+
+/**
+ * A decay or release "time" is four time constants: a setTarget curve has covered 98% of the way
+ * by then.
+ */
+export const TAUS_PER_TIME = 4;
+
+/** A released voice may stop seven time constants after its gate (−61 dB). */
+export const TAIL_TAUS = 7;
+
+/** Where an envelope moves a parameter. */
+export interface EnvelopeRange {
+	/** Level before the note and after the release (0 for amplitude, the resting cutoff). */
+	readonly base: number;
+	/** Level at the top of the attack. */
+	readonly peak: number;
+	/** `linear` ramps the attack in level (amplitude), `exponential` in ratio (frequency). */
+	readonly curve: 'linear' | 'exponential';
+}
+
+/** One note's envelope on one parameter. */
+export class Envelope {
+	/** When the attack starts. */
+	readonly start: number;
+	readonly shape: Adsr;
+	readonly range: EnvelopeRange;
+	/** When the note is let go (Infinity while held). */
+	gate = Infinity;
+	#releaseTau: number;
+
+	constructor(start: number, shape: Adsr, range: EnvelopeRange) {
+		if (range.curve === 'exponential' && !(range.base > 0 && range.peak > 0)) {
+			throw new RangeError('an exponential envelope needs positive levels');
+		}
+		this.start = start;
+		this.shape = shape;
+		this.range = range;
+		this.#releaseTau = shape.release / TAUS_PER_TIME;
+	}
+
+	/** The level the decay settles on. */
+	get sustainLevel(): number {
+		const { base, peak, curve } = this.range;
+		const s = this.shape.sustain;
+		return curve === 'linear' ? base + (peak - base) * s : base * Math.pow(peak / base, s);
+	}
+
+	/** When the curve has faded out (and the voice may stop). */
+	get end(): number {
+		return this.gate + TAIL_TAUS * this.#releaseTau;
+	}
+
+	/** The level at `time`: exactly the curve the scheduled parameter follows. */
+	valueAt(time: number): number {
+		if (time <= this.start) return this.range.base;
+		if (time <= this.gate) return this.#held(time);
+		const { base } = this.range;
+		return base + (this.#held(this.gate) - base) * Math.exp(-(time - this.gate) / this.#releaseTau);
+	}
+
+	/** The curve as if the key were never let go. */
+	#held(time: number): number {
+		const { base, peak, curve } = this.range;
+		const t = time - this.start;
+		const { attack } = this.shape;
+		if (t < attack) {
+			const x = t / attack;
+			return curve === 'linear' ? base + (peak - base) * x : base * Math.pow(peak / base, x);
+		}
+		const sustain = this.sustainLevel;
+		return sustain + (peak - sustain) * Math.exp(-(t - attack) / this.#decayTau);
+	}
+
+	get #decayTau(): number {
+		return this.shape.decay / TAUS_PER_TIME;
+	}
+
+	#ramp(param: ParamLike, value: number, time: number): void {
+		if (this.range.curve === 'linear') param.linearRampToValueAtTime(value, time);
+		else param.exponentialRampToValueAtTime(value, time);
+	}
+
+	/** Puts the curve on `param`: attack, decay and sustain, and the release when the gate is known. */
+	schedule(param: ParamLike, gate = Infinity): void {
+		this.gate = Math.max(gate, this.start);
+		const { base, peak } = this.range;
+		const top = this.start + this.shape.attack;
+		param.setValueAtTime(base, this.start);
+		if (this.gate < top) {
+			// let go during the attack: ramp only as far as it gets, then release
+			this.#ramp(param, this.#held(this.gate), this.gate);
+			param.setTargetAtTime(base, this.gate, this.#releaseTau);
+			return;
+		}
+		this.#ramp(param, peak, top);
+		param.setTargetAtTime(this.sustainLevel, top, this.#decayTau);
+		if (Number.isFinite(this.gate)) param.setTargetAtTime(base, this.gate, this.#releaseTau);
+	}
+
+	/**
+	 * Lets go at `at`, over `seconds` (default: the envelope's release; a stolen voice goes faster).
+	 * Nothing happens when the note is already let go by then.
+	 */
+	release(param: ParamLike, at: number, seconds = this.shape.release): void {
+		const time = Math.max(at, this.start);
+		if (time >= this.gate) return;
+		const level = this.valueAt(time);
+		if (typeof param.cancelAndHoldAtTime === 'function') param.cancelAndHoldAtTime(time);
+		else {
+			param.cancelScheduledValues(time);
+			param.setValueAtTime(level, time);
+		}
+		this.gate = time;
+		this.#releaseTau = Math.max(seconds, 0.001) / TAUS_PER_TIME;
+		param.setTargetAtTime(this.range.base, time, this.#releaseTau);
+	}
+
+	/** Moves a scheduled release later: a legato note carries the voice on to its own end. */
+	extend(param: ParamLike, gate: number): void {
+		if (gate <= this.gate) return;
+		if (this.gate < this.start + this.shape.attack) {
+			// the old release cut the attack short: lay the curve down again
+			param.cancelScheduledValues(this.start);
+			this.schedule(param, gate);
+			return;
+		}
+		param.cancelScheduledValues(this.gate);
+		this.gate = gate;
+		if (Number.isFinite(gate)) param.setTargetAtTime(this.range.base, gate, this.#releaseTau);
+	}
+}

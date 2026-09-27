@@ -8,10 +8,11 @@
  *   only, so what the device bridge lights (the notes the OP-XY plays) stays lit until the
  *   simulator itself changes that key.
  * - **Time:** the page's clock always runs the simulator's timers (holds, flashing LEDs, the record
- *   countdown, the boot screen) and, while it plays, moves the playhead, unless a connected OP-XY
- *   sends its clock (COM → clock "both"): then its Start / Stop and every F8 tick drive the
- *   transport, so the steps chase in time with the device. The simulator's millisecond clock is the
- *   same page clock.
+ *   countdown, the boot screen) and, while it plays, moves the playhead: by the audio clock while
+ *   the computer makes the sound (`playheadClock`, set by `sound.svelte.ts`), so the steps light
+ *   with what plays. A connected OP-XY that sends its clock (COM → clock "both") moves it instead:
+ *   its Start / Stop and every F8 tick drive the transport, so the steps chase in time with the
+ *   device. The simulator's millisecond clock is the page clock.
  * - **Device facts:** the device's tempo (measured, else what the app last set) and the track the
  *   app selected with CC102 carry over.
  *
@@ -60,6 +61,7 @@ export class AppSimulator implements ScreenFrameSource {
 	/** The LED states last applied to the replica. */
 	#applied: Partial<Record<KeyId, KeyLedState>> = {};
 	#stop: (() => void) | null = null;
+	#playheadClock = $state.raw<(() => number) | null>(null);
 
 	constructor(options: AppSimulatorOptions) {
 		this.#replica = options.replica;
@@ -84,6 +86,19 @@ export class AppSimulator implements ScreenFrameSource {
 	/** True while a connected OP-XY's clock drives the transport. */
 	get deviceClock(): boolean {
 		return this.#stack?.session.phase === 'ready' && this.#stack.mirror.clockOut;
+	}
+
+	/**
+	 * A clock (ms) the page's playhead follows instead of the frames' time, or null for the frames.
+	 * The sound engine sets its audio clock while it runs, so the steps and the sound share one
+	 * timeline; it must stop advancing only when the sound does.
+	 */
+	get playheadClock(): (() => number) | null {
+		return this.#playheadClock;
+	}
+
+	set playheadClock(clock: (() => number) | null) {
+		this.#playheadClock = clock;
 	}
 
 	/** Starts listening and drawing. Idempotent; returns `stop`. */
@@ -125,14 +140,27 @@ export class AppSimulator implements ScreenFrameSource {
 	}
 
 	/**
-	 * The page's clock, every frame: the simulator's timers run, and a playing transport moves unless
-	 * the device's clock moves it (its F8 ticks, see {@link #onBus}).
+	 * The page's clock, every frame: the simulator's timers run on the frames' time, and a playing
+	 * transport moves, by the time `playheadClock` has moved when it is set (the sound's audio clock)
+	 * or else the frames', unless the device's clock moves it (its F8 ticks, see {@link #onBus}).
 	 */
 	#runClock(): () => void {
 		const frames = this.#frames;
 		let last = frames.now();
+		// the playhead clock's last reading (null while none is set: the frames' time is used)
+		let lastPlayhead: number | null = null;
 		const step = (now: number) => {
-			untrack(() => this.sim.advance(now - last, { transport: !this.deviceClock }));
+			const clock = this.#playheadClock;
+			const reading = clock ? clock() : null;
+			const playhead =
+				reading !== null && lastPlayhead !== null ? reading - lastPlayhead : now - last;
+			lastPlayhead = reading;
+			untrack(() =>
+				this.sim.advance(now - last, {
+					transport: !this.deviceClock,
+					playhead: Math.max(0, playhead)
+				})
+			);
 			last = now;
 			handle = frames.request(step);
 		};

@@ -176,13 +176,16 @@ export class OpxySim {
 
 	/**
 	 * Moves time forward: the areas' timers run, playing or not, and while playing the playhead
-	 * advances a sixteenth per step length at the current tempo. With `transport: false` only the
-	 * timers run: a connected device's clock moves the playhead instead ({@link clockTick}).
+	 * advances a sixteenth per step length at the current tempo, by `playhead` ms when another clock
+	 * keeps the music's time (the sound's audio clock) or else by `ms`. With `transport: false` only
+	 * the timers run: a connected device's clock moves the playhead instead ({@link clockTick}).
 	 */
-	advance(ms: number, { transport = true }: { transport?: boolean } = {}): void {
-		if (ms <= 0) return;
-		for (const area of AREAS) area.advance?.(this.state, ms);
-		if (transport) this.#move(ms / (60000 / this.state.tempo.bpm / 4));
+	advance(
+		ms: number,
+		{ transport = true, playhead = ms }: { transport?: boolean; playhead?: number } = {}
+	): void {
+		if (ms > 0) for (const area of AREAS) area.advance?.(this.state, ms);
+		if (transport && playhead > 0) this.#move(playhead / (60000 / this.state.tempo.bpm / 4));
 	}
 
 	/** Moves a playing transport `steps` sixteenths, then lets the areas act on what it crossed. */

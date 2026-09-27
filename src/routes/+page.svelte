@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { HintCaption, ReplicaBridge, StageHint, sweepSteps } from '$lib/app';
+	import { getAppSound, HintCaption, ReplicaBridge, StageHint, sweepSteps } from '$lib/app';
 	import { browserClock, browserTimers, getDeviceStack, type SessionPhase } from '$lib/device';
 	import { getReplicaState, Replica } from '$lib/replica';
-	import { Button, Led, Readout } from '$lib/ui';
+	import { Button, Led, Readout, tooltip } from '$lib/ui';
 	import AgentPanel from '$lib/ui/shell/AgentPanel.svelte';
 	import DeviceStage from '$lib/ui/shell/DeviceStage.svelte';
 	import { getShellStatus } from '$lib/ui/shell/status.svelte';
@@ -13,6 +13,15 @@
 	const stack = getDeviceStack();
 	const { session, mirror } = stack;
 	const replica = getReplicaState();
+	// The replica's own sound (root layout): on while simulated, off while the OP-XY plays.
+	const sound = getAppSound();
+	const soundTip = $derived(
+		!sound.available
+			? 'this browser cannot make sound'
+			: sound.connected
+				? 'the op-xy makes the sound; switch on to hear the replica here as well'
+				: 'the replica’s sound, synthesized in the browser'
+	);
 
 	// Replica ⇄ device: while connected the replica's keys play the OP-XY, and what the device sends
 	// back lights the replica. Building it has no side effects; it listens from onMount.
@@ -187,6 +196,17 @@
 					<span class="line__state">simulated</span>
 					<span>the replica works like an op-xy; nothing is sent</span>
 				{/if}
+				<button
+					type="button"
+					class="sound"
+					aria-pressed={sound.enabled}
+					disabled={!sound.available}
+					onclick={() => sound.toggle()}
+					{@attach tooltip(soundTip)}
+				>
+					<Led state={sound.enabled && sound.available ? 'white' : 'off'} size="sm" />
+					{sound.connected ? 'sound on this computer' : 'sound'}
+				</button>
 			</p>
 		{/snippet}
 	</StageHint>
@@ -232,6 +252,41 @@
 
 	.line__state {
 		color: var(--xy-fg-muted);
+	}
+
+	/* The speaker switch: the line's own type and an LED, pushed to the end of the line. */
+	.sound {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		margin: -0.125rem -0.25rem -0.125rem auto;
+		padding: 0.125rem 0.25rem;
+		border: 0;
+		border-radius: var(--xy-radius-tile);
+		background: none;
+		color: inherit;
+		font: inherit;
+		letter-spacing: inherit;
+		cursor: pointer;
+	}
+
+	.sound[aria-pressed='true'] {
+		color: var(--xy-fg-muted);
+	}
+
+	.sound:hover,
+	.sound:focus-visible {
+		color: var(--xy-fg);
+	}
+
+	.sound:focus-visible {
+		outline: 2px solid var(--xy-focus);
+		outline-offset: 1px;
+	}
+
+	.sound:disabled {
+		cursor: not-allowed;
+		color: var(--xy-fg-faint);
 	}
 
 	.conn {
