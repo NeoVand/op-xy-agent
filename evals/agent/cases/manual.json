@@ -1,0 +1,529 @@
+[
+	{
+		"id": "01-hardware-overview-battery",
+		"chapter": "1 hardware overview",
+		"question": "how do i check the battery level on my op-xy, and how should i charge it?",
+		"facts": [
+			"Holding com makes the level meter light up with the approximate battery level.",
+			"It charges through the USB-C port on the right side, from a computer or USB charger.",
+			"To keep the battery healthy, charge it at least once every six months."
+		],
+		"keys": ["hold com"],
+		"source": "https://teenage.engineering/guides/op-xy/hardware-overview"
+	},
+	{
+		"id": "01-hardware-overview-multi-out",
+		"chapter": "1 hardware overview",
+		"question": "can the op-xy send cv/gate or clock sync to my modular gear, and at what voltages?",
+		"facts": [
+			"The signals come from the 3.5 mm multi out jack, which works in one mode at a time: cv/gate, or a sync mode (sync8, sync16 or sync24).",
+			"The CV output range is ±5 V.",
+			"Sync and gate signals are output at 5.2 V."
+		],
+		"keys": [],
+		"source": "https://teenage.engineering/guides/op-xy/hardware-overview"
+	},
+	{
+		"id": "02-layout-play-stop",
+		"chapter": "2 layout",
+		"question": "what does pressing play or stop a second time do?",
+		"facts": [
+			"Pressing play again while the pattern plays restarts playback from the beginning.",
+			"Pressing stop a second time silences every note and sound on the device."
+		],
+		"keys": ["play → play", "stop → stop"],
+		"source": "https://teenage.engineering/guides/op-xy/layout#transport-controls"
+	},
+	{
+		"id": "02-layout-modules",
+		"chapter": "2 layout",
+		"question": "what are the four numbered buttons under the screen for?",
+		"facts": [
+			"The buttons labelled 1 to 4 are called M1, M2, M3 and M4.",
+			"They switch between the four modules, or sub-modes, of the current main mode.",
+			"Modules let you edit the selected track's parameters using the four encoders.",
+			"Arrange is the only main mode that has no modules."
+		],
+		"keys": [],
+		"source": "https://teenage.engineering/guides/op-xy/layout#modules"
+	},
+	{
+		"id": "03-guide-conventions-press-types",
+		"chapter": "3 guide conventions",
+		"question": "the op-xy guide talks about combo presses, sequence presses and holds. what's the difference?",
+		"facts": [
+			"A combo press means holding one key down and then pressing a second key.",
+			"A sequence press means pressing one key and then another, one after the other.",
+			"A hold means pressing a button and keeping it held down."
+		],
+		"keys": [],
+		"source": "https://teenage.engineering/guides/op-xy/guide-conventions#guide-conventions"
+	},
+	{
+		"id": "04-get-started-new-project",
+		"chapter": "4 get started",
+		"question": "how do i start a new project, and what sounds are on the tracks by default?",
+		"facts": [
+			"Pressing the project button brings up the project view.",
+			"From the project view, a long press on M1 creates a fresh project.",
+			"Out of the box, tracks 1 and 2 hold drums and track 3 holds a bass.",
+			"Tracks 4 to 8 are a pluck, a lead, a soft pluck, strings and a pad, in that order."
+		],
+		"keys": ["project → hold M1"],
+		"source": "https://teenage.engineering/guides/op-xy/get-started#4.%20get%20started"
+	},
+	{
+		"id": "04-get-started-snare-backbeat",
+		"chapter": "4 get started",
+		"question": "in a new project i have a kick on steps 1, 5, 9 and 13 of track 1. how do i add a snare on 5 and 13 without disturbing the kick?",
+		"facts": [
+			"In a new project the snare is on the G key, right next to the kick.",
+			"Hold the snare key and press record so the sequencer shows only the snare's steps.",
+			"Keep holding the snare key while pressing steps 5 and 13, then let go."
+		],
+		"keys": ["key + record", "key + step n"],
+		"source": "https://teenage.engineering/guides/op-xy/get-started#4.1%20sequencing%20a%20drum%20beat"
+	},
+	{
+		"id": "04-get-started-longer-pattern",
+		"chapter": "4 get started",
+		"question": "the bassline i recorded runs past the end of the pattern and overlaps itself. how do i lengthen the pattern, or clear it and start again?",
+		"facts": [
+			"Holding bar and tapping [+] adds one more bar to the pattern.",
+			"Up to three extra bars can be added, making four bars in total.",
+			"For even longer patterns, hold bar and press accidental keys to raise the track scale, multiplying each step's length.",
+			"To erase the track, keep record and stop held until every step lights red."
+		],
+		"keys": ["bar + [+]", "record + hold stop"],
+		"source": "https://teenage.engineering/guides/op-xy/get-started#4.2%20recording%20a%20baseline"
+	},
+	{
+		"id": "05-main-modes-overview",
+		"chapter": "5 main modes",
+		"question": "what are the four main modes on the op-xy and what is each one for?",
+		"facts": [
+			"Instrument mode is for composing; its track buttons edit the 8 instrument tracks.",
+			"Auxiliary mode is for transposing tracks and also covers send effects, external inputs/outputs and punch-in FX.",
+			"Arrange mode builds the song by chaining scenes made from the tracks' patterns.",
+			"Mix mode sets track levels and panning, plus the master compressor and main EQ."
+		],
+		"keys": [],
+		"source": "https://teenage.engineering/guides/op-xy/main-modes#5.1%20main-modes"
+	},
+	{
+		"id": "06-track-buttons-linking",
+		"chapter": "6 track buttons",
+		"question": "how do i link tracks together on the op-xy, and what happens once they're linked?",
+		"facts": [
+			"Hold one track button and tap the track buttons you want linked to it.",
+			"Up to four tracks can be linked together.",
+			"The held track becomes the primary and controls all of the linked tracks.",
+			"A linked track can still be played on its own when you are on it instead of the primary track."
+		],
+		"keys": ["Tn + Tm"],
+		"source": "https://teenage.engineering/guides/op-xy/track-buttons#6.2%20linking-tracks"
+	},
+	{
+		"id": "07-live-recording",
+		"chapter": "7 sequencer",
+		"question": "how do i record notes live in real time instead of step by step, and can i get a count-in first?",
+		"facts": [
+			"Hold record and press play to arm live recording.",
+			"Step 1 flashes red while it waits; recording starts once you begin playing the keyboard.",
+			"For a count-in, hold record, press play, then press play once more.",
+			"Press stop when you are done recording."
+		],
+		"keys": ["record + play", "record + play → play"],
+		"source": "https://teenage.engineering/guides/op-xy/sequencer#live-recording"
+	},
+	{
+		"id": "07-parameter-lock",
+		"chapter": "7 sequencer",
+		"question": "can i give one step its own filter setting that's different from the rest of the pattern?",
+		"facts": [
+			"Hold the step and turn an encoder to store a parameter lock on that step.",
+			"When playback reaches that step, the parameter is set to the locked value.",
+			"All four modules accept parameter locks, but players do not."
+		],
+		"keys": ["step n + turn E1"],
+		"source": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing"
+	},
+	{
+		"id": "07-add-bars",
+		"chapter": "7 sequencer",
+		"question": "how do i make my pattern longer than one bar, and can i copy the first bar instead of starting over?",
+		"facts": [
+			"Hold bar and tap + to add a bar.",
+			"A pattern can use at most four bars.",
+			"Hold bar plus shift, then press +, to duplicate the current bar."
+		],
+		"keys": ["bar + [+]", "bar + shift + [+]"],
+		"source": "https://teenage.engineering/guides/op-xy/sequencer#extend-with-bar"
+	},
+	{
+		"id": "08-add-step-component",
+		"chapter": "8 step components",
+		"question": "how do i put a step component on a few steps, and how do i take it off again?",
+		"facts": [
+			"Hold shift and press the steps you want; the selected steps flash.",
+			"Still holding shift, press a natural key to choose a component; each has its icon printed on it.",
+			"Keep shift held and use an accidental key to set the component's value.",
+			"To remove it, hold shift, reselect those steps and press the same natural key again."
+		],
+		"keys": ["shift + step n", "shift + key"],
+		"source": "https://teenage.engineering/guides/op-xy/step-components#adding-step-components-to-a-sequence"
+	},
+	{
+		"id": "08-multiply-ratchet",
+		"chapter": "8 step components",
+		"question": "how can i get ratchets or fast rolls on my hi-hat steps?",
+		"facts": [
+			"Use the multiply step component, which multiplies a step's triggers to create a ratchet.",
+			"Hold shift, select the steps, then press the natural key marked with the multiply icon.",
+			"Pick an accidental key to set how many trigs the step is split into."
+		],
+		"keys": ["shift + step n", "shift + key"],
+		"source": "https://teenage.engineering/guides/op-xy/step-components"
+	},
+	{
+		"id": "09-arpeggio",
+		"chapter": "9 players",
+		"question": "how do i turn on the arpeggiator for a track and change its pattern and speed?",
+		"facts": [
+			"On an instrument or auxiliary track, tap player to open it, then tap it again to turn it on.",
+			"Pressing player while holding shift switches the player style, e.g. to arpeggio.",
+			"Turn E2 (mid grey) to change the arp pattern, such as up, down, up/down or random.",
+			"Turn E1 (dark grey) to set the arpeggio speed."
+		],
+		"keys": ["player → player", "shift + player", "turn E2"],
+		"source": "https://teenage.engineering/guides/op-xy/players#arpeggio"
+	},
+	{
+		"id": "10-save-project",
+		"chapter": "10 project",
+		"question": "how do i save my project, does it auto save, and how do i make a copy under a new name?",
+		"facts": [
+			"Auto save is enabled by default; you can turn it off in project settings or system settings.",
+			"In the project view, M2 saves the project and stores a version in its versions folder.",
+			"Save as is shift + M2; you then type a name for the duplicated project."
+		],
+		"keys": ["project → M2", "project → shift + M2"],
+		"source": "https://teenage.engineering/guides/op-xy/project#rename"
+	},
+	{
+		"id": "10-time-signature",
+		"chapter": "10 project",
+		"question": "how do i change my project's time signature, and which time signatures can i pick?",
+		"facts": [
+			"Time signature lives in the project settings: press project, then M4 to configure.",
+			"Turn E1 (dark grey) to select the tempo page of the project settings.",
+			"Turn E2 (mid grey) to pick the setting, then E3 or E4 to change its value.",
+			"Besides 4/4, you can choose 3/4, 5/4, 6/8, 7/8 or 12/8."
+		],
+		"keys": ["project → M4", "turn E1", "turn E3"],
+		"source": "https://teenage.engineering/guides/op-xy/project#project-settings"
+	},
+	{
+		"id": "11-swing-groove",
+		"chapter": "11 tempo",
+		"question": "how do i add swing to my beat, and what does the groove setting actually change?",
+		"facts": [
+			"Press tempo, from any screen, to open the tempo screen.",
+			"Turn E3 (light grey) clockwise past centre for swing, or counter-clockwise for shuffle.",
+			"Turn E2 (mid grey) to choose the groove type.",
+			"Grooves change note timing and velocity, adding slight randomisation so the feel is more human."
+		],
+		"keys": ["tempo → turn E3", "tempo → turn E2"],
+		"source": "https://teenage.engineering/guides/op-xy/tempo#edit-tempo"
+	},
+	{
+		"id": "12-patterns-scenes-songs",
+		"chapter": "12 workflow",
+		"question": "what's the difference between patterns, scenes and songs, and how many of each can i have?",
+		"facts": [
+			"Every track, instrument or auxiliary, holds up to 16 patterns (older documentation says nine).",
+			"A single pattern holds at most 120 notes.",
+			"A scene is the set of patterns playing across the tracks, and a project has 99 scenes.",
+			"A song plays scenes in order, and a project holds up to 14 songs."
+		],
+		"keys": [],
+		"source": "https://teenage.engineering/guides/op-xy/workflow#patterns-scenes-songs-and-projects"
+	},
+	{
+		"id": "14-duck-sidechain",
+		"chapter": "14 instrument",
+		"question": "how do I get a sidechain-style pumping effect on my bass track?",
+		"facts": [
+			"Duck is part of the lfo module on M4; choose it as the lfo type with shift + M4.",
+			"Turning E1 picks the duck source: any of the 16 tracks, or the metronome for four-on-the-floor pumping.",
+			"Clicking E1 toggles whether duck reacts to audio or to note data.",
+			"E2 sets how strongly duck pulls down the track's volume."
+		],
+		"keys": ["shift + M4", "turn E1", "click E1"],
+		"source": "https://teenage.engineering/guides/op-xy/instrument#duck"
+	},
+	{
+		"id": "14-mono-glide",
+		"chapter": "14 instrument",
+		"question": "how do I make a synth track play mono with glide between notes?",
+		"facts": [
+			"Play mode sits on the shift layer of the envelope module, M2.",
+			"While holding shift on M2, turn E1 to choose poly, mono or legato.",
+			"Turning E2 on that page sets portamento, meaning how long notes take to slide into each other."
+		],
+		"keys": ["instrument → M2", "shift + turn E1", "shift + turn E2"],
+		"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes"
+	},
+	{
+		"id": "14-copy-save-sound",
+		"chapter": "14 instrument",
+		"question": "can I duplicate the sound on one track onto another track, then store it as a preset?",
+		"facts": [
+			"Hold the source track's key and press M2 to copy its sound.",
+			"Hold the target track's key and press M3 to paste the copied sound onto it.",
+			"Holding a track's key and pressing M4 saves that track's current sound as a preset."
+		],
+		"keys": ["Tn + M2", "Tn + M3", "Tn + M4"],
+		"source": "https://teenage.engineering/guides/op-xy/instrument#view-and-create-preset"
+	},
+	{
+		"id": "15-punch-in-single-track",
+		"chapter": "15 auxiliary",
+		"question": "can I apply punch-in fx to just one track instead of everything, and record them?",
+		"facts": [
+			"On an instrument track, hold shift and play keyboard keys to trigger punch-in fx.",
+			"Keys in the lower octave affect only the current track.",
+			"Keys in the upper octave affect all tracks in that group, percussion or melodic.",
+			"If you record while doing this, they are written to auxiliary track 2, the punch-in fx track."
+		],
+		"keys": ["shift + key"],
+		"source": "https://teenage.engineering/guides/op-xy/auxiliary#punch-in-fx"
+	},
+	{
+		"id": "15-external-midi",
+		"chapter": "15 auxiliary",
+		"question": "how do I play and sequence an external synth over midi, and set which channel it's on?",
+		"facts": [
+			"External midi gear is played from auxiliary track 3, the external midi track.",
+			"Connect the synth via USB-C or via the multi-out jack.",
+			"On M1, E1 chooses the midi channel, E2 the bank and E3 the program.",
+			"Eight midi CCs live on M2 and M3, and they can be tweaked, sequenced and recorded."
+		],
+		"keys": ["auxiliary → T3", "M1"],
+		"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi"
+	},
+	{
+		"id": "15-fx-change-and-chain",
+		"chapter": "15 auxiliary",
+		"question": "how do I swap the effect on fx i, tweak it, and feed fx i into fx ii?",
+		"facts": [
+			"The two send effects, fx i and fx ii, are auxiliary tracks 7 and 8.",
+			"Hold shift and press the fx track's key, then use the encoders to choose a new effect.",
+			"M1 is where the selected fx engine's parameters are edited.",
+			"Inside fx i, hold shift and turn E4 to set how much of fx i feeds fx ii."
+		],
+		"keys": ["auxiliary → T7", "shift + T7", "shift + turn E4"],
+		"source": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii"
+	},
+	{
+		"id": "16-new-pattern",
+		"chapter": "16 arrange",
+		"question": "how do I start a new pattern on a track and flip between its patterns?",
+		"facts": [
+			"Patterns are created in arrange mode, opened with the arrange key.",
+			"Select the track with its track key, then press M1 to add a new pattern to it.",
+			"Turn E4 to move through the patterns that already exist on that track."
+		],
+		"keys": ["arrange → Tn → M1", "turn E4"],
+		"source": "https://teenage.engineering/guides/op-xy/arrange#edit-controls"
+	},
+	{
+		"id": "16-song-mode-loop",
+		"chapter": "16 arrange",
+		"question": "how do I string my scenes together into a song that loops?",
+		"facts": [
+			"From arrange mode, hold shift and press arrange to open song mode.",
+			"Hold shift and press the numbered accidental keys to enter scenes in order, like dialing a phone number.",
+			"Turn E1 to toggle looping, so playback returns to the first scene after the last one."
+		],
+		"keys": ["shift + arrange", "shift + key", "turn E1"],
+		"source": "https://teenage.engineering/guides/op-xy/arrange#song-mode"
+	},
+	{
+		"id": "17-mute-solo",
+		"chapter": "17 mix",
+		"question": "how do I mute and solo tracks while mixing?",
+		"facts": [
+			"In mix mode, shift plus a track key toggles that track's mute.",
+			"Keep one or more track keys held down in mix mode to solo those tracks.",
+			"Muting acts on a track's notes rather than on its audio."
+		],
+		"keys": ["mix → shift + Tn", "hold Tn"],
+		"source": "https://teenage.engineering/guides/op-xy/mix#levels-pans-and-sends"
+	},
+	{
+		"id": "17-group-levels",
+		"chapter": "17 mix",
+		"question": "how can I turn all my drums down relative to my synths in one move?",
+		"facts": [
+			"In mix mode, M4 opens the master page.",
+			"On the master page, E1 sets the percussion group level.",
+			"E2 on the master page sets the melodic group level.",
+			"Percussive engines like the drum sampler feed the percussion group automatically; synths and the sampler feed the melodic group."
+		],
+		"keys": ["mix → M4", "turn E1", "turn E2"],
+		"source": "https://teenage.engineering/guides/op-xy/mix#master"
+	},
+	{
+		"id": "18-record-sample",
+		"chapter": "18 sample",
+		"question": "how do i record a sample on the op-xy, and is there a limit on how long it can be?",
+		"facts": [
+			"Pressing sample from any screen takes you straight into sampling.",
+			"Hold M1 to record; recording only begins once the input level crosses the threshold.",
+			"The record threshold is set with the white encoder (E4).",
+			"Samples can be at most 20 seconds long in every sampler."
+		],
+		"keys": ["sample", "hold M1", "turn E4"],
+		"source": "https://teenage.engineering/guides/op-xy/sample"
+	},
+	{
+		"id": "18-drum-slicer",
+		"chapter": "18 sample",
+		"question": "how do i chop a drum loop into slices across the keys in the drum sampler?",
+		"facts": [
+			"Hold the keyboard key that holds the sample and press M1 to open the slicer.",
+			"Turn the dark grey encoder (E1) to choose a slice mode: transient, even or tap.",
+			"Slices are spread across the keyboard automatically and set to choke one another.",
+			"In transient and even modes, the white encoder (E4) sets how many slices are made."
+		],
+		"keys": ["key + M1", "turn E1", "turn E4"],
+		"source": "https://teenage.engineering/guides/op-xy/sample#sample-slicer"
+	},
+	{
+		"id": "19-midi-controller-mode",
+		"chapter": "19 com",
+		"question": "how do i use the op-xy as a midi controller for my daw, and what can i set up in that mode?",
+		"facts": [
+			"Press com, then M2, to switch OP-XY into MIDI controller mode.",
+			"Hold shift and turn the dark grey encoder (E1) to set the MIDI channel it sends on.",
+			"Hold shift and turn E2 to switch the knobs between absolute (0-127) and relative output.",
+			"Holding shift and pressing com leaves controller mode and goes back to com."
+		],
+		"keys": ["com → M2", "shift + turn E1", "shift + com"],
+		"source": "https://teenage.engineering/guides/op-xy/com#midi-controller-moder"
+	},
+	{
+		"id": "19-multi-out-locked",
+		"chapter": "19 com",
+		"question": "i want to use the multi-out jack for cv/gate but the setting on the com screen won't switch. why?",
+		"facts": [
+			"The multi-out mode is chosen by turning the light grey encoder (E3) on the com screen.",
+			"Multi-out cannot be switched while a cable is plugged into it: unplug it, change the mode, then plug it back in."
+		],
+		"keys": ["com", "turn E3"],
+		"source": "https://teenage.engineering/guides/op-xy/com#setting-the-multi-out-port-and-bluetooth-midi"
+	},
+	{
+		"id": "20-change-engine",
+		"chapter": "20 synth engines",
+		"question": "how do i switch the synth engine on one of my instrument tracks?",
+		"facts": [
+			"In instrument mode, pick the instrument track whose engine you want to change.",
+			"Shift + M1 opens the synth engine list for that track.",
+			"Turn the dark grey encoder (E1) to scroll through the engines.",
+			"Clicking the encoder or pressing M1 confirms the chosen engine."
+		],
+		"keys": ["instrument", "shift + M1", "turn E1"],
+		"source": "https://teenage.engineering/guides/op-xy/synth-engines#change-engine"
+	},
+	{
+		"id": "20-axis-ratio",
+		"chapter": "20 synth engines",
+		"question": "what does the ratio knob do on the axis engine?",
+		"facts": [
+			"On axis, ratio is on the mid grey encoder (E2) and sets the pitch of one oscillator.",
+			"Ratio values from 0 to 50 act as a detune.",
+			"Ratio values from 51 to 100 step through ascending fifths."
+		],
+		"keys": ["turn E2"],
+		"source": "https://teenage.engineering/guides/op-xy/synth-engines#axis"
+	},
+	{
+		"id": "21-change-fx",
+		"chapter": "21 fx",
+		"question": "how do i swap the effect loaded on the fx i send track for a different one?",
+		"facts": [
+			"Enter auxiliary mode and select the fx i track.",
+			"Hold shift and press the fx i track button to open the effect list.",
+			"Scroll through the effects with the white encoder (E4).",
+			"Confirm the choice by clicking the encoder or pressing M1."
+		],
+		"keys": ["auxiliary → T7", "shift + T7", "turn E4"],
+		"source": "https://teenage.engineering/guides/op-xy/fx#fx"
+	},
+	{
+		"id": "22-enable-velocity",
+		"chapter": "22 how to",
+		"question": "my op-xy keyboard plays every note at the same level no matter how hard i hit the keys. how do i turn on velocity?",
+		"facts": [
+			"Press com, then M1, to open system settings.",
+			"Turn the dark grey encoder (E1) to reach the keyboard settings page.",
+			"With the velocity setting selected, turn the light grey encoder (E3) to change it.",
+			"Velocity can be set to off, soft (for gentle playing) or hard (for heavier playing)."
+		],
+		"keys": ["com → M1", "turn E1", "turn E3"],
+		"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-enable-velocity"
+	},
+	{
+		"id": "22-load-samples",
+		"chapter": "22 how to",
+		"question": "how do i get my own wav samples from my computer onto the op-xy?",
+		"facts": [
+			"Connect OP-XY to the computer first; MTP mode (com, then M4) only appears once it is connected.",
+			"On a Mac you need the field-kit app to access the drive.",
+			"Copy wav or aiff files into the 'samples' folder, e.g. its 'user' folder or your own subfolders.",
+			"Sample file names may only use alphanumeric characters plus -, # and space."
+		],
+		"keys": ["com → M4"],
+		"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-load-samples"
+	},
+	{
+		"id": "23-midi-cc-mix",
+		"chapter": "23 midi references",
+		"question": "i want to mix my op-xy from an external midi controller. which CC numbers set a track's volume, mute and pan, and on which midi channel do i send them?",
+		"facts": [
+			"Track volume is CC 7.",
+			"Track mute is CC 9.",
+			"Track pan is CC 10.",
+			"Each of these goes on the track's own MIDI channel: channel 1 for track 1 up to channel 16 for track 16."
+		],
+		"keys": [],
+		"source": "https://teenage.engineering/guides/op-xy/midi-references"
+	},
+	{
+		"id": "23-midi-cc-tempo-scenes",
+		"chapter": "23 midi references",
+		"question": "can i change the tempo or switch scenes on the op-xy with midi CC messages from my daw?",
+		"facts": [
+			"Tempo listens to CC 80, on any channel.",
+			"The CC 80 value is half the tempo in BPM, so 48 gives 96 BPM and only even tempos can be set this way.",
+			"Scenes can be changed by CC: 83 steps to the previous scene and 84 to the next one.",
+			"CC 85 picks a scene directly, and CC 82 does the same but waits before switching."
+		],
+		"keys": [],
+		"source": "https://teenage.engineering/guides/op-xy/midi-references"
+	},
+	{
+		"id": "24-factory-reset",
+		"chapter": "24 te boot",
+		"question": "how do i factory reset my op-xy?",
+		"facts": [
+			"Power the OP-XY off, then hold com while turning it back on to enter te boot.",
+			"In te boot, press T7 (track button 7) and go through the on-screen steps.",
+			"A factory reset wipes all user content and settings, so back up your projects first."
+		],
+		"keys": ["com + power", "T7"],
+		"source": "https://teenage.engineering/guides/op-xy/te-boot#factory-reset"
+	}
+]

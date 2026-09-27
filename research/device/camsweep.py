@@ -45,13 +45,24 @@ def arg(name: str, default=None, cast=str):
 
 
 def grab(cam: int) -> np.ndarray:
-    """One frame from an AVFoundation camera as a float32 grey image."""
+    """One frame from an AVFoundation camera as a float32 grey image (half resolution)."""
+    size = arg("--size", "1920x1440")  # Desk View only offers 1920x1440
     raw = subprocess.run(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-f", "avfoundation", "-framerate", "30",
-         "-video_size", "1280x720", "-i", f"{cam}:none", "-frames:v", "1", "-f", "image2pipe",
-         "-vcodec", "mjpeg", "-"],
-        capture_output=True, check=True, timeout=15).stdout
+         "-video_size", size, "-i", f"{cam}:none", "-frames:v", "1", "-vf", "scale=iw/2:ih/2",
+         "-f", "image2pipe", "-vcodec", "mjpeg", "-"],
+        capture_output=True, check=True, timeout=20).stdout
     return np.asarray(Image.open(io.BytesIO(raw)).convert("L"), dtype=np.float32)
+
+
+def grab_color(cam: int) -> Image.Image:
+    size = arg("--size", "1920x1440")
+    raw = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-f", "avfoundation", "-framerate", "30",
+         "-video_size", size, "-i", f"{cam}:none", "-frames:v", "1", "-vf", "scale=iw/2:ih/2",
+         "-f", "image2pipe", "-vcodec", "mjpeg", "-"],
+        capture_output=True, check=True, timeout=20).stdout
+    return Image.open(io.BytesIO(raw)).convert("RGB")
 
 
 def rois_from_args(shape) -> list[tuple[int, int, int, int]]:
@@ -108,7 +119,7 @@ def main() -> None:
         subprocess.run(["ffmpeg", "-hide_banner", "-f", "avfoundation", "-list_devices", "true", "-i", ""])
         return
     if cmd == "calib":
-        Image.fromarray(grab(cam).astype(np.uint8)).save(OUT / "calib.jpg")
+        grab_color(cam).save(OUT / "calib.jpg")
         print(f"saved {OUT / 'calib.jpg'}")
         return
     plan = sys.argv[2]
