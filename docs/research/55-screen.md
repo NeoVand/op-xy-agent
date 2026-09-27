@@ -243,14 +243,18 @@ project, COM and tap times. `buildFrame(state)` and `buildLeds(state)` are pure.
 - `project` and `com` toggle their pages, where M1–M4 open the soft-key sub-pages [project/project-view,
   com/overview]. `sample`, `player` and `bar` toggle their (text) pages.
 - M1–M4 choose the page and close tempo, sample, players and bar. On instrument tracks,
-  `shift + M1 / M3 / M4` opens the engine, filter or LFO type list: turn to choose, click E1 to load, or
-  press any M key to leave [basics/modules, instrument/engine].
+  `shift + M1 / M3 / M4` opens the engine, filter or LFO type list: turn to choose; click E1, or press
+  the key that opened the list (M1 in the guide, M3 and M4 ours), to load; any other M key leaves
+  [basics/modules, instrument/engine]. A synth swapped for the midi engine comes back as it was when
+  its engine is chosen again (OS 1.0.50).
 - Holding `shift` shows a page's second layer: drum sampler settings on M1, play mode on M2, sends on
   M3 [instrument/play-mode, instrument/track-sends].
 - T1–T8 select the track in the current set, lit white (instrument) or red (auxiliary)
   [basics/track-buttons]. `instrument + Tn` / `auxiliary + Tn` mute. In mix, `shift + Tn` mutes and, while
   shift is held, unmuted tracks light [mix/mute-solo]. `shift + Tn` elsewhere opens the preset browser
-  (text).
+  (text). In instrument mode, a track key pressed while another is held links it to the held one (four
+  tracks at most; again unlinks, ours): the held track stays active, its links glow dim while it is
+  held [basics/linked-tracks].
 - Step keys toggle the active track's steps (white).
 - Keyboard keys light while held and, on sampler tracks, select the key being edited.
 - `play` toggles the transport, `stop` stops and rewinds, `record` toggles recording.
@@ -269,11 +273,15 @@ project, COM and tap times. `buildFrame(state)` and `buildLeds(state)` are pure.
 | M2 + shift              | poly / mono / legato             | portamento         | bend range (0 = off) | preset volume   | —                          |
 | M3                      | cutoff                           | resonance          | envelope amount ±99  | key tracking    | —                          |
 | M3 + shift              | aux out                          | tape               | FX I                 | FX II           | —                          |
-| M4 value/random/element | speed (synced counts, then free) | amount ±99         | destination          | parameter       | E4: next parameter         |
-| M4 tremolo              | speed                            | vibrato            | volume               | —               | —                          |
-| M4 duck                 | trigger track                    | amount             | hold                 | release         | E1: audio ↔ notes          |
+| M4 value and random LFO | speed (synced counts, then free) | amount ±99         | destination          | parameter       | E4: next parameter         |
+| M4 random + shift       | —                                | envelope ±99       | —                    | —               | —                          |
+| M4 element              | source: gyro, mic, env, sum      | amount ±99         | destination          | parameter       | E4: next parameter         |
+| M4 tremolo              | speed                            | vibrato            | volume               | envelope ±99    | —                          |
+| M4 tremolo + shift      | —                                | shape              | —                    | —               | —                          |
+| M4 duck                 | source: tracks 1–16, metronome   | amount             | hold                 | release         | E1: audio ↔ notes          |
+| M4 duck + shift         | audio ↔ notes                    | —                  | —                    | —               | —                          |
 | mix M1                  | FX I send                        | FX II send         | pan                  | level           | E3: centre pan; E4: mute   |
-| picker                  | move                             | move               | move                 | move            | E1: confirm                |
+| picker                  | move                             | move               | move                 | move            | E1 or its M key: confirm   |
 
 **LEDs.** Only track, step and keyboard keys have LED windows (`controls.json`). The simulator lists
 all 48 on every update, so applying its map also turns off what went dark. The playhead chases over
@@ -336,7 +344,9 @@ TE's guide has no art for these, or the art disagrees with the manual. A look at
 each (read-only; the list for the owner is in `docs/QUESTIONS.md`):
 
 1. **Our layouts:** mix M2–M4, the midi engine's CC pages, the bar menu, step components, players,
-   the lock view, the auxiliary routing / filter / LFO pages, naming, confirm, boot and history.
+   the lock view, the auxiliary routing / filter / LFO pages, naming, confirm, boot and history; on
+   the LFO page, the envelope's ramp at other values than TE's full fade-in, element's source letters
+   other than G, and duck's metronome source.
 2. **Soft-key order:** arrange's patterns page and the projects folder (TE's text puts new / load on
    M1, its art the reverse; we follow the text).
 3. **M2 envelopes and M3 filter without shift.** Reconstructed from the dimmed layers.

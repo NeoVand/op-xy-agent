@@ -728,6 +728,20 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toMatch(/^prism: shape 80/);
 		});
 
+		it('scrolls a list with any encoder; only E1’s click loads (ours: the guide names E1)', async () => {
+			const d = await start();
+			await d.click('track.3');
+			await openList(d, 1);
+			await d.turn(4, 1);
+			expect(d.screen()).toBe('sampler');
+			await d.turn(2, -2);
+			expect(d.screen()).toBe('organ');
+			await d.push(4);
+			expect(d.screen()).toBe('organ');
+			await d.push(1);
+			expect(header(d)[0]).toBe('type 80');
+		});
+
 		it('closes the list when another track is picked (ours)', async () => {
 			const d = await start();
 			await d.click('track.3');
@@ -1067,8 +1081,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 
 		// bug in src/lib/sim/areas/sequencer/locks.ts: lockTarget still mirrors the LFO page as it was
 		// (element's E1 locks the speed, not the source; shift + E2 locks random's amount, not its
-		// envelope; tremolo's E4 locks nothing, so the turn changes the track itself; duck's source
-		// stops at 8 instead of running to 16 and the metronome)
+		// envelope; tremolo's E4 locks nothing and the turn is lost; duck's source stops at 8 instead
+		// of running to 16 and the metronome)
 		it.skip('locks on a held step what each LFO encoder turns on the page', async () => {
 			const d = await start();
 			const base = () => on(d, 'lock').base as Page<'lfo'>;
@@ -1085,7 +1099,10 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				expect(base()).toMatchObject({ amount: 0, envelope: 50 / 99 });
 			});
 			await lfo(d, 'tremolo');
-			await d.holding('step.1', () => d.turn(4, 40));
+			await d.holding('step.1', async () => {
+				await d.turn(4, 40);
+				expect(base().envelope).toBeCloseTo(40 / 99, 9);
+			});
 			expect(on(d, 'lfo').envelope).toBe(0);
 			await lfo(d, 'duck');
 			await d.holding('step.1', async () => {
@@ -1447,6 +1464,22 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await loadEngine(d, 'midi');
 			await loadEngine(d, 'prism');
 			expect(header(d)).toEqual(['shape 50', 'ratio 80', 'detune 80', 'stereo 90']);
+		});
+
+		// bug in src/lib/sim/areas/sequencer/locks.ts: the midi engine's program is not lockable
+		// (lockTarget gives nothing on the midi page), so a turn with a step held is lost (manual
+		// instrument/engine-midi: program changes lock per step, fixed in OS 1.1.15)
+		it.skip('locks a program change on a held step, leaving the track’s own program (OS 1.1.15)', async () => {
+			const d = await start();
+			await d.click('track.3');
+			await loadEngine(d, 'midi');
+			await play(d, 'c4');
+			await d.click('step.1');
+			await d.holding('step.1', async () => {
+				await d.turn(3, 4);
+				expect((on(d, 'lock').base as Page<'midi'>).program).toBe('5');
+			});
+			expect(d.screen()).toBe('midi: channel 1, bank none, program 1');
 		});
 	});
 }
