@@ -229,28 +229,37 @@ drift law, and whether phases reset per note.
 
 ### epiano — tone, texture, punch, tine
 
-Established:
+Established before measuring: TE calls it a nice electric piano to a filthy synth; reviewers hear
+FM, as TE's OP-Z e-piano was (eight FM algorithms).
 
-- TE's staff: ranges from a nice electric piano to a filthy synth.
-- The OP–Z e-piano is 8 FM algorithms, and reviewers hear FM here too.
-- By ear:
-  - tone brings in a modulator that turns saw- or square-like, and high tone sounds saw-like;
-  - texture pushes the carrier from sine towards a peaky triangle;
-  - punch adds a fast-decaying higher partial;
-  - tine is how long the modulation takes to fall back to the pure carrier (0 sustains it; high tine
-    plucks).
-- 1.1.25 fixed the screen's parameter names; the CCs keep the guide's order.
-- 4 of 5 factory epiano presets switch the M3 filter off.
+Measured on the owner's device (2026-09-27, `2026-09-27-132638-epiano`, velocity 100;
+`research/device/epiano_fit.py`):
 
-Model [I]:
+- **Everything at 0 is a pure sine**, −17.9 dBFS on A2, 2.9 dB lower on A4 (−1.45 dB an octave up).
+- **tone is a 1:1 FM index with no modulator feedback** (fitted within 0.1–0.9 dB): 0.67, 1.23,
+  1.85, 2.41, 2.95 at CC 13, 25, 38, 51, 64 on A2 (≈ 5.9 × tone), capped at ≈ 3.05 from CC 64 up
+  (the fundamental cancels near CC 38, where 1:1 FM's J0 = J2). A4 runs 0.82 × A2 (0.9 an octave).
+  FM's own level dip is not compensated; past CC 76 the spectrum holds but the level falls 1.3 dB
+  by 127.
+- **tine decays the 1:1 index in straight lines**: after a hold (0.2 s at CC 13, none from 64), down
+  at a fast rate to 0.65 of it, then at a slow rate to nothing; fast = 0.26, 0.4, 0.86, 1.45, 2.24,
+  3.0 … 6/s and slow = 0.04, 0.06, 0.13, 0.24, 0.34, 0.45 … 0.92/s (of the starting index) at CC 13
+  … 127, the same on A2 and A4. At 127 the index is gone in 0.8 s.
+- **punch is a second modulator at 4× the note**: sidebands 3 and 5, then 7 and 9, in equal pairs;
+  index 1.7·punch^2.95 on A2 (0.86 an octave up), rising over ~40 ms and then decaying by itself
+  even at tine 0 (τ ≈ 1.9 s). Not a decaying partial.
+- **texture blends a soft clipper into the carrier at an unchanged level**: 0.37 of the sine plus
+  0.63 of atan(g·sine)/atan(g) (within 0.3–0.8 dB); g = 1.2, 2.2, 3.8, 7.0, 12.4, 19.4, 28.4 at CC
+  13 … 89 on A2, the clipped share rising to all of it at the top (where h3 grows past a square's,
+  a hint of folding). **The drive falls steeply up the keyboard**: 0.6 … 4.4 on A4.
 
-- **Carrier:** a 1:1 carrier with index I(t) = Imax·tone^1.5·e^(−t/τ), where τ goes from infinite
-  (tine 0) down to about 30 ms. The modulator's own feedback moves it from sine to saw.
-- **Texture:** a shaper, sine → triangle, then folding.
-- **Punch:** a high (7–14×) partial decaying over 10–50 ms, scaled by velocity.
+Model: the above (`epiano.ts`): a phase-modulated carrier read from a band-limited table of clipper
+shapes, the indexes shrinking where the spectrum would pass Nyquist. [I] Velocity scales both
+indexes (0.5 at the softest, 1 at 100); tine's envelope applies to punch too. Against the capture:
+tone and punch partials within 0.1–1 dB, texture within 0.3–0.6 dB (1–1.5 dB at its top on A2),
+levels within ±0.4 dB except mid tone on A2 (1 dB).
 
-Open: the ratio and the modulator's waveform, velocity and key scaling, and whether tine is a time or
-an amount.
+Open: velocity; tine's effect on punch; texture's top (folding?); a slow index drift at tine 0.
 
 ### organ — type, bass, tremolo amount, tremolo speed
 
@@ -478,16 +487,16 @@ every voice per sample instead.
 
 **The engines as built** (constants at the top of each `engines/*.ts`, awaiting §6):
 
-| Engine    | What we built                                                                                                                                                                                                                                                                                                                                           |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| prism     | Measured: saw → square blend k with a −3.9 dB/k level law, then oscillator 2 narrows before oscillator 1 (to w ≈ 0.113); oscillator 2 at −2.4 dB, less at high ratios; ten ratio zones up to 1:16; detune to 15 cents; each oscillator fades with its pitch above ~2 kHz; stereo = the swept copy.                                                      |
-| simple    | Saw → square blend, width 0.5 − 0.44·pw on the pulse only, the measured noise crossfade, and the measured stereo: a delayed copy per channel, a triangle sweeping it ±6.9–15.2 cents (opposite in L and R), high-passed at 815–490 Hz.                                                                                                                  |
-| hardsync  | Measured: a saw synced at 1 + 7·freq times the note (linear), a sub saw at the note in phase (to 2×), a one-pole lowcut on the saws only (101 Hz–8.2 kHz), white noise at −64 dBFS/Hz after it; levels at the device's.                                                                                                                                 |
-| dissolve  | Two sines ±45 cents at full detune. Swarm: independent wobble per carrier, jitter on the FM, and a noise band at Q 2. AM by narrow-band noise at the note (Q 8). FM by a 1:1 cosine-phase modulator (the saw-like series at moderate index), DC removed exactly.                                                                                        |
-| epiano    | 1:1 FM: tone raises the index (to 2.2 rad, where 1:1 FM is brightest) and the modulator's feedback (sine → saw); texture is the carrier's shape (sine → triangle → a peaky pickup triangle); punch a partial at 7× the note decaying over 25 ms, ∝ punch² × velocity; tine the index's decay, 8 s → 30 ms (none at 0). The FM level dip is compensated. |
-| axis      | Operator 2 at r × the note phase-modulates operator 1 (index 1.3) and is also heard (0.5, less at high ratios). r runs 0.5 → 1 weighted to unison below 50 (M1 49 ≈ 3 cents: a slow chorus), then steps 1…32 above, gliding over 5 ms. Shape: saw at 0, triangle at 1. Tone: a resonant lowpass 100 Hz–16 kHz. Tremolo up to 0.6 deep, 0.5–10 Hz.       |
-| organ     | Measured registrations: per type, every partial (on the half-note grid, or a few cents off it) at bass 0/½/1 on A1–A5, played as sine oscillators behind a one-pole 54 Hz high-pass. Type 2's bass slides two partials. Tremolo 1 + amount·sin at 10.9 Hz × speed^0.93, free-running on the core's clock.                                               |
-| wavetable | Nine tables of our own, 16 frames each: formant (a sine at 0, our ninth, first so that all-zero is a sine), buzz, zap, basic, geometric, fibonacci, fractal, crush, drawbars. Warp: the knee d = 0.5 − 0.41·warp with rounded corners; drift δ = drift³ (periodic again at 1, nothing at warp 0).                                                       |
+| Engine    | What we built                                                                                                                                                                                                                                                                                                                                     |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| prism     | Measured: saw → square blend k with a −3.9 dB/k level law, then oscillator 2 narrows before oscillator 1 (to w ≈ 0.113); oscillator 2 at −2.4 dB, less at high ratios; ten ratio zones up to 1:16; detune to 15 cents; each oscillator fades with its pitch above ~2 kHz; stereo = the swept copy.                                                |
+| simple    | Saw → square blend, width 0.5 − 0.44·pw on the pulse only, the measured noise crossfade, and the measured stereo: a delayed copy per channel, a triangle sweeping it ±6.9–15.2 cents (opposite in L and R), high-passed at 815–490 Hz.                                                                                                            |
+| hardsync  | Measured: a saw synced at 1 + 7·freq times the note (linear), a sub saw at the note in phase (to 2×), a one-pole lowcut on the saws only (101 Hz–8.2 kHz), white noise at −64 dBFS/Hz after it; levels at the device's.                                                                                                                           |
+| dissolve  | Two sines ±45 cents at full detune. Swarm: independent wobble per carrier, jitter on the FM, and a noise band at Q 2. AM by narrow-band noise at the note (Q 8). FM by a 1:1 cosine-phase modulator (the saw-like series at moderate index), DC removed exactly.                                                                                  |
+| epiano    | Measured: a sine carrier phase-modulated 1:1 (tone, index to 3.05, no feedback) and 4:1 (punch, rising then fading), a soft clipper blended in (texture, drive key-scaled), tine's two straight-line decays on the index; key-scaled level.                                                                                                       |
+| axis      | Operator 2 at r × the note phase-modulates operator 1 (index 1.3) and is also heard (0.5, less at high ratios). r runs 0.5 → 1 weighted to unison below 50 (M1 49 ≈ 3 cents: a slow chorus), then steps 1…32 above, gliding over 5 ms. Shape: saw at 0, triangle at 1. Tone: a resonant lowpass 100 Hz–16 kHz. Tremolo up to 0.6 deep, 0.5–10 Hz. |
+| organ     | Measured registrations: per type, every partial (on the half-note grid, or a few cents off it) at bass 0/½/1 on A1–A5, played as sine oscillators behind a one-pole 54 Hz high-pass. Type 2's bass slides two partials. Tremolo 1 + amount·sin at 10.9 Hz × speed^0.93, free-running on the core's clock.                                         |
+| wavetable | Nine tables of our own, 16 frames each: formant (a sine at 0, our ninth, first so that all-zero is a sine), buzz, zap, basic, geometric, fibonacci, fractal, crush, drawbars. Warp: the knee d = 0.5 − 0.41·warp with rounded corners; drift δ = drift³ (periodic again at 1, nothing at warp 0).                                                 |
 
 **Tests.**
 
@@ -607,7 +616,7 @@ message logged in `90-device-probe.md`. Filter and LFO types have no CC and are 
 2. Filter slopes, resonance curves and envelope depth per type.
 3. ~~Prism's shape curve, stereo mechanism and octave; the ratio step edges.~~ Measured (§3).
 4. ~~The organ's 8 types (partials) and its bass control per type.~~ Measured (§3, organ).
-5. Epiano's modulator ratio and waveform, and tine's law.
+5. ~~Epiano's modulator ratio and waveform, and tine's law.~~ Measured (§3).
 6. Axis: whether operator 2 is audible, its FM index, and the tone filter.
 7. Wavetable: frames per table, the ninth table, the warp shape and the drift law.
 8. Dissolve's modulators (noise or periodic).

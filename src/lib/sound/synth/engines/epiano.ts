@@ -1,375 +1,371 @@
 /**
- * epiano: an FM electric piano, a carrier and a modulator at 1:1, with a decaying high partial for
- * the strike. The evidence and its sources are in `docs/research/57-synth-engines.md`; what TE, the
- * device's screen or several reviewers establish is marked [E], our inference [I].
+ * epiano: a sine carrier phase-modulated at 1:1 (tone) and at 4:1 (punch), shaped by a soft clipper
+ * (texture), the 1:1 modulation falling away over the note (tine). Evidence and how it was fitted:
+ * `docs/research/57-synth-engines.md` §3 (epiano), `research/device/epiano_fit.py`.
  *
- * - [E] TE: from a nice electric piano to a filthy synth. Reviewers hear FM; TE's OP-Z e-piano was
- *   eight FM algorithms. axis and epiano presets alone share the same hidden values after P1–P4,
- *   which suggests one FM core under both.
- * - [E] By ear: tone modulates a sine carrier with an operator that itself turns saw-like as the
- *   knob rises (amount and shape together); texture morphs the carrier from sine towards a peaky
- *   triangle, adding grit; punch adds a fast-decaying, higher-pitched second oscillator; tine is
- *   how long the modulation takes to fall back to the pure carrier: held at 0, plucky when high.
- * - [I] Carrier: W(φ + I(t)·m / 2π), where W is texture's waveform and m the modulator, a sine at
- *   the note with the DX7's averaged self-feedback β = FEEDBACK_MAX·tone² (sine → saw).
- * - [I] Index: I(t) = INDEX_MAX · tone^1.2 · v · D(t), v from 0.5 (softest) to 1 (hardest);
- *   D(t) = e^(−t/τ), τ from tine on a log scale, TINE_SLOW → TINE_FAST, and no decay at tine 0.
- * - [I] Texture: sine → triangle ((2/π)·asin of the sine) over its first half; then the triangle
- *   grows peaky (|x|^1…2) and asymmetric like a pickup's curve (x / (1 − b·x)²), which brings the
- *   grit and some even harmonics. Each shape is stored as a band-limited table at equal RMS, so
- *   texture changes the tone, not the level.
- * - [I] Punch: punch² · v · sin(2π · PUNCH_RATIO · φ) · e^(−t/PUNCH_SECONDS) added to the carrier.
- * - [I] Level: 1:1 FM loses up to 4 dB around an index of 2 (sidebands below 0 Hz fold back onto
- *   the fundamental out of phase), which would make each note swell as its modulation decays. The
- *   carrier is lifted by the inverse of that loss, measured once over index × feedback.
- * - [I] Key scaling: the index shrinks where the FM spectrum would pass Nyquist (FM pianos scale
- *   their modulators down the keyboard likewise), so high notes stay clean at a cost in bite.
+ * Measured on the owner's device (2026-09-27, OS 1.1.33, `2026-09-27-132638-epiano`; velocity 100):
+ * - everything at 0 is a pure sine, −17.9 dBFS on A2 and 2.9 dB lower on A4 (the level falls
+ *   {@link LEVEL_PER_OCTAVE} dB an octave up the keyboard);
+ * - tone is a 1:1 FM index with no modulator feedback (fitted within 0.1–0.9 dB): 5.9 × tone on A2
+ *   ({@link TONE_INDEX}), less up the keyboard ({@link TONE_PER_OCTAVE}), capped at 3.05
+ *   ({@link INDEX_MAX}) from about tone 64 up; FM's own level dip is left uncompensated;
+ * - tine decays the 1:1 index in straight lines: after a short hold at low tine, fast down to 0.65
+ *   of it, then slower to nothing, both rates rising with tine ({@link TINE}): at tine 127 the index
+ *   is gone in 0.8 s, at 64 it takes 2 s;
+ * - punch adds a modulator at 4 × the note (sidebands 3 and 5, then 7 and 9, in equal pairs), its
+ *   index 1.7 · punch^2.95 on A2 ({@link PUNCH_INDEX}, {@link PUNCH_CURVE}), less up the keyboard,
+ *   rising over its first 40 ms and then decaying on its own even at tine 0 (to 0.57 of it after a
+ *   second: {@link PUNCH_DECAY});
+ * - texture blends a soft clipper into the carrier at an unchanged level: 0.63 of atan(g · sine)
+ *   (peak-normalized) with 0.37 of the sine (fitted within 0.3–0.8 dB), the clipped share rising
+ *   to all of it at the very top on A2 ({@link DRIVE}); its drive g falls steeply up the keyboard
+ *   (200 on A2 but 4.4 on A4 at texture 127);
+ * - tone past about 76 no longer changes the spectrum but takes the level down, 1.3 dB by 127
+ *   ({@link TONE_TOP_DB}).
+ *
+ * Our model plays the carrier from a band-limited table of clipper shapes (indexed by drive), read
+ * at the modulated phase with a band limit that follows the phase's speed; the index also shrinks
+ * where the FM spectrum would pass Nyquist. [I] Velocity scales both indexes, 0.5 at the softest,
+ * 1 at 100 (where the device was measured); tine's decay applies to punch's modulator too.
  */
 import { DcBlocker } from '../filters';
 import { sin2pi } from '../sine';
 import { WaveTable } from '../wavetable';
+import { DEVICE_GAIN_DB } from './device';
 import type { EngineVoice } from './index';
 
-// Calibration: our estimates until the owner's device is measured (57-synth-engines.md).
+const cc = (values: readonly number[]) => values.map((v) => v / 127);
+const STEPS = cc([0, 13, 25, 38, 51, 64, 76, 89, 102, 114, 127]);
+
+// Measured on the owner's device (2026-09-27).
+/** The pure sine's level on A2 (dBFS on the device) and its fall per octave up. */
+export const SINE_DB = -17.9;
+export const LEVEL_PER_OCTAVE = -1.45;
+/** tone's 1:1 index on A2 per unit of tone, its factor per octave up, and the cap. */
+export const TONE_INDEX = 5.88;
+export const TONE_PER_OCTAVE = 0.904;
+export const INDEX_MAX = 3.05;
+/** tone's level past {@link TONE_TOP_FROM}: this many dB per unit of tone. */
+export const TONE_TOP_FROM = 0.6;
+export const TONE_TOP_DB = -3.2;
 /**
- * FM index (radians) at full tone and velocity, before key scaling. With the modulator's feedback
- * at 1, an index of 1.5 comes closest to a saw (harmonics near 1/2, 1/3, 1/4, …) and 2 is the
- * brightest; past that 1:1 FM folds back onto the fundamental and grows duller again.
+ * tine's envelope on the index: a hold (s), then down at `fast` (per second, of the start) to
+ * {@link TINE_BREAK}, then at `slow` to nothing.
  */
-const INDEX_MAX = 2.2;
-/** Tone's curve into the index: index ∝ tone^TONE_CURVE, a little gentler at the bottom. */
-const TONE_CURVE = 1.2;
+export const TINE = {
+	at: STEPS,
+	hold: [0, 0.2, 0.15, 0.075, 0.025, 0, 0, 0, 0, 0, 0],
+	fast: [0, 0.257, 0.4, 0.86, 1.45, 2.24, 3, 3.7, 4.5, 5.2, 6],
+	slow: [0, 0.04, 0.06, 0.13, 0.24, 0.34, 0.45, 0.57, 0.69, 0.8, 0.92]
+} as const;
+export const TINE_BREAK = 0.65;
 /**
- * Modulator self-feedback (radians) at full tone: 0 keeps it a sine, 1 makes it a saw. Past 1 the
- * feedback loop starts to jump between its two solutions and the modulator grows edges.
+ * punch's 4:1 index on A2, PUNCH_INDEX · punch^PUNCH_CURVE; its factor per octave up; its rise and
+ * its decay's time constant (seconds).
  */
-const FEEDBACK_MAX = 1;
-/** Share of the index (and of punch) left at the softest velocity; the hardest keeps all of it. */
-const VELOCITY_FLOOR = 0.5;
-/** Tine's decay time constants (seconds) just above 0 and at full; tine 0 holds the brightness. */
-const TINE_SLOW = 8;
-const TINE_FAST = 0.03;
-/** Punch: the partial's ratio to the note, its decay time constant (s), its level at full. */
-const PUNCH_RATIO = 7;
-const PUNCH_SECONDS = 0.025;
-const PUNCH_LEVEL = 0.5;
-/** Output gain: about 0.27 RMS at the default M1 (80s) on a 220 Hz note. */
-const LEVEL = 0.38;
+export const PUNCH_RATIO = 4;
+export const PUNCH_INDEX = 1.7;
+export const PUNCH_CURVE = 2.95;
+export const PUNCH_PER_OCTAVE = 0.857;
+export const PUNCH_RISE = 0.04;
+export const PUNCH_DECAY = 1.9;
+/**
+ * texture's clipper on A2 and A4 at CC 0, 13 … 127: its drive (read in log between the notes) and
+ * its share against the sine (read linearly).
+ */
+export const DRIVE = {
+	at: STEPS,
+	a2: [0, 1.21, 2.15, 3.8, 6.95, 12.38, 19.38, 28.38, 27.66, 30.23, 41.06],
+	a4: [0, 0.62, 0.89, 1.2, 1.51, 1.87, 2.22, 2.67, 3.19, 3.72, 4.37],
+	wetA2: [0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.86, 1, 1],
+	wetA4: [0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63, 0.63]
+} as const;
 
 // Design constants.
-/** Smoothing of every continuous parameter (seconds): fast, but no zipper or click. */
+/** Velocity's share of the indexes at the softest (1 at velocity 100). */
+const VELOCITY_FLOOR = 0.5;
+/** Smoothing of every continuous parameter (seconds). */
 const SMOOTH_SECONDS = 0.005;
 /**
- * The FM spectrum's estimated top, 1 + I·S(β)·(1 + TAIL) harmonics, may reach this share of
- * Nyquist before the index is scaled down; TAIL covers the Bessel sidebands past the modulated
- * phase's top speed. Both measured to keep aliasing near −50 dB or below at 1–2 kHz.
+ * The FM spectrum's estimated top, 1 + I·(1 + TAIL) harmonics, may reach this share of Nyquist
+ * before the index is scaled down (TAIL covers the Bessel sidebands past the phase's top speed).
  */
 const BANDWIDTH = 0.8;
 const TAIL = 0.5;
-/** Texture's stored shapes, at texture 0, 1/8, …, 1 (the first half blends exactly). */
-const TEXTURE_FRAMES = 9;
+/** Orders of punch's sidebands past its index still loud enough to count (−50 dB at an index of 1). */
+const PUNCH_TAIL = 1.5;
+/** The clipper shapes: drive 0, then log-spaced from DRIVE_LOW to DRIVE_HIGH. */
+const DRIVE_FRAMES = 25;
+const DRIVE_LOW = 0.25;
+const DRIVE_HIGH = 200;
+const DRIVE_STEP = Math.log(DRIVE_HIGH / DRIVE_LOW) / (DRIVE_FRAMES - 2);
 /** Samples per drawn shape before it is band-limited. */
 const CYCLE = 4096;
-/** How peaky the triangle grows (extra exponent) and how asymmetric (pickup curve) at full. */
-const PEAK = 1;
-const ASYMMETRY = 0.25;
-/** Highest peak a shape may have at equal RMS (a unit sine's); peakier shapes give up level. */
-const SHAPE_PEAK = 2;
-/** The level compensation's grid: index 0…3 rad by 0.25, feedback 0…1 rad by 0.1. */
-const LIFT_INDEX_STEP = 0.25;
-const LIFT_INDEXES = 13;
-const LIFT_FEEDBACK_STEP = 0.1;
-const LIFT_FEEDBACKS = 11;
-/** The most the compensation lifts. */
-const LIFT_MAX = 2;
-/** The output's peak budget: the lift gives way where it would push a shape's peak past it. */
-const PEAK_BUDGET = 1.05;
 
-/** texture's waveform at `t` (0–1) for one point of a sine, `s`. */
-function shape(t: number, s: number): number {
-	const tri = (2 / Math.PI) * Math.asin(s);
-	if (t <= 0.5) return s + (tri - s) * 2 * t;
-	const b = 2 * t - 1;
-	const peaky = Math.sign(tri) * Math.abs(tri) ** (1 + PEAK * b);
-	const bend = 1 - ASYMMETRY * b * peaky;
-	return peaky / (bend * bend);
+/** `curve` values at `x`, linearly between points (held beyond them). */
+function read(at: readonly number[], values: readonly number[], x: number): number {
+	if (x <= at[0]) return values[0];
+	const last = at.length - 1;
+	if (x >= at[last]) return values[last];
+	let i = 0;
+	while (x > at[i + 1]) i++;
+	return values[i] + ((values[i + 1] - values[i]) * (x - at[i])) / (at[i + 1] - at[i]);
 }
 
-/** The carrier's shapes across texture, band-limited, and how high each one peaks. */
-interface Carriers {
+/** texture's clipper drive at texture `t` (0–1) on `note` (MIDI): log between A2 and A4. */
+export function drive(t: number, note: number): number {
+	const a2 = read(DRIVE.at, DRIVE.a2, t);
+	const a4 = read(DRIVE.at, DRIVE.a4, t);
+	if (a2 <= 0 || a4 <= 0) return 0;
+	const g = a2 * Math.pow(a4 / a2, (note - 45) / 24);
+	return Math.min(g, DRIVE_HIGH);
+}
+
+/** texture's clipped share at texture `t` on `note`: linear between A2 and A4, held beyond. */
+export function wet(t: number, note: number): number {
+	const a2 = read(DRIVE.at, DRIVE.wetA2, t);
+	const a4 = read(DRIVE.at, DRIVE.wetA4, t);
+	const x = Math.min(1, Math.max(0, (note - 45) / 24));
+	return a2 + (a4 - a2) * x;
+}
+
+/** The frame of the shape table for drive `g`. */
+function frameOf(g: number): number {
+	if (g <= 0) return 0;
+	if (g < DRIVE_LOW) return g / DRIVE_LOW;
+	return Math.min(DRIVE_FRAMES - 1, 1 + Math.log(g / DRIVE_LOW) / DRIVE_STEP);
+}
+
+/**
+ * The clipper's shapes, atan(g·sine) / atan(g) (peak 1), band-limited; with each shape's
+ * fundamental and power, to keep the blend with the sine at a unit sine's RMS.
+ */
+interface Shapes {
 	readonly table: WaveTable;
-	/** Each shape's peak (at most {@link SHAPE_PEAK}). */
-	readonly peaks: Float32Array;
+	readonly h1: Float32Array;
+	readonly power: Float32Array;
 }
 
-/**
- * Draws texture's shapes, each at the RMS of a unit sine (less where its peak would pass
- * {@link SHAPE_PEAK}), DC removed, and stores them band-limited.
- */
-function buildCarriers(): Carriers {
+function buildShapes(): Shapes {
 	const cycles: Float32Array[] = [];
-	const peaks = new Float32Array(TEXTURE_FRAMES);
-	for (let f = 0; f < TEXTURE_FRAMES; f++) {
-		const t = f / (TEXTURE_FRAMES - 1);
+	const h1 = new Float32Array(DRIVE_FRAMES);
+	const power = new Float32Array(DRIVE_FRAMES);
+	for (let f = 0; f < DRIVE_FRAMES; f++) {
+		const g = f === 0 ? 0 : DRIVE_LOW * Math.exp((f - 1) * DRIVE_STEP);
 		const cycle = new Float32Array(CYCLE);
-		let mean = 0;
+		const norm = g === 0 ? 1 : Math.atan(g);
 		for (let i = 0; i < CYCLE; i++) {
-			cycle[i] = shape(t, Math.sin((2 * Math.PI * i) / CYCLE));
-			mean += cycle[i] / CYCLE;
+			const s = Math.sin((2 * Math.PI * i) / CYCLE);
+			cycle[i] = g === 0 ? s : Math.atan(g * s) / norm;
+			h1[f] += (2 * cycle[i] * s) / CYCLE;
+			power[f] += (cycle[i] * cycle[i]) / CYCLE;
 		}
-		let power = 0;
-		let peak = 0;
-		for (let i = 0; i < CYCLE; i++) {
-			cycle[i] -= mean;
-			power += (cycle[i] * cycle[i]) / CYCLE;
-			peak = Math.max(peak, Math.abs(cycle[i]));
-		}
-		const gain = Math.min(Math.SQRT1_2 / Math.sqrt(power), SHAPE_PEAK / peak);
-		for (let i = 0; i < CYCLE; i++) cycle[i] *= gain;
 		cycles.push(cycle);
-		peaks[f] = peak * gain;
 	}
-	return { table: WaveTable.fromCycles(cycles), peaks };
+	return { table: WaveTable.fromCycles(cycles), h1, power };
 }
 
-/**
- * The gain that brings a sine carrier under 1:1 modulation back to its unmodulated RMS, over the
- * index × feedback grid: each point runs the averaged-feedback modulator until it settles and
- * measures two cycles of the carrier (DC left out, as the voice's DC blocker removes it).
- */
-function buildLift(): Float32Array {
-	const lift = new Float32Array(LIFT_INDEXES * LIFT_FEEDBACKS);
-	const n = 256;
-	for (let b = 0; b < LIFT_FEEDBACKS; b++) {
-		const beta = b * LIFT_FEEDBACK_STEP;
-		for (let a = 0; a < LIFT_INDEXES; a++) {
-			const index = a * LIFT_INDEX_STEP;
-			let y1 = 0;
-			let y2 = 0;
-			let sum = 0;
-			let sum2 = 0;
-			for (let i = 0; i < 5 * n; i++) {
-				const p = (2 * Math.PI * (i % n)) / n;
-				const m = Math.sin(p + (beta * (y1 + y2)) / 2);
-				y2 = y1;
-				y1 = m;
-				if (i < 3 * n) continue;
-				const y = Math.sin(p + index * m);
-				sum += y;
-				sum2 += y * y;
-			}
-			const mean = sum / (2 * n);
-			const power = sum2 / (2 * n) - mean * mean;
-			lift[b * LIFT_INDEXES + a] = Math.min(LIFT_MAX, Math.sqrt(0.5 / power));
-		}
-	}
-	return lift;
+let shapeTable: Shapes | null = null;
+
+/** The shared shapes (built on first use). */
+function shapes(): Shapes {
+	shapeTable ??= buildShapes();
+	return shapeTable;
 }
 
-let carrierTables: Carriers | null = null;
-let liftTable: Float32Array | null = null;
-
-/** The shared carrier shapes (built on first use). */
-function carriers(): Carriers {
-	carrierTables ??= buildCarriers();
-	return carrierTables;
+/** `values` at fractional `frame`, linearly between frames. */
+function atFrame(values: Float32Array, frame: number): number {
+	const i = Math.min(Math.floor(frame), values.length - 2);
+	return values[i] + (values[i + 1] - values[i]) * (frame - i);
 }
 
-/** The shared level compensation (built on first use). */
-function lifts(): Float32Array {
-	liftTable ??= buildLift();
-	return liftTable;
-}
-
-/** The compensation for `index` and feedback `beta` (radians), bilinear on the grid. */
-function liftAt(lift: Float32Array, index: number, beta: number): number {
-	const x = Math.min(Math.max(index / LIFT_INDEX_STEP, 0), LIFT_INDEXES - 1.001);
-	const y = Math.min(Math.max(beta / LIFT_FEEDBACK_STEP, 0), LIFT_FEEDBACKS - 1.001);
-	const i = Math.floor(x);
-	const j = Math.floor(y);
-	const fx = x - i;
-	const fy = y - j;
-	const at = j * LIFT_INDEXES + i;
-	const low = lift[at] + (lift[at + 1] - lift[at]) * fx;
-	const high =
-		lift[at + LIFT_INDEXES] + (lift[at + LIFT_INDEXES + 1] - lift[at + LIFT_INDEXES]) * fx;
-	return low + (high - low) * fy;
-}
-
-/**
- * How much faster than the note the modulated carrier's phase can run, per radian of index, for
- * feedback `beta`: the modulator's steepest slope, fitted to the averaged-feedback operator
- * (1.4 at β 0.3, 4.4 at 0.8, 8.8 at 1, 15 at 1.2).
- */
-function steepness(beta: number): number {
-	const b2 = beta * beta;
-	return 1 + beta + 1.5 * b2 + 5 * b2 * b2;
-}
+/** The sine's peak on A2: its RMS is the device's level, {@link DEVICE_GAIN_DB} louder. */
+const LEVEL = Math.SQRT2 * Math.pow(10, (SINE_DB + DEVICE_GAIN_DB) / 20);
 
 export class EpianoVoice implements EngineVoice {
 	readonly #sr: number;
-	readonly #table: WaveTable;
-	readonly #peaks: Float32Array;
-	readonly #lifts = lifts();
+	readonly #shapes: Shapes;
 	readonly #dc: DcBlocker;
-	/** Per-sample smoothing coefficient and the punch's per-sample decay. */
 	readonly #smooth: number;
-	readonly #punchDecay: number;
 	#dt = 0;
 	#phase = 0;
-	/** The modulator's last two outputs (its feedback). */
-	#y1 = 0;
-	#y2 = 0;
-	/** Index (cycles of phase per unit of modulator) before the tine decay, and its target. */
+	/** The note's level (its key scaling, and tone's top) and its target; velocity's share of the indexes. */
+	#level = LEVEL;
+	#levelTarget = LEVEL;
+	#velocity = 1;
+	/** The 1:1 index (cycles of phase per unit of modulator), before tine's envelope; its target. */
 	#index = 0;
 	#indexTarget = 0;
-	/** Feedback (cycles per unit of the summed last two outputs) and its target. */
-	#feedback = 0;
-	#feedbackTarget = 0;
-	/** The carrier's level compensation (it ramps to its next value over each block). */
-	#lift = 1;
-	/** Texture as a frame of the carrier table, and its target. */
-	#texture = 0;
-	#textureTarget = 0;
-	/** Punch level (with velocity and a guard below Nyquist), its target, and its decay so far. */
+	/** The 4:1 index and its target; its rise and decay so far. */
 	#punch = 0;
 	#punchTarget = 0;
-	#punchEnv = 1;
-	/** The tine decay so far and its per-sample factor. */
-	#tine = 1;
-	#tineDecay = 1;
-	/** Velocity's share of index and punch. */
-	#velocity = 1;
+	#rise = 0;
+	#fall = 1;
+	readonly #riseStep: number;
+	readonly #fallStep: number;
+	/** The shape table's frame, the clipped share and the blend's gain, and their targets. */
+	#frame = 0;
+	#frameTarget = 0;
+	#wet = 0;
+	#wetTarget = 0;
+	#gain = 1;
+	#gainTarget = 1;
+	/** tine's envelope: seconds into the note, where it is, and its settings. */
+	#time = 0;
+	#env = 1;
+	#hold = 0;
+	#fast = 0;
+	#slow = 0;
 
 	constructor(sampleRate: number) {
 		this.#sr = sampleRate;
-		({ table: this.#table, peaks: this.#peaks } = carriers());
+		this.#shapes = shapes();
 		this.#dc = new DcBlocker(sampleRate);
 		this.#smooth = 1 - Math.exp(-1 / (SMOOTH_SECONDS * sampleRate));
-		this.#punchDecay = Math.exp(-1 / (PUNCH_SECONDS * sampleRate));
+		this.#riseStep = 1 / (PUNCH_RISE * sampleRate);
+		this.#fallStep = Math.exp(-1 / (PUNCH_DECAY * sampleRate));
 	}
 
 	start(hz: number, velocity: number, params: Float32Array): void {
-		const v = (Math.min(Math.max(velocity, 1), 127) - 1) / 126;
-		this.#velocity = VELOCITY_FLOOR + (1 - VELOCITY_FLOOR) * v;
+		const v = Math.min(Math.max(velocity, 1), 127);
+		this.#velocity = VELOCITY_FLOOR + ((1 - VELOCITY_FLOOR) * (v - 1)) / 99;
 		this.#phase = 0;
-		this.#y1 = 0;
-		this.#y2 = 0;
-		this.#tine = 1;
-		this.#punchEnv = 1;
+		this.#time = 0;
+		this.#env = 1;
+		this.#rise = 0;
+		this.#fall = 1;
 		this.#dc.reset();
-		// a note starts where its parameters are, not gliding in from the last note's
 		this.control(hz, params);
+		// a note starts where its parameters are
 		this.#index = this.#indexTarget;
-		this.#feedback = this.#feedbackTarget;
-		this.#texture = this.#textureTarget;
 		this.#punch = this.#punchTarget;
-		this.#lift = this.#liftFor(this.#index, this.#feedback, this.#texture, this.#punch);
+		this.#frame = this.#frameTarget;
+		this.#wet = this.#wetTarget;
+		this.#gain = this.#gainTarget;
+		this.#level = this.#levelTarget;
 	}
 
 	control(hz: number, params: Float32Array): void {
 		const dt = Math.min(Math.max(hz, 1), 0.45 * this.#sr) / this.#sr;
 		this.#dt = dt;
+		const octaves = Math.log2(hz / 110);
+		const note = 45 + 12 * octaves;
 		const tone = clamp01(params[0]);
+		const top = TONE_TOP_DB * Math.max(0, tone - TONE_TOP_FROM);
+		this.#levelTarget = LEVEL * Math.pow(10, (LEVEL_PER_OCTAVE * octaves + top) / 20);
 		const texture = clamp01(params[1]);
 		const punch = clamp01(params[2]);
 		const tine = clamp01(params[3]);
-		const beta = FEEDBACK_MAX * tone * tone;
-		// key scaling: the estimated top of the spectrum stays below Nyquist
-		const spread = steepness(beta) * (1 + TAIL);
-		const room = Math.max(0, (BANDWIDTH * 0.5) / dt - 1) / spread;
-		const index = Math.min(INDEX_MAX * Math.pow(tone, TONE_CURVE) * this.#velocity, room);
+		const toneIndex = Math.min(
+			TONE_INDEX * tone * Math.pow(TONE_PER_OCTAVE, octaves) * this.#velocity,
+			INDEX_MAX
+		);
+		const punchIndex =
+			PUNCH_INDEX *
+			Math.pow(punch, PUNCH_CURVE) *
+			Math.pow(PUNCH_PER_OCTAVE, octaves) *
+			this.#velocity;
+		// the FM spectrum stays below Nyquist: the 1:1 modulation's reach first (its sidebands a
+		// harmonic apart), then punch's in what is left (four harmonics apart, and a tail of
+		// sidebands past its index that small indexes still reach)
+		const highest = (BANDWIDTH * 0.5) / dt;
+		const index = Math.min(toneIndex, Math.max(0, (highest - 1) / (1 + TAIL)));
+		const room = highest - 1 - index * (1 + TAIL);
+		const punchRoom = Math.max(0, (room / PUNCH_RATIO - PUNCH_TAIL) / (1 + TAIL));
 		this.#indexTarget = index / (2 * Math.PI);
-		this.#feedbackTarget = beta / (4 * Math.PI);
-		this.#textureTarget = texture * (TEXTURE_FRAMES - 1);
-		// the partial fades out as it nears Nyquist instead of folding back
-		const top = PUNCH_RATIO * dt;
-		const guard = Math.min(1, Math.max(0, (0.45 - top) / 0.05));
-		this.#punchTarget = PUNCH_LEVEL * punch * punch * this.#velocity * guard;
-		this.#tineDecay =
-			tine <= 0 ? 1 : Math.exp(-1 / (TINE_SLOW * Math.pow(TINE_FAST / TINE_SLOW, tine) * this.#sr));
+		this.#punchTarget = Math.min(punchIndex, punchRoom) / (2 * Math.PI);
+		const frame = frameOf(drive(texture, note));
+		const w = wet(texture, note);
+		this.#frameTarget = frame;
+		this.#wetTarget = w;
+		// the blend (1 − w)·sine + w·shape at a unit sine's RMS
+		const h1 = atFrame(this.#shapes.h1, frame);
+		const power = atFrame(this.#shapes.power, frame);
+		const blend = 0.5 * (1 - w) * (1 - w) + w * (1 - w) * h1 + w * w * power;
+		this.#gainTarget = Math.SQRT1_2 / Math.sqrt(blend);
+		this.#hold = read(TINE.at, TINE.hold, tine);
+		this.#fast = read(TINE.at, TINE.fast, tine);
+		this.#slow = read(TINE.at, TINE.slow, tine);
 	}
 
 	/**
-	 * The level compensation at index `depth` and `feedback` (both in the voice's cycle units),
-	 * given way where it would push the shape at `texture` (with the strike, `punch`, on top) past
-	 * the peak budget.
+	 * tine's envelope `seconds` on: after the hold, down at the fast rate to the break, then at the
+	 * slow rate to nothing. Rates, not values, follow tine, so turning it never jumps.
 	 */
-	#liftFor(depth: number, feedback: number, texture: number, punch: number): number {
-		const f = Math.min(texture, TEXTURE_FRAMES - 1.001);
-		const at = Math.floor(f);
-		const shapePeak = this.#peaks[at] + (this.#peaks[at + 1] - this.#peaks[at]) * (f - at);
-		const lift = liftAt(this.#lifts, 2 * Math.PI * depth, 4 * Math.PI * feedback);
-		return Math.min(lift, (PEAK_BUDGET / LEVEL - punch) / shapePeak);
+	#advance(seconds: number): void {
+		const start = this.#time;
+		this.#time += seconds;
+		let remaining = Math.min(seconds, this.#time - this.#hold);
+		if (remaining <= 0 || start + seconds <= this.#hold) return;
+		let env = this.#env;
+		if (env > TINE_BREAK && this.#fast > 0) {
+			const d = Math.min(remaining, (env - TINE_BREAK) / this.#fast);
+			env -= this.#fast * d;
+			remaining -= d;
+		}
+		if (env <= TINE_BREAK + 1e-9) env = Math.max(0, env - this.#slow * remaining);
+		this.#env = env;
 	}
 
 	render(left: Float32Array, right: Float32Array, n: number): void {
-		const table = this.#table;
+		const table = this.#shapes.table;
 		const dc = this.#dc;
 		const k = this.#smooth;
 		const dt = this.#dt;
-		const tineDecay = this.#tineDecay;
-		const punchDecay = this.#punchDecay;
+		// the envelope moves in a straight line across each block
+		const e0 = this.#env;
+		this.#advance(n / this.#sr);
+		const de = (this.#env - e0) / n;
+		let env = e0;
 		let phase = this.#phase;
-		let y1 = this.#y1;
-		let y2 = this.#y2;
 		let index = this.#index;
-		let feedback = this.#feedback;
-		let lift = this.#lift;
-		let texture = this.#texture;
 		let punch = this.#punch;
-		let punchEnv = this.#punchEnv;
-		let tine = this.#tine;
+		let frame = this.#frame;
+		let w = this.#wet;
+		let gain = this.#gain;
+		let rise = this.#rise;
+		let fall = this.#fall;
+		const riseStep = this.#riseStep;
+		const fallStep = this.#fallStep;
 		const indexTarget = this.#indexTarget;
-		const feedbackTarget = this.#feedbackTarget;
-		const textureTarget = this.#textureTarget;
 		const punchTarget = this.#punchTarget;
-		// the compensation for where the smoothing and decays will be at the end of this block,
-		// reached in a straight line: it tracks the index without lagging behind it
-		const settle = Math.pow(1 - k, n);
-		const feedbackEnd = feedbackTarget + (feedback - feedbackTarget) * settle;
-		const liftEnd = this.#liftFor(
-			(indexTarget + (index - indexTarget) * settle) * tine * Math.pow(tineDecay, n),
-			feedbackEnd,
-			textureTarget + (texture - textureTarget) * settle,
-			(punchTarget + (punch - punchTarget) * settle) * punchEnv * Math.pow(punchDecay, n)
-		);
-		const liftStep = (liftEnd - lift) / n;
-		// the band limit's spread for the feedback the modulator has over this block (not its target)
-		const beta = 4 * Math.PI * Math.max(feedback, feedbackEnd);
-		const spread = 2 * Math.PI * steepness(beta) * (1 + TAIL);
+		const frameTarget = this.#frameTarget;
+		const wetTarget = this.#wetTarget;
+		const gainTarget = this.#gainTarget;
+		const levelTarget = this.#levelTarget;
+		let level = this.#level;
 		for (let i = 0; i < n; i++) {
 			index += (indexTarget - index) * k;
-			feedback += (feedbackTarget - feedback) * k;
-			lift += liftStep;
-			texture += (textureTarget - texture) * k;
 			punch += (punchTarget - punch) * k;
-			tine *= tineDecay;
-			punchEnv *= punchDecay;
-			const m = sin2pi(phase + feedback * (y1 + y2));
-			y2 = y1;
-			y1 = m;
-			const depth = index * tine;
-			// the carrier table's band limit follows how fast the modulated phase can run
-			const carrier = table.read(texture, phase + depth * m, dt * (1 + depth * spread));
-			const strike = punch * punchEnv * sin2pi(PUNCH_RATIO * phase);
-			const y = dc.process(LEVEL * (lift * carrier + strike));
+			frame += (frameTarget - frame) * k;
+			w += (wetTarget - w) * k;
+			gain += (gainTarget - gain) * k;
+			level += (levelTarget - level) * k;
+			env += de;
+			if (rise < 1) rise = Math.min(1, rise + riseStep);
+			fall *= fallStep;
+			const a = index * env;
+			const b = punch * env * rise * fall;
+			const pm = a * sin2pi(phase) + b * sin2pi(PUNCH_RATIO * phase);
+			// the table's band limit follows how fast the modulated phase can run
+			const at = phase + pm;
+			const shape = table.read(frame, at, dt * (1 + 2 * Math.PI * (a + PUNCH_RATIO * b)));
+			const y = dc.process(level * gain * ((1 - w) * sin2pi(at) + w * shape));
 			left[i] = y;
 			right[i] = y;
 			phase += dt;
 			if (phase >= 1) phase -= 1;
 		}
 		this.#phase = phase;
-		this.#y1 = y1;
-		this.#y2 = y2;
 		this.#index = index;
-		this.#feedback = feedback;
-		this.#lift = liftEnd;
-		this.#texture = texture;
 		this.#punch = punch;
-		// far below hearing: stop before the decays reach denormal numbers
-		this.#punchEnv = punchEnv < 1e-9 ? 0 : punchEnv;
-		this.#tine = tine < 1e-9 ? 0 : tine;
+		this.#frame = frame;
+		this.#wet = w;
+		this.#gain = gain;
+		this.#level = level;
+		this.#rise = rise;
+		// far below hearing: stop before the decay reaches denormal numbers
+		this.#fall = fall < 1e-9 ? 0 : fall;
 	}
 }
 
