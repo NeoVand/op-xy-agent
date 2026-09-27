@@ -168,7 +168,7 @@ describe('OpxySim: navigation', () => {
 		expect((sim.frame as { title: string }).title).toContain('tape');
 		expect(sim.leds['track.6']).toBe('red');
 		sim.press('key.arrange');
-		expect(sim.frame).toMatchObject({ page: 'text' });
+		expect(sim.frame).toMatchObject({ page: 'arrange' });
 	});
 });
 
