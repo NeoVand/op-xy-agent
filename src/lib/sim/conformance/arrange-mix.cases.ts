@@ -1039,7 +1039,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect(page(d, 'song').loop).toBe(false);
 		});
 
-		it('picks one of 14 songs with shift + a white key, each with its own order', async () => {
+		it('picks one of 14 songs with shift + a white key, each its own (the workflow chapter’s nine is older)', async () => {
 			const d = await start();
 			await d.click('key.arrange');
 			await emptySong(d);
@@ -1511,6 +1511,11 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			});
 			expect(d.state.aux[7].mix.muted).toBe(true);
 			expect(d.state.tracks[7].mix.muted).toBe(false);
+			await d.click(track(3));
+			await d.push(4); // and the white encoder mutes the chosen auxiliary track
+			await d.withShift(async () => {
+				expect(tracks(d)).toBe('rr.rrrr.');
+			});
 		});
 
 		it('mutes the chosen track with a push of the white encoder', async () => {
@@ -1532,6 +1537,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect(page(d, 'mix').strips[0].meter).toBeGreaterThan(0);
 			await d.push(4);
 			await run(d, 2);
+			// ours: the bar drops at once (a note already sounding rings out in the sound)
 			expect(page(d, 'mix').strips[0].meter).toBe(0);
 			expect(d.led(step(9))).toBe('white'); // the sequence is all there
 			await d.push(4);
@@ -1691,6 +1697,18 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			const saturator = page(d, 'mix-saturator');
 			expect(saturator.tone).toBeLessThan(0);
 			expect(saturator.mix).toBeCloseTo(45 / 99, 9);
+		});
+
+		it('gives the encoders’ pushes nothing to do here or on M4 (ours: the guide names none)', async () => {
+			const d = await start();
+			await d.clicks('key.mix', 'key.m3');
+			await d.turn(1, 10);
+			for (const e of [1, 2, 3, 4]) await d.push(e);
+			expect(values(d)).toEqual(['30', '20', '00', '00']);
+			await d.click('key.m4');
+			await d.turn(3, 10);
+			for (const e of [1, 2, 3, 4]) await d.push(e);
+			expect(values(d)).toEqual(['50', '50', '20', '50']);
 		});
 	});
 

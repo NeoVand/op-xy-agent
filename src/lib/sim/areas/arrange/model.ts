@@ -6,7 +6,10 @@
  *
  * Tracks are numbered as a scene addresses them: 0–7 the instrument tracks, 8–15 the auxiliary
  * tracks. Which pattern a track plays is its `sequence.current`; everything that changes it goes
- * through {@link playPattern}, so a pattern's sound travels with it.
+ * through {@link playPattern}, so a pattern's sound travels with it. Patterns come and go here, so
+ * what other parts keep per pattern follows them here too: the scenes, sound link's source, and
+ * the brain's settings (the auxiliary area's list, OS 1.0.29). How long a scene lasts is the
+ * project's setting, on the system area's settings page.
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import { clamp, type SimState, type TrackState } from '../../params';
