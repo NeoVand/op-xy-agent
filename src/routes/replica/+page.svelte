@@ -1,9 +1,12 @@
 <!--
 Dev page for the replica (M2): the replica large, plus a bench to show key combos with
-`animate()`, drive LEDs, the screen and the level meter, and watch the outbound events.
-Nothing here talks to a MIDI device.
+`animate()`, drive LEDs, the screen and the level meter, and watch the outbound events. The UI
+simulator (M2.5, `$lib/sim`) listens to the replica and drives its screen and LEDs; in dev a
+card compares a simulated page with TE's guide picture of it. Nothing here talks to a MIDI device.
 -->
 <script lang="ts">
+	import { dev } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { KeyParseError, LED_KEYS, normalizeKeys, type KeyId } from '$lib/core/opxy';
 	import {
@@ -14,6 +17,15 @@ Nothing here talks to a MIDI device.
 		type KeyLedState,
 		type ReplicaEvent
 	} from '$lib/replica';
+	import { setScreenFrameSource } from '$lib/replica/screen';
+	import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+	import { SCENARIOS } from '$lib/sim/scenarios';
+	import { SCREEN_OFFSET_Y, renderFrame } from '$lib/sim/screen';
+	import { untrack } from 'svelte';
+	import type { Attachment } from 'svelte/attachments';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	interface LoggedEvent {
 		readonly n: number;
@@ -50,6 +62,89 @@ Nothing here talks to a MIDI device.
 		onBend: log,
 		screen: ['tempo', '120.0']
 	});
+
+	// ── simulator: replica input in, screen frames and LEDs out
+	const sim = new OpxySim();
+	let simulate = $state(true);
+
+	replica.subscribe((event) => {
+		if (simulate) sim.input(event);
+	});
+
+	setScreenFrameSource({
+		get frame() {
+			return simulate ? sim.frame : null;
+		},
+		get tick() {
+			const t = sim.state.transport;
+			return t.playing ? Math.floor(t.position) : 0;
+		}
+	});
+
+	$effect(() => {
+		if (simulate) replica.setLeds(sim.leds);
+		else replica.clearLeds();
+	});
+
+	// the transport: while playing, time moves the playhead
+	$effect(() => {
+		if (!simulate || !sim.state.transport.playing) return;
+		let last = performance.now();
+		let raf = requestAnimationFrame(function step(now) {
+			sim.advance(now - last);
+			last = now;
+			raf = requestAnimationFrame(step);
+		});
+		return () => cancelAnimationFrame(raf);
+	});
+
+	const status = $derived.by(() => {
+		const s = sim.state;
+		const where = s.overlay ?? `${s.mode} M${s.mode === 'arrange' ? '' : s.pages[s.mode]}`;
+		const track = s.active === 'instrument' ? `T${s.track + 1}` : `aux T${s.auxTrack + 1}`;
+		return `${where} · ${track} ${s.tracks[s.track].engine} · ${s.tempo.bpm} bpm${s.shift ? ' · shift' : ''}${s.transport.playing ? ' · playing' : ''}`;
+	});
+
+	function resetSim() {
+		sim.reset();
+		scenarioId = '';
+	}
+
+	// ── dev: a simulated page beside TE's guide picture of it
+	const initialGuide = untrack(() => data.guide?.id ?? '');
+	let scenarioId = $state(initialGuide);
+	let difference = $state(false);
+	const scenario = $derived(SCENARIOS.find((s) => s.id === scenarioId));
+
+	function applyScenario(id: string) {
+		const next = SCENARIOS.find((s) => s.id === id);
+		if (!next) return;
+		simulate = true;
+		sim.reset();
+		next.setup(sim);
+		// the same page with a query (the dev picture to load); resolve() takes no query string
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		goto(`${resolve('/replica')}?guide=${encodeURIComponent(id)}`, {
+			replaceState: true,
+			noScroll: true,
+			keepFocus: true
+		});
+	}
+
+	if (initialGuide) SCENARIOS.find((s) => s.id === initialGuide)?.setup(sim);
+
+	/** Our render at the guide pictures' scale: 480 × 222 (TE's 220 rows centred), doubled. */
+	const ours: Attachment<HTMLCanvasElement> = (canvas) => {
+		const ctx = canvas.getContext('2d');
+		$effect(() => {
+			if (!ctx) return;
+			ctx.setTransform(2, 0, 0, 2, 0, 0);
+			ctx.fillStyle = '#000000';
+			ctx.fillRect(0, 0, 480, 222);
+			ctx.translate(0, SCREEN_OFFSET_Y);
+			renderFrame(ctx, sim.frame);
+		});
+	};
 
 	// ── combos
 	const PRESETS = [
@@ -186,6 +281,71 @@ Nothing here talks to a MIDI device.
 	</section>
 
 	<section class="controls">
+		<div class="card">
+			<h2>simulator</h2>
+			<p class="hint mono" aria-live="polite">{simulate ? status : 'off: the screen shows text'}</p>
+			<div class="chips">
+				<button
+					class="chip"
+					type="button"
+					aria-pressed={simulate}
+					onclick={() => (simulate = !simulate)}
+				>
+					drive screen + LEDs
+				</button>
+				<button class="chip" type="button" onclick={resetSim}>new project</button>
+				<button class="chip" type="button" onclick={() => sim.press('key.play')}>
+					{sim.state.transport.playing ? 'pause' : 'play'}
+				</button>
+			</div>
+			<p class="hint">
+				Press keys and turn encoders on the replica: mode keys, M1–M4, T1–T8, shift layers, tempo /
+				project / com. The LED buttons below are overwritten while the simulator drives.
+			</p>
+		</div>
+
+		{#if dev}
+			<div class="card card--compare">
+				<h2>screen vs guide art <span class="count">dev</span></h2>
+				<div class="row">
+					<select
+						class="field"
+						bind:value={scenarioId}
+						onchange={() => applyScenario(scenarioId)}
+						aria-label="guide picture"
+					>
+						<option value="" disabled>choose a guide picture…</option>
+						{#each SCENARIOS as s (s.id)}
+							<option value={s.id}>{s.title}</option>
+						{/each}
+					</select>
+					<label class="row check">
+						<input type="checkbox" bind:checked={difference} />
+						<span>difference</span>
+					</label>
+				</div>
+				<div class="compare" class:compare--difference={difference}>
+					<figure>
+						<canvas width="960" height="444" {@attach ours}></canvas>
+						<figcaption>ours (live)</figcaption>
+					</figure>
+					<figure>
+						{#if data.guide?.src && data.guide.id === scenarioId}
+							<img src={data.guide.src} alt="TE's guide picture of {scenario?.title}" />
+						{:else if scenarioId}
+							<p class="hint">
+								No picture: the research input is missing (scripts/fetch-research.sh).
+							</p>
+						{/if}
+						<figcaption>TE's guide</figcaption>
+					</figure>
+				</div>
+				{#if scenario?.note}
+					<p class="hint">{scenario.note}</p>
+				{/if}
+			</div>
+		{/if}
+
 		<div class="card">
 			<h2>show a combo</h2>
 			<form
@@ -360,6 +520,53 @@ Nothing here talks to a MIDI device.
 	/* room for the switch tab and the pitch-bend pad, which sit just outside the body */
 	.stage {
 		padding: clamp(0.5rem, 2vw, 2rem) clamp(0.75rem, 2vw, 2rem) clamp(1.5rem, 3vw, 3rem);
+	}
+
+	.card--compare {
+		grid-column: 1 / -1;
+	}
+
+	.compare {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+		gap: 1rem;
+	}
+
+	.compare figure {
+		display: grid;
+		gap: 0.375rem;
+		margin: 0;
+	}
+
+	.compare canvas,
+	.compare img {
+		display: block;
+		width: 100%;
+		height: auto;
+		border-radius: 0.5rem;
+		background: #000000;
+	}
+
+	.compare figcaption {
+		color: var(--xy-fg-subtle, #96969b);
+		font-size: var(--xy-text-xs, 0.75rem);
+	}
+
+	/* difference: TE's picture over ours; matching pixels go black */
+	.compare--difference {
+		grid-template-columns: 1fr;
+	}
+
+	.compare--difference figure {
+		grid-area: 1 / 1;
+	}
+
+	.compare--difference figure + figure img {
+		mix-blend-mode: difference;
+	}
+
+	.compare--difference figcaption {
+		display: none;
 	}
 
 	.controls {

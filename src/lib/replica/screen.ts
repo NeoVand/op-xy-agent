@@ -1,8 +1,35 @@
 /**
- * Placeholder renderer for the replica's 480 × 222 display: a small pixel font and a layout of a
- * title plus one big value ("tempo" / "120.0"). Pure drawing onto any canvas-like context, in
- * logical pixels; the real page renderers (§3 of docs/research/50-hardware-ui.md) replace it later.
+ * The replica's 480 × 222 display, two ways. With a simulator attached (`setScreenFrameSource`, or a
+ * `frame` prop on Screen) it shows the simulator's frames, drawn by `$lib/sim/screen` the way TE's
+ * guide art shows each page. Without one it falls back to the placeholder text renderer here: a
+ * small pixel font and a layout of a title plus one big value ("tempo" / "120.0"). Both are pure
+ * drawing onto any canvas-like context, in logical pixels.
  */
+import { getContext, hasContext, setContext } from 'svelte';
+import type { ScreenFrame } from '$lib/sim/screen/frame';
+
+/** A live source of simulator frames for every Screen inside a component (read reactively). */
+export interface ScreenFrameSource {
+	/** The frame to draw, or null for the text lines. */
+	readonly frame: ScreenFrame | null;
+	/** Animation step for pages that move on their own (dissolve's noise field). */
+	readonly tick?: number;
+}
+
+const FRAME_SOURCE = Symbol('opxy.screen.frames');
+
+/**
+ * Makes every Screen rendered inside the calling component draw frames from `source`, e.g. a
+ * simulator's `{ get frame() { return sim.frame; } }`. Call during component initialisation.
+ */
+export function setScreenFrameSource(source: ScreenFrameSource): ScreenFrameSource {
+	return setContext(FRAME_SOURCE, source);
+}
+
+/** The frame source an enclosing component set, if any. Call during component initialisation. */
+export function getScreenFrameSource(): ScreenFrameSource | undefined {
+	return hasContext(FRAME_SOURCE) ? getContext<ScreenFrameSource>(FRAME_SOURCE) : undefined;
+}
 
 /** The part of CanvasRenderingContext2D the renderer uses (a fake one works in tests). */
 export interface ScreenContext {

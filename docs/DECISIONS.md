@@ -111,3 +111,15 @@ consequences. Superseded entries stay, marked as such.
   procedures. When a device is connected the simulator syncs what the device reports (tempo, play
   state, what the app itself sent); it cannot mirror the real screen or encoder moves, which the
   OP-XY does not transmit. New work item "M2.5 screen & UI simulator" (`research/55-screen.md`).
+
+## D11 — 2026-09-26 — Ship the screen glyphs traced from TE's guide art
+
+- **Context:** the screen simulator (D10) renders text with glyph outlines extracted from TE's guide
+  screen illustrations (`scripts/extract-screen-font.mjs` → `knowledge/opxy/screen-font.json`, 63
+  glyphs). They appear to be Linotype's Univers, which TE licenses, so publishing them in the public MIT
+  repo could count as redistributing a commercial font.
+- **Decision (owner):** ship the traced glyphs for the most faithful screen (pages match TE's art within
+  about 1% of pixels). Credited in `NOTICE.md`, with a commitment to swap in an open look-alike if a
+  rights holder objects. The app's own UI text stays on open fonts (Work Sans, Red Hat Mono).
+- **Consequences:** keep the font pipeline swappable (one module, `src/lib/sim/screen/font.ts`, reads the
+  glyph data), so a replacement face needs only a new data file.

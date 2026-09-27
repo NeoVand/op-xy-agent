@@ -1,0 +1,110 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`frames and formats > builds stable frames for a new project (snapshot) 1`] = `
+{
+  "com": {
+    "advertising": false,
+    "charging": false,
+    "multiOut": "midi",
+    "page": "com",
+  },
+  "drum": {
+    "end": 1,
+    "fade": 0,
+    "gain": 0.6,
+    "key": "F3",
+    "page": "drum",
+    "pan": 0,
+    "playMode": "oneshot",
+    "reverse": false,
+    "seed": 1,
+    "shift": false,
+    "start": 0,
+    "tune": "0.00",
+  },
+  "envelope": {
+    "amp": {
+      "attack": 0,
+      "decay": 1,
+      "release": 0,
+      "sustain": 0.7676767676767676,
+    },
+    "filter": {
+      "attack": 1,
+      "decay": 1,
+      "release": 0.8888888888888888,
+      "sustain": 0.41414141414141414,
+    },
+    "filterDepth": 0,
+    "page": "envelope",
+    "selected": "amp",
+  },
+  "filter": {
+    "cutoff": 1,
+    "envAmount": 0,
+    "keyTracking": 0,
+    "page": "filter",
+    "resonance": 0,
+    "type": "svf",
+  },
+  "lfo": {
+    "amount": 0,
+    "destination": {
+      "free": false,
+      "label": "syn",
+    },
+    "fourth": "shape",
+    "page": "lfo",
+    "parameter": 0,
+    "source": "G",
+    "sourceAudio": true,
+    "speed": {
+      "label": "4",
+      "position": 0.02702702702702703,
+      "synced": true,
+    },
+    "type": "value",
+    "volume": 0,
+  },
+  "prism": {
+    "engine": "prism",
+    "header": [
+      {
+        "label": "shape",
+        "value": "80",
+      },
+      {
+        "label": "ratio",
+        "value": "80",
+      },
+      {
+        "label": "detune",
+        "value": "80",
+      },
+      {
+        "label": "stereo",
+        "value": "80",
+      },
+    ],
+    "page": "synth",
+    "params": [
+      0.8080808080808081,
+      0.8080808080808081,
+      0.8080808080808081,
+      0.8080808080808081,
+    ],
+  },
+  "tempo": {
+    "beat": 0,
+    "bpm": "120",
+    "groove": "SH",
+    "metronome": {
+      "level": 1,
+      "on": false,
+    },
+    "page": "tempo",
+    "pendulum": 1,
+    "swing": 0,
+  },
+}
+`;
