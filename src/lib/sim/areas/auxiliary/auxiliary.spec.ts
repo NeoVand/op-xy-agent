@@ -282,9 +282,10 @@ describe('punch-in shortcut (shift + key on instrument tracks)', () => {
 	it('writes the effect to the punch-in track while recording', () => {
 		const sim = new OpxySim({ now: () => 0 });
 		sim.press('track.3');
-		sim.press('key.record');
 		sim.press('key.play');
 		sim.advance((60000 / 120 / 4) * 2);
+		// record + play during playback latches live recording (manual: sequencer/live-recording)
+		sim.combo('key.record', 'key.play');
 		sim.combo('key.shift', 'keyboard.c4');
 		const steps = currentPattern(sim.state.aux[1].sequence).steps;
 		expect(steps[2].notes.map((n) => n.note)).toEqual([60]);

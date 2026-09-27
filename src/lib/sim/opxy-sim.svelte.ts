@@ -39,12 +39,10 @@ import {
 } from './params';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
 import type { ScreenFrame } from './screen/frame';
-import { STEPS_PER_BAR, currentPattern, toggleNote, toggleStep } from './sequencer';
+import { STEPS_PER_BAR } from './sequencer';
+import { keyboardPress, stepPress, stepRelease } from './areas/sequencer/steps';
 
 export type { SimInput } from './input';
-
-/** The first keyboard key's note (F3). */
-const KEYBOARD_BASE = 53;
 
 /** Options for {@link OpxySim}. */
 export interface OpxySimOptions {
@@ -80,12 +78,6 @@ export class OpxySim {
 	/** Everything the simulator knows (reactive; mutate only through {@link input}). */
 	state = $state<SimState>(defaultState());
 	readonly #now: () => number;
-	/**
-	 * Steps with notes being held, by pattern index: cleared on release unless something was edited
-	 * while they were down (a key toggled, another step pressed). Bookkeeping, never rendered.
-	 */
-	// eslint-disable-next-line svelte/prefer-svelte-reactivity
-	readonly #pendingClear = new Map<number, boolean>();
 
 	constructor(options: OpxySimOptions = {}) {
 		this.#now = options.now ?? (() => performance.now());
@@ -413,72 +405,32 @@ export class OpxySim {
 		s.sub = s.shift && s.mode !== 'mix' ? `preset browser · T${index + 1}` : null;
 	}
 
-	/** The sequence the step keys edit (the active track of the addressed set). */
-	#sequence() {
-		const s = this.state;
-		return this.#bank() === 'instrument' ? s.tracks[s.track].sequence : s.aux[s.auxTrack].sequence;
-	}
-
-	/** Notes of the keyboard keys held now. */
-	#heldNotes(): number[] {
-		return this.state.held.flatMap((id) => {
-			const i = (KEYBOARD_NOTE_NAMES as readonly string[]).indexOf(id.slice('keyboard.'.length));
-			return id.startsWith('keyboard.') && i >= 0 ? [KEYBOARD_BASE + i] : [];
-		});
-	}
-
 	/**
-	 * Step entry (manual: sequencer/step-entry): an empty step stores the chord held on the keyboard,
-	 * else the last note played; a step with notes is cleared.
+	 * Step entry and editing (manual: sequencer/step-entry, extend-notes, copy-step): the step keys'
+	 * rules live with the sequencer area (`areas/sequencer/steps.ts`), which also takes the gestures
+	 * made with modifiers held before they get here.
 	 */
 	#stepKey(index: number): void {
 		if (index < 0 || index >= STEPS_PER_BAR) return;
-		const sequence = this.#sequence();
-		const pattern = currentPattern(sequence);
-		const at = sequence.page * STEPS_PER_BAR + index;
-		if (at >= pattern.length) return;
-		// another step pressed while one is held is an edit of the held one (extend, copy…)
-		for (const held of this.#pendingClear.keys()) this.#pendingClear.set(held, true);
-		if (pattern.steps[at].notes.length > 0) {
-			// a tap clears the step; a hold (to edit its notes) must not, so wait for the release
-			this.#pendingClear.set(at, false);
-			return;
-		}
-		const held = this.#heldNotes();
-		toggleStep(pattern, at, held.length > 0 ? held : [sequence.lastNote]);
+		stepPress(this.#context(), index);
 	}
 
-	/** A step came up: a tap on a step with notes clears it. */
+	/** A step came up: a tap on a step with notes clears it, a hold copies it (`steps.ts`). */
 	#stepReleased(index: number): void {
-		const sequence = this.#sequence();
-		const at = sequence.page * STEPS_PER_BAR + index;
-		const edited = this.#pendingClear.get(at);
-		this.#pendingClear.delete(at);
-		if (edited === false) currentPattern(sequence).steps[at].notes = [];
+		if (index < 0 || index >= STEPS_PER_BAR) return;
+		stepRelease(this.#context(), index);
 	}
 
 	/**
-	 * A keyboard key: remembered as the last note played; on sampler tracks it selects the key to
-	 * edit; with steps held it toggles its note on each of them (manual: step entry).
+	 * A keyboard key: with steps held it toggles its note on them, else it is the last note played
+	 * (`steps.ts`); on sampler tracks it also selects the key to edit.
 	 */
 	#keyboardKey(name: string): void {
 		const index = (KEYBOARD_NOTE_NAMES as readonly string[]).indexOf(name);
 		if (index < 0) return;
 		const s = this.state;
 		const t = this.track;
-		const note = KEYBOARD_BASE + index;
-		const sequence = this.#sequence();
-		const pattern = currentPattern(sequence);
-		const heldSteps = s.held.flatMap((id) => {
-			const m = /^step\.(\d+)$/.exec(id);
-			return m ? [sequence.page * STEPS_PER_BAR + Number(m[1]) - 1] : [];
-		});
-		for (const at of heldSteps) {
-			if (at >= pattern.length) continue;
-			toggleNote(pattern, at, note);
-			if (this.#pendingClear.has(at)) this.#pendingClear.set(at, true);
-		}
-		if (heldSteps.length === 0) sequence.lastNote = note;
+		keyboardPress(s, index);
 		if (s.mode === 'instrument' && s.overlay === null && isSampler(t.engine)) t.drumKey = index;
 	}
 
