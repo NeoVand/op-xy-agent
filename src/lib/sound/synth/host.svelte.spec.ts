@@ -89,4 +89,27 @@ describe('the synth core in its worklet', () => {
 		});
 		expect(rms(buffer, 0.05, 0.25)).toBeGreaterThan(0.01);
 	});
+
+	it('runs 24 voices faster than real time', async () => {
+		const seconds = 4;
+		const started = performance.now();
+		const { buffer } = await render(seconds, (engine) => {
+			for (let v = 0; v < 24; v++) {
+				engine.noteOn({
+					track: v % 8,
+					settings: prism(),
+					note: 40 + v,
+					velocity: 90,
+					time: 0.05,
+					duration: seconds - 0.5
+				});
+			}
+		});
+		const wall = (performance.now() - started) / 1000;
+		// the render's own share: the helper waits 0.1 s around it
+		const factor = seconds / Math.max(0.01, wall - 0.1);
+		console.log(`24 voices: ${factor.toFixed(1)}× real time`);
+		expect(rms(buffer, 1, 3)).toBeGreaterThan(0.05);
+		expect(factor).toBeGreaterThan(1.5);
+	});
 });
