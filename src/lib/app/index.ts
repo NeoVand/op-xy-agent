@@ -45,6 +45,8 @@ export {
 } from './sound.svelte';
 export {
 	SimPersistence,
+	getSimPersistence,
+	setSimPersistence,
 	applySaved,
 	captureSim,
 	createIdbSimStore,

@@ -13,6 +13,7 @@
  *
  * Storage is IndexedDB (a database of its own, `opxy-sim`), or memory where IndexedDB is missing.
  */
+import { createContext } from 'svelte';
 import type { ReplicaState } from '$lib/replica';
 import { restore, snapshot } from '$lib/sim/areas/system/projects';
 import type { SystemState } from '$lib/sim/areas/system/state';
@@ -336,3 +337,6 @@ export class SimPersistence {
 		this.#pending = this.#timers.setTimeout(() => void this.flush(), this.#delay);
 	}
 }
+
+/** Typed context for the app's {@link SimPersistence}: `setSimPersistence` in the root layout. */
+export const [getSimPersistence, setSimPersistence] = createContext<SimPersistence>();

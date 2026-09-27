@@ -9,6 +9,9 @@
  * MIDI start/stop run the transport, the device echoes transport only with COM → clock "both",
  * and it never reports tempo edits, mutes or track selection made by hand.
  *
+ * With no OP-XY connected, the live tools act on the virtual OP-XY on screen instead (the replica's
+ * simulator, which the browser plays; `env.virtual`), and say so in their result.
+ *
  * Nothing dangerous exists as a tool: no project load (CC86), no remote keys, no files, no SysEx.
  */
 import { z } from 'zod';
@@ -25,6 +28,7 @@ import {
 import type { DeviceStack } from '$lib/device';
 import { DeviceError } from '$lib/device/errors';
 import { deviceSnapshot } from '../device-state';
+import type { VirtualOpxy } from '../virtual-opxy';
 import {
 	defineTool,
 	errorResult,
@@ -58,9 +62,28 @@ function connected(env: AgentEnvironment): DeviceStack | ToolResult {
 	return stack;
 }
 
-function isResult(value: DeviceStack | ToolResult): value is ToolResult {
+function isResult<T extends object>(value: T | ToolResult): value is ToolResult {
 	return 'summary' in value;
 }
+
+/** Where a live tool acts: the connected OP-XY, else the virtual one on screen. */
+type Target = { readonly device: DeviceStack } | { readonly virtual: VirtualOpxy };
+
+function whereTo(env: AgentEnvironment): Target | ToolResult {
+	const stack = env.device;
+	if (stack && stack.session.phase === 'ready') return { device: stack };
+	if (env.virtual) return { virtual: env.virtual };
+	return errorResult(NOT_CONNECTED, 'no op-xy connected');
+}
+
+/** The virtual OP-XY when no device is connected, else null (for snapshots). */
+function virtualTarget(env: AgentEnvironment): VirtualOpxy | null {
+	const stack = env.device;
+	return stack && stack.session.phase === 'ready' ? null : (env.virtual ?? null);
+}
+
+const ON_VIRTUAL =
+	'No OP-XY is connected, so this happened on the virtual OP-XY on screen (the browser plays it).';
 
 /** Sends one message through the transport; a refusal becomes a readable error. */
 function send(stack: DeviceStack, ctx: ToolContext, message: MidiMessage): void {
@@ -71,6 +94,12 @@ function send(stack: DeviceStack, ctx: ToolContext, message: MidiMessage): void 
 function sendError(error: unknown): ToolResult {
 	const detail = error instanceof Error ? error.message : String(error);
 	return errorResult(`The app refused or failed to send this: ${detail}`, 'not sent');
+}
+
+/** A tempo as the virtual OP-XY keeps it (tenths, 40–220). */
+function virtualTempo(bpm: number): number {
+	const clamped = Math.min(CC80_TEMPO_RANGE.max, Math.max(CC80_TEMPO_RANGE.min, bpm));
+	return Math.round(clamped * 10) / 10;
 }
 
 /** Rounds a tempo to what CC80 can express (2-BPM steps, 40–220). */
@@ -90,7 +119,7 @@ export const deviceStatusTool = defineTool({
 	label: 'device status',
 	kind: 'read',
 	description:
-		'Read what the app knows about the OP-XY right now: whether it is connected, firmware, play state and who reported it, whether the device sends clock (and the measured tempo), and the sent-state cache (tempo, selected track and mutes as this app last sent them; the user may have changed them by hand). Sends nothing.',
+		'Read what the app knows about the OP-XY right now: whether it is connected, firmware, play state and who reported it, whether the device sends clock (and the measured tempo), and the sent-state cache (tempo, selected track and mutes as this app last sent them; the user may have changed them by hand). Also the virtual OP-XY on screen: tempo, transport, tracks (engine, patterns, notes, mutes), scenes and song, and whether the browser sound is on. Sends nothing.',
 	input: z.object({}),
 	async run(_input, ctx) {
 		const s = deviceSnapshot(ctx.env.device);
@@ -108,6 +137,7 @@ export const deviceStatusTool = defineTool({
 			transport: { playState: s.playState, reportedBy: s.playSource },
 			clock: { deviceSendsClock: s.clockOut, measuredBpm: s.measuredBpm },
 			sentState: { tempoBpm: s.tempoSent, selectedTrack: s.selectedTrack, mutes: s.mutes },
+			virtual: ctx.env.virtual?.status() ?? null,
 			notes: [
 				'sentState is what this app last sent; the OP-XY never reports tempo edits, mutes or track selection made by hand.',
 				s.clockOut
@@ -117,7 +147,9 @@ export const deviceStatusTool = defineTool({
 		};
 		const summary = s.connected
 			? `connected, os ${s.firmware ?? 'unknown'}, ${s.playState}`
-			: 'no op-xy connected';
+			: ctx.env.virtual
+				? 'no op-xy connected: the virtual one plays'
+				: 'no op-xy connected';
 		return jsonResult(data, summary);
 	}
 });
@@ -136,11 +168,14 @@ export const transportTool = defineTool({
 	approval: 'auto',
 	device: true,
 	description:
-		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top.',
+		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the virtual OP-XY on screen (its song from the first scene, when the song has more than one entry).',
 	input: z.object({
 		action: z.enum(['play', 'stop']).describe('play starts the sequencer, stop stops it')
 	}),
 	snapshot(_input, env): TransportSnapshot {
+		const virtual = virtualTarget(env);
+		if (virtual)
+			return { playState: virtual.status().playing ? 'playing' : 'stopped', reported: true };
 		const s = deviceSnapshot(env.device);
 		return {
 			playState: s.playState,
@@ -164,8 +199,26 @@ export const transportTool = defineTool({
 		};
 	},
 	async run(input, ctx) {
-		const stack = connected(ctx.env);
-		if (isResult(stack)) return stack;
+		const where = whereTo(ctx.env);
+		if (isResult(where)) return where;
+		if ('virtual' in where) {
+			const virtual = where.virtual;
+			if (input.action === 'play' && virtual.status().playing) {
+				return jsonResult(
+					{ target: 'virtual', playState: 'playing', note: 'Already playing.' },
+					'already playing',
+					{ applied: false }
+				);
+			}
+			virtual.transport(input.action);
+			const playState = virtual.status().playing ? 'playing' : 'stopped';
+			return jsonResult(
+				{ target: 'virtual', playState, note: ON_VIRTUAL },
+				`${playState} on the virtual op-xy`,
+				{ applied: true, after: playState }
+			);
+		}
+		const stack = where.device;
 		const { mirror } = stack;
 		const reported = mirror.playSource === 'device' || mirror.playSource === 'echo';
 		if (input.action === 'play' && mirror.playState === 'playing' && reported) {
@@ -209,7 +262,7 @@ export const transportTool = defineTool({
 
 interface TempoSnapshot {
 	readonly bpm: number | null;
-	readonly from: 'measured' | 'sent' | null;
+	readonly from: 'measured' | 'sent' | 'virtual' | null;
 }
 
 export const setTempoTool = defineTool({
@@ -218,18 +271,20 @@ export const setTempoTool = defineTool({
 	kind: 'mutate',
 	device: true,
 	description:
-		'Set the project tempo on the OP-XY (CC80). Changes the project (autosave keeps it), so the user approves it in the app. The device steps in 2 BPM: odd tempos round to the nearest even BPM, and the result says which tempo was sent.',
+		'Set the project tempo on the OP-XY (CC80). Changes the project (autosave keeps it), so the user approves it in the app. The device steps in 2 BPM: odd tempos round to the nearest even BPM, and the result says which tempo was sent. With no OP-XY connected it sets the virtual OP-XY on screen, to the tenth of a BPM.',
 	input: z.object({
 		bpm: z.number().min(CC80_TEMPO_RANGE.min).max(CC80_TEMPO_RANGE.max).describe('Tempo in BPM')
 	}),
 	snapshot(_input, env): TempoSnapshot {
+		const virtual = virtualTarget(env);
+		if (virtual) return { bpm: virtual.status().bpm, from: 'virtual' };
 		const s = deviceSnapshot(env.device);
 		if (s.measuredBpm !== null) return { bpm: s.measuredBpm, from: 'measured' };
 		if (s.tempoSent !== null) return { bpm: s.tempoSent, from: 'sent' };
 		return { bpm: null, from: null };
 	},
 	preview(input, before) {
-		const target = deviceTempo(input.bpm);
+		const target = before.from === 'virtual' ? virtualTempo(input.bpm) : deviceTempo(input.bpm);
 		return {
 			label: `tempo ${before.bpm !== null ? `${formatBpm(before.bpm)} → ` : ''}${target} bpm`,
 			before:
@@ -245,7 +300,7 @@ export const setTempoTool = defineTool({
 	},
 	inverse(_input, before) {
 		if (before.bpm === null) return null;
-		const back = deviceTempo(before.bpm);
+		const back = before.from === 'virtual' ? virtualTempo(before.bpm) : deviceTempo(before.bpm);
 		const exact = Math.abs(back - before.bpm) < 0.5;
 		return {
 			tool: 'set_tempo',
@@ -256,8 +311,19 @@ export const setTempoTool = defineTool({
 		};
 	},
 	async run(input, ctx) {
-		const stack = connected(ctx.env);
-		if (isResult(stack)) return stack;
+		const where = whereTo(ctx.env);
+		if (isResult(where)) return where;
+		if ('virtual' in where) {
+			const previous = where.virtual.status().bpm;
+			where.virtual.setTempo(input.bpm);
+			const bpm = where.virtual.status().bpm;
+			return jsonResult(
+				{ target: 'virtual', tempoBpm: bpm, previousBpm: previous, note: ON_VIRTUAL },
+				`tempo ${formatBpm(bpm)} bpm on the virtual op-xy`,
+				{ applied: true, after: bpm }
+			);
+		}
+		const stack = where.device;
 		const target = resolveCc({ param: 'global.tempo' });
 		const value = encodeCcValue(target, input.bpm);
 		const bpm = ccToTempo(value);
@@ -302,11 +368,20 @@ export const selectTrackTool = defineTool({
 	kind: 'ui',
 	device: true,
 	description:
-		'Select a track on the OP-XY (CC102), the way pressing its track key does: 1–8 instrument tracks, 9–16 auxiliary tracks. Changes what the device shows, not the project. The device does not report selections made by hand.',
+		'Select a track on the OP-XY (CC102), the way pressing its track key does: 1–8 instrument tracks, 9–16 auxiliary tracks. Changes what the device shows, not the project. The device does not report selections made by hand. With no OP-XY connected it selects the track on the virtual OP-XY on screen.',
 	input: z.object({ track: z.int().min(1).max(16).describe('Track number') }),
 	async run(input, ctx) {
-		const stack = connected(ctx.env);
-		if (isResult(stack)) return stack;
+		const where = whereTo(ctx.env);
+		if (isResult(where)) return where;
+		if ('virtual' in where) {
+			where.virtual.selectTrack(input.track);
+			const track = getTrack(input.track);
+			return jsonResult(
+				{ target: 'virtual', selected: input.track, name: track.name, note: ON_VIRTUAL },
+				`${track.name} selected on the virtual op-xy`
+			);
+		}
+		const stack = where.device;
 		const target = resolveCc({ param: 'track.select' });
 		const value = encodeCcValue(target, input.track);
 		const track = getTrack(input.track);
@@ -344,12 +419,14 @@ export const muteTrackTool = defineTool({
 	kind: 'mutate',
 	device: true,
 	description:
-		"Mute or unmute one track on the OP-XY (CC9 on the track's channel). Changes the project, so the user approves it in the app. Mutes stop new notes; tails keep ringing. The device never reports mutes made by hand, so the previous state is known only if this app set it.",
+		"Mute or unmute one track on the OP-XY (CC9 on the track's channel). Changes the project, so the user approves it in the app. Mutes stop new notes; tails keep ringing. The device never reports mutes made by hand, so the previous state is known only if this app set it. With no OP-XY connected it mutes the track on the virtual OP-XY on screen.",
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track number'),
 		muted: z.boolean().describe('true mutes, false unmutes')
 	}),
 	snapshot(input, env): MuteSnapshot {
+		const virtual = virtualTarget(env);
+		if (virtual) return { muted: virtual.status().tracks[input.track - 1]?.muted ?? null };
 		const muted = env.device?.mirror.mutes[input.track - 1] ?? null;
 		return { muted };
 	},
@@ -373,8 +450,18 @@ export const muteTrackTool = defineTool({
 		};
 	},
 	async run(input, ctx) {
-		const stack = connected(ctx.env);
-		if (isResult(stack)) return stack;
+		const where = whereTo(ctx.env);
+		if (isResult(where)) return where;
+		if ('virtual' in where) {
+			where.virtual.setMuted(input.track, input.muted);
+			const name = getTrack(input.track).name;
+			return jsonResult(
+				{ target: 'virtual', track: input.track, muted: input.muted, note: ON_VIRTUAL },
+				`${name} ${input.muted ? 'muted' : 'unmuted'} on the virtual op-xy`,
+				{ applied: true, after: input.muted }
+			);
+		}
+		const stack = where.device;
 		const target = resolveCc({ track: input.track, param: 'mute' });
 		const value = encodeCcValue(target, input.muted);
 		try {
@@ -434,7 +521,7 @@ export const playNotesTool = defineTool({
 	kind: 'mutate',
 	approval: 'auto',
 	device: true,
-	description: `Play a short preview on one instrument track of the OP-XY: a note, a chord or a little melody, paced in real time and always ending with note-offs. At most ${MAX_PREVIEW_SECONDS} seconds and 64 steps. On drum tracks (1 and 2 in a fresh project) the drum sounds sit on notes 53–76. Audible only: it records nothing unless the user is recording.`,
+	description: `Play a short preview on one instrument track of the OP-XY: a note, a chord or a little melody, paced in real time and always ending with note-offs. At most ${MAX_PREVIEW_SECONDS} seconds and 64 steps. On drum tracks (1 and 2 in a fresh project) the drum sounds sit on notes 53–76. Audible only: it records nothing unless the user is recording. With no OP-XY connected the browser plays it with the virtual OP-XY's sound for that track (the app's sound switch must be on).`,
 	input: z.object({
 		track: z.int().min(1).max(8).describe('Instrument track 1–8 (plays on its MIDI channel)'),
 		bpm: z
@@ -446,10 +533,14 @@ export const playNotesTool = defineTool({
 		steps: z.array(stepSchema).min(1).max(64).describe('Steps in order')
 	}),
 	async run(input, ctx) {
-		const stack = connected(ctx.env);
-		if (isResult(stack)) return stack;
-		const snapshot = deviceSnapshot(stack);
-		const bpm = input.bpm ?? snapshot.measuredBpm ?? snapshot.tempoSent ?? 120;
+		const where = whereTo(ctx.env);
+		if (isResult(where)) return where;
+		const virtual = 'virtual' in where ? where.virtual : null;
+		const stack = 'device' in where ? where.device : null;
+		const snapshot = stack ? deviceSnapshot(stack) : null;
+		const bpm =
+			input.bpm ??
+			(virtual ? virtual.status().bpm : (snapshot?.measuredBpm ?? snapshot?.tempoSent ?? 120));
 		const beatMs = 60_000 / bpm;
 		const steps = input.steps.map((step) => ({ ...step, ...resolveNotes(step.notes) }));
 		const invalid = steps.flatMap((s) => s.invalid);
@@ -466,6 +557,39 @@ export const playNotesTool = defineTool({
 				'preview too long'
 			);
 		}
+		if (virtual) {
+			if (input.track > 8) {
+				return errorResult('Previews play on instrument tracks 1–8.', 'not an instrument track');
+			}
+			let played = 0;
+			for (const step of steps) {
+				const lengthMs = step.beats * beatMs;
+				const gateMs = Math.max(15, Math.min(lengthMs - 10, lengthMs * 0.9));
+				for (const note of step.notes) {
+					if (!virtual.preview(input.track, note, step.velocity ?? 100, gateMs / 1000)) {
+						return errorResult(
+							"No OP-XY is connected and the app's sound is off, so nothing played. Ask the user to switch on sound under the replica (or connect the OP-XY).",
+							'sound is off'
+						);
+					}
+				}
+				await sleep(lengthMs, ctx.env.timers, ctx.signal);
+				played++;
+			}
+			return jsonResult(
+				{
+					target: 'virtual',
+					played,
+					steps: steps.length,
+					track: input.track,
+					bpm: Math.round(bpm * 10) / 10,
+					seconds: Math.round(totalMs / 100) / 10,
+					note: ON_VIRTUAL
+				},
+				`played ${played} step${played === 1 ? '' : 's'} on the virtual op-xy`
+			);
+		}
+		if (!stack) return errorResult(NOT_CONNECTED, 'no op-xy connected');
 		const channel = input.track - 1;
 		const sounding = new Set<number>();
 		const noteOff = (note: number) => {

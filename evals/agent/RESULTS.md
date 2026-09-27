@@ -3,6 +3,21 @@
 Re-run with `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5` (needs `ANTHROPIC_API_KEY`
 in `.env`; never printed). Newest first.
 
+## 2026-09-27 — the virtual OP-XY: programming without a device, conductor claude-opus-5-5
+
+`node evals/agent/virtual.mjs`: no device connected; the agent gets a request in plain words and
+programs the replica's simulator through `write_pattern`, `write_arrangement` and `transport`. We
+check the patterns, scenes and song it left, exactly.
+
+| Case     | Request                                                      | Result | Tools it used                                                              |
+| -------- | ------------------------------------------------------------ | ------ | -------------------------------------------------------------------------- |
+| `beat`   | a house beat on track 1 (kick on quarters, snare on 2 and 4) | pass   | write_pattern → transport                                                  |
+| `chords` | C, Am, F, G on track 4, a bar each, held                     | pass   | write_pattern → transport                                                  |
+| `song`   | two scenes (kick; kick + C2 eighths bass), song 1 1 2 2 loop | pass   | write_todos, device_status, write_pattern ×2, write_arrangement, transport |
+
+$1.07 for the three ($0.75 of it writing the manual cache on the first case), 14–25 s each. Every
+answer said it played on the virtual OP-XY in the browser because no device was connected.
+
 ## 2026-09-27 — files: sheet music and MIDI, conductor claude-opus-5-5
 
 `node evals/agent/files.mjs`: the agent gets a file and "play this on track 3"; the notes it plays on

@@ -23,6 +23,7 @@ import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
 import type { ManualSource } from '../manual-source';
 import type { AgentName, InverseCall, Todo, ToolKind, ToolPreview } from '../types';
+import type { VirtualOpxy } from '../virtual-opxy';
 
 /** `setTimeout` / `clearTimeout`, injectable for tests. */
 export interface AgentTimers {
@@ -45,6 +46,11 @@ export interface AgentEnvironment {
 	readonly replica: ReplicaState | null;
 	/** What the replica's screen shows (the app's simulation of the OP-XY); absent when headless. */
 	readonly screen?: ScreenReader | null;
+	/**
+	 * The virtual OP-XY on screen: live tools fall back to it when no device is connected, and the
+	 * programming tools write to it. Absent when headless.
+	 */
+	readonly virtual?: VirtualOpxy | null;
 	readonly manual: ManualSource;
 	readonly timers: AgentTimers;
 	/** How long device tools wait to see the device confirm a change (e.g. echoed start); 0 = no wait. */

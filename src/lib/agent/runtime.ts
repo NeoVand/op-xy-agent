@@ -4,6 +4,7 @@
  * present.
  */
 import type { AppSimulator } from '$lib/app/simulator.svelte';
+import { createVirtualOpxy, type VirtualSound } from '$lib/app/virtual';
 import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
 import { describeFrame } from '$lib/sim/screen/render';
@@ -19,8 +20,12 @@ export interface BrowserConductorOptions {
 	readonly apiKey: string;
 	readonly device: DeviceStack | null;
 	readonly replica: ReplicaState | null;
-	/** The replica's virtual OP-XY, so the agent can read its screen (read_screen). */
+	/** The replica's virtual OP-XY: its screen (read_screen), and what the agent plays and programs. */
 	readonly simulator?: AppSimulator | null;
+	/** Its sound in the browser (the agent's note previews with no device connected). */
+	readonly sound?: VirtualSound | null;
+	/** Told after every change the agent makes to the virtual OP-XY, so it is saved. */
+	readonly persistence?: { markDirty(): void } | null;
 }
 
 /** read_screen's view of the simulator: the page in words plus where the interface stands. */
@@ -83,6 +88,13 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 		device: options.device,
 		replica: options.replica,
 		screen: options.simulator ? screenReader(options.simulator) : null,
+		virtual: options.simulator
+			? createVirtualOpxy({
+					sim: options.simulator.sim,
+					sound: options.sound ?? null,
+					changed: () => options.persistence?.markDirty()
+				})
+			: null,
 		manual,
 		store: createIdbThreadStore(),
 		preferences: browserPreferences()

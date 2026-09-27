@@ -62,6 +62,7 @@ import {
 	type ToolContext,
 	type ToolRegistry
 } from './tools';
+import type { VirtualOpxy } from './virtual-opxy';
 import type {
 	AgentErrorInfo,
 	AgentEvent,
@@ -88,6 +89,8 @@ export interface ConductorOptions {
 	readonly replica: ReplicaState | null;
 	/** What the replica's screen shows (read_screen); absent when headless. */
 	readonly screen?: ScreenReader | null;
+	/** The virtual OP-XY on screen (programming tools, and live tools with no device); absent when headless. */
+	readonly virtual?: VirtualOpxy | null;
 	readonly manual: ManualSource;
 	readonly store: ThreadStore;
 	/** Remembers the last thread and the chosen model; memory-only when absent. */
@@ -249,6 +252,7 @@ export class Conductor {
 			device: options.device,
 			replica: options.replica,
 			screen: options.screen ?? null,
+			virtual: options.virtual ?? null,
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,

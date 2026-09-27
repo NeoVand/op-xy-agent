@@ -18,7 +18,9 @@ waits for you to ask); production builds drop that code.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { getSimPersistence } from '$lib/app/persistence';
 	import { getAppSimulator } from '$lib/app/simulator.svelte';
+	import { getAppSound } from '$lib/app/sound.svelte';
 	import {
 		ATTACHMENT_ACCEPT,
 		ATTACHMENT_LIMITS,
@@ -68,6 +70,8 @@ waits for you to ask); production builds drop that code.
 	const device: DeviceStack | null = fromContext(getDeviceStack);
 	const replica: ReplicaState | null = fromContext(getReplicaState);
 	const simulator = fromContext(getAppSimulator);
+	const sound = fromContext(getAppSound);
+	const persistence = fromContext(getSimPersistence);
 	const keys = new KeyStore();
 	const uid = $props.id();
 
@@ -213,7 +217,14 @@ waits for you to ask); production builds drop that code.
 			const { createBrowserConductor } = await import('$lib/agent/runtime');
 			conductor?.dispose();
 			conductor = null;
-			const next = await createBrowserConductor({ apiKey, device, replica, simulator });
+			const next = await createBrowserConductor({
+				apiKey,
+				device,
+				replica,
+				simulator,
+				sound,
+				persistence
+			});
 			conductor = next;
 			booting = false;
 			keyStatus = 'checking';

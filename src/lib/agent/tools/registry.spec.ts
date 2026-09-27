@@ -143,7 +143,10 @@ describe('the conductor tool set', () => {
 			show_on_replica: 'ui',
 			read_screen: 'read',
 			write_todos: 'ui',
-			task: 'read'
+			task: 'read',
+			write_pattern: 'mutate',
+			read_pattern: 'read',
+			write_arrangement: 'mutate'
 		});
 	});
 

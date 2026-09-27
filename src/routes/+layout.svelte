@@ -12,7 +12,8 @@
 		SimPersistence,
 		createIdbSimStore,
 		setAppSimulator,
-		setAppSound
+		setAppSound,
+		setSimPersistence
 	} from '$lib/app';
 	import { browserDeviceOptions, createDeviceStack, setDeviceStack } from '$lib/device';
 	import type { SessionPhase } from '$lib/device';
@@ -58,6 +59,7 @@
 		replica,
 		store: createIdbSimStore()
 	});
+	setSimPersistence(persistence);
 
 	const CONNECTING: readonly SessionPhase[] = [
 		'requesting-access',

@@ -68,8 +68,10 @@ interface LiveEvent {
 	readonly key: string;
 	readonly track: number;
 	readonly note: number;
-	/** Seconds after it is played: the later notes of a maestro strum. */
+	/** Seconds after it is played: the later notes of a maestro strum, a preview's end. */
 	readonly delay?: number;
+	/** 1–127 (default: the keyboard's). */
+	readonly velocity?: number;
 }
 
 /** Options for {@link AppSound}. */
@@ -128,6 +130,8 @@ export class AppSound {
 	#tickMs = 25;
 	#timer: unknown = null;
 	#suspendTimer: unknown = null;
+	/** Numbers the agent's preview notes (their keys). */
+	#previews = 0;
 	/** Keyboard keys sounding and the track each plays on (bookkeeping, never rendered). */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	readonly #live = new Map<string, LiveEvent>();
@@ -198,6 +202,20 @@ export class AppSound {
 	/** False when this browser cannot make sound (no Web Audio, or the engine failed to load). */
 	get available(): boolean {
 		return !this.#unavailable;
+	}
+
+	/**
+	 * Sounds one note on instrument track `track` (0–7) for `seconds`: the agent's previews on the
+	 * virtual OP-XY. Plays as soon as the engine is ready; false when sound is off or unavailable, or
+	 * the connected OP-XY makes the sound.
+	 */
+	preview(track: number, note: number, velocity: number, seconds: number): boolean {
+		if (!this.enabled || !this.available || track < 0 || track > 7) return false;
+		const key = `preview.${this.#previews++}`;
+		this.#unlock();
+		this.#send({ kind: 'on', key, track, note, velocity });
+		this.#send({ kind: 'off', key, track, note, delay: Math.max(0.02, seconds) });
+		return true;
 	}
 
 	/** Starts listening. Idempotent; returns `stop`. */
@@ -576,7 +594,7 @@ export class AppSound {
 			track: event.track,
 			settings,
 			note: event.note,
-			velocity: VELOCITY,
+			velocity: event.velocity ?? VELOCITY,
 			time,
 			key: event.key
 		});
