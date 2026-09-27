@@ -52,6 +52,13 @@ font" above). Those shapes appear to come from Linotype's Univers, which TE lice
 by the maintainer's decision ([DECISIONS D11](docs/DECISIONS.md)) and will be replaced with an open
 look-alike if a rights holder objects.
 
+## Test fixtures
+
+`evals/agent/fixtures/*.png` are scores engraved with [Verovio](https://www.verovio.org) (LGPL-3.0,
+used only to render them, not shipped) from our own ABC transcriptions of public-domain melodies
+(Beethoven's _Ode to Joy_, the traditional _Frère Jacques_); the music font glyphs in them are under
+the SIL Open Font License.
+
 ## Facts and data
 
 Device facts come from Teenage Engineering's public guide and firmware release notes (paraphrased in

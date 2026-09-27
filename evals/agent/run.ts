@@ -25,6 +25,7 @@ import { DEVICE_TASKS, type Check, type DeviceTask } from './cases/device';
 import manualCases from './cases/manual.json';
 import { connectFakeDevice, recordingReplica, settle, type FakeDevice } from './fake-device';
 import { judgeAnswer, type Judgement } from './judge';
+import { anthropicKey } from './key';
 
 /** One manual Q&A case (cases/manual.json). */
 interface ManualCase {
@@ -66,28 +67,6 @@ interface AgentRun {
 }
 
 // ─── setup ──────────────────────────────────────────────────────────────────────────────────────
-
-const ROOT = process.cwd();
-
-/** The Anthropic key: $ANTHROPIC_API_KEY or .env, chosen by its prefix. Never printed. */
-function anthropicKey(): string {
-	const fromEnv = process.env.ANTHROPIC_API_KEY?.trim();
-	if (fromEnv?.startsWith('sk-ant-')) return fromEnv;
-	let text = '';
-	try {
-		text = readFileSync(join(ROOT, '.env'), 'utf8');
-	} catch {
-		// no .env
-	}
-	for (const line of text.split('\n')) {
-		const value = line
-			.slice(line.indexOf('=') + 1)
-			.trim()
-			.replace(/^['"]|['"]$/g, '');
-		if (value.startsWith('sk-ant-')) return value;
-	}
-	throw new Error('No Anthropic key (sk-ant-…) in $ANTHROPIC_API_KEY or .env');
-}
 
 function parseOptions(argv: readonly string[]): Options {
 	const get = (flag: string) => {
