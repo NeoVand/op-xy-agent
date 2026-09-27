@@ -102,6 +102,17 @@ describe('loadManualSource', () => {
 		expect(empty).toBe(guide);
 	});
 
+	it('starts with our manual alone when the dev guide fails to load', async () => {
+		const source = await loadManualSource({
+			ours: async () => ours,
+			dev: true,
+			loadDev: async () => {
+				throw new TypeError('Failed to fetch dynamically imported module');
+			}
+		});
+		expect(source).toBe(ours);
+	});
+
 	it('says there is no manual when neither exists', async () => {
 		expect(await loadManualSource({ ours: null, dev: true, loadDev: async () => null })).toBe(
 			NO_MANUAL

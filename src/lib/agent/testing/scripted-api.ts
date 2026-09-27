@@ -1,8 +1,8 @@
 /**
  * A scripted stand-in for api.anthropic.com, for tests: a `fetch` that answers the real SDK with
  * server-sent events built from scripted assistant turns, and records every request (URL, headers,
- * JSON body) so tests can assert exactly what went over the wire. Test-only; nothing imports it
- * from app code.
+ * JSON body) so tests can assert exactly what went over the wire. Test-only; app code never imports
+ * it (the dev-only demo run reuses its helpers through `paced-api.ts`).
  */
 
 /** A content block of a scripted assistant turn. */
@@ -58,8 +58,48 @@ export interface CapturedRequest {
 /** A turn, or a function that picks one after looking at the request. */
 export type ScriptStep = ScriptedTurn | ((request: CapturedRequest) => ScriptedTurn);
 
-function sseEvent(type: string, data: unknown): string {
+/** One server-sent event as the API writes it. */
+export function sseEvent(type: string, data: unknown): string {
 	return `event: ${type}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
+/** The Models API's answer listing `ids`. */
+export function modelsResponse(ids: readonly string[]): Response {
+	return new Response(
+		JSON.stringify({
+			data: ids.map((id) => ({
+				type: 'model',
+				id,
+				display_name: id,
+				created_at: '2026-09-22T00:00:00Z',
+				max_input_tokens: null,
+				max_tokens: null,
+				capabilities: null
+			})),
+			has_more: false,
+			first_id: ids[0] ?? null,
+			last_id: ids.at(-1) ?? null
+		}),
+		{ status: 200, headers: { 'content-type': 'application/json' } }
+	);
+}
+
+/** Default model ids the fake Models API lists. */
+export const FAKE_MODEL_IDS: readonly string[] = [
+	'claude-opus-5-5',
+	'claude-sonnet-5',
+	'claude-haiku-4-5-20251001'
+];
+
+/** URL, method, headers and parsed JSON body of a request the SDK made. */
+export function captureRequest(input: RequestInfo | URL, init?: RequestInit): CapturedRequest {
+	const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+	return {
+		url,
+		method: init?.method ?? 'GET',
+		headers: headersOf(init),
+		body: typeof init?.body === 'string' ? JSON.parse(init.body) : null
+	};
 }
 
 let messageCounter = 0;
@@ -216,37 +256,10 @@ export function scriptedApi(
 	const requests: CapturedRequest[] = [];
 	let next = 0;
 	const fetchImpl = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-		const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-		const request: CapturedRequest = {
-			url,
-			method: init?.method ?? 'GET',
-			headers: headersOf(init),
-			body: typeof init?.body === 'string' ? JSON.parse(init.body) : null
-		};
+		const request = captureRequest(input, init);
 		requests.push(request);
-		if (new URL(url).pathname.startsWith('/v1/models')) {
-			const ids = options.models ?? [
-				'claude-opus-5-5',
-				'claude-sonnet-5',
-				'claude-haiku-4-5-20251001'
-			];
-			return new Response(
-				JSON.stringify({
-					data: ids.map((id) => ({
-						type: 'model',
-						id,
-						display_name: id,
-						created_at: '2026-09-22T00:00:00Z',
-						max_input_tokens: null,
-						max_tokens: null,
-						capabilities: null
-					})),
-					has_more: false,
-					first_id: ids[0] ?? null,
-					last_id: ids.at(-1) ?? null
-				}),
-				{ status: 200, headers: { 'content-type': 'application/json' } }
-			);
+		if (new URL(request.url).pathname.startsWith('/v1/models')) {
+			return modelsResponse(options.models ?? FAKE_MODEL_IDS);
 		}
 		const problem = requestProblem(request.body);
 		if (problem) {

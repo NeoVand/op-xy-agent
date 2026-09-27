@@ -159,12 +159,18 @@ export function applyEvent(
 				agent: event.agent,
 				parent: event.parent,
 				name: event.name,
-				label: event.name.replace(/_/g, ' '),
+				label: event.label,
 				toolKind: 'read',
 				status: 'pending',
 				input: null,
 				summary: ''
 			});
+			return;
+		}
+		case 'tool_input': {
+			// A preview while the call is being written; tool_start brings the final input.
+			const existing = findEntry(entries, 'tool', event.id);
+			if (existing?.status === 'pending') existing.input = event.input;
 			return;
 		}
 		case 'tool_start': {

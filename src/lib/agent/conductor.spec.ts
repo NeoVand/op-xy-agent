@@ -9,6 +9,7 @@ import { createAnthropicClient } from './client';
 import { Conductor, type PreferenceStore } from './conductor.svelte';
 import { createUnitSource } from './manual-index';
 import { createMemoryThreadStore, type ThreadStore } from './threads';
+import { PacedTurn, pacedApi } from './testing/paced-api';
 import { scriptedApi, type ScriptStep } from './testing/scripted-api';
 import type { AgentEvent, ApprovalDecision } from './types';
 
@@ -52,13 +53,19 @@ interface SetupOptions {
 	readonly store?: ThreadStore;
 	readonly preferences?: PreferenceStore;
 	readonly connect?: boolean;
+	/** Another fake API (a paced one) instead of the script. */
+	readonly fetch?: typeof fetch;
 }
 
 async function setup(script: ScriptStep[], options: SetupOptions = {}) {
 	const rig = createFakeRig();
 	if (options.connect !== false) await rig.connect();
 	const api = scriptedApi(script);
-	const client = createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 });
+	const client = createAnthropicClient({
+		apiKey: KEY,
+		fetch: options.fetch ?? api.fetch,
+		maxRetries: 0
+	});
 	const conductor = await Conductor.create({
 		client,
 		device: rig.stack,
@@ -629,5 +636,129 @@ describe('conductor: errors, stop and persistence', () => {
 		const { conductor } = await setup([]);
 		expect(await conductor.loadModels()).toBe(true);
 		expect(conductor.models.map((m) => m.label)).toEqual(['opus 5.5', 'sonnet 5', 'haiku 4.5']);
+	});
+});
+
+describe('conductor: what it is doing (the live status line)', () => {
+	it('is live from the first moment, follows each phase and ends with the run', async () => {
+		const { conductor } = await setup([
+			{
+				content: [
+					{ type: 'thinking', thinking: 'Asking the manual expert.', signature: 'sig-1' },
+					{
+						type: 'tool_use',
+						id: 'toolu_task',
+						name: 'task',
+						input: { subagent_type: 'manual-expert', description: 'What does shift + M1 do?' }
+					}
+				],
+				stop_reason: 'tool_use'
+			},
+			{
+				content: [
+					{ type: 'tool_use', id: 'toolu_s1', name: 'search_manual', input: { query: 'shift M1' } }
+				],
+				stop_reason: 'tool_use'
+			},
+			{
+				content: [{ type: 'text', text: 'shift + M1 opens the engine picker.' }],
+				stop_reason: 'end_turn'
+			},
+			{ content: [{ type: 'text', text: 'It opens the engine picker.' }], stop_reason: 'end_turn' }
+		]);
+		const seen: string[] = [];
+		conductor.on(() => {
+			const a = conductor.activity;
+			const line = a ? `${a.phase}: ${a.label}${a.detail ? ` / ${a.detail}` : ''}` : 'idle';
+			if (seen.at(-1) !== line) seen.push(line);
+		});
+		const run = conductor.send('what does shift + M1 do?');
+		// Before any response: the status line is already up.
+		expect(conductor.activity).toMatchObject({
+			phase: 'thinking',
+			label: 'reading the manual and thinking'
+		});
+		await run;
+		expect(conductor.activity).toBeNull();
+		expect(seen).toEqual([
+			'thinking: reading the manual and thinking',
+			'thinking: thinking / Asking the manual expert.',
+			'tool: preparing ask the manual expert',
+			'tool: preparing ask the manual expert / What does shift + M1 do?',
+			'subagent: manual expert / reading the manual',
+			'subagent: manual expert / search manual',
+			'subagent: manual expert / search manual “shift M1”',
+			'subagent: manual expert / thinking',
+			// The scripted API streams each text in two halves ("shift + M1 opens t", "he engine…").
+			'subagent: manual expert / writing 5 words',
+			'subagent: manual expert / writing 7 words',
+			'thinking: thinking',
+			'writing: writing / 4 words',
+			'writing: writing / 5 words',
+			'idle'
+		]);
+	});
+
+	it('settles each tool chip when its own call finishes, not when the slowest does', async () => {
+		const { conductor, events } = await setup([
+			{
+				content: [
+					{ type: 'tool_use', id: 'toolu_status', name: 'device_status', input: {} },
+					{
+						type: 'tool_use',
+						id: 'toolu_task',
+						name: 'task',
+						input: { subagent_type: 'manual-expert', description: 'What is the M1 page for?' }
+					}
+				],
+				stop_reason: 'tool_use'
+			},
+			{ content: [{ type: 'text', text: 'M1 shows the engine page.' }], stop_reason: 'end_turn' },
+			{ content: [{ type: 'text', text: 'M1 is the engine page.' }], stop_reason: 'end_turn' }
+		]);
+		await conductor.send('what is M1 for, and is my op-xy connected?');
+		const at = (predicate: (e: AgentEvent) => boolean) => events.findIndex(predicate);
+		const statusEnd = at((e) => e.type === 'tool_end' && e.id === 'toolu_status');
+		const subagentDone = at((e) => e.type === 'done' && e.agent.startsWith('manual-expert:'));
+		const taskEnd = at((e) => e.type === 'tool_end' && e.id === 'toolu_task');
+		expect(statusEnd).toBeGreaterThanOrEqual(0);
+		expect(statusEnd).toBeLessThan(subagentDone);
+		expect(subagentDone).toBeLessThan(taskEnd);
+	});
+
+	it('names the chip at once and previews its input while the model writes it', async () => {
+		const todos = [
+			'Open the engine list with shift + M1',
+			'Turn E1 to highlight an engine',
+			'Click E1 to load it',
+			'Check the M1 page for the new parameters',
+			'Save the project'
+		].map((content, i) => ({ content, status: i === 0 ? 'in_progress' : 'pending' }));
+		const api = pacedApi((request) => {
+			const last = request.body.messages.findLast((m: { role: string }) => m.role === 'user');
+			const answered = JSON.stringify(last?.content ?? '').includes('tool_result');
+			return answered
+				? new PacedTurn().start().text('Plan is up.').stop('end_turn')
+				: new PacedTurn()
+						.start()
+						.toolUse('toolu_plan', 'write_todos', { todos }, { size: 12, every: 4 })
+						.stop('tool_use');
+		});
+		const { conductor, events } = await setup([], { fetch: api.fetch });
+		await conductor.send('plan how to change the engine');
+		const pendingEvent = events.find((e) => e.type === 'tool_pending');
+		expect(pendingEvent).toMatchObject({ name: 'write_todos', label: 'plan' });
+		const previews = events.flatMap((e) =>
+			e.type === 'tool_input' && e.id === 'toolu_plan' ? [e.input as { todos?: unknown[] }] : []
+		);
+		// Throttled (fewer previews than the 12 deltas), growing, and complete at the end.
+		expect(previews.length).toBeGreaterThanOrEqual(3);
+		expect(previews.length).toBeLessThan(12);
+		const counts = previews.map((p) => p.todos?.length ?? 0);
+		expect(counts).toEqual([...counts].sort((a, b) => a - b));
+		expect(previews.at(-1)).toEqual({ todos });
+		const startIndex = events.findIndex((e) => e.type === 'tool_start' && e.id === 'toolu_plan');
+		expect(events.findIndex((e) => e.type === 'tool_input')).toBeLessThan(startIndex);
+		expect(conductor.todos).toHaveLength(5);
 	});
 });

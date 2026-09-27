@@ -261,9 +261,13 @@ export async function loadManualSource(options: LoadManualOptions = {}): Promise
 	const loaded = ours ? await ours().catch(() => null) : null;
 	const primary = loaded && loaded.unitCount > 0 ? loaded : null;
 	const dev = options.dev ?? import.meta.env.DEV;
+	// The guide is a best-effort supplement: when it cannot load (the dev server refuses files
+	// outside its allow list, a chapter fails to parse), the agent still starts with our manual.
 	const guide =
 		dev && options.devGuide !== false
-			? await (options.loadDev ?? loadDevGuide)(primary ? 'supplement' : 'stand-in')
+			? await (options.loadDev ?? loadDevGuide)(primary ? 'supplement' : 'stand-in').catch(
+					() => null
+				)
 			: null;
 	if (primary && guide) return combineSources(primary, guide);
 	return primary ?? guide ?? NO_MANUAL;

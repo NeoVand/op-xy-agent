@@ -184,7 +184,7 @@ export const taskTool = defineTool({
 		const text = (result.text.trim() || '(the subagent returned no text)') + sources;
 		return {
 			content: text,
-			summary: `${input.subagent_type} answered${result.sources.length ? ` (${result.sources.length} sources)` : ''}`,
+			summary: `${input.subagent_type.replace(/-/g, ' ')} answered${result.sources.length ? ` (${result.sources.length} sources)` : ''}`,
 			isError: result.stopReason === 'error'
 		};
 	}

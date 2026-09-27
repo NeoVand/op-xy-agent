@@ -7,6 +7,10 @@ The agent runs in this browser with the user's own Anthropic key (saved in local
 to api.anthropic.com). Its code (the SDK, tools, manual index and conductor) loads lazily, once a key
 is present. It reads the app's device stack and replica from context: without a connected OP-XY it
 still teaches and animates the replica, and says plainly that device tools need a connection.
+
+The panel is a fixed-height column: the conversation scrolls inside it and the composer always
+stays in view. In development builds `?demo=1` plays a scripted run without a key (`demo.dev.ts`;
+`?demo=idle` waits for you to ask); production builds drop that code.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -57,6 +61,8 @@ still teaches and animates the replica, and says plainly that device tools need 
 	let keyStatus = $state<'unchecked' | 'checking' | 'valid' | 'invalid'>('unchecked');
 	let draft = $state('');
 	let undoing = $state<number | null>(null);
+	/** A scripted demo run instead of the API (development builds only: always false otherwise). */
+	let demo = $state(false);
 	let composer: HTMLTextAreaElement | null = null;
 
 	/** Remembers the composer so closing the settings can return focus to it. */
@@ -67,7 +73,7 @@ still teaches and animates the replica, and says plainly that device tools need 
 		};
 	}
 
-	const hasKey = $derived(keys.loaded && keys.has('anthropic'));
+	const hasKey = $derived((import.meta.env.DEV && demo) || (keys.loaded && keys.has('anthropic')));
 	const status = $derived(conductor?.status ?? 'idle');
 	const busy = $derived(conductor?.busy ?? false);
 	const canSend = $derived(conductor !== null && !busy && draft.trim().length > 0);
@@ -116,13 +122,38 @@ still teaches and animates the replica, and says plainly that device tools need 
 
 	onMount(() => {
 		keys.load();
-		if (keys.has('anthropic')) void boot();
+		const demoMode = import.meta.env.DEV ? new URLSearchParams(location.search).get('demo') : null;
+		if (demoMode !== null) void bootDemo(demoMode !== 'idle');
+		else if (keys.has('anthropic')) void boot();
 		return () => conductor?.dispose();
 	});
+
+	/** Development only: a conductor on a paced fake API, optionally asking its question at once. */
+	async function bootDemo(autoplay: boolean): Promise<void> {
+		// Keep the import inside this `if`: Vite replaces import.meta.env.DEV with false in production
+		// builds, which drops the branch and the demo module with it.
+		if (import.meta.env.DEV) {
+			demo = true;
+			booting = true;
+			bootError = null;
+			try {
+				const { createDemoConductor, DEMO_QUESTION } = await import('$lib/agent/demo.dev');
+				conductor?.dispose();
+				conductor = await createDemoConductor(replica);
+				keyStatus = 'valid';
+				if (autoplay) void conductor.send(DEMO_QUESTION);
+			} catch (error) {
+				bootError = error instanceof Error ? error.message : String(error);
+			} finally {
+				booting = false;
+			}
+		}
+	}
 
 	async function boot(): Promise<void> {
 		const apiKey = keys.get('anthropic');
 		if (!apiKey) return;
+		demo = false;
 		booting = true;
 		bootError = null;
 		keyStatus = 'unchecked';
@@ -211,7 +242,12 @@ still teaches and animates the replica, and says plainly that device tools need 
 		<div class="agent__id">
 			<Led state={led} blink={ledBlink} size="sm" />
 			<h2 class="agent__title">agent</h2>
-			{#if hasKey}<span class="agent__model">{modelLabel}</span>{/if}
+			<!-- The literal DEV check lets production builds drop this branch entirely. -->
+			{#if import.meta.env.DEV && demo}
+				<span class="agent__model">demo run</span>
+			{:else if hasKey}
+				<span class="agent__model">{modelLabel}</span>
+			{/if}
 		</div>
 		<div class="agent__actions">
 			{#if stateText}<span class="agent__state" aria-live="polite">{stateText}</span>{/if}
@@ -233,28 +269,30 @@ still teaches and animates the replica, and says plainly that device tools need 
 	<div class="agent__body" id="{uid}-body">
 		<div class="agent__log">
 			{#if settingsOpen}
-				<KeySettings
-					{keys}
-					models={conductor?.models ?? modelOptions(null)}
-					model={conductor?.model ?? DEFAULT_CONDUCTOR_MODEL}
-					onmodel={(id) => conductor?.setModel(id)}
-					onclose={closeSettings}
-					onchange={onKeyChange}
-					{keyStatus}
-					manualLabel={conductor ? `${conductor.manualLabel}` : null}
-				/>
+				<div class="agent__scroll">
+					<KeySettings
+						{keys}
+						models={conductor?.models ?? modelOptions(null)}
+						model={conductor?.model ?? DEFAULT_CONDUCTOR_MODEL}
+						onmodel={(id) => conductor?.setModel(id)}
+						onclose={closeSettings}
+						onchange={onKeyChange}
+						{keyStatus}
+						manualLabel={conductor ? `${conductor.manualLabel}` : null}
+					/>
+				</div>
 			{:else if conductor && conductor.entries.length > 0}
 				<Conversation
 					entries={conductor.entries}
 					running={busy}
-					waiting={status === 'approval'}
+					activity={conductor.activity}
 					onkeys={replica ? showKeys : undefined}
 					cite={(ref) => conductor?.citation(ref) ?? null}
 					onretry={() => void conductor?.retry()}
 					onsettings={openSettings}
 				/>
 			{:else}
-				<div class="empty">
+				<div class="agent__scroll empty">
 					<h3 class="empty__title">ask about your <span class="whitespace-nowrap">op-xy</span></h3>
 					<p class="empty__text">
 						It answers from the manual, shows you which keys to press on the replica, and can
@@ -422,6 +460,7 @@ still teaches and animates the replica, and says plainly that device tools need 
 		white-space: nowrap;
 	}
 
+	/* A column of fixed height (the panel's): only the log in the middle scrolls. */
 	.agent__body {
 		display: flex;
 		flex-direction: column;
@@ -429,7 +468,16 @@ still teaches and animates the replica, and says plainly that device tools need 
 		min-height: 0;
 	}
 
+	/* The log takes the room left; what it shows scrolls by itself (the conversation is its own
+	 * scroll area, so it can pin its status line and "latest" key to the bottom). */
 	.agent__log {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+	}
+
+	.agent__scroll {
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
@@ -437,10 +485,14 @@ still teaches and animates the replica, and says plainly that device tools need 
 		overscroll-behavior: contain;
 	}
 
+	/* Plan, approval and changes stay above the composer; past half the panel they scroll. */
 	.agent__dock {
 		display: flex;
 		flex-direction: column;
+		flex: none;
 		gap: 0.5rem;
+		max-height: 50%;
+		overflow-y: auto;
 		padding: 0 0.75rem 0.5rem;
 	}
 
@@ -549,6 +601,7 @@ still teaches and animates the replica, and says plainly that device tools need 
 
 	.composer {
 		display: flex;
+		flex: none;
 		align-items: flex-end;
 		gap: 0.5rem;
 		margin: 0 0.75rem;
@@ -595,6 +648,7 @@ still teaches and animates the replica, and says plainly that device tools need 
 
 	.agent__foot {
 		display: flex;
+		flex: none;
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;

@@ -3,7 +3,8 @@
 An agent answer in markdown-lite, rendered with components (never `{@html}`). Key combos written in
 backticks become keycaps; clicking one plays it on the replica. Citations of manual units
 (`[sequencer.parameter-locks]`) become small links to the unit's source, and citations the model
-attached through search results are listed underneath.
+attached through search results are listed underneath. While the answer is still being written
+(`streaming`), a caret blinks at its end.
 -->
 <script module lang="ts">
 	/** What a manual citation points at. */
@@ -29,9 +30,11 @@ attached through search results are listed underneath.
 		onkeys?: (keys: string) => void;
 		/** Resolves a manual citation (`unit-id` or `unit-id#fact-id`); null when unknown. */
 		cite?: (ref: string) => CitationTarget | null;
+		/** The answer is still streaming: show a caret at its end. */
+		streaming?: boolean;
 	}
 
-	let { text, citations = [], onkeys, cite }: Props = $props();
+	let { text, citations = [], onkeys, cite, streaming = false }: Props = $props();
 
 	const isKeys = (code: string) => code.length <= 80 && tryParseKeys(code).ok;
 	const blocks = $derived(parseMarkdown(text, { isKeys }));
@@ -64,30 +67,39 @@ attached through search results are listed underneath.
 	{/each}
 {/snippet}
 
+<!-- The caret goes inside the last block, right after its last character. -->
+{#snippet caret(last: boolean)}{#if streaming && last}<span class="caret" aria-hidden="true"
+		></span>{/if}{/snippet}
+
 <div class="md">
 	{#each blocks as block, i (i)}
+		{@const last = i === blocks.length - 1}
 		{#if block.t === 'p'}
-			<p>{@render inlines(block.c)}</p>
+			<p>{@render inlines(block.c)}{@render caret(last)}</p>
 		{:else if block.t === 'h'}
-			<p class="md__h md__h--{block.level}">{@render inlines(block.c)}</p>
+			<p class="md__h md__h--{block.level}">{@render inlines(block.c)}{@render caret(last)}</p>
 		{:else if block.t === 'list'}
 			{#if block.ordered}
 				<ol start={block.start}>
 					{#each block.items as item, j (j)}
-						<li class={[item.depth > 0 && 'md__sub']}>{@render inlines(item.c)}</li>
+						<li class={[item.depth > 0 && 'md__sub']}>
+							{@render inlines(item.c)}{@render caret(last && j === block.items.length - 1)}
+						</li>
 					{/each}
 				</ol>
 			{:else}
 				<ul>
 					{#each block.items as item, j (j)}
-						<li class={[item.depth > 0 && 'md__sub']}>{@render inlines(item.c)}</li>
+						<li class={[item.depth > 0 && 'md__sub']}>
+							{@render inlines(item.c)}{@render caret(last && j === block.items.length - 1)}
+						</li>
 					{/each}
 				</ul>
 			{/if}
 		{:else if block.t === 'code'}
-			<pre><code>{block.v}</code></pre>
+			<pre><code>{block.v}{@render caret(last)}</code></pre>
 		{:else if block.t === 'quote'}
-			<blockquote>{@render inlines(block.c)}</blockquote>
+			<blockquote>{@render inlines(block.c)}{@render caret(last)}</blockquote>
 		{:else if block.t === 'table'}
 			<div class="md__table">
 				<table>
@@ -109,6 +121,9 @@ attached through search results are listed underneath.
 			<hr />
 		{/if}
 	{/each}
+	{#if streaming && (blocks.length === 0 || ['table', 'hr'].includes(blocks[blocks.length - 1].t))}
+		<p>{@render caret(true)}</p>
+	{/if}
 	{#if citations.length > 0}
 		<ul class="md__sources" aria-label="sources">
 			{#each citations as citation (citation.source)}
@@ -307,5 +322,28 @@ attached through search results are listed underneath.
 
 	.md__sources a {
 		color: var(--xy-fg-subtle);
+	}
+
+	/* A block cursor, blinking as a hard square wave like the device's LEDs. */
+	.caret {
+		display: inline-block;
+		width: 0.5ch;
+		height: 1.05em;
+		margin-left: 0.125rem;
+		vertical-align: -0.2em;
+		background-color: var(--xy-fg-subtle);
+		animation: caret 1s steps(1, end) infinite;
+	}
+
+	@keyframes caret {
+		50% {
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.caret {
+			animation: none;
+		}
 	}
 </style>

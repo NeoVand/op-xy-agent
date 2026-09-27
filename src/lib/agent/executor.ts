@@ -20,6 +20,7 @@ import {
 	ToolAbortedError,
 	type AgentEnvironment,
 	type AnyTool,
+	type ParsedCall,
 	type ToolRegistry,
 	type ToolResult
 } from './tools/define';
@@ -162,64 +163,75 @@ export class ToolExecutor {
 				? this.#gate.review(agent, actions, signal).then((r) => r.decision)
 				: Promise.resolve<ApprovalDecision>({ kind: 'approve' });
 
-		const outcomes = await Promise.all(
-			prepared.map(async ({ call, parsed }): Promise<Outcome> => {
-				if (!parsed.ok) {
-					return {
-						status: 'error',
-						result: { content: parsed.error, summary: 'invalid input', isError: true }
-					};
-				}
-				const tool = parsed.tool;
-				const job = async (jobSignal: AbortSignal): Promise<Outcome> => {
-					if (needing.has(call.id)) {
-						const decision = await review;
-						if (!isApproved(decision)) {
-							return {
-								status: decision.kind === 'reject' ? 'rejected' : 'stopped',
-								result: {
-									content: rejectionText(decision),
-									summary: decision.kind === 'reject' ? 'rejected' : 'stopped',
-									isError: true,
-									applied: false
-								}
-							};
-						}
-					}
-					return this.#run(tool, parsed.input, call.id, agent, env, jobSignal, null);
-				};
-				try {
-					if (tool.device && !tool.priority) return await this.#queue.run(tool.label, job, signal);
-					return await job(signal);
-				} catch (error) {
-					if (isAbort(error, signal)) {
-						return {
-							status: 'stopped',
-							result: { content: STOPPED_TEXT, summary: 'stopped', isError: true }
-						};
-					}
-					const message = error instanceof Error ? error.message : String(error);
-					return {
-						status: 'error',
-						result: { content: `The tool failed: ${message}`, summary: 'failed', isError: true }
-					};
-				}
-			})
-		);
-
-		return prepared.map(({ call }, i) => {
-			const { result, status } = outcomes[i];
+		const settle = async ({ call, parsed }: (typeof prepared)[number]): Promise<Outcome> => {
+			const outcome = await this.#outcome(call, parsed, needing, review, agent, env, signal);
+			// Each chip settles when its own call does: a quick call next to a long one (a subagent,
+			// a queued device job) must not look busy until the slowest finishes.
 			this.#emit({
 				type: 'tool_end',
 				agent,
 				id: call.id,
 				name: call.name,
-				status,
-				summary: result.summary,
+				status: outcome.status,
+				summary: outcome.result.summary,
 				parent
 			});
-			return this.#block(call.id, result);
-		});
+			return outcome;
+		};
+		const outcomes = await Promise.all(prepared.map(settle));
+		return prepared.map(({ call }, i) => this.#block(call.id, outcomes[i].result));
+	}
+
+	/** Runs one call (waiting for its approval inside its queue slot); never rejects. */
+	async #outcome(
+		call: ToolCallRequest,
+		parsed: ParsedCall,
+		needing: ReadonlySet<string>,
+		review: Promise<ApprovalDecision>,
+		agent: AgentName,
+		env: AgentEnvironment,
+		signal: AbortSignal
+	): Promise<Outcome> {
+		if (!parsed.ok) {
+			return {
+				status: 'error',
+				result: { content: parsed.error, summary: 'invalid input', isError: true }
+			};
+		}
+		const tool = parsed.tool;
+		const job = async (jobSignal: AbortSignal): Promise<Outcome> => {
+			if (needing.has(call.id)) {
+				const decision = await review;
+				if (!isApproved(decision)) {
+					return {
+						status: decision.kind === 'reject' ? 'rejected' : 'stopped',
+						result: {
+							content: rejectionText(decision),
+							summary: decision.kind === 'reject' ? 'rejected' : 'stopped',
+							isError: true,
+							applied: false
+						}
+					};
+				}
+			}
+			return this.#run(tool, parsed.input, call.id, agent, env, jobSignal, null);
+		};
+		try {
+			if (tool.device && !tool.priority) return await this.#queue.run(tool.label, job, signal);
+			return await job(signal);
+		} catch (error) {
+			if (isAbort(error, signal)) {
+				return {
+					status: 'stopped',
+					result: { content: STOPPED_TEXT, summary: 'stopped', isError: true }
+				};
+			}
+			const message = error instanceof Error ? error.message : String(error);
+			return {
+				status: 'error',
+				result: { content: `The tool failed: ${message}`, summary: 'failed', isError: true }
+			};
+		}
 	}
 
 	/**

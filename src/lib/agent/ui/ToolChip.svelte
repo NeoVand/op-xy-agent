@@ -1,14 +1,18 @@
 <!--
 @component
 One tool call as a compact row: an LED (blinking while it runs, red while a change is being written
-to the device), the tool's name and what came of it. Opens to show the exact input and, for the
-manual expert, the steps it took and its answer.
+to the device), the tool's name, its state and a short summary: what it was asked while it runs
+(the input shows as the model writes it), what came of it when done. Opens to show the exact input.
+
+A `task` call (the manual expert) opens by itself while the subagent works, showing its steps and
+the line it is writing, and closes to its summary when it is done; open it again for the steps and
+the full answer.
 -->
 <script lang="ts">
 	import Led from '$lib/ui/Led.svelte';
 	import type { LedState } from '$lib/ui/types';
+	import { inputSummary, lastLine, subagentLabel } from '../activity';
 	import type { ChatEntry } from '../chat';
-	import { agentLabel } from '../agent-names';
 	import MessageText from './MessageText.svelte';
 	import Self from './ToolChip.svelte';
 
@@ -25,9 +29,11 @@ manual expert, the steps it took and its answer.
 
 	const running = $derived(entry.status === 'pending' || entry.status === 'running');
 	const writes = $derived(entry.toolKind === 'mutate');
+	/** A subagent at work: the chip stays open on its live steps. */
+	const live = $derived(entry.name === 'task' && entry.status === 'running');
 	const led: LedState = $derived(
 		running
-			? writes
+			? writes && entry.status === 'running'
 				? 'red'
 				: 'white'
 			: entry.status === 'ok'
@@ -46,6 +52,9 @@ manual expert, the steps it took and its answer.
 			stopped: 'stopped'
 		}[entry.status]
 	);
+	const asked = $derived(inputSummary(entry.name, entry.input));
+	/** What it was asked while it runs; what came of it once it is done. */
+	const summary = $derived(running ? asked : entry.summary || asked);
 	const input = $derived(
 		entry.input === null || entry.input === undefined ? '' : JSON.stringify(entry.input, null, 1)
 	);
@@ -56,44 +65,63 @@ manual expert, the steps it took and its answer.
 			.map((e) => (e.kind === 'text' ? e.text : ''))
 			.join('\n\n')
 	);
-	const nestedProgress = $derived.by(() => {
-		const notes = nested.filter((e) => e.kind === 'progress');
-		const last = notes.at(-1);
-		return last?.kind === 'progress' ? (last.text.trim().split('\n').at(-1) ?? '') : '';
-	});
 	const subagent = $derived.by(() => {
 		const first = nested.find((e) => 'agent' in e);
-		return first && 'agent' in first ? agentLabel(first.agent) : '';
+		if (first && 'agent' in first) return subagentLabel(first.agent);
+		const type =
+			entry.input !== null && typeof entry.input === 'object'
+				? (entry.input as Record<string, unknown>).subagent_type
+				: undefined;
+		return typeof type === 'string' ? subagentLabel(type) : '';
+	});
+	/** The subagent's newest note or line of its answer, while that is the newest thing it did. */
+	const now = $derived.by(() => {
+		const last = nested.at(-1);
+		if (last?.kind === 'text') return { text: lastLine(last.text), writing: true };
+		if (last?.kind === 'progress') return { text: lastLine(last.text), writing: false };
+		return null;
 	});
 </script>
 
-<details class={['chip', `chip--${entry.status}`]}>
+<details class={['chip', `chip--${entry.status}`, live && 'chip--live']} open={live}>
 	<summary class="chip__row">
 		<Led state={led} blink={running ? 'fast' : false} size="sm" />
 		<span class="chip__label">{entry.label}</span>
 		{#if statusWord}<span class="chip__status">{statusWord}</span>{/if}
-		{#if entry.summary && entry.summary !== statusWord}
-			<span class="chip__summary">{entry.summary}</span>
-		{:else if running && nestedProgress}
-			<span class="chip__summary">{nestedProgress}</span>
-		{/if}
+		{#if summary && summary !== statusWord}<span class="chip__summary">{summary}</span>{/if}
 	</summary>
 	<div class="chip__detail">
-		{#if input && input !== '{}'}
-			<pre class="chip__input">{input}</pre>
-		{/if}
-		{#if nestedTools.length > 0}
-			<div class="chip__nested" aria-label="{subagent} steps">
-				{#each nestedTools as child (child.id)}
-					{#if child.kind === 'tool'}<Self entry={child} {onkeys} />{/if}
-				{/each}
-			</div>
-		{/if}
-		{#if nestedText}
-			<div class="chip__answer">
-				<span class="chip__who">{subagent}</span>
-				<MessageText text={nestedText} {onkeys} />
-			</div>
+		{#if live}
+			{#if nestedTools.length > 0}
+				<div class="chip__nested" aria-label="{subagent} steps">
+					{#each nestedTools as child (child.id)}
+						{#if child.kind === 'tool'}<Self entry={child} {onkeys} />{/if}
+					{/each}
+				</div>
+			{/if}
+			{#if now?.text}
+				<p class={['chip__now', now.writing && 'chip__now--writing']}>
+					<span class="chip__who">{subagent}</span>
+					<span class="chip__line">{now.text}</span>
+				</p>
+			{/if}
+		{:else}
+			{#if input && input !== '{}'}
+				<pre class="chip__input">{input}</pre>
+			{/if}
+			{#if nestedTools.length > 0}
+				<div class="chip__nested" aria-label="{subagent} steps">
+					{#each nestedTools as child (child.id)}
+						{#if child.kind === 'tool'}<Self entry={child} {onkeys} />{/if}
+					{/each}
+				</div>
+			{/if}
+			{#if nestedText}
+				<div class="chip__answer">
+					<span class="chip__who">{subagent}</span>
+					<MessageText text={nestedText} {onkeys} />
+				</div>
+			{/if}
 		{/if}
 	</div>
 </details>
@@ -153,12 +181,16 @@ manual expert, the steps it took and its answer.
 		white-space: nowrap;
 	}
 
-	.chip[open] .chip__summary {
+	.chip[open]:not(.chip--live) .chip__summary {
 		white-space: normal;
 	}
 
 	.chip__detail {
 		padding: 0.25rem 0.5rem 0.5rem 1.375rem;
+	}
+
+	.chip--live .chip__detail {
+		padding-top: 0;
 	}
 
 	.chip__input {
@@ -180,6 +212,63 @@ manual expert, the steps it took and its answer.
 		margin-top: 0.375rem;
 		padding-left: 0.5rem;
 		border-left: 1px solid var(--xy-line);
+	}
+
+	.chip--live .chip__nested {
+		margin-top: 0;
+	}
+
+	/* The subagent's newest line, on the same rail as its steps. */
+	.chip__now {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0.3125rem 0.5rem 0.125rem 1rem;
+		border-left: 1px solid var(--xy-line);
+		color: var(--xy-fg-subtle);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+	}
+
+	.chip__now .chip__who {
+		flex: none;
+		margin: 0;
+	}
+
+	.chip__line {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.chip__now--writing .chip__line {
+		color: var(--xy-fg-muted);
+	}
+
+	/* The caret of the line being written. */
+	.chip__now--writing::after {
+		content: '';
+		flex: none;
+		align-self: center;
+		width: 0.375rem;
+		height: 0.75rem;
+		margin-left: -0.375rem;
+		background-color: var(--xy-fg-subtle);
+		animation: caret 1s steps(1, end) infinite;
+	}
+
+	@keyframes caret {
+		50% {
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.chip__now--writing::after {
+			animation: none;
+		}
 	}
 
 	.chip__answer {

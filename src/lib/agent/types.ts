@@ -172,6 +172,16 @@ export type AgentEvent =
 			readonly agent: AgentName;
 			readonly id: string;
 			readonly name: string;
+			/** Friendly tool label ("set tempo"). */
+			readonly label: string;
+			readonly parent: string | null;
+	  }
+	/** The input of a tool call being written, parsed as far as it has streamed (a preview). */
+	| {
+			readonly type: 'tool_input';
+			readonly agent: AgentName;
+			readonly id: string;
+			readonly input: unknown;
 			readonly parent: string | null;
 	  }
 	| {

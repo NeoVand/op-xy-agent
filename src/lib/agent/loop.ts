@@ -304,6 +304,19 @@ export function runawayCut(text: string): number {
 
 const RUNAWAY_NOTE = '(The rest of this answer was cut: it started repeating itself.)';
 
+/** Characters of streamed tool input between two input previews (bounds the partial parses). */
+const INPUT_PREVIEW_CHARS = 32;
+
+/** A tool call's input as far as it has streamed (the SDK parses partial JSON), or undefined. */
+function partialInput(message: BetaMessage | undefined, index: number): unknown {
+	try {
+		const block = message?.content[index];
+		return block?.type === 'tool_use' ? block.input : undefined;
+	} catch {
+		return undefined; // not parseable yet
+	}
+}
+
 /**
  * The message a runaway stream leaves: the blocks before the runaway one, that block's text up to
  * the cut, the stop reason of a finished answer, and output tokens estimated from what streamed.
@@ -366,15 +379,32 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 			const texts: string[] = [];
 			let streamedChars = 0;
 			let runaway: { block: number; cut: number; snapshot: BetaMessage | undefined } | null = null;
+			// Tool calls being written, by block index: their input is previewed as it streams, every
+			// INPUT_PREVIEW_CHARS characters and once more when the block is complete.
+			const calls = new Map<number, { id: string; chars: number; shown: number }>();
+			const preview = (index: number) => {
+				const call = calls.get(index);
+				if (!call) return;
+				call.shown = call.chars;
+				const input = partialInput(stream.currentMessage, index);
+				if (input !== undefined) emit({ type: 'tool_input', agent, id: call.id, input, parent });
+			};
 			for await (const event of stream) {
 				if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
+					const { id, name } = event.content_block;
+					calls.set(event.index, { id, chars: 0, shown: -1 });
 					emit({
 						type: 'tool_pending',
 						agent,
-						id: event.content_block.id,
-						name: event.content_block.name,
+						id,
+						name,
+						label: config.registry.get(name)?.label ?? name.replace(/_/g, ' '),
 						parent
 					});
+				} else if (event.type === 'content_block_stop') {
+					const call = calls.get(event.index);
+					if (call && call.shown !== call.chars) preview(event.index);
+					calls.delete(event.index);
 				} else if (event.type === 'content_block_delta') {
 					const { delta, index } = event;
 					if (delta.type === 'text_delta') {
@@ -392,6 +422,12 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 					} else if (delta.type === 'citations_delta') {
 						const citation = toCitation(delta.citation);
 						if (citation) emit({ type: 'citation', agent, turn, block: index, citation });
+					} else if (delta.type === 'input_json_delta') {
+						const call = calls.get(index);
+						if (call) {
+							call.chars += delta.partial_json.length;
+							if (call.shown < 0 || call.chars - call.shown >= INPUT_PREVIEW_CHARS) preview(index);
+						}
 					}
 				}
 			}

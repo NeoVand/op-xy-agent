@@ -6,6 +6,9 @@ plate: an honest invitation to connect, unless `plate` replaces it (with the con
 card, for example). The connect key stays disabled, marked "coming soon", until the Web MIDI layer
 provides `onconnect`. `caption` is a line of its own right under the device, for a status line and
 short notes about what the replica just did.
+
+The stage is at most 76rem wide; a page can lower that with `--stage-max-w` (the home page does, so
+device, caption and plate fit the height of the window).
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -93,7 +96,7 @@ short notes about what the replica just did.
 		flex-direction: column;
 		gap: var(--stage-gap);
 		width: 100%;
-		max-width: 76rem;
+		max-width: var(--stage-max-w, 76rem);
 		margin-inline: auto;
 	}
 

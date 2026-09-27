@@ -83,7 +83,7 @@
 </svelte:head>
 
 <div class="home">
-	<section class="home__stage" aria-label="device">
+	<section class={['home__stage', engaged && 'home__stage--engaged']} aria-label="device">
 		<DeviceStage
 			webMidi={status.webMidi}
 			onconnect={connect}
@@ -176,17 +176,22 @@
 		flex: 1;
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) var(--xy-agent-w);
+		/* One row that never grows with its content: the stage and the agent panel both fit it, and
+		 * each scrolls inside itself (the conversation always; the stage only as a last resort). */
+		grid-template-rows: minmax(0, 1fr);
 		min-height: 0;
 	}
 
 	.home__stage {
 		display: grid;
-		align-content: center;
+		align-content: safe center;
 		min-width: 0;
+		min-height: 0;
 		padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 4vw, 4rem);
 	}
 
 	.home :global(.home__agent) {
+		min-height: 0;
 		margin: 0.75rem 0.75rem 0.75rem 0;
 	}
 
@@ -262,21 +267,42 @@
 		color: var(--xy-fg);
 	}
 
-	/* Desktop: the page is exactly one screen; the conversation scrolls inside its panel. */
+	/* Desktop: the page is exactly one screen; the conversation scrolls inside its panel. The
+	 * height must be the flex basis (`flex: none`): with `flex: 1` the column above has no definite
+	 * height, the basis falls back to the content, and a long conversation made the page taller. */
 	@media (min-width: 68.75rem) {
 		.home {
+			flex: none;
 			height: calc(100dvh - var(--xy-header-h) - var(--xy-status-h));
-			min-height: 36rem;
+			min-height: 30rem;
+		}
+
+		/* The stage fits the height it gets: the device is only as wide as leaves room for the
+		 * caption and the plate under it (the device body is 285 : 102). Past that, it scrolls. */
+		.home__stage {
+			container-type: size;
+			/* Vertical only; the faint light pool around the device may spill sideways, clipped. */
+			overflow: hidden auto;
+			--stage-max-w: min(76rem, calc((100cqh - var(--stage-reserve)) * 285 / 102));
+			--stage-reserve: 13.5rem;
+		}
+
+		.home__stage--engaged {
+			--stage-reserve: 16rem;
 		}
 	}
 
+	/* One column: the page scrolls from the stage down to the panel, which has a height of its own
+	 * so its conversation still scrolls inside it with the composer in view. */
 	@media (max-width: 68.6875rem) {
 		.home {
 			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto;
 		}
 
 		.home :global(.home__agent) {
-			min-height: 30rem;
+			height: 80dvh;
+			min-height: 24rem;
 			margin: 0 1rem 1rem;
 		}
 	}

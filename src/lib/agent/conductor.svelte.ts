@@ -23,6 +23,7 @@ import type {
 } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
+import { nextActivity, startActivity, type Activity } from './activity';
 import {
 	applyEvent,
 	emptyUsage,
@@ -162,6 +163,8 @@ export class Conductor {
 	deviceBusy = $state(false);
 	/** Tools the user allowed for this session. */
 	grants: string[] = $state.raw([]);
+	/** What the agent is doing right now, for the live status line; null while no run is active. */
+	activity: Activity | null = $state.raw(null);
 
 	/** Which manual the agent answers from. */
 	readonly manualKind: ManualSourceKind;
@@ -193,6 +196,8 @@ export class Conductor {
 	#deviceNote: string | null = null;
 	#pendingNotes: string[] = [];
 	#controller: AbortController | null = null;
+	/** The model has answered in this conversation (so the manual is no longer read cold). */
+	#answered = false;
 	#resolveApproval: ((decision: ApprovalDecision) => void) | null = null;
 	#system: Promise<BetaTextBlockParam[]> | null = null;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -445,6 +450,10 @@ export class Conductor {
 
 	#emit(event: AgentEvent): void {
 		applyEvent(this.entries, this.usage, event, parentOf);
+		this.activity = nextActivity(this.activity, event, this.entries, {
+			now: this.#now(),
+			firstTurn: !this.#answered
+		});
 		for (const listener of this.#listeners) {
 			try {
 				listener(event);
@@ -483,6 +492,7 @@ export class Conductor {
 			messages: this.#messages,
 			append: (message) => {
 				this.#messages.push(message);
+				if (message.role === 'assistant') this.#answered = true;
 				if (message.role === 'user') void this.#save();
 			}
 		};
@@ -509,6 +519,8 @@ export class Conductor {
 		this.#controller = controller;
 		this.status = 'running';
 		this.lastError = null;
+		// The status line is live from the first moment, before the system prompt or the model.
+		this.activity = startActivity(this.#now(), !this.#answered);
 		try {
 			const system = await this.#systemBlocks();
 			const result = await runLoop(
@@ -545,6 +557,7 @@ export class Conductor {
 			this.#emit({ type: 'error', agent: 'conductor', error: info });
 		} finally {
 			if (this.#controller === controller) this.#controller = null;
+			this.activity = null;
 			settleEntries(this.entries);
 			await this.#save();
 		}
@@ -609,6 +622,8 @@ export class Conductor {
 		this.usage = emptyUsage();
 		this.lastError = null;
 		this.status = 'idle';
+		this.activity = null;
+		this.#answered = false;
 		this.#deviceNote = null;
 		this.#pendingNotes = [];
 		this.#journal.reset(this.threadId);
@@ -620,6 +635,7 @@ export class Conductor {
 		this.threadTitle = record.title;
 		this.#createdAt = record.createdAt;
 		this.#messages = record.messages;
+		this.#answered = record.messages.some((m) => m.role === 'assistant');
 		this.#repairTranscript();
 		this.entries = record.entries;
 		settleEntries(this.entries);
@@ -627,6 +643,7 @@ export class Conductor {
 		this.usage = { ...emptyUsage(), ...record.usage };
 		this.lastError = null;
 		this.status = 'idle';
+		this.activity = null;
 		this.#deviceNote = record.deviceNote;
 		this.#pendingNotes = [];
 		this.#journal.reset(record.id, record.revisions);
