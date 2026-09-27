@@ -93,9 +93,11 @@ export interface ShapeMix {
 
 /** The plain (not band-limited) value of a mix at phase `p`, with pulse width `w`. */
 function naive(m: ShapeMix, w: number, p: number): number {
-	const tri = p < 0.5 ? 4 * p - 1 : 3 - 4 * p;
-	const pulse = p < w ? 1 : -1;
-	return m.sine * Math.sin(TAU * p) + m.triangle * tri + m.saw * (2 * p - 1) + m.pulse * pulse;
+	let y = m.saw * (2 * p - 1) + m.pulse * (p < w ? 1 : -1);
+	// the sine costs the most: only when it is in the blend
+	if (m.sine !== 0) y += m.sine * Math.sin(TAU * p);
+	if (m.triangle !== 0) y += m.triangle * (p < 0.5 ? 4 * p - 1 : 3 - 4 * p);
+	return y;
 }
 
 /**
