@@ -540,7 +540,7 @@ export class SoundEngine {
 		glide: number
 	): AnyVoice | null {
 		const { settings, track } = request;
-		if (this.#synth && this.#coreEngines.has(settings.engine)) {
+		if (this.#synth && !this.#synth.failed && this.#coreEngines.has(settings.engine)) {
 			return this.#spawnCore(this.#synth, request, time, gate, hz, from, glide);
 		}
 		const source = this.#source(request, hz, time, gate);

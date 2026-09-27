@@ -28,7 +28,7 @@ async function render(
 	const host = await SynthHost.create(context, workletUrl);
 	expect(host).not.toBeNull();
 	const errors: string[] = [];
-	host!.node.onprocessorerror = (e) => errors.push(String(e));
+	host!.node.addEventListener('processorerror', (e) => errors.push(String(e)));
 	const engine = new SoundEngine({ context });
 	engine.useSynth(host, engines);
 	play(engine, host!);

@@ -35,6 +35,7 @@ export class SynthHost {
 	#batch: CoreMessage[] = [];
 	#flushing = false;
 	#nextId = 1;
+	#failed = false;
 	/** Each track's LFO input, and what is wired into it. */
 	readonly #mods: { merger: ChannelMergerNode; wired: (AudioNode | null)[] }[];
 
@@ -52,6 +53,15 @@ export class SynthHost {
 			const done = this.#ended.get(event.data.id);
 			this.#ended.delete(event.data.id);
 			done?.();
+		};
+		// a processor that throws is silenced for good: its voices end here, and new notes go back
+		// to the Web Audio voices (the engine checks `failed`)
+		this.node.onprocessorerror = () => {
+			this.#failed = true;
+			console.error('the synth core stopped; the first engines take over');
+			const ended = [...this.#ended.values()];
+			this.#ended.clear();
+			for (const done of ended) done();
 		};
 		this.#mods = Array.from({ length: TRACK_OUTPUTS }, (_, k) => {
 			const merger = context.createChannelMerger(MOD_CHANNELS);
@@ -76,6 +86,11 @@ export class SynthHost {
 
 	get context(): BaseAudioContext {
 		return this.#context;
+	}
+
+	/** True once the processor has thrown: it makes no more sound. */
+	get failed(): boolean {
+		return this.#failed;
 	}
 
 	/** Sends track `k`'s sound to `destination` (its channel strip's input). */
