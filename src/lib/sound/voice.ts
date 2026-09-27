@@ -41,6 +41,8 @@ export interface VoiceSpec {
 	readonly filter: VoiceFilter;
 	/** Pitch bend at the start, in cents. */
 	readonly bend: number;
+	/** A bend component's curve over the note (cents, spread across start → gate). */
+	readonly curve?: Float32Array;
 	/** Played from the replica's keys (with the key's id) or by the sequencer. */
 	readonly source: 'live' | 'sequence';
 	readonly key: string | null;
@@ -95,6 +97,8 @@ export class Voice implements VoiceSlot {
 	readonly #cutoff: Envelope[];
 	/** Modulation wiring, undone on re-attach and at the end. */
 	#wires: { from: AudioNode; to: AudioNode | AudioParam }[] = [];
+	/** A bend component's curve, if the note has one. */
+	#curve: ConstantSourceNode | null = null;
 	#disposed = false;
 
 	constructor(
@@ -155,6 +159,16 @@ export class Voice implements VoiceSlot {
 		graph.retune?.(spec.from, start, 0);
 		if (spec.from !== spec.hz) graph.retune?.(spec.hz, start, spec.glide / 3);
 		if (spec.bend !== 0) for (const d of graph.detune) d.setValueAtTime(spec.bend, start);
+		if (spec.curve && Number.isFinite(gate) && gate > start) {
+			// its own source, summed into detune, so the pitch strip's automation never collides;
+			// it holds its last value through the release and goes with the voice
+			const curve = context.createConstantSource();
+			curve.offset.value = 0;
+			curve.offset.setValueCurveAtTime(spec.curve, start, gate - start);
+			for (const d of graph.detune) curve.connect(d);
+			curve.start(start);
+			this.#curve = curve;
+		}
 
 		graph.onended = () => this.#dispose();
 		graph.start(start);
@@ -270,6 +284,14 @@ export class Voice implements VoiceSlot {
 		if (this.#disposed) return;
 		this.#disposed = true;
 		this.#detach();
+		if (this.#curve) {
+			try {
+				this.#curve.stop();
+			} catch {
+				// not started yet or already stopped
+			}
+			this.#curve.disconnect();
+		}
 		this.#graph.dispose();
 		for (const f of this.#filters) f.disconnect();
 		this.#vca.disconnect();

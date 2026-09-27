@@ -101,11 +101,13 @@ export class Channel {
 	}
 
 	/**
-	 * Applies a track's mixer strip, sends, preset volume, LFO and engine tremolo at `time`. Returns
-	 * true when voices must re-wire to the LFO.
+	 * Applies a track's mixer strip, sends, preset volume, LFO and engine tremolo at `time`; `gain`
+	 * is what the mixer adds on top (its group level, 0 while another track is soloed). Returns true
+	 * when voices must re-wire to the LFO.
 	 */
-	apply(track: TrackState, bpm: number, time: number): boolean {
-		this.#set('level', track.mix.muted ? 0 : levelGain(track.mix.level), this.#level.gain, time);
+	apply(track: TrackState, bpm: number, time: number, gain = 1): boolean {
+		const level = track.mix.muted ? 0 : levelGain(track.mix.level) * gain;
+		this.#set('level', level, this.#level.gain, time);
 		this.#set('pan', panValue(track.mix.pan), this.#pan.pan, time);
 		this.#set('preset', presetGain(track.playMode.volume), this.#preset.gain, time);
 		this.#set('fx1', sendGain(track.sends[2]), this.#sends[0].gain, time);

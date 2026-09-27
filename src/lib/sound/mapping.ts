@@ -117,6 +117,23 @@ export function levelGain(v: number): number {
 /** Pan −100…100 as −1…1. */
 export const panValue = (v: number): number => clamp(v, -100, 100) / 100;
 
+/**
+ * Mix M4's group levels (percussion, melodic) and master level: unity at a new project's 50, silent
+ * at 0, +6 dB at 99 (the master's extra drive goes into the limiter).
+ */
+export function groupGain(v: number): number {
+	const x = clamp(v, 0, 99);
+	if (x <= 50) return (x / 50) ** 2;
+	return Math.pow(10, (6 * (x - 50)) / 49 / 20);
+}
+
+/** A master EQ band (mix M2, −50…50) in dB, heard as far as `blend` (0–99; 0 = flat): ±12 dB at full. */
+export const eqGainDb = (band: number, blend: number): number =>
+	(clamp(band, -50, 50) / 50) * 12 * unit(blend);
+
+/** Where the master EQ's three bands sit: a low shelf, a mid bell and a high shelf (Hz). */
+export const EQ_BANDS = { low: 150, mid: 1000, high: 6000 } as const;
+
 /** A send level (0–99), squared so low values stay subtle. */
 export const sendGain = (v: number): number => unit(v) ** 2;
 

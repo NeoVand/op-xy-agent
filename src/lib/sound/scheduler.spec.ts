@@ -1,31 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { GROOVES, defaultState, type SimState } from '$lib/sim/params';
-import { currentPattern, toggleStep } from '$lib/sim/sequencer';
+import {
+	GROOVES,
+	defaultState,
+	defaultTrack,
+	type SimState,
+	type TrackState
+} from '$lib/sim/params';
+import { playheadAt } from '$lib/sim/sequencer-playback';
+import { currentPattern, setComponentValue, setLock, toggleStep } from '$lib/sim/sequencer';
 import {
 	Scheduler,
 	firstIndex,
-	plainStepEvents,
+	lockedSettings,
 	positionAt,
-	sequencerStepEvents,
 	timeAt,
-	toEvents,
+	trackGroove,
 	type ClickEvent,
-	type NoteEvent,
-	type StepEventsFn
+	type ScheduledNote
 } from './scheduler';
 
 /** A scheduler on a hand-turned audio clock, recording what it plays. */
-function rig(options: { stepEvents?: StepEventsFn; follow?: () => boolean } = {}) {
+function rig(options: { follow?: () => boolean } = {}) {
 	const state: SimState = defaultState();
 	const clock = { now: 0 };
-	const notes: NoteEvent[] = [];
+	const notes: ScheduledNote[] = [];
+	const settings: TrackState[] = [];
 	const clicks: ClickEvent[] = [];
 	const stops: number[] = [];
 	const scheduler = new Scheduler({
 		state: () => state,
 		now: () => clock.now,
 		sink: {
-			note: (e) => notes.push(e),
+			note: (e, s) => {
+				notes.push(e);
+				settings.push(s);
+			},
 			click: (e) => clicks.push(e),
 			stop: (t) => stops.push(t)
 		},
@@ -40,12 +49,29 @@ function rig(options: { stepEvents?: StepEventsFn; follow?: () => boolean } = {}
 		}
 		scheduler.tick();
 	};
-	const play = () => {
+	const play = (position = 0) => {
 		state.transport.playing = true;
-		state.transport.position = 0;
+		state.transport.position = position;
 	};
 	const pattern = (track: number) => currentPattern(state.tracks[track].sequence);
-	return { state, clock, notes, clicks, stops, scheduler, run, play, pattern };
+	/** Note times in sixteenths from the start of play. */
+	const sixteenths = (track?: number) =>
+		notes
+			.filter((n) => track === undefined || n.track === track)
+			.map((n) => +((n.time - (scheduler.anchor?.time ?? 0)) / 0.125).toFixed(3));
+	return {
+		state,
+		clock,
+		notes,
+		settings,
+		clicks,
+		stops,
+		scheduler,
+		run,
+		play,
+		pattern,
+		sixteenths
+	};
 }
 
 describe('timeline maths', () => {
@@ -55,60 +81,62 @@ describe('timeline maths', () => {
 		expect(positionAt(anchor, 10.25)).toBeCloseTo(6);
 	});
 
-	it('starts on the step under the position when it has only just begun', () => {
+	it('starts on the slot under the position when it has only just begun', () => {
 		expect(firstIndex(0, 1)).toBe(0);
 		expect(firstIndex(0.3, 1)).toBe(0);
 		expect(firstIndex(0.7, 1)).toBe(1);
 		expect(firstIndex(5, 2)).toBe(2);
-		expect(firstIndex(0.4, 4, 0.5)).toBe(0);
+		expect(firstIndex(-15.9, 4, 0.5)).toBe(-4);
 	});
 
-	it('cleans step events: real notes only, defaults for the rest', () => {
-		expect(
-			toEvents([
-				{ note: 60 },
-				{ note: 200 },
-				{ velocity: 3 },
-				{ note: 61.4, velocity: 500, length: 0 }
-			])
-		).toEqual([
-			{ note: 60, velocity: 100, length: 1, offset: 0 },
-			{ note: 61, velocity: 127, length: 0.05, offset: 0 }
-		]);
-		const found = sequencerStepEvents();
-		expect(found === null || typeof found === 'function').toBe(true);
+	it("applies a step's locks through the sequencer's own table, leaving the track alone", () => {
+		const track = defaultTrack('prism');
+		const locked = lockedSettings(track, {
+			'm1.2': 10,
+			'filter.cutoff': 30,
+			'amp.attack': 50,
+			'key3.tune': 2,
+			'playMode.volume': 20
+		});
+		expect(locked.m1).toEqual([80, 10, 80, 80]);
+		expect(locked.filter.cutoff).toBe(30);
+		expect(locked.amp.attack).toBe(50);
+		expect(locked.drumKeys[3].tune).toBe(2);
+		expect(locked.playMode.volume).toBe(20);
+		expect(track.m1).toEqual([80, 80, 80, 80]);
+		expect(track.filter.cutoff).toBe(99);
+		expect(lockedSettings(track, {})).toBe(track);
+	});
+
+	it("lets a track's own groove replace the tempo page's swing", () => {
+		const state = defaultState();
+		const p = currentPattern(state.tracks[0].sequence);
+		state.tempo.swing = 30;
+		expect(trackGroove(state, p)).toEqual({ type: 0, amount: 30 });
+		p.groove = -44;
+		expect(trackGroove(state, p)).toEqual({ type: 0, amount: -44 });
 	});
 });
 
 describe('the lookahead scheduler', () => {
 	it("plays a track's steps in time: sixteenths at the tempo, with their velocity and length", () => {
-		const { play, run, notes, pattern, scheduler } = rig();
+		const { play, run, notes, pattern, sixteenths } = rig();
 		toggleStep(pattern(0), 0, [53]);
 		toggleStep(pattern(0), 4, [55], 90);
 		pattern(0).steps[4].notes[0].length = 2;
 		play();
 		run(2.45);
-		const start = scheduler.anchor?.time ?? 0;
 		// one bar at 120 BPM lasts two seconds: two passes of both steps
-		expect(notes.map((n) => [n.note, +(n.time - start).toFixed(4)])).toEqual([
-			[53, 0],
-			[55, 0.5],
-			[53, 2],
-			[55, 2.5]
-		]);
+		expect(notes.map((n) => n.note)).toEqual([53, 55, 53, 55]);
+		expect(sixteenths()).toEqual([0, 4, 16, 20]);
 		expect(notes[1]).toMatchObject({ track: 0, velocity: 90 });
-		expect(notes[0].duration).toBeCloseTo(0.125);
+		// a step-entered note is half a step long (the pattern's note length)
+		expect(notes[0].duration).toBeCloseTo(0.0625);
 		expect(notes[1].duration).toBeCloseTo(0.25);
 	});
 
-	it('gives each track its own length and scale, and counts passes', () => {
-		const passes: [number, number][] = [];
-		const { play, run, notes, pattern, scheduler } = rig({
-			stepEvents: (p, index, pass) => {
-				if (p === pattern(2)) passes.push([index, pass]);
-				return plainStepEvents(p, index, pass);
-			}
-		});
+	it('gives each track its own length and scale', () => {
+		const { play, run, pattern, sixteenths } = rig();
 		const p = pattern(2);
 		p.length = 3;
 		p.scale = 2;
@@ -116,26 +144,8 @@ describe('the lookahead scheduler', () => {
 		toggleStep(p, 2, [64]);
 		play();
 		run(1.6);
-		const start = scheduler.anchor?.time ?? 0;
-		// steps of two sixteenths (0.25 s); three steps then round again
-		expect(
-			notes.filter((n) => n.track === 2).map((n) => [n.note, +(n.time - start).toFixed(3)])
-		).toEqual([
-			[60, 0],
-			[64, 0.5],
-			[60, 0.75],
-			[64, 1.25],
-			[60, 1.5]
-		]);
-		expect(passes.slice(0, 7)).toEqual([
-			[0, 0],
-			[1, 0],
-			[2, 0],
-			[0, 1],
-			[1, 1],
-			[2, 1],
-			[0, 2]
-		]);
+		// steps of two sixteenths; three steps, then round again
+		expect(sixteenths(2)).toEqual([0, 4, 6, 10, 12]);
 	});
 
 	it('schedules only a short way ahead of the audio clock', () => {
@@ -150,15 +160,82 @@ describe('the lookahead scheduler', () => {
 		expect(notes.every((n) => n.time < clock.now + 0.2)).toBe(true);
 	});
 
-	it('swings the off-beat sixteenths with the tempo page groove', () => {
-		const { state, play, run, notes, pattern, scheduler } = rig();
+	it('plays step components: pulse repeats, multiply ratchets, velocity 0 is silent', () => {
+		const { play, run, notes, pattern, sixteenths } = rig();
+		const p = pattern(3);
+		toggleStep(p, 0, [60]);
+		setComponentValue(p, [0], 'pulse', 2); // two repeats: the step plays three times
+		toggleStep(p, 8, [62]);
+		setComponentValue(p, [8], 'multiply', 4); // four hits inside the step
+		toggleStep(p, 12, [64]);
+		setComponentValue(p, [12], 'velocity', 9); // digit 9: silent
+		play();
+		run(1.9);
+		// the repeats keep the track on step 1 for two more slots, so step 9 comes two slots later
+		expect(sixteenths(3)).toEqual([0, 1, 2, 10, 10.25, 10.5, 10.75]);
+		expect(notes.map((n) => n.note)).toEqual([60, 60, 60, 62, 62, 62, 62]);
+		expect(notes[3].duration).toBeCloseTo(0.0625 / 4);
+	});
+
+	it('glides a portamento step and bends a bend step over the note', () => {
+		const { play, run, notes, pattern } = rig();
+		const p = pattern(3);
+		toggleStep(p, 0, [60]);
+		setComponentValue(p, [0], 'portamento', 5);
+		toggleStep(p, 4, [67]);
+		setComponentValue(p, [4], 'bend', 7); // fade down
+		play();
+		run(0.8);
+		// half of a 125 ms step, and no glide of its own on the next note
+		expect(notes[0].glide).toBeCloseTo(0.0625);
+		expect(notes[1].glide).toBeUndefined();
+		const curve = notes[1].bend!;
+		// the default bend range is one semitone: the fade runs from 0 down to −100 cents
+		expect(curve[0]).toBeCloseTo(0);
+		expect(curve[curve.length - 1]).toBeCloseTo(-100);
+	});
+
+	it('hands a locked step its settings: the lock reaches the note, the track stays as it was', () => {
+		const { play, run, settings, pattern, state } = rig();
+		const p = pattern(2);
+		toggleStep(p, 0, [60]);
+		toggleStep(p, 1, [60]);
+		setLock(p, 1, 'filter.cutoff', 20);
+		setLock(p, 1, 'm1.1', 5);
+		play();
+		run(0.3);
+		expect(settings[0].filter.cutoff).toBe(99);
+		expect(settings[1].filter.cutoff).toBe(20);
+		expect(settings[1].m1[0]).toBe(5);
+		expect(state.tracks[2].filter.cutoff).toBe(99);
+	});
+
+	it('walks the pattern as the LEDs do, pulse, pulse hold and jump included', () => {
+		const { play, run, notes, pattern, sixteenths } = rig();
+		const p = pattern(0);
+		for (let i = 0; i < 16; i++) toggleStep(p, i, [60 + i]);
+		setComponentValue(p, [1], 'pulse', 1); // step 2 plays twice
+		setComponentValue(p, [3], 'pulse hold', 2); // step 4 holds for two more slots
+		setComponentValue(p, [6], 'jump', 1); // step 7 jumps back to step 1
+		play();
+		run(3);
+		const slots = sixteenths(0);
+		expect(slots.length).toBeGreaterThan(12);
+		// every note sounds on the slot where the LEDs show its step
+		slots.forEach((slot, i) => expect(notes[i].note - 60).toBe(playheadAt(p, Math.round(slot))));
+		// and the walk really bent: step 2 twice in a row, and back to step 1 after step 7
+		expect(notes.slice(0, 4).map((n) => n.note - 60)).toEqual([0, 1, 1, 2]);
+		expect(notes.slice(6, 9).map((n) => n.note - 60)).toEqual([5, 6, 0]);
+	});
+
+	it('swings the off-beat sixteenths with the groove', () => {
+		const { state, play, run, pattern, sixteenths } = rig();
 		state.tempo.groove = GROOVES.indexOf('shuffle');
 		state.tempo.swing = 99;
 		for (let i = 0; i < 4; i++) toggleStep(pattern(3), i, [60]);
 		play();
 		run(0.6);
-		const start = scheduler.anchor?.time ?? 0;
-		const times = notes.slice(0, 4).map((n) => (n.time - start) / 0.125);
+		const times = sixteenths(3).slice(0, 4);
 		expect(times[0]).toBeCloseTo(0, 1);
 		expect(times[1]).toBeCloseTo(1.5, 1);
 		expect(times[2]).toBeCloseTo(2, 1);
@@ -178,6 +255,17 @@ describe('the lookahead scheduler', () => {
 		expect(clicks[0].gain).toBeGreaterThan(0);
 	});
 
+	it('counts a recording in: a bar of clicks before the pattern starts, metronome or not', () => {
+		const { play, run, clicks, notes, pattern, scheduler } = rig();
+		toggleStep(pattern(0), 0, [53]);
+		play(-16);
+		run(2.3);
+		expect(clicks.map((c) => c.accent)).toEqual([true, false, false, false]);
+		// the pattern starts where the count-in ends
+		expect(notes).toHaveLength(1);
+		expect(notes[0].time - scheduler.anchor!.time).toBeCloseTo(2);
+	});
+
 	it('ends the sequence when the transport stops and starts afresh on play', () => {
 		const { state, play, run, notes, stops, pattern, clock } = rig();
 		toggleStep(pattern(0), 0, [53]);
@@ -194,18 +282,22 @@ describe('the lookahead scheduler', () => {
 		expect(notes.at(-1)?.time).toBeCloseTo(clock.now, 1);
 	});
 
-	it('starts again from the top when the position jumps back (play pressed while playing)', () => {
+	it('starts the walks over when the position jumps back (play again, a scene starting)', () => {
 		const { state, play, run, notes, stops, pattern } = rig();
-		toggleStep(pattern(0), 0, [53]);
+		const p = pattern(0);
+		toggleStep(p, 0, [53]);
+		// every second pass: the first pass is silent, the second sounds
+		setComponentValue(p, [0], 'skip trigger', 2);
 		play();
-		run(0.4);
-		// the simulator's playhead has moved on; then play is pressed again
-		state.transport.position = 3.2;
+		run(2.3);
+		expect(notes).toHaveLength(1);
+		state.transport.position = 20;
 		run(0.025);
 		state.transport.position = 0;
-		run(0.05);
+		run(0.3);
 		expect(stops).toHaveLength(1);
-		expect(notes.filter((n) => n.note === 53)).toHaveLength(2);
+		// the new start counts passes from one again: its first pass is silent too
+		expect(notes).toHaveLength(1);
 	});
 
 	it('re-anchors on a tempo change without losing its place', () => {
@@ -219,6 +311,20 @@ describe('the lookahead scheduler', () => {
 		const later = notes.filter((n) => n.time > changed + 0.3);
 		// sixteenths at 60 BPM are 250 ms apart
 		expect(later[1].time - later[0].time).toBeCloseTo(0.25);
+	});
+
+	it('keeps playing in time when the track scale changes mid-play', () => {
+		const { play, run, pattern, sixteenths } = rig();
+		const p = pattern(0);
+		for (let i = 0; i < 16; i++) toggleStep(p, i, [53]);
+		play();
+		run(0.45);
+		p.scale = 2;
+		run(0.6);
+		const times = sixteenths(0);
+		const gaps = times.slice(1).map((t, i) => +(t - times[i]).toFixed(3));
+		expect(gaps.slice(0, 3)).toEqual([1, 1, 1]);
+		expect(gaps.slice(-2)).toEqual([2, 2]);
 	});
 
 	it('skips muted tracks and the silent midi engine', () => {
@@ -240,23 +346,7 @@ describe('the lookahead scheduler', () => {
 		scheduler.tick();
 		clock.now = 1;
 		scheduler.tick();
-		expect(notes.every((n) => n.time >= clock.now - 0.03 || n.time < 0.2)).toBe(true);
 		expect(notes.filter((n) => n.time > 0.2 && n.time < 0.97)).toHaveLength(0);
-	});
-
-	it('plays what a step-events function makes of a step: ratchets and offsets', () => {
-		const ratchet: StepEventsFn = (p, index) =>
-			p.steps[index].notes.flatMap((n) => [
-				{ ...n, length: 0.5 },
-				{ ...n, offset: 0.5, length: 0.5 }
-			]);
-		const { play, run, notes, pattern, scheduler } = rig({ stepEvents: ratchet });
-		toggleStep(pattern(0), 0, [53]);
-		play();
-		run(0.2);
-		const start = scheduler.anchor?.time ?? 0;
-		expect(notes.map((n) => +(n.time - start).toFixed(4))).toEqual([0, 0.0625]);
-		expect(notes[0].duration).toBeCloseTo(0.0625);
 	});
 
 	it("follows a device's clock when told to, re-anchoring on drift", () => {

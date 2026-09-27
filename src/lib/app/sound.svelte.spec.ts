@@ -2,7 +2,6 @@ import { flushSync } from 'svelte';
 import { describe, expect, it } from 'vitest';
 import { ReplicaState } from '$lib/replica';
 import type { NoteRequest } from '$lib/sound/engine';
-import { plainStepEvents } from '$lib/sound/scheduler';
 import { createFakeRig } from '../../../test/fakes/rig';
 import { AppSimulator, type FrameClock } from './simulator.svelte';
 import { AppSound, SOUND_STORAGE_KEY, type SoundRuntime } from './sound.svelte';
@@ -96,9 +95,7 @@ function setup(options: { connect?: boolean; stored?: string; slowLoad?: boolean
 			}
 		},
 		TICK_MS: 25,
-		LOOKAHEAD: 0.1,
-		plainStepEvents,
-		sequencerStepEvents: () => null
+		LOOKAHEAD: 0.1
 	} as unknown as SoundRuntime;
 	const gestures = new EventTarget();
 	const sound = new AppSound({

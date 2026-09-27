@@ -287,3 +287,85 @@ describe('the sound engine, rendered offline', () => {
 		expect(engine.voices).toBe(1);
 	});
 });
+
+describe('the sound engine follows the mixer', () => {
+	/** RMS of one note on `track` after the engine took `patch`'s state. */
+	const level = async (trackIndex: number, patch: (s: SimState) => void, pitch = 60) => {
+		const { buffer } = await render(0.5, (engine) => {
+			const s = defaultState();
+			patch(s);
+			engine.sync(s);
+			const note = s.tracks[trackIndex].engine === 'drum' ? 53 : pitch;
+			engine.noteOn({
+				track: trackIndex,
+				settings: s.tracks[trackIndex],
+				note,
+				velocity: 100,
+				time: 0.1,
+				duration: 0.3
+			});
+		});
+		return measure(buffer, 0.1).rms;
+	};
+
+	it('hears only the soloed tracks while track keys are held in mix mode', async () => {
+		const solo = (s: SimState) => {
+			s.mode = 'mix';
+			s.held = ['track.3'];
+		};
+		expect(await level(2, solo)).toBeGreaterThan(0.005);
+		expect(await level(3, solo)).toBeLessThan(1e-4);
+	});
+
+	it('takes the master level and the group levels from mix M4', async () => {
+		const plain = await level(2, () => {});
+		expect(await level(2, (s) => (s.areas.mixer.master.level = 0))).toBeLessThan(1e-4);
+		// percussion down to nothing leaves the melodic tracks alone
+		expect(await level(0, (s) => (s.areas.mixer.master.percussion = 0))).toBeLessThan(1e-4);
+		expect(await level(2, (s) => (s.areas.mixer.master.percussion = 0))).toBeCloseTo(plain, 3);
+		expect(await level(2, (s) => (s.areas.mixer.master.melodic = 99))).toBeGreaterThan(plain * 1.5);
+	});
+
+	it('cuts the lows with the master EQ', async () => {
+		// a soft sine at C2 (65 Hz), well under the low shelf's corner
+		const low = (patch: (s: SimState) => void) =>
+			level(
+				2,
+				(s) => {
+					s.tracks[2].engine = 'sampler';
+					patch(s);
+				},
+				36
+			);
+		const flat = await low(() => {});
+		const cut = await low((s) => Object.assign(s.areas.mixer.eq, { low: -50, blend: 99 }));
+		// about −12 dB down there
+		expect(cut).toBeLessThan(flat * 0.4);
+	});
+
+	it('bends a note along its curve (the bend component)', async () => {
+		const up = Float32Array.from({ length: 32 }, (_, i) => (1200 * i) / 31);
+		const { buffer } = await render(0.8, (engine) => {
+			const settings = track('sampler');
+			engine.noteOn({
+				track: 7,
+				settings,
+				note: 57,
+				velocity: 110,
+				time: 0,
+				duration: 0.6,
+				bend: up
+			});
+		});
+		const crossings = (from: number) => {
+			const data = buffer
+				.getChannelData(0)
+				.subarray(Math.round(SR * from), Math.round(SR * (from + 0.05)));
+			let n = 0;
+			for (let i = 1; i < data.length; i++) if (data[i - 1] < 0 !== data[i] < 0) n++;
+			return n;
+		};
+		// A3 (220 Hz) rising an octave over the note: about twice the crossings at the end
+		expect(crossings(0.52) / crossings(0.02)).toBeGreaterThan(1.7);
+	});
+});

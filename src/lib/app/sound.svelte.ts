@@ -342,7 +342,6 @@ export class AppSound {
 			state: () => simulator.sim.state,
 			now: () => context.currentTime,
 			sink: engine.sink,
-			stepEvents: runtime.sequencerStepEvents() ?? runtime.plainStepEvents,
 			follow: () => simulator.deviceClock
 		});
 		engine.sync(simulator.sim.state);

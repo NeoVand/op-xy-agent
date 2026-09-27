@@ -33,20 +33,18 @@ export {
 	LOOKAHEAD,
 	Scheduler,
 	TICK_MS,
+	WALK_SEED,
 	firstIndex,
-	plainStepEvents,
+	lockedSettings,
 	positionAt,
-	sequencerStepEvents,
 	sixteenthSeconds,
 	timeAt,
-	toEvents,
+	trackGroove,
 	type Anchor,
 	type ClickEvent,
-	type NoteEvent,
+	type ScheduledNote,
 	type SchedulerOptions,
-	type SchedulerSink,
-	type StepEvent,
-	type StepEventsFn
+	type SchedulerSink
 } from './scheduler';
 export { bufferSource, synthSource, type BufferPlay, type SourceGraph } from './synths';
 export { Voice, type VoiceFilter, type VoiceModulation, type VoiceSpec } from './voice';

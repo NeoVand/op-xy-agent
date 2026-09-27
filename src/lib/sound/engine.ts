@@ -13,26 +13,31 @@
  * newest one lets go.
  */
 import { TRACKS } from '$lib/core/opxy';
+import { soloed } from '$lib/sim/areas/mixer/meters';
 import { defaultDrumKey, type SimState, type TrackState } from '$lib/sim/params';
 import { VOICE_LIMIT, victim } from './allocator';
 import { Channel } from './channel';
 import { createEffect, type SendEffect } from './fx';
 import { FIRST_DRUM_NOTE } from './kit';
 import {
+	EQ_BANDS,
 	bendCents,
 	cutoffHz,
 	dbGain,
 	engineControls,
 	envAmountCents,
 	envelopeSeconds,
+	eqGainDb,
 	fadeSeconds,
 	filterDesign,
 	glideSeconds,
+	groupGain,
 	keyTrackCents,
 	levelGain,
 	noteHz,
 	panValue,
 	playMode,
+	presetGain,
 	resonanceQ,
 	sampleRegion,
 	tuneRate,
@@ -61,6 +66,10 @@ export interface NoteRequest {
 	readonly duration?: number;
 	/** The replica key playing it (live notes). */
 	readonly key?: string;
+	/** Seconds to glide in from the last note, whatever the track's portamento (the component). */
+	readonly glide?: number;
+	/** A pitch curve over the note, in cents (the bend component). */
+	readonly bend?: Float32Array;
 }
 
 /** Options for {@link SoundEngine}. */
@@ -131,8 +140,15 @@ export class SoundEngine {
 	readonly #last: (number | null)[];
 	/** Each track's settings as last seen (for live note-offs and bends). */
 	readonly #settings: (TrackState | null)[];
+	/** Each track's settings as the mixer strip has them (without a step's locks). */
+	readonly #base: (TrackState | null)[];
 	/** What was last applied to sounding voices, per track. */
 	readonly #shown: { filter: string; m1: string }[];
+	/** The master EQ's low shelf, mid bell and high shelf, and the master level after them. */
+	readonly #eq: BiquadFilterNode[];
+	readonly #master: GainNode;
+	/** Master values last applied. */
+	readonly #applied = new Map<string, number>();
 	#bpm = 0;
 	#quiet = 0;
 
@@ -143,13 +159,22 @@ export class SoundEngine {
 		this.samples = options.samples ?? null;
 		this.#limit = options.voices ?? VOICE_LIMIT;
 
-		// master: bus → soft-knee limiter → out, with a tap for the level meter. The limiter is a
-		// static curve rather than a DynamicsCompressorNode: Chrome's compressor starts with its gain
-		// pulled down ~13 dB and takes a good 100 ms to let go, which would swallow the first note
-		// played after the context starts (on that very key press). Single sounds stay well under
-		// the knee; only dense moments round off.
+		// master: bus → EQ (mix M2) → master level (mix M4) → soft-knee limiter → out, with a tap for
+		// the level meter. The limiter is a static curve rather than a DynamicsCompressorNode:
+		// Chrome's compressor starts with its gain pulled down ~13 dB and takes a good 100 ms to let
+		// go, which would swallow the first note played after the context starts (on that very key
+		// press). Single sounds stay well under the knee; only dense moments round off.
 		this.#bus = context.createGain();
 		this.#bus.gain.value = MASTER_GAIN;
+		this.#eq = (['lowshelf', 'peaking', 'highshelf'] as const).map((type, i) => {
+			const band = context.createBiquadFilter();
+			band.type = type;
+			band.frequency.value = [EQ_BANDS.low, EQ_BANDS.mid, EQ_BANDS.high][i];
+			band.Q.value = type === 'peaking' ? 0.9 : 0.707;
+			band.gain.value = 0;
+			return band;
+		});
+		this.#master = context.createGain();
 		const limiter = context.createWaveShaper();
 		limiter.curve = softClip();
 		limiter.oversample = '2x';
@@ -157,7 +182,8 @@ export class SoundEngine {
 		this.#analyser = context.createAnalyser();
 		this.#analyser.fftSize = 1024;
 		this.#meter = new Float32Array(this.#analyser.fftSize);
-		this.#bus.connect(limiter).connect(this.#out);
+		let chain: AudioNode = this.#bus;
+		for (const node of [...this.#eq, this.#master, limiter, this.#out]) chain = chain.connect(node);
 		limiter.connect(this.#analyser);
 		this.#out.connect(options.destination ?? context.destination);
 
@@ -178,6 +204,7 @@ export class SoundEngine {
 		this.#mono = this.#channels.map(() => ({ voice: null, held: [] }));
 		this.#last = this.#channels.map(() => null);
 		this.#settings = this.#channels.map(() => null);
+		this.#base = this.#channels.map(() => null);
 		this.#shown = this.#channels.map(() => ({ filter: '', m1: '' }));
 		this.sink = {
 			note: (event, settings) =>
@@ -187,7 +214,9 @@ export class SoundEngine {
 					note: event.note,
 					velocity: event.velocity,
 					time: event.time,
-					duration: event.duration
+					duration: event.duration,
+					glide: event.glide,
+					bend: event.bend
 				}),
 			click: (event) => this.click(event),
 			stop: (time) => this.stopSequence(time)
@@ -218,8 +247,9 @@ export class SoundEngine {
 	}
 
 	/**
-	 * Takes the simulator's state: mixer strips, sends, FX returns, preset volume, LFOs and tempo,
-	 * and the filter and M1 of notes already sounding. Cheap when nothing changed; call it every tick.
+	 * Takes the simulator's state: mixer strips (with solo and the mix page's group levels), sends,
+	 * FX returns, the master EQ and level, preset volume, LFOs and tempo, and the filter and M1 of
+	 * notes already sounding. Cheap when nothing changed; call it every tick.
 	 */
 	sync(state: SimState, time = this.context.currentTime): void {
 		const { bpm } = state.tempo;
@@ -227,6 +257,16 @@ export class SoundEngine {
 			this.#bpm = bpm;
 			for (const fx of this.#effects) fx.setTempo(bpm, time);
 		}
+		const mixer = state.areas?.mixer;
+		if (mixer) {
+			const { eq, master } = mixer;
+			[eq.low, eq.mid, eq.high].forEach((band, i) => {
+				this.#set(`eq${i}`, eqGainDb(band, eq.blend), this.#eq[i].gain, time);
+			});
+			this.#set('master', groupGain(master.level), this.#master.gain, time);
+		}
+		// solo: tracks held in mix mode (instrument set) are the only ones heard
+		const solo = state.banks?.mix === 'instrument' ? soloed(state) : [];
 		this.#returns.forEach((strip, i) => {
 			const aux = state.aux[6 + i];
 			if (!aux) return;
@@ -239,7 +279,12 @@ export class SoundEngine {
 			const channel = this.#channels[k];
 			if (!channel) return;
 			this.#settings[k] = track;
-			const rewire = channel.apply(track, bpm, time);
+			this.#base[k] = track;
+			const group = mixer
+				? groupGain(track.engine === 'drum' ? mixer.master.percussion : mixer.master.melodic)
+				: 1;
+			const heard = solo.length === 0 || solo.includes(k) ? 1 : 0;
+			const rewire = channel.apply(track, bpm, time, group * heard);
 			const voices = this.#voices.filter((v) => v.track === k);
 			if (rewire) {
 				const mod = channel.modulation();
@@ -263,6 +308,13 @@ export class SoundEngine {
 		});
 	}
 
+	/** Sets a master parameter when its value changed since last time. */
+	#set(key: string, value: number, param: AudioParam, time: number): void {
+		if (this.#applied.get(key) === value) return;
+		this.#applied.set(key, value);
+		param.setTargetAtTime(value, time, 0.01);
+	}
+
 	/** Plays a note: live (held until {@link noteOff}) or sequenced (with its duration). */
 	noteOn(request: NoteRequest): void {
 		const { track: k, settings } = request;
@@ -279,7 +331,8 @@ export class SoundEngine {
 			return;
 		}
 		const mode = playMode(settings.playMode.mode);
-		const glide = glideSeconds(settings.playMode.portamento);
+		// a portamento component glides this note in whatever the track's portamento says
+		const glide = request.glide ?? glideSeconds(settings.playMode.portamento);
 		const hz = noteHz(request.note);
 		if (mode === 'poly') {
 			// the same note again on this track lets the one before go
@@ -456,15 +509,33 @@ export class SoundEngine {
 			from,
 			glide,
 			amp: source.amp ?? envelopeSeconds(settings.amp),
-			peak: velocityGain(request.velocity) * source.graph.level * source.gain,
+			peak:
+				velocityGain(request.velocity) *
+				source.graph.level *
+				source.gain *
+				this.#lockedVolume(track, settings),
 			filter: this.#filter(settings, request.note),
 			bend: this.#channels[track].bend,
+			curve: request.bend,
 			source: request.key ? 'live' : 'sequence',
 			key: request.key ?? null
 		});
 		this.#adopt(voice);
 		this.#last[track] = hz;
 		return voice;
+	}
+
+	/**
+	 * A step's locked preset volume against the one the track's strip already applies: the note
+	 * plays that much louder or softer.
+	 */
+	#lockedVolume(track: number, settings: TrackState): number {
+		const base = this.#base[track];
+		if (!base || base.playMode.volume === settings.playMode.volume) return 1;
+		return Math.min(
+			4,
+			presetGain(settings.playMode.volume) / Math.max(presetGain(base.playMode.volume), 1e-3)
+		);
 	}
 
 	/** A synth's sources, or a sampler's recording when the registry has one. */
@@ -558,9 +629,10 @@ export class SoundEngine {
 			from: hz,
 			glide: 0,
 			amp: held ? amp : oneshotAmp(amp),
-			peak: velocityGain(request.velocity) * DRUM_GAIN,
+			peak: velocityGain(request.velocity) * DRUM_GAIN * this.#lockedVolume(track, settings),
 			filter: this.#filter(settings, request.note),
 			bend: this.#channels[track].bend,
+			curve: request.bend,
 			source: request.key ? 'live' : 'sequence',
 			// a oneshot plays to its end whatever the key does
 			key: held ? (request.key ?? null) : null,
