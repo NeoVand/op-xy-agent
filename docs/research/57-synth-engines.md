@@ -304,22 +304,28 @@ bass curve between 0, 64 and 127; the onset (no key click heard).
 
 ### hardsync — freq, sub, noise, lowcut
 
-Established:
+Established before measuring: a saw slave hard-synced to a master; the sub at the master's pitch;
+white noise; lowcut is a highpass on top of M3 (TE's staff): the thin, tinny sound.
 
-- A saw slave hard-synced to a master, freq spanning about three octaves.
-- The sub sits at the master's pitch.
-- Noise is white.
-- Lowcut is a highpass on top of M3 (TE's staff), which gives the thin sound.
-- Puny without the sub, and loud raw: presets use preset volume 24–48 %.
+Measured on the owner's device (2026-09-27, `2026-09-27-133212-hardsync`):
 
-Model [I]:
+- **freq moves the synced saw linearly, 1 + 7·freq times the note**: the 2nd harmonic leads at CC
+  13–25, the 3rd at 38, the 4th at 51, the 6th at 89, and at 127 a plain saw three octaves up; the
+  same on A2, A3 and A4. The pitch stays the note's.
+- **The sub is a saw at the note, in phase with the synced saw** (at freq 0 the sum stays a pure
+  saw), up to 2× the synced saw's level at sub 127, rising a little faster than in proportion
+  (≈ 2·sub^0.8).
+- **The lowcut filters the saws only; the noise passes untouched** at every setting (white, flat to
+  16 kHz). One pole, corner 101, 417, 712, 1023, 1888, 2757, 4028, 5006, 5334, 8165 Hz at CC 13,
+  25 … 127 (fitted on the saw's first harmonics within 2 dB).
+- Levels: the synced saw −24.3 dBFS on average (±1 dB note to note, even at the same setting); full
+  noise −64 dBFS/Hz. On A6 at freq 127 the slave (14 kHz) aliases into noise.
 
-- Slave at f0·2^(3·freq), reset at the exact fraction of a sample.
-- The sub is a sine at f0.
-- Noise ∝ noise².
-- A two-pole highpass from about 20 Hz to 3 kHz on the sum.
+Model: the above (`hardsync.ts`); our slave stops at 0.2 × the sample rate instead of aliasing.
+Against the capture, the partials within 40 dB of the loudest match within 1–1.5 dB.
 
-Open: the slave's waveform, the ratio curve, the sub's waveform and octave, and the highpass slope.
+Open: the noise curve (only noise 100 was measured); the lowcut's corner near 0 (a slight cut of
+A2 at freq 0?); what scatters the level note to note.
 
 ### simple — shape, pw, noise, stereo
 
@@ -476,7 +482,7 @@ every voice per sample instead.
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | prism     | Measured: saw → square blend k with a −3.9 dB/k level law, then oscillator 2 narrows before oscillator 1 (to w ≈ 0.113); oscillator 2 at −2.4 dB, less at high ratios; ten ratio zones up to 1:16; detune to 15 cents; each oscillator fades with its pitch above ~2 kHz; stereo = the swept copy.                                                      |
 | simple    | Saw → square blend, width 0.5 − 0.44·pw on the pulse only, the measured noise crossfade, and the measured stereo: a delayed copy per channel, a triangle sweeping it ±6.9–15.2 cents (opposite in L and R), high-passed at 815–490 Hz.                                                                                                                  |
-| hardsync  | A saw synced at the exact sub-sample instant, 3 octaves up (capped at 9.6 kHz, where its aligned peaks double), a sine sub at the note read off the master's phase, noise, and a two-pole highpass 20 Hz–3 kHz on the sum.                                                                                                                              |
+| hardsync  | Measured: a saw synced at 1 + 7·freq times the note (linear), a sub saw at the note in phase (to 2×), a one-pole lowcut on the saws only (101 Hz–8.2 kHz), white noise at −64 dBFS/Hz after it; levels at the device's.                                                                                                                                 |
 | dissolve  | Two sines ±45 cents at full detune. Swarm: independent wobble per carrier, jitter on the FM, and a noise band at Q 2. AM by narrow-band noise at the note (Q 8). FM by a 1:1 cosine-phase modulator (the saw-like series at moderate index), DC removed exactly.                                                                                        |
 | epiano    | 1:1 FM: tone raises the index (to 2.2 rad, where 1:1 FM is brightest) and the modulator's feedback (sine → saw); texture is the carrier's shape (sine → triangle → a peaky pickup triangle); punch a partial at 7× the note decaying over 25 ms, ∝ punch² × velocity; tine the index's decay, 8 s → 30 ms (none at 0). The FM level dip is compensated. |
 | axis      | Operator 2 at r × the note phase-modulates operator 1 (index 1.3) and is also heard (0.5, less at high ratios). r runs 0.5 → 1 weighted to unison below 50 (M1 49 ≈ 3 cents: a slow chorus), then steps 1…32 above, gliding over 5 ms. Shape: saw at 0, triangle at 1. Tone: a resonant lowpass 100 Hz–16 kHz. Tremolo up to 0.6 deep, 0.5–10 Hz.       |
@@ -605,7 +611,7 @@ message logged in `90-device-probe.md`. Filter and LFO types have no CC and are 
 6. Axis: whether operator 2 is audible, its FM index, and the tone filter.
 7. Wavetable: frames per table, the ninth table, the warp shape and the drift law.
 8. Dissolve's modulators (noise or periodic).
-9. Hardsync's sub octave and waveform, and the lowcut slope. (Simple's stereo: measured, §3.)
+9. ~~Hardsync's sub octave and waveform, and the lowcut slope.~~ Measured (§3). (Simple's stereo too.)
 10. LFO shapes per type and element's envelope source; portamento curves; bend steps.
 
 ## 8. File map

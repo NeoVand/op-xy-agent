@@ -3,25 +3,13 @@
 // white noise, the device's levels, and the bounds every engine keeps. Played straight at 48 kHz,
 // block by block as the core plays it.
 import { describe, expect, it } from 'vitest';
-import { centroid, harmonicLevels, inharmonicDb, levelAt, powerSpectrum, rms } from '../analysis';
+import { harmonicLevels, inharmonicDb, levelAt, rms } from '../analysis';
 import { BOUNDS, SR, clickRatios, grid, m1, play, worstInharmonic, worstPeak } from './audition';
 import { DEVICE_GAIN_DB } from './device';
 import { HardsyncVoice, LEVEL, LOWCUT, NOISE_DENSITY_DB, SUB_LEVEL, TOP_RATIO } from './hardsync';
 
 const make = (seed: number) => new HardsyncVoice(SR, seed);
 const DEFAULT = m1(80, 80, 80, 80);
-
-/** The share of `x`'s power between `lo` and `hi` hertz. */
-function share(x: Float32Array, lo: number, hi: number): number {
-	const { power, binHz } = powerSpectrum(x, SR);
-	let band = 0;
-	let total = 0;
-	for (let i = 1; i < power.length; i++) {
-		total += power[i];
-		if (i * binHz >= lo && i * binHz <= hi) band += power[i];
-	}
-	return band / total;
-}
 
 describe('hardsync', () => {
 	it('is a plain saw at the note at freq 0, periodic and band-limited', () => {
