@@ -363,7 +363,9 @@ export class OpxySim {
 				if (!s.shift) s.pages.instrument = page;
 				return;
 			}
-			if (s.shift && page !== 2) {
+			// a midi track has no filter: shift + M3 is its second CC page (the mixer area's)
+			const filterless = page === 3 && this.track.engine === 'midi';
+			if (s.shift && page !== 2 && !filterless) {
 				s.pages.instrument = page;
 				this.#openPicker(page === 1 ? 'engine' : page === 3 ? 'filter' : 'lfo');
 				return;
@@ -568,7 +570,6 @@ export class OpxySim {
 				return;
 			}
 			case 2: {
-				if (t.engine === 'midi') return;
 				if (s.shift) {
 					const p = t.playMode;
 					if (e === 0) p.mode = clamp(p.mode + delta, 0, 2);
@@ -583,7 +584,6 @@ export class OpxySim {
 				return;
 			}
 			case 3: {
-				if (t.engine === 'midi') return;
 				if (s.shift) {
 					t.sends[e] = step(t.sends[e], 0, 99);
 					return;

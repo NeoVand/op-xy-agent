@@ -357,3 +357,15 @@ describe('frames, formats and scenarios', () => {
 		expect(SCENARIOS).toContain(s);
 	});
 });
+
+describe('a midi track from M1', () => {
+	it('opens its second CC page with shift + M3 (it has no filter to pick)', () => {
+		const sim = new OpxySim({ now: () => 0 });
+		sim.press('track.4');
+		sim.state.tracks[3].engine = 'midi';
+		sim.combo('key.shift', 'key.m3');
+		expect(sim.state.picker).toBeNull();
+		expect(sim.frame.page).not.toBe('list');
+		expect(sim.state.pages.instrument).toBe(3);
+	});
+});

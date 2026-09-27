@@ -363,6 +363,7 @@ describe('scenarios (states that reproduce TE’s guide art)', () => {
 
 	it('have unique ids and guide files', () => {
 		expect(new Set(SCENARIOS.map((s) => s.id)).size).toBe(SCENARIOS.length);
-		expect(new Set(SCENARIOS.map((s) => s.png)).size).toBe(SCENARIOS.length);
+		const pictures = SCENARIOS.flatMap((s) => (s.png === null ? [] : [s.png]));
+		expect(new Set(pictures).size).toBe(pictures.length);
 	});
 });

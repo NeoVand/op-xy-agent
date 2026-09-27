@@ -332,6 +332,8 @@ card compares a simulated page with TE's guide picture of it. Nothing here talks
 					<figure>
 						{#if data.guide?.src && data.guide.id === scenarioId}
 							<img src={data.guide.src} alt="TE's guide picture of {scenario?.title}" />
+						{:else if scenario && scenario.png === null}
+							<p class="hint">TE's guide has no picture of this page: the layout is ours.</p>
 						{:else if scenarioId}
 							<p class="hint">
 								No picture: the research input is missing (scripts/fetch-research.sh).

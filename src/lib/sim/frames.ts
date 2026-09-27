@@ -175,7 +175,7 @@ function instrumentFrame(s: SimState): ScreenFrame {
 			};
 		}
 		case 2:
-			if (t.engine === 'midi') return midiCcFrame(t, 2);
+			// (a midi track's M2 and M3 are the mixer area's CC pages)
 			if (s.shift) {
 				const p = t.playMode;
 				return {
@@ -191,7 +191,6 @@ function instrumentFrame(s: SimState): ScreenFrame {
 			}
 			return { page: 'envelope', ...envelopeView(t) };
 		case 3:
-			if (t.engine === 'midi') return midiCcFrame(t, 3);
 			if (s.shift) {
 				const [aux, tape, fx1, fx2] = t.sends;
 				return {
@@ -204,15 +203,6 @@ function instrumentFrame(s: SimState): ScreenFrame {
 		case 4:
 			return lfoFrame(t);
 	}
-}
-
-/** The midi engine's M2/M3 CC pages (not drawn yet). */
-function midiCcFrame(t: TrackState, page: 2 | 3): ScreenFrame {
-	return {
-		page: 'text',
-		title: `midi · M${page} cc controls`,
-		lines: [`channel ${t.midi.channel}`, 'cc pages are not drawn yet']
-	};
 }
 
 /**

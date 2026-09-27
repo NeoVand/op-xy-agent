@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ url }): Promise<{ guide: GuidePictu
 	if (!id) return { guide: null };
 	const { SCENARIOS } = await import('$lib/sim/scenarios');
 	const scenario = SCENARIOS.find((s) => s.id === id);
-	if (!scenario) return { guide: null };
+	if (!scenario || scenario.png === null) return { guide: null };
 	const { readFile } = await import('node:fs/promises');
 	try {
 		const png = await readFile(`research/ui-reference/guide-screens/${scenario.png}`);
