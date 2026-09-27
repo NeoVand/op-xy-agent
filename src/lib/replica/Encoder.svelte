@@ -5,9 +5,9 @@ white) in a recessed round dish, sized from TE's drawing. The real knob has no p
 replica shows rotation with the knurled edge and a brief arrow cue — clearer than the device
 without being different.
 
-Input: vertical drag or the wheel turns it (6 px per detent); a tap clicks it; alt- or
-shift-drag turns with the click held (fine adjustment); arrow keys and Page Up/Down turn,
-Enter/Space clicks.
+Input: vertical drag or the wheel turns it (6 px per detent); a tap clicks it; alt-drag turns
+with the click held (fine adjustment); arrow keys and Page Up/Down turn, Enter/Space clicks. With
+the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the replica's shift).
 -->
 <svelte:options namespace="svg" />
 
@@ -55,7 +55,8 @@ Enter/Space clicks.
 		if (event.button !== 0) return;
 		event.preventDefault();
 		capturePointer(event);
-		const fine = event.altKey || event.shiftKey;
+		// alt-drag is push-turn (fine); Shift is the OP-XY's shift, held by Replica.svelte
+		const fine = event.altKey;
 		drag = {
 			pointer: event.pointerId,
 			startY: event.clientY,

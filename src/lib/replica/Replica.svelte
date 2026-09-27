@@ -6,7 +6,9 @@ tab) built from TE's own panel drawing and `knowledge/opxy/controls.json`, with 
 the power-switch tab and the pitch-bend pad reach just outside that box, as on the device.
 
 Everything reactive lives in the `ReplicaState` you pass in. Keys share one Tab stop (arrow keys
-move between them); encoders, the volume knob and the pitch bend each have their own.
+move between them); encoders, the volume knob and the pitch bend each have their own. The
+computer's Shift key holds the replica's shift (except while typing in a text field), so a click
+on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for combos.
 
 ```svelte
 <script lang="ts">
@@ -30,6 +32,7 @@ move between them); encoders, the volume knob and the pitch bend each have their
 	import Screen from './Screen.svelte';
 	import VolumeKnob from './VolumeKnob.svelte';
 	import { BODY_RADIUS, ENCODER_PARTS, KEY_PARTS, PANEL_H, PANEL_W, SCREEN_PART } from './geometry';
+	import { ComputerShift, isTyping } from './modifiers';
 	import type { ReplicaState } from './state.svelte';
 
 	interface Props {
@@ -45,6 +48,8 @@ move between them); encoders, the volume knob and the pitch bend each have their
 
 	/** The key that holds the keys' single Tab stop. */
 	let focusKey = $state<KeyId>('key.play');
+	/** The computer's Shift, held on the replica's shift key. */
+	const shift = new ComputerShift(() => replica);
 	let svg: SVGSVGElement | null = null;
 
 	const active = SCREEN_PART.active;
@@ -88,11 +93,25 @@ move between them); encoders, the volume knob and the pitch bend each have their
 	}
 </script>
 
+<svelte:window
+	onkeydown={(event) =>
+		shift.keydown({
+			key: event.key,
+			code: event.code,
+			repeat: event.repeat,
+			typing: isTyping(event.target)
+		})}
+	onkeyup={(event) => shift.keyup(event)}
+	onblur={() => shift.releaseAll()}
+/>
+<svelte:document onvisibilitychange={() => document.hidden && shift.releaseAll()} />
+
 <div
 	class={['replica', className]}
 	role="group"
 	aria-label={label}
 	style:--rx-body-radius={bodyRadius}
+	onpointerdowncapture={(event) => shift.pointerdown(event.shiftKey)}
 >
 	<svg
 		class="replica__svg"
