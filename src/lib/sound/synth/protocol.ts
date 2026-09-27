@@ -97,12 +97,16 @@ export type CoreMessage =
 export type CoreReply = { readonly t: 'ended'; readonly id: number };
 
 /**
- * The engines the core plays; the others stay with the Web Audio voices until their models land
- * (docs/research/57-synth-engines.md).
+ * The engines the core plays: all eight synth engines. The samplers and the midi engine stay with
+ * the Web Audio voices (docs/research/57-synth-engines.md).
  */
 export const CORE_ENGINES: ReadonlySet<EngineId> = new Set<EngineId>([
+	'axis',
 	'dissolve',
+	'epiano',
 	'hardsync',
+	'organ',
 	'prism',
-	'simple'
+	'simple',
+	'wavetable'
 ]);

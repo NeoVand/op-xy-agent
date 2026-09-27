@@ -51,12 +51,6 @@ const FADE_SECONDS = 0.02;
 /** Every frame's RMS before LEVEL (a unit sine's is 0.707) and the peak it may not pass. */
 const FRAME_RMS = 0.5;
 const FRAME_PEAK = 1.5;
-/**
- * The band limit is asked for this much above the read speed: over the top quarter of each
- * octave the table fades in its next richer level, whose top harmonic sits up to 2^¼ past
- * Nyquist; bright frames (fibonacci, geometric) are not faint up there.
- */
-const FADE_MARGIN = 1.25;
 /** Harmonics a frame is described with (the richest stored level's). */
 const HARMONICS = 512;
 /** Samples per drawn cycle. */
@@ -385,7 +379,7 @@ export class WavetableVoice implements EngineVoice {
 			const speed =
 				Math.max(Math.abs(dt + (below - 1) * dtw), Math.abs(dt + (above - 1) * dtw)) +
 				EDGE_ROOM * (below - above) * dtw;
-			const limit = FADE_MARGIN * speed;
+			const limit = speed;
 			let y = into.read(frame, read, limit);
 			if (fade < 1) {
 				y = y * fade + from.read(frame, read, limit) * (1 - fade);

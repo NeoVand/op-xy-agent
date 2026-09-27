@@ -51,12 +51,6 @@ const SMOOTH_SECONDS = 0.005;
 const FADE_SECONDS = 0.02;
 /** Every frame's RMS before LEVEL (a unit sine's is 0.707). */
 const FRAME_RMS = 0.5;
-/**
- * The table's band limit is asked for this much above the note: over the top quarter of each
- * octave the table fades in its next richer level, whose top harmonic sits up to 2^¼ past Nyquist.
- * That folds back unheard for a saw's faint top; a full 1′ drawbar is not faint.
- */
-const FADE_MARGIN = 1.25;
 
 /** One rank: a multiple of the note (0.5 is the 16′) and its amplitude (a full drawbar is 1). */
 type Rank = readonly [multiple: number, amplitude: number];
@@ -321,8 +315,8 @@ export class OrganVoice implements EngineVoice {
 		const k = this.#smooth;
 		const half = 0.5 * this.#dt;
 		const celesteHalf = half * this.#celesteRatio;
-		const limit = FADE_MARGIN * half;
-		const celesteLimit = FADE_MARGIN * celesteHalf;
+		const limit = half;
+		const celesteLimit = celesteHalf;
 		const type = this.#type;
 		const from = this.#from;
 		const fadeStep = this.#fadeStep;

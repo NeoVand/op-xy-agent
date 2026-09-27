@@ -4,7 +4,10 @@
  * whose harmonics stay below Nyquist, fading in the next richer one as it nears the top of its
  * octave so brightness never jumps. Frames blend by position. Built from harmonic amplitudes (and
  * phases) or from drawn single cycles; used by the wavetable engine and anywhere a fixed spectrum
- * plays (organ registrations, prism's shapes, sub oscillators).
+ * plays (organ registrations, the FM engines' operator shapes).
+ *
+ * Levels are built the first time a note reads them, one inverse FFT each (well under a
+ * millisecond), so no note waits for a whole table on the audio thread.
  */
 import { fft } from './analysis';
 
@@ -16,14 +19,22 @@ export interface Partials {
 
 /** Harmonics in the richest level. */
 export const MAX_HARMONICS = 512;
-/** Each level: the harmonics it keeps and the samples it stores them in (four per top harmonic). */
+/**
+ * Each level: the harmonics it keeps and the samples it stores them in, eight per cycle of its top
+ * harmonic, so linear interpolation's images stay low.
+ */
 const LEVELS = Array.from({ length: 10 }, (_, l) => {
 	const harmonics = MAX_HARMONICS >> l;
-	return { harmonics, size: Math.max(256, 4 * harmonics) };
+	return { harmonics, size: Math.max(512, 8 * harmonics) };
 });
 
 /** Where in its octave a note starts fading in the next richer level (0–1, in octaves). */
 const FADE_FROM = 0.75;
+/**
+ * Levels are picked this much early (the fade's quarter octave), so the richer level's top harmonic
+ * is already below Nyquist wherever it fades in.
+ */
+const EARLY = 2 ** (1 - FADE_FROM);
 
 /** One level of one frame, with a guard sample for interpolation. */
 function build(partials: Partials, harmonics: number, size: number): Float32Array {
@@ -64,21 +75,21 @@ export function partialsOf(cycle: ArrayLike<number>, harmonics = MAX_HARMONICS):
 }
 
 export class WaveTable {
-	/** `levels[l][frame]`. */
-	readonly #levels: Float32Array[][];
+	/** Each frame's partials, and `levels[l][frame]` once built. */
+	readonly #partials: readonly Partials[];
+	readonly #levels: (Float32Array | null)[][];
 	readonly frames: number;
 
-	private constructor(levels: Float32Array[][]) {
-		this.#levels = levels;
-		this.frames = levels[0].length;
+	private constructor(partials: readonly Partials[]) {
+		this.#partials = partials;
+		this.#levels = LEVELS.map(() => partials.map(() => null));
+		this.frames = partials.length;
 	}
 
 	/** A table from each frame's partials. */
 	static fromPartials(frames: readonly Partials[]): WaveTable {
 		if (frames.length === 0) throw new Error('a wavetable needs at least one frame');
-		return new WaveTable(
-			LEVELS.map(({ harmonics, size }) => frames.map((f) => build(f, harmonics, size)))
-		);
+		return new WaveTable(frames);
 	}
 
 	/** A table from drawn single cycles (power-of-two lengths). */
@@ -91,7 +102,7 @@ export class WaveTable {
 	 * note advancing `dt` cycles a sample.
 	 */
 	read(frame: number, phase: number, dt: number): number {
-		const lvl = Math.log2(Math.max(dt, 1e-9) * 2 * MAX_HARMONICS);
+		const lvl = Math.log2(Math.max(dt, 1e-9) * 2 * MAX_HARMONICS * EARLY);
 		const last = LEVELS.length - 1;
 		// the richest level with every harmonic below Nyquist, and how far into its octave we are
 		const safe = Math.min(last, Math.max(0, Math.ceil(lvl)));
@@ -99,19 +110,29 @@ export class WaveTable {
 		const f = Math.min(Math.max(frame, 0), this.frames - 1);
 		const a = this.#frame(safe, f, phase);
 		if (safe === 0 || into <= FADE_FROM) return a;
-		// over the octave's top quarter, fade in the richer level: the few of its harmonics still
-		// above Nyquist are faint and fold back above ~0.4 × the sample rate
+		// over the octave's top quarter, fade in the richer level (picked early, it fits below Nyquist)
 		const x = (into - FADE_FROM) / (1 - FADE_FROM);
 		return a + (this.#frame(safe - 1, f, phase) - a) * x * x;
 	}
 
 	#frame(level: number, frame: number, phase: number): number {
-		const frames = this.#levels[level];
 		const i = Math.floor(frame);
-		const a = sample(frames[i], phase);
+		const a = sample(this.#cycle(level, i), phase);
 		const w = frame - i;
-		if (w === 0 || i + 1 >= frames.length) return a;
-		return a + (sample(frames[i + 1], phase) - a) * w;
+		if (w === 0 || i + 1 >= this.frames) return a;
+		return a + (sample(this.#cycle(level, i + 1), phase) - a) * w;
+	}
+
+	/** One level of one frame, built the first time it is read. */
+	#cycle(level: number, frame: number): Float32Array {
+		const row = this.#levels[level];
+		let cycle = row[frame];
+		if (!cycle) {
+			const { harmonics, size } = LEVELS[level];
+			cycle = build(this.#partials[frame], harmonics, size);
+			row[frame] = cycle;
+		}
+		return cycle;
 	}
 }
 

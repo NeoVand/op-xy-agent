@@ -82,7 +82,7 @@ describe('the synth core in its worklet', () => {
 		const { buffer } = await render(0.5, (engine) => {
 			engine.noteOn({
 				track: 3,
-				settings: defaultTrack('epiano'),
+				settings: defaultTrack('multisampler'),
 				note: 60,
 				velocity: 100,
 				time: 0,
@@ -92,25 +92,30 @@ describe('the synth core in its worklet', () => {
 		expect(rms(buffer, 0.05, 0.25)).toBeGreaterThan(0.01);
 	});
 
-	it('runs 24 voices faster than real time', async () => {
+	it('runs 24 voices of all eight engines faster than real time', async () => {
 		const seconds = 4;
+		const engines = [...CORE_ENGINES];
 		const started = performance.now();
-		const { buffer } = await render(seconds, (engine) => {
-			for (let v = 0; v < 24; v++) {
-				engine.noteOn({
-					track: v % 8,
-					settings: prism(),
-					note: 40 + v,
-					velocity: 90,
-					time: 0.05,
-					duration: seconds - 0.5
-				});
-			}
-		});
+		const { buffer } = await render(
+			seconds,
+			(engine) => {
+				for (let v = 0; v < 24; v++) {
+					engine.noteOn({
+						track: v % 8,
+						settings: defaultTrack(engines[v % engines.length]),
+						note: 40 + v,
+						velocity: 90,
+						time: 0.05,
+						duration: seconds - 0.5
+					});
+				}
+			},
+			CORE_ENGINES
+		);
 		const wall = (performance.now() - started) / 1000;
 		// the render's own share: the helper waits 0.1 s around it
 		const factor = seconds / Math.max(0.01, wall - 0.1);
-		console.log(`24 voices: ${factor.toFixed(1)}× real time`);
+		console.log(`24 voices, all engines: ${factor.toFixed(1)}× real time`);
 		expect(rms(buffer, 1, 3)).toBeGreaterThan(0.05);
 		expect(factor).toBeGreaterThan(1.5);
 	});
