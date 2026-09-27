@@ -290,6 +290,7 @@ describe.skipIf(!existsSync(research))(
 			);
 			expect(out).toMatch(/screen-font\.json is up to date/);
 			expect(out).toMatch(/screen-icons\.json is up to date/);
-		});
+			// It traces every guide screen: seconds alone, longer beside the whole suite.
+		}, 60_000);
 	}
 );

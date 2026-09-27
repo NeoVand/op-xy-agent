@@ -155,3 +155,45 @@ describe('Conversation (browser)', () => {
 		expect(chip?.textContent).toMatch(/manual expert answered/);
 	});
 });
+
+describe('Conversation: files you sent', () => {
+	it('shows a picture as a thumbnail and other files as tags with their detail', async () => {
+		const screen = render(Conversation, {
+			props: {
+				entries: [
+					{
+						kind: 'user',
+						id: 'u1',
+						text: 'play this',
+						attachments: [
+							{
+								id: 'f1',
+								kind: 'image',
+								name: 'score.png',
+								size: 1000,
+								detail: '1500 × 2000',
+								thumb:
+									'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+							},
+							{
+								id: 'f2',
+								kind: 'midi',
+								name: 'song.mid',
+								size: 200,
+								detail: '2 tracks · 64 notes · 0:32'
+							}
+						]
+					}
+				]
+			}
+		});
+		const list = screen.getByRole('list', { name: 'files sent' });
+		await expect.element(list).toBeVisible();
+		await expect.element(screen.getByText('score.png')).toBeVisible();
+		await expect.element(screen.getByText('2 tracks · 64 notes · 0:32')).toBeVisible();
+		await expect.element(screen.getByText('midi')).toBeVisible();
+		await expect.element(screen.getByText('play this')).toBeVisible();
+		const img = list.element().querySelector('img');
+		expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
+	});
+});

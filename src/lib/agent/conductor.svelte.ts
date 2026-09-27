@@ -24,6 +24,7 @@ import type {
 import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
 import { nextActivity, startActivity, type Activity } from './activity';
+import { attachmentProblem, userContent, type PreparedAttachment } from './attachments';
 import {
 	applyEvent,
 	emptyUsage,
@@ -290,13 +291,32 @@ export class Conductor {
 		return () => this.#listeners.delete(listener);
 	}
 
-	/** Sends a user message and runs the agent until it answers. */
-	async send(text: string): Promise<void> {
+	/**
+	 * Why these files cannot go with the next message (too many, or the conversation would grow
+	 * past what one request can carry), or null.
+	 */
+	attachmentProblem(attachments: readonly PreparedAttachment[]): string | null {
+		return attachmentProblem(this.#messages, attachments);
+	}
+
+	/**
+	 * Sends a user message, with any files (see `attachments.ts`), and runs the agent until it
+	 * answers. Files that `attachmentProblem` refuses are not sent (nor is the message).
+	 */
+	async send(text: string, attachments: readonly PreparedAttachment[] = []): Promise<void> {
 		const trimmed = text.trim();
-		if (!trimmed || this.busy || this.#disposed) return;
-		if (this.#messages.length === 0) this.threadTitle = titleFrom(trimmed);
-		this.entries.push({ kind: 'user', id: entryId('user'), text: trimmed });
-		this.#messages.push({ role: 'user', content: [{ type: 'text', text: trimmed }] });
+		if ((!trimmed && attachments.length === 0) || this.busy || this.#disposed) return;
+		if (this.attachmentProblem(attachments)) return;
+		if (this.#messages.length === 0) {
+			this.threadTitle = titleFrom(trimmed || attachments.map((a) => a.view.name).join(', '));
+		}
+		this.entries.push({
+			kind: 'user',
+			id: entryId('user'),
+			text: trimmed,
+			...(attachments.length > 0 ? { attachments: attachments.map((a) => a.view) } : {})
+		});
+		this.#messages.push({ role: 'user', content: userContent(trimmed, attachments) });
 		const note = this.#deviceUpdate();
 		if (note) this.#messages.push({ role: 'system', content: note });
 		await this.#run();

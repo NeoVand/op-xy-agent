@@ -4,6 +4,7 @@
  * under the `task` call for subagents), notices and approval records. Plain data, so a thread can be
  * stored in IndexedDB and shown again after a reload.
  */
+import type { AttachmentView } from './attachments';
 import type { TokenCounts } from './models';
 import type { AgentErrorInfo, AgentEvent, Citation, ToolKind } from './types';
 
@@ -12,7 +13,13 @@ export type ToolStatus = 'pending' | 'running' | 'ok' | 'error' | 'rejected' | '
 
 /** One item in the chat. */
 export type ChatEntry =
-	| { readonly kind: 'user'; readonly id: string; text: string }
+	| {
+			readonly kind: 'user';
+			readonly id: string;
+			text: string;
+			/** Files sent with the message (what the chat shows of them). */
+			attachments?: AttachmentView[];
+	  }
 	| {
 			readonly kind: 'text';
 			readonly id: string;

@@ -1,6 +1,6 @@
 <!--
 @component
-The conversation: your messages, the agent's answers (streamed, with a caret while they are being
+The conversation: your messages (with the files you sent), the agent's answers (streamed, with a caret while they are being
 written and keycaps you can click to see a combo on the replica), its tool calls (a subagent's work
 shows live under its chip), approval records and notices.
 
@@ -16,6 +16,7 @@ says what it is doing and for how long.
 	import type { Activity } from '../activity';
 	import type { ChatEntry } from '../chat';
 	import ActivityLine from './ActivityLine.svelte';
+	import AttachmentChip from './AttachmentChip.svelte';
 	import MessageText, { type CitationTarget } from './MessageText.svelte';
 	import ToolChip from './ToolChip.svelte';
 
@@ -110,7 +111,24 @@ says what it is doing and for how long.
 		{#each top as entry, i (entry.id)}
 			<li class={['conv__item', `conv__item--${entry.kind}`]}>
 				{#if entry.kind === 'user'}
-					<p class="conv__user" {@attach reveal}>{entry.text}</p>
+					<div class="conv__user" {@attach reveal}>
+						{#if entry.attachments && entry.attachments.length > 0}
+							<ul class="conv__files" aria-label="files sent">
+								{#each entry.attachments as file (file.id)}
+									<li>
+										<AttachmentChip
+											name={file.name}
+											kind={file.kind}
+											detail={file.detail}
+											thumb={file.thumb}
+											variant="message"
+										/>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+						{#if entry.text}<p class="conv__text">{entry.text}</p>{/if}
+					</div>
 				{:else if entry.kind === 'text'}
 					<MessageText
 						text={entry.text}
@@ -189,15 +207,31 @@ says what it is doing and for how long.
 	}
 
 	.conv__user {
-		margin: 0;
 		padding: 0.5rem 0.75rem;
 		border-radius: var(--xy-radius-tile);
 		background-color: var(--xy-surface-sunken);
 		color: var(--xy-fg);
 		font-size: var(--xy-text-sm);
 		line-height: var(--xy-leading-sm);
+	}
+
+	.conv__text {
+		margin: 0;
 		white-space: pre-wrap;
 		overflow-wrap: anywhere;
+	}
+
+	.conv__files {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 0.125rem -0.25rem 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.conv__files:has(+ .conv__text) {
+		margin-bottom: 0.5rem;
 	}
 
 	.conv__approval {

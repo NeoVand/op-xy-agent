@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MidiEvent } from '$lib/core/midi/bus';
 import { createFakeRig } from '../../../test/fakes/rig';
+import { ATTACHMENT_LIMITS, type PreparedAttachment } from './attachments';
 import { createAnthropicClient } from './client';
 import { Conductor, type PreferenceStore } from './conductor.svelte';
 import { createUnitSource } from './manual-index';
@@ -228,6 +229,72 @@ describe('conductor: requests and streaming', () => {
 		});
 		expect(conductor.citation('MODES.M1#engine-picker')?.title).toBe('M1 page');
 		expect(conductor.citation('nope.unit')).toBeNull();
+	});
+});
+
+describe('conductor: files', () => {
+	const scale: PreparedAttachment = {
+		view: {
+			id: 'file-1',
+			kind: 'image',
+			name: 'scale.png',
+			size: 1234,
+			detail: '800 × 200',
+			thumb: 'data:image/jpeg;base64,AAAA'
+		},
+		blocks: [
+			{ type: 'text', text: 'Image “scale.png” (800 × 200 px):' },
+			{ type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'iVBORw0KGgo=' } }
+		],
+		bytes: 12
+	};
+
+	it('sends files before the text, shows them in the chat and keeps them in the thread', async () => {
+		const store = createMemoryThreadStore();
+		const { api, conductor } = await setup(
+			[
+				{
+					content: [{ type: 'text', text: 'A C major scale, one octave up.' }],
+					stop_reason: 'end_turn'
+				}
+			],
+			{ store }
+		);
+		await conductor.send('what is this?', [scale]);
+		const body = api.messageRequests[0].body;
+		expect(body.messages[0]).toEqual({
+			role: 'user',
+			content: [...scale.blocks, { type: 'text', text: 'what is this?' }]
+		});
+		expect(conductor.entries[0]).toEqual({
+			kind: 'user',
+			id: expect.any(String),
+			text: 'what is this?',
+			attachments: [scale.view]
+		});
+		const saved = await store.load(conductor.threadId);
+		expect(saved?.messages[0].content).toEqual(body.messages[0].content);
+		expect(saved?.entries[0]).toMatchObject({ attachments: [scale.view] });
+	});
+
+	it('sends files without text and names the thread after them', async () => {
+		const { api, conductor } = await setup([
+			{ content: [{ type: 'text', text: 'Got it.' }], stop_reason: 'end_turn' }
+		]);
+		await conductor.send('  ', [scale]);
+		expect(api.messageRequests[0].body.messages[0].content).toEqual(scale.blocks);
+		expect(conductor.threadTitle).toBe('scale.png');
+		expect(conductor.entries[0]).toMatchObject({ kind: 'user', text: '' });
+	});
+
+	it('refuses files that would not fit a request and sends nothing', async () => {
+		const { api, conductor } = await setup([]);
+		const huge = { ...scale, bytes: ATTACHMENT_LIMITS.conversationBytes + 1 };
+		expect(conductor.attachmentProblem([huge])).toMatch(/too large/);
+		expect(conductor.attachmentProblem([scale])).toBeNull();
+		await conductor.send('look', [huge]);
+		expect(api.messageRequests).toHaveLength(0);
+		expect(conductor.entries).toHaveLength(0);
 	});
 });
 

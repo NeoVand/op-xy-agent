@@ -9,15 +9,30 @@ is present. It reads the app's device stack and replica from context: without a 
 still teaches and animates the replica, and says plainly that device tools need a connection.
 
 The panel is a fixed-height column: the conversation scrolls inside it and the composer always
-stays in view. In development builds `?demo=1` plays a scripted run without a key (`demo.dev.ts`;
-`?demo=idle` waits for you to ask); production builds drop that code.
+stays in view. Files go to the agent from the [+] key (the device's own plus), by pasting (a
+screenshot, say) or by dropping them anywhere on the page; they are read in the browser
+(`attachments.ts`) and wait in a row above the composer until they go with the message.
+
+In development builds `?demo=1` plays a scripted run without a key (`demo.dev.ts`; `?demo=idle`
+waits for you to ask); production builds drop that code.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import {
+		ATTACHMENT_ACCEPT,
+		ATTACHMENT_LIMITS,
+		AttachmentError,
+		attachmentId,
+		attachmentKind,
+		prepareAttachment,
+		type AttachmentKind,
+		type PreparedAttachment
+	} from '$lib/agent/attachments';
 	import type { Conductor } from '$lib/agent/conductor.svelte';
 	import { KeyStore, type KeyProvider } from '$lib/agent/keys.svelte';
 	import { DEFAULT_CONDUCTOR_MODEL, modelOptions, profileFor } from '$lib/agent/models';
 	import ApprovalSheet from '$lib/agent/ui/ApprovalSheet.svelte';
+	import AttachmentChip from '$lib/agent/ui/AttachmentChip.svelte';
 	import Conversation from '$lib/agent/ui/Conversation.svelte';
 	import CostMeter from '$lib/agent/ui/CostMeter.svelte';
 	import KeySettings from '$lib/agent/ui/KeySettings.svelte';
@@ -65,6 +80,36 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 	let demo = $state(false);
 	let composer: HTMLTextAreaElement | null = null;
 
+	/** A file in the composer: being read, ready to go, or refused. */
+	interface PendingFile {
+		readonly key: string;
+		readonly name: string;
+		readonly kind: AttachmentKind | null;
+		readonly status: 'reading' | 'ready' | 'error';
+		readonly detail?: string;
+		readonly thumb?: string;
+		readonly error?: string;
+	}
+
+	let files = $state.raw<PendingFile[]>([]);
+	/** What the ready files send (kept out of reactive state: it holds the file data). */
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	const prepared = new Map<string, PreparedAttachment>();
+	/** A problem with the files as a whole (too many, conversation too large…). */
+	let fileNote = $state<string | null>(null);
+	/** Files are being dragged over the page. */
+	let dragging = $state(false);
+	let dragDepth = 0;
+	let picker: HTMLInputElement | null = null;
+
+	/** Remembers the hidden file input behind the [+] key. */
+	function trackPicker(node: HTMLInputElement): () => void {
+		picker = node;
+		return () => {
+			picker = null;
+		};
+	}
+
 	/** Remembers the composer so closing the settings can return focus to it. */
 	function trackComposer(node: HTMLTextAreaElement): () => void {
 		composer = node;
@@ -76,7 +121,12 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 	const hasKey = $derived((import.meta.env.DEV && demo) || (keys.loaded && keys.has('anthropic')));
 	const status = $derived(conductor?.status ?? 'idle');
 	const busy = $derived(conductor?.busy ?? false);
-	const canSend = $derived(conductor !== null && !busy && draft.trim().length > 0);
+	const reading = $derived(files.some((file) => file.status === 'reading'));
+	const readyCount = $derived(files.filter((file) => file.status === 'ready').length);
+	const canSend = $derived(
+		conductor !== null && !busy && !reading && (draft.trim().length > 0 || readyCount > 0)
+	);
+	const canAttach = $derived(conductor !== null && !settingsOpen);
 	const modelLabel = $derived(profileFor(conductor?.model ?? DEFAULT_CONDUCTOR_MODEL).label);
 	const connected = $derived(device?.session.phase === 'ready');
 	const firmware = $derived(device?.session.firmware?.osVersion ?? null);
@@ -193,10 +243,108 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 
 	function submit(event: SubmitEvent): void {
 		event.preventDefault();
-		if (!canSend) return;
+		if (!canSend || !conductor) return;
+		const attachments = files.flatMap((file) => {
+			const ready = file.status === 'ready' ? prepared.get(file.key) : undefined;
+			return ready ? [ready] : [];
+		});
+		const problem = conductor.attachmentProblem(attachments);
+		if (problem) {
+			fileNote = problem;
+			return;
+		}
 		const text = draft;
 		draft = '';
-		send(text);
+		files = [];
+		prepared.clear();
+		fileNote = null;
+		void conductor.send(text, attachments);
+	}
+
+	function updateFile(key: string, changes: Partial<PendingFile>): void {
+		files = files.map((file) => (file.key === key ? { ...file, ...changes } : file));
+	}
+
+	/** Reads files into the composer (at most the per-message limit). */
+	function addFiles(list: Iterable<File>): void {
+		if (!canAttach) return;
+		fileNote = null;
+		let incoming = [...list];
+		const room = ATTACHMENT_LIMITS.perMessage - files.length;
+		if (incoming.length > room) {
+			fileNote = `Up to ${ATTACHMENT_LIMITS.perMessage} files per message.`;
+			incoming = incoming.slice(0, Math.max(0, room));
+		}
+		for (const file of incoming) {
+			const key = attachmentId();
+			const name = file.name || 'pasted image';
+			files = [...files, { key, name, kind: attachmentKind(name, file.type), status: 'reading' }];
+			prepareAttachment(file, key).then(
+				(ready) => {
+					if (!files.some((f) => f.key === key)) return; // removed while it was read
+					prepared.set(key, ready);
+					updateFile(key, { status: 'ready', detail: ready.view.detail, thumb: ready.view.thumb });
+				},
+				(error: unknown) => {
+					updateFile(key, {
+						status: 'error',
+						error: error instanceof AttachmentError ? error.message : `${name} could not be read.`
+					});
+				}
+			);
+		}
+		composer?.focus();
+	}
+
+	function removeFile(key: string): void {
+		files = files.filter((file) => file.key !== key);
+		prepared.delete(key);
+		fileNote = null;
+		composer?.focus();
+	}
+
+	function onPick(event: Event & { currentTarget: HTMLInputElement }): void {
+		const input = event.currentTarget;
+		if (input.files) addFiles(input.files);
+		input.value = ''; // so the same file can be picked again
+	}
+
+	/** A pasted picture (a screenshot, say) becomes an attachment; pasted text stays text. */
+	function onPaste(event: ClipboardEvent): void {
+		const pasted = [...(event.clipboardData?.files ?? [])];
+		if (pasted.length === 0) return;
+		if (!event.clipboardData?.types.includes('text/plain')) event.preventDefault();
+		addFiles(pasted);
+	}
+
+	const draggingFiles = (event: DragEvent) => event.dataTransfer?.types.includes('Files') ?? false;
+
+	// Files dropped anywhere on the page go to the agent; a stray drop never navigates away.
+	function onDragEnter(event: DragEvent): void {
+		if (!draggingFiles(event)) return;
+		event.preventDefault();
+		dragDepth++;
+		dragging = canAttach;
+	}
+
+	function onDragOver(event: DragEvent): void {
+		if (!draggingFiles(event)) return;
+		event.preventDefault();
+		if (event.dataTransfer) event.dataTransfer.dropEffect = canAttach ? 'copy' : 'none';
+	}
+
+	function onDragLeave(event: DragEvent): void {
+		if (!draggingFiles(event)) return;
+		dragDepth = Math.max(0, dragDepth - 1);
+		if (dragDepth === 0) dragging = false;
+	}
+
+	function onDrop(event: DragEvent): void {
+		if (!draggingFiles(event)) return;
+		event.preventDefault();
+		dragDepth = 0;
+		dragging = false;
+		if (canAttach && event.dataTransfer) addFiles(event.dataTransfer.files);
 	}
 
 	function onKeyDown(event: KeyboardEvent & { currentTarget: HTMLTextAreaElement }): void {
@@ -236,6 +384,13 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 		queueMicrotask(() => composer?.focus());
 	}
 </script>
+
+<svelte:window
+	ondragenter={onDragEnter}
+	ondragover={onDragOver}
+	ondragleave={onDragLeave}
+	ondrop={onDrop}
+/>
 
 <Panel as="section" variant="plate" padding="none" class={['agent', className]} aria-label="agent">
 	{#snippet header()}
@@ -296,7 +451,8 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 					<h3 class="empty__title">ask about your <span class="whitespace-nowrap">op-xy</span></h3>
 					<p class="empty__text">
 						It answers from the manual, shows you which keys to press on the replica, and can
-						program the device for you. Changes to the device wait for your approval.
+						program the device for you. Changes to the device wait for your approval. Give it a
+						photo of sheet music, a PDF score or a MIDI file and it can play it for you.
 					</p>
 					{#if keys.loaded && !hasKey}
 						<div class="empty__cta">
@@ -369,42 +525,94 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 			</div>
 		{/if}
 
+		{#if files.length > 0 || fileNote}
+			<div class="files">
+				{#if files.length > 0}
+					<ul class="files__list" aria-label="files to send">
+						{#each files as file (file.key)}
+							<li>
+								<AttachmentChip
+									name={file.name}
+									kind={file.kind}
+									detail={file.detail}
+									thumb={file.thumb}
+									status={file.status}
+									error={file.error}
+									onremove={() => removeFile(file.key)}
+								/>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+				{#if fileNote}
+					<p class="files__note" role="status"><Led state="red" size="sm" /> {fileNote}</p>
+				{/if}
+			</div>
+		{/if}
 		<form class="composer" onsubmit={submit}>
-			<label class="sr-only" for="{uid}-message">message to the agent</label>
-			<textarea
-				id="{uid}-message"
-				class="composer__field"
-				rows="1"
-				placeholder={!keys.loaded
-					? 'ask about a key, a page or a workflow'
-					: !hasKey
-						? 'add your anthropic key in settings to start'
-						: busy
-							? 'working… (escape to stop)'
-							: 'ask about a key, a page or a workflow'}
-				disabled={!conductor || settingsOpen}
-				bind:value={draft}
-				{@attach trackComposer}
-				onkeydown={onKeyDown}></textarea>
-			{#if busy}
+			<div class="composer__row">
 				<IconButton
 					type="button"
-					label="stop"
-					icon="stop"
+					label="attach files"
+					icon="plus"
 					size="sm"
-					onclick={() => conductor?.stop()}
+					disabled={!canAttach}
+					onclick={() => picker?.click()}
 				/>
-			{:else}
-				<IconButton
-					type="submit"
-					label="send"
-					icon="arrow-up"
-					variant={canSend ? 'primary' : 'key'}
-					size="sm"
-					disabled={!canSend}
-				/>
-			{/if}
+				<label class="sr-only" for="{uid}-message">message to the agent</label>
+				<textarea
+					id="{uid}-message"
+					class="composer__field"
+					rows="1"
+					placeholder={!keys.loaded
+						? 'ask about a key, a page or a workflow'
+						: !hasKey
+							? 'add your anthropic key in settings to start'
+							: busy
+								? 'working… (escape to stop)'
+								: files.length > 0
+									? 'say what to do with it, or just send'
+									: 'ask about a key, a page or a workflow'}
+					disabled={!conductor || settingsOpen}
+					bind:value={draft}
+					{@attach trackComposer}
+					onkeydown={onKeyDown}
+					onpaste={onPaste}></textarea>
+				{#if busy}
+					<IconButton
+						type="button"
+						label="stop"
+						icon="stop"
+						size="sm"
+						onclick={() => conductor?.stop()}
+					/>
+				{:else}
+					<IconButton
+						type="submit"
+						label="send"
+						icon="arrow-up"
+						variant={canSend ? 'primary' : 'key'}
+						size="sm"
+						disabled={!canSend}
+					/>
+				{/if}
+			</div>
+			<input
+				{@attach trackPicker}
+				class="sr-only"
+				type="file"
+				multiple
+				accept={ATTACHMENT_ACCEPT}
+				tabindex="-1"
+				aria-hidden="true"
+				onchange={onPick}
+			/>
 		</form>
+		{#if dragging}
+			<div class="agent__drop" aria-hidden="true">
+				<span><Led state="white" blink="breathe" size="sm" /> drop files for the agent</span>
+			</div>
+		{/if}
 		<div class="agent__foot">
 			<p class="agent__note">
 				{#if !hasKey}
@@ -462,10 +670,33 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 
 	/* A column of fixed height (the panel's): only the log in the middle scrolls. */
 	.agent__body {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		height: 100%;
 		min-height: 0;
+	}
+
+	/* While files are dragged over the page: the whole panel is the target. */
+	.agent__drop {
+		position: absolute;
+		inset: 0.5rem;
+		z-index: var(--xy-z-overlay);
+		display: grid;
+		place-items: center;
+		border: 1px dashed var(--xy-fg-muted);
+		border-radius: var(--xy-radius-tile);
+		background-color: color-mix(in srgb, var(--xy-surface) 90%, transparent);
+		color: var(--xy-fg);
+		font-size: var(--xy-text-sm);
+		line-height: var(--xy-leading-sm);
+		pointer-events: none;
+	}
+
+	.agent__drop span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 	}
 
 	/* The log takes the room left; what it shows scrolls by itself (the conversation is its own
@@ -599,13 +830,52 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 		gap: 0.5rem;
 	}
 
+	/* Files waiting to go, in a row above the composer (it wraps; it never scrolls). */
+	.files {
+		display: flex;
+		flex: none;
+		flex-direction: column;
+		gap: 0.375rem;
+		margin: 0 0.75rem 0.5rem;
+	}
+
+	.files__list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.375rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	/* Two tiles to a row. */
+	.files__list li {
+		flex: 0 0 calc(50% - 0.1875rem);
+		min-width: 0;
+	}
+
+	.files__note {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0 0.25rem;
+		color: var(--xy-fg-muted);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+	}
+
+	.files__note :global(.led) {
+		flex: none;
+		align-self: center;
+	}
+
 	.composer {
 		display: flex;
 		flex: none;
-		align-items: flex-end;
-		gap: 0.5rem;
+		flex-direction: column;
 		margin: 0 0.75rem;
-		padding: 0.375rem 0.375rem 0.375rem 0.875rem;
+		padding: 0.375rem;
 		border-radius: var(--xy-radius-tile);
 		background-color: var(--xy-surface-sunken);
 		box-shadow:
@@ -619,11 +889,17 @@ stays in view. In development builds `?demo=1` plays a scripted run without a ke
 			0 0 0 1px var(--xy-fg-muted);
 	}
 
+	.composer__row {
+		display: flex;
+		align-items: flex-end;
+		gap: 0.5rem;
+	}
+
 	.composer__field {
 		flex: 1;
 		min-height: 2.25rem;
 		max-height: 10rem;
-		padding: 0.5rem 0;
+		padding: 0.5rem 0.125rem;
 		border: 0;
 		background: none;
 		color: var(--xy-fg);
