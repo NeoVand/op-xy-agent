@@ -36,10 +36,14 @@ describe('mapping: envelopes, filter and voice settings', () => {
 			sweep(11, 1, 100) / sweep(10, 1, 100)
 		);
 		const sharp = envelopeSeconds({ attack: 0, decay: 0, sustain: 0, release: 0 });
-		expect(sharp.attack).toBeGreaterThan(0.001);
-		expect(sharp.release).toBeGreaterThan(0.01);
+		expect(sharp).toEqual({ attack: 0.0015, decay: 0.02, sustain: 0, release: 0.015 });
+		// the device's measured law: about 2 s at half, minutes at the top
+		const half = envelopeSeconds({ attack: 49.5, decay: 49.5, sustain: 49.5, release: 49.5 });
+		expect(half.attack).toBeGreaterThan(1.8);
+		expect(half.attack).toBeLessThan(2.2);
 		const slow = envelopeSeconds({ attack: 99, decay: 99, sustain: 99, release: 99 });
-		expect(slow).toEqual({ attack: 8, decay: 12, sustain: 1, release: 12 });
+		expect(slow.attack).toBeGreaterThan(300);
+		expect(slow.sustain).toBe(1);
 	});
 
 	it('maps the filter: cutoff 20 Hz–20 kHz, flat to peaky resonance, envelope and key tracking in cents', () => {

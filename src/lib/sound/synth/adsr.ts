@@ -4,9 +4,7 @@
  * constants per "time", as TE's envelope art shows. A restarted envelope attacks from where it is,
  * so nothing clicks.
  *
- * Times follow the community's measurement of the OP-XY's attack (op-forums t/31132, two fits
- * agreeing): exponential in the encoder, about 2 s at 50 and minutes at 99. We assume decay and
- * release follow the same law until the owner's device is measured (docs/research/57-synth-engines.md).
+ * Times arrive in seconds, on the measured law (`envelopeSeconds` in `../mapping.ts`).
  */
 
 import { TAUS_PER_TIME } from '../envelope';
@@ -16,15 +14,6 @@ export type { AdsrSettings };
 
 /** Envelope stages. */
 export type Stage = 'idle' | 'attack' | 'decay' | 'sustain' | 'release';
-
-/**
- * Seconds for an envelope encoder value 0–99: 0.0111·(e^(10.386·x) − 1) + 1 ms, x = value/99 (the
- * measured law, with a 1 ms floor at 0 where the fit overestimates).
- */
-export function envelopeTime(value: number): number {
-	const x = Math.min(Math.max(value, 0), 99) / 99;
-	return 0.0111 * (Math.exp(10.386 * x) - 1) + 0.001;
-}
 
 export class Adsr {
 	stage: Stage = 'idle';

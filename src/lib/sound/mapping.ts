@@ -35,15 +35,22 @@ export interface Adsr {
 }
 
 /**
- * Envelope times: attack 1.5 ms … 8 s, decay 20 ms … 12 s, release 15 ms … 12 s. None reaches
- * zero, so even the sharpest setting starts and ends without a click.
+ * An envelope time in seconds for an encoder value 0–99, on the OP-XY's measured law: exponential,
+ * about 2 s at half and six minutes at 99 (op-forums t/31132, two fits agreeing on the attack; we
+ * assume decay and release follow it; docs/research/57-synth-engines.md §4). The fit's 11 ms at 0
+ * gives way to `floor`, so the sharpest setting is as quick as it can be without a click.
  */
+export function envelopeTime(value: number, floor: number): number {
+	return 0.0111 * (Math.exp(10.386 * unit(value)) - 1) + floor;
+}
+
+/** Envelope times on the measured law: from 1.5 ms (attack), 20 ms (decay) or 15 ms (release) up. */
 export function envelopeSeconds(env: Envelope99): Adsr {
 	return {
-		attack: sweep(env.attack, 0.0015, 8),
-		decay: sweep(env.decay, 0.02, 12),
+		attack: envelopeTime(env.attack, 0.0015),
+		decay: envelopeTime(env.decay, 0.02),
 		sustain: unit(env.sustain),
-		release: sweep(env.release, 0.015, 12)
+		release: envelopeTime(env.release, 0.015)
 	};
 }
 

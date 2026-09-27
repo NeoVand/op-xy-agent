@@ -3,7 +3,8 @@
 // voices, glides, the filter envelope, and the track's LFO arriving as audio inputs. Rendered in
 // Node, 128 samples at a time as an AudioWorklet would.
 import { describe, expect, it } from 'vitest';
-import { Adsr, envelopeTime } from './adsr';
+import { envelopeTime } from '../mapping';
+import { Adsr } from './adsr';
 import { levelAt, rms } from './analysis';
 import { MOD_CHANNELS, SynthCore, TRACK_OUTPUTS, type CoreReply, type VoiceStart } from './core';
 
@@ -83,10 +84,10 @@ function pitch(x: Float32Array): number {
 
 describe('envelope', () => {
 	it('follows the measured time law: milliseconds at 0, about 2 s at 50, minutes at 99', () => {
-		expect(envelopeTime(0)).toBeCloseTo(0.001, 4);
-		expect(envelopeTime(49.5)).toBeGreaterThan(1.8);
-		expect(envelopeTime(49.5)).toBeLessThan(2.2);
-		expect(envelopeTime(99)).toBeGreaterThan(300);
+		expect(envelopeTime(0, 0.001)).toBeCloseTo(0.001, 4);
+		expect(envelopeTime(49.5, 0.001)).toBeGreaterThan(1.8);
+		expect(envelopeTime(49.5, 0.001)).toBeLessThan(2.2);
+		expect(envelopeTime(99, 0.001)).toBeGreaterThan(300);
 	});
 
 	it('attacks linearly, decays to the sustain, and releases to silence', () => {
