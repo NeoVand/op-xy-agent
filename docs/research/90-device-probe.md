@@ -170,6 +170,48 @@ channels are set, transport and tempo with clock = both, and never mode keys, M-
 normal use (only controller mode transmits those). The home page now says so and shows which channels
 notes arrive on. Next: T28 (set T1 → channel 1, play keys and the sequencer, capture).
 
+## 2026-09-27 — Synth calibration session (owner present, new project, OS 1.1.33)
+
+Approved by the owner in chat: "go in and play all the engines, collect samples, run experiments".
+Setup by the owner, by hand: a **new project** (hold M1 in the project view); engines T1 simple,
+T2 organ, T8 wavetable (T3–T7 keep the defaults: prism, epiano, dissolve, hardsync, axis); on every
+one of these tracks the **filter and LFO switched off** (T1, T2, T8 also a flat envelope).
+
+What we send (`research/device/synth_capture.py … --send`, allow-listed in the script): on the
+track's channel only, CC 12–15 (engine P1–P4) and CC 20–23 (amp envelope: attack 0, decay 64,
+sustain 127, release 10 before every take), note on/off at velocity 100, and CC123 (all notes off)
+at the end. No filter or LFO CCs, no transport, no SysEx, no project load. While sending, ffmpeg
+records the OP-XY's USB audio (44.1 kHz, 16-bit stereo) into git-ignored
+`research/device/captures/synth/<time>-<engine>/` with a cue sheet (`cues.json`).
+
+Runs (appended as they happen):
+
+1. 11:59 `test` and 12:00 `simple` (29 takes) on channel 1 — **invalid, wrong track.** The stock
+   MIDI settings make channel 1 the _active track channel_, and T7 (axis) was selected, so every
+   note played axis and the CC12–15 sweeps and envelope CCs went to T7's axis (the owner noticed).
+   T7's M1 ended at tone 0, ratio 0, shape 127, tremolo 0; its envelope at attack 0, decay 64,
+   sustain 127, release 10. Fix: each run first selects its track with **CC102** on channel 1
+   (verified), then plays on channel 1. Captures kept as `…-test`, `…-simple-invalid-t7`.
+2. 12:10–12:26, diagnosis (T1 selected by CC102): notes piled up because T1's release was minutes
+   long (the owner's first "flat" envelope) and CC20–23 did not change it, though CC12–15 plainly
+   reach the track: they seem to edit whichever envelope M2 shows. `relcheck` (release CCs + one
+   note), `cccheck` (CC12 flipped under a held note; velocity-0 note-off), `offcheck` (T3, default
+   envelope: note-off stops at once). ffmpeg also lost ~4 s per 100 s, so recording moved into the
+   capture script (PortAudio), each cue stamped with the recording frame it was sent at (latency
+   45 ms). The owner then set **every track: rectangular envelope (attack 0, sustain 100, release 0),
+   LFO and filter off, FX sends (delay, reverb) to 0**; no envelope CCs are sent any more.
+3. 12:29 and 12:31 `simple` on T1 (58 notes: A2 and A4 per take) — clean. Our model matches the
+   device within 0–2 dB per harmonic (shape morph = saw − k·square, PW acting only on the square),
+   except: noise is a crossfade (saw full to ~60 %, gone at 100 %, loudness steady) and stereo is a
+   slow opposite phase wobble of left and right (±10–17° at A2, ±37–45° at A4, ~1–2 Hz), not a
+   static detune. Narrowest pulse ≈ 6 %.
+4. 12:55 `organ` on T2 and the start of `wavetable` on T8 — **engine sweeps invalid**: the notes
+   (channel 1, the active track) reached T2/T8, but CCs on channel 1 reached **T1**, so the organ
+   played its stored settings throughout (kept: `…-organ-fixed-params`) and T1's simple took the
+   sweeps. `chcheck-1` settled it: CC12 on channel 2 changes T2's organ, and a note on channel 2
+   plays T2 while T8 is selected. **Channel N reaches track N for notes and CCs**; channel 1 also
+   follows the selected track for notes. The script now sends everything on the track's channel.
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers

@@ -17,7 +17,10 @@
  *   0.5 − {@link PW_RANGE} at PW 99;
  * - the pulse's mean (2w − 1 per unit of pulse) is subtracted exactly, so narrow pulses carry no
  *   DC into the filter and the envelope;
- * - noise is white, at {@link NOISE_LEVEL} × noise²;
+ * - noise crossfades the oscillator into white noise, as measured on the device (2026-09-27, T1,
+ *   docs/research/90-device-probe.md): the oscillator stays whole to about 60 %, then fades out and
+ *   is gone at 100 %, while the noise rises so that the loudness barely changes
+ *   ({@link NOISE_CURVE});
  * - stereo detunes the left copy down and the right copy up by {@link STEREO_CENTS} × stereo²: at
  *   0 they are the same oscillator (mono); up, they drift through each other's phase like a
  *   stereo phaser. The right copy runs only while stereo is up, taking the right channel over from
@@ -30,11 +33,18 @@ import { ShapeOscillator, type ShapeMix } from '../oscillators';
 import type { EngineVoice } from './index';
 import { Ramp, Smoothing } from './ramp';
 
-// Calibration [I]: starting values, awaiting measurement on the owner's device (57 §6).
-/** How far PW 99 narrows the pulse from 50 %: width = 0.5 − PW_RANGE·pw. */
-export const PW_RANGE = 0.45;
-/** Noise at noise 1, relative to the oscillator (uniform white noise, peak 1). */
-export const NOISE_LEVEL = 0.45;
+// Measured on the owner's device (2026-09-27): pulse width and the noise crossfade.
+/** How far PW 99 narrows the pulse from 50 %: width = 0.5 − PW_RANGE·pw (6 % at the end). */
+export const PW_RANGE = 0.44;
+/**
+ * The noise crossfade, sampled at noise = 0, 0.1 … 1: the oscillator's gain, and the noise's
+ * (uniform white noise, peak 1) relative to the oscillator's level. Read off the device's harmonic
+ * and noise levels at CC steps of 13 on a saw: at 100 % the noise carries 1.5× the saw's power.
+ */
+export const NOISE_CURVE = {
+	osc: [1, 1, 1, 1, 1, 1, 1, 0.84, 0.56, 0.28, 0],
+	noise: [0, 0, 0.01, 0.03, 0.127, 0.23, 0.386, 0.643, 0.854, 1.045, 1.229]
+} as const;
 /** The left copy's detune down and the right copy's up at stereo 1, in cents (squared curve). */
 export const STEREO_CENTS = 10;
 /**
@@ -60,7 +70,9 @@ export class SimpleVoice implements EngineVoice {
 	readonly #pulse = new Ramp();
 	readonly #width = new Ramp(0.5);
 	readonly #noiseLevel = new Ramp();
-	readonly #ramps = [this.#saw, this.#pulse, this.#width, this.#noiseLevel];
+	/** The oscillator's share against the noise (the crossfade). */
+	readonly #oscLevel = new Ramp(1);
+	readonly #ramps = [this.#saw, this.#pulse, this.#width, this.#noiseLevel, this.#oscLevel];
 	#dt = 0;
 	#dtR = 0;
 	/** Whether the right copy runs, and how much of the right channel it makes (0–1). */
@@ -107,8 +119,8 @@ export class SimpleVoice implements EngineVoice {
 		this.#pulse.target = -LEVEL * k;
 		// a sample wide at least, as the oscillator keeps it: then the mean we subtract is exact
 		this.#width.target = Math.max(0.5 - PW_RANGE * params[1], this.#dtR);
-		const noise = params[2];
-		this.#noiseLevel.target = LEVEL * NOISE_LEVEL * noise * noise;
+		this.#oscLevel.target = curve(NOISE_CURVE.osc, params[2]);
+		this.#noiseLevel.target = LEVEL * curve(NOISE_CURVE.noise, params[2]);
 	}
 
 	render(left: Float32Array, right: Float32Array, n: number): void {
@@ -117,6 +129,8 @@ export class SimpleVoice implements EngineVoice {
 		let pulse = this.#pulse.advance(c, n);
 		let width = this.#width.advance(c, n);
 		let noise = this.#noiseLevel.advance(c, n);
+		let gain = this.#oscLevel.advance(c, n);
+		const dGain = this.#oscLevel.step;
 		const dSaw = this.#saw.step;
 		const dPulse = this.#pulse.step;
 		const dWidth = this.#width.step;
@@ -133,10 +147,11 @@ export class SimpleVoice implements EngineVoice {
 				pulse += dPulse;
 				width += dWidth;
 				noise += dNoise;
+				gain += dGain;
 				m.saw = saw;
 				m.pulse = pulse;
 				m.width = width;
-				let y = osc.next(dt, m) - pulse * (2 * width - 1);
+				let y = gain * (osc.next(dt, m) - pulse * (2 * width - 1));
 				if (!quiet) y += noise * white.next();
 				left[i] = right[i] = y;
 			}
@@ -158,13 +173,14 @@ export class SimpleVoice implements EngineVoice {
 			pulse += dPulse;
 			width += dWidth;
 			noise += dNoise;
+			gain += dGain;
 			share += dShare;
 			m.saw = saw;
 			m.pulse = pulse;
 			m.width = width;
 			const dc = pulse * (2 * width - 1);
-			const a = osc.next(dt, m) - dc;
-			const b = oscR.next(dtR, m) - dc;
+			const a = gain * (osc.next(dt, m) - dc);
+			const b = gain * (oscR.next(dtR, m) - dc);
 			const hiss = quiet ? 0 : noise * white.next();
 			left[i] = a + hiss;
 			right[i] = a + share * (b - a) + hiss;
@@ -173,4 +189,11 @@ export class SimpleVoice implements EngineVoice {
 		// back to one oscillator once the copy has handed the right channel back
 		if (shareEnd === 0 && toward === 0) this.#copy = false;
 	}
+}
+
+/** A curve sampled at 0, 0.1 … 1, read at `x` (0–1) between its points. */
+function curve(points: readonly number[], x: number): number {
+	const at = Math.min(1, Math.max(0, x)) * (points.length - 1);
+	const i = Math.min(points.length - 2, Math.floor(at));
+	return points[i] + (points[i + 1] - points[i]) * (at - i);
 }
