@@ -107,7 +107,7 @@ describe('OpxySim: navigation', () => {
 		sim.press('key.com');
 		expect(page(sim, 'com').multiOut).toBe('midi');
 		sim.press('key.m1');
-		expect(sim.frame).toMatchObject({ page: 'text', title: 'system settings' });
+		expect(sim.frame).toMatchObject({ page: 'system-list', title: 'system settings' });
 		sim.press('key.m1');
 		expect(sim.frame.page).toBe('com');
 	});
@@ -160,15 +160,14 @@ describe('OpxySim: navigation', () => {
 		expect(page(sim, 'filter').type).toBe('z hipass');
 	});
 
-	it('shows auxiliary and arrange pages as honest text until they are drawn', () => {
+	it('draws the auxiliary tape page, then arrange mode', () => {
 		const sim = new OpxySim();
 		sim.press('key.auxiliary');
 		sim.press('track.6');
-		expect(sim.frame).toMatchObject({ page: 'text' });
-		expect((sim.frame as { title: string }).title).toContain('tape');
+		expect(sim.frame).toMatchObject({ page: 'aux-tape' });
 		expect(sim.leds['track.6']).toBe('red');
 		sim.press('key.arrange');
-		expect(sim.frame).toMatchObject({ page: 'text' });
+		expect(sim.frame).toMatchObject({ page: 'arrange' });
 	});
 });
 
@@ -363,6 +362,7 @@ describe('scenarios (states that reproduce TE’s guide art)', () => {
 
 	it('have unique ids and guide files', () => {
 		expect(new Set(SCENARIOS.map((s) => s.id)).size).toBe(SCENARIOS.length);
-		expect(new Set(SCENARIOS.map((s) => s.png)).size).toBe(SCENARIOS.length);
+		const pictures = SCENARIOS.flatMap((s) => (s.png === null ? [] : [s.png]));
+		expect(new Set(pictures).size).toBe(pictures.length);
 	});
 });

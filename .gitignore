@@ -24,15 +24,19 @@ vite.config.ts.timestamp-*
 # Playwright
 test-results
 
-# Research bulk (reproducible via scripts/fetch-research.sh; third-party content, not ours to redistribute)
-/research/repos/
-/research/firmware/
-/research/web/
-/research/device/captures/
-/research/ui-reference/
+# Research bulk (reproducible via scripts/fetch-research.sh; third-party content, not ours to redistribute).
+# No trailing slashes: agent worktrees link these folders in as symlinks, which `dir/` patterns miss.
+/research/repos
+/research/firmware
+/research/web
+/research/device/captures
+/research/ui-reference
 # Verbatim TE manual scrape — kept local until redistribution is cleared (see docs/QUESTIONS.md)
-/knowledge/official/
+/knowledge/official
 
 # Python
 __pycache__/
 *.pyc
+
+# Claude Code agent worktrees (local only)
+.claude/worktrees/

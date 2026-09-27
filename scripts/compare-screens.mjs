@@ -46,9 +46,16 @@ try {
 		(s) => (ids.length === 0 || ids.includes(s.id)) && (!prefix || s.id.startsWith(prefix))
 	);
 	if (chosen.length === 0) throw new Error('no scenario matches');
+	if (chosen.every((s) => s.png === null)) {
+		console.log('none of these pages has a guide picture to compare with');
+	}
 	mkdirSync(out, { recursive: true });
 	const pairs = [];
 	for (const scenario of chosen) {
+		if (scenario.png === null) {
+			console.log(`${scenario.id}: no guide picture (our own layout), not compared`);
+			continue;
+		}
 		const sim = new OpxySim({ now: () => 0 });
 		scenario.setup(sim);
 		const frame = sim.frame;

@@ -137,6 +137,29 @@ export const showOnReplicaTool = defineTool({
 	}
 });
 
+export const readScreenTool = defineTool({
+	name: 'read_screen',
+	label: 'read screen',
+	kind: 'read',
+	description:
+		"What the replica's screen shows right now: the app's simulation of the OP-XY's interface (it follows the user's presses on the replica and your show_on_replica animations; it cannot see the real device's screen). Gives the page and its values, the mode, the selected track and engine, shift, tempo and the simulated transport. Use it to check where a combo landed or when the user asks about what they see.",
+	input: z.object({}),
+	async run(_input, ctx) {
+		const screen = ctx.env.screen;
+		if (!screen) {
+			return jsonResult(
+				{ available: false, reason: 'No replica screen in this view.' },
+				'no screen'
+			);
+		}
+		const reading = screen.read();
+		return jsonResult(
+			reading,
+			reading.shows.length > 60 ? `${reading.shows.slice(0, 57)}…` : reading.shows
+		);
+	}
+});
+
 const todoSchema = z.object({
 	content: z.string().min(1).max(200).describe('The step, in a few words'),
 	status: z.enum(['pending', 'in_progress', 'completed'])
@@ -195,6 +218,7 @@ export const KNOWLEDGE_TOOLS = [
 	searchManualTool,
 	readManualUnitTool,
 	showOnReplicaTool,
+	readScreenTool,
 	writeTodosTool,
 	taskTool
 ];
