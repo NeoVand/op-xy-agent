@@ -16,3 +16,6 @@ skills-lock.json
 # Research inputs (git-ignored bulk) and generated data
 /research/
 /knowledge/official/
+
+# Generated manual artefacts (byte-stable output of scripts/build-manual.mjs; the prompt bundle must not be reflowed)
+/knowledge/manual/build/
