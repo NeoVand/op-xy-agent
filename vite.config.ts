@@ -6,7 +6,11 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
 	// Honour a PORT handed to us by the harness; fall back to Vite's default.
-	server: { port: Number(process.env.PORT) || 5173 },
+	server: {
+		port: Number(process.env.PORT) || 5173,
+		// agent worktrees are whole copies of the repo inside it: never watch or serve from them
+		watch: { ignored: ['**/.claude/worktrees/**'] }
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({
