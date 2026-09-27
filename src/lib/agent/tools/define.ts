@@ -43,6 +43,8 @@ export interface AgentEnvironment {
 	readonly device: DeviceStack | null;
 	/** The replica the agent animates; null when headless. */
 	readonly replica: ReplicaState | null;
+	/** What the replica's screen shows (the app's simulation of the OP-XY); absent when headless. */
+	readonly screen?: ScreenReader | null;
 	readonly manual: ManualSource;
 	readonly timers: AgentTimers;
 	/** How long device tools wait to see the device confirm a change (e.g. echoed start); 0 = no wait. */
@@ -57,6 +59,31 @@ export interface AgentEnvironment {
 		description: string,
 		ctx: ToolContext
 	) => Promise<SubagentResult>;
+}
+
+/** What the replica's screen shows now (the app's UI simulator, not the real device's screen). */
+export interface ScreenReading {
+	/** The page the screen draws ("tempo", "lfo", "mix", …). */
+	readonly page: string;
+	/** The page in words, with its values. */
+	readonly shows: string;
+	readonly mode: string;
+	/** A page opened over the mode (tempo, project, com, sample, players, bar), or null. */
+	readonly overlay: string | null;
+	/** The M-page of the mode, when it has them. */
+	readonly modulePage: number | null;
+	/** The selected instrument track (1–8) and its engine. */
+	readonly track: number;
+	readonly engine: string;
+	readonly shift: boolean;
+	readonly bpm: number;
+	/** The simulated transport. */
+	readonly playing: boolean;
+}
+
+/** Reads the replica's screen. */
+export interface ScreenReader {
+	read(): ScreenReading;
 }
 
 /** Per-call context handed to `run`. */

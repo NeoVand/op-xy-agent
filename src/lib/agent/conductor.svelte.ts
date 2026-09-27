@@ -57,6 +57,7 @@ import {
 	createConductorRegistry,
 	type AgentEnvironment,
 	type AgentTimers,
+	type ScreenReader,
 	type SubagentResult,
 	type ToolContext,
 	type ToolRegistry
@@ -85,6 +86,8 @@ export interface ConductorOptions {
 	readonly client: ModelClient;
 	readonly device: DeviceStack | null;
 	readonly replica: ReplicaState | null;
+	/** What the replica's screen shows (read_screen); absent when headless. */
+	readonly screen?: ScreenReader | null;
 	readonly manual: ManualSource;
 	readonly store: ThreadStore;
 	/** Remembers the last thread and the chosen model; memory-only when absent. */
@@ -245,6 +248,7 @@ export class Conductor {
 		this.#env = {
 			device: options.device,
 			replica: options.replica,
+			screen: options.screen ?? null,
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,
