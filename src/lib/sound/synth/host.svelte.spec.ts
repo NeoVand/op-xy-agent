@@ -2,9 +2,11 @@
 // track's notes to the worklet, which plays them on that track's channel, lets them go on time and
 // reports them ended; the Web Audio voices keep the engines the core does not play.
 import { describe, expect, it } from 'vitest';
+import type { EngineId } from '$lib/core/opxy';
 import { defaultTrack, type TrackState } from '$lib/sim/params';
 import { SoundEngine } from '../engine';
 import { SynthHost } from './host';
+import { CORE_ENGINES } from './protocol';
 import workletUrl from './worklet?worker&url';
 
 const SR = 48000;
@@ -20,7 +22,7 @@ function rms(buffer: AudioBuffer, from: number, to: number): number {
 async function render(
 	seconds: number,
 	play: (engine: SoundEngine, host: SynthHost) => void,
-	engines = new Set(['prism'] as const)
+	engines: ReadonlySet<EngineId> = new Set<EngineId>(['prism'])
 ) {
 	const context = new OfflineAudioContext(2, Math.round(SR * seconds), SR);
 	const host = await SynthHost.create(context, workletUrl);
@@ -111,5 +113,27 @@ describe('the synth core in its worklet', () => {
 		console.log(`24 voices: ${factor.toFixed(1)}× real time`);
 		expect(rms(buffer, 1, 3)).toBeGreaterThan(0.05);
 		expect(factor).toBeGreaterThan(1.5);
+	});
+
+	it('sounds about as loud as the first engines at a new track’s settings', async () => {
+		const levels: string[] = [];
+		for (const id of CORE_ENGINES) {
+			const note = (engine: SoundEngine) =>
+				engine.noteOn({
+					track: 2,
+					settings: defaultTrack(id),
+					note: 57,
+					velocity: 100,
+					time: 0.05,
+					duration: 1
+				});
+			const core = await render(1.2, note, new Set([id]));
+			const first = await render(1.2, note, new Set());
+			const ratio = rms(core.buffer, 0.3, 1) / rms(first.buffer, 0.3, 1);
+			levels.push(`${id} ${(20 * Math.log10(ratio)).toFixed(1)} dB`);
+			expect(ratio).toBeGreaterThan(0.5);
+			expect(ratio).toBeLessThan(2);
+		}
+		console.log(`new against first engines: ${levels.join(', ')}`);
 	});
 });

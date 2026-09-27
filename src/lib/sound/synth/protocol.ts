@@ -100,4 +100,9 @@ export type CoreReply = { readonly t: 'ended'; readonly id: number };
  * The engines the core plays; the others stay with the Web Audio voices until their models land
  * (docs/research/57-synth-engines.md).
  */
-export const CORE_ENGINES: ReadonlySet<EngineId> = new Set<EngineId>([]);
+export const CORE_ENGINES: ReadonlySet<EngineId> = new Set<EngineId>([
+	'dissolve',
+	'hardsync',
+	'prism',
+	'simple'
+]);

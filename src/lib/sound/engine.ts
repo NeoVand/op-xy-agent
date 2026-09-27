@@ -100,9 +100,10 @@ export interface SoundEngineOptions {
 const VOICE_GAIN = 0.45;
 /**
  * The synth core's voices before velocity: its engines come out about as loud as each other
- * (RMS ≈ 0.28), this brings them level with the Web Audio voices.
+ * (RMS ≈ 0.28); this brings them level with the Web Audio voices on average (measured in
+ * `synth/host.svelte.spec.ts`; the device session will set each engine's own).
  */
-const CORE_GAIN = 0.5;
+const CORE_GAIN = 0.44;
 const DRUM_GAIN = 0.6;
 const SAMPLE_GAIN = 0.6;
 const MASTER_GAIN = 0.85;
