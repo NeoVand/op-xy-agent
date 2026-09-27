@@ -309,3 +309,30 @@ describe('song drawing and the arrange-028 scenario', () => {
 		expect(bar).toBeDefined();
 	});
 });
+
+describe('following a connected device', () => {
+	it('changes scenes on its clock ticks, landing exactly on the new scene’s first step', () => {
+		const sim = threeScenes();
+		sim.press('key.play');
+		for (let i = 0; i < 16 * 6 - 1; i++) sim.clockTick();
+		expect(scene(sim)).toBe(1);
+		// the page's frames only run the areas' timers while the device's clock drives
+		sim.advance(1000, { transport: false });
+		expect(sim.state.transport.position).toBe(95 / 6);
+		sim.clockTick();
+		expect([scene(sim), t1(sim)]).toEqual([2, 1]);
+		expect(sim.state.transport.position).toBe(0);
+		for (let i = 0; i < 6; i++) sim.clockTick();
+		expect(sim.state.transport.position).toBe(1);
+	});
+
+	it('lands a page-clock scene start at the overshoot, never ahead of it', () => {
+		const sim = threeScenes();
+		sim.press('key.play');
+		const stepMs = 60000 / sim.state.tempo.bpm / 4;
+		sim.advance(stepMs * 15.9);
+		sim.advance(stepMs * 0.3);
+		expect(scene(sim)).toBe(2);
+		expect(sim.state.transport.position).toBeCloseTo(0.2, 9);
+	});
+});

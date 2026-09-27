@@ -4,6 +4,7 @@
  * units a page draws (0–1 positions, display strings), so pages stay pure drawing code.
  */
 import type { AreaFrame } from '../areas/frames';
+import type { SamplerView } from '../areas/sample/frames';
 import type { HeaderCell, SoftLabel } from './draw';
 
 /** Attack, decay and release as 0–1 of their segment's width; sustain as a 0–1 level. */
@@ -88,6 +89,8 @@ export interface DrumFrame {
 	readonly gain: number;
 	/** Seeds the placeholder waveform (we have no sample audio). */
 	readonly seed: number;
+	/** The sample area's part: the lanes' waveforms, loop points, root key, zone (areas/sample). */
+	readonly sampler?: SamplerView;
 }
 
 /** The midi engine's M1 page. */

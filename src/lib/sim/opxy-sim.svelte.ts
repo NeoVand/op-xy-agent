@@ -15,11 +15,11 @@
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
 import { AREAS, ownerOf } from './areas/registry';
+import { turnSamplerPage } from './areas/sample/m1';
 import type { AreaContext } from './areas/types';
 import { buildFrame, buildLeds } from './frames';
 import type { SimInput } from './input';
 import {
-	DRUM_PLAY_MODES,
 	ENGINE_LIST,
 	FILTER_TYPES,
 	GROOVES,
@@ -175,27 +175,36 @@ export class OpxySim {
 	}
 
 	/**
-	 * Moves time forward: while playing, the playhead advances a sixteenth per step length at the
-	 * current tempo (the pendulum and meters follow it).
+	 * Moves time forward: the areas' timers run, playing or not, and while playing the playhead
+	 * advances a sixteenth per step length at the current tempo. With `transport: false` only the
+	 * timers run: a connected device's clock moves the playhead instead ({@link clockTick}).
 	 */
-	advance(ms: number): void {
+	advance(ms: number, { transport = true }: { transport?: boolean } = {}): void {
 		if (ms <= 0) return;
 		for (const area of AREAS) area.advance?.(this.state, ms);
+		if (transport) this.#move(ms / (60000 / this.state.tempo.bpm / 4));
+	}
+
+	/** Moves a playing transport `steps` sixteenths, then lets the areas act on what it crossed. */
+	#move(steps: number): void {
 		const t = this.state.transport;
 		if (!t.playing) return;
-		const stepMs = 60000 / this.state.tempo.bpm / 4;
-		t.position += ms / stepMs;
+		const from = t.position;
+		t.position += steps;
+		for (const area of AREAS) area.moved?.(this.state, from);
 	}
 
 	// ─────────────────────────────────────────────────────────── following a device
 
 	/**
 	 * One MIDI clock tick from a connected OP-XY (24 per beat): while playing, the playhead moves a
-	 * sixth of a step, so the steps chase in time with the device instead of the page's clock.
+	 * sixth of a step, so the steps chase in time with the device instead of the page's clock. The
+	 * position stays on whole ticks, so step boundaries fall exactly on the device's.
 	 */
 	clockTick(): void {
+		this.#move(1 / 6);
 		const t = this.state.transport;
-		if (t.playing) t.position += 1 / 6;
+		if (t.playing) t.position = Math.round(t.position * 6) / 6;
 	}
 
 	/** The device started (from the top, unless it continues) or stopped. */
@@ -492,21 +501,9 @@ export class OpxySim {
 		const step = (v: number, min: number, max: number, by = 1) => clamp(v + delta * by, min, max);
 		switch (s.pages.instrument) {
 			case 1: {
+				// sampler engines: the sample area's M1 encoders (areas/sample/m1.ts)
 				if (isSampler(t.engine)) {
-					const k = t.drumKeys[t.drumKey];
-					if (s.shift) {
-						if (e === 0) k.reverse = delta < 0;
-						else if (e === 1) k.pan = step(k.pan, -100, 100, fine ? 1 : 2);
-						else if (e === 2) k.fade = step(k.fade, 0, 99);
-						else k.gain = step(k.gain, -30, 20);
-					} else if (e === 0) {
-						k.tune = Math.round(step(k.tune, -12, 12, fine ? 0.01 : 0.1) * 100) / 100;
-					} else if (e === 1) k.start = step(k.start, 0, k.end);
-					else if (e === 2) k.end = step(k.end, k.start, 99);
-					else if (t.engine === 'drum') {
-						const at = DRUM_PLAY_MODES.indexOf(k.playMode);
-						k.playMode = DRUM_PLAY_MODES[clamp(at + delta, 0, DRUM_PLAY_MODES.length - 1)];
-					}
+					turnSamplerPage(s, e, delta, fine);
 					return;
 				}
 				if (t.engine === 'midi') {

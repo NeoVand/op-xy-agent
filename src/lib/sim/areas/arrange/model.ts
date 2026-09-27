@@ -539,30 +539,23 @@ function sceneEnded(s: SimState): 'next' | 'again' | 'stop' {
 }
 
 /**
- * Time passing while the transport plays (called before the core moves the playhead by the same
- * amount): at each scene end a queued scene or the song's next scene takes over, and the playhead
- * then counts from the new scene's start, so every track begins it on its first step. A song with
- * loop off stops the transport after its last scene.
+ * The transport moved from `from` to its position: at each scene end on the way a queued scene or
+ * the song's next scene takes over, and the playhead then counts from the new scene's start, so
+ * every track begins it on its first step. A song with loop off stops the transport after its last
+ * scene. A count-in runs below zero and ends where the scene starts, which is no scene end.
  */
-export function advanceArrange(s: SimState, ms: number): void {
+export function movedArrange(s: SimState, from: number): void {
 	const t = s.transport;
-	const a = s.areas.arrange;
-	if (!t.playing && a.lead !== 0) a.lead = 0;
-	if (!t.playing || ms <= 0) return;
-	if (a.lead > 0) {
-		// the last frame started a scene: give back what the playhead ran ahead
-		t.position = Math.max(0, t.position - a.lead);
-		a.lead = 0;
-	}
-	const step = ms / (60000 / s.tempo.bpm / 4);
-	let position = t.position;
-	let left = step;
+	let position = from;
+	let left = t.position - from;
+	if (!t.playing || left <= 0) return;
 	for (let guard = 0; guard < 4096; guard++) {
 		const length = sceneLength(s);
-		const end = (Math.floor(position / length + 1e-9) + 1) * length;
+		const end = position < 0 ? 0 : (Math.floor(position / length + 1e-9) + 1) * length;
 		if (position + left < end - 1e-9) break;
 		left -= end - position;
 		position = end;
+		if (end === 0) continue;
 		const what = sceneEnded(s);
 		if (what === 'stop') {
 			t.playing = false;
@@ -571,10 +564,5 @@ export function advanceArrange(s: SimState, ms: number): void {
 		}
 		if (what === 'next') position = 0;
 	}
-	// the core adds `step` next. A scene that started within this frame would need a position
-	// below zero until then, which the areas after this one could read; it starts at zero instead,
-	// runs ahead by less than a frame, and the next frame takes that back
-	const final = position + left - step;
-	t.position = Math.max(0, final);
-	a.lead = Math.max(0, -final);
+	t.position = position + Math.max(0, left);
 }

@@ -3,7 +3,8 @@
 One of the 68 keys: its tile, the round keycap with TE's legend, the LED window (off, dim, white or
 red, optionally blinking, with a glow), the press animation, and a ring for keyboard focus and for
 teaching highlights. The whole tile is the hit area. Pointer, touch and keyboard input go to the
-ReplicaState; a modifier-click (alt, shift or ⌘) latches the key for single-pointer combos.
+ReplicaState; an alt- or ⌘-click latches the key for single-pointer combos (Shift is the OP-XY's
+shift: see Replica.svelte).
 
 Only four values are reactive (pressed, LED, blink, highlight); they flip data attributes and CSS
 does the rest, so a key press never re-renders the legend paths.
@@ -75,7 +76,7 @@ does the rest, so a key press never re-renders the legend paths.
 	function onpointerdown(event: PointerEvent) {
 		if (event.button !== 0) return;
 		event.preventDefault();
-		if (event.altKey || event.shiftKey || event.metaKey) {
+		if (event.altKey || event.metaKey) {
 			replica.toggleLatch(part.id, 'pointer');
 			return;
 		}

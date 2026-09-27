@@ -86,9 +86,9 @@ card compares a simulated page with TE's guide picture of it. Nothing here talks
 		else replica.clearLeds();
 	});
 
-	// the transport: while playing, time moves the playhead
+	// time: the areas' timers always run (record countdown, slicer, boot); playing, the playhead too
 	$effect(() => {
-		if (!simulate || !sim.state.transport.playing) return;
+		if (!simulate) return;
 		let last = performance.now();
 		let raf = requestAnimationFrame(function step(now) {
 			sim.advance(now - last);

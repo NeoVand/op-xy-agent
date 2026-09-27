@@ -8,6 +8,7 @@ import type { KeyLedState } from '$lib/replica/state.svelte';
 import type { EnvelopeView, FilterView, LfoFrame, ListFrame, ScreenFrame } from './screen/frame';
 import { ownerOf } from './areas/registry';
 import { soloed, trackMeter } from './areas/mixer/meters';
+import { samplerPage } from './areas/sample/m1';
 import { sequencerLeds } from './areas/sequencer/leds';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
 import {
@@ -22,9 +23,7 @@ import {
 	clamp,
 	engineParams,
 	formatBpm,
-	formatTune,
 	isSampler,
-	keyName,
 	two,
 	type Envelope99,
 	type SimState,
@@ -138,23 +137,8 @@ function instrumentFrame(s: SimState): ScreenFrame {
 	if (s.picker) return pickerFrame(s);
 	switch (page) {
 		case 1: {
-			if (isSampler(t.engine)) {
-				const k = t.drumKeys[t.drumKey];
-				return {
-					page: 'drum',
-					key: keyName(t.drumKey),
-					tune: formatTune(k.tune),
-					start: k.start / 99,
-					end: k.end / 99,
-					playMode: t.engine === 'drum' ? k.playMode : '',
-					shift: s.shift,
-					reverse: k.reverse,
-					pan: k.pan / 100,
-					fade: k.fade / 99,
-					gain: (k.gain + 30) / 50,
-					seed: s.track * 24 + t.drumKey + 1
-				};
-			}
+			// sampler engines: the sample area builds the page (areas/sample/m1.ts)
+			if (isSampler(t.engine)) return samplerPage(s);
 			if (t.engine === 'midi') {
 				return {
 					page: 'midi',
