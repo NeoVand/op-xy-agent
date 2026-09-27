@@ -7,7 +7,7 @@
 import { dev } from '$app/environment';
 import type { PageServerLoad } from './$types';
 
-/** A guide picture as a data URL (`src` null when the research input is missing). */
+/** A guide picture as a data URL (`src` null when TE has no picture or the input is missing). */
 export interface GuidePicture {
 	readonly id: string;
 	readonly src: string | null;
@@ -19,7 +19,8 @@ export const load: PageServerLoad = async ({ url }): Promise<{ guide: GuidePictu
 	if (!id) return { guide: null };
 	const { SCENARIOS } = await import('$lib/sim/scenarios');
 	const scenario = SCENARIOS.find((s) => s.id === id);
-	if (!scenario || scenario.png === null) return { guide: null };
+	if (!scenario) return { guide: null };
+	if (scenario.png === null) return { guide: { id, src: null } };
 	const { readFile } = await import('node:fs/promises');
 	try {
 		const png = await readFile(`research/ui-reference/guide-screens/${scenario.png}`);
