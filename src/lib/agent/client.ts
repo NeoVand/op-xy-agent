@@ -44,8 +44,52 @@ export interface AnthropicClientOptions {
 	readonly timeoutMs?: number;
 }
 
+/**
+ * Opt-in network timing for diagnosing streaming (`localStorage['opxy:debug'] = 'stream'`): logs when
+ * each chunk of a Messages API response arrives, relative to the request. Never logs content or keys.
+ */
+function debugStreaming(): boolean {
+	try {
+		return (globalThis.localStorage?.getItem('opxy:debug') ?? '').includes('stream');
+	} catch {
+		return false;
+	}
+}
+
+function timedFetch(base: typeof fetch): typeof fetch {
+	return async (input, init) => {
+		const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+		const started = performance.now();
+		const response = await base(input, init);
+		if (!url.includes('/v1/messages') || !response.body) return response;
+		const [forApp, forLog] = response.body.tee();
+		void (async () => {
+			const reader = forLog.getReader();
+			let bytes = 0;
+			let chunks = 0;
+			for (;;) {
+				const { done, value } = await reader.read();
+				const at = Math.round(performance.now() - started);
+				if (done) {
+					console.info(`[opxy stream] done +${at}ms chunks=${chunks} bytes=${bytes}`);
+					return;
+				}
+				chunks += 1;
+				bytes += value.length;
+				console.info(`[opxy stream] chunk ${chunks} +${at}ms ${value.length}B`);
+			}
+		})();
+		return new Response(forApp, {
+			status: response.status,
+			statusText: response.statusText,
+			headers: response.headers
+		});
+	};
+}
+
 /** The browser (and Node) client for the Anthropic API. */
 export function createAnthropicClient(options: AnthropicClientOptions): ModelClient {
+	const baseFetch = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
 	const sdk = new Anthropic({
 		apiKey: options.apiKey,
 		authToken: null,
@@ -54,7 +98,7 @@ export function createAnthropicClient(options: AnthropicClientOptions): ModelCli
 		logLevel: 'off',
 		maxRetries: options.maxRetries ?? 2,
 		timeout: options.timeoutMs ?? 10 * 60_000,
-		...(options.fetch ? { fetch: options.fetch } : {})
+		fetch: debugStreaming() ? timedFetch(baseFetch) : baseFetch
 	});
 	return {
 		stream(params, streamOptions) {
