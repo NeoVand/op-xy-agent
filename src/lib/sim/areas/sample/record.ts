@@ -34,6 +34,15 @@ export function recordTarget(track: TrackState): RecordTarget {
 	return 'library';
 }
 
+/**
+ * The record page the sample key opens now, which is also where the library loads: the selected
+ * instrument track's sampler, or the library when an auxiliary track is selected, since only a
+ * sample track records into its sampler (manual: sampling "which-page").
+ */
+export function targetOf(s: SimState): RecordTarget {
+	return s.active === 'auxiliary' ? 'library' : recordTarget(s.tracks[s.track]);
+}
+
 /** How loud the stand-in input plays at 0 dB (0–1 of the meter). */
 const INPUT_PEAK = 0.25;
 /** The stand-in input's performance: TE's demo waveform, looping every 20 s. */
@@ -133,7 +142,7 @@ export function finish(s: SimState, now: number | null): SampleFile | null {
 	area.user.push(take);
 	const t = s.tracks[s.track];
 	const st = area.tracks[s.track];
-	switch (recordTarget(t)) {
+	switch (targetOf(s)) {
 		case 'library':
 			rec.take = take;
 			break;
