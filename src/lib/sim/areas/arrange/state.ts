@@ -8,6 +8,7 @@
  */
 import type { TrackState } from '../../params';
 import type { Pattern } from '../../sequencer';
+import type { BrainSettings } from '../auxiliary/state';
 
 /** Scenes in a project, songs in a project, scenes in one song (manual: arrange/scenes, songs). */
 export const SCENES = 99;
@@ -16,7 +17,11 @@ export const SONG_LENGTH = 96;
 /** Tracks a scene addresses: the eight instrument tracks, then the eight auxiliary ones. */
 export const SCENE_TRACKS = 16;
 
-/** How a scene's length is worked out, a project setting since OS 1.1.0 (manual: project/settings). */
+/**
+ * How a scene's length can be worked out, a project setting since OS 1.1.0 (manual:
+ * project/settings): the three modes a project file knows (docs/research/10-xy-format.md §3.2). The
+ * setting itself is the project's, on its settings page (the system area's state).
+ */
 export const SCENE_LENGTH_MODES = ['longest', 'shortest', 'time signature'] as const;
 export type SceneLengthMode = (typeof SCENE_LENGTH_MODES)[number];
 
@@ -79,10 +84,14 @@ export interface SoundLink {
 	source: number;
 }
 
-/** A copied pattern with the sound it played with (null when it came from an auxiliary track). */
+/**
+ * A copied pattern with the sound it played with (null when it came from an auxiliary track) and,
+ * from the brain track, its brain settings (kept per pattern since OS 1.0.29; null otherwise).
+ */
 export interface PatternClip {
 	pattern: Pattern;
 	sound: PatternSound | null;
+	brain: BrainSettings | null;
 }
 
 /** A scene number being typed after `accidental 0` (scenes 10–99), and what it is for. */
@@ -108,9 +117,6 @@ export interface ArrangeState {
 	armed: boolean;
 	/** A two-digit scene number in progress, or null. */
 	entry: SceneEntry | null;
-	/** Project settings that decide how long a scene lasts. */
-	sceneLength: SceneLengthMode;
-	timeSignature: TimeSignature;
 	/**
 	 * The sound each pattern of each instrument track carries, index for index with its patterns;
 	 * null = none stored yet (the pattern takes whatever the track plays when it is reached).
@@ -145,8 +151,6 @@ export function initialArrange(): ArrangeState {
 		queued: null,
 		armed: false,
 		entry: null,
-		sceneLength: 'longest',
-		timeSignature: '4/4',
 		sounds: Array.from({ length: 8 }, () => [null]),
 		link: Array.from({ length: SCENE_TRACKS }, () => ({ on: false, source: 0 })),
 		clipboard: { pattern: null, scene: null, song: null },

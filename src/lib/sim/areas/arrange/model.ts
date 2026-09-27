@@ -6,7 +6,10 @@
  *
  * Tracks are numbered as a scene addresses them: 0–7 the instrument tracks, 8–15 the auxiliary
  * tracks. Which pattern a track plays is its `sequence.current`; everything that changes it goes
- * through {@link playPattern}, so a pattern's sound travels with it.
+ * through {@link playPattern}, so a pattern's sound travels with it. Patterns come and go here, so
+ * what other parts keep per pattern follows them here too: the scenes, sound link's source, and
+ * the brain's settings (the auxiliary area's list, OS 1.0.29). How long a scene lasts is the
+ * project's setting, on the system area's settings page.
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import { clamp, type SimState, type TrackState } from '../../params';
@@ -15,17 +18,23 @@ import {
 	STEPS_PER_BAR,
 	currentPattern,
 	emptyPattern,
+	newPatternLike,
 	noteCount,
 	type Pattern,
 	type Sequence
 } from '../../sequencer';
+import { brainSettings, editBrain, type BrainSettings } from '../auxiliary/state';
+import { SCENE_LENGTH_MODES as PROJECT_LENGTH_MODES, SIGNATURES } from '../system/catalogue';
 import {
 	SCENES,
+	SCENE_LENGTH_MODES,
 	SCENE_TRACKS,
 	SONG_LENGTH,
+	TIME_SIGNATURES,
 	type ArrangeState,
 	type PatternSound,
 	type Scene,
+	type SceneLengthMode,
 	type TimeSignature
 } from './state';
 
@@ -34,6 +43,8 @@ export const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 /** The 16 track numbers a scene addresses. */
 const TRACKS = Array.from({ length: SCENE_TRACKS }, (_, t) => t);
+/** The brain, auxiliary track 1. */
+const BRAIN = 8;
 
 /** The black keys, marked 1–9 and 0 from the left (manual: hardware/layout). */
 const ACCIDENTALS = KEYBOARD_NOTE_NAMES.filter((name) => name.includes('s'));
@@ -171,25 +182,49 @@ export function setLinkSource(s: SimState, t: number): void {
 /**
  * M1: a new, empty pattern on the selected track, up to 16 (manual: arrange/patterns). It is added
  * after the others and plays at once, with the sound the track plays now (ours: the guide does not
- * say where it goes). Returns false when the track is full.
+ * say where it goes), and takes over the player type in use (OS 1.1.25). Returns false when the
+ * track is full.
  */
 export function newPattern(s: SimState): boolean {
 	const t = selectedTrack(s);
 	const seq = trackSequence(s, t);
 	if (seq.patterns.length >= MAX_PATTERNS) return false;
-	seq.patterns.push(emptyPattern());
+	seq.patterns.push(newPatternLike(currentPattern(seq)));
 	if (t < 8) slots(s.areas.arrange, t, seq.patterns.length - 1).push(null);
 	playPattern(s, t, seq.patterns.length - 1);
 	return true;
 }
 
-/** M2: copies the selected track's pattern with the sound it plays (manual: arrange/patterns). */
+/**
+ * M2: copies the selected track's pattern with the sound it plays (manual: arrange/patterns), or on
+ * the brain track with its brain settings.
+ */
 export function copyPattern(s: SimState): void {
 	const t = selectedTrack(s);
+	const seq = trackSequence(s, t);
 	s.areas.arrange.clipboard.pattern = {
-		pattern: copy(currentPattern(trackSequence(s, t))),
-		sound: t < 8 ? soundOf(s.tracks[t]) : null
+		pattern: copy(currentPattern(seq)),
+		sound: t < 8 ? soundOf(s.tracks[t]) : null,
+		brain: t === BRAIN ? copy(brainSettings(s.areas.auxiliary, seq.current)) : null
 	};
+}
+
+// The brain track keeps its settings per pattern (OS 1.0.29), in the auxiliary area's list by
+// pattern number; the patterns come and go here, so the list follows them here.
+
+/** Pattern `index` of the brain track takes the brain settings of a copy. */
+function pasteBrain(s: SimState, index: number, brain: BrainSettings): void {
+	Object.assign(editBrain(s.areas.auxiliary, index), copy(brain));
+}
+
+/**
+ * Brain pattern `gone` of `count` is removed: every pattern first gets its own settings (one without
+ * shows the first's), so taking the removed one's out of the list changes no other pattern's.
+ */
+function removeBrain(s: SimState, count: number, gone: number): void {
+	const aux = s.areas.auxiliary;
+	editBrain(aux, count - 1);
+	aux.brain.patterns.splice(gone, 1);
 }
 
 /**
@@ -206,6 +241,7 @@ export function pastePattern(s: SimState): boolean {
 	const t = selectedTrack(s);
 	const seq = trackSequence(s, t);
 	const sound = t < 8 ? clip.sound : null;
+	const brain = t === BRAIN ? clip.brain : null;
 	if (isEmpty(currentPattern(seq))) {
 		seq.patterns[seq.current] = copy(clip.pattern);
 		if (sound) {
@@ -213,19 +249,21 @@ export function pastePattern(s: SimState): boolean {
 			const link = a.link[t];
 			if (!link.on || link.source === seq.current) loadSound(s.tracks[t], sound);
 		}
+		if (brain) pasteBrain(s, seq.current, brain);
 		return true;
 	}
 	if (seq.patterns.length >= MAX_PATTERNS) return false;
 	seq.patterns.push(copy(clip.pattern));
 	if (t < 8) slots(a, t, seq.patterns.length - 1).push(sound ? copy(sound) : null);
+	if (brain) pasteBrain(s, seq.patterns.length - 1, brain);
 	playPattern(s, t, seq.patterns.length - 1);
 	return true;
 }
 
 /**
  * M4: removes the selected track's pattern (manual: arrange/patterns); the one before it plays
- * next. A track keeps at least one pattern, so the last one is emptied instead (ours). Scenes and
- * the link's source that pointed past it move down with the patterns.
+ * next. A track keeps at least one pattern, so the last one is emptied instead (ours). Scenes, the
+ * link's source and the brain's settings that pointed past it move down with the patterns.
  */
 export function removePattern(s: SimState): void {
 	const a = s.areas.arrange;
@@ -237,6 +275,7 @@ export function removePattern(s: SimState): void {
 		return;
 	}
 	const gone = seq.current;
+	if (t === BRAIN) removeBrain(s, seq.patterns.length, gone);
 	const landing = gone > 0 ? gone - 1 : 1;
 	playPattern(s, t, landing);
 	seq.patterns.splice(gone, 1);
@@ -345,18 +384,39 @@ const BAR: Readonly<Record<TimeSignature, number>> = {
 };
 
 /**
- * How long the current scene lasts, in sixteenths: its longest pattern by default (manual:
- * arrange/scenes), the shortest, or one bar of the time signature (the project's scene length
- * setting). A pattern lasts its length times its track scale. Only patterns with notes count, so an
- * untouched track does not cut a scene short (ours); with no notes anywhere, all patterns count.
+ * The project's scene length mode and time signature, as its settings page sets them (project →
+ * M4: general, tempo; manual: project/settings). The page is the system area's: its choices are
+ * read by name, so a mode the page does not offer (yet) is simply never chosen.
  */
+export function lengthSettings(s: SimState): { mode: SceneLengthMode; signature: TimeSignature } {
+	const settings = s.areas.system.projectSettings;
+	const mode: string | undefined = PROJECT_LENGTH_MODES[settings.sceneLength];
+	const signature: string | undefined = SIGNATURES[settings.signature];
+	return {
+		mode: SCENE_LENGTH_MODES.find((m) => m === mode) ?? 'longest',
+		signature: TIME_SIGNATURES.find((t) => t === signature) ?? '4/4'
+	};
+}
+
+/** How long the current scene lasts, in sixteenths, by the project's settings ({@link lengthIn}). */
 export function sceneLength(s: SimState): number {
-	const a = s.areas.arrange;
-	if (a.sceneLength === 'time signature') return BAR[a.timeSignature];
+	const { mode, signature } = lengthSettings(s);
+	return lengthIn(s, mode, signature);
+}
+
+/**
+ * How long the current scene lasts in a scene length mode, in sixteenths: its longest pattern by
+ * default (manual: arrange/scenes), the shortest, or one bar of the time signature (ours: the guide
+ * does not describe the modes). A pattern lasts its length times its track scale. Only patterns
+ * with notes count, so an untouched track does not cut a scene short (ours); with no notes
+ * anywhere, all patterns count.
+ */
+export function lengthIn(s: SimState, mode: SceneLengthMode, signature: TimeSignature): number {
+	if (mode === 'time signature') return BAR[signature];
 	const all = TRACKS.map((t) => currentPattern(trackSequence(s, t)));
 	const used = all.filter((p) => !isEmpty(p));
 	const lengths = (used.length > 0 ? used : all).map((p) => p.length * p.scale);
-	const length = a.sceneLength === 'shortest' ? Math.min(...lengths) : Math.max(...lengths);
+	const length = mode === 'shortest' ? Math.min(...lengths) : Math.max(...lengths);
 	return length > 0 ? length : STEPS_PER_BAR;
 }
 
