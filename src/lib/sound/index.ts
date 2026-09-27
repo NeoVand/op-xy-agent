@@ -30,10 +30,12 @@ export {
 	type SampleZone
 } from './samples';
 export {
+	KEY_VELOCITY,
 	LOOKAHEAD,
 	Scheduler,
 	TICK_MS,
 	WALK_SEED,
+	arpeggioInput,
 	firstIndex,
 	lockedSettings,
 	positionAt,
@@ -41,6 +43,7 @@ export {
 	timeAt,
 	trackGroove,
 	type Anchor,
+	type ArpeggioInput,
 	type ClickEvent,
 	type ScheduledNote,
 	type SchedulerOptions,

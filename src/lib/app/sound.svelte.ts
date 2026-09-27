@@ -1,8 +1,9 @@
 /**
  * The replica's sound when no OP-XY makes it: Web Audio synthesis (`$lib/sound`) played from the
  * app's simulator. Keyboard keys on the replica play the active track's engine at once (a drum track
- * its kit sound); while the simulator's transport runs, the lookahead scheduler plays every track's
- * pattern and the metronome.
+ * its kit sound), in the keyboard's octave, or through the track's player when it is on (hold,
+ * maestro, arpeggio); while the simulator's transport runs, the lookahead scheduler plays every
+ * track's pattern, the arpeggio and the metronome.
  *
  * - **When:** on by default while the replica is simulated, and remembered. While a real OP-XY is
  *   connected (session ready) the device makes the sound, so the computer stays quiet unless the
@@ -21,7 +22,6 @@
  * made of each event (which track is active, whether the transport runs).
  */
 import { createContext, untrack } from 'svelte';
-import { KEYBOARD_FIRST_NOTE, KEYBOARD_NOTE_NAMES } from '$lib/core/opxy';
 import {
 	browserClock,
 	browserTimers,
@@ -31,6 +31,9 @@ import {
 } from '$lib/device';
 import type { ReplicaEvent, ReplicaState } from '$lib/replica';
 import { METER_SEGMENTS } from '$lib/replica/geometry';
+import { activeTrack, keyNote, keyboardIndex, seq } from '$lib/sim/areas/sequencer/model';
+import { playerNotes, playerOf } from '$lib/sim/areas/sequencer/players';
+import { maestroEvents } from '$lib/sim/sequencer-playback';
 import { SampleRegistry } from '$lib/sound/samples';
 import type { AppSimulator } from './simulator.svelte';
 
@@ -57,12 +60,14 @@ const METER_FLOOR_DB = -48;
 /** How much of the meter's height falls away per tick (rising is instant). */
 const METER_FALL = 0.035;
 
-/** A keyboard key going down or up, on the track it plays. */
+/** A keyboard key (or a player's note) going down or up, on the track it plays. */
 interface LiveEvent {
 	readonly kind: 'on' | 'off';
 	readonly key: string;
 	readonly track: number;
 	readonly note: number;
+	/** Seconds after it is played: the later notes of a maestro strum. */
+	readonly delay?: number;
 }
 
 /** Options for {@link AppSound}. */
@@ -120,6 +125,9 @@ export class AppSound {
 	/** Keyboard keys sounding and the track each plays on (bookkeeping, never rendered). */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	readonly #live = new Map<string, LiveEvent>();
+	/** Notes a player sounds: their track and audio start time (bookkeeping, never rendered). */
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	readonly #playerLive = new Map<number, { track: number; start: number }>();
 	/** Keys pressed before the engine had loaded. */
 	#pending: { at: number; event: LiveEvent }[] = [];
 	#bendTrack: number | null = null;
@@ -247,6 +255,7 @@ export class AppSound {
 		this.#engine?.silence();
 		this.#scheduler?.reset();
 		this.#live.clear();
+		this.#playerLive.clear();
 		this.#pending = [];
 		this.#bendTrack = null;
 		this.#follow();
@@ -356,6 +365,7 @@ export class AppSound {
 		this.#engine = null;
 		this.#scheduler = null;
 		this.#live.clear();
+		this.#playerLive.clear();
 		this.#pending = [];
 		this.#showMeter(0);
 		const context = this.#context;
@@ -385,6 +395,8 @@ export class AppSound {
 		const state = this.#simulator.sim.state;
 		engine.sync(state);
 		scheduler.tick(this.#hidden() ? HIDDEN_LOOKAHEAD : undefined);
+		// a running arpeggio moves on with the transport
+		if (this.#playerLive.size > 0 || playerOf(state).on) this.#followPlayer();
 		this.#meterTick(engine);
 		if (!state.transport.playing && context.currentTime > engine.quietAt + IDLE_SECONDS) {
 			// long silent: rest the audio thread until the next gesture or note
@@ -417,15 +429,22 @@ export class AppSound {
 		if (!this.enabled) return;
 		switch (event.type) {
 			case 'press':
-				if (event.id.startsWith('keyboard.')) this.#noteOn(event.id);
-				else if (event.id === 'key.play' || event.id === 'key.stop') {
+				if (event.id.startsWith('keyboard.')) {
+					this.#unlock();
+					if (playerOf(this.#simulator.sim.state).on) this.#playerKey(event.id);
+					else this.#noteOn(event.id);
+				} else if (event.id === 'key.play' || event.id === 'key.stop') {
 					// the simulator has moved its transport already: schedule from it now, not next tick
 					this.#unlock();
 					this.#scheduler?.tick();
-				}
+					this.#followPlayer();
+				} else if (event.id === 'key.player') this.#followPlayer();
 				return;
 			case 'release':
-				if (event.id.startsWith('keyboard.')) this.#noteOff(event.id);
+				if (event.id.startsWith('keyboard.')) {
+					this.#noteOff(event.id);
+					this.#followPlayer();
+				}
 				return;
 			case 'bend':
 				this.#bend(event.value);
@@ -433,18 +452,72 @@ export class AppSound {
 		}
 	}
 
+	/** A keyboard key while the player is on: what the player sounds follows at once. */
+	#playerKey(id: string): void {
+		const { state } = this.#simulator.sim;
+		const index = keyboardIndex(id.slice('keyboard.'.length));
+		this.#followPlayer(index >= 0 ? keyNote(state, index) : undefined);
+		// the arpeggio takes the key on the audio clock: no waiting for the next tick
+		if (state.transport.playing) this.#scheduler?.tick();
+	}
+
+	/**
+	 * While the pattern's player is on (manual: players/*), the keyboard sounds what the simulator
+	 * says it sounds (`playerNotes`, which its LEDs show): hold keeps the last notes played, maestro
+	 * plays its chord from any key (strummed by its roll when `pressed` just went down), and the
+	 * arpeggio, stopped, plays the notes it would run over. While the transport plays, the scheduler
+	 * runs the arpeggio on the audio clock. Notes that joined start, notes that left stop.
+	 */
+	#followPlayer(pressed?: number): void {
+		const { state } = this.#simulator.sim;
+		const player = playerOf(state);
+		const track = activeTrack(state) ? state.track : null;
+		const scheduled = player.type === 'arpeggio' && state.transport.playing;
+		const want = player.on && track !== null && !scheduled ? (playerNotes(state) ?? []) : [];
+		const now = this.#context?.currentTime ?? 0;
+		for (const [note, live] of this.#playerLive) {
+			if (want.includes(note)) continue;
+			this.#playerLive.delete(note);
+			// a strummed note let go before it came in still starts, then fades from its release
+			const delay = Math.max(0, live.start - now);
+			this.#send({ kind: 'off', key: `player:${note}`, track: live.track, note, delay });
+		}
+		// shift or bar held: the keys are functions (maestro takes its chord), nothing new sounds
+		if (track === null || state.held.includes('key.shift') || state.held.includes('key.bar')) {
+			return;
+		}
+		const strum = pressed !== undefined && player.type === 'maestro' ? this.#strum(pressed) : [];
+		for (const note of want) {
+			if (this.#playerLive.has(note) || note < 0 || note > 127) continue;
+			const delay = strum.find((e) => e.note === note)?.time ?? 0;
+			this.#playerLive.set(note, { track, start: now + delay });
+			this.#send({ kind: 'on', key: `player:${note}`, track, note, delay });
+		}
+	}
+
+	/** When each note of maestro's chord on `key` comes in (s): its strum order and roll. */
+	#strum(key: number): { note: number; time: number }[] {
+		const { state } = this.#simulator.sim;
+		const { maestro } = playerOf(state);
+		// the simulator has counted this press already
+		const hit = Math.max(0, seq(state).hits - 1);
+		const sixteenth = 15 / state.tempo.bpm;
+		return maestroEvents(maestro.chord, key, maestro, hit).map((e) => ({
+			note: e.note,
+			time: e.time * sixteenth
+		}));
+	}
+
 	#noteOn(key: string): void {
 		const { state } = this.#simulator.sim;
-		// with shift or bar held the keys are functions (octave, track scale…), not notes
+		// with shift or bar held the keys are functions (octave, track scale…), not notes; on an
+		// auxiliary track they are not this engine's either
 		if (state.held.includes('key.shift') || state.held.includes('key.bar')) return;
-		const index = (KEYBOARD_NOTE_NAMES as readonly string[]).indexOf(key.slice('keyboard.'.length));
+		if (!activeTrack(state)) return;
+		const index = keyboardIndex(key.slice('keyboard.'.length));
 		if (index < 0) return;
-		const event: LiveEvent = {
-			kind: 'on',
-			key,
-			track: state.track,
-			note: KEYBOARD_FIRST_NOTE + index
-		};
+		// in the keyboard's octave (the − and + keys; melodic tracks only)
+		const event: LiveEvent = { kind: 'on', key, track: state.track, note: keyNote(state, index) };
 		this.#live.set(key, event);
 		this.#unlock();
 		this.#send(event);
@@ -464,7 +537,7 @@ export class AppSound {
 	}
 
 	#play(engine: Engine, context: AudioContext, event: LiveEvent): void {
-		const time = context.currentTime;
+		const time = context.currentTime + (event.delay ?? 0);
 		if (event.kind === 'off') {
 			engine.noteOff(event.track, event.key, time);
 			return;

@@ -10,7 +10,8 @@
  * jump, the skips — its notes' quantised timing, lengths, glides and bends, and the step's parameter
  * locks, which reach the voice through the track settings the note starts with. On top come the
  * tempo page's groove (or the track's own groove from the bar menu) and the metronome, which also
- * counts in a recording.
+ * counts in a recording. The active track's arpeggio player runs here too while the transport plays
+ * (manual: players/arpeggio), over the keys held or the notes its hold kept, on the same clock.
  *
  * Each track's walk runs on a random source seeded like the LEDs' walk (`playheadAt`), and is laid
  * down again from the start whenever what it depends on changes (the scale, the length, the flow
@@ -21,9 +22,13 @@
  * ends the sequence's notes when the transport stops.
  */
 import { lockParam } from '$lib/sim/areas/sequencer/locks';
+import { activeTrack, heldNotes, seq } from '$lib/sim/areas/sequencer/model';
+import { playerOf } from '$lib/sim/areas/sequencer/players';
 import type { SimState, TrackState } from '$lib/sim/params';
 import {
 	advancePlayhead,
+	arpEvent,
+	arpStepLength,
 	bendCurve,
 	seededRng,
 	startPlayhead,
@@ -31,7 +36,7 @@ import {
 	type Rng,
 	type StepPlay
 } from '$lib/sim/sequencer-playback';
-import { currentPattern, type Pattern } from '$lib/sim/sequencer';
+import { currentPattern, type ArpSettings, type Pattern } from '$lib/sim/sequencer';
 import { grooveJitter, grooveTime, grooveVelocity, maxEarlyShift, type Groove } from './groove';
 import { bendCents, metronomeGain } from './mapping';
 import { seedOf } from './random';
@@ -51,6 +56,8 @@ export interface ScheduledNote {
 	readonly glide?: number;
 	/** The bend component: pitch over the note in cents, spread evenly across its duration. */
 	readonly bend?: Float32Array;
+	/** Its own place in the stereo field, −1…1 (the arpeggio's stereo spread). */
+	readonly pan?: number;
 }
 
 /** A metronome click. */
@@ -87,8 +94,10 @@ export interface SchedulerOptions {
 export const TICK_MS = 25;
 export const LOOKAHEAD = 0.1;
 
-/** The seed of every track's walk: the LEDs' (`playheadAt`'s default). */
+/** The seed of every track's walk: the LEDs' (`playheadAt`'s default), and the arpeggio's. */
 export const WALK_SEED = 1;
+/** The replica keyboard's velocity, for the notes the arpeggio makes of its keys. */
+export const KEY_VELOCITY = 100;
 
 /** Notes due further than this before now are dropped rather than played late (a stalled timer). */
 const LATE = 0.03;
@@ -100,6 +109,13 @@ const FOLLOW_TOLERANCE = 0.5;
 const REPLAY_LIMIT = 40000;
 /** Points a bend curve is drawn with. */
 const BEND_POINTS = 32;
+/**
+ * How far ahead the arpeggio is scheduled (s): less than the patterns, so keys pressed and let go
+ * reach it at once. Only while the page is hidden does it look as far as they do.
+ */
+const ARP_LOOKAHEAD = 0.05;
+/** An arpeggio note with less than this left to sound when it comes up is skipped (s). */
+const ARP_SHORTEST = 0.02;
 
 /** Where the timeline was pinned: a transport position (sixteenths) at an audio time and tempo. */
 export interface Anchor {
@@ -175,6 +191,38 @@ function walkKey(track: TrackState, pattern: Pattern): string {
 	return key;
 }
 
+/** What the active track's arpeggio plays over, from {@link arpeggioInput}. */
+export interface ArpeggioInput {
+	readonly track: number;
+	readonly arp: ArpSettings;
+	/** The notes, in the order they were played. */
+	readonly notes: readonly number[];
+}
+
+/**
+ * What the active instrument track's arpeggio runs over now (manual: players/arpeggio): the keys
+ * held, else the notes its hold kept. Null while it does not run: another player or none, nothing
+ * to play, an auxiliary track, the silent midi engine. A mute leaves it alone (OS 1.1.0: held
+ * arpeggio notes still sound on a muted track).
+ */
+export function arpeggioInput(state: SimState): ArpeggioInput | null {
+	const track = activeTrack(state);
+	if (!track || track.engine === 'midi') return null;
+	const player = playerOf(state);
+	if (!player.on || player.type !== 'arpeggio') return null;
+	const held = heldNotes(state);
+	const notes = held.length > 0 ? held : player.arp.hold ? seq(state).sustained : [];
+	return notes.length > 0 ? { track: state.track, arp: player.arp, notes } : null;
+}
+
+/** A running arpeggio: its track, how many sixteenths a step lasts, the next step to schedule. */
+interface ArpRun {
+	readonly track: number;
+	readonly length: number;
+	/** Step k starts k × length sixteenths into the transport (as its LEDs count). */
+	step: number;
+}
+
 /** One track's walk through its pattern. */
 interface Walk {
 	key: string;
@@ -203,6 +251,7 @@ export class Scheduler {
 	#walks: Walk[] = [];
 	#nextClick = 0;
 	#lastPosition = 0;
+	#arp: ArpRun | null = null;
 
 	constructor(options: SchedulerOptions) {
 		this.#state = options.state;
@@ -217,11 +266,6 @@ export class Scheduler {
 		return this.#anchor;
 	}
 
-	/** The step each track's walk is on (for tests and diagnostics). */
-	get steps(): number[] {
-		return this.#walks.map((w) => w.head.step);
-	}
-
 	/**
 	 * Schedules everything due before now + `lookahead` (default the option's; look further while
 	 * the page is hidden and timers are throttled).
@@ -231,6 +275,7 @@ export class Scheduler {
 		const now = this.#now();
 		const { transport, tempo } = state;
 		if (!transport.playing) {
+			this.#arp = null;
 			if (this.#anchor) {
 				this.#anchor = null;
 				this.#sink.stop(now);
@@ -253,8 +298,10 @@ export class Scheduler {
 		this.#lastPosition = transport.position;
 		const anchor = this.#anchor as Anchor;
 		const until = positionAt(anchor, now + lookahead);
+		const arpAhead = lookahead > this.#lookahead ? lookahead : Math.min(lookahead, ARP_LOOKAHEAD);
 		const due = [
 			...this.#notes(state, anchor, until, now),
+			...this.#arpeggio(state, anchor, positionAt(anchor, now + arpAhead), now),
 			...this.#clicks(state, anchor, until, now)
 		];
 		due.sort((a, b) => a.event.time - b.event.time);
@@ -280,6 +327,7 @@ export class Scheduler {
 		});
 		this.#nextClick = firstIndex(position, 4, 0.5);
 		this.#lastPosition = position;
+		this.#arp = null;
 	}
 
 	/** A walk from the start, replayed up to slot `slot` without sounding (as the LEDs replay it). */
@@ -367,6 +415,55 @@ export class Scheduler {
 				}
 			});
 		}
+	}
+
+	/**
+	 * The active track's arpeggio up to `until` (manual: players/arpeggio), with the sequencer's own
+	 * notes (`arpEvent`: order, range, style, note length, glide, stereo). Its steps count from the
+	 * transport's start, as its LEDs do; a run that starts (a key pressed) or changes speed begins
+	 * with the step under the playhead, for what is left of it.
+	 */
+	#arpeggio(state: SimState, anchor: Anchor, until: number, now: number): Due[] {
+		const input = arpeggioInput(state);
+		if (!input) {
+			this.#arp = null;
+			return [];
+		}
+		const { track: k, arp, notes } = input;
+		const length = arpStepLength(arp);
+		const under = Math.floor(Math.max(0, positionAt(anchor, now)) / length + 1e-9);
+		let run = this.#arp;
+		if (!run || run.track !== k || run.length !== length) {
+			run = { track: k, length, step: under };
+			this.#arp = run;
+		}
+		// the timer stalled or the timeline moved on: what went by is not played late
+		run.step = Math.max(run.step, under);
+		const settings = state.tracks[k];
+		const sixteenth = sixteenthSeconds(anchor.bpm);
+		const due: Due[] = [];
+		while (run.step * length < until) {
+			const event = arpEvent(notes, arp, run.step++, WALK_SEED);
+			if (!event) break;
+			const begin = timeAt(anchor, event.time);
+			const end = begin + event.length * sixteenth;
+			const time = Math.max(begin, now, anchor.time);
+			if (end - time < ARP_SHORTEST) continue;
+			due.push({
+				kind: 'note',
+				settings,
+				event: {
+					track: k,
+					note: event.note,
+					velocity: KEY_VELOCITY,
+					time,
+					duration: end - time,
+					glide: event.glide > 0 ? event.glide * length * sixteenth : undefined,
+					pan: event.pan !== 0 ? event.pan : undefined
+				}
+			});
+		}
+		return due;
 	}
 
 	#clicks(state: SimState, anchor: Anchor, until: number, now: number): Due[] {

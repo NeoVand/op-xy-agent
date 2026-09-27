@@ -1,6 +1,7 @@
 import { flushSync } from 'svelte';
 import { describe, expect, it } from 'vitest';
 import { ReplicaState } from '$lib/replica';
+import { currentPattern } from '$lib/sim/sequencer';
 import type { NoteRequest } from '$lib/sound/engine';
 import { createFakeRig } from '../../../test/fakes/rig';
 import { AppSimulator, type FrameClock } from './simulator.svelte';
@@ -30,10 +31,13 @@ class FakeContext extends EventTarget {
 /** Records what the app asks of the engine. */
 class FakeEngine {
 	readonly calls: string[] = [];
+	/** Each note's start time, in order. */
+	readonly starts: number[] = [];
 	readonly sink = { note() {}, click() {}, stop() {} };
 	quietAt = 0;
 	noteOn(r: NoteRequest) {
 		this.calls.push(`on ${r.track} ${r.note} ${r.settings.engine} ${r.key}`);
+		this.starts.push(r.time);
 	}
 	noteOff(track: number, key: string) {
 		this.calls.push(`off ${track} ${key}`);
@@ -236,6 +240,94 @@ describe('AppSound: the replica sounds while simulated', () => {
 		expect(store.get(SOUND_STORAGE_KEY)).toBe('off');
 		press('keyboard.d4');
 		expect(engines[0].calls.filter((c) => c.startsWith('on'))).toHaveLength(1);
+	});
+
+	it("plays in the keyboard's octave, and leaves the keys to an auxiliary track", async () => {
+		const { press, release, engines, settle } = setup();
+		press('track.3');
+		release('track.3');
+		press('key.plus');
+		release('key.plus');
+		press('keyboard.a3');
+		await settle();
+		release('keyboard.a3');
+		expect(engines[0].calls).toEqual(['on 2 69 prism keyboard.a3', 'off 2 keyboard.a3']);
+		press('key.auxiliary');
+		release('key.auxiliary');
+		press('keyboard.c4');
+		release('keyboard.c4');
+		expect(engines[0].calls).toHaveLength(2);
+	});
+
+	it('plays through the hold player: the last notes played sound on until the next', async () => {
+		const { press, release, engines, settle, simulator } = setup();
+		press('track.3');
+		release('track.3');
+		const player = currentPattern(simulator.sim.state.tracks[2].sequence).player;
+		player.type = 'hold';
+		player.on = true;
+		press('keyboard.c4');
+		await settle();
+		press('keyboard.e4');
+		release('keyboard.c4');
+		release('keyboard.e4');
+		expect(engines[0].calls).toEqual(['on 2 60 prism player:60', 'on 2 64 prism player:64']);
+		// a new note with nothing held starts a new set
+		press('keyboard.g4');
+		release('keyboard.g4');
+		expect(engines[0].calls.slice(2)).toEqual([
+			'off 2 player:60',
+			'off 2 player:64',
+			'on 2 67 prism player:67'
+		]);
+		// stop lets go of what it kept
+		press('key.stop');
+		expect(engines[0].calls.at(-1)).toBe('off 2 player:67');
+	});
+
+	it("plays maestro's chord from any key, strummed by its roll", async () => {
+		const { press, release, engines, settle, simulator } = setup();
+		press('track.3');
+		release('track.3');
+		const player = currentPattern(simulator.sim.state.tracks[2].sequence).player;
+		player.type = 'maestro';
+		player.on = true;
+		player.maestro.chord = [60, 64, 67];
+		player.maestro.roll = 99;
+		press('keyboard.d4');
+		await settle();
+		expect(engines[0].calls).toEqual([
+			'on 2 62 prism player:62',
+			'on 2 66 prism player:66',
+			'on 2 69 prism player:69'
+		]);
+		// roll 99: a quarter of a sixteenth apart (120 bpm)
+		expect(engines[0].starts[1] - engines[0].starts[0]).toBeCloseTo(0.03125);
+		expect(engines[0].starts[2] - engines[0].starts[0]).toBeCloseTo(0.0625);
+		release('keyboard.d4');
+		expect(engines[0].calls.slice(3).sort()).toEqual([
+			'off 2 player:62',
+			'off 2 player:66',
+			'off 2 player:69'
+		]);
+	});
+
+	it('hands the arpeggio to the scheduler while the transport plays', async () => {
+		const { press, release, engines, schedulers, settle, simulator } = setup();
+		press('track.3');
+		release('track.3');
+		currentPattern(simulator.sim.state.tracks[2].sequence).player.on = true;
+		// stopped, it sounds the notes it would run over (as its LEDs show)
+		press('keyboard.c4');
+		await settle();
+		expect(engines[0].calls).toEqual(['on 2 60 prism player:60']);
+		press('key.play');
+		expect(engines[0].calls.at(-1)).toBe('off 2 player:60');
+		const ticks = schedulers[0].ticks;
+		press('keyboard.e4');
+		release('keyboard.e4');
+		expect(schedulers[0].ticks).toBe(ticks + 1);
+		expect(engines[0].calls).toHaveLength(2);
 	});
 
 	it('starts switched off when that was the last choice', async () => {

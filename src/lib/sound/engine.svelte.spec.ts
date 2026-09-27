@@ -140,11 +140,10 @@ describe('the sound engine, rendered offline', () => {
 		}
 	});
 
-	it('mutes a muted track, and lets a released note fade', async () => {
+	it('lets a note ring on when its track is muted (mutes stop notes), and a released note fade', async () => {
 		const muted = await render(0.5, (engine) => {
 			const s = defaultState();
-			s.tracks[2].mix.muted = true;
-			engine.sync(s);
+			engine.sync(s, 0);
 			engine.noteOn({
 				track: 2,
 				settings: s.tracks[2],
@@ -153,8 +152,11 @@ describe('the sound engine, rendered offline', () => {
 				time: 0.05,
 				duration: 0.3
 			});
+			const later = defaultState();
+			later.tracks[2].mix.muted = true;
+			engine.sync(later, 0.1);
 		});
-		expect(measure(muted.buffer, 0.1).rms).toBeLessThan(1e-4);
+		expect(measure(muted.buffer, 0.15, 0.3).rms).toBeGreaterThan(0.01);
 		const released = await render(0.8, (engine) => {
 			engine.noteOn({
 				track: 2,
@@ -367,5 +369,30 @@ describe('the sound engine follows the mixer', () => {
 		};
 		// A3 (220 Hz) rising an octave over the note: about twice the crossings at the end
 		expect(crossings(0.52) / crossings(0.02)).toBeGreaterThan(1.7);
+	});
+
+	it("places a note of its own in the stereo field (the arpeggio's stereo spread)", async () => {
+		const { buffer } = await render(0.5, (engine) => {
+			const s = defaultState();
+			s.tracks[2].sends = [0, 0, 0, 0];
+			engine.sync(s, 0);
+			engine.noteOn({
+				track: 2,
+				settings: s.tracks[2],
+				note: 60,
+				velocity: 100,
+				time: 0,
+				duration: 0.3,
+				pan: -1
+			});
+		});
+		const rms = (channel: number) => {
+			const data = buffer.getChannelData(channel);
+			let sum = 0;
+			for (const v of data) sum += v * v;
+			return Math.sqrt(sum / data.length);
+		};
+		expect(rms(0)).toBeGreaterThan(0.01);
+		expect(rms(1)).toBeLessThan(rms(0) * 0.01);
 	});
 });

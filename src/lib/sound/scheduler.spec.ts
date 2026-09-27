@@ -6,10 +6,13 @@ import {
 	type SimState,
 	type TrackState
 } from '$lib/sim/params';
-import { playheadAt } from '$lib/sim/sequencer-playback';
+import { seq } from '$lib/sim/areas/sequencer/model';
+import { arpNoteAt, playheadAt } from '$lib/sim/sequencer-playback';
 import { currentPattern, setComponentValue, setLock, toggleStep } from '$lib/sim/sequencer';
 import {
+	KEY_VELOCITY,
 	Scheduler,
+	arpeggioInput,
 	firstIndex,
 	lockedSettings,
 	positionAt,
@@ -356,5 +359,117 @@ describe('the lookahead scheduler', () => {
 		state.transport.position = 8;
 		run(0.05);
 		expect(positionAt(scheduler.anchor!, clock.now)).toBeCloseTo(8, 0);
+	});
+});
+
+describe("the active track's arpeggio", () => {
+	/** A rig on T3 (prism) with its arpeggio on and `keys` held. */
+	function arp(keys: string[] = ['keyboard.c4', 'keyboard.e4', 'keyboard.g4']) {
+		const r = rig();
+		r.state.track = 2;
+		const player = r.pattern(2).player;
+		player.on = true;
+		r.state.held = keys;
+		return { ...r, player, arpNotes: () => r.notes.filter((n) => n.track === 2) };
+	}
+
+	it('runs over the keys held on the audio clock: its speed, note length and the keys velocity', () => {
+		const { play, run, arpNotes, sixteenths } = arp();
+		play();
+		run(1);
+		const notes = arpNotes().slice(0, 8);
+		expect(notes.map((n) => n.note)).toEqual([60, 64, 67, 60, 64, 67, 60, 64]);
+		expect(sixteenths(2).slice(0, 8)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+		// half a sixteenth at 120 bpm
+		for (const n of notes) expect(n.duration).toBeCloseTo(0.0625);
+		expect(notes.every((n) => n.velocity === KEY_VELOCITY && n.pan === undefined)).toBe(true);
+	});
+
+	it('sounds what its LEDs show, a random pattern too', () => {
+		const { play, run, arpNotes, player, state, scheduler } = arp();
+		player.arp.pattern = 4; // random
+		player.arp.range = 2;
+		player.arp.speed = 4; // eighths
+		play();
+		run(2);
+		const input = arpeggioInput(state)!.notes;
+		for (const n of arpNotes()) {
+			const position = positionAt(scheduler.anchor!, n.time);
+			expect(n.note).toBe(arpNoteAt(input, player.arp, position + 1e-6));
+		}
+		expect(arpNotes().length).toBeGreaterThanOrEqual(8);
+	});
+
+	it('keeps running on what its hold kept, and stops when nothing is left', () => {
+		const { state, play, run, arpNotes, player } = arp([]);
+		player.arp.hold = true;
+		seq(state).sustained = [60, 67];
+		play();
+		run(0.5);
+		// the fifth step (0.51 s) is inside the last tick's look-ahead
+		expect(arpNotes().map((n) => n.note)).toEqual([60, 67, 60, 67, 60]);
+		seq(state).sustained = [];
+		const count = arpNotes().length;
+		run(0.5);
+		expect(arpNotes()).toHaveLength(count);
+	});
+
+	it('starts with the step under the playhead when a key goes down, for what is left of it', () => {
+		const { state, play, run, arpNotes, clock, scheduler } = arp([]);
+		play();
+		run(0.275);
+		expect(arpNotes()).toHaveLength(0);
+		state.held = ['keyboard.c4'];
+		scheduler.tick();
+		const [first] = arpNotes();
+		// step 2 began at 0.26 s and its note ends 62.5 ms later
+		expect(first.time).toBeCloseTo(clock.now);
+		expect(first.duration).toBeCloseTo(0.26 + 0.0625 - clock.now);
+		run(0.2);
+		expect(arpNotes()[1].time).toBeCloseTo(timeAt(scheduler.anchor!, 3));
+	});
+
+	it('waits out a count-in, and leaves the stopped transport to the keys', () => {
+		const { play, run, arpNotes, scheduler } = arp();
+		run(0.5);
+		expect(arpNotes()).toHaveLength(0);
+		play(-16);
+		run(1.9);
+		expect(arpNotes()).toHaveLength(0);
+		run(0.2);
+		expect(arpNotes()[0].time).toBeCloseTo(timeAt(scheduler.anchor!, 0));
+	});
+
+	it('plays on a muted track (OS 1.1.0), never for another player, an aux track or midi', () => {
+		const muted = arp();
+		muted.state.tracks[2].mix.muted = true;
+		muted.play();
+		muted.run(0.2);
+		expect(muted.arpNotes().length).toBeGreaterThan(0);
+		const cases: ((r: ReturnType<typeof arp>) => void)[] = [
+			(r) => (r.player.type = 'hold'),
+			(r) => (r.player.on = false),
+			(r) => (r.state.mode = 'auxiliary'),
+			(r) => (r.state.tracks[2].engine = 'midi')
+		];
+		for (const change of cases) {
+			const r = arp();
+			change(r);
+			r.play();
+			r.run(0.2);
+			expect(r.arpNotes()).toHaveLength(0);
+		}
+	});
+
+	it('spreads successive notes by its stereo amount and glides by its glide', () => {
+		const { play, run, arpNotes, player } = arp();
+		player.arp.stereo = 99;
+		player.arp.glide = 99;
+		play();
+		run(0.3);
+		const notes = arpNotes();
+		expect(notes.slice(0, 3).map((n) => n.pan)).toEqual([-1, 1, -1]);
+		// a whole arpeggio step of glide at 99
+		for (const n of notes) expect(n.glide).toBeCloseTo(0.125);
 	});
 });

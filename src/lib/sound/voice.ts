@@ -48,6 +48,8 @@ export interface VoiceSpec {
 	readonly key: string | null;
 	/** A drum key in the mute group (another mute-group hit cuts it off). */
 	readonly group?: boolean;
+	/** The note's own place in the stereo field, −1…1 (an arpeggio's stereo spread); 0 = centre. */
+	readonly pan?: number;
 }
 
 /** What the track's LFO offers voices, per destination (null = not routed there). */
@@ -93,6 +95,8 @@ export class Voice implements VoiceSlot {
 	readonly #graph: SourceGraph;
 	readonly #filters: BiquadFilterNode[];
 	readonly #vca: GainNode;
+	/** Only a note with a place of its own in the stereo field has one. */
+	readonly #panner: StereoPannerNode | null;
 	readonly #amp: Envelope;
 	readonly #cutoff: Envelope[];
 	/** Modulation wiring, undone on re-attach and at the end. */
@@ -133,7 +137,13 @@ export class Voice implements VoiceSlot {
 		this.#vca.gain.value = 0;
 		let chain: AudioNode = graph.output;
 		for (const f of this.#filters) chain = chain.connect(f);
-		chain.connect(this.#vca).connect(destination);
+		chain = chain.connect(this.#vca);
+		this.#panner = spec.pan ? context.createStereoPanner() : null;
+		if (this.#panner) {
+			this.#panner.pan.value = Math.max(-1, Math.min(1, spec.pan ?? 0));
+			chain = chain.connect(this.#panner);
+		}
+		chain.connect(destination);
 
 		this.#amp = new Envelope(start, spec.amp, { base: 0, peak: spec.peak, curve: 'linear' });
 		this.#amp.schedule(this.#vca.gain, gate);
@@ -295,6 +305,7 @@ export class Voice implements VoiceSlot {
 		this.#graph.dispose();
 		for (const f of this.#filters) f.disconnect();
 		this.#vca.disconnect();
+		this.#panner?.disconnect();
 		this.off = Math.min(this.off, this.#context.currentTime);
 		this.end = Math.min(this.end, this.#context.currentTime);
 		this.onended?.(this);

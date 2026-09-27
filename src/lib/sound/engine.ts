@@ -70,6 +70,8 @@ export interface NoteRequest {
 	readonly glide?: number;
 	/** A pitch curve over the note, in cents (the bend component). */
 	readonly bend?: Float32Array;
+	/** The note's own place in the stereo field, −1…1, on top of the strip's pan (arpeggio stereo). */
+	readonly pan?: number;
 }
 
 /** Options for {@link SoundEngine}. */
@@ -216,7 +218,8 @@ export class SoundEngine {
 					time: event.time,
 					duration: event.duration,
 					glide: event.glide,
-					bend: event.bend
+					bend: event.bend,
+					pan: event.pan
 				}),
 			click: (event) => this.click(event),
 			stop: (time) => this.stopSequence(time)
@@ -270,6 +273,7 @@ export class SoundEngine {
 		this.#returns.forEach((strip, i) => {
 			const aux = state.aux[6 + i];
 			if (!aux) return;
+			// an effect's track has no notes to stop: its mute cuts the return (ours)
 			const level = aux.mix.muted ? 0 : levelGain(aux.mix.level);
 			if (strip.level.gain.value !== level) strip.level.gain.setTargetAtTime(level, time, 0.01);
 			const pan = panValue(aux.mix.pan);
@@ -518,7 +522,8 @@ export class SoundEngine {
 			bend: this.#channels[track].bend,
 			curve: request.bend,
 			source: request.key ? 'live' : 'sequence',
-			key: request.key ?? null
+			key: request.key ?? null,
+			pan: request.pan
 		});
 		this.#adopt(voice);
 		this.#last[track] = hz;
@@ -609,7 +614,7 @@ export class SoundEngine {
 				rate,
 				region,
 				loop: looping ? region : null,
-				pan: panValue(key.pan),
+				pan: Math.max(-1, Math.min(1, panValue(key.pan) + (request.pan ?? 0))),
 				fade: fadeSeconds(key.fade, region.end - region.start),
 				glides: false,
 				gain: dbGain(key.gain)

@@ -1,10 +1,13 @@
 /**
  * An instrument track's strip: voices in, then tremolo, duck, preset volume (M2 + shift), the mixer's
- * level, mute and pan, and post-fader sends to FX I and FX II (M3 + shift, or mix M1). It also runs
- * the track's LFO (M4) — a wave the voices wire into their filter, pitch or M1 parameters, or that
+ * level and pan, and post-fader sends to FX I and FX II (M3 + shift, or mix M1). It also runs the
+ * track's LFO (M4) — a wave the voices wire into their filter, pitch or M1 parameters, or that
  * wobbles the level (tremolo) — the engine's own tremolo (organ, axis), and the duck that dips the
  * level when another track plays. Settings arrive as the simulator's track state; only what changed
  * is applied, gliding over 10 ms so nothing zippers.
+ *
+ * A mute is not here: it stops the track's notes, not its audio (manual: mix/mute-solo), so the
+ * scheduler leaves the sequence's notes out while what already sounds rings on, and keys still play.
  */
 import type { TrackState } from '$lib/sim/params';
 import {
@@ -106,7 +109,7 @@ export class Channel {
 	 * when voices must re-wire to the LFO.
 	 */
 	apply(track: TrackState, bpm: number, time: number, gain = 1): boolean {
-		const level = track.mix.muted ? 0 : levelGain(track.mix.level) * gain;
+		const level = levelGain(track.mix.level) * gain;
 		this.#set('level', level, this.#level.gain, time);
 		this.#set('pan', panValue(track.mix.pan), this.#pan.pan, time);
 		this.#set('preset', presetGain(track.playMode.volume), this.#preset.gain, time);
