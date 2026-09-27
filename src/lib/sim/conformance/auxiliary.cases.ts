@@ -464,10 +464,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			expect(page(d, 'aux-brain').root).toBe('e');
 		});
 
-		// bug in src/lib/sim/areas/arrange/model.ts: removePattern (arrange M4) drops a brain pattern
-		// but not its per-pattern settings (areas.auxiliary.brain.patterns), so every later pattern
-		// takes its neighbour's key, scale and routing
-		it.skip('keeps a later pattern’s settings when an earlier brain pattern is removed', async () => {
+		it('keeps a later pattern’s settings when an earlier brain pattern is removed', async () => {
 			const d = await start();
 			await aux(d, 1);
 			await d.turn(2, 2); // pattern 1 in d

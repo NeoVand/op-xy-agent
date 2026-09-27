@@ -191,6 +191,11 @@ export function newPattern(s: SimState): boolean {
 	if (seq.patterns.length >= MAX_PATTERNS) return false;
 	seq.patterns.push(newPatternLike(currentPattern(seq)));
 	if (t < 8) slots(s.areas.arrange, t, seq.patterns.length - 1).push(null);
+	// the brain's new pattern starts from the settings it plays now, as an instrument track's
+	// starts with its sound (ours, by analogy with arrange/patterns)
+	if (t === BRAIN) {
+		pasteBrain(s, seq.patterns.length - 1, brainSettings(s.areas.auxiliary, seq.current));
+	}
 	playPattern(s, t, seq.patterns.length - 1);
 	return true;
 }

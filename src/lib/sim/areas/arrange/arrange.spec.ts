@@ -279,13 +279,25 @@ describe('arrange mode: the brain’s settings per pattern (OS 1.0.29)', () => {
 		expect(brainSettings(aux, 2).key).toBe(2);
 	});
 
-	it('stay with every other pattern when one goes, also on those that showed the first’s', () => {
+	it('start a new pattern from the settings the brain plays now', () => {
 		const sim = brain();
 		const aux = sim.state.areas.auxiliary;
+		aux.brain.patterns[0].key = 7;
 		sim.press(key('new'));
-		sim.press(key('new')); // three patterns, only the first with settings of its own
+		expect(brainSettings(aux, 1).key).toBe(7);
+		editBrain(aux, 1).key = 9;
+		sim.press(key('new')); // from pattern 2, the one playing
+		expect(brainSettings(aux, 2).key).toBe(9);
+	});
+
+	it('stay with every other pattern when one goes, also on one that showed the first’s', () => {
+		const sim = brain();
+		const aux = sim.state.areas.auxiliary;
 		aux.brain.patterns[0].key = 2;
+		sim.press(key('new'));
 		editBrain(aux, 1).key = 4;
+		sim.press(key('new'));
+		aux.brain.patterns.splice(2); // pattern 3 without settings of its own: it shows the first's
 		sim.turn(4, -2);
 		sim.press(key('clear')); // pattern 1 goes
 		expect(brainSettings(aux, 0).key).toBe(4); // what was pattern 2
