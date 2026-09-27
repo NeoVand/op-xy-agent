@@ -156,6 +156,17 @@ The deployed `/lab` page (https://neovand.github.io/op-xy-agent/lab, device laye
 works** (identity + GREET → OP-XY / 1.1.33 / hw rev 2 / TE033AS001, serial hidden), **play/stop and
 track mutes work from the browser**. First proof that the static web app controls the real device.
 
+## 2026-09-26 — What the device transmits in normal use (owner's project, clock = both)
+
+Passive 25 s capture while the owner pressed keyboard keys, track 3, M2, turned the dark encoder and
+pressed play/stop: **only `F8` clock arrived** (1,400 ticks = 140 BPM, the project tempo). No notes
+from the keyboard, nothing for track/M-keys or the encoder. Per our manual (`project.midi-channels`),
+tracks transmit notes only after a MIDI channel is assigned in project settings (project → M4 → midi
+page), and a fresh project has every channel off. Implication for the replica: it can mirror notes
+(keyboard + sequencer) only once track channels are set, transport/tempo with clock = both, and never
+mode keys, M-keys or encoders in normal mode (only controller mode transmits those). Onboarding should
+offer to set track channels.
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers
