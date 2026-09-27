@@ -1,6 +1,6 @@
-// simple, measured: saw to square, pulse width that acts only on the square, white noise, a
-// stereo pair detuned apart, and the bounds every engine keeps. Played straight at 48 kHz, block by
-// block as the core plays it.
+// simple, measured: saw to square, pulse width that acts only on the square, white noise, the
+// device's stereo copy, its level against the device's, and the bounds every engine keeps. Played
+// straight at 48 kHz, block by block as the core plays it.
 import { describe, expect, it } from 'vitest';
 import { harmonicLevels, inharmonicDb, levelAt, powerSpectrum, rms } from '../analysis';
 import {
@@ -14,7 +14,9 @@ import {
 	worstInharmonic,
 	worstPeak
 } from './audition';
-import { PW_RANGE, STEREO_CENTS, SimpleVoice } from './simple';
+import { DEVICE_GAIN_DB } from './device';
+import { PW_RANGE, SimpleVoice } from './simple';
+import { offsetCents } from './stereo';
 
 const make = (seed: number) => new SimpleVoice(SR, seed);
 const DEFAULT = m1(80, 80, 0, 0);
@@ -79,19 +81,29 @@ describe('simple', () => {
 		expect(between(8000, 12000) / between(2000, 6000)).toBeCloseTo(1, 1);
 	});
 
-	it('is mono at stereo 0, and spreads a pair detuned apart above it', () => {
+	it('is mono at stereo 0, and adds the device’s swept copy above it', () => {
 		const mono = play(make(1), 220, 1, DEFAULT);
 		expect(mono.right).toEqual(mono.left);
-		const wide = play(make(1), 220, 2, [1, 0, 0, 1]);
-		expect(Math.abs(correlation(wide.left, wide.right))).toBeLessThan(0.3);
-		// the left copy sits STEREO_CENTS below the note, the right one above
-		const cents = (c: number) => 220 * Math.pow(2, c / 1200);
-		expect(levelAt(wide.left, SR, cents(-STEREO_CENTS))).toBeGreaterThan(
-			2 * levelAt(wide.left, SR, cents(STEREO_CENTS))
+		// at full stereo on A4 the device's channels correlate at 0.69
+		const wide = play(make(1), 440, 2, [0, 0, 0, 1]);
+		expect(correlation(wide.left, wide.right)).toBeGreaterThan(0.55);
+		expect(correlation(wide.left, wide.right)).toBeLessThan(0.85);
+		// early in the note the left copy sits above the note and the right one below (stereo.spec)
+		const at = (c: number) => 440 * 4 * Math.pow(2, c / 1200);
+		const l = wide.left.subarray(4800, 4800 + 48000);
+		const r = wide.right.subarray(4800, 4800 + 48000);
+		expect(levelAt(l, SR, at(offsetCents(1)))).toBeGreaterThan(
+			5 * levelAt(l, SR, at(-offsetCents(1)))
 		);
-		expect(levelAt(wide.right, SR, cents(STEREO_CENTS))).toBeGreaterThan(
-			2 * levelAt(wide.right, SR, cents(-STEREO_CENTS))
+		expect(levelAt(r, SR, at(-offsetCents(1)))).toBeGreaterThan(
+			5 * levelAt(r, SR, at(offsetCents(1)))
 		);
+	});
+
+	it('plays its saw at the device’s level', () => {
+		// −18.9 dBFS on the device's USB audio: the level every measured engine is scaled from
+		const { left } = play(make(1), 220, 0.5, [0, 0, 0, 0]);
+		expect(20 * Math.log10(rms(left, 2400))).toBeCloseTo(-18.9 + DEVICE_GAIN_DB, 0);
 	});
 
 	it('sits at the target level at its default M1', () => {
@@ -102,9 +114,18 @@ describe('simple', () => {
 		}
 	});
 
-	it('never peaks past ±1.2, on any setting or note', { timeout: 60_000 }, () => {
-		const { peak, at } = worstPeak(make, grid([0, 0.5, 1]), BOUNDS.notes);
-		expect(peak, at).toBeLessThan(BOUNDS.peak);
+	it('never peaks past ±1.2 in mono, ±2 with the stereo copy', { timeout: 60_000 }, () => {
+		const settings = grid([0, 0.5, 1]);
+		const mono = worstPeak(
+			make,
+			settings.filter((p) => p[3] === 0),
+			BOUNDS.notes
+		);
+		expect(mono.peak, mono.at).toBeLessThan(BOUNDS.peak);
+		// the copy adds up to 0.89 of the sound, high-passed: its edges stack on the dry sound's, as
+		// on the device
+		const wide = worstPeak(make, settings, BOUNDS.notes);
+		expect(wide.peak, wide.at).toBeLessThan(2);
 	});
 
 	it('moves every parameter without clicks', { timeout: 60_000 }, () => {

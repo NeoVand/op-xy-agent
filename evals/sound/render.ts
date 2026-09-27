@@ -57,13 +57,14 @@ function wav(left: Float32Array, right: Float32Array): Buffer {
 	return out;
 }
 
-/** One note of `engine`: held for `hold` s with a 1 ms attack, then a 15 ms release. */
+/** One note of `engine`, begun at `time`: held `hold` s with a 1 ms attack, then a 15 ms release. */
 function renderNote(
 	engine: EngineId,
 	cc: Record<string, number>,
 	note: number,
 	hold: number,
-	seed: number
+	seed: number,
+	time: number
 ) {
 	const voice = createEngine(engine, SR, seed);
 	const params = Float32Array.from([12, 13, 14, 15], (k) => param(cc[k] ?? 0));
@@ -73,7 +74,8 @@ function renderNote(
 	const right = new Float32Array(total);
 	const l = new Float32Array(BLOCK);
 	const r = new Float32Array(BLOCK);
-	voice.start(hz, 100, params);
+	// the capture's clock: free-running LFOs (organ tremolo, stereo) start somewhere, as on the device
+	voice.start(hz, 100, params, time);
 	const attack = 0.001 * SR;
 	const gate = hold * SR;
 	const release = 0.015 * SR;
@@ -99,7 +101,8 @@ export async function main(argv: readonly string[]): Promise<void> {
 	const out = join(folder, 'ours');
 	mkdirSync(out, { recursive: true });
 	sheet.cues.forEach((cue, i) => {
-		const { left, right } = renderNote(engine, cue.cc, cue.note, sheet.hold, i + 1);
+		// each note as long as the device held it (a plan's takes can hold longer than its default)
+		const { left, right } = renderNote(engine, cue.cc, cue.note, cue.off - cue.on, i + 1, cue.on);
 		writeFileSync(join(out, `${String(i).padStart(3, '0')}.wav`), wav(left, right));
 	});
 	console.log(`rendered ${sheet.cues.length} notes of ${engine} into ${out}`);

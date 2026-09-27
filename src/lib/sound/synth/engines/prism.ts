@@ -1,248 +1,202 @@
 /**
- * prism: two oscillators under one shape control, the second at one of nine musical ratios to the
- * first and a little detuned, spread across the stereo field. TE presents it as subtractive in
- * spirit (Moog-like basses), with supersaw and Reese sounds from detune plus stereo. Evidence and
- * open questions: `docs/research/57-synth-engines.md`, §3 (prism).
+ * prism: two oscillators under one shape control, the second at one of ten musical ratios to the
+ * first and a little detuned, with stereo from a swept, detuned copy in each channel. TE presents
+ * it as subtractive in spirit (Moog-like basses), with supersaw and Reese sounds from detune and
+ * stereo. Evidence: `docs/research/57-synth-engines.md`, §3 (prism).
  *
- * Established [E]:
- * - two oscillators share one shape: saw at 0, square around the upper third, a narrower pulse at
- *   the top (the scope review sees the width skew there);
- * - ratio has nine fixed steps, shown on the device as oscillator 1 : oscillator 2 = 2:1, 1:1, 2:3,
- *   1:2, 1:3, 1:4, 1:6, 1:8, 1:12 (a reviewer hears it move in fifths and fourths);
- * - detune is small and moves oscillator 2;
- * - stereo 0 is mono; turned up it sounds wide and phasey, like a stereo phaser.
+ * Measured on the owner's device (2026-09-27, OS 1.1.33; `research/device/prism_fit.py`):
+ * - shape, first half: saw → square as saw − k·(the saw half a cycle on), even harmonics fading as
+ *   1 − k while odd ones grow as 1 + k (fitted within 0.05 dB), k reaching 1 at CC 64 along
+ *   {@link BLEND}, the level falling 3.9 dB per unit of k so the square is only 0.9 dB louder;
+ * - second half: each oscillator narrows its pulse, oscillator 2 first ({@link WIDTH2}: 0.5 → 0.113
+ *   by CC 102) and oscillator 1 after ({@link WIDTH1}: from CC 89 to 0.115 at 127), with no level
+ *   compensation (fitted within 0.06 dB);
+ * - oscillator 2 plays 2.4 dB below oscillator 1 (the two in phase at 1:1), a little less at high
+ *   ratios ({@link RATIO_DB}); both fade with their own pitch: −2.5 dB at 3.5 kHz, gone by 5.5 kHz;
+ * - ratio: ten equal zones, 2:1 1:1 2:3 1:2 1:3 1:4 1:6 1:8 1:12 1:16 ({@link RATIOS});
+ * - detune moves oscillator 2 up by as much as 15 cents ({@link DETUNE}, the same in cents on A2
+ *   and A4);
+ * - stereo: the device's swept copy ({@link StereoCopy}), not a pan of the two oscillators;
+ * - prism sounds at the note (not an octave down), and its phases restart with every note.
  *
- * Our model [I]:
- * - both oscillators are one band-limited saw/pulse blend, at half level each. Up to
- *   {@link SQUARE_AT}, shape morphs saw into square as saw − k·(the same saw half a cycle on) =
- *   (1 − k)·saw − k·square: even harmonics fade as 1 − k and odd ones grow as 1 + k, with no dip
- *   (a plain crossfade passes through a half-level saw). Above it the square narrows to
- *   {@link NARROWEST};
- * - ratio step ⌊p2·9⌋ sets oscillator 2 to oscillator 1 × {@link RATIOS}[step];
- * - detune raises oscillator 2 by up to {@link DETUNE_CENTS}, on a squared curve (fine near 0);
- * - stereo pans oscillator 1 left and 2 right (equal power, up to {@link STEREO_PAN}) and detunes a
- *   left and a right copy of each by ∓{@link STEREO_CENTS}, so it widens even at 1:1 with no
- *   detune. The right copies run only while stereo is up, taking the right channel over from the
- *   originals within a few milliseconds;
- * - phases restart with every note (the device's behaviour is unknown; this keeps attacks alike);
- * - the pulse's mean (2w − 1 per unit of pulse) is subtracted exactly: a DC filter would thump at
- *   the start of every note;
- * - a one-pole lowpass at {@link LEAK_CUT} × the sample rate (−0.7 dB at 15 kHz) catches what the
- *   band-limited steps let through just past Nyquist, which matters for oscillator 2 at high
- *   ratios: at 1:12 on a 1 kHz note its second harmonic sits right at Nyquist.
- *
- * Open: every factory prism preset transposes +12, so prism may sound an octave below the note on
- * the device. Not built in until a recording settles it.
+ * Our model plays each oscillator as the band-limited saw/pulse blend with its pulse's mean
+ * subtracted exactly (a DC filter would thump at every note), and catches what the band-limited
+ * steps let through near Nyquist with a one-pole lowpass at {@link LEAK_CUT} × the sample rate.
  */
 import { OnePole, prewarp } from '../filters';
 import { ShapeOscillator, type ShapeMix } from '../oscillators';
+import { DEVICE_GAIN_DB } from './device';
 import type { EngineVoice } from './index';
 import { Ramp, Smoothing } from './ramp';
+import { StereoCopy } from './stereo';
 
-/** Oscillator 2's frequency over oscillator 1's at each ratio step [E, the device's screen]. */
-export const RATIOS: readonly number[] = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12];
+/** Oscillator 2's frequency over oscillator 1's in each of ratio's ten zones (the device's). */
+export const RATIOS: readonly number[] = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16];
 
-// Calibration [I]: starting values, awaiting measurement on the owner's device (57 §6).
-/** Shape at which the saw has become a square; above it, the pulse narrows. */
-export const SQUARE_AT = 0.8;
-/** Pulse width at shape 1. */
-export const NARROWEST = 0.27;
-/** Oscillator 2's detune at detune 1, in cents (on a squared curve). */
-export const DETUNE_CENTS = 30;
-/** How far each oscillator pans off centre at stereo 1 (1 would be hard left and right). */
-export const STEREO_PAN = 0.5;
-/** The left copies' detune down and the right copies' up at stereo 1, in cents. */
-export const STEREO_CENTS = 3;
-/** Output level: RMS ≈ 0.28 per channel at the default M1 (two squares, 1:8). */
-export const LEVEL = 0.4;
+/** A curve through measured points: `at` (0–1, CC/127) and the value there. */
+interface Curve {
+	readonly at: readonly number[];
+	readonly value: readonly number[];
+}
+
+const cc = (values: readonly number[]) => values.map((v) => v / 127);
+
+// Measured on the owner's device (2026-09-27).
+/** The blend k from saw (0) to square (1) over the first half of shape. */
+export const BLEND: Curve = {
+	at: cc([0, 13, 25, 38, 51, 64]),
+	value: [0, 0.083, 0.275, 0.463, 0.654, 1]
+};
+/** The blend's level: this many dB per unit of k. */
+export const BLEND_DB = -3.9;
+/** Each oscillator's pulse width over the second half of shape. */
+export const WIDTH1: Curve = {
+	at: cc([64, 89, 102, 114, 127]),
+	value: [0.5, 0.5, 0.47, 0.346, 0.115]
+};
+export const WIDTH2: Curve = {
+	at: cc([64, 76, 89, 102, 127]),
+	value: [0.5, 0.422, 0.238, 0.113, 0.113]
+};
+/** Oscillator 2's level against oscillator 1's at each ratio (dB). */
+export const RATIO_DB: readonly number[] = [
+	-2.2, -2.4, -2.7, -3.1, -3.4, -3.7, -3.9, -4.2, -4.5, -4.8
+];
+/** Oscillator 2's detune (cents) over detune. */
+export const DETUNE: Curve = {
+	at: cc([0, 13, 25, 38, 51, 64, 76, 89, 102, 114, 127]),
+	value: [0, 0.9, 2, 4, 6, 7, 7.9, 10.1, 12.2, 13.2, 15]
+};
+/** Each oscillator's level against its pitch: a gentle one-pole-like fall, then gone by the top. */
+const FALL_HZ = 4000;
+const GONE_FROM_HZ = 4000;
+const GONE_HZ = 5550;
+/**
+ * Oscillator 1's saw (peak) at shape 0: with oscillator 2 in phase at 1:1, −14.8 dBFS on the
+ * device's USB audio, which our levels play {@link DEVICE_GAIN_DB} louder.
+ */
+const LEVEL =
+	(Math.sqrt(3) * Math.pow(10, (-14.8 + DEVICE_GAIN_DB) / 20)) / (1 + Math.pow(10, -2.4 / 20));
 
 /** The leakage lowpass's cutoff, as a fraction of the sample rate (20 kHz at 48 kHz). */
 export const LEAK_CUT = 0.42;
-/** Oscillators fade out between these rates (cycles a sample): none of their harmonics is heard. */
-const FADE_FROM = 0.3;
+/** Oscillators stop short of this rate (cycles a sample). */
 const TOP = 0.45;
-/** Samples the right channel takes to move onto the stereo copies, or back off them. */
-const TAKEOVER = 128;
 
-/** An oscillator's level towards the top of the band: 1, fading to 0 at {@link TOP}. */
-const fade = (dt: number): number => Math.min(1, Math.max(0, (TOP - dt) / (TOP - FADE_FROM)));
+/** `curve` at `x`, linearly between its points (held beyond them). */
+function read(curve: Curve, x: number): number {
+	const { at, value } = curve;
+	if (x <= at[0]) return value[0];
+	const last = at.length - 1;
+	if (x >= at[last]) return value[last];
+	let i = 0;
+	while (x > at[i + 1]) i++;
+	return value[i] + ((value[i + 1] - value[i]) * (x - at[i])) / (at[i + 1] - at[i]);
+}
+
+/** An oscillator's level at its own pitch `hz`. */
+function pitchGain(hz: number): number {
+	const gone = hz <= GONE_FROM_HZ ? 1 : Math.max(0, (GONE_HZ - hz) / (GONE_HZ - GONE_FROM_HZ));
+	return gone / Math.hypot(1, hz / FALL_HZ);
+}
 
 export class PrismVoice implements EngineVoice {
 	readonly #sampleRate: number;
 	readonly #smoothing: Smoothing;
-	/** Oscillators 1 and 2 (the left channel, and the right in mono), and their right copies. */
 	readonly #osc1 = new ShapeOscillator();
 	readonly #osc2 = new ShapeOscillator();
-	readonly #osc1r = new ShapeOscillator();
-	readonly #osc2r = new ShapeOscillator();
-	/** The blend all four play, updated sample by sample from the ramps below. */
-	readonly #mix: ShapeMix = { sine: 0, triangle: 0, saw: 1, pulse: 0, width: 0.5 };
+	/** Each oscillator's blend, updated sample by sample from the ramps below. */
+	readonly #mix1: ShapeMix = { sine: 0, triangle: 0, saw: 1, pulse: 0, width: 0.5 };
+	readonly #mix2: ShapeMix = { sine: 0, triangle: 0, saw: 1, pulse: 0, width: 0.5 };
 	readonly #saw = new Ramp(1);
 	readonly #pulse = new Ramp();
-	readonly #width = new Ramp(0.5);
-	/** Each oscillator's level in each channel. */
-	readonly #l1 = new Ramp();
-	readonly #l2 = new Ramp();
-	readonly #r1 = new Ramp();
-	readonly #r2 = new Ramp();
-	readonly #ramps = [this.#saw, this.#pulse, this.#width, this.#l1, this.#l2, this.#r1, this.#r2];
+	readonly #width1 = new Ramp(0.5);
+	readonly #width2 = new Ramp(0.5);
+	readonly #g1 = new Ramp();
+	readonly #g2 = new Ramp();
+	readonly #ramps = [this.#saw, this.#pulse, this.#width1, this.#width2, this.#g1, this.#g2];
 	#dt1 = 0;
 	#dt2 = 0;
-	#dt1r = 0;
-	#dt2r = 0;
-	/** Whether the right copies run, and how much of the right channel they make (0–1). */
-	#copies = false;
-	#share = 0;
-	#shareTarget = 0;
-	readonly #leakL: OnePole;
-	readonly #leakR: OnePole;
+	readonly #leak: OnePole;
+	readonly #stereo: StereoCopy;
 
 	constructor(sampleRate: number) {
 		this.#sampleRate = sampleRate;
 		this.#smoothing = new Smoothing(sampleRate);
-		const g = prewarp(LEAK_CUT * sampleRate, sampleRate);
-		this.#leakL = new OnePole(g);
-		this.#leakR = new OnePole(g);
+		this.#leak = new OnePole(prewarp(LEAK_CUT * sampleRate, sampleRate));
+		this.#stereo = new StereoCopy(sampleRate);
 	}
 
-	start(hz: number, _velocity: number, params: Float32Array): void {
+	start(hz: number, _velocity: number, params: Float32Array, time = 0): void {
 		this.#osc1.reset();
 		this.#osc2.reset();
-		this.#osc1r.reset();
-		this.#osc2r.reset();
-		this.#leakL.reset();
-		this.#leakR.reset();
-		this.#copies = params[3] > 0;
-		this.#share = this.#shareTarget = this.#copies ? 1 : 0;
+		this.#leak.reset();
+		this.#stereo.start(params[3], time);
 		this.#set(hz, params);
 		// the note begins at its own settings: nothing glides in
 		for (const ramp of this.#ramps) ramp.jump(ramp.target);
 	}
 
 	control(hz: number, params: Float32Array): void {
-		const wide = params[3] > 0;
-		if (wide && !this.#copies) {
-			// the copies start where the originals are, and the right channel crossfades onto them
-			this.#osc1r.reset(this.#osc1.phase);
-			this.#osc2r.reset(this.#osc2.phase);
-			this.#copies = true;
-		}
-		this.#shareTarget = wide ? 1 : 0;
+		this.#stereo.set(params[3]);
 		this.#set(hz, params);
 	}
 
 	/** Targets and rates for M1 `params` at `hz`. */
 	#set(hz: number, params: Float32Array): void {
 		const shape = params[0];
-		const k = Math.min(1, shape / SQUARE_AT);
-		this.#saw.target = 1 - k;
-		this.#pulse.target = -k;
-		this.#width.target =
-			shape <= SQUARE_AT ? 0.5 : 0.5 - ((0.5 - NARROWEST) * (shape - SQUARE_AT)) / (1 - SQUARE_AT);
+		const k = read(BLEND, shape);
+		const level = Math.pow(10, (BLEND_DB * k) / 20);
+		this.#saw.target = level * (1 - k);
+		this.#pulse.target = -level * k;
+		this.#width1.target = read(WIDTH1, shape);
+		this.#width2.target = read(WIDTH2, shape);
 
-		const dt = hz / this.#sampleRate;
 		const step = Math.min(RATIOS.length - 1, Math.floor(params[1] * RATIOS.length));
-		const detune = params[2];
-		const dt2 = dt * RATIOS[step] * Math.pow(2, (DETUNE_CENTS * detune * detune) / 1200);
-		const stereo = params[3];
-		const spread = Math.pow(2, (STEREO_CENTS * stereo) / 1200);
-		this.#dt1 = Math.min(dt / spread, TOP);
-		this.#dt2 = Math.min(dt2 / spread, TOP);
-		this.#dt1r = Math.min(dt * spread, TOP);
-		this.#dt2r = Math.min(dt2 * spread, TOP);
-
-		// equal-power pans with the centre at unity: oscillator 1 moves left, oscillator 2 right
-		const angle = (Math.PI / 4) * (1 - STEREO_PAN * stereo);
-		const near = Math.SQRT2 * Math.cos(angle);
-		const far = Math.SQRT2 * Math.sin(angle);
-		const half = LEVEL / 2;
-		const g1 = half * fade(dt * spread);
-		const g2 = half * fade(dt2 * spread);
-		this.#l1.target = g1 * near;
-		this.#r1.target = g1 * far;
-		this.#l2.target = g2 * far;
-		this.#r2.target = g2 * near;
+		const hz2 = hz * RATIOS[step] * Math.pow(2, read(DETUNE, params[2]) / 1200);
+		this.#dt1 = Math.min(hz / this.#sampleRate, TOP);
+		this.#dt2 = Math.min(hz2 / this.#sampleRate, TOP);
+		this.#g1.target = LEVEL * pitchGain(hz);
+		this.#g2.target = LEVEL * Math.pow(10, RATIO_DB[step] / 20) * pitchGain(hz2);
 	}
 
 	render(left: Float32Array, right: Float32Array, n: number): void {
 		const c = this.#smoothing.coef(n);
 		let saw = this.#saw.advance(c, n);
 		let pulse = this.#pulse.advance(c, n);
-		let width = this.#width.advance(c, n);
-		let l1 = this.#l1.advance(c, n);
-		let l2 = this.#l2.advance(c, n);
-		let r1 = this.#r1.advance(c, n);
-		let r2 = this.#r2.advance(c, n);
+		let width1 = this.#width1.advance(c, n);
+		let width2 = this.#width2.advance(c, n);
+		let g1 = this.#g1.advance(c, n);
+		let g2 = this.#g2.advance(c, n);
 		const dSaw = this.#saw.step;
 		const dPulse = this.#pulse.step;
-		const dWidth = this.#width.step;
-		const dl1 = this.#l1.step;
-		const dl2 = this.#l2.step;
-		const dr1 = this.#r1.step;
-		const dr2 = this.#r2.step;
-		const m = this.#mix;
+		const dWidth1 = this.#width1.step;
+		const dWidth2 = this.#width2.step;
+		const dg1 = this.#g1.step;
+		const dg2 = this.#g2.step;
+		const m1 = this.#mix1;
+		const m2 = this.#mix2;
 		const osc1 = this.#osc1;
 		const osc2 = this.#osc2;
 		const dt1 = this.#dt1;
 		const dt2 = this.#dt2;
-		const leakL = this.#leakL;
-		const leakR = this.#leakR;
-
-		if (!this.#copies) {
-			for (let i = 0; i < n; i++) {
-				saw += dSaw;
-				pulse += dPulse;
-				width += dWidth;
-				l1 += dl1;
-				l2 += dl2;
-				r1 += dr1;
-				r2 += dr2;
-				m.saw = saw;
-				m.pulse = pulse;
-				m.width = width;
-				const dc = pulse * (2 * width - 1);
-				const a = osc1.next(dt1, m) - dc;
-				const b = osc2.next(dt2, m) - dc;
-				left[i] = leakL.process(l1 * a + l2 * b);
-				right[i] = leakR.process(r1 * a + r2 * b);
-			}
-			return;
-		}
-
-		// stereo: the right channel is the copies, crossfaded from the originals while taking over
-		const osc1r = this.#osc1r;
-		const osc2r = this.#osc2r;
-		const dt1r = this.#dt1r;
-		const dt2r = this.#dt2r;
-		let share = this.#share;
-		const toward = this.#shareTarget;
-		const shareEnd =
-			toward > share
-				? Math.min(toward, share + n / TAKEOVER)
-				: Math.max(toward, share - n / TAKEOVER);
-		const dShare = (shareEnd - share) / n;
+		const leak = this.#leak;
 		for (let i = 0; i < n; i++) {
 			saw += dSaw;
 			pulse += dPulse;
-			width += dWidth;
-			l1 += dl1;
-			l2 += dl2;
-			r1 += dr1;
-			r2 += dr2;
-			share += dShare;
-			m.saw = saw;
-			m.pulse = pulse;
-			m.width = width;
-			const dc = pulse * (2 * width - 1);
-			const a = osc1.next(dt1, m) - dc;
-			const b = osc2.next(dt2, m) - dc;
-			const ar = osc1r.next(dt1r, m) - dc;
-			const br = osc2r.next(dt2r, m) - dc;
-			left[i] = leakL.process(l1 * a + l2 * b);
-			right[i] = leakR.process(r1 * (a + share * (ar - a)) + r2 * (b + share * (br - b)));
+			width1 += dWidth1;
+			width2 += dWidth2;
+			g1 += dg1;
+			g2 += dg2;
+			m1.saw = m2.saw = saw;
+			m1.pulse = m2.pulse = pulse;
+			// a sample wide at least, as the oscillator keeps it: then the mean subtracted is exact
+			m1.width = Math.max(width1, dt1);
+			m2.width = Math.max(width2, dt2);
+			const a = osc1.next(dt1, m1) - pulse * (2 * m1.width - 1);
+			const b = osc2.next(dt2, m2) - pulse * (2 * m2.width - 1);
+			left[i] = leak.process(g1 * a + g2 * b);
 		}
-		this.#share = shareEnd;
-		// back to mono once the copies have handed the right channel back
-		if (shareEnd === 0 && this.#shareTarget === 0) this.#copies = false;
+		this.#stereo.process(left, left, right, n);
 	}
 }

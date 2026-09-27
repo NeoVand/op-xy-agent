@@ -1,7 +1,7 @@
 /**
  * simple: one oscillator that morphs from saw to square, a pulse width for the square, white
- * noise, and a stereo spread that detunes a left and a right copy apart. Evidence and open
- * questions: `docs/research/57-synth-engines.md`, §3 (simple).
+ * noise, and stereo: a swept, detuned copy in each channel. Evidence and open questions:
+ * `docs/research/57-synth-engines.md`, §3 (simple).
  *
  * Established [E]:
  * - shape goes from saw at 0 to square at 100 (four reviewers agree);
@@ -21,10 +21,9 @@
  *   docs/research/90-device-probe.md): the oscillator stays whole to about 60 %, then fades out and
  *   is gone at 100 %, while the noise rises so that the loudness barely changes
  *   ({@link NOISE_CURVE});
- * - stereo detunes the left copy down and the right copy up by {@link STEREO_CENTS} × stereo²: at
- *   0 they are the same oscillator (mono); up, they drift through each other's phase like a
- *   stereo phaser. The right copy runs only while stereo is up, taking the right channel over from
- *   the left oscillator within a few milliseconds;
+ * - stereo adds to each channel a copy of the sound a few cents off the note, up in one channel
+ *   and down in the other, swapping every few seconds, as measured on the device (the same as
+ *   prism's: {@link StereoCopy});
  * - the phase restarts with every note; levels are normalized to our target, not the device's
  *   hot output (the preset volume and our core gain set the rest).
  */
@@ -32,6 +31,7 @@ import { Noise } from '../noise';
 import { ShapeOscillator, type ShapeMix } from '../oscillators';
 import type { EngineVoice } from './index';
 import { Ramp, Smoothing } from './ramp';
+import { StereoCopy } from './stereo';
 
 // Measured on the owner's device (2026-09-27): pulse width and the noise crossfade.
 /** How far PW 99 narrows the pulse from 50 %: width = 0.5 − PW_RANGE·pw (6 % at the end). */
@@ -45,8 +45,6 @@ export const NOISE_CURVE = {
 	osc: [1, 1, 1, 1, 1, 1, 1, 0.84, 0.56, 0.28, 0],
 	noise: [0, 0, 0.01, 0.03, 0.127, 0.23, 0.386, 0.643, 0.854, 1.045, 1.229]
 } as const;
-/** The left copy's detune down and the right copy's up at stereo 1, in cents (squared curve). */
-export const STEREO_CENTS = 10;
 /**
  * Output level: RMS ≈ 0.25 at the default M1 (shape and PW at 80: a narrow pulse with some saw).
  * It leaves room for the narrowest pulse, whose DC-free spike reaches 1.9, with full noise on top.
@@ -55,16 +53,13 @@ export const LEVEL = 0.4;
 
 /** The highest oscillator rate (cycles a sample), well clear of Nyquist. */
 const TOP = 0.45;
-/** Samples the right channel takes to move onto the right copy, or back off it. */
-const TAKEOVER = 128;
 
 export class SimpleVoice implements EngineVoice {
 	readonly #sampleRate: number;
 	readonly #smoothing: Smoothing;
 	readonly #noise: Noise;
-	/** The oscillator (the left channel, and the right in mono) and its right copy. */
 	readonly #osc = new ShapeOscillator();
-	readonly #oscR = new ShapeOscillator();
+	readonly #stereo: StereoCopy;
 	readonly #mix: ShapeMix = { sine: 0, triangle: 0, saw: 1, pulse: 0, width: 0.5 };
 	readonly #saw = new Ramp(1);
 	readonly #pulse = new Ramp();
@@ -74,51 +69,35 @@ export class SimpleVoice implements EngineVoice {
 	readonly #oscLevel = new Ramp(1);
 	readonly #ramps = [this.#saw, this.#pulse, this.#width, this.#noiseLevel, this.#oscLevel];
 	#dt = 0;
-	#dtR = 0;
-	/** Whether the right copy runs, and how much of the right channel it makes (0–1). */
-	#copy = false;
-	#share = 0;
-	#shareTarget = 0;
 
 	constructor(sampleRate: number, seed: number) {
 		this.#sampleRate = sampleRate;
 		this.#smoothing = new Smoothing(sampleRate);
 		this.#noise = new Noise(seed);
+		this.#stereo = new StereoCopy(sampleRate);
 	}
 
-	start(hz: number, _velocity: number, params: Float32Array): void {
+	start(hz: number, _velocity: number, params: Float32Array, time = 0): void {
 		this.#osc.reset();
-		this.#oscR.reset();
-		this.#copy = params[3] > 0;
-		this.#share = this.#shareTarget = this.#copy ? 1 : 0;
+		this.#stereo.start(params[3], time);
 		this.#set(hz, params);
 		// the note begins at its own settings: nothing glides in
 		for (const ramp of this.#ramps) ramp.jump(ramp.target);
 	}
 
 	control(hz: number, params: Float32Array): void {
-		const wide = params[3] > 0;
-		if (wide && !this.#copy) {
-			// the copy starts where the oscillator is, and the right channel crossfades onto it
-			this.#oscR.reset(this.#osc.phase);
-			this.#copy = true;
-		}
-		this.#shareTarget = wide ? 1 : 0;
+		this.#stereo.set(params[3]);
 		this.#set(hz, params);
 	}
 
 	/** Targets and rates for M1 `params` at `hz`. */
 	#set(hz: number, params: Float32Array): void {
 		const k = params[0];
-		const stereo = params[3];
-		const spread = Math.pow(2, (STEREO_CENTS * stereo * stereo) / 1200);
-		const dt = hz / this.#sampleRate;
-		this.#dt = Math.min(dt / spread, TOP);
-		this.#dtR = Math.min(dt * spread, TOP);
+		this.#dt = Math.min(hz / this.#sampleRate, TOP);
 		this.#saw.target = LEVEL * (1 - k);
 		this.#pulse.target = -LEVEL * k;
 		// a sample wide at least, as the oscillator keeps it: then the mean we subtract is exact
-		this.#width.target = Math.max(0.5 - PW_RANGE * params[1], this.#dtR);
+		this.#width.target = Math.max(0.5 - PW_RANGE * params[1], this.#dt);
 		this.#oscLevel.target = curve(NOISE_CURVE.osc, params[2]);
 		this.#noiseLevel.target = LEVEL * curve(NOISE_CURVE.noise, params[2]);
 	}
@@ -141,53 +120,20 @@ export class SimpleVoice implements EngineVoice {
 		const dt = this.#dt;
 		const white = this.#noise;
 
-		if (!this.#copy) {
-			for (let i = 0; i < n; i++) {
-				saw += dSaw;
-				pulse += dPulse;
-				width += dWidth;
-				noise += dNoise;
-				gain += dGain;
-				m.saw = saw;
-				m.pulse = pulse;
-				m.width = width;
-				let y = gain * (osc.next(dt, m) - pulse * (2 * width - 1));
-				if (!quiet) y += noise * white.next();
-				left[i] = right[i] = y;
-			}
-			return;
-		}
-
-		// stereo: the right channel is the copy, crossfaded from the oscillator while taking over
-		const oscR = this.#oscR;
-		const dtR = this.#dtR;
-		let share = this.#share;
-		const toward = this.#shareTarget;
-		const shareEnd =
-			toward > share
-				? Math.min(toward, share + n / TAKEOVER)
-				: Math.max(toward, share - n / TAKEOVER);
-		const dShare = (shareEnd - share) / n;
 		for (let i = 0; i < n; i++) {
 			saw += dSaw;
 			pulse += dPulse;
 			width += dWidth;
 			noise += dNoise;
 			gain += dGain;
-			share += dShare;
 			m.saw = saw;
 			m.pulse = pulse;
 			m.width = width;
-			const dc = pulse * (2 * width - 1);
-			const a = gain * (osc.next(dt, m) - dc);
-			const b = gain * (oscR.next(dtR, m) - dc);
-			const hiss = quiet ? 0 : noise * white.next();
-			left[i] = a + hiss;
-			right[i] = a + share * (b - a) + hiss;
+			let y = gain * (osc.next(dt, m) - pulse * (2 * width - 1));
+			if (!quiet) y += noise * white.next();
+			left[i] = y;
 		}
-		this.#share = shareEnd;
-		// back to one oscillator once the copy has handed the right channel back
-		if (shareEnd === 0 && toward === 0) this.#copy = false;
+		this.#stereo.process(left, left, right, n);
 	}
 }
 

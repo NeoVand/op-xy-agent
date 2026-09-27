@@ -108,33 +108,41 @@ presents a value as 0–100 on screen, our model takes M1 as 0–99 encoder step
 
 ### prism — shape, ratio, detune, stereo
 
-Established:
+Established before measuring: two oscillators under one shape control (saw, square, a narrower
+pulse at the top); detune is small and moves oscillator 2; stereo sounds wide and phasey; TE calls
+it subtractive-style (Moog-like basses, supersaw and Reese sounds). All 8 factory presets are mono
+with transpose +12.
 
-- Two oscillators share one shape control. Shape runs saw at 0, square around the upper third, and
-  a narrower pulse at the top; the scope review sees the pulse width skew near the top.
-- Ratio steps, read from the screen, as oscillator 1 : oscillator 2: 2:1, 1:1, 2:3, 1:2, 1:3, 1:4,
-  1:6, 1:8, 1:12.
-- Detune is small and acts on oscillator 2.
-- Stereo 0 is mono; turned up, it sounds wide and phasey.
-- TE calls it subtractive-style (Moog-like basses), with supersaw and Reese sounds from detune plus
-  stereo.
-- All 8 factory presets are mono with transpose +12.
+Measured on the owner's device (2026-09-27, `2026-09-27-132309-prism` and
+`2026-09-27-133842-prism-stereo`; `research/device/prism_fit.py`, `stereo_fit.py`):
 
-Model [I]:
+- **Shape, first half (CC 0–64):** saw → square as saw − k·(the saw half a cycle on): odd harmonics
+  (1 + k)/n, even (1 − k)/n, fitted within 0.05 dB. k = 0, 0.083, 0.275, 0.463, 0.654, 1 at CC 0,
+  13, 25, 38, 51, 64. The level falls 3.9 dB per unit of k, so the square is only 0.9 dB louder
+  than the saw.
+- **Second half (CC 64–127): the two oscillators narrow one after the other.** At 1:1 the sound is
+  0.568·pulse(w1) + 0.432·pulse(w2) (within 0.06 dB): oscillator 2 narrows first (w2 = 0.5, 0.422,
+  0.238, 0.113 at CC 64, 76, 89, 102, then holds), oscillator 1 later (w1 = 0.5 to CC 89, then
+  0.47, 0.346, 0.115 at 102, 114, 127). No level compensation. (Which oscillator narrows first is
+  inferred from the levels: the louder one narrows later.)
+- **Levels:** oscillator 2 is 2.4 dB under oscillator 1, in phase at 1:1; a little less at higher
+  ratios (−2.2 dB at 2:1 to −4.8 dB at 1:16). Each oscillator also fades with its own pitch: −0.8,
+  −1.6, −2.5 dB at 1.8, 2.6, 3.5 kHz (a one-pole-like fall at 4 kHz), −20 dB at 5.3 kHz and gone at
+  7 kHz; oscillator 1's harmonics keep their levels (a gain, not a filter). A saw at 1:1 measures
+  −14.8 dBFS (simple's saw −18.9).
+- **Ratio: ten equal zones**, 2:1 1:1 2:3 1:2 1:3 1:4 1:6 1:8 1:12 1:16 (the screen reading missed
+  1:16). Oscillator 2 runs 0.1–0.25 cents sharp even at detune 0.
+- **Detune is in cents** (the same on A2 and A4): 0.9, 2, 4, 6, 7, 7.9, 10.1, 12.2, 13.2, 15 cents
+  at CC 13, 25 … 127.
+- **Stereo is the swept copy described under simple** (identical curves), not a pan of the two
+  oscillators; the dry sound stays mono.
+- Prism sounds at the note (not an octave down).
 
-- Oscillator 2 = oscillator 1 × R[k], with R = 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12 and k = ⌊p2·9⌋.
-- Shape blends saw → square over 0–0.8, then narrows the width from 50 % to about 27 %.
-- Detune is about 0–30 cents on a squared curve.
-- Stereo pans the two oscillators apart and adds a small left/right detune, so it widens even at
-  1:1.
+Model: exactly the above (`prism.ts`), the curves read linearly between the measured points. Against
+the capture: levels within 0.2 dB, partials within 1 dB on most takes.
 
-Open:
-
-- Which oscillator the ratio moves.
-- Where the shape curve turns, and how narrow the pulse gets.
-- Whether detune is in cents or hertz.
-- How stereo is built, whether phases reset per note, and whether prism sounds an octave low (every
-  preset is +12).
+Open: a finer shape sweep (the blend between CC 51 and 64, the widths between points); which
+oscillator narrows first (a shape sweep at a ratio other than 1:1); phase reset per note.
 
 ### axis — tone, ratio, shape, tremolo
 
@@ -315,20 +323,33 @@ Open: the slave's waveform, the ratio curve, the sub's waveform and octave, and 
 
 ### simple — shape, pw, noise, stereo
 
-Established:
+Established before measuring: shape goes from saw to square and PW does nothing at saw (four
+reviewers); "big square" is shape 100, PW 0, so PW 0 is the square; stereo sounds like a stereo
+phaser; square basses use preset volume 11–25 %.
 
-- Four reviewers agree that shape goes from saw to square, and that PW does nothing at saw.
-- Stereo spreads the oscillators (plural) and sounds like a stereo phaser.
-- The preset "big square" is shape 100, PW 0, so PW 0 is the square.
-- Square basses use preset volume 11–25 %: the raw engine is hot.
+Measured on the owner's device (2026-09-27, `2026-09-27-123129-simple`,
+`2026-09-27-133717-simple-stereo`):
 
-Model [I]:
+- Shape: saw − k·(the saw half a cycle on), as prism; pulse width = 0.5 − 0.44·pw on the pulse part.
+- Noise crossfades the oscillator into white noise (the oscillator whole to about 60 %, gone at
+  100 %; the noise then carries 1.5× the saw's power).
+- Saw: −18.9 dBFS on A2 and A4. The level of every engine built from measurements is scaled from it
+  (`device.ts`: ours = device + 6.2 dB).
+- **Stereo (also prism's): each channel is the dry sound plus a copy through a delay that a slow
+  triangle sweeps**, so the copy sits a few cents off the note, up in one channel while down in the
+  other, the two trading places at every turn (`stereo_fit.py`, the same on simple and prism):
+  - up to CC 64 stereo raises the copy's level, 0.0135 a step to 0.86;
+  - above 64 the level holds at 0.89 while the offset widens and the triangle quickens: 6.9 cents
+    and a half period of 3.05 s up to 64, then 8.7, 10.7, 12.9, 15.2 cents and 2.8, 2.6, 2.35,
+    2.2 s at 80, 96, 112, 127;
+  - the copy is high-passed (one pole): ~815 Hz up to 64, falling to ~490 Hz at 127, so the bass
+    stays in the middle;
+  - the triangle runs free (its turns fall on one clock across notes), and the dry sound keeps its
+    level. Left/right correlation at 127: 0.87 on A2, 0.69 on A4.
 
-- Saw → pulse blend, width 0.5 − 0.45·pw.
-- A left/right pair detuned by a few cents × stereo.
-- White noise ∝ noise².
-
-Open: the morph curve, the PW range, how stereo is built, and the level between shapes.
+Model: the above (`simple.ts`, `stereo.ts`: τ₀ = 12 ms, a sweep of D = δ·P/4 either way, cubic
+reads, the triangle's phase from the core's clock). Our render reproduces the fitted offsets, half
+periods, copy levels (within 1 dB) and corners.
 
 ## 4. The shared voice
 
@@ -453,8 +474,8 @@ every voice per sample instead.
 
 | Engine    | What we built                                                                                                                                                                                                                                                                                                                                           |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| prism     | Two saw/pulse blends. Up to shape 0.8 the saw becomes a square as saw − k·(the saw half a cycle on), so odd harmonics grow while even ones fade with no level dip; above 0.8 the pulse narrows to 27 %. Nine screen ratios; detune up to 30 cents on oscillator 2; stereo pans the two apart and runs detuned right copies only while stereo > 0.       |
-| simple    | The same saw → square blend, width 0.5 − 0.45·pw on the pulse only, white noise ∝ noise², and a left/right pair detuned up to ±10 cents.                                                                                                                                                                                                                |
+| prism     | Measured: saw → square blend k with a −3.9 dB/k level law, then oscillator 2 narrows before oscillator 1 (to w ≈ 0.113); oscillator 2 at −2.4 dB, less at high ratios; ten ratio zones up to 1:16; detune to 15 cents; each oscillator fades with its pitch above ~2 kHz; stereo = the swept copy.                                                      |
+| simple    | Saw → square blend, width 0.5 − 0.44·pw on the pulse only, the measured noise crossfade, and the measured stereo: a delayed copy per channel, a triangle sweeping it ±6.9–15.2 cents (opposite in L and R), high-passed at 815–490 Hz.                                                                                                                  |
 | hardsync  | A saw synced at the exact sub-sample instant, 3 octaves up (capped at 9.6 kHz, where its aligned peaks double), a sine sub at the note read off the master's phase, noise, and a two-pole highpass 20 Hz–3 kHz on the sum.                                                                                                                              |
 | dissolve  | Two sines ±45 cents at full detune. Swarm: independent wobble per carrier, jitter on the FM, and a noise band at Q 2. AM by narrow-band noise at the note (Q 8). FM by a 1:1 cosine-phase modulator (the saw-like series at moderate index), DC removed exactly.                                                                                        |
 | epiano    | 1:1 FM: tone raises the index (to 2.2 rad, where 1:1 FM is brightest) and the modulator's feedback (sine → saw); texture is the carrier's shape (sine → triangle → a peaky pickup triangle); punch a partial at 7× the note decaying over 25 ms, ∝ punch² × velocity; tine the index's decay, 8 s → 30 ms (none at 0). The FM level dip is compensated. |
@@ -578,13 +599,13 @@ message logged in `90-device-probe.md`. Filter and LFO types have no CC and are 
 
 1. Envelope decay and release laws; sustain linear or dB (every patch uses them).
 2. Filter slopes, resonance curves and envelope depth per type.
-3. Prism's shape curve, stereo mechanism and octave; the ratio step edges.
+3. ~~Prism's shape curve, stereo mechanism and octave; the ratio step edges.~~ Measured (§3).
 4. ~~The organ's 8 types (partials) and its bass control per type.~~ Measured (§3, organ).
 5. Epiano's modulator ratio and waveform, and tine's law.
 6. Axis: whether operator 2 is audible, its FM index, and the tone filter.
 7. Wavetable: frames per table, the ninth table, the warp shape and the drift law.
 8. Dissolve's modulators (noise or periodic).
-9. Hardsync's sub octave and waveform, and the lowcut slope; simple's stereo.
+9. Hardsync's sub octave and waveform, and the lowcut slope. (Simple's stereo: measured, §3.)
 10. LFO shapes per type and element's envelope source; portamento curves; bend steps.
 
 ## 8. File map
