@@ -23,7 +23,6 @@
 import type { SimArea } from '../types';
 import {
 	accidentalDigit,
-	advanceArrange,
 	browsePatterns,
 	chooseScene,
 	clearSong,
@@ -34,6 +33,7 @@ import {
 	cueSong,
 	deleteFromSong,
 	moveCursor,
+	movedArrange,
 	naturalNumber,
 	newPattern,
 	pastePattern,
@@ -132,7 +132,6 @@ export const arrange: SimArea = {
 			stopSong(a);
 			a.queued = null;
 			a.armed = false;
-			a.lead = 0;
 			return false;
 		}
 		if (input.id !== 'key.play') return false;
@@ -141,7 +140,6 @@ export const arrange: SimArea = {
 			a.armed = true;
 			return true;
 		}
-		a.lead = 0;
 		// play in song mode starts the song; pressed again while it plays, anywhere, it starts
 		// over; any other play plays the current scene
 		if (owns(s) && a.view === 'song') startSong(s);
@@ -230,5 +228,5 @@ export const arrange: SimArea = {
 	},
 
 	leds: arrangeLeds,
-	advance: advanceArrange
+	moved: movedArrange
 };

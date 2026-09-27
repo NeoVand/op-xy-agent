@@ -134,11 +134,6 @@ export interface ArrangeState {
 	position: number;
 	/** An entry cued with shift + [-] / [+], taken at the next scene end, or null. */
 	cue: number | null;
-	/**
-	 * Sixteenths the playhead ran ahead when a scene started within the last frame (it cannot go
-	 * below zero while the frame is worked out); the next frame takes them back.
-	 */
-	lead: number;
 }
 
 /** The arrange area's state in a new project. */
@@ -161,7 +156,6 @@ export function initialArrange(): ArrangeState {
 		scroll: 0,
 		playing: false,
 		position: 0,
-		cue: null,
-		lead: 0
+		cue: null
 	};
 }
