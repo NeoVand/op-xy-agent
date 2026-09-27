@@ -120,7 +120,7 @@ class Carrier {
 	}
 }
 
-export class Dissolve implements EngineVoice {
+export class DissolveVoice implements EngineVoice {
 	readonly #sampleRate: number;
 	readonly #smoothing: Smoothing;
 	readonly #noise: Noise;

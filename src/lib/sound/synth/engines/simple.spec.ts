@@ -14,9 +14,9 @@ import {
 	worstInharmonic,
 	worstPeak
 } from './audition';
-import { PW_RANGE, STEREO_CENTS, Simple } from './simple';
+import { PW_RANGE, STEREO_CENTS, SimpleVoice } from './simple';
 
-const make = (seed: number) => new Simple(SR, seed);
+const make = (seed: number) => new SimpleVoice(SR, seed);
 const DEFAULT = m1(80, 80, 0, 0);
 /** Harmonics 1…`count` over the fundamental. */
 const relative = (x: Float32Array, hz: number, count: number) => {

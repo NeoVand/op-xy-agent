@@ -60,7 +60,7 @@ const TAU = 2 * Math.PI;
 /** The master's highest rate (cycles a sample). */
 const TOP = 0.45;
 
-export class Hardsync implements EngineVoice {
+export class HardsyncVoice implements EngineVoice {
 	readonly #sampleRate: number;
 	readonly #smoothing: Smoothing;
 	readonly #noise: Noise;

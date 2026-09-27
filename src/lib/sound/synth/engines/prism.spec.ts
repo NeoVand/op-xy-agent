@@ -14,9 +14,9 @@ import {
 	worstInharmonic,
 	worstPeak
 } from './audition';
-import { DETUNE_CENTS, NARROWEST, Prism, RATIOS, SQUARE_AT } from './prism';
+import { DETUNE_CENTS, NARROWEST, PrismVoice, RATIOS, SQUARE_AT } from './prism';
 
-const make = () => new Prism(SR);
+const make = () => new PrismVoice(SR);
 const DEFAULT = m1(80, 80, 80, 80);
 /** The middle of ratio step `k`'s range. */
 const ratio = (k: number) => (k + 0.5) / RATIOS.length;

@@ -5,9 +5,9 @@
 import { describe, expect, it } from 'vitest';
 import { harmonicLevels, inharmonicDb, levelAt, powerSpectrum, rms } from '../analysis';
 import { BOUNDS, SR, clickRatios, grid, m1, play, worstInharmonic, worstPeak } from './audition';
-import { DETUNE_CENTS, Dissolve, FM_INDEX, LEVEL, besselJ1 } from './dissolve';
+import { DETUNE_CENTS, DissolveVoice, FM_INDEX, LEVEL, besselJ1 } from './dissolve';
 
-const make = (seed: number) => new Dissolve(SR, seed);
+const make = (seed: number) => new DissolveVoice(SR, seed);
 const DEFAULT = m1(49, 52, 90, 0);
 
 /** Jₙ(x) by its power series. */

@@ -4,9 +4,9 @@
 import { describe, expect, it } from 'vitest';
 import { centroid, harmonicLevels, inharmonicDb, levelAt, powerSpectrum, rms } from '../analysis';
 import { BOUNDS, SR, clickRatios, grid, m1, play, worstInharmonic, worstPeak } from './audition';
-import { Hardsync, LEVEL, LOWCUT_FROM, LOWCUT_TO, OCTAVES, SUB_LEVEL } from './hardsync';
+import { HardsyncVoice, LEVEL, LOWCUT_FROM, LOWCUT_TO, OCTAVES, SUB_LEVEL } from './hardsync';
 
-const make = (seed: number) => new Hardsync(SR, seed);
+const make = (seed: number) => new HardsyncVoice(SR, seed);
 const DEFAULT = m1(80, 80, 80, 80);
 
 /** The share of `x`'s power between `lo` and `hi` hertz. */

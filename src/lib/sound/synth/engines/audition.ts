@@ -1,10 +1,14 @@
 /**
  * Test support for the engines: plays an engine the way the core does (`start`, then a `control`
- * update and a 16-sample `render` per block), with M1 fixed or moving over time, and the
- * measurements the engine specs share: level, peaks, the largest sample-to-sample step (for
- * clicks), left/right correlation (for stereo), and the bounds every engine keeps.
+ * update and a 16-sample `render` per block), with M1 fixed or moving over time — on its own
+ * ({@link play}, {@link playNote}, which also moves the pitch and takes a velocity) or through the
+ * synth core ({@link throughCore}) — and the measurements the engine specs share: level, peaks, the
+ * largest sample-to-sample step and second difference (for clicks), left/right correlation (for
+ * stereo), and the bounds every engine keeps.
  */
+import type { EngineId } from '$lib/core/opxy';
 import { inharmonicDb } from '../analysis';
+import { SynthCore, TRACK_OUTPUTS } from '../core';
 import type { EngineVoice } from './index';
 
 export const SR = 48000;
@@ -201,6 +205,100 @@ export function worstInharmonic(
 			const db = inharmonicDb(left.subarray(4096, 4096 + 16384), SR, f0(p, hz));
 			if (db > worst.db) worst = { db, at: `${Array.from(p)} at ${hz} Hz` };
 		}
+	}
+	return worst;
+}
+
+/** Plays `engine` for `seconds` at `hz` (or a pitch that moves with time), at `velocity`. */
+export function playNote(
+	engine: EngineVoice,
+	{
+		hz,
+		seconds,
+		params,
+		velocity = 100
+	}: {
+		hz: number | ((seconds: number) => number);
+		seconds: number;
+		params: Params;
+		velocity?: number;
+	}
+): Played {
+	const total = Math.round(seconds * SR);
+	const left = new Float32Array(total);
+	const right = new Float32Array(total);
+	const l = new Float32Array(BLOCK);
+	const r = new Float32Array(BLOCK);
+	const m1 = new Float32Array(4);
+	const at = (t: number) => {
+		const values = typeof params === 'function' ? params(t) : params;
+		for (let i = 0; i < 4; i++) m1[i] = values[i];
+		return m1;
+	};
+	const pitch = (t: number) => (typeof hz === 'function' ? hz(t) : hz);
+	engine.start(pitch(0), velocity, at(0));
+	for (let i = 0; i < total; i += BLOCK) {
+		engine.control(pitch(i / SR), at(i / SR));
+		engine.render(l, r, BLOCK);
+		const n = Math.min(BLOCK, total - i);
+		left.set(l.subarray(0, n), i);
+		right.set(r.subarray(0, n), i);
+	}
+	return { left, right };
+}
+
+/**
+ * One note of `engine` played through the synth core, 128 samples at a time as the worklet runs
+ * it, with an open filter and a flat envelope: the left channel of its track.
+ */
+export function throughCore(engine: EngineId, m1: readonly number[], seconds = 0.3): Float32Array {
+	const core = new SynthCore(SR);
+	const flat = { attack: 0.002, decay: 0.1, sustain: 1, release: 0.05 };
+	core.post({
+		t: 'start',
+		voice: {
+			id: 1,
+			track: 0,
+			engine,
+			m1,
+			velocity: 100,
+			start: 0,
+			gate: Infinity,
+			hz: 220,
+			from: 220,
+			glide: 0,
+			amp: flat,
+			peak: 1,
+			filter: { type: 'svf', hz: 20000, resonance: 0, envelope: flat, depth: 0 },
+			bend: 0,
+			curve: null,
+			pan: 0,
+			lfoParam: null
+		}
+	});
+	const total = Math.round(seconds * SR);
+	const out = new Float32Array(total);
+	for (let at = 0; at < total; at += 128) {
+		const n = Math.min(128, total - at);
+		const outputs = Array.from({ length: TRACK_OUTPUTS }, () => [
+			new Float32Array(n),
+			new Float32Array(n)
+		]);
+		core.process(at, outputs, [], n);
+		out.set(outputs[0][0], at);
+	}
+	return out;
+}
+
+/**
+ * The largest second difference |x[n] − 2x[n−1] + x[n−2]| over [from, to): how far a sample strays
+ * from the straight line through the two before it. A band-limited tone of amplitude A keeps it
+ * near A·(2πf/sr)² per partial; a jump of J shows as J at once, whatever the tone.
+ */
+export function roughness(x: ArrayLike<number>, from = 2, to = x.length): number {
+	let worst = 0;
+	for (let i = Math.max(2, from); i < to; i++) {
+		worst = Math.max(worst, Math.abs(x[i] - 2 * x[i - 1] + x[i - 2]));
 	}
 	return worst;
 }

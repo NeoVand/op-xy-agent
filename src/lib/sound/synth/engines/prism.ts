@@ -67,7 +67,7 @@ const TAKEOVER = 128;
 /** An oscillator's level towards the top of the band: 1, fading to 0 at {@link TOP}. */
 const fade = (dt: number): number => Math.min(1, Math.max(0, (TOP - dt) / (TOP - FADE_FROM)));
 
-export class Prism implements EngineVoice {
+export class PrismVoice implements EngineVoice {
 	readonly #sampleRate: number;
 	readonly #smoothing: Smoothing;
 	/** Oscillators 1 and 2 (the left channel, and the right in mono), and their right copies. */

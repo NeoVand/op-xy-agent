@@ -48,7 +48,7 @@ const TOP = 0.45;
 /** Samples the right channel takes to move onto the right copy, or back off it. */
 const TAKEOVER = 128;
 
-export class Simple implements EngineVoice {
+export class SimpleVoice implements EngineVoice {
 	readonly #sampleRate: number;
 	readonly #smoothing: Smoothing;
 	readonly #noise: Noise;

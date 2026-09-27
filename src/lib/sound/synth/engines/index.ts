@@ -5,10 +5,14 @@
  */
 import type { EngineId } from '$lib/core/opxy';
 import { ShapeOscillator, type ShapeMix } from '../oscillators';
-import { Dissolve } from './dissolve';
-import { Hardsync } from './hardsync';
-import { Prism } from './prism';
-import { Simple } from './simple';
+import { AxisVoice } from './axis';
+import { DissolveVoice } from './dissolve';
+import { EpianoVoice } from './epiano';
+import { HardsyncVoice } from './hardsync';
+import { OrganVoice } from './organ';
+import { PrismVoice } from './prism';
+import { SimpleVoice } from './simple';
+import { WavetableVoice } from './wavetable';
 
 /** One note's engine. */
 export interface EngineVoice {
@@ -44,14 +48,22 @@ class Placeholder implements EngineVoice {
 /** A new voice of `engine`; `seed` makes its randomness (drift, noise) differ note by note. */
 export function createEngine(engine: EngineId, sampleRate: number, seed: number): EngineVoice {
 	switch (engine) {
+		case 'axis':
+			return new AxisVoice(sampleRate, seed);
 		case 'dissolve':
-			return new Dissolve(sampleRate, seed);
+			return new DissolveVoice(sampleRate, seed);
+		case 'epiano':
+			return new EpianoVoice(sampleRate);
 		case 'hardsync':
-			return new Hardsync(sampleRate, seed);
+			return new HardsyncVoice(sampleRate, seed);
+		case 'organ':
+			return new OrganVoice(sampleRate);
 		case 'prism':
-			return new Prism(sampleRate);
+			return new PrismVoice(sampleRate);
 		case 'simple':
-			return new Simple(sampleRate, seed);
+			return new SimpleVoice(sampleRate, seed);
+		case 'wavetable':
+			return new WavetableVoice(sampleRate);
 		default:
 			return new Placeholder(sampleRate);
 	}
