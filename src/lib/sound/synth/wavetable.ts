@@ -1,8 +1,9 @@
 /**
- * Band-limited single-cycle tables, mipmapped by octave: each frame of a table is stored once per
- * level, level l holding only the first 512 >> l harmonics, and a note reads the richest level
- * whose harmonics stay below Nyquist, fading in the next richer one as it nears the top of its
- * octave so brightness never jumps. Frames blend by position. Built from harmonic amplitudes (and
+ * Band-limited single-cycle tables, mipmapped by half octaves: each frame of a table is stored once
+ * per level, level l holding only the first 512·2^(−l/2) harmonics, and a note reads the richest
+ * level whose harmonics stay below Nyquist, fading in the next richer one as it nears the top of
+ * its step so brightness never jumps. Half octaves keep a note's top harmonic within 14–20 kHz
+ * (whole octaves let it drop to 10 kHz). Frames blend by position. Built from harmonic amplitudes (and
  * phases) or from drawn single cycles; used by the wavetable engine and anywhere a fixed spectrum
  * plays (organ registrations, the FM engines' operator shapes).
  *
@@ -19,22 +20,24 @@ export interface Partials {
 
 /** Harmonics in the richest level. */
 export const MAX_HARMONICS = 512;
+/** Levels per octave. */
+const STEPS = 2;
 /**
- * Each level: the harmonics it keeps and the samples it stores them in, eight per cycle of its top
- * harmonic, so linear interpolation's images stay low.
+ * Each level: the harmonics it keeps and the samples it stores them in (a power of two), at least
+ * eight per cycle of its top harmonic, so linear interpolation's images stay low.
  */
-const LEVELS = Array.from({ length: 10 }, (_, l) => {
-	const harmonics = MAX_HARMONICS >> l;
-	return { harmonics, size: Math.max(512, 8 * harmonics) };
+const LEVELS = Array.from({ length: 9 * STEPS + 1 }, (_, l) => {
+	const harmonics = Math.max(1, Math.floor(MAX_HARMONICS / 2 ** (l / STEPS)));
+	return { harmonics, size: Math.max(512, 2 ** Math.ceil(Math.log2(8 * harmonics))) };
 });
 
-/** Where in its octave a note starts fading in the next richer level (0–1, in octaves). */
+/** Where in its step a note starts fading in the next richer level (0–1, in steps). */
 const FADE_FROM = 0.75;
 /**
- * Levels are picked this much early (the fade's quarter octave), so the richer level's top harmonic
+ * Levels are picked this much early (the fade's quarter step), so the richer level's top harmonic
  * is already below Nyquist wherever it fades in.
  */
-const EARLY = 2 ** (1 - FADE_FROM);
+const EARLY = 2 ** ((1 - FADE_FROM) / STEPS);
 
 /** One level of one frame, with a guard sample for interpolation. */
 function build(partials: Partials, harmonics: number, size: number): Float32Array {
@@ -102,15 +105,15 @@ export class WaveTable {
 	 * note advancing `dt` cycles a sample.
 	 */
 	read(frame: number, phase: number, dt: number): number {
-		const lvl = Math.log2(Math.max(dt, 1e-9) * 2 * MAX_HARMONICS * EARLY);
+		const lvl = STEPS * Math.log2(Math.max(dt, 1e-9) * 2 * MAX_HARMONICS * EARLY);
 		const last = LEVELS.length - 1;
-		// the richest level with every harmonic below Nyquist, and how far into its octave we are
+		// the richest level with every harmonic below Nyquist, and how far into its step we are
 		const safe = Math.min(last, Math.max(0, Math.ceil(lvl)));
 		const into = Math.min(1, Math.max(0, safe - lvl));
 		const f = Math.min(Math.max(frame, 0), this.frames - 1);
 		const a = this.#frame(safe, f, phase);
 		if (safe === 0 || into <= FADE_FROM) return a;
-		// over the octave's top quarter, fade in the richer level (picked early, it fits below Nyquist)
+		// over the step's top quarter, fade in the richer level (picked early, it fits below Nyquist)
 		const x = (into - FADE_FROM) / (1 - FADE_FROM);
 		return a + (this.#frame(safe - 1, f, phase) - a) * x * x;
 	}

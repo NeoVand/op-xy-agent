@@ -14,8 +14,9 @@ Modes:
 - `--waveform`: the voice's harmonics (band powers within ±40 cents of each harmonic, which the
   copies' beating barely disturbs) fitted to y = sin(θ + β·((1 − s)·y + s·y²)) for β and s (shape).
 - `--loop`: the ideal β measured for the tone sweep and the band limit, as the β of a loop that
-  feeds back its last sample at 48 kHz (the device's: past β ≈ 1.25 it rings at half the sample
-  rate, as the device does from tone ≈ 110), each found by simulating that loop.
+  feeds back its last sample at 48 kHz (our engine's rate; the capture ran at 44.1 kHz), each
+  found by simulating that loop. Past β ≈ 1.25 such a loop rings at half the sample rate, as the
+  device does from tone ≈ 110.
 - `--tremolo`: each tremolo take's gain against the tremolo=0 take on the same note, 10 ms at a
   time (the voice is deterministic, so they differ by the tremolo alone).
 

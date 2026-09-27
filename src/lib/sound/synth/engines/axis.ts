@@ -10,8 +10,8 @@
  *   (the same settings give the same waveform, sample for sample);
  * - tone sets the feedback ({@link FEEDBACK}): op2 most, the copies 0.75–0.9 of it. Each loop feeds
  *   back its last sample, so past ~1.25 it rings at half the sample rate (from tone ≈ 110 on
- *   op2, as on the device, where that ringing sits at 20–24 kHz and the audible band stays
- *   clean). It fades with the oscillator's pitch above ~500 Hz and is gone by 3.5 kHz
+ *   op2, as on the device, where that ringing sits at 20–22 kHz, just under the capture's
+ *   Nyquist, and the audible band stays clean). It fades with the oscillator's pitch above ~500 Hz and is gone by 3.5 kHz
  *   ({@link BAND}): the device's own band limit;
  * - shape crossfades the feedback from y (a saw-like series) to y² (odd harmonics only, a
  *   square-like wave) ({@link SHAPE}), within 0.4 dB of every harmonic;
@@ -43,7 +43,7 @@ export const COPIES = [-9, -4, 8] as const;
 export const OP2_CENTS = 4;
 /**
  * Each oscillator's feedback over tone (at {@link AT}), for a loop that feeds back its last sample
- * at 48 kHz: the copies (−9, −4, +8 cents), then op2. The copies run at about 0.75, 0.9 and 0.82
+ * at 48 kHz (our rate; the capture ran at 44.1 kHz): the copies (−9, −4, +8 cents), then op2. The copies run at about 0.75, 0.9 and 0.82
  * of op2's.
  */
 export const FEEDBACK = [

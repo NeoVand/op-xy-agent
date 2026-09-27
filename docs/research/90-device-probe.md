@@ -222,7 +222,9 @@ Runs (appended as they happen):
    `organ` T2 (125 notes), `wavetable` T8 (425), `prism` T3 (114), `epiano` T4 (90), then
    dissolve T5, hardsync T6, axis T7 and long-note stereo takes of simple T1 and prism T3. The organ
    capture fitted the new organ engine (`57-synth-engines.md`, organ): every type's partials within
-   0.1–0.2 dB.
+   0.1–0.2 dB. The chain completed, and every capture has since been fitted (note 57 §3): prism,
+   epiano, dissolve, hardsync, axis and wavetable, the last with its tables' rules, warp as FM by a
+   sine and drift's slide to half the note. Nothing else was sent to the device after the chain.
 
 ## Session 1 runbook (owner present, ≈20–30 min)
 

@@ -19,14 +19,23 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    - How long must a lit step be held before it copies instead of coming off? (Ours: 0.5 s.)
    - Step component multiply, black key 9: 9 hits, or 3 as TE's table prints?
    - While playing: does the playhead dim a step that has notes, and light an empty one?
-5. **Synth calibration session** (changes device state: CCs and notes on a new throwaway project;
-   nothing saved, loaded or deleted). We record the OP-XY's USB audio while a script sweeps each
-   engine's four parameters, the envelopes and the filter, then fit our engines to the recordings.
-   Filter and LFO types are set by hand. Plan in `docs/research/57-synth-engines.md` §6. Approve when
-   ready, and say whether loading three test samples (impulse, noise, sine) as presets is fine for
-   the filter measurements.
+5. **Filter and LFO session** (changes device state the same way as the engine session: CCs and
+   notes on a new throwaway project; nothing saved, loaded or deleted). The engines were measured
+   with filters and LFOs off; the four filters (slopes, resonance, envelope depth) and the LFO shapes
+   need their own sweeps. Approve when ready, and say whether loading three test samples (impulse,
+   noise, sine) as presets is fine for the filter measurements.
+6. **Wavetable tables: our approach, and the eighth table's name.** Our wavetable frames are
+   formulas fitted to the device's harmonics, not its data. For crush, geometric and basic the
+   fitted rules reproduce the device's frames closely; drawbars uses a measured registration (nine
+   bar levels per tenth of position). Fine to ship as is (D2 by analogy), or should ours diverge?
+   And the eighth table, never seen on screen: we call it "primes" (a sine joined by the prime
+   harmonics); what does the device call it?
 
 ## Answered
+
+- 2026-09-27 — **Synth calibration session?** Approved in chat and run: a new project, filters,
+  LFOs and FX off and flat envelopes set by hand; CCs 12–15, CC102 and notes only. Every engine
+  refit from the captures (note 57 §3; `docs/research/90-device-probe.md`).
 
 - 2026-09-26 — **Photos for the replica?** Not needed: build it from TE's guide SVGs (the full-panel
   drawing has every legend and icon). → D9.

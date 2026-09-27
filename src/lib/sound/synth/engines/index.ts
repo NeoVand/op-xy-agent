@@ -66,7 +66,7 @@ export function createEngine(engine: EngineId, sampleRate: number, seed: number)
 		case 'simple':
 			return new SimpleVoice(sampleRate, seed);
 		case 'wavetable':
-			return new WavetableVoice(sampleRate);
+			return new WavetableVoice(sampleRate, seed);
 		default:
 			return new Placeholder(sampleRate);
 	}

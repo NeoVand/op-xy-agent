@@ -27,8 +27,10 @@
 - **Synth engines: rebuilt.** Research (`docs/research/57-synth-engines.md`) and a new synth core:
   band-limited oscillators, TPT filters and the measured envelope law, per sample in an
   AudioWorklet. All eight engines play on it (a "new engines" switch compares them with the first
-  ones); 24 voices run 11× faster than real time. Calibration against the owner's device waits for
-  approval (`QUESTIONS.md` 5).
+  ones); 24 voices run 11× faster than real time. **Calibrated on the owner's device** (2026-09-27
+  session, `90-device-probe.md`): every engine rebuilt from its measurements (note 57 §3), most
+  within about 1 dB per harmonic on the measured settings. Left: the engines' screen animations
+  (with the owner's camera), filters and LFOs (sent off during the session).
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).

@@ -28,8 +28,9 @@
      crossfades it to y² (odd harmonics), and a 180 Hz highpass sits on the sum (§3).
    - **dissolve:** measured: two sines ±34 cents apart at full detune; fm is each sine's own
      feedback, am a hard clip inside that loop, and swarm a fast random pitch jitter (§3).
-   - **wavetable:** 9 tables, 8 of them named on screen (buzz, zap, basic, geometric, fibonacci,
-     fractal, crush, drawbars); warp is a piecewise-linear phase distortion, and drift detunes it [E].
+   - **wavetable:** measured: nine tables in alphabetical order (basic first), each a simple rule
+     over 32 crossfaded frames; warp is FM of the read by a sine, and drift slows that sine to half
+     the note (§3).
    - **epiano and organ:** FM, like their OP–Z ancestors [E]. The organ has 8 types drawn as
      drawbars [E].
    - **hardsync:** a synced saw over three octaves, a sub at the master pitch, noise and a highpass
@@ -167,10 +168,10 @@ Measured on the owner's device (2026-09-27, `2026-09-27-133356-axis`; `research/
   - at shape 0 it is the plain feedback operator, fitted within 0.1–0.9 dB per oscillator;
   - there is no FM between the operators, and none of op1 by op2 at any ratio;
   - the loop takes the last sample. Past a feedback of ~1.25 it rings at half the sample rate:
-    from tone ≈ 110, energy appears at 20–24 kHz (−19.5 dB at 114, −7.7 dB at 127) while the audible
-    band stays clean.
+    from tone ≈ 110, energy appears at 20–22 kHz, just under the capture's Nyquist (it ran at
+    44.1 kHz): −19.5 dB at 114, −7.7 dB at 127, while the audible band stays clean.
 - **tone sets the feedback**:
-  - for op2 at 48 kHz: 0.21, 0.34, 0.45, 0.58, 0.70, 0.82, 0.93, 1.05, 1.18, 1.28, 1.44 at CC 0,
+  - for op2, as a loop at our 48 kHz: 0.21, 0.34, 0.45, 0.58, 0.70, 0.82, 0.93, 1.05, 1.18, 1.28, 1.44 at CC 0,
     13 … 127;
   - the copies run at about 0.75, 0.9 and 0.82 of op2's (−9, −4, +8 cents);
   - the level does not change: 2J1(β)/β's dip is not made up.
@@ -252,36 +253,69 @@ notes; any stereo (the capture plays mono).
 
 ### wavetable — table, position, warp, drift
 
-Established:
+Established before measuring: nine tables, eight named on screen (buzz, zap, basic, geometric,
+fibonacci, fractal, crush, drawbars); switching tables keeps the position; the screen draws warp as
+a phase distortion, and drift pulls the warping away from the note.
 
-- 9 tables; switching tables keeps the position; everything at 0 is a sine.
-- Tables named on screen, with the wave at position 0:
-  - buzz: saw
-  - zap: saw
-  - basic: triangle → square → sine across positions
-  - geometric: sine with ripples
-  - fibonacci: sine with denser ripples
-  - fractal: a saw of smaller saws
-  - crush: a stair-stepped sine
-  - drawbars: additive
-  - The ninth was never seen.
-- Warp is drawn as a piecewise-linear phase distortion. The wave's half-cycle point moves from about
-  0.49 at warp 0 to 0.38 at 30, 0.33 at 40 and 0.26 at 62. It acts like PWM on any shape.
-- Drift slides that point over time: LFO-like when low, FM-like in the middle, synced again at the
-  top (Sound On Sound: phase modulation up to a synced audio rate).
+Measured on the owner's device (2026-09-27, `2026-09-27-131026-wavetable`, track 8: every table at
+positions 0–100 % in steps of 5 on A1 and A4; warp on crush at position 64; drift at warp 64 on
+basic's triangle, and at warp 0; `research/device/wavetable_fit.py`):
 
-Model [I]:
+- **Order and frames.** The table knob runs alphabetically: basic, buzz, crush, drawbars,
+  fibonacci, fractal, geometric, the unseen table, zap. So everything at 0 is basic's triangle, not
+  a sine. Each table has 32 frames (crush 16), and a position between two frames crossfades them.
+  Zap gives it away: its neighbouring frames cancel at the 74th, 127th and 168th harmonics, exactly
+  at the positions that fall between frames (32 frames explains all 21 positions; 90 did not).
+- **Each table is a simple rule**, recovered from the harmonics' magnitudes and phases. Our frames
+  match within 0.0–0.5 dB on both notes unless noted:
+  - basic, in thirds: a triangle bent into a square, sign(t)·|t|^k with k = (1 − 3x)^1.2; the
+    square bent the same way into a falling saw; then the saw smooths into a sine by way of a softer
+    saw with harmonics at 1/h² (within 2 dB; the fit's residual is −58 dB re the fundamental);
+  - buzz: a saw crossfading into white noise, new noise in every frame (neighbouring positions
+    correlate only where they share a frame). The saw falls to 5 %, the noise rises to −24 dB a
+    harmonic (re the saw's fundamental) by the middle. All frames share one gain, so the level falls
+    5 dB as the noise takes over;
+  - crush: a sine rounded to steps of q = (0.2 + 1.13·x)² of its peak, the steps' square roots
+    evenly spaced, from 51 levels to three (within 1 dB; residual −60 dB);
+  - drawbars: nine tones at the Hammond ratios, each a sine with odd overtones at 1.93·n^−2.64, all
+    in one phase (our earlier alternating signs cancelled harmonics the device reinforces). The
+    registration tilts from the 16′ bar to the 1′, measured as nine levels per tenth of position;
+  - fibonacci: a sine joined frame by frame by the Fibonacci harmonics at 1/(j + 1), folded as on a
+    1024-point cycle (987 lands on 37);
+  - fractal: saws at the octaves, their weights growing with position;
+  - geometric: partials at the powers of ρ = 1 + 2x + 3x² (rounded, each above the last), the jth
+    at (j + 1)^−(2 − x): a soft saw at 0; the note, 6, 36 and 216 times it at 1, ½, ⅓ and ¼ at the
+    end (residual −74 dB);
+  - the unseen table ("primes", our name): a sine joined frame by frame by the primes up to 127 at
+    1/p;
+  - zap: a rising saw whose hth harmonic turns by x·(59.9h − 2.9h²/(1 + 0.0191h)^0.534) degrees, a
+    chirp that also slides a sixth of a cycle in time across the table.
+- **Levels** (dBFS on A1): basic −16.5, crush −16.8, drawbars −20.0, fibonacci −16.5, primes
+  −15.2, zap −20.6; buzz −23.9, falling as its noise takes over; fractal about −18 throughout;
+  geometric −17.4 falling to −28.8 across positions.
+- **The output rolls off like a one-pole lowpass at 8.3 kHz**, the same on every note (within
+  0.2 dB up to 18 kHz). Harmonics carry on to about 20 kHz on both notes.
+- **Warp is frequency modulation of the read by a sine**, not the drawn phase distortion: no
+  piecewise-linear bend fits, whatever its knee. The read's phase swings by 0.15·warp cycles on A2
+  and 0.117·warp on A4 with the sine at the note's rate (within about 1 dB up to warp 0.3 on
+  crush, and 0.2–0.3 dB on the triangle). The sine keeps its own phase from note to note, so at a
+  given warp the timbre differs a little from note to note. At high warp the device aliases:
+  inharmonic energy reaches −29 dB on A2 and −37 dB on A4.
+- **Drift slows that sine** from the note's rate to half of it: the ratio is 1 − s/2, where s is an
+  S-curve, ½(2·drift)^2.6 mirrored above ½, the same on both notes. The result is a slow wobble low
+  down, inharmonic FM in the middle and a subharmonic at the top. Halving the sine's rate doubles
+  the swing, as FM does: the first sideband at drift 64 is predicted at −9.3 dB and measured at
+  −9.4. Drift does nothing at warp 0.
 
-- **Knee:** d = 0.5 − 0.41·warp.
-- **Distortion:** PD(x) = x/2d below the knee, else ½ + (x − d)/2(1 − d). It is driven by a second
-  phase at f·(1 + δ), and the table is read at φ + PD(φw) − φw.
-- **Drift:** δ = drift³, so drift 1 gives 2f, harmonic again. Drift does nothing at warp 0.
+Our model: all of the above, with every frame stored per half octave (the shared wavetable), and
+warp read at the level for the fastest it drives the read. Unlike the device, ours does not alias.
+The tables are our formulas fitted to the device's behaviour; nothing of the device's tables is
+stored (D2 by analogy). For the owner to confirm: crush, geometric and basic are rules that
+reproduce the device's frames closely, drawbars' registration is a measured table, and "primes" is
+our name for the unseen table.
 
-**The tables are TE's content: we design our own in the same families rather than capture theirs.**
-(D2 applies by analogy.)
-
-Open: the tables' data and frame count, the ninth table and the order, sine versus linear warp, the
-drift law, and whether phases reset per note.
+Open: the unseen table's name; warp at high settings (the fit degrades to 3–5 dB there, partly
+the device's aliasing); whether the warp sine's phase is random or carries over from the last note.
 
 ### epiano — tone, texture, punch, tine
 
@@ -519,9 +553,10 @@ every voice per sample instead.
 - FM operators use DX7-style averaged feedback.
 - Filters are topology-preserving transforms (Zavalishin): a Simper SVF and a four-pole ladder with
   saturating feedback and two-times headroom.
-- Wavetables are stored per octave (512 >> l harmonics, eight samples per cycle of the top one).
-  A note reads the richest level below Nyquist, picked a quarter octave early, and fades in the
-  next one over the top quarter of its octave, so no harmonic ever passes Nyquist. Each level is
+- Wavetables are stored per half octave (512·2^(−l/2) harmonics, at least eight samples per cycle
+  of the top one), which keeps a note's top harmonic within 14–20 kHz, as the device's reach.
+  A note reads the richest level below Nyquist, picked an eighth of an octave early, and fades in
+  the next one over the top quarter of its step, so no harmonic ever passes Nyquist. Each level is
   built the first time a note reads it (one inverse FFT, well under a millisecond), so no note
   waits on the audio thread for a whole table.
 - Envelopes follow the measured law above. Pitch, filter and engine parameters update every 16
@@ -543,16 +578,16 @@ every voice per sample instead.
 
 **The engines as built** (constants at the top of each `engines/*.ts`, awaiting §6):
 
-| Engine    | What we built                                                                                                                                                                                                                                                                                             |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| prism     | Measured: saw → square blend k with a −3.9 dB/k level law, then oscillator 2 narrows before oscillator 1 (to w ≈ 0.113); oscillator 2 at −2.4 dB, less at high ratios; ten ratio zones up to 1:16; detune to 15 cents; each oscillator fades with its pitch above ~2 kHz; stereo = the swept copy.        |
-| simple    | Saw → square blend, width 0.5 − 0.44·pw on the pulse only, the measured noise crossfade, and the measured stereo: a delayed copy per channel, a triangle sweeping it ±6.9–15.2 cents (opposite in L and R), high-passed at 815–490 Hz.                                                                    |
-| hardsync  | Measured: a saw synced at 1 + 7·freq times the note (linear), a sub saw at the note in phase (to 2×), a one-pole lowcut on the saws only (101 Hz–8.2 kHz), white noise at −64 dBFS/Hz after it; levels at the device's.                                                                                   |
-| dissolve  | Measured: two sines ±34.3 cents at full detune (the lower 5 dB under), each feeding back into its own phase (fm, β to 0.686), clipped hard inside the loop (am, drive to 2 on A2, key-scaled), swarm a one-pole 50 Hz pitch jitter to 0.13 of the note; run at 2× through a 64-tap decimator.             |
-| epiano    | Measured: a sine carrier phase-modulated 1:1 (tone, index to 3.05, no feedback) and 4:1 (punch, rising then fading), a soft clipper blended in (texture, drive key-scaled), tine's two straight-line decays on the index; key-scaled level.                                                               |
-| axis      | Measured: four feedback operators at one level, copies of the note at −9, −4, +8 cents and op2 at the ratio (0.5 + p, then steps 1 … 32, +4 cents); tone = feedback (per-oscillator tables, band-limited above ~500 Hz), shape = y → y² feedback, 180 Hz highpass, tremolo dips.                          |
-| organ     | Measured registrations: per type, every partial (on the half-note grid, or a few cents off it) at bass 0/½/1 on A1–A5, played as sine oscillators behind a one-pole 54 Hz high-pass. Type 2's bass slides two partials. Tremolo 1 + amount·sin at 10.9 Hz × speed^0.93, free-running on the core's clock. |
-| wavetable | Nine tables of our own, 16 frames each: formant (a sine at 0, our ninth, first so that all-zero is a sine), buzz, zap, basic, geometric, fibonacci, fractal, crush, drawbars. Warp: the knee d = 0.5 − 0.41·warp with rounded corners; drift δ = drift³ (periodic again at 1, nothing at warp 0).         |
+| Engine    | What we built                                                                                                                                                                                                                                                                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| prism     | Measured: saw → square blend k with a −3.9 dB/k level law, then oscillator 2 narrows before oscillator 1 (to w ≈ 0.113); oscillator 2 at −2.4 dB, less at high ratios; ten ratio zones up to 1:16; detune to 15 cents; each oscillator fades with its pitch above ~2 kHz; stereo = the swept copy.                                                     |
+| simple    | Saw → square blend, width 0.5 − 0.44·pw on the pulse only, the measured noise crossfade, and the measured stereo: a delayed copy per channel, a triangle sweeping it ±6.9–15.2 cents (opposite in L and R), high-passed at 815–490 Hz.                                                                                                                 |
+| hardsync  | Measured: a saw synced at 1 + 7·freq times the note (linear), a sub saw at the note in phase (to 2×), a one-pole lowcut on the saws only (101 Hz–8.2 kHz), white noise at −64 dBFS/Hz after it; levels at the device's.                                                                                                                                |
+| dissolve  | Measured: two sines ±34.3 cents at full detune (the lower 5 dB under), each feeding back into its own phase (fm, β to 0.686), clipped hard inside the loop (am, drive to 2 on A2, key-scaled), swarm a one-pole 50 Hz pitch jitter to 0.13 of the note; run at 2× through a 64-tap decimator.                                                          |
+| epiano    | Measured: a sine carrier phase-modulated 1:1 (tone, index to 3.05, no feedback) and 4:1 (punch, rising then fading), a soft clipper blended in (texture, drive key-scaled), tine's two straight-line decays on the index; key-scaled level.                                                                                                            |
+| axis      | Measured: four feedback operators at one level, copies of the note at −9, −4, +8 cents and op2 at the ratio (0.5 + p, then steps 1 … 32, +4 cents); tone = feedback (per-oscillator tables, band-limited above ~500 Hz), shape = y → y² feedback, 180 Hz highpass, tremolo dips.                                                                       |
+| organ     | Measured registrations: per type, every partial (on the half-note grid, or a few cents off it) at bass 0/½/1 on A1–A5, played as sine oscillators behind a one-pole 54 Hz high-pass. Type 2's bass slides two partials. Tremolo 1 + amount·sin at 10.9 Hz × speed^0.93, free-running on the core's clock.                                              |
+| wavetable | Measured: nine tables in the device's order, each a rule fitted to its harmonics (basic's power-shaped morphs, buzz's saw into fresh noise, crush's quantiser, in-phase drawbars, geometric's powers, zap's chirp …) over 32 crossfaded frames (crush 16); a one-pole at 8.3 kHz; warp = FM by a free-running sine, drift slowing it to half the note. |
 
 **Tests.**
 
@@ -675,7 +710,9 @@ message logged in `90-device-probe.md`. Filter and LFO types have no CC and are 
 5. ~~Epiano's modulator ratio and waveform, and tine's law.~~ Measured (§3).
 6. ~~Axis: whether operator 2 is audible, its FM index, and the tone filter.~~ Measured (§3): four
    feedback operators, no FM between them; tone is feedback.
-7. Wavetable: frames per table, the ninth table, the warp shape and the drift law.
+7. ~~Wavetable: frames per table, the ninth table, the warp shape and the drift law.~~ Measured
+   (§3): 32 frames (crush 16); warp is FM by a sine; drift slows it to half the note. The unseen
+   table's name is still ours.
 8. ~~Dissolve's modulators (noise or periodic).~~ Measured (§3): feedback, a clip, a pitch jitter.
 9. ~~Hardsync's sub octave and waveform, and the lowcut slope.~~ Measured (§3). (Simple's stereo too.)
 10. LFO shapes per type and element's envelope source; portamento curves; bend steps.
