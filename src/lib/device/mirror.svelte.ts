@@ -6,10 +6,12 @@
  * - With COM → clock "both" it sends FA on every play press, FC on stop, and F8 continuously, even
  *   while stopped. With the stock "clock in" it sends none of these.
  * - It re-transmits FA/FC it receives, and answers CC104/CC105 (value 127) with FA/FC.
+ * - It sends notes only from tracks the project gives a MIDI channel (none in a fresh project).
  * - It never reports encoder moves, track selection or mutes.
  *
  * So: play state follows FA/FC in both directions and says who reported it (`playSource`); tempo is
- * measured from F8; `clockOut` says whether F8 arrived in the last second. Selected track, mutes,
+ * measured from F8; `clockOut` says whether F8 arrived in the last second; `noteChannels` lists the
+ * channels the device has sent notes on. Selected track, mutes,
  * tempo and every CC value we sent are a **sent-state cache**: what the app last set, labelled as
  * such, because the device may have been changed by hand since.
  */
@@ -73,6 +75,8 @@ export class DeviceMirror {
 	clockOut = $state(false);
 	/** Tempo measured from the device's clock, rounded to 0.1 BPM; null without clock. */
 	measuredBpm: number | null = $state(null);
+	/** Wire channels (0–15) the device has sent notes on since it connected, in order. */
+	noteChannels: readonly number[] = $state.raw([]);
 	/** Sent-state: the tempo the app last set with CC80, in BPM. */
 	tempoSent: number | null = $state(null);
 	/** Sent-state: the track (1–16) the app last selected with CC102. */
@@ -120,6 +124,7 @@ export class DeviceMirror {
 		this.playSource = null;
 		this.clockOut = false;
 		this.measuredBpm = null;
+		this.noteChannels = [];
 		this.tempoSent = null;
 		this.selectedTrack = null;
 		this.mutes = Array.from({ length: 16 }, () => null);
@@ -147,7 +152,15 @@ export class DeviceMirror {
 			case 'stop':
 				this.#setPlay('stopped', this.#isEcho(event) ? 'echo' : 'device');
 				return;
+			case 'noteOn':
+				if (!this.#isEcho(event)) this.#heardNote(message.channel);
+				return;
 		}
+	}
+
+	#heardNote(channel: number): void {
+		if (this.noteChannels.includes(channel)) return;
+		this.noteChannels = [...this.noteChannels, channel].sort((a, b) => a - b);
 	}
 
 	#outgoing(event: MidiEvent): void {

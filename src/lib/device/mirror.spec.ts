@@ -180,3 +180,23 @@ describe('DeviceMirror: sent-state cache', () => {
 		expect(stack.mirror.selectedTrack).toBe(6);
 	});
 });
+
+describe('DeviceMirror: notes', () => {
+	it('lists the channels the device sends notes on, never echoes of ours', async () => {
+		const { stack, time, opxy } = await connected({ opxy: { echoAll: true } });
+		stack.transport.send(
+			{ type: 'noteOn', channel: 0, note: 60, velocity: 90 },
+			{ source: 'user' }
+		);
+		await time.advance(5);
+		expect(stack.mirror.noteChannels).toEqual([]);
+		opxy.emit([0x94, 60, 90]);
+		opxy.emit([0x90, 62, 90]);
+		opxy.emit([0x94, 64, 90]);
+		await time.advance(5);
+		expect(stack.mirror.noteChannels).toEqual([0, 4]);
+		opxy.unplug();
+		await time.advance(5);
+		expect(stack.mirror.noteChannels).toEqual([]);
+	});
+});

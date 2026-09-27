@@ -395,12 +395,91 @@ describe('ReplicaBridge: device → replica', () => {
 		rig.opxy.emit([0x81, 60, 0]);
 		await rig.time.advance(5);
 		expect(replica.led('keyboard.c4')).toBe('off');
-		// All Notes Off clears the channel; notes outside the keyboard are ignored.
+		// All Notes Off clears the channel, notes below the keyboard included.
 		rig.opxy.emit([0x93, 74, 90]);
 		rig.opxy.emit([0x93, 30, 90]);
+		await rig.time.advance(5);
+		expect(replica.led('keyboard.d5')).toBe('white');
+		expect(replica.led('keyboard.fs3')).toBe('white');
 		rig.opxy.emit([0xb3, 123, 0]);
 		await rig.time.advance(5);
 		expect(replica.led('keyboard.d5')).toBe('off');
+		expect(replica.led('keyboard.fs3')).toBe('off');
+	});
+
+	it('shows notes outside its two octaves on the key of the same name', async () => {
+		const { rig, replica } = await setup();
+		// F2 and F3 share the low F key; it stays lit until both have ended.
+		rig.opxy.emit([0x90, 41, 90]);
+		rig.opxy.emit([0x90, 53, 90]);
+		await rig.time.advance(5);
+		expect(replica.led('keyboard.f3')).toBe('white');
+		rig.opxy.emit([0x80, 41, 0]);
+		await rig.time.advance(5);
+		expect(replica.led('keyboard.f3')).toBe('white');
+		rig.opxy.emit([0x80, 53, 0]);
+		await rig.time.advance(5);
+		expect(replica.led('keyboard.f3')).toBe('off');
+		// F5 (77) and C7 (96) fold down onto F4 and C5.
+		rig.opxy.emit([0x90, 77, 90]);
+		rig.opxy.emit([0x90, 96, 90]);
+		await rig.time.advance(5);
+		expect(replica.led('keyboard.f4')).toBe('white');
+		expect(replica.led('keyboard.c5')).toBe('white');
+	});
+
+	it("shows other senders' notes outside its two octaves as pressed keys", async () => {
+		const { rig, replica } = await setup();
+		const send = (type: 'noteOn' | 'noteOff', note: number) =>
+			rig.stack.transport.send(
+				{ type, channel: 1, note, velocity: type === 'noteOn' ? 80 : 0 },
+				{ source: 'agent' }
+			);
+		send('noteOn', 36);
+		send('noteOn', 48);
+		expect(replica.isPressed('keyboard.c4')).toBe(true);
+		send('noteOff', 36);
+		expect(replica.isPressed('keyboard.c4')).toBe(true);
+		send('noteOff', 48);
+		expect(replica.isPressed('keyboard.c4')).toBe(false);
+	});
+
+	it("moves the pad with the device's pitch bend, once a frame, ending on the latest value", async () => {
+		const { rig, replica, sent } = await setup();
+		const heard: ReplicaEvent[] = [];
+		replica.subscribe((event) => heard.push(event));
+		rig.opxy.emit([0xe0, 0x7f, 0x7f]);
+		await rig.time.advance(5);
+		expect(replica.bend).toBe(1);
+		// A burst within one frame shows only its last value, a frame later.
+		rig.opxy.emit([0xe0, 0x00, 0x60]);
+		rig.opxy.emit([0xe0, 0x00, 0x20]);
+		await rig.time.advance(2);
+		expect(replica.bend).toBe(1);
+		await rig.time.advance(20);
+		expect(replica.bend).toBeCloseTo(-0.5, 3);
+		rig.opxy.emit([0xe0, 0x00, 0x40]);
+		await rig.time.advance(40);
+		expect(replica.bend).toBe(0);
+		// Mirroring is not playing: nothing went back to the device, no replica events.
+		expect(heard).toEqual([]);
+		expect(sent()).toEqual([]);
+	});
+
+	it('leaves the pad to the pointer while the replica bends, and centres it when the device goes', async () => {
+		const { rig, replica, sent } = await setup();
+		replica.setBend(0.5, 'pointer');
+		rig.opxy.emit([0xe1, 0x00, 0x00]);
+		await rig.time.advance(40);
+		expect(replica.bend).toBe(0.5);
+		replica.setBend(0, 'pointer');
+		expect(sent()).toEqual(['E0 00 60', 'E0 00 40']);
+		rig.opxy.emit([0xe1, 0x00, 0x00]);
+		await rig.time.advance(40);
+		expect(replica.bend).toBe(-1);
+		rig.opxy.unplug();
+		await rig.time.advance(40);
+		expect(replica.bend).toBe(0);
 	});
 
 	it('does not light keys for echoes of its own notes', async () => {
@@ -428,8 +507,9 @@ describe('ReplicaBridge: device → replica', () => {
 				{ source: 'agent' }
 			);
 		send('noteOn', 64);
-		send('noteOn', 40);
+		send('noteOn', 38);
 		expect(replica.isPressed('keyboard.e4')).toBe(true);
+		expect(replica.isPressed('keyboard.d4')).toBe(true);
 		send('noteOff', 64);
 		expect(replica.isPressed('keyboard.e4')).toBe(false);
 		send('noteOn', 60, 0);

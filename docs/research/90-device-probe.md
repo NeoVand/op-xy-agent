@@ -158,14 +158,17 @@ track mutes work from the browser**. First proof that the static web app control
 
 ## 2026-09-26 — What the device transmits in normal use (owner's project, clock = both)
 
-Passive 25 s capture while the owner pressed keyboard keys, track 3, M2, turned the dark encoder and
-pressed play/stop: **only `F8` clock arrived** (1,400 ticks = 140 BPM, the project tempo). No notes
-from the keyboard, nothing for track/M-keys or the encoder. Per our manual (`project.midi-channels`),
-tracks transmit notes only after a MIDI channel is assigned in project settings (project → M4 → midi
-page), and a fresh project has every channel off. Implication for the replica: it can mirror notes
-(keyboard + sequencer) only once track channels are set, transport/tempo with clock = both, and never
-mode keys, M-keys or encoders in normal mode (only controller mode transmits those). Onboarding should
-offer to set track channels.
+Passive 25 s capture, started as the owner was asked to press keyboard keys, track 3, M2, the dark
+encoder and play/stop: **only `F8` clock arrived** (1,400 ticks = 140 BPM, the project tempo). No
+`FA`/`FC` came either, although session 1 verified the device sends them on every play/stop with clock
+= both, so the owner had probably not reached those steps inside the window; the negative result for
+keys and the encoder rests on the earlier research, not on this capture alone. No keyboard notes is
+what our manual (`project.midi-channels`) predicts: tracks transmit notes only after the project gives
+them a MIDI channel (project → M4 → midi page), and a fresh project has every channel off.
+Implication for the replica: it mirrors notes (keyboard + sequencer) and the pitch-bend pad once track
+channels are set, transport and tempo with clock = both, and never mode keys, M-keys or encoders in
+normal use (only controller mode transmits those). The home page now says so and shows which channels
+notes arrive on. Next: T28 (set T1 → channel 1, play keys and the sequencer, capture).
 
 ## Session 1 runbook (owner present, ≈20–30 min)
 

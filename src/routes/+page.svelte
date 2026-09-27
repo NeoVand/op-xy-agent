@@ -60,6 +60,15 @@
 	const engaged = $derived(session.phase !== 'idle');
 	const bpm = $derived(mirror.measuredBpm ?? mirror.tempoSent);
 	const bpmLabel = $derived(mirror.measuredBpm !== null ? 'tempo' : 'tempo (last set)');
+	// The channels the device's tracks send notes on (a track needs one before its notes go out).
+	const notesIn = $derived(
+		mirror.noteChannels.length === 0
+			? '–'
+			: `ch ${mirror.noteChannels
+					.slice(0, 3)
+					.map((channel) => channel + 1)
+					.join(' ')}${mirror.noteChannels.length > 3 ? ' +' : ''}`
+	);
 
 	function connect(): void {
 		void session.connect();
@@ -120,12 +129,16 @@
 					To mirror play state and tempo, set com → system settings → midi → clock to “both” on the
 					device.
 				</p>
+			{:else if session.phase === 'ready' && mirror.noteChannels.length === 0}
+				<p class="conn__text">
+					To see what you play light up here, give the track a MIDI channel on the device: project →
+					M4, then turn E1 to the midi page, E2 to the track and E3 to a channel.
+				</p>
 			{/if}
 		</div>
 
 		{#if session.phase === 'ready'}
 			<div class="conn__readouts">
-				<Readout variant="cell" label="firmware" value={session.firmware?.osVersion ?? '–'} />
 				<Readout
 					variant="cell"
 					label="transport"
@@ -137,7 +150,8 @@
 					value={bpm === null ? '–' : bpm.toFixed(1)}
 					unit={bpm === null ? undefined : 'bpm'}
 				/>
-				<Readout variant="cell" label="notes" value="ch {bridge.channel + 1}" />
+				<Readout variant="cell" label="notes in" value={notesIn} />
+				<Readout variant="cell" label="notes out" value="ch {bridge.channel + 1}" />
 			</div>
 		{/if}
 

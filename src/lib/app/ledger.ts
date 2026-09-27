@@ -47,8 +47,9 @@ export class KeyNotes {
 }
 
 /**
- * Notes one sender (the device, or the app's other senders) is sounding, per channel, plus which of
- * those notes the bridge put on the replica (`mark`), so it only ever undoes its own changes.
+ * Notes one sender (the device, or the app's other senders) is sounding, per channel, plus which
+ * keys the bridge put on the replica (`mark`, by the note of the key), so it only ever undoes its
+ * own changes.
  */
 export class SoundingNotes {
 	/** `channel * 128 + note`. */
@@ -69,7 +70,12 @@ export class SoundingNotes {
 
 	/** True when any channel sounds `note`. */
 	sounds(note: number): boolean {
-		for (const code of this.#codes) if ((code & 0x7f) === note) return true;
+		return this.soundsAny((sounding) => sounding === note);
+	}
+
+	/** True when any channel sounds a note that `matches` (say, one shown on the same key). */
+	soundsAny(matches: (note: number) => boolean): boolean {
+		for (const code of this.#codes) if (matches(code & 0x7f)) return true;
 		return false;
 	}
 
@@ -84,9 +90,14 @@ export class SoundingNotes {
 		return stopped;
 	}
 
-	/** Remembers that the bridge showed `note` on the replica. */
+	/** Remembers that the bridge showed the key of `note` on the replica. */
 	mark(note: number): void {
 		this.#marked.add(note);
+	}
+
+	/** Whether the key of `note` is marked. */
+	marked(note: number): boolean {
+		return this.#marked.has(note);
 	}
 
 	/** Forgets the mark; returns whether there was one (so the bridge knows to undo it). */

@@ -12,8 +12,14 @@
  * local simulation: keys move, nothing is sent.
  *
  * **Device → replica** (mirroring what crosses the wire, never guessing):
- * - notes the device sends light their keyboard keys while they sound (echoes of ours don't);
+ * - notes the device sends light their keyboard keys while they sound (echoes of ours don't). A
+ *   track sends its notes only once the project gives it a MIDI channel (project → M4 → midi), and
+ *   the keyboard, sequencer and pitch-bend pad are all the device transmits in normal use;
  * - notes the app sends from elsewhere (the agent, the lab) show their keys pressed;
+ * - a note outside the replica's two octaves (53–76) shows on the key of the same name an octave or
+ *   more away, so nothing played goes unseen;
+ * - the device's pitch bend moves the replica's pad (at most once a frame; the pad is left alone
+ *   while the replica itself bends the device);
  * - the track the app last selected (the mirror's sent-state) lights its track key, white for an
  *   instrument track and red for an auxiliary one, as the device does;
  * - while the device plays, confirmed by its own Start with its clock arriving (COM → clock
@@ -28,7 +34,7 @@
  * bridge does, so mirror-derived LEDs are refreshed one microtask later.
  */
 import type { MidiEvent } from '$lib/core/midi/bus';
-import { unitToBend, type MidiMessage } from '$lib/core/midi/messages';
+import { bendToUnit, unitToBend, type MidiMessage } from '$lib/core/midi/messages';
 import {
 	getControl,
 	keyboardKeyForNote,
@@ -88,14 +94,27 @@ const TICKS_PER_STEP = 6;
 const STEPS = 16;
 /** Pitch bend at rest. */
 const BEND_CENTRE = 8192;
+/** The device's pitch bend moves the replica's pad at most this often, in ms (about a frame). */
+const BEND_FRAME_MS = 16;
+/** The replica keyboard: F3 (53) to E5 (76). */
+const LOWEST_NOTE = 53;
+const HIGHEST_NOTE = 76;
 /** Play and stop by CC (value 127), as the device answers them (verified on OS 1.1.33). */
 const STOP_CC = 105;
 
 /** All Sound Off or All Notes Off: whatever sounded on that channel has stopped. */
 const silences = (controller: number) => controller === 120 || controller === 123;
 
-/** The keyboard key that plays `note` on the replica (53–76), if any. */
-const keyFor = (note: number): KeyboardKeyId | undefined => keyboardKeyForNote(note)?.id;
+/** The note whose replica key shows `note`: itself, or the note of the same name within 53–76. */
+function shownNote(note: number): number {
+	let shown = note;
+	while (shown < LOWEST_NOTE) shown += 12;
+	while (shown > HIGHEST_NOTE) shown -= 12;
+	return shown;
+}
+
+/** The keyboard key that shows `note` on the replica. */
+const keyFor = (note: number): KeyboardKeyId | undefined => keyboardKeyForNote(shownNote(note))?.id;
 
 /** Connects the replica to the device stack; see the module comment. Call `start()` in onMount. */
 export class ReplicaBridge {
@@ -118,10 +137,16 @@ export class ReplicaBridge {
 	readonly #notes = new KeyNotes();
 	/** The pitch bend we left the device at, or null when centred. */
 	#bend: { readonly channel: number; readonly value: number } | null = null;
-	/** Notes the device is sounding; marked ones lit their keyboard LED. */
+	/** Notes the device is sounding; marked keys are the LEDs the bridge lit. */
 	readonly #deviceNotes = new SoundingNotes();
-	/** Notes the app's other senders are sounding; marked ones pressed their key. */
+	/** Notes the app's other senders are sounding; marked keys are the ones the bridge pressed. */
 	readonly #sentNotes = new SoundingNotes();
+	/** The device's latest pitch bend, waiting for the next frame; null when none waits. */
+	#pendingBend: number | null = null;
+	#bendTimer: unknown = null;
+	#bendShownAt = Number.NEGATIVE_INFINITY;
+	/** The replica's pad shows a bend the device sent. */
+	#deviceBent = false;
 	/** The track LED showing the app's last track selection. */
 	#trackLed: { readonly id: TrackKeyId; readonly state: KeyLedState } | null = null;
 	/** The running playhead: clock ticks since Start and the step LED it lit. */
@@ -416,6 +441,9 @@ export class ReplicaBridge {
 					for (const note of this.#deviceNotes.silence(message.channel)) this.#unlight(note);
 				}
 				return;
+			case 'pitchBend':
+				this.#deviceBend(message.value);
+				return;
 		}
 	}
 
@@ -443,7 +471,10 @@ export class ReplicaBridge {
 		}
 	}
 
-	/** The device plays or ends a note: its key lights white while any channel sounds it. */
+	/**
+	 * The device plays or ends a note: its key lights white while any channel sounds it, or any
+	 * other note shown on the same key.
+	 */
 	#deviceNote(channel: number, note: number, on: boolean): void {
 		const key = keyFor(note);
 		if (!key || !this.#deviceNotes.set(channel, note, on)) return;
@@ -451,13 +482,16 @@ export class ReplicaBridge {
 			this.#unlight(note);
 			return;
 		}
-		this.#deviceNotes.mark(note);
+		this.#deviceNotes.mark(shownNote(note));
 		this.#replica.setLed(key, 'white');
 	}
 
+	/** A device note stopped everywhere: its key goes dark unless another note still shows there. */
 	#unlight(note: number): void {
+		const shown = shownNote(note);
 		const key = keyFor(note);
-		if (key && this.#deviceNotes.unmark(note)) this.#darken(key);
+		if (!key || this.#deviceNotes.soundsAny((other) => shownNote(other) === shown)) return;
+		if (this.#deviceNotes.unmark(shown)) this.#darken(key);
 	}
 
 	/** Turns a keyboard LED the bridge lit off, unless someone else changed it meanwhile. */
@@ -465,7 +499,10 @@ export class ReplicaBridge {
 		if (this.#replica.led(key) === 'white') this.#replica.setLed(key, 'off');
 	}
 
-	/** Another sender plays or ends a note: its key shows pressed while any channel sounds it. */
+	/**
+	 * Another sender plays or ends a note: its key shows pressed while any channel sounds it, or any
+	 * other note shown on the same key.
+	 */
 	#sentNote(channel: number, note: number, on: boolean): void {
 		const key = keyFor(note);
 		if (!key || !this.#sentNotes.set(channel, note, on)) return;
@@ -474,15 +511,42 @@ export class ReplicaBridge {
 			return;
 		}
 		// A key someone holds already shows; it stays theirs.
-		if (this.#replica.isPressed(key)) return;
-		this.#sentNotes.mark(note);
+		if (this.#sentNotes.marked(shownNote(note)) || this.#replica.isPressed(key)) return;
+		this.#sentNotes.mark(shownNote(note));
 		this.#replica.press(key, 'device');
 	}
 
+	/** A sent note stopped everywhere: its key comes up unless another note still shows there. */
 	#unshow(note: number): void {
+		const shown = shownNote(note);
 		const key = keyFor(note);
-		if (key && this.#sentNotes.unmark(note)) this.#replica.release(key, 'device');
+		if (!key || this.#sentNotes.soundsAny((other) => shownNote(other) === shown)) return;
+		if (this.#sentNotes.unmark(shown)) this.#replica.release(key, 'device');
 	}
+
+	/**
+	 * The device bends: the replica's pad follows, at most once a frame and always ending on the
+	 * latest value. While the replica bends the device itself, its pad stays with the pointer.
+	 */
+	#deviceBend(value: number): void {
+		if (this.#bend) return;
+		this.#pendingBend = value;
+		if (this.#bendTimer !== null) return;
+		const wait = BEND_FRAME_MS - (this.#clock.now() - this.#bendShownAt);
+		if (wait <= 0) this.#showBend();
+		else this.#bendTimer = this.#timers.setTimeout(this.#showBend, wait);
+	}
+
+	#showBend = (): void => {
+		this.#bendTimer = null;
+		const value = this.#pendingBend;
+		this.#pendingBend = null;
+		if (value === null || this.#bend) return;
+		this.#bendShownAt = this.#clock.now();
+		const unit = bendToUnit(value);
+		this.#deviceBent = unit !== 0;
+		this.#replica.setBend(unit, 'device');
+	};
 
 	#onPairChange(change: PairChange): void {
 		if (change.kind === 'disconnected') this.#forgetDevice();
@@ -541,6 +605,11 @@ export class ReplicaBridge {
 			const key = keyFor(note);
 			if (key) this.#replica.release(key, 'device');
 		}
+		if (this.#bendTimer !== null) this.#timers.clearTimeout(this.#bendTimer);
+		this.#bendTimer = null;
+		this.#pendingBend = null;
+		if (this.#deviceBent) this.#replica.setBend(0, 'device');
+		this.#deviceBent = false;
 		this.#setTrackLed(null);
 	}
 
