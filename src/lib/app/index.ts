@@ -1,8 +1,9 @@
 /**
  * The app layer: what connects the replica to the device and presents it on the home page. The
- * simulator is the replica's virtual OP-XY (screen, LEDs, transport); the bridge maps replica input
- * to MIDI (through the transport) and mirrors the device back onto the replica; hints explain what
- * cannot be done remotely; the caption shows them, rate-limited.
+ * simulator is the replica's virtual OP-XY (screen, LEDs, transport) and the sound its voice when no
+ * device makes one; the bridge maps replica input to MIDI (through the transport) and mirrors the
+ * device back onto the replica; hints explain what cannot be done remotely; the caption shows them,
+ * rate-limited.
  */
 export { BridgeError, ReplicaBridge, type ReplicaBridgeOptions } from './bridge.svelte';
 export { HINT_REPEAT_MS, HintCaption, type HintCaptionOptions } from './caption.svelte';
@@ -34,4 +35,12 @@ export {
 	TRACK_SELECT_CC,
 	type RemoteRoute
 } from './mapping';
+export {
+	AppSound,
+	getAppSound,
+	setAppSound,
+	SOUND_STORAGE_KEY,
+	type AppSoundOptions,
+	type SoundRuntime
+} from './sound.svelte';
 export { default as StageHint } from './StageHint.svelte';

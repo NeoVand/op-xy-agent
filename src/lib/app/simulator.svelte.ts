@@ -9,7 +9,9 @@
  *   simulator itself changes that key.
  * - **Time:** while it plays, the page's clock moves the playhead, unless a connected OP-XY sends
  *   its clock (COM → clock "both"): then its Start / Stop and every F8 tick drive the transport, so
- *   the steps chase in time with the device.
+ *   the steps chase in time with the device. While the computer makes the sound (`sound.svelte.ts`)
+ *   the playhead follows the audio clock instead (`playheadClock`), so the steps light with what
+ *   plays.
  * - **Device facts:** the device's tempo (measured, else what the app last set) and the track the
  *   app selected with CC102 carry over.
  *
@@ -58,6 +60,7 @@ export class AppSimulator implements ScreenFrameSource {
 	/** The LED states last applied to the replica. */
 	#applied: Partial<Record<KeyId, KeyLedState>> = {};
 	#stop: (() => void) | null = null;
+	#playheadClock = $state.raw<(() => number) | null>(null);
 
 	constructor(options: AppSimulatorOptions) {
 		this.#replica = options.replica;
@@ -80,6 +83,19 @@ export class AppSimulator implements ScreenFrameSource {
 	/** True while a connected OP-XY's clock drives the transport. */
 	get deviceClock(): boolean {
 		return this.#stack?.session.phase === 'ready' && this.#stack.mirror.clockOut;
+	}
+
+	/**
+	 * A clock (ms) the page's playhead follows instead of the frames' time, or null for the frames.
+	 * The sound engine sets its audio clock while it runs, so the steps and the sound share one
+	 * timeline; it must stop advancing only when the sound does.
+	 */
+	get playheadClock(): (() => number) | null {
+		return this.#playheadClock;
+	}
+
+	set playheadClock(clock: (() => number) | null) {
+		this.#playheadClock = clock;
 	}
 
 	/** Starts listening and drawing. Idempotent; returns `stop`. */
@@ -120,15 +136,22 @@ export class AppSimulator implements ScreenFrameSource {
 		if (any) untrack(() => this.#replica.setLeds(changes));
 	}
 
-	/** The page's clock moves the playhead while playing, unless the device's clock does. */
+	/**
+	 * The page's clock moves the playhead while playing, unless the device's clock does: each frame
+	 * advances it by the time since the last one, read from the frames or from `playheadClock`.
+	 */
 	#runClock(): (() => void) | void {
 		if (!this.sim.state.transport.playing || this.deviceClock) return;
 		const { sim } = this;
 		const frames = this.#frames;
-		let last = frames.now();
+		// switching clocks restarts this effect, so each loop reads one clock throughout
+		const clock = this.#playheadClock;
+		const read = (frame: number) => (clock ? clock() : frame);
+		let last = read(frames.now());
 		let handle = frames.request(function step(now: number) {
-			untrack(() => sim.advance(now - last));
-			last = now;
+			const time = read(now);
+			untrack(() => sim.advance(time - last));
+			last = time;
 			handle = frames.request(step);
 		});
 		return () => frames.cancel(handle);

@@ -6,7 +6,7 @@
 	import workSansLatin from '@fontsource-variable/work-sans/files/work-sans-latin-wght-normal.woff2?url';
 	import { onMount } from 'svelte';
 	import { asset } from '$app/paths';
-	import { AppSimulator, setAppSimulator } from '$lib/app';
+	import { AppSimulator, AppSound, setAppSimulator, setAppSound } from '$lib/app';
 	import { browserDeviceOptions, createDeviceStack, setDeviceStack } from '$lib/device';
 	import type { SessionPhase } from '$lib/device';
 	import { ReplicaState, setReplicaState } from '$lib/replica';
@@ -38,6 +38,11 @@
 	const simulator = new AppSimulator({ replica, stack: device });
 	setAppSimulator(simulator);
 	setScreenFrameSource(simulator);
+
+	// Its sound while no OP-XY makes one: synthesized in the browser, silent while a device is
+	// connected unless asked. Nothing is loaded or started until the first key press.
+	const sound = new AppSound({ simulator, replica, stack: device });
+	setAppSound(sound);
 
 	const CONNECTING: readonly SessionPhase[] = [
 		'requesting-access',
@@ -72,7 +77,10 @@
 		status.detect();
 		const stop = device.start();
 		const stopSimulator = simulator.start();
+		// after the simulator: the sound reads what the simulator made of each replica event
+		const stopSound = sound.start();
 		return () => {
+			stopSound();
 			stopSimulator();
 			stop();
 			void device.session.disconnect();
