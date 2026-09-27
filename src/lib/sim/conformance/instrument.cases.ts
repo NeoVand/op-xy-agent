@@ -160,6 +160,15 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(notesOn(d, 1)).toEqual([72]);
 		});
 
+		it('leaves a drum track’s 24 sounds where they are with [+] (ours; device check)', async () => {
+			const d = await start();
+			await d.click('key.plus');
+			await play(d, 'a3');
+			await d.click('step.1');
+			expect(notesOn(d, 1)).toEqual([57]);
+			expect(d.screen()).toMatch(/^drum key A3/);
+		});
+
 		it('does nothing with shift alone: pages without a second layer stay as they are', async () => {
 			const d = await start();
 			await d.click('track.3');
@@ -796,6 +805,19 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(on(d, 'drum').tune).toBe('+0.23');
 		});
 
+		// bug in src/lib/sim/areas/sample/m1.ts (turnDrumKey): a drum key's start and end move in
+		// whole steps, pushed in or not (guide 18, drum sampler: pushed in they move finer)
+		it.skip('moves a drum key’s start and end finer with the encoder pushed in', async () => {
+			const d = await start();
+			await d.turn(2, 10);
+			await d.turn(2, 3, { fine: true });
+			expect(on(d, 'drum').start).toBeGreaterThan(10 / 99);
+			expect(on(d, 'drum').start).toBeLessThan(11 / 99);
+			await d.turn(3, -3, { fine: true });
+			expect(on(d, 'drum').end).toBeGreaterThan(98 / 99);
+			expect(on(d, 'drum').end).toBeLessThan(1);
+		});
+
 		it('steps a drum key’s play mode through key, oneshot, mute group and loop', async () => {
 			const d = await start();
 			const seen: string[] = [];
@@ -833,6 +855,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toMatch(/^sampler, root /);
 			await d.turn(1, 10);
 			expect(on(d, 'drum').start).toBeCloseTo(0.1, 9);
+			await d.turn(1, 5, { fine: true }); // pushed in, the points move finer
+			expect(on(d, 'drum').start).toBeCloseTo(0.105, 9);
 			await d.withShift(() => d.turn(2, 5));
 			expect(on(d, 'drum').tune).toBe('+0.50');
 		});
