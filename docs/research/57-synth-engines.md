@@ -41,8 +41,9 @@
    - Envelope times are exponential in the encoder: attack ≈ 0.0111·e^(10.39·x) s, about 2 s at
      half and minutes at full. Two independent fits agree [E].
    - 24 voices, at most 8 per track [E].
-5. **We rebuilt the sound as a synth core** (§5): band-limited oscillators (minBLEP) with exact hard
-   sync, TPT filters, the measured envelope law, and mipmapped wavetables. It runs sample by sample
+5. **We rebuilt the sound as a synth core** (§5), and all eight engines now play on it:
+   band-limited oscillators (minBLEP) with exact hard sync, TPT filters, the measured envelope law,
+   and mipmapped wavetables. It runs sample by sample
    in an AudioWorklet, and the same code runs in Node, where objective tests measure harmonics,
    aliasing and filter slopes. The engine still makes every decision (play modes, glides, steals);
    the worklet only computes the sound.
@@ -398,14 +399,40 @@ every voice per sample instead.
 - FM operators use DX7-style averaged feedback.
 - Filters are topology-preserving transforms (Zavalishin): a Simper SVF and a four-pole ladder with
   saturating feedback and two-times headroom.
-- Wavetables are stored per octave (512 >> l harmonics). A note reads the richest level below
-  Nyquist and fades in the next one over the top quarter of its octave.
+- Wavetables are stored per octave (512 >> l harmonics, eight samples per cycle of the top one).
+  A note reads the richest level below Nyquist, picked a quarter octave early, and fades in the
+  next one over the top quarter of its octave, so no harmonic ever passes Nyquist. Each level is
+  built the first time a note reads it (one inverse FFT, well under a millisecond), so no note
+  waits on the audio thread for a whole table.
 - Envelopes follow the measured law above. Pitch, filter and engine parameters update every 16
   samples; oscillators, filters and amplitude run every sample.
 
-**Levels and CPU.** Engines aim at RMS ≈ 0.28 at their default M1; `CORE_GAIN` brings them level with
-the Web Audio voices. The budget is 24 voices in real time in one worklet thread: no allocation and no
-per-sample `pow`, `exp` or `tan`, with tables for costly shapes.
+**Levels and CPU.**
+
+- Engines aim at RMS ≈ 0.28 at their default M1. `CORE_GAIN` centres them on the first Web Audio
+  engines: at a new track's settings they sit between −2.9 dB (epiano) and +3.8 dB (simple). The
+  device session will set each engine's own level.
+- Parameters glide over about 4 ms inside the engines (`engines/ramp.ts`), so an LFO or a turned
+  encoder never clicks. hardsync and dissolve have a soft ceiling above ±1 (`engines/guard.ts`) for
+  rare aligned peaks.
+- The budget is 24 voices in real time in one worklet thread: no allocation and no per-sample
+  `pow`, `exp` or `tan`, with tables for costly shapes (`sine.ts`, a 4096-point sine within 4e-7 of
+  `Math.sin`).
+- Measured: engines cost 35–180 ns per voice-sample in Node. 24 voices of all eight together render
+  11× faster than real time in Chromium through the whole graph.
+
+**The engines as built** (constants at the top of each `engines/*.ts`, awaiting §6):
+
+| Engine    | What we built                                                                                                                                                                                                                                                                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| prism     | Two saw/pulse blends. Up to shape 0.8 the saw becomes a square as saw − k·(the saw half a cycle on), so odd harmonics grow while even ones fade with no level dip; above 0.8 the pulse narrows to 27 %. Nine screen ratios; detune up to 30 cents on oscillator 2; stereo pans the two apart and runs detuned right copies only while stereo > 0.       |
+| simple    | The same saw → square blend, width 0.5 − 0.45·pw on the pulse only, white noise ∝ noise², and a left/right pair detuned up to ±10 cents.                                                                                                                                                                                                                |
+| hardsync  | A saw synced at the exact sub-sample instant, 3 octaves up (capped at 9.6 kHz, where its aligned peaks double), a sine sub at the note read off the master's phase, noise, and a two-pole highpass 20 Hz–3 kHz on the sum.                                                                                                                              |
+| dissolve  | Two sines ±45 cents at full detune. Swarm: independent wobble per carrier, jitter on the FM, and a noise band at Q 2. AM by narrow-band noise at the note (Q 8). FM by a 1:1 cosine-phase modulator (the saw-like series at moderate index), DC removed exactly.                                                                                        |
+| epiano    | 1:1 FM: tone raises the index (to 2.2 rad, where 1:1 FM is brightest) and the modulator's feedback (sine → saw); texture is the carrier's shape (sine → triangle → a peaky pickup triangle); punch a partial at 7× the note decaying over 25 ms, ∝ punch² × velocity; tine the index's decay, 8 s → 30 ms (none at 0). The FM level dip is compensated. |
+| axis      | Operator 2 at r × the note phase-modulates operator 1 (index 1.3) and is also heard (0.5, less at high ratios). r runs 0.5 → 1 weighted to unison below 50 (M1 49 ≈ 3 cents: a slow chorus), then steps 1…32 above, gliding over 5 ms. Shape: saw at 0, triangle at 1. Tone: a resonant lowpass 100 Hz–16 kHz. Tremolo up to 0.6 deep, 0.5–10 Hz.       |
+| organ     | Eight drawbar registrations, darkest first: transistor, jazz, theatre, combo, fm, reed, gospel, church. Bass follows r10: 0 is the most bass; towards 1 the 16′ gives way (to nothing, the 4′, highs, or a 7-cent celeste rank). Tremolo up to 0.6 deep, 0.5–15 Hz; type changes crossfade over 20 ms.                                                  |
+| wavetable | Nine tables of our own, 16 frames each: formant (a sine at 0, our ninth, first so that all-zero is a sine), buzz, zap, basic, geometric, fibonacci, fractal, crush, drawbars. Warp: the knee d = 0.5 − 0.41·warp with rounded corners; drift δ = drift³ (periodic again at 1, nothing at warp 0).                                                       |
 
 **Tests.**
 
@@ -534,18 +561,22 @@ message logged in `90-device-probe.md`. Filter and LFO types have no CC and are 
 
 ## 8. File map
 
-| Path                                 | What                                                          |
-| ------------------------------------ | ------------------------------------------------------------- |
-| `src/lib/sound/synth/analysis.ts`    | FFT, harmonic levels, aliasing and spectral-distance measures |
-| `src/lib/sound/synth/blep.ts`        | minBLEP table and buffer, polyBLAMP                           |
-| `src/lib/sound/synth/oscillators.ts` | phase, saw, shape blend (hard-syncable), FM operator          |
-| `src/lib/sound/synth/filters.ts`     | TPT SVF, ladder, one-pole, DC blocker, soft clip              |
-| `src/lib/sound/synth/adsr.ts`        | envelopes on the measured law                                 |
-| `src/lib/sound/synth/wavetable.ts`   | mipmapped tables from partials or cycles                      |
-| `src/lib/sound/synth/noise.ts`       | seeded white noise, smooth random                             |
-| `src/lib/sound/synth/engines/*.ts`   | the eight engines (one module each)                           |
-| `src/lib/sound/synth/core.ts`        | voices, filters per type, scheduling, the render loop         |
-| `src/lib/sound/synth/protocol.ts`    | messages, constants, `CORE_ENGINES`                           |
-| `src/lib/sound/synth/worklet.ts`     | the AudioWorklet processor                                    |
-| `src/lib/sound/synth/host.ts`        | the worklet node, LFO wiring, `WorkletVoice`                  |
-| `src/lib/sound/engine.ts`            | the engine: hands core engines' notes to `WorkletVoice`s      |
+| Path                                      | What                                                          |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| `src/lib/sound/synth/analysis.ts`         | FFT, harmonic levels, aliasing and spectral-distance measures |
+| `src/lib/sound/synth/blep.ts`             | minBLEP table and buffer, polyBLAMP                           |
+| `src/lib/sound/synth/oscillators.ts`      | phase, saw, shape blend (hard-syncable), FM operator          |
+| `src/lib/sound/synth/filters.ts`          | TPT SVF, ladder, one-pole, DC blocker, soft clip              |
+| `src/lib/sound/synth/adsr.ts`             | envelopes on the measured law                                 |
+| `src/lib/sound/synth/wavetable.ts`        | mipmapped tables from partials or cycles                      |
+| `src/lib/sound/synth/noise.ts`            | seeded white noise, smooth random                             |
+| `src/lib/sound/synth/engines/*.ts`        | the eight engines (one module each)                           |
+| `src/lib/sound/synth/engines/ramp.ts`     | click-free parameter glides                                   |
+| `src/lib/sound/synth/engines/guard.ts`    | the soft ceiling                                              |
+| `src/lib/sound/synth/engines/audition.ts` | test support: playing engines, the shared bounds              |
+| `src/lib/sound/synth/sine.ts`             | the table sine                                                |
+| `src/lib/sound/synth/core.ts`             | voices, filters per type, scheduling, the render loop         |
+| `src/lib/sound/synth/protocol.ts`         | messages, constants, `CORE_ENGINES`                           |
+| `src/lib/sound/synth/worklet.ts`          | the AudioWorklet processor                                    |
+| `src/lib/sound/synth/host.ts`             | the worklet node, LFO wiring, `WorkletVoice`                  |
+| `src/lib/sound/engine.ts`                 | the engine: hands core engines' notes to `WorkletVoice`s      |
