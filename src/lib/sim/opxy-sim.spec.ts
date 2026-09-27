@@ -107,7 +107,7 @@ describe('OpxySim: navigation', () => {
 		sim.press('key.com');
 		expect(page(sim, 'com').multiOut).toBe('midi');
 		sim.press('key.m1');
-		expect(sim.frame).toMatchObject({ page: 'text', title: 'system settings' });
+		expect(sim.frame).toMatchObject({ page: 'system-list', title: 'system settings' });
 		sim.press('key.m1');
 		expect(sim.frame.page).toBe('com');
 	});
