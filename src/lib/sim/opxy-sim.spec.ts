@@ -160,7 +160,7 @@ describe('OpxySim: navigation', () => {
 		expect(page(sim, 'filter').type).toBe('z hipass');
 	});
 
-	it('draws the auxiliary tape page, and arrange as honest text until it is drawn', () => {
+	it('draws the auxiliary tape page, then arrange mode', () => {
 		const sim = new OpxySim();
 		sim.press('key.auxiliary');
 		sim.press('track.6');
