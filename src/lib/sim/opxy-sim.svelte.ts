@@ -15,11 +15,11 @@
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
 import { AREAS, ownerOf } from './areas/registry';
+import { turnSamplerPage } from './areas/sample/m1';
 import type { AreaContext } from './areas/types';
 import { buildFrame, buildLeds } from './frames';
 import type { SimInput } from './input';
 import {
-	DRUM_PLAY_MODES,
 	ENGINE_LIST,
 	FILTER_TYPES,
 	GROOVES,
@@ -538,21 +538,9 @@ export class OpxySim {
 		const step = (v: number, min: number, max: number, by = 1) => clamp(v + delta * by, min, max);
 		switch (s.pages.instrument) {
 			case 1: {
+				// sampler engines: the sample area's M1 encoders (areas/sample/m1.ts)
 				if (isSampler(t.engine)) {
-					const k = t.drumKeys[t.drumKey];
-					if (s.shift) {
-						if (e === 0) k.reverse = delta < 0;
-						else if (e === 1) k.pan = step(k.pan, -100, 100, fine ? 1 : 2);
-						else if (e === 2) k.fade = step(k.fade, 0, 99);
-						else k.gain = step(k.gain, -30, 20);
-					} else if (e === 0) {
-						k.tune = Math.round(step(k.tune, -12, 12, fine ? 0.01 : 0.1) * 100) / 100;
-					} else if (e === 1) k.start = step(k.start, 0, k.end);
-					else if (e === 2) k.end = step(k.end, k.start, 99);
-					else if (t.engine === 'drum') {
-						const at = DRUM_PLAY_MODES.indexOf(k.playMode);
-						k.playMode = DRUM_PLAY_MODES[clamp(at + delta, 0, DRUM_PLAY_MODES.length - 1)];
-					}
+					turnSamplerPage(s, e, delta, fine);
 					return;
 				}
 				if (t.engine === 'midi') {

@@ -6,6 +6,7 @@
  * the note says so.
  */
 import type { EngineId } from '$lib/core/opxy';
+import { demoFile, demoRegion } from './areas/sample/demo';
 import { AREA_SCENARIOS } from './areas/scenarios';
 import type { OpxySim } from './opxy-sim.svelte';
 import { defaultTrack, type TrackState } from './params';
@@ -100,11 +101,14 @@ const CORE_SCENARIOS: readonly Scenario[] = [
 		png: 'sample-025-sample-start.png',
 		title: 'M1 · synth sampler',
 		page: 'drum',
-		note: 'Our waveform is a stand-in (no audio); TE shows the root key as an arrow and "G".',
+		note: 'Our waveform is a stand-in drawn from a seed (no audio); the loop spans start to end, as TE’s markers show.',
 		setup: (sim) => {
-			const t = track(sim, 3, 'sampler');
-			t.drumKey = 2;
-			Object.assign(t.drumKeys[2], { tune: -1.22, start: 11, end: 75, fade: 50 });
+			track(sim, 3, 'sampler');
+			Object.assign(sim.state.areas.sample.tracks[2].synth, {
+				file: demoFile(20),
+				root: 55,
+				region: { ...demoRegion(), tune: -1.22 }
+			});
 			page(sim, 1);
 		}
 	},
@@ -113,9 +117,10 @@ const CORE_SCENARIOS: readonly Scenario[] = [
 		png: 'sample-056-tune.png',
 		title: 'M1 · drum sampler (shift)',
 		page: 'drum',
-		note: 'Our waveform is a stand-in (no audio).',
+		note: 'Our waveform is a stand-in drawn from a seed (no audio); key start and end are whole percents, so the markers sit 1–2 px from TE’s.',
 		setup: (sim) => {
 			const t = track(sim, 1);
+			sim.state.areas.sample.tracks[0].keys[0] = demoFile(20);
 			Object.assign(t.drumKeys[0], { start: 11, end: 75, fade: 50, gain: 3 });
 			page(sim, 1);
 			holdShift(sim);
