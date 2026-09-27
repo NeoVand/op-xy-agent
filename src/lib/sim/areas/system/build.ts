@@ -2,6 +2,7 @@
  * From state to what the system area's screen shows (pure). Each page lists what its columns hold
  * and what is selected; `draw.ts` places it the way TE's art does.
  */
+import type { EngineId } from '$lib/core/opxy';
 import { clamp, type SimState } from '../../params';
 import type { SoftLabel } from '../../screen/draw';
 import type { ProjectFrame, ScreenFrame } from '../../screen/frame';
@@ -14,7 +15,7 @@ import type {
 	SystemNamingFrame
 } from './frames';
 import { neighbours } from './naming';
-import { currentGroup, findPreset, presetKey, presetsIn } from './presets';
+import { currentGroup, engineLabel, findPreset, presetKey, presetsIn } from './presets';
 import {
 	DEVICE_ROWS,
 	OS_VERSION,
@@ -182,7 +183,11 @@ function presetsFrame(s: SimState): SystemListFrame {
 		columns: [
 			// TE's art labels engine view "synth" beside the track; "category" is ours
 			column([String(b.track + 1), b.view === 'engine' ? 'synth' : 'category'], null, 2),
-			column(list, list.length ? index : null, ROWS.presets),
+			column(
+				b.view === 'engine' ? list.map((e) => engineLabel(e as EngineId)) : list,
+				list.length ? index : null,
+				ROWS.presets
+			),
 			column(
 				presets.map((p) => p.name),
 				presets.length ? clamp(b.row, 0, presets.length - 1) : null,

@@ -504,7 +504,7 @@ describe('system area: presets (manual: instrument/preset-browser, preset-manage
 		let f = page(s, 'system-list');
 		expect(f.columns[0].items[1]).toBe('synth');
 		expect(picks(f)).toEqual([null, 'prism', 'bass 1']);
-		s.turn(1, -4); // hardsync (engines are listed alphabetically)
+		s.turn(1, -3); // hardsync (listed alphabetically by name, the midi engine as external)
 		s.turn(2, 1);
 		f = page(s, 'system-list');
 		expect(picks(f)).toEqual([null, 'hardsync', 'lead 2']);

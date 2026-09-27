@@ -148,9 +148,14 @@ export function samplerPage(s: SimState): DrumFrame {
 	};
 }
 
-/** One drum key's encoders (the drum sampler's M1 page; manual: drum-key-settings). */
+/**
+ * One drum key's encoders (the drum sampler's M1 page; manual: drum-key-settings). Start and end
+ * move a step of their 0–99 scale a detent, a tenth of a step pushed in (manual: "push in for
+ * finer steps"), like the synth sampler's points.
+ */
 function turnDrumKey(k: DrumKey, e: number, delta: number, fine: boolean, shift: boolean): void {
 	const step = (v: number, min: number, max: number, by = 1) => clamp(v + delta * by, min, max);
+	const tenths = (v: number) => Math.round(v * 10) / 10;
 	if (shift) {
 		if (e === 0) k.reverse = delta < 0;
 		else if (e === 1) k.pan = step(k.pan, -100, 100, fine ? 1 : 2);
@@ -158,8 +163,8 @@ function turnDrumKey(k: DrumKey, e: number, delta: number, fine: boolean, shift:
 		else k.gain = step(k.gain, -30, 20);
 	} else if (e === 0) {
 		k.tune = Math.round(step(k.tune, -12, 12, fine ? 0.01 : 0.1) * 100) / 100;
-	} else if (e === 1) k.start = step(k.start, 0, k.end);
-	else if (e === 2) k.end = step(k.end, k.start, 99);
+	} else if (e === 1) k.start = tenths(step(k.start, 0, k.end, fine ? 0.1 : 1));
+	else if (e === 2) k.end = tenths(step(k.end, k.start, 99, fine ? 0.1 : 1));
 	else {
 		const at = DRUM_PLAY_MODES.indexOf(k.playMode);
 		k.playMode = DRUM_PLAY_MODES[clamp(at + delta, 0, DRUM_PLAY_MODES.length - 1)];

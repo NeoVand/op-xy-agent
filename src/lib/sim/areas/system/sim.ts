@@ -88,6 +88,18 @@ const passes = (id: string) =>
 	id.startsWith('encoder.') ||
 	['key.play', 'key.stop', 'key.record', 'key.minus', 'key.plus'].includes(id);
 
+/**
+ * Keys other areas take before the screen's owner sees them (the sample key, bar, player): on one
+ * of this area's pages they must close it first, or their page would open unseen underneath
+ * (manual: sampling "from any screen").
+ */
+const OPENS_ELSEWHERE: readonly string[] = ['key.sample', 'key.bar', 'key.player'];
+
+const encoderOf = (id: string) => {
+	const m = /^encoder\.([1-4])$/.exec(id);
+	return m ? Number(m[1]) - 1 : -1;
+};
+
 /** Leaves the area's page (the overlay underneath stays). */
 function closePage(s: SimState): void {
 	const sys = sysOf(s);
@@ -266,6 +278,38 @@ function systemSettingsKey(s: SimState, id: string): boolean {
 		sys.notice = 'calibrated';
 	}
 	return n !== null || passOrLeave(s, id);
+}
+
+/** Controller mode with shift held (manual: controller-mode): E1 channel, E2 knobs, E3 octave keys. */
+function turnController(sys: SystemState, e: number, delta: number): void {
+	const c = sys.controller;
+	if (e === 0) c.channel = clamp(c.channel + delta, 1, 16);
+	else if (e === 1) c.knobs = clamp(c.knobs + delta, 0, 1);
+	else if (e === 2) c.octave = delta > 0;
+}
+
+/**
+ * Controller mode and MTP mode take every input, so no other area acts on a key, turn or click
+ * meanwhile (manual: controller-mode: the panel is a MIDI controller then; mtp: the unit waits on the
+ * computer). Their own gestures: shift + com leaves controller mode and shift + E1–E3 set it; in
+ * MTP mode M4 ejects and M1 leaves (TE's text has both).
+ */
+function linkInput(ctx: AreaContext, input: SimInput): boolean {
+	const s = ctx.state;
+	const sys = sysOf(s);
+	if (sys.page === 'controller') {
+		if (input.type === 'press' && input.id === 'key.com' && s.shift) {
+			closePage(s);
+			s.overlay = 'com';
+		} else if (input.type === 'turn' && s.shift) {
+			const e = encoderOf(input.id);
+			const delta = Math.trunc(input.delta);
+			if (e >= 0 && delta !== 0) turnController(sys, e, delta);
+		}
+	} else if (input.type === 'press' && (input.id === 'key.m1' || input.id === 'key.m4')) {
+		closePage(s);
+	}
+	return true;
 }
 
 /** Devices (manual: com/devices: M1 back, M2 forgets the chosen device). */
@@ -558,14 +602,10 @@ export const system: SimArea = {
 			if (sys.power.since !== null && ctx.now() - sys.power.since >= BOOT_MS) finishBoot(s);
 			return true;
 		}
+		if (sys.page === 'controller' || sys.page === 'mtp') return linkInput(ctx, input);
 		if (input.type !== 'press') return false;
-		if (sys.page === 'controller' || sys.page === 'mtp') {
-			// manual: controller-mode: shift + com leaves; every other key is the controller's
-			if (sys.page === 'controller' && input.id === 'key.com' && s.shift) {
-				closePage(s);
-				s.overlay = 'com';
-				return true;
-			}
+		if (sys.page !== null && OPENS_ELSEWHERE.includes(input.id)) {
+			closePage(s);
 			return false;
 		}
 		const key = softKey(input.id);
@@ -612,13 +652,9 @@ export const system: SimArea = {
 			case 'system-settings':
 				return systemSettingsKey(s, id);
 			case 'controller':
+			case 'mtp':
+				// their claim takes every input (`linkInput`)
 				return true;
-			case 'mtp': {
-				// manual: mtp: M4 ejects (TE's text also has M1 leave)
-				const key = softKey(id);
-				if (key === 1 || key === 4) closePage(s);
-				return true;
-			}
 			case 'devices':
 				return devicesKey(s, id);
 			case 'folder':
@@ -683,15 +719,6 @@ export const system: SimArea = {
 			}
 			case 'preset-settings':
 				return turnList(s, PRESET_SECTIONS, sys.presetCursor, e, delta);
-			case 'controller': {
-				// manual: controller-mode: with shift, E1 channel, E2 knob mode, E3 octave keys
-				if (!s.shift) return;
-				const c = sys.controller;
-				if (e === 0) c.channel = clamp(c.channel + delta, 1, 16);
-				else if (e === 1) c.knobs = clamp(c.knobs + delta, 0, 1);
-				else if (e === 2) c.octave = delta > 0;
-				return;
-			}
 			case 'devices': {
 				// manual: devices: E1 device, E2 setting, E3 / E4 value
 				const d = sys.deviceCursor;

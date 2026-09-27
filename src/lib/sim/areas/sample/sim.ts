@@ -10,7 +10,7 @@
  * "ours".
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
-import { clamp, isSampler, type SimState } from '../../params';
+import { clamp, type SimState } from '../../params';
 import type { AreaContext, LedMap, SimArea } from '../types';
 import type {
 	KeyboardView,
@@ -29,9 +29,9 @@ import {
 	finish,
 	keyNote,
 	playTake,
-	recordTarget,
 	recordedMs,
 	recordingStart,
+	targetOf,
 	timerText
 } from './record';
 import {
@@ -89,13 +89,18 @@ export function formatGain(db: number): string {
 	return `${v < 0 ? '–' : '+'}${Math.abs(v)}`;
 }
 
-/** The instrument M1 page of a track running one of `engines` is showing, nothing over it. */
+/**
+ * The instrument M1 page of a track running one of `engines` is showing, nothing over it (the
+ * system area's pages, such as the preset browser, open without an overlay: their soft keys stay
+ * theirs while a note is held).
+ */
 function onM1(s: SimState, engines: readonly string[]): boolean {
 	return (
 		s.mode === 'instrument' &&
 		s.overlay === null &&
 		s.sub === null &&
 		s.picker === null &&
+		s.areas.system.page === null &&
 		s.pages.instrument === 1 &&
 		engines.includes(s.tracks[s.track].engine)
 	);
@@ -143,7 +148,7 @@ function sampleKey(s: SimState): void {
 	const area = s.areas.sample;
 	const key = heldKey(s);
 	if (key >= 0 || s.shift) {
-		if (key >= 0 && isSampler(s.tracks[s.track].engine)) s.tracks[s.track].drumKey = key;
+		if (key >= 0 && targetOf(s) !== 'library') s.tracks[s.track].drumKey = key;
 		area.library.previewing = false;
 		openPage(s, 'library');
 		return;
@@ -203,7 +208,7 @@ function load(s: SimState, file: SampleFile): boolean {
 	const area = s.areas.sample;
 	const t = s.tracks[s.track];
 	const st = area.tracks[s.track];
-	switch (t.engine) {
+	switch (targetOf(s)) {
 		case 'drum': {
 			st.keys[t.drumKey] = { ...file };
 			const k = t.drumKeys[t.drumKey];
@@ -296,7 +301,7 @@ function cardSample(s: SimState): { file: SampleFile | null; tone: 'white' | 'li
 	const area = s.areas.sample;
 	const t = s.tracks[s.track];
 	const st = area.tracks[s.track];
-	switch (recordTarget(t)) {
+	switch (targetOf(s)) {
 		case 'library':
 			return { file: area.record.take, tone: 'white' };
 		case 'sampler':
@@ -313,7 +318,7 @@ function cardSample(s: SimState): { file: SampleFile | null; tone: 'white' | 'li
 export function recordFrame(s: SimState): SampleRecordFrame {
 	const area = s.areas.sample;
 	const rec = area.record;
-	const target = recordTarget(s.tracks[s.track]);
+	const target = targetOf(s);
 	const start = recordingStart(rec);
 	const recording = start !== null;
 	const armed = rec.trigger !== null && !recording;
@@ -361,7 +366,7 @@ function pressRecord(ctx: AreaContext, id: string): boolean {
 	const area = s.areas.sample;
 	const rec = area.record;
 	const t = s.tracks[s.track];
-	const target = recordTarget(t);
+	const target = targetOf(s);
 	const keyed = target === 'drum' || target === 'multisampler';
 	const m = /^key\.m([1-4])$/.exec(id);
 	if (m) {
@@ -567,7 +572,7 @@ export function libraryFrame(s: SimState): SampleLibraryFrame {
 	const folders = siblings.filter((n) => n.kind === 'folder');
 	const item = clamp(area.library.item, 0, Math.max(0, entries.length - 1));
 	const selected = entries[item];
-	const engine = s.tracks[s.track].engine;
+	const target = targetOf(s);
 	return {
 		page: 'sample-library',
 		folders: column(
@@ -579,7 +584,7 @@ export function libraryFrame(s: SimState): SampleLibraryFrame {
 			selected && selected.kind === 'file'
 				? wave(selected.file, 0, selected.file.seconds, TILE_COLUMNS)
 				: null,
-		keyControls: engine === 'drum' || engine === 'multisampler'
+		keyControls: target === 'drum' || target === 'multisampler'
 	};
 }
 
@@ -602,8 +607,9 @@ function turnLibrary(s: SimState, e: number, delta: number): void {
 	}
 	const entries = browse(s.areas.sample).entries;
 	lib.item = clamp(lib.item + delta, 0, Math.max(0, entries.length - 1));
-	// a sample plays as soon as it is selected (manual: sample-library "preview")
-	lib.previewing = entries[lib.item]?.kind === 'file';
+	// a sample plays as soon as it is selected (manual: sample-library "preview"), unless the system
+	// setting for it (OS 1.1.17, manual: "preview-setting") is off
+	lib.previewing = entries[lib.item]?.kind === 'file' && s.areas.system.system.preview;
 }
 
 /** A click in the library: enter a sub-folder, or load the sample (manual: sample-library). */
@@ -626,8 +632,8 @@ function clickLibrary(s: SimState): void {
 function pressLibrary(ctx: AreaContext, id: string): boolean {
 	const s = ctx.state;
 	const lib = s.areas.sample.library;
-	const engine = s.tracks[s.track].engine;
-	const keyed = engine === 'drum' || engine === 'multisampler';
+	const target = targetOf(s);
+	const keyed = target === 'drum' || target === 'multisampler';
 	const m = /^key\.m([1-4])$/.exec(id);
 	if (m) {
 		const n = Number(m[1]);
@@ -650,7 +656,7 @@ function pressLibrary(ctx: AreaContext, id: string): boolean {
 		return false;
 	}
 	const k = keyIndex(id);
-	if (k >= 0 && isSampler(engine)) {
+	if (k >= 0 && target !== 'library') {
 		// the key the library loads into (manual: sample-library "from-key")
 		s.tracks[s.track].drumKey = k;
 		return true;
@@ -745,7 +751,8 @@ export const sample: SimArea = {
 			if (area.slicer.selected !== null) light(area.slicer.selected, 'white');
 			return;
 		}
-		if (t.engine !== 'drum' && t.engine !== 'multisampler') return;
+		const target = targetOf(s);
+		if (target !== 'drum' && target !== 'multisampler') return;
 		// keys holding a sample glow; the selected one is lit (manual: drum-sampler "record")
 		if (area.page === 'record') {
 			for (const k of filledKeys(s)) {

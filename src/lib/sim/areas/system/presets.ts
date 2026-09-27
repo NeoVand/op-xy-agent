@@ -7,14 +7,20 @@
  */
 import { ENGINE_IDS, type EngineId } from '$lib/core/opxy';
 import { clamp, defaultTrack, type SimState, type TrackState } from '../../params';
+import type { SamplerTrack } from '../sample/state';
 import { PRESET_CATEGORIES, SNAPSHOT_FOLDER, type PresetEntry } from './catalogue';
 import { defaultPresetSettings, type PresetBrowserState, type PresetSettings } from './state';
 
 /** A preset's key: `folder/name`. */
 export const presetKey = (p: Pick<PresetEntry, 'folder' | 'name'>) => `${p.folder}/${p.name}`;
 
-/** Engines in the order the browser lists them (alphabetical, like its other lists). */
-const ENGINES_SORTED: readonly EngineId[] = [...ENGINE_IDS].sort();
+/** How engine view names an engine: TE's art lists the midi engine as external (instrument-118). */
+export const engineLabel = (engine: EngineId): string => (engine === 'midi' ? 'external' : engine);
+
+/** Engines in the order the browser lists them (alphabetical by name, like its other lists). */
+const ENGINES_SORTED: readonly EngineId[] = [...ENGINE_IDS].sort((a, b) =>
+	engineLabel(a).localeCompare(engineLabel(b))
+);
 
 /**
  * The middle column: the categories that have presets, the snapshot folder and the user folders
@@ -122,8 +128,37 @@ type Sound = Pick<
 	| 'midi'
 >;
 
-/** A track's sound with its preset settings, as a user preset stores it. */
-export function soundOf(t: TrackState, settings: PresetSettings): string {
+/** What a sampler engine plays, as a saved sound keeps it: the part of the sampler its engine uses. */
+type Samples = Partial<Pick<SamplerTrack, 'keys' | 'synth' | 'zones'>>;
+
+/** A saved sound: the track's sound, its preset settings and, on a sampler track, its samples. */
+interface SavedSound {
+	sound: Sound;
+	settings: PresetSettings;
+	samples?: Samples;
+}
+
+/** The samples a track's engine plays: the drum keys, the synth sampler's sample or the zones. */
+function samplesOf(s: SimState, track: number): Samples | undefined {
+	const st = s.areas.sample.tracks[track];
+	switch (s.tracks[track].engine) {
+		case 'drum':
+			return { keys: st.keys };
+		case 'sampler':
+			return { synth: st.synth };
+		case 'multisampler':
+			return { zones: st.zones };
+		default:
+			return undefined;
+	}
+}
+
+/**
+ * A track's sound with its preset settings and its samples, as a user preset stores it (manual:
+ * save-copy-scramble: saving copies the track's samples into the preset).
+ */
+export function soundOf(s: SimState, track: number): string {
+	const t = s.tracks[track];
 	const sound: Sound = {
 		engine: t.engine,
 		m1: t.m1,
@@ -137,21 +172,37 @@ export function soundOf(t: TrackState, settings: PresetSettings): string {
 		drumKeys: t.drumKeys,
 		midi: t.midi
 	};
-	return JSON.stringify({ sound, settings });
+	const saved: SavedSound = {
+		sound,
+		settings: s.areas.system.presetSettings[track],
+		samples: samplesOf(s, track)
+	};
+	return JSON.stringify(saved);
+}
+
+/** Puts a saved sound onto a track: its sound, its preset settings and the samples it brings. */
+function applySound(s: SimState, track: number, json: string): SavedSound {
+	const saved = JSON.parse(json) as SavedSound;
+	Object.assign(s.tracks[track], saved.sound);
+	s.areas.system.presetSettings[track] = saved.settings;
+	if (saved.samples) {
+		const st = s.areas.sample.tracks[track];
+		Object.assign(st, saved.samples);
+		st.selection = [];
+	}
+	return saved;
 }
 
 /**
- * Loads a preset onto an instrument track: the whole sound and its preset settings change, the
- * steps and the mixer strip stay (manual: preset-browser: "replaces the track's whole sound").
+ * Loads a preset onto an instrument track: the whole sound and its preset settings change, with
+ * the samples a saved sound brings; the steps and the mixer strip stay (manual: preset-browser:
+ * "replaces the track's whole sound"). Our factory placeholders leave the samples alone.
  */
 export function loadPreset(s: SimState, track: number, preset: PresetEntry): void {
 	const t = s.tracks[track];
 	const sys = s.areas.system;
-	if (preset.sound) {
-		const saved = JSON.parse(preset.sound) as { sound: Sound; settings: PresetSettings };
-		Object.assign(t, saved.sound);
-		sys.presetSettings[track] = saved.settings;
-	} else {
+	if (preset.sound) applySound(s, track, preset.sound);
+	else {
 		const fresh = defaultTrack(preset.engine);
 		const sound: Sound = {
 			engine: fresh.engine,
@@ -295,7 +346,7 @@ export function saveSound(s: SimState, track: number, inPlace: boolean): PresetE
 	const sys = s.areas.system;
 	const b = sys.presets;
 	const t = s.tracks[track];
-	const sound = soundOf(t, sys.presetSettings[track]);
+	const sound = soundOf(s, track);
 	const from = findPreset(b, sys.trackPresets[track]);
 	if (inPlace && from?.user && from.folder === SNAPSHOT_FOLDER) {
 		const updated: PresetEntry = { ...from, engine: t.engine, sound };
@@ -314,10 +365,10 @@ export function saveSound(s: SimState, track: number, inPlace: boolean): PresetE
 	return preset;
 }
 
-/** `Tn + M2` copies the track's sound (with its preset settings). */
+/** `Tn + M2` copies the track's sound (with its preset settings and samples). */
 export function copySound(s: SimState, track: number): void {
 	const sys = s.areas.system;
-	const saved = JSON.parse(soundOf(s.tracks[track], sys.presetSettings[track])) as object;
+	const saved = JSON.parse(soundOf(s, track)) as SavedSound;
 	sys.sound = JSON.stringify({ ...saved, preset: sys.trackPresets[track] });
 }
 
@@ -325,9 +376,7 @@ export function copySound(s: SimState, track: number): void {
 export function pasteSound(s: SimState, track: number): boolean {
 	const sys = s.areas.system;
 	if (!sys.sound) return false;
-	const saved = JSON.parse(sys.sound) as { sound: Sound; settings: PresetSettings; preset: string };
-	Object.assign(s.tracks[track], saved.sound);
-	sys.presetSettings[track] = saved.settings;
+	const saved = applySound(s, track, sys.sound) as SavedSound & { preset: string };
 	sys.trackPresets[track] = saved.preset;
 	return true;
 }
