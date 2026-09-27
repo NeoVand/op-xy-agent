@@ -1,8 +1,8 @@
 /**
  * Our behavioural simulator of the OP-XY's user interface (decision D10). The firmware is closed,
  * so this reproduces what the manual documents: the main modes, the module pages M1–M4 and their
- * shift layers, track selection, the tempo / project / COM pages, encoder turns and clicks with
- * plausible ranges, tap tempo, the transport and the LEDs. Input arrives as the replica's events
+ * shift layers, track selection and links, the tempo / project / COM pages, encoder turns and clicks
+ * with plausible ranges, tap tempo, the transport and the LEDs. Input arrives as the replica's events
  * (press, release, turn, click by control id); `frame` is what the screen shows, `leds` what the
  * key windows light. State is one reactive object, so Svelte views update as it changes.
  *
