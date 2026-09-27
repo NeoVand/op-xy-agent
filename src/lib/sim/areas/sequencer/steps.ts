@@ -37,6 +37,7 @@ import {
 	activePattern,
 	activeSequence,
 	activeTrack,
+	editHolds,
 	heldKeys,
 	heldNotes,
 	heldSteps,
@@ -49,16 +50,16 @@ import {
 } from './model';
 import { moveCursor } from './recording';
 
-/** Everything held counts as edited: its release does nothing more. */
-function editHolds(s: SimState): void {
-	for (const hold of Object.values(seq(s).holds)) {
-		hold.edited = true;
-		hold.place = false;
-	}
+/**
+ * Remembers the sequence for undo at the first edit made while steps are held, so one undo takes
+ * back the whole gesture (keys toggled, locks turned, nudges, extends).
+ */
+function rememberOnce(s: SimState): void {
+	const st = seq(s);
+	if (st.holdUndo) return;
+	remember(s);
+	st.holdUndo = true;
 }
-
-/** Whether a held step has not been edited yet (the first edit remembers for undo). */
-const freshHold = (s: SimState) => Object.values(seq(s).holds).some((h) => !h.edited);
 
 /** A step key (0–15) went down. */
 export function stepPress(ctx: AreaContext, key: number): void {
@@ -69,6 +70,7 @@ export function stepPress(ctx: AreaContext, key: number): void {
 	const index = stepIndex(s, key);
 	if (index >= pattern.length) return;
 	const now = ctx.now();
+	if (Object.keys(st.holds).length === 0) st.holdUndo = false;
 
 	// a later step pressed while a step with notes is held: stretch its notes to here
 	const from = Object.entries(st.holds)
@@ -76,7 +78,7 @@ export function stepPress(ctx: AreaContext, key: number): void {
 		.map(([, h]) => h)
 		.pop();
 	if (from) {
-		remember(s);
+		rememberOnce(s);
 		extendNotes(pattern, from.index, index);
 		from.edited = true;
 		st.holds[id] = { index, since: now, notes: false, place: false, edited: true };
@@ -88,7 +90,7 @@ export function stepPress(ctx: AreaContext, key: number): void {
 	const step = pattern.steps[index];
 	const keys = heldNotes(s);
 	if (keys.length > 0) {
-		remember(s);
+		rememberOnce(s);
 		if (hasNotes(step)) for (const note of keys) toggleNote(pattern, index, note);
 		else toggleStep(pattern, index, keys);
 		if (keys.length === 1) st.single = { note: keys[0], key: heldKeys(s)[0] };
@@ -120,7 +122,8 @@ export function stepRelease(ctx: AreaContext, key: number): void {
 		step.notes = [];
 		return;
 	}
-	if (hold.place) {
+	// notes that arrived meanwhile (a live take) stay: placing toggles, it would clear them
+	if (hold.place && !hasNotes(step)) {
 		remember(s);
 		if (st.clipboard) pasteStep(pattern, hold.index, st.clipboard);
 		else toggleStep(pattern, hold.index, [activeSequence(s).lastNote]);
@@ -136,7 +139,7 @@ export function keyboardPress(s: SimState, key: number): void {
 	const held = heldSteps(s);
 	if (held.length > 0) {
 		const pattern = activePattern(s);
-		if (freshHold(s)) remember(s);
+		rememberOnce(s);
 		for (const index of held) toggleNote(pattern, index, note);
 		editHolds(s);
 		return;
@@ -156,7 +159,7 @@ export function lockTurn(s: SimState, e: number, delta: number, fine: boolean): 
 	const track = activeTrack(s);
 	if (indexes.length === 0 || !target || !track) return false;
 	const pattern = activePattern(s);
-	if (freshHold(s)) remember(s);
+	rememberOnce(s);
 	for (const index of indexes) {
 		const locks = pattern.steps[index].locks;
 		setLock(pattern, index, target.id, turnedValue(target, track, locks, delta, fine));
@@ -181,7 +184,7 @@ export function plusMinus(s: SimState, direction: -1 | 1): boolean {
 	const held = heldSteps(s);
 	if (held.length > 0) {
 		if (canNudge(pattern)) {
-			if (freshHold(s)) remember(s);
+			rememberOnce(s);
 			for (const index of held) nudgeStep(pattern, index, direction);
 		}
 		editHolds(s);

@@ -51,6 +51,8 @@ export interface SequencerState {
 	// step keys (manual: step-entry, copy-step, extend-notes, parameter-locks)
 	/** Step keys held now, by key id (`step.5`). */
 	holds: Record<string, StepHold>;
+	/** The steps held now have had their first edit, which remembered the sequence for undo. */
+	holdUndo: boolean;
 	/** A step copied by holding it: the next empty step pressed gets it. */
 	clipboard: SeqStep | null;
 	/** The lock turned last (pattern step and parameter id), for the screen. */
@@ -105,6 +107,7 @@ export function initialSequencer(): SequencerState {
 		selection: [],
 		component: null,
 		holds: {},
+		holdUndo: false,
 		clipboard: null,
 		lastLock: null,
 		octave: 0,

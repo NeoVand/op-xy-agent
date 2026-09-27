@@ -17,6 +17,10 @@
  * names a behaviour but not its numbers (bend curves, ramp spacing, random chances, "every Nth
  * pass"), the choice is ours and marked so. Groove (bar menu E3 with the tempo page's groove type)
  * is not applied here: TE's groove templates are unknown.
+ *
+ * Locks come back per step as parameter ids → values; `areas/sequencer/locks.ts` maps an id to the
+ * track parameter it sets (`lockParam(id).set`). Between locked steps a parameter jumps, unless the
+ * pattern's `smoothing` (bar menu E4, 0–99) asks the engine to glide there.
  */
 import {
 	ARP_PATTERNS,
@@ -455,13 +459,7 @@ export function advancePlayhead(
 		const again = stepEvents(pattern, head.step, head.passes[head.step] ?? 1, rng, options);
 		return { head: next, play: again, retrigger: true };
 	}
-	const length = pattern.length;
-	let step: number;
-	if (head.step < 0) step = 0;
-	else if (head.next === 'align') step = clock % length;
-	else if (head.next !== null) step = head.next;
-	else step = head.step + 1;
-	step = ((step % length) + length) % length;
+	const step = stepAfter(pattern, head, clock);
 	const passes = [...head.passes];
 	passes[step] = (passes[step] ?? 0) + 1;
 	const play = stepEvents(pattern, step, passes[step], rng, options);
@@ -480,6 +478,25 @@ export function advancePlayhead(
 	};
 }
 
+/** The step a finished visit moves on to: the first, the jump's target, realigned, or the next. */
+function stepAfter(pattern: Pattern, head: Playhead, clock: number): number {
+	const length = pattern.length;
+	let step: number;
+	if (head.step < 0) step = 0;
+	else if (head.next === 'align') step = clock % length;
+	else if (head.next !== null) step = head.next;
+	else step = head.step + 1;
+	return ((step % length) + length) % length;
+}
+
+/** Components that change the walk (skip step component can switch the others off). */
+const FLOW_KINDS: ReadonlySet<StepComponentKind> = new Set([
+	'pulse',
+	'pulse hold',
+	'jump',
+	'skip step component'
+]);
+
 /** Whether a pattern changes the playhead's walk (pulse, pulse hold or jump on a playing step). */
 export function hasFlowComponents(pattern: Pattern): boolean {
 	return pattern.steps
@@ -490,17 +507,70 @@ export function hasFlowComponents(pattern: Pattern): boolean {
 }
 
 /**
+ * The walk without the sound, for LEDs: one slot of {@link advancePlayhead} that looks only at
+ * pulse, pulse hold, jump and skip step component, drawing randomness only for them, and counting
+ * passes in place (the caller owns the playhead).
+ */
+function advanceFlow(pattern: Pattern, head: Playhead, rng: Rng): Playhead {
+	const clock = head.clock + 1;
+	if (head.step >= 0 && head.slot + 1 < head.slots) return { ...head, slot: head.slot + 1, clock };
+	const step = stepAfter(pattern, head, clock);
+	const passes = head.passes as number[];
+	passes[step] = (passes[step] ?? 0) + 1;
+	const s = pattern.steps[step];
+	const skip = getComponent(s, 'skip step component');
+	const active = !skip || playsOnPass(skip.value, passes[step], rng);
+	const pulse = active ? getComponent(s, 'pulse') : undefined;
+	const hold = active ? getComponent(s, 'pulse hold') : undefined;
+	const jump = active ? getComponent(s, 'jump') : undefined;
+	const repeats = pulse ? countOf(pulse.value, rng) : 0;
+	const held = hold ? countOf(hold.value, rng) : 0;
+	return {
+		step,
+		slot: 0,
+		slots: 1 + repeats + held,
+		repeats,
+		next: jump ? jumpTarget(jump.value, step, pattern.length, rng) : null,
+		passes,
+		clock
+	};
+}
+
+/** What a pattern's walk depends on: its length and its flow components (a memo key). */
+function flowKey(pattern: Pattern, seed: number): string {
+	let key = `${seed}/${pattern.length}`;
+	for (let i = 0; i < pattern.length; i++) {
+		for (const c of pattern.steps[i].components) {
+			if (FLOW_KINDS.has(c.kind)) key += `/${i}.${c.kind}.${c.value}`;
+		}
+	}
+	return key;
+}
+
+/** The LED walks, carried forward from call to call (a memo: the answers do not depend on it). */
+const walks = new WeakMap<Pattern, { key: string; slot: number; head: Playhead; rng: Rng }>();
+
+/**
  * The step playing at `position` (sixteenths since play) for LEDs: plain `stepAt` unless pulse,
- * pulse hold or jump change the walk, which is then replayed from the start with a seeded random
- * source (so the answer is stable from frame to frame). Negative positions (a count-in) wrap.
+ * pulse hold or jump change the walk, which then runs from the start with a seeded random source
+ * (so the answer is stable from frame to frame), carried forward between calls while the flow
+ * components stay the same. With random counts or jumps the sound engine's own draws decide what
+ * really plays; without, both walks agree. Negative positions (a count-in) wrap.
  */
 export function playheadAt(pattern: Pattern, position: number, seed = 1): number {
 	if (position < 0 || !hasFlowComponents(pattern)) return stepAt(pattern, position);
 	const slots = Math.floor(position / pattern.scale);
-	const rng = seededRng(seed);
-	let head = startPlayhead();
-	for (let i = 0; i <= slots; i++) head = advancePlayhead(pattern, head, rng).head;
-	return head.step;
+	const key = flowKey(pattern, seed);
+	let walk = walks.get(pattern);
+	if (!walk || walk.key !== key || walk.slot > slots) {
+		walk = { key, slot: -1, head: startPlayhead(), rng: seededRng(seed) };
+		walks.set(pattern, walk);
+	}
+	while (walk.slot < slots) {
+		walk.head = advanceFlow(pattern, walk.head, walk.rng);
+		walk.slot += 1;
+	}
+	return walk.head.step;
 }
 
 // ─────────────────────────────────────────────────────────────────────────── players

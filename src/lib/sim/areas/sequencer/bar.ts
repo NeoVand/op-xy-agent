@@ -29,6 +29,7 @@ import {
 	TAP_MS,
 	activePattern,
 	activeSequence,
+	editHolds,
 	keyboardIndex,
 	playingStep,
 	remember,
@@ -48,10 +49,7 @@ export function barPress(ctx: AreaContext): void {
 	}
 	if (s.overlay !== 'bar') st.barReturn = { overlay: s.overlay, sub: s.sub, picker: s.picker };
 	// a step held meanwhile is part of another gesture now: its release must not clear or place
-	for (const hold of Object.values(st.holds)) {
-		hold.edited = true;
-		hold.place = false;
-	}
+	editHolds(s);
 	s.overlay = 'bar';
 	s.sub = null;
 	s.picker = null;

@@ -26,6 +26,7 @@ import {
 	activeBank,
 	activePattern,
 	barDown,
+	editHolds,
 	heldKeys,
 	heldSteps,
 	keyNote,
@@ -121,6 +122,8 @@ function claimPress(ctx: AreaContext, id: string): boolean {
 	}
 	if (id === 'key.shift') {
 		st.chordFresh = true;
+		// a step held first then shift: a lock on the shift layer, never a tap
+		editHolds(s);
 		if (!barDown(s)) endComponents(s);
 		return false;
 	}
@@ -164,8 +167,14 @@ function claimPress(ctx: AreaContext, id: string): boolean {
 		recordKey(s, id, key);
 		return false;
 	}
-	// another track: a copied step stays with the one it came from
-	if (/^track\.[1-8]$/.test(id)) st.clipboard = null;
+	// another track: a copied step stays with the one it came from, and so do a player's kept
+	// notes (ours; OS 1.1.21 also lets them go when the pattern changes); steps held belong to the
+	// track they were pressed on
+	if (/^track\.[1-8]$/.test(id)) {
+		st.clipboard = null;
+		st.sustained = [];
+		editHolds(s);
+	}
 	return false;
 }
 

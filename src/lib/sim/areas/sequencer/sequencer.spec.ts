@@ -11,6 +11,7 @@ import {
 	describeComponent,
 	naturalIndex
 } from './components';
+import { flashing } from './leds';
 import { lockParam, lockTarget, lockedTrack, turnedValue } from './locks';
 import { COUNT_IN } from './recording';
 
@@ -352,6 +353,9 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		});
 		expect(sim.track.envelope).toBe('filter');
 		expect(sim.track.sends[2]).toBe(0);
+		// one undo takes back the whole held gesture
+		sim.combo('key.shift', 'key.record');
+		expect(locks(0)).toEqual({ 'filter.cutoff': 79 });
 	});
 
 	it('locks sampler keys (fine tune included) but not the midi engine', () => {
@@ -761,6 +765,16 @@ describe('players (manual: players/*)', () => {
 		expect(litKeys(sim)).toEqual(['e4']);
 		sim.press('key.stop');
 		expect(litKeys(sim)).toEqual([]);
+		// keys held down run it too: the keyboard shows the note sounding, not every key held
+		down(sim, 'keyboard.d4');
+		down(sim, 'keyboard.a4');
+		expect(litKeys(sim).sort()).toEqual(['a4', 'd4']);
+		sim.press('key.play');
+		expect(litKeys(sim)).toEqual(['d4']);
+		sim.advance(SIXTEENTH);
+		expect(litKeys(sim)).toEqual(['a4']);
+		up(sim, 'keyboard.d4');
+		up(sim, 'keyboard.a4');
 	});
 
 	it('holds notes until the next ones with the hold player', () => {
@@ -813,6 +827,24 @@ describe('players (manual: players/*)', () => {
 		expect(page(sim, 'player').cards.map((c) => c.value)).toEqual(['40', 'random', '', 'on']);
 		sim.press('keyboard.g4');
 		expect(litKeys(sim)).toEqual(['g4']);
+	});
+});
+
+describe('flashing LEDs', () => {
+	it('tells a host when an LED flashes, so it can keep the clock running while stopped', () => {
+		const { sim } = rig();
+		expect(flashing(sim.state)).toBe(false);
+		down(sim, 'key.record');
+		sim.press('key.play'); // armed
+		expect(flashing(sim.state)).toBe(true);
+		up(sim, 'key.record');
+		sim.press('key.record'); // disarmed
+		expect(flashing(sim.state)).toBe(false);
+		down(sim, 'key.shift');
+		sim.press('step.1');
+		expect(flashing(sim.state)).toBe(true);
+		up(sim, 'key.shift');
+		expect(flashing(sim.state)).toBe(false);
 	});
 });
 

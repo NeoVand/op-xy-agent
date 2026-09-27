@@ -344,6 +344,23 @@ describe('the walk (pulse, pulse hold, jump) and playheadAt', () => {
 		const random = withStep(2, [60], { jump: 0 });
 		expect(playheadAt(random, 40)).toBe(playheadAt(random, 40));
 	});
+
+	it('carries the LED walk forward, starting over when the flow changes or time goes back', () => {
+		const p = withStep(1, [60], { pulse: 2 });
+		p.length = 4;
+		expect(playheadAt(p, 5)).toBe(3);
+		expect(playheadAt(p, 9)).toBe(1);
+		expect(playheadAt(p, 10)).toBe(2);
+		expect(playheadAt(p, 2)).toBe(1);
+		setComponentValue(p, [1], 'pulse', 1);
+		expect(playheadAt(p, 3)).toBe(2);
+		// a long run agrees with the full walk, and costs little once walked
+		const long = withStep(3, [60], { jump: 1, 'skip step component': 3 });
+		setComponentValue(long, [6], 'pulse hold', 2);
+		const full = walk(long, 5001).head.step;
+		expect(playheadAt(long, 5000)).toBe(full);
+		expect(playheadAt(long, 5001)).toBe(walk(long, 5002).head.step);
+	});
 });
 
 describe('players (manual: players/*)', () => {

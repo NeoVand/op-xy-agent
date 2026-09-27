@@ -14,11 +14,12 @@
  * - otherwise notes white, held steps white, and the playhead chasing: an empty step lights, a step
  *   with notes dims.
  *
- * The keyboard lights the keys held; the notes of a held step [step-entry] or of step recording's
- * cursor; with shift and steps selected, the components on them (white keys) and the chosen one's
- * digit (black key); with the bar menu up, the track scale's black key; and a player's notes.
- * Flashing follows the simulator clock, which the app advances while playing; stopped, a flashing
- * LED stays lit.
+ * The keyboard lights the keys held, or with a player on the notes it sounds (hold's kept notes,
+ * maestro's chord, the arpeggio's note of the moment while playing) [players]; the notes of a held
+ * step [step-entry] or of step recording's cursor; with shift and steps selected, the components
+ * on them (white keys) and the chosen one's digit (black key); with the bar menu up, the track
+ * scale's black key. Flashing follows the simulator clock, which the app advances while playing;
+ * stopped, a flashing LED stays lit.
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
@@ -51,6 +52,16 @@ import { playerNotes } from './players';
 export function sequencerLeds(s: SimState, leds: LedMap): void {
 	stepLeds(s, leds);
 	keyboardLeds(s, leds);
+}
+
+/**
+ * Whether an LED is flashing or filling now (armed, counting in, steps selected with shift, the
+ * clear gesture): a host should keep advancing the simulator's clock while this is true, even with
+ * playback stopped, for the LEDs to move.
+ */
+export function flashing(s: SimState): boolean {
+	const st = seq(s);
+	return st.armed || st.countIn || st.clearClock !== null || (s.shift && st.selection.length > 0);
 }
 
 function stepLeds(s: SimState, leds: LedMap): void {
@@ -134,10 +145,14 @@ function keyboardLeds(s: SimState, leds: LedMap): void {
 		notes(pattern.steps[heldSet[0]].notes.map((n) => n.note));
 	} else {
 		if (st.cursor !== null) notes(pattern.steps[st.cursor].notes.map((n) => n.note));
-		notes(playerNotes(s) ?? []);
-		KEYBOARD_NOTE_NAMES.forEach((name, i) => {
-			if (s.held.includes(`keyboard.${name}`)) lit.add(i);
-		});
+		// a player on shows the notes it sounds (the arpeggio's one at a time); else the keys held
+		const sounding = playerNotes(s);
+		if (sounding) notes(sounding);
+		else {
+			KEYBOARD_NOTE_NAMES.forEach((name, i) => {
+				if (s.held.includes(`keyboard.${name}`)) lit.add(i);
+			});
+		}
 	}
 	KEYBOARD_NOTE_NAMES.forEach((name, i) => {
 		leds[`keyboard.${name}` as KeyId] = lit.has(i) ? 'white' : 'off';

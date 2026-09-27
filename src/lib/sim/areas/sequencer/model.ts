@@ -134,6 +134,17 @@ export function heldSteps(s: SimState): number[] {
 	return s.held.flatMap((id) => (holds[id] ? [holds[id].index] : []));
 }
 
+/**
+ * Every step held now becomes part of another gesture: letting go of it will not clear, copy or
+ * place anything.
+ */
+export function editHolds(s: SimState): void {
+	for (const hold of Object.values(seq(s).holds)) {
+		hold.edited = true;
+		hold.place = false;
+	}
+}
+
 /** Whether a track key (`track.n`) is held; returns its number 1–8 or 0. */
 export function heldTrackKey(s: SimState): number {
 	const id = s.held.find((h) => /^track\.[1-8]$/.test(h));
