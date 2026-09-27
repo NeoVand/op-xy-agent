@@ -170,6 +170,30 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.click('track.5');
 			expect(d.frame.page).toBe('aux-filter');
 		});
+
+		it('keeps a pattern per aux track, cleared with record + stop held until the row fills red (OS 1.0.32)', async () => {
+			const d = await start();
+			await aux(d, 2);
+			await play(d, 'f3');
+			await d.clicks(step(1), step(5));
+			await d.click('track.6');
+			await play(d, 'c4');
+			await d.click(step(9));
+			expect(d.steps()).toBe('........w.......');
+			await d.click('track.2');
+			expect(d.steps()).toBe('w...w...........');
+			await d.down('key.record');
+			await d.down('key.stop');
+			await d.wait(450);
+			expect(d.steps()).toMatch(/^r+[.w]*$/);
+			await d.wait(750);
+			await d.up('key.stop');
+			await d.up('key.record');
+			await d.wait(GAP_MS);
+			expect(d.steps()).toBe('................');
+			await d.click('track.6'); // the tape's pattern stays
+			expect(d.steps()).toBe('........w.......');
+		});
 	});
 
 	describe('15.1 brain', () => {
@@ -322,6 +346,23 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await aux(d, 1);
 			await play(d, 'f3');
 			expect(page(d, 'aux-brain')).toMatchObject({ title: 'f minor', root: 'd', auto: true });
+		});
+
+		it('takes a chord to its lowest note, played on the keyboard or sequenced on a step (ours)', async () => {
+			const d = await start();
+			await aux(d, 1);
+			await holdKeys(d, ['c4', 'e4'], async () => {
+				expect(page(d, 'aux-brain').title).toBe('c major');
+			});
+			await holdKeys(d, ['c4', 'e4', 'a3'], () => d.click(step(1)));
+			expect(page(d, 'aux-brain').title).toBe('a major');
+			await play(d, 'd4'); // stopped, the keyboard moves it on
+			expect(page(d, 'aux-brain').title).toBe('d major');
+			await d.down('key.play');
+			expect(page(d, 'aux-brain').title).toBe('a major'); // the chord on step 1
+			await d.wait(GAP_MS);
+			await d.up('key.play');
+			await d.click('key.stop');
 		});
 
 		it('plays chord changes sequenced on its own steps, each holding until the next', async () => {
@@ -1368,6 +1409,15 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.push(1);
 			await d.turn(1, -1);
 			expect(d.screen()).toBe('brain routing: tracks 5–8 on the encoders, routed 3 4 6 7 8');
+		});
+
+		it('22.8 brings an audio interface into the external audio track: usb audio, switched on with E1', async () => {
+			const d = await start();
+			await aux(d, 5);
+			await d.turn(1, 3);
+			expect(page(d, 'aux-audio')).toMatchObject({ input: 'usb audio', on: false });
+			await d.push(1);
+			expect(d.screen()).toBe('external audio: usb audio on, drive 00, level 75, mix 99');
 		});
 
 		it('4.4 adds punch-in fx while the song plays, and sequences them like any track', async () => {

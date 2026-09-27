@@ -205,6 +205,20 @@ describe('brain (T1)', () => {
 		expect(page(sim, 'aux-brain').title).toBe('d major');
 	});
 
+	it('transposes a chord held on its keyboard to the lowest key, like a sequenced chord', () => {
+		const sim = aux(1);
+		sim.input({ type: 'press', id: 'keyboard.c4' });
+		sim.input({ type: 'press', id: 'keyboard.e4' });
+		expect(page(sim, 'aux-brain').title).toBe('c major');
+		sim.input({ type: 'press', id: 'keyboard.a3' });
+		expect(page(sim, 'aux-brain').title).toBe('a major');
+		for (const id of ['keyboard.a3', 'keyboard.e4', 'keyboard.c4']) {
+			sim.input({ type: 'release', id });
+		}
+		// the change holds after the keys come up
+		expect(page(sim, 'aux-brain').title).toBe('a major');
+	});
+
 	it('routes tracks in and out on M2, four at a time, per pattern', () => {
 		const sim = aux(1, 2);
 		const route = () => page(sim, 'aux-route');

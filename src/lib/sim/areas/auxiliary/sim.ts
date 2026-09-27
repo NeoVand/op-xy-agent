@@ -707,8 +707,9 @@ export const auxiliary: SimArea = {
 		}
 		const key = keyboardIndex(id);
 		if (key !== null && !stepHeld(s)) {
-			// the brain's keyboard transposes; the tape's plays clips (manual: brain, tape)
-			if (s.auxTrack === 0) aux.brain.note = KEYBOARD_BASE + key;
+			// the brain's keyboard transposes, a chord to its lowest key as a sequenced chord does
+			// (ours); the tape's plays clips (manual: brain, tape)
+			if (s.auxTrack === 0) aux.brain.note = KEYBOARD_BASE + Math.min(...heldKeys(s));
 			else if (s.auxTrack === 5) aux.tape.clip = key;
 		}
 		return false;
