@@ -1,181 +1,262 @@
-// axis measured on its own at 48 kHz: slow beating just below unison, the octave below at ratio
-// 0, sidebands where the ratio steps put them, tone darkening, tremolo at its rate, and the bounds
-// every engine keeps: level at the default M1, peaks, aliasing and no clicks as parameters move.
+// axis against the device: four feedback operators of one waveform (three copies of the note at
+// −9, −4 and +8 cents, op2 +4 cents off its ratio) at one level, tone's feedback and its band limit,
+// shape's crossfade to y² feedback, the ratio law and op2's level steps, the 180 Hz highpass, the
+// tremolo's dip, the device's level and its ringing at full tone, and the bounds every engine keeps.
+// Played on its own at 48 kHz, block by block as the core plays it.
 import { describe, expect, it } from 'vitest';
-import { centroid, inharmonicDb, levelAt, rms } from '../analysis';
-import { SR, peak, playNote, roughness, throughCore } from './audition';
-import { AxisVoice, axisRatio } from './axis';
+import { levelAt, powerSpectrum, rms } from '../analysis';
+import { DEVICE_GAIN_DB } from './device';
+import { BOUNDS, SR, clickRatios, grid, m1, play, throughCore, worstPeak } from './audition';
+import {
+	AxisVoice,
+	COPIES,
+	HIGHPASS_HZ,
+	OP2_CENTS,
+	OP2_DB,
+	STEPS,
+	TREMOLO,
+	TREMOLO_DELAY,
+	axisRatio
+} from './axis';
 
-const DEFAULT = [80 / 99, 80 / 99, 80 / 99, 80 / 99];
-const axis = () => new AxisVoice(SR, 7);
-/** A note whose period is exactly 256 samples, so level windows can hold whole periods. */
-const EVEN = SR / 256;
-/** RMS over consecutive windows of `periods` periods of {@link EVEN}: the level's envelope. */
-function envelope(x: Float32Array, periods: number): number[] {
-	const n = 256 * periods;
-	const out: number[] = [];
-	for (let i = 0; i + n <= x.length; i += n) out.push(rms(x, i, i + n));
-	return out;
+const make = () => new AxisVoice(SR);
+const DEFAULT = m1(49, 49, 0, 0);
+const db = (x: number) => 20 * Math.log10(x);
+const cents = (hz: number, c: number) => hz * Math.pow(2, c / 1200);
+/** The one-pole highpass's gain at `hz`. */
+const highpass = (hz: number) => hz / Math.hypot(hz, HIGHPASS_HZ);
+/** The ratio knob's position for step `i` above the middle. */
+const step = (i: number) => 0.5 + 0.05 * (i + 0.5);
+
+/** Amplitude of what lies within ±`width` cents of `hz` (a cluster of close partials). */
+function band(x: Float32Array, hz: number, width = 40): number {
+	const { power, binHz } = powerSpectrum(x, SR, 'hann');
+	let sum = 0;
+	for (let i = Math.ceil(cents(hz, -width) / binHz); i <= cents(hz, width) / binHz; i++)
+		sum += power[i];
+	return Math.sqrt(2 * sum);
 }
 
 describe('axis', () => {
-	it('maps ratio: an octave below at 0, unison at 50, fifths and fourths up five octaves', () => {
-		expect(axisRatio(0)).toBeCloseTo(0.5, 6);
-		expect(axisRatio(49 / 99)).toBeGreaterThan(0.995);
-		expect(axisRatio(49 / 99)).toBeLessThan(1);
-		// most of the detune half sits near unison: 45 is still within a third of a semitone
-		expect(axisRatio(45 / 99)).toBeGreaterThan(Math.pow(2, -1 / 36));
-		expect([50, 55, 60, 64, 69, 73, 78, 82, 87, 91, 99].map((m) => axisRatio(m / 99))).toEqual([
-			1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32
-		]);
+	it('plays three copies of the note at −9, −4 and +8 cents and op2 +4 cents off its ratio', () => {
+		// tone 0: near-sines; ratio 25/127: op2 at 0.697 × the note, clear of the copies
+		const hz = 880;
+		const p = 25 / 127;
+		const { left } = play(make(), hz, 2.5, [0, p, 0, 0]);
+		const x = left.subarray(4800);
+		const copies = COPIES.map((c) => levelAt(x, SR, cents(hz, c)));
+		const op2 = levelAt(x, SR, cents(hz * axisRatio(p), OP2_CENTS));
+		for (const level of copies) expect(db(level / copies[0])).toBeCloseTo(0, 0);
+		// op2 at the copies' level, but for the highpass's tilt between their pitches
+		expect(db(op2 / copies[0])).toBeCloseTo(db(highpass(hz * 0.697) / highpass(hz)), 0);
+		// nothing at the note itself, between the copies
+		expect(levelAt(x, SR, hz)).toBeLessThan(0.2 * copies[0]);
+		expect(axisRatio(p)).toBeCloseTo(0.5 + p, 6);
 	});
 
-	it('beats slowly just below 50 and holds steady at unison', () => {
-		const at = (m: number, seconds: number) =>
-			envelope(playNote(axis(), { hz: EVEN, seconds, params: [1, m / 99, 0.5, 0] }).left, 4).slice(
-				5
-			);
-		const depth = (e: number[]) => Math.max(...e) / Math.min(...e);
-		// 45: a few beats a second (the chorus), 49: one every few seconds
-		const chorus = at(45, 1.5);
-		expect(depth(chorus)).toBeGreaterThan(1.5);
-		const slow = at(49, 4);
-		expect(depth(slow)).toBeGreaterThan(1.3);
-		let step = 0;
-		for (let i = 1; i < slow.length; i++)
-			step = Math.max(step, Math.abs(slow[i] / slow[i - 1] - 1));
-		expect(step).toBeLessThan(0.03);
-		expect(depth(at(50, 1.5))).toBeLessThan(1.05);
-	});
-
-	it('has the octave below at ratio 0, and none at unison', () => {
-		const sub = (m: number) => {
-			const { left } = playNote(axis(), { hz: 220, seconds: 0.5, params: [1, m / 99, 0.5, 0] });
-			const x = left.subarray(4800, 4800 + 16384);
-			return { below: levelAt(x, SR, 110), note: levelAt(x, SR, 220) };
+	it('maps ratio: 0.5–1 straight below the middle, then 1, 2, 3, 4, 6, 8, 12, 16, 24, 32', () => {
+		expect(axisRatio(0)).toBe(0.5);
+		expect(axisRatio(0.25)).toBe(0.75);
+		expect(axisRatio(0.5)).toBe(1);
+		expect(STEPS.map((_, i) => axisRatio(step(i)))).toEqual([1, 2, 3, 4, 6, 8, 12, 16, 24, 32]);
+		// op2 plays each step at its measured level, against op2 in the lower half (the copies'
+		// level): tone 0, so each is a near-sine, highpassed at its pitch. At ×1 and ×2 op2 sits too
+		// close to the copies' partials to read on its own.
+		const hz = 110;
+		const op2 = (p: number) => {
+			const x = play(make(), hz, 1, [0, p, 0, 0]).left.subarray(4800);
+			const at = cents(hz * axisRatio(p), OP2_CENTS);
+			return levelAt(x, SR, at) / highpass(at);
 		};
-		const zero = sub(0);
-		expect(zero.below).toBeGreaterThan(0.1);
-		expect(zero.below).toBeGreaterThan(zero.note * 0.5);
-		expect(sub(50).below).toBeLessThan(1e-3);
-	});
-
-	it('puts sidebands where the ratio steps say', () => {
-		// triangles (shape 1) have odd harmonics only: sidebands r apart keep that parity at r = 2,
-		// break it at r = 3, and fall halfway between harmonics at r = 1.5
-		const spectrum = (m: number) => {
-			const { left } = playNote(axis(), { hz: 220, seconds: 0.5, params: [1, m / 99, 1, 0] });
-			const x = left.subarray(4800, 4800 + 16384);
-			return (multiple: number) => levelAt(x, SR, 220 * multiple);
-		};
-		const two = spectrum(60);
-		expect(two(2)).toBeGreaterThan(0.05); // op2 itself (its triangle adds 6, 10, …)
-		expect(two(4)).toBeLessThan(1e-3);
-		expect(two(8)).toBeLessThan(1e-3);
-		const three = spectrum(64);
-		expect(three(3)).toBeGreaterThan(0.05);
-		expect(three(2)).toBeGreaterThan(0.02);
-		expect(three(4)).toBeGreaterThan(0.02);
-		const fifth = spectrum(55);
-		expect(fifth(1.5)).toBeGreaterThan(0.05);
-		expect(fifth(0.5)).toBeGreaterThan(0.02);
-		expect(fifth(2.5)).toBeGreaterThan(0.02);
-	});
-
-	it('darkens as tone falls', () => {
-		const brightness = [0.2, 0.5, 1].map((tone) => {
-			const { left } = playNote(axis(), { hz: 220, seconds: 0.5, params: [tone, 0.6, 0, 0] });
-			return centroid(left.subarray(4800), SR);
-		});
-		expect(brightness[0]).toBeLessThan(brightness[1] * 0.8);
-		expect(brightness[1]).toBeLessThan(brightness[2]);
-	});
-
-	it('tremolo moves the level at its rate and depth, both rising with the knob', () => {
-		const tremolo = (amount: number, rate: number, depth: number) => {
-			const { left } = playNote(axis(), { hz: EVEN, seconds: 2.2, params: [1, 0.52, 0.5, amount] });
-			// two-period windows: the envelope sampled at EVEN / 2
-			const e = Float64Array.from(envelope(left, 2).slice(20));
-			const mean = e.reduce((s, v) => s + v, 0) / e.length;
-			const ac = e.map((v) => v - mean);
-			const at = levelAt(ac, EVEN / 2, rate);
-			expect(at).toBeGreaterThan(3 * levelAt(ac, EVEN / 2, rate * 0.6));
-			expect(at).toBeGreaterThan(3 * levelAt(ac, EVEN / 2, rate * 1.6));
-			// gain from 1 down to 1 − D: the envelope's swing
-			expect(Math.min(...e) / Math.max(...e)).toBeCloseTo(1 - depth, 1);
-		};
-		tremolo(0.5, 0.5 * Math.sqrt(20), 0.3);
-		tremolo(1, 10, 0.6);
-		const still = envelope(
-			playNote(axis(), { hz: EVEN, seconds: 1, params: [1, 0.52, 0.5, 0] }).left,
-			2
-		);
-		expect(Math.max(...still.slice(5)) / Math.min(...still.slice(5))).toBeLessThan(1.02);
-	});
-
-	it('plays through the synth core at the same level', () => {
-		const x = throughCore('axis', [80, 80, 80, 80]);
-		expect(x.every(Number.isFinite)).toBe(true);
-		expect(rms(x, 2400)).toBeGreaterThan(0.2);
-		expect(rms(x, 2400)).toBeLessThan(0.35);
-	});
-
-	it('sits at the level every engine shares at the default M1 (0.2–0.35 RMS per channel)', () => {
-		const { left, right } = playNote(axis(), { hz: 220, seconds: 1.05, params: DEFAULT });
-		for (const x of [left, right]) {
-			expect(rms(x, 2400)).toBeGreaterThan(0.2);
-			expect(rms(x, 2400)).toBeLessThan(0.35);
+		const lower = op2(0.25);
+		for (let i = 2; i < STEPS.length; i++) {
+			expect(db(op2(step(i)) / lower), `×${STEPS[i]}`).toBeCloseTo(OP2_DB[i], 0);
 		}
 	});
 
-	it('keeps its peaks within ±1.2 at any setting from 30 Hz to 4 kHz', () => {
-		let worst = 0;
-		for (const hz of [30, 55, 110, 220, 440, 880, 1760, 3520, 4000]) {
-			for (const tone of [0, 0.15, 0.3, 1]) {
-				for (const ratio of [0, 0.45, 0.52, 0.6, 1]) {
+	it('matches the device’s harmonics at tone 64 on A3, op2 up at ×16', () => {
+		// the capture's ratio.high=110 take (no glide into it, so the copies beat in the same phase
+		// as ours): band powers within ±40 cents of each harmonic, 0.1 s to the note's end
+		const hz = 220;
+		const x = play(make(), hz, 1.21, [64 / 127, 110 / 127, 0, 0]).left;
+		const window = x.subarray(Math.round(0.1 * SR), Math.round(1.19 * SR));
+		const h = [1, 2, 3, 4, 5, 6, 7, 8].map((k) => band(window, k * hz));
+		const device = [-6.6, -13.3, -18.5, -22.9, -26.8, -30.3, -33.6];
+		device.forEach((level, k) => {
+			expect(db(h[k + 1] / h[0]), `h${k + 2}`).toBeCloseTo(level, 0);
+		});
+		// and its level there: −29.8 dBFS from 0.2 s
+		expect(db(rms(x, Math.round(0.2 * SR), Math.round(1.19 * SR)))).toBeCloseTo(
+			-29.8 + DEVICE_GAIN_DB,
+			0
+		);
+	});
+
+	it('darkens toward sines as tone falls, and brightens as it rises', () => {
+		const second = (tone: number) => {
+			const y = play(make(), 440, 1, [tone, step(7), 0, 0]).left.subarray(9600);
+			return db(band(y, 880) / band(y, 440));
+		};
+		// the device's A4: −22.0 dB at tone 0, −7.9 dB at full
+		expect(second(0)).toBeLessThan(-20);
+		expect(second(64 / 127)).toBeGreaterThan(second(0) + 8);
+		expect(second(1)).toBeGreaterThan(-9);
+	});
+
+	it('fades the feedback out with pitch: pure sines by 3.5 kHz', () => {
+		const second = (hz: number) => {
+			const y = play(make(), hz, 0.6, [1, step(7), 0, 0]).left.subarray(4800);
+			return band(y, 2 * hz) / band(y, hz);
+		};
+		expect(second(3600)).toBeLessThan(0.01);
+		expect(second(1760)).toBeLessThan(second(440) * 0.6);
+	});
+
+	it('crossfades the feedback to y² with shape: odd harmonics only at full', () => {
+		const hz = 440;
+		const harmonics = (shape: number) => {
+			const y = play(make(), hz, 1.25, [64 / 127, 64 / 127, shape, 0]).left.subarray(21600);
+			return [1, 2, 3, 4, 5].map((k) => band(y, k * hz));
+		};
+		const [h1, h2, h3, h4, h5] = harmonics(1);
+		expect(h2 / h1).toBeLessThan(1e-3);
+		expect(h4 / h1).toBeLessThan(1e-3);
+		// the device: h3 −15.9 and h5 −24.7 dB at shape 127 (its note glided in, so its partials
+		// beat in other phases than ours: within 2 dB)
+		expect(Math.abs(db(h3 / h1) + 15.9)).toBeLessThan(2);
+		expect(Math.abs(db(h5 / h1) + 24.7)).toBeLessThan(2);
+		// halfway the even harmonics are falling, the odd ones holding
+		const half = harmonics(64 / 127);
+		const saw = harmonics(0);
+		expect(half[1] / half[0]).toBeLessThan((saw[1] / saw[0]) * 0.7);
+		expect(db(half[2] / half[0])).toBeGreaterThan(db(saw[2] / saw[0]) - 5);
+	});
+
+	it('highpasses the sum at 180 Hz, one pole: low notes play thinner', () => {
+		// op2 in the lower half (0.75 × the note) as the probe: a near-sine at tone 0, clear of the
+		// copies' partials, at the same level on every note
+		const probe = (at: number) => {
+			const hz = at / (0.75 * Math.pow(2, OP2_CENTS / 1200));
+			const x = play(make(), hz, 1.5, [0, 0.25, 0, 0]).left.subarray(4800);
+			return levelAt(x, SR, at);
+		};
+		const reference = probe(880);
+		for (const at of [55, 110, 220]) {
+			expect(db(probe(at) / reference), `${at} Hz`).toBeCloseTo(
+				db(highpass(at) / highpass(880)),
+				0
+			);
+		}
+	});
+
+	it('dips the level by half the tremolo’s depth at once, its swing arriving later', () => {
+		const hz = 440;
+		const base = play(make(), hz, 1.6, [64 / 127, step(7), 0, 0]).left;
+		for (const cc of [25, 64, 127]) {
+			const x = play(make(), hz, 1.6, [64 / 127, step(7), 0, cc / 127]).left;
+			const i = [0, 13, 25, 38, 51, 64, 76, 89, 102, 114, 127].indexOf(cc);
+			const depth = TREMOLO.depth[i];
+			// before the swing: a steady 1 − depth/2
+			const early =
+				rms(x, 2400, Math.round(TREMOLO_DELAY * SR)) / rms(base, 2400, TREMOLO_DELAY * SR);
+			expect(early, `CC ${cc}`).toBeCloseTo(1 - depth / 2, 2);
+			// later, the gain window by window swings at the tremolo's rate
+			const win = 240;
+			const gains: number[] = [];
+			for (let at = SR * 0.6; at + win <= SR * 1.6; at += win) {
+				gains.push(rms(x, at, at + win) / rms(base, at, at + win));
+			}
+			const g = Float64Array.from(gains);
+			const mean = g.reduce((s, v) => s + v, 0) / g.length;
+			const ac = g.map((v) => v - mean);
+			const rate = TREMOLO.hz[i];
+			const at = levelAt(ac, SR / win, rate);
+			expect(at, `CC ${cc}`).toBeGreaterThan(3 * levelAt(ac, SR / win, rate * 0.6));
+			expect(Math.min(...g), `CC ${cc}`).toBeCloseTo(1 - depth, 1);
+		}
+	});
+
+	it('plays each oscillator at the device’s level: −27.7 dBFS at tone 0', () => {
+		// op2 in the lower half, clear of the copies: its sine, the highpass taken off
+		const hz = 440;
+		const x = play(make(), hz, 1.5, [0, 0.25, 0, 0]).left.subarray(4800);
+		const at = cents(hz * 0.75, OP2_CENTS);
+		expect(db(levelAt(x, SR, at) / highpass(at))).toBeCloseTo(-27.7 + DEVICE_GAIN_DB, 0);
+	});
+
+	it('rings at half the sample rate only near full tone, as the device does', () => {
+		const nyquist = (tone: number) => {
+			const x = play(make(), 440, 1, [tone, 64 / 127, 0, 0]).left.subarray(4800);
+			const { power, binHz } = powerSpectrum(x, SR);
+			let high = 0;
+			let all = 0;
+			power.forEach((p, i) => {
+				all += p;
+				if (i * binHz > 20000) high += p;
+			});
+			return 10 * Math.log10(high / all);
+		};
+		expect(nyquist(102 / 127)).toBeLessThan(-50);
+		expect(nyquist(1)).toBeGreaterThan(-20);
+	});
+
+	it('plays through the synth core as it does on its own', () => {
+		const x = throughCore('axis', [49, 49, 0, 0], 0.5);
+		expect(x.every(Number.isFinite)).toBe(true);
+		const alone = play(make(), 220, 0.5, m1(49, 49, 0, 0)).left;
+		expect(rms(x, 4800) / rms(alone, 4800)).toBeCloseTo(1, 1);
+	});
+
+	it('never peaks past ±1.2, on any setting or note', { timeout: 60_000 }, () => {
+		const { peak, at } = worstPeak(make, grid([0, 0.5, 1]), BOUNDS.notes);
+		expect(peak, at).toBeLessThan(BOUNDS.peak);
+	});
+
+	it('moves every parameter without clicks', { timeout: 60_000 }, () => {
+		for (let k = 0; k < 4; k++) {
+			const { sweep, jump, back } = clickRatios(make, DEFAULT, k);
+			expect(Math.max(sweep, jump, back), `p${k + 1}`).toBeLessThan(BOUNDS.click);
+		}
+	});
+
+	it(
+		'keeps what folds back past Nyquist below −45 dB on 1–2 kHz notes',
+		{ timeout: 60_000 },
+		() => {
+			// the copies and op2 sit off the note's harmonics by design; aliasing is what lies away
+			// from every one of their clusters
+			let worst = -Infinity;
+			let where = '';
+			for (const hz of BOUNDS.highNotes) {
+				for (const i of [0, 1, 3, 5, 9]) {
 					for (const shape of [0, 1]) {
-						const params = [tone, ratio, shape, 1];
-						worst = Math.max(worst, peak(playNote(axis(), { hz, seconds: 0.25, params }).left));
+						const p = step(i);
+						const x = play(make(), hz, (4096 + 16384) / SR, [0.7, p, shape, 0]).left.subarray(
+							4096,
+							4096 + 16384
+						);
+						const { power, binHz } = powerSpectrum(x, SR);
+						const op2 = cents(hz * axisRatio(p), OP2_CENTS);
+						let off = 0;
+						let all = 0;
+						for (let b = Math.ceil(20 / binHz); b < power.length; b++) {
+							const f = b * binHz;
+							all += power[b];
+							const near = (f0: number) => {
+								const k = Math.max(1, Math.round(f / f0));
+								return Math.abs(f - k * f0) < 6 * binHz + k * f0 * 0.006;
+							};
+							if (!near(hz) && !near(op2)) off += power[b];
+						}
+						const level = 10 * Math.log10(off / all);
+						if (level > worst) {
+							worst = level;
+							where = `×${STEPS[i]} shape ${shape} at ${hz} Hz`;
+						}
 					}
 				}
 			}
+			expect(worst, where).toBeLessThan(BOUNDS.inharmonic);
 		}
-		expect(worst).toBeLessThan(1.2);
-	});
-
-	it('keeps aliasing below −50 dB at 1–2 kHz on every ratio step', () => {
-		for (const hz of [1003, 1499, 2011]) {
-			for (let step = 0; step < 11; step++) {
-				const p = 0.5 + (step + 0.5) / 22;
-				// the fifth's sidebands fall halfway between harmonics: its period is two cycles
-				const f0 = axisRatio(p) === 1.5 ? hz / 2 : hz;
-				for (const shape of [0, 1]) {
-					const { left } = playNote(axis(), { hz, seconds: 0.45, params: [1, p, shape, 0] });
-					expect(inharmonicDb(left.subarray(4096, 4096 + 16384), SR, f0)).toBeLessThan(-50);
-				}
-			}
-		}
-	});
-
-	it('glides through parameter jumps without clicks', () => {
-		// Every parameter jumps between 0 and 1 every 50 ms. Smoothing turns each jump into a 5 ms
-		// glide (ratio steps included: op2 slides to its new pitch), through shapes the static
-		// settings also make, so the waveform's second difference stays within theirs; a click would
-		// add its full jump, a hundredth or more, on top. 25% covers the glides' in-between shapes.
-		const settings = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
-		for (let param = 0; param < 4; param++) {
-			const at = (v: number) => [0.6, 0.6, 0.5, 0.3].map((x, i) => (i === param ? v : x));
-			const still = Math.max(
-				...settings.map((v) =>
-					roughness(playNote(axis(), { hz: 220, seconds: 0.3, params: at(v) }).left)
-				)
-			);
-			const jumping = playNote(axis(), {
-				hz: 220,
-				seconds: 0.6,
-				params: (t) => at(Math.floor(t / 0.05) % 2 === 0 ? 0 : 1)
-			}).left;
-			expect(roughness(jumping)).toBeLessThan(still * 1.25);
-		}
-	});
+	);
 });

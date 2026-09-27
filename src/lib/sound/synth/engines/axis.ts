@@ -1,282 +1,262 @@
 /**
- * axis: FM strings, two operators and a resonant lowpass. The evidence and its sources are in
- * `docs/research/57-synth-engines.md`; what TE, the device's screen or several reviewers establish
- * is marked [E], our inference [I].
+ * axis: four feedback operators of one waveform, summed and highpassed. Three play the note,
+ * detuned −9, −4 and +8 cents (the "lush" ensemble); op2 plays the ratio's multiple of it, +4 cents.
+ * Evidence and how it was fitted: `docs/research/57-synth-engines.md` §3 (axis),
+ * `research/device/axis_fit.py`.
  *
- * - [E] TE: an FM engine for lush strings. Tone makes it brighter or darker (TE staff: a built-in
- *   filter); ratio sets one oscillator's pitch, detuning over 0–50 and stepping up in fifths over
- *   51–100; shape sets the oscillators' waveform; tremolo adds movement. axis and epiano presets
- *   alone share the same hidden values after P1–P4: one FM core under both, we think.
- * - [E] An oscilloscope review hears two operators; tone as a lowpass with an unusual resonance;
- *   ratio from an octave below, sweeping smoothly to unison at 50, then about five octaves in
- *   alternating fifths and fourths; shape morphing saw ↔ triangle. Another review: tremolo speeds
- *   up as it deepens, and shape goes from saw towards square by ear. The guide's early screen
- *   drawing called P4 vibrato.
- * - [I] op2 runs at r × the note. Its sine phase-modulates op1 (the note) at a fixed index, and its
- *   own waveform is mixed in beside op1's (less of it as the ratio climbs), so detune beats audibly
- *   and the fifths stack like an organ even with tone dark. The FM depth stays fixed, as the
- *   evidence gives tone to the filter; it shrinks only where its sidebands would pass Nyquist.
- * - [I] Ratio: 0–50 glides r from 0.5 to 1 on a curve that spends most of its travel near unison,
- *   where op1 and op2 beat slowly (the chorus); 51–100 steps r through 1, 1.5, 2, 3, 4, 6, 8, 12,
- *   16, 24, 32. Steps glide over a few milliseconds, so they never click.
- * - [I] Shape: both operators are a triangle whose rise takes a share of the cycle, from all of it
- *   (a saw, shape 0; both reviews put the saw at the bottom) to half (a triangle, shape 1): the
- *   edges soften as it rises. Band-limited tables, phase-modulated at a band limit that follows the
- *   modulation.
- * - [I] Tone: a state-variable lowpass inside the engine, TONE_LOW → TONE_HIGH exponentially, more
- *   resonant as it darkens (Q_BRIGHT → Q_DARK): a resonant hump at low tone, its peak met halfway
- *   by a 1/√Q gain so a note sitting on it stays within bounds.
- * - [I] Tremolo: gain 1 − D·(½ + ½·sin 2πRt), depth D and rate R both rising with the knob, with a
- *   touch of pitch vibrato from the same LFO (strings' vibrato moves both).
+ * Measured on the owner's device (2026-09-27, OS 1.1.33, `2026-09-27-133356-axis`):
+ * - every oscillator is y = sin(φ + a·y + b·y²), an operator feeding its own output back into its
+ *   phase; all four play at one level ({@link OSCILLATOR_DB}), starting at phase 0 on each note
+ *   (the same settings give the same waveform, sample for sample);
+ * - tone sets the feedback ({@link FEEDBACK}): op2 most, the copies 0.75–0.9 of it. Each loop feeds
+ *   back its last sample, so past ~1.25 it rings at half the sample rate (from tone ≈ 110 on
+ *   op2, as on the device, where that ringing sits at 20–24 kHz and the audible band stays
+ *   clean). It fades with the oscillator's pitch above ~500 Hz and is gone by 3.5 kHz
+ *   ({@link BAND}): the device's own band limit;
+ * - shape crossfades the feedback from y (a saw-like series) to y² (odd harmonics only, a
+ *   square-like wave) ({@link SHAPE}), within 0.4 dB of every harmonic;
+ * - ratio sets op2 at 0.5 + p times the note below the middle (p the ratio, 0–0.5), then at 1, 2,
+ *   3, 4, 6, 8, 12, 16, 24, 32 in steps of 0.05 of the knob ({@link STEPS}), −1.4 to −15 dB above
+ *   1 ({@link OP2_DB});
+ * - the sum passes a one-pole highpass at {@link HIGHPASS_HZ} (so low notes sound thinner);
+ * - tremolo dips the level from note-on: by half its depth at first, the swing fading in after
+ *   {@link TREMOLO_DELAY}; depth to 0.54 at the middle, then 0.30 as the rate climbs from 5.2 to
+ *   10.5 Hz ({@link TREMOLO}).
+ *
+ * Our model: the above, the tables fitted for our loop through its own spectra (a loop that feeds
+ * back its last sample brightens less than the ideal y = sin(φ + β·y) at the same β); op2 fades
+ * out before it could fold past Nyquist.
  */
-import { Svf, prewarp } from '../filters';
-import { Noise } from '../noise';
+import { OnePole, prewarp } from '../filters';
 import { sin2pi } from '../sine';
-import { WaveTable } from '../wavetable';
+import { DEVICE_GAIN_DB } from './device';
 import type { EngineVoice } from './index';
+import { Ramp, Smoothing } from './ramp';
 
-// Calibration: our estimates until the owner's device is measured (57-synth-engines.md).
-/** op2's phase modulation of op1, in radians. */
-const INDEX = 1.3;
-/** How far below unison the detune half starts (semitones) and its curve (0 = linear). */
-const DETUNE_RANGE = 12;
-const DETUNE_CURVE = 2.5;
-/** The ratio steps above 50: fifths and fourths up five octaves. */
-const RATIO_STEPS = [1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32];
-/** op2's own level in the mix at ratios up to 2; above, it falls as √(2/r). */
-const OP2_LEVEL = 0.5;
+const cc = (values: readonly number[]) => values.map((v) => v / 127);
+/** The knob positions the tables below were measured at: CC 0, 13, 25 … 127. */
+const AT = cc([0, 13, 25, 38, 51, 64, 76, 89, 102, 114, 127]);
+
+// Measured on the owner's device (2026-09-27).
+/** The copies of the note (cents), and op2's offset from its ratio (cents). */
+export const COPIES = [-9, -4, 8] as const;
+export const OP2_CENTS = 4;
 /**
- * Tone's cutoff range (Hz) and its resonance (Q) at the dark and bright ends; Q falls with the
- * cube of tone, so the hump belongs to the dark end and brightness rises all the way up.
+ * Each oscillator's feedback over tone (at {@link AT}), for a loop that feeds back its last sample
+ * at 48 kHz: the copies (−9, −4, +8 cents), then op2. The copies run at about 0.75, 0.9 and 0.82
+ * of op2's.
  */
-const TONE_LOW = 100;
-const TONE_HIGH = 16000;
-const Q_DARK = 2.5;
-const Q_BRIGHT = Math.SQRT1_2;
-/** Tremolo depth at full, and its rate (Hz) at the bottom and top of the knob. */
-const TREMOLO_DEPTH = 0.6;
-const TREMOLO_SLOW = 0.5;
-const TREMOLO_FAST = 10;
-/** The vibrato that comes with a full tremolo, in cents. */
-const VIBRATO_CENTS = 6;
-/** Output gain: about 0.26 RMS at the default M1 (80s) on a 220 Hz note. */
-const LEVEL = 0.5;
+export const FEEDBACK = [
+	[0.138, 0.241, 0.334, 0.433, 0.531, 0.628, 0.718, 0.815, 0.912, 1.001, 1.098],
+	[0.167, 0.288, 0.401, 0.518, 0.635, 0.751, 0.859, 0.975, 1.09, 1.199, 1.319],
+	[0.154, 0.264, 0.367, 0.476, 0.582, 0.69, 0.788, 0.896, 1.001, 1.102, 1.204],
+	[0.207, 0.335, 0.449, 0.575, 0.695, 0.815, 0.926, 1.052, 1.178, 1.28, 1.44]
+] as const;
+/** The share of that feedback an oscillator keeps at its pitch (Hz): the device's band limit. */
+export const BAND = {
+	hz: [0, 441, 882, 1764, 2646, 3528],
+	share: [1, 1, 0.946, 0.552, 0.14, 0]
+} as const;
+/** shape: the feedback's y and y² terms, as shares of tone's feedback, at {@link AT}. */
+export const SHAPE = {
+	y: [1, 0.99, 0.956, 0.877, 0.746, 0.596, 0.425, 0.252, 0.118, 0.028, 0],
+	y2: [0, 0.03, 0.146, 0.341, 0.553, 0.712, 0.835, 0.924, 0.976, 0.994, 0.991]
+} as const;
+/** op2's multiple of the note above the middle of the ratio knob, a step every 0.05. */
+export const STEPS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32] as const;
+/** op2's level at each step (dB); at 1 and below, the copies'. */
+export const OP2_DB = [0, -1.36, -2.98, -4.45, -6.05, -7.8, -9.37, -11.28, -13.18, -15.28] as const;
+/** Each oscillator's peak on the device (dBFS), and the highpass on their sum (Hz, one pole). */
+export const OSCILLATOR_DB = -27.75;
+export const HIGHPASS_HZ = 180;
+/** Tremolo: its dip's depth (peak to peak) and rate (Hz) at {@link AT}. */
+export const TREMOLO = {
+	depth: [0, 0.12, 0.24, 0.34, 0.46, 0.54, 0.5, 0.46, 0.4, 0.36, 0.3],
+	hz: [5.2, 5.2, 5.2, 5.2, 5.2, 5.2, 6.3, 7.3, 8.45, 9.3, 10.5]
+} as const;
+/** When the tremolo's swing starts after note-on, and how long it takes to reach full (s). */
+export const TREMOLO_DELAY = 0.25;
+export const TREMOLO_FADE = 0.3;
 
 // Design constants.
-/** Smoothing of every continuous parameter, ratio included (seconds). */
-const SMOOTH_SECONDS = 0.005;
-/**
- * The share of Nyquist op1's sidebands may reach before the index and op1's band limit give way.
- * Harmonic h of op1, modulated at index h·I by op2 at r × the note, has sidebands r apart out to
- * the last order k with |J_k(h·I)| above −50 dB: one order below an index of FIRST_ORDER, else
- * about 2 + 1.7·h·I (fitted to Bessel tables). At high ratios even the second order lands far out.
- */
-const BANDWIDTH = 0.8;
-const FIRST_ORDER = 0.1;
-/** Shape's stored waveforms: the rise's share of the cycle from 1 (saw) to ½ (triangle). */
-const SHAPE_FRAMES = 9;
-/** Samples per drawn waveform before it is band-limited. */
-const CYCLE = 4096;
+/** op2 fades out between these rates (cycles a sample), before it could fold past Nyquist. */
+const FOLD_FROM = 0.4;
+const FOLD_TO = 0.45;
+/** How long op2 takes to slide to a new ratio (s). */
+const RATIO_GLIDE = 0.005;
 
-/** The operators' waveforms across shape: a triangle rising for `1 − w` of the cycle. */
-function buildShapes(): WaveTable {
-	const cycles: Float32Array[] = [];
-	for (let f = 0; f < SHAPE_FRAMES; f++) {
-		const w = (0.5 * f) / (SHAPE_FRAMES - 1);
-		const cycle = new Float32Array(CYCLE);
-		for (let i = 0; i < CYCLE; i++) {
-			const x = i / CYCLE;
-			cycle[i] = x < 1 - w ? -1 + (2 * x) / (1 - w) : 1 - (2 * (x - (1 - w))) / w;
-		}
-		cycles.push(cycle);
-	}
-	return WaveTable.fromCycles(cycles);
+const INV_TAU = 1 / (2 * Math.PI);
+
+/** `values` at `x`, linearly between the points of `at`. */
+function read(at: readonly number[], values: readonly number[], x: number): number {
+	if (x <= at[0]) return values[0];
+	const last = at.length - 1;
+	if (x >= at[last]) return values[last];
+	let i = 0;
+	while (x > at[i + 1]) i++;
+	return values[i] + ((values[i + 1] - values[i]) * (x - at[i])) / (at[i + 1] - at[i]);
 }
 
-/**
- * The largest index (radians) whose sidebands on op1's fundamental all fit below `room` harmonics
- * of the note, with op2 at ratio `r`.
- */
-function indexRoom(r: number, room: number): number {
-	const full = ((room - 1) / r - 2) / 1.7;
-	if (full >= FIRST_ORDER) return full;
-	// only the first order fits: stay below where the second matters, and fade out as the first
-	// order itself nears the limit
-	return FIRST_ORDER * Math.min(1, Math.max(0, (room - 1 - r) / 2));
-}
-
-/** How many of op1's harmonics may sound under index `index` (radians) at ratio `r`. */
-function harmonicRoom(index: number, r: number, room: number): number {
-	if (index <= 0) return room;
-	// harmonics whose own index is below FIRST_ORDER need room for one order, the rest for all
-	const firstOnly = Math.min(room - r, FIRST_ORDER / index);
-	const all = (room - 2 * r) / (1 + 1.7 * index * r);
-	return Math.max(1, firstOnly, all);
-}
-
-let shapeTable: WaveTable | null = null;
-
-/** The shared operator waveforms (built on first use). */
-function shapes(): WaveTable {
-	shapeTable ??= buildShapes();
-	return shapeTable;
-}
-
-/** op2's frequency ratio for ratio `p` (0–1). */
+/** op2's multiple of the note for ratio `p` (0–1), before its +4 cents. */
 export function axisRatio(p: number): number {
-	if (p <= 0.5) {
-		// most of the travel near unison: the semitones below it grow exponentially towards 0
-		const u = 1 - p / 0.5;
-		const semitones = (DETUNE_RANGE * Math.expm1(DETUNE_CURVE * u)) / Math.expm1(DETUNE_CURVE);
-		return Math.pow(2, -semitones / 12);
-	}
-	const step = Math.floor(((p - 0.5) / 0.5) * RATIO_STEPS.length);
-	return RATIO_STEPS[Math.min(RATIO_STEPS.length - 1, step)];
+	if (p <= 0.5) return 0.5 + p;
+	return STEPS[Math.min(STEPS.length - 1, Math.floor((p - 0.5) / 0.05))];
 }
+
+/** op2's gain at multiple `r` of the note: 1 up to 1, then the steps' levels, straight in octaves
+ * between them (where a glide from one step to the next passes). */
+function op2Gain(r: number): number {
+	if (r <= 1) return 1;
+	const octaves = Math.log2(r);
+	let i = 0;
+	while (i < STEPS.length - 2 && octaves > Math.log2(STEPS[i + 1])) i++;
+	const from = Math.log2(STEPS[i]);
+	const to = Math.log2(STEPS[i + 1]);
+	const t = Math.min(1, (octaves - from) / (to - from));
+	return Math.pow(10, (OP2_DB[i] + t * (OP2_DB[i + 1] - OP2_DB[i])) / 20);
+}
+
+/** The four oscillators: the three copies, then op2. */
+const COUNT = 4;
 
 export class AxisVoice implements EngineVoice {
 	readonly #sr: number;
-	readonly #table = shapes();
-	readonly #filter = new Svf();
-	readonly #smooth: number;
-	#dt = 0;
-	#p1 = 0;
-	#p2 = 0;
+	readonly #smoothing: Smoothing;
+	readonly #highpass: OnePole;
+	readonly #phase = new Float64Array(COUNT);
+	readonly #dt = new Float64Array(COUNT);
+	readonly #y1 = new Float64Array(COUNT);
+	/** Each oscillator's y and y² feedback, and op2's gain; the tremolo's depth. */
+	readonly #a = Array.from({ length: COUNT }, () => new Ramp());
+	readonly #b = Array.from({ length: COUNT }, () => new Ramp());
+	readonly #op2 = new Ramp(1);
+	readonly #depth = new Ramp();
+	readonly #ramps = [...this.#a, ...this.#b, this.#op2, this.#depth];
+	readonly #level: number;
+	/** op2's rate: where it is and where it glides to (cycles a sample), its rate at a multiple of
+	 * 1, and the feedback and shape it takes at tone and shape (before its band limit). */
+	#op2Dt = 0;
+	#op2Target = 0;
+	#op2Unit = 0;
+	#op2Beta = 0;
+	#shapeY = 1;
+	#shapeY2 = 0;
+	readonly #ratioCoef: number;
 	#lfo = 0;
-	/** Smoothed parameters and their targets: ratio, index (cycles), op2's level, shape frame. */
-	#ratio = 1;
-	#ratioTarget = 1;
-	#index = 0;
-	#indexTarget = 0;
-	#mix2 = 0;
-	#mix2Target = 0;
-	#shape = 0;
-	#shapeTarget = 0;
-	/** Tremolo depth and rate (cycles per sample), vibrato depth (pitch ratio per unit of LFO). */
-	#depth = 0;
-	#depthTarget = 0;
 	#rate = 0;
-	#rateTarget = 0;
-	#vibrato = 0;
-	#vibratoTarget = 0;
-	/** Tone's cutoff (log2 Hz) and its target; the filter is set once per block. */
-	#cutoff = 0;
-	#cutoffTarget = 0;
+	/** Samples since note-on, for the tremolo's fade-in. */
+	#age = 0;
+	readonly #aNow = new Float64Array(COUNT);
+	readonly #bNow = new Float64Array(COUNT);
+	readonly #aStep = new Float64Array(COUNT);
+	readonly #bStep = new Float64Array(COUNT);
 
-	constructor(sampleRate: number, seed: number) {
+	constructor(sampleRate: number) {
 		this.#sr = sampleRate;
-		this.#smooth = 1 - Math.exp(-1 / (SMOOTH_SECONDS * sampleRate));
-		// each voice's tremolo starts somewhere of its own, like players in a section
-		this.#lfo = 0.5 + 0.5 * new Noise(seed).next();
+		this.#smoothing = new Smoothing(sampleRate);
+		this.#highpass = new OnePole(prewarp(HIGHPASS_HZ, sampleRate));
+		this.#level = Math.pow(10, (OSCILLATOR_DB + DEVICE_GAIN_DB) / 20);
+		this.#ratioCoef = 1 - Math.exp(-1 / (RATIO_GLIDE * sampleRate));
 	}
 
 	start(hz: number, _velocity: number, params: Float32Array): void {
-		this.#p1 = 0;
-		this.#p2 = 0;
-		this.#filter.reset();
-		// a note starts where its parameters are, not gliding in from the last note's
-		this.#ratio = axisRatio(clamp01(params[1]));
+		this.#phase.fill(0);
+		this.#y1.fill(0);
+		this.#highpass.reset();
+		this.#lfo = 0;
+		this.#age = 0;
 		this.control(hz, params);
-		this.#index = this.#indexTarget;
-		this.#mix2 = this.#mix2Target;
-		this.#shape = this.#shapeTarget;
-		this.#depth = this.#depthTarget;
-		this.#rate = this.#rateTarget;
-		this.#vibrato = this.#vibratoTarget;
-		this.#cutoff = this.#cutoffTarget;
+		this.#op2Dt = this.#op2Target;
+		this.#followOp2(this.#op2Dt);
+		for (const ramp of this.#ramps) ramp.jump(ramp.target);
 	}
 
 	control(hz: number, params: Float32Array): void {
-		const dt = Math.min(Math.max(hz, 1), 0.45 * this.#sr) / this.#sr;
-		this.#dt = dt;
 		const tone = clamp01(params[0]);
+		const p = clamp01(params[1]);
+		const shape = clamp01(params[2]);
 		const tremolo = clamp01(params[3]);
-		this.#ratioTarget = axisRatio(clamp01(params[1]));
-		this.#shapeTarget = clamp01(params[2]) * (SHAPE_FRAMES - 1);
-		// while the ratio glides down from a high step, the limits hold for where it still is
-		const r = Math.max(this.#ratio, this.#ratioTarget);
-		const room = (BANDWIDTH * 0.5) / dt;
-		this.#indexTarget = Math.min(INDEX, indexRoom(r, room)) / (2 * Math.PI);
-		// op2 fades out before its own fundamental could reach Nyquist
-		const guard = Math.min(1, Math.max(0, (0.45 - r * dt) / 0.05));
-		this.#mix2Target = OP2_LEVEL * Math.min(1, Math.sqrt(2 / this.#ratioTarget)) * guard;
-		this.#cutoffTarget = Math.log2(TONE_LOW) + tone * Math.log2(TONE_HIGH / TONE_LOW);
-		this.#depthTarget = TREMOLO_DEPTH * tremolo;
-		this.#rateTarget = (TREMOLO_SLOW * Math.pow(TREMOLO_FAST / TREMOLO_SLOW, tremolo)) / this.#sr;
-		this.#vibratoTarget = (VIBRATO_CENTS * tremolo * tremolo * Math.LN2) / 1200;
+		const sr = this.#sr;
+		const y = read(AT, SHAPE.y, shape);
+		const y2 = read(AT, SHAPE.y2, shape);
+		for (let j = 0; j < COPIES.length; j++) {
+			const pitch = hz * Math.pow(2, COPIES[j] / 1200);
+			this.#dt[j] = Math.min(pitch / sr, FOLD_TO);
+			const beta = read(AT, FEEDBACK[j], tone) * read(BAND.hz, BAND.share, pitch);
+			this.#a[j].target = beta * y;
+			this.#b[j].target = beta * y2;
+		}
+		// op2's level and feedback follow the ratio it has glided to (render)
+		this.#op2Unit = (hz * Math.pow(2, OP2_CENTS / 1200)) / sr;
+		this.#op2Target = this.#op2Unit * axisRatio(p);
+		this.#op2Beta = read(AT, FEEDBACK[3], tone);
+		this.#shapeY = y;
+		this.#shapeY2 = y2;
+		this.#depth.target = read(AT, TREMOLO.depth, tremolo);
+		this.#rate = read(AT, TREMOLO.hz, tremolo) / sr;
+	}
+
+	/** op2's level and feedback for rate `dt`: its step's level, its band limit, and its fade before
+	 * it could fold back past Nyquist. */
+	#followOp2(dt: number): void {
+		const fold = Math.min(1, Math.max(0, (FOLD_TO - dt) / (FOLD_TO - FOLD_FROM)));
+		this.#op2.target = op2Gain(dt / this.#op2Unit) * fold;
+		const beta = this.#op2Beta * read(BAND.hz, BAND.share, dt * this.#sr);
+		this.#a[3].target = beta * this.#shapeY;
+		this.#b[3].target = beta * this.#shapeY2;
 	}
 
 	render(left: Float32Array, right: Float32Array, n: number): void {
-		const table = this.#table;
-		const filter = this.#filter;
-		const k = this.#smooth;
-		const dt = this.#dt;
-		// the filter follows tone's smoothed cutoff, block by block, its resonance with it
-		const settle = Math.pow(1 - k, n);
-		this.#cutoff = this.#cutoffTarget + (this.#cutoff - this.#cutoffTarget) * settle;
-		const dark = 1 - (this.#cutoff - Math.log2(TONE_LOW)) / Math.log2(TONE_HIGH / TONE_LOW);
-		const q = Q_BRIGHT + (Q_DARK - Q_BRIGHT) * dark * dark * dark;
-		filter.set(prewarp(Math.pow(2, this.#cutoff), this.#sr), 1 / q);
-		// the resonant peak lifts what sits at the cutoff by about Q: meet it halfway
-		const gain = LEVEL / Math.sqrt(q);
-		// op1's band limit for the modulation it may have over this block
-		const r = Math.max(this.#ratio, this.#ratioTarget);
-		const index = 2 * Math.PI * Math.max(this.#index, this.#indexTarget);
-		const limit = 0.5 / harmonicRoom(index, r, (BANDWIDTH * 0.5) / dt);
-		let p1 = this.#p1;
-		let p2 = this.#p2;
-		let lfo = this.#lfo;
-		let ratio = this.#ratio;
-		let idx = this.#index;
-		let mix2 = this.#mix2;
-		let shape = this.#shape;
-		let depth = this.#depth;
-		let rate = this.#rate;
-		let vibrato = this.#vibrato;
-		const ratioTarget = this.#ratioTarget;
-		const indexTarget = this.#indexTarget;
-		const mix2Target = this.#mix2Target;
-		const shapeTarget = this.#shapeTarget;
-		const depthTarget = this.#depthTarget;
-		const rateTarget = this.#rateTarget;
-		const vibratoTarget = this.#vibratoTarget;
-		for (let i = 0; i < n; i++) {
-			ratio += (ratioTarget - ratio) * k;
-			idx += (indexTarget - idx) * k;
-			mix2 += (mix2Target - mix2) * k;
-			shape += (shapeTarget - shape) * k;
-			depth += (depthTarget - depth) * k;
-			rate += (rateTarget - rate) * k;
-			vibrato += (vibratoTarget - vibrato) * k;
-			const wobble = sin2pi(lfo);
-			lfo += rate;
-			if (lfo >= 1) lfo -= 1;
-			// vibrato a quarter cycle ahead of the tremolo: pitch and level move in turn
-			const step = dt * (1 + vibrato * sin2pi(lfo + 0.25));
-			const step2 = step * ratio;
-			const mod = sin2pi(p2);
-			const op2 = table.read(shape, p2, step2);
-			const op1 = table.read(shape, p1 + idx * mod, limit);
-			// op2 inverted: at ratio 0 its fundamental then adds to op1's lower sideband, which sits
-			// on it in opposite phase, instead of cancelling it
-			const y = filter.process(op1 - mix2 * op2) * gain * (1 - depth * (0.5 + 0.5 * wobble));
-			left[i] = y;
-			right[i] = y;
-			p1 += step;
-			if (p1 >= 1) p1 -= 1;
-			p2 += step2;
-			if (p2 >= 1) p2 -= Math.floor(p2);
+		// where op2's glide will be by the block's end, so its level and feedback move with it
+		const glided = 1 - Math.pow(1 - this.#ratioCoef, n);
+		this.#followOp2(this.#op2Dt + (this.#op2Target - this.#op2Dt) * glided);
+		const c = this.#smoothing.coef(n);
+		for (let j = 0; j < COUNT; j++) {
+			this.#aNow[j] = this.#a[j].advance(c, n);
+			this.#bNow[j] = this.#b[j].advance(c, n);
+			this.#aStep[j] = this.#a[j].step;
+			this.#bStep[j] = this.#b[j].step;
 		}
-		this.#p1 = p1;
-		this.#p2 = p2;
-		this.#lfo = lfo;
-		this.#ratio = ratio;
-		this.#index = idx;
-		this.#mix2 = mix2;
-		this.#shape = shape;
-		this.#depth = depth;
-		this.#rate = rate;
-		this.#vibrato = vibrato;
+		let op2 = this.#op2.advance(c, n);
+		const dOp2 = this.#op2.step;
+		let depth = this.#depth.advance(c, n);
+		const dDepth = this.#depth.step;
+		// the swing fades in after its delay; over a block it barely moves
+		const seconds = this.#age / this.#sr;
+		const swing = Math.min(1, Math.max(0, (seconds - TREMOLO_DELAY) / TREMOLO_FADE));
+		this.#age += n;
+		const phase = this.#phase;
+		const dt = this.#dt;
+		const y1 = this.#y1;
+		const a = this.#aNow;
+		const b = this.#bNow;
+		const level = this.#level;
+		const highpass = this.#highpass;
+		for (let i = 0; i < n; i++) {
+			this.#op2Dt += (this.#op2Target - this.#op2Dt) * this.#ratioCoef;
+			dt[3] = Math.min(this.#op2Dt, FOLD_TO);
+			op2 += dOp2;
+			depth += dDepth;
+			let sum = 0;
+			for (let j = 0; j < COUNT; j++) {
+				a[j] += this.#aStep[j];
+				b[j] += this.#bStep[j];
+				const last = y1[j];
+				const y = sin2pi(phase[j] + (a[j] * last + b[j] * last * last) * INV_TAU);
+				y1[j] = y;
+				sum += j === 3 ? op2 * y : y;
+				phase[j] += dt[j];
+				if (phase[j] >= 1) phase[j] -= 1;
+			}
+			const lfo = sin2pi(this.#lfo);
+			this.#lfo += this.#rate;
+			if (this.#lfo >= 1) this.#lfo -= 1;
+			const gain = 1 - depth * (0.5 + 0.5 * swing * lfo);
+			const x = level * gain * sum;
+			const out = x - highpass.process(x);
+			left[i] = out;
+			right[i] = out;
+		}
 	}
 }
 

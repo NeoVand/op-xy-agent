@@ -52,7 +52,7 @@ class Placeholder implements EngineVoice {
 export function createEngine(engine: EngineId, sampleRate: number, seed: number): EngineVoice {
 	switch (engine) {
 		case 'axis':
-			return new AxisVoice(sampleRate, seed);
+			return new AxisVoice(sampleRate);
 		case 'dissolve':
 			return new DissolveVoice(sampleRate, seed);
 		case 'epiano':
