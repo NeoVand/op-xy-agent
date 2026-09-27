@@ -1,13 +1,48 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { getDeviceStack, type SessionPhase } from '$lib/device';
+	import { HintCaption, ReplicaBridge, StageHint, sweepSteps } from '$lib/app';
+	import { browserClock, browserTimers, getDeviceStack, type SessionPhase } from '$lib/device';
+	import { getReplicaState, Replica } from '$lib/replica';
 	import { Button, Led, Readout } from '$lib/ui';
 	import AgentPanel from '$lib/ui/shell/AgentPanel.svelte';
 	import DeviceStage from '$lib/ui/shell/DeviceStage.svelte';
 	import { getShellStatus } from '$lib/ui/shell/status.svelte';
 
 	const status = getShellStatus();
-	const { session, mirror } = getDeviceStack();
+	const stack = getDeviceStack();
+	const { session, mirror } = stack;
+	const replica = getReplicaState();
+
+	// Replica ⇄ device: while connected the replica's keys play the OP-XY, and what the device sends
+	// back lights the replica. Building it has no side effects; it listens from onMount.
+	const bridge = new ReplicaBridge({ replica, stack, clock: browserClock, timers: browserTimers });
+	// What the device can't take remotely, said under the replica now and then.
+	const caption = new HintCaption({ clock: browserClock, timers: browserTimers });
+
+	onMount(() => {
+		const stopBridge = bridge.start();
+		const stopHints = bridge.onHint((hint) => caption.show(hint));
+		// The page's one orchestrated moment: a playhead sweeps the step row once.
+		const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const stopSweep = calm || bridge.live ? null : sweepSteps(replica, browserTimers);
+		return () => {
+			stopSweep?.();
+			stopHints();
+			stopBridge();
+			caption.dispose();
+		};
+	});
+
+	// A held note must never hang: let go of everything when the page loses focus or goes away.
+	// (The tab hiding comes before pagehide, while the port is still open.)
+	function releaseNotes(): void {
+		bridge.releaseAll();
+	}
+
+	function onvisibilitychange(): void {
+		if (document.visibilityState === 'hidden') bridge.releaseAll();
+	}
 
 	const PHASE_TEXT: Record<SessionPhase, string> = {
 		idle: 'not connected',
@@ -31,9 +66,13 @@
 	}
 
 	function disconnect(): void {
-		void session.disconnect();
+		// Notes off first, while the port is still open.
+		void bridge.disconnect();
 	}
 </script>
+
+<svelte:window onblur={releaseNotes} onpagehide={releaseNotes} />
+<svelte:document {onvisibilitychange} />
 
 <svelte:head>
 	<title>OP-XY Agent</title>
@@ -49,7 +88,10 @@
 			webMidi={status.webMidi}
 			onconnect={connect}
 			plate={engaged ? connection : undefined}
-		/>
+			caption={hints}
+		>
+			<Replica {replica} />
+		</DeviceStage>
 	</section>
 	<AgentPanel class="home__agent" />
 </div>
@@ -95,6 +137,7 @@
 					value={bpm === null ? '–' : bpm.toFixed(1)}
 					unit={bpm === null ? undefined : 'bpm'}
 				/>
+				<Readout variant="cell" label="notes" value="ch {bridge.channel + 1}" />
 			</div>
 		{/if}
 
@@ -108,6 +151,24 @@
 			<a class="conn__lab" href={resolve('/lab')}>open the device lab →</a>
 		</div>
 	</div>
+{/snippet}
+
+{#snippet hints()}
+	<StageHint {caption}>
+		{#snippet idle()}
+			<p class="line">
+				{#if bridge.live}
+					<Led state="white" size="sm" />
+					<span class="line__state">live</span>
+					<span>the keyboard, play, stop and track keys play the op-xy</span>
+				{:else}
+					<Led state="dim" size="sm" />
+					<span class="line__state">simulated</span>
+					<span>the keys move, nothing is sent</span>
+				{/if}
+			</p>
+		{/snippet}
+	</StageHint>
 {/snippet}
 
 <style>
@@ -127,6 +188,24 @@
 
 	.home :global(.home__agent) {
 		margin: 0.75rem 0.75rem 0.75rem 0;
+	}
+
+	/* The status line under the replica, shown while no hint is up. */
+	.line {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.5rem;
+		margin: 0;
+		color: var(--xy-fg-subtle);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+		font-weight: 450;
+		letter-spacing: var(--xy-tracking-label);
+	}
+
+	.line__state {
+		color: var(--xy-fg-muted);
 	}
 
 	.conn {

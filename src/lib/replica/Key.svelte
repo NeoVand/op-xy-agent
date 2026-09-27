@@ -10,9 +10,25 @@ does the rest, so a key press never re-renders the legend paths.
 -->
 <svelte:options namespace="svg" />
 
+<script lang="ts" module>
+	/**
+	 * An unlit LED window is frosted, translucent plastic flush with the cap: it reads as a faint
+	 * tint of the cap itself, a hair darker on dark caps and a hair lighter on pale ones, never as a
+	 * hole. Mixes the cap colour toward black or white.
+	 */
+	function frostedWindow(cap: string, pale: boolean): string {
+		const [target, amount] = pale ? [255, 0.22] : [0, 0.16];
+		const mixed = [1, 3, 5].map((i) => {
+			const channel = parseInt(cap.slice(i, i + 2), 16);
+			return Math.round(channel + (target - channel) * amount);
+		});
+		return `#${mixed.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+	}
+</script>
+
 <script lang="ts">
 	import type { KeyId } from '$lib/core/opxy';
-	import type { KeyPart } from './geometry';
+	import { luminance, type KeyPart } from './geometry';
 	import { capturePointer } from './input';
 	import type { ReplicaState } from './state.svelte';
 
@@ -42,6 +58,8 @@ does the rest, so a key press never re-renders the legend paths.
 	const cell = $derived(part.art.tile);
 	const capR = $derived(part.art.capRadius);
 	const ledArt = $derived(part.art.led);
+	/** The unlit window's colour; the lit core fades back to it. Pale = the light half of the step ramp. */
+	const ledWindow = $derived(frostedWindow(part.colors.cap, luminance(part.colors.cap) > 0.3));
 
 	/** Pointer that pressed the key (so another finger's release does not lift it). */
 	let pointer: number | null = null;
@@ -178,14 +196,18 @@ does the rest, so a key press never re-renders the legend paths.
 			/>
 		{/each}
 		{#if ledArt}
-			<circle cx={ledArt.x} cy={ledArt.y + 0.07} r={ledArt.r} fill="#ffffff" fill-opacity="0.16" />
-			<circle class="key__led" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} />
-			<circle class="key__core" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} />
+			<!-- the window's lower rim catching the light, barely -->
+			<circle cx={ledArt.x} cy={ledArt.y + 0.06} r={ledArt.r} fill="#ffffff" fill-opacity="0.07" />
+			<circle class="key__led" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} fill={ledWindow} />
+			<!-- one core per colour, each with a fixed fill, so a light decays in its own colour -->
+			<circle class="key__core key__core--white" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} />
+			<circle class="key__core key__core--red" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} />
 		{/if}
 		<circle class="key__state" r={capR} />
 	</g>
 	{#if ledArt}
-		<circle class="key__glow" cx={ledArt.x} cy={ledArt.y} r={ledArt.r * 3.4} />
+		<circle class="key__glow key__glow--white" cx={ledArt.x} cy={ledArt.y} r={ledArt.r * 3.4} />
+		<circle class="key__glow key__glow--red" cx={ledArt.x} cy={ledArt.y} r={ledArt.r * 3.4} />
 	{/if}
 
 	{#if highlight === 'hold' || highlight === 'press'}
@@ -273,11 +295,9 @@ does the rest, so a key press never re-renders the legend paths.
 		opacity: 0.12;
 	}
 
-	/* LED window: a dark hole; the lit core snaps on and decays off over it */
-	.key__led {
-		fill: var(--rx-led-off, #0a0a0c);
-	}
-
+	/* LED window: frosted plastic tinted like its cap (its fill is set per key). A lit core snaps on
+	 * over it and decays back to it in its own colour; each colour has its own core and glow with a
+	 * fixed fill, so nothing ever falls back to SVG's default black while fading. */
 	.key__core,
 	.key__glow {
 		opacity: 0;
@@ -285,38 +305,38 @@ does the rest, so a key press never re-renders the legend paths.
 		transition: opacity var(--rx-led-decay, 260ms) var(--rx-ease-decay, ease-out);
 	}
 
-	.key[data-led='white'] .key__core {
+	.key__core--white {
 		fill: var(--rx-led-white, #ffffff);
-		opacity: 1;
 	}
 
-	.key[data-led='red'] .key__core {
+	.key__core--red {
 		fill: var(--rx-led-red, #ff4d00);
-		opacity: 1;
 	}
 
-	.key[data-led='dim'] .key__core {
-		fill: var(--rx-led-dim, #8a8a93);
-		opacity: 0.7;
-	}
-
-	.key[data-led='white'] .key__glow {
+	.key__glow--white {
 		fill: url(#rx-glow-white);
-		opacity: 1;
 	}
 
-	.key[data-led='dim'] .key__glow {
-		fill: url(#rx-glow-white);
-		opacity: 0.2;
-	}
-
-	.key[data-led='red'] .key__glow {
+	.key__glow--red {
 		fill: url(#rx-glow-red);
-		opacity: 1;
 	}
 
-	.key:not([data-led='off']) .key__core,
-	.key:not([data-led='off']) .key__glow {
+	.key[data-led='white'] .key__core--white,
+	.key[data-led='white'] .key__glow--white,
+	.key[data-led='red'] .key__core--red,
+	.key[data-led='red'] .key__glow--red {
+		opacity: 1;
+		transition-duration: var(--rx-led-attack, 30ms);
+	}
+
+	/* dim: the same white light, faintly (brighter than the unlit window on every cap) */
+	.key[data-led='dim'] .key__core--white {
+		opacity: 0.42;
+		transition-duration: var(--rx-led-attack, 30ms);
+	}
+
+	.key[data-led='dim'] .key__glow--white {
+		opacity: 0.2;
 		transition-duration: var(--rx-led-attack, 30ms);
 	}
 

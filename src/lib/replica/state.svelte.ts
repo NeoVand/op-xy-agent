@@ -1,9 +1,9 @@
 /**
  * The replica's live state: which controls are down, what every LED shows, how far each encoder
  * has turned, the volume, the pitch bend, the level meter and the screen. Components render it;
- * input on the replica changes it and emits outbound events that the device layer can map to MIDI
- * later; `animate("shift + M1")` shows a procedure on the replica (the agent's "look, press this")
- * without emitting anything.
+ * input on the replica changes it and emits outbound events (`on(type, …)` per event name,
+ * `subscribe(…)` for all of them) that the device bridge maps to MIDI; `animate("shift + M1")`
+ * shows a procedure on the replica (the agent's "look, press this") without emitting anything.
  *
  * Reactivity is per control (SvelteSet/SvelteMap), so pressing one key re-renders one key.
  */
@@ -87,6 +87,8 @@ export type ReplicaEventType = 'press' | 'release' | 'turn' | 'click' | 'bend';
 export type ReplicaEventOf<T extends ReplicaEventType> = T extends 'press' | 'release'
 	? PressEvent
 	: Extract<ReplicaEvent, { type: T }>;
+/** A listener for every outbound event (see {@link ReplicaState.subscribe}). */
+export type ReplicaListener = (event: ReplicaEvent) => void;
 
 /** Timer functions, injectable for tests; default to the global ones at call time. */
 export interface Timers {
@@ -166,6 +168,12 @@ export const DRAWN_VOLUME = Math.min(
 	Math.max(0, (VOLUME_ART.dimpleAngle + VOLUME_TRAVEL / 2) / VOLUME_TRAVEL)
 );
 
+/** Removes one occurrence of `item` from `list`, if present. */
+function removeFrom<T>(list: T[], item: T): void {
+	const index = list.indexOf(item);
+	if (index >= 0) list.splice(index, 1);
+}
+
 function assertUnit(name: string, value: number, min: number, max: number): void {
 	if (!Number.isFinite(value) || value < min || value > max) {
 		throw new ReplicaError(`${name} must be between ${min} and ${max}, got ${value}`);
@@ -196,6 +204,8 @@ export class ReplicaState {
 		click: [],
 		bend: []
 	};
+	/** Listeners for every outbound event, called after the per-name ones. */
+	readonly #subscribers: ReplicaListener[] = [];
 	readonly #timers: Timers;
 	/** Encoder detents per revolution (for the knurl angle). */
 	readonly detentsPerTurn: number;
@@ -316,22 +326,32 @@ export class ReplicaState {
 	// ─────────────────────────────────────────────────────────────── events
 
 	/**
-	 * Listens to outbound events; returns a function that stops listening.
+	 * Listens to outbound events of one name; returns a function that stops listening. Any number
+	 * of listeners may listen, each gets every event.
 	 * @example replica.on('press', (e) => device.pressKey(e.id))
 	 */
 	on<T extends ReplicaEventType>(type: T, handler: (event: ReplicaEventOf<T>) => void): () => void {
 		const listener = handler as (event: ReplicaEvent) => void;
 		this.#listeners[type].push(listener);
-		return () => {
-			const list = this.#listeners[type];
-			const index = list.indexOf(listener);
-			if (index >= 0) list.splice(index, 1);
-		};
+		return () => removeFrom(this.#listeners[type], listener);
+	}
+
+	/**
+	 * Listens to every outbound event (press, release, turn, click, bend) in the order they happen;
+	 * returns a function that stops listening. Several consumers (the device bridge, the agent) can
+	 * subscribe side by side. Like {@link on}, it hears only someone operating the replica
+	 * (`pointer`, `keyboard`, `program`), never mirroring (`device`) or teaching animations (`demo`).
+	 * Subscribers run after the per-name listeners of the same event.
+	 * @example const stop = replica.subscribe((e) => log(e.type, e.id))
+	 */
+	subscribe(listener: ReplicaListener): () => void {
+		this.#subscribers.push(listener);
+		return () => removeFrom(this.#subscribers, listener);
 	}
 
 	#emit(event: ReplicaEvent): void {
 		if (!EMITTING.includes(event.source)) return;
-		for (const listener of [...this.#listeners[event.type]]) {
+		for (const listener of [...this.#listeners[event.type], ...this.#subscribers]) {
 			try {
 				listener(event);
 			} catch (error) {

@@ -1,9 +1,11 @@
 <!--
 @component
 The device stage: the area framed at the device body's exact 285:102 aspect where the replica mounts
-(M2). Until something is passed as `children`, it shows an abstract placeholder and an honest
-invitation to connect: the connect key stays disabled, marked "coming soon", until the Web MIDI layer
-provides `onconnect`.
+(pass it as `children`; without it an abstract placeholder stands in). Under the device sits the
+plate: an honest invitation to connect, unless `plate` replaces it (with the connected device's
+card, for example). The connect key stays disabled, marked "coming soon", until the Web MIDI layer
+provides `onconnect`. `caption` is a line of its own right under the device, for a status line and
+short notes about what the replica just did.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -20,9 +22,11 @@ provides `onconnect`.
 		webMidi?: 'unknown' | 'available' | 'unavailable';
 		/** Replaces the connect copy under the device, e.g. with the connected device's card. */
 		plate?: Snippet;
+		/** A line right under the device: a status line, and hints from the replica. */
+		caption?: Snippet;
 	}
 
-	let { children, onconnect, webMidi = 'unknown', plate }: Props = $props();
+	let { children, onconnect, webMidi = 'unknown', plate, caption }: Props = $props();
 
 	const uid = $props.id();
 	const canConnect = $derived(Boolean(onconnect) && webMidi !== 'unavailable');
@@ -37,9 +41,13 @@ provides `onconnect`.
 		{/if}
 	</div>
 
+	{#if caption}
+		<div class="stage__caption">{@render caption()}</div>
+	{/if}
+
 	{#if plate}
 		<div class="stage__plate">{@render plate()}</div>
-	{:else if !children}
+	{:else}
 		<div class="stage__plate">
 			<div class="stage__copy">
 				<h1 class="stage__title">connect your <span class="whitespace-nowrap">op-xy</span></h1>
@@ -47,12 +55,12 @@ provides `onconnect`.
 					{#if webMidi === 'unavailable'}
 						This browser has no Web MIDI. Open the app in Chrome, Edge or Firefox to connect.
 					{:else if onconnect}
-						Plug it in with a <span class="whitespace-nowrap">USB-C</span> cable to mirror every key here
-						and let the agent play it.
+						Plug it in with a <span class="whitespace-nowrap">USB-C</span> cable to play it from the replica,
+						see what it plays, and let the agent drive it.
 					{:else}
-						The USB connection is being built right now, and the interactive replica arrives in M2.
-						Then you plug in with <span class="whitespace-nowrap">USB-C</span>, every key is
-						mirrored here, and the agent can play it.
+						The USB connection is being built right now. Then you plug in with
+						<span class="whitespace-nowrap">USB-C</span>, the replica plays the device and shows
+						what it plays, and the agent can drive it.
 					{/if}
 				</p>
 			</div>
@@ -79,10 +87,11 @@ provides `onconnect`.
 
 <style>
 	.stage {
+		--stage-gap: clamp(1.25rem, 3vw, 2.25rem);
 		position: relative;
 		display: flex;
 		flex-direction: column;
-		gap: clamp(1.25rem, 3vw, 2.25rem);
+		gap: var(--stage-gap);
 		width: 100%;
 		max-width: 76rem;
 		margin-inline: auto;
@@ -105,6 +114,18 @@ provides `onconnect`.
 		position: relative;
 		width: 100%;
 		aspect-ratio: var(--xy-body-aspect);
+	}
+
+	/* A line of its own between the device and the plate, on the device's tile grid, tall enough for
+	 * a two-line note; the stage gap around it is halved so it reads as part of the device. Whatever
+	 * grows past it floats over the plate (z-index) instead of pushing it down. */
+	.stage__caption {
+		position: relative;
+		z-index: var(--xy-z-raised);
+		display: grid;
+		min-height: 3.5rem;
+		margin-block: calc(var(--stage-gap) / -2);
+		padding-inline: calc(100% * 4.41 / 285) calc(100% * 17.09 / 285);
 	}
 
 	/* The caption plate aligns with the device's own tile grid: it starts 4.41 mm from the left edge

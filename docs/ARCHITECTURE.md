@@ -20,6 +20,8 @@ src/lib/
   device/      Browser adapters (Web MIDI, workers, audio). Everything injected for tests:
                access, transport (the single send choke point + policy), monitor, device mirror,
                scheduler + tick worker, session (identity + GREET), expect()
+  app/         Glue between features, e.g. the replica ⇄ device bridge (replica keys → notes/transport/
+               track select through the transport; device notes/clock → replica LEDs), app-wide contexts
   agent/       (M3) conductor harness on @anthropic-ai/sdk, tools, subagents, approvals, journal
   replica/     (M2) SVG digital twin: geometry model (mm), components, screen canvas, animations
   manual/      (M4) our manual: schema, loader, search
@@ -29,7 +31,7 @@ test/fakes/    fakes shared by tests (e.g. FakeMIDIAccess with an emulated OP-XY
 knowledge/     committed data the app imports via the `$knowledge` alias
 ```
 
-Dependency direction: `routes → (replica | agent | manual | ui) → device → core`. `core` imports
+Dependency direction: `routes → app → (replica | agent | manual | ui) → device → core`. `core` imports
 nothing outside `core` (and `$knowledge` JSON). Nothing imports `routes`.
 
 ## Rules

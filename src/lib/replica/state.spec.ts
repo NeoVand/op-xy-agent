@@ -126,6 +126,84 @@ describe('ReplicaState input', () => {
 	});
 });
 
+describe('ReplicaState.subscribe', () => {
+	it('hears every outbound event, in order, next to per-name listeners', () => {
+		const state = new ReplicaState();
+		const all: string[] = [];
+		const presses = vi.fn();
+		state.on('press', presses);
+		state.subscribe((e) => all.push(`${e.type} ${e.id} ${e.source}`));
+		state.press('keyboard.c4', 'pointer');
+		state.release('keyboard.c4', 'pointer');
+		state.turn('encoder.3', -1, { source: 'keyboard' });
+		state.click('encoder.3', 'keyboard');
+		state.setBend(0.25, 'pointer');
+		state.setVolume(0.5, 'program');
+		expect(all).toEqual([
+			'press keyboard.c4 pointer',
+			'release keyboard.c4 pointer',
+			'turn encoder.3 keyboard',
+			'click encoder.3 keyboard',
+			'bend strip.pitchbend pointer',
+			'turn knob.volume program'
+		]);
+		expect(presses).toHaveBeenCalledTimes(1);
+	});
+
+	it('lets several consumers subscribe and each unsubscribe on its own', () => {
+		const state = new ReplicaState();
+		const bridge = vi.fn();
+		const agent = vi.fn();
+		const stopBridge = state.subscribe(bridge);
+		state.subscribe(agent);
+		state.press('key.play', 'pointer');
+		stopBridge();
+		stopBridge();
+		state.release('key.play', 'pointer');
+		expect(bridge).toHaveBeenCalledTimes(1);
+		expect(agent).toHaveBeenCalledTimes(2);
+		expect(agent.mock.calls[1][0]).toEqual({ type: 'release', id: 'key.play', source: 'pointer' });
+	});
+
+	it('stays silent for mirroring and teaching, like on()', () => {
+		vi.useFakeTimers();
+		try {
+			const state = new ReplicaState();
+			const heard = vi.fn();
+			state.subscribe(heard);
+			state.press('keyboard.e4', 'device');
+			state.release('keyboard.e4', 'device');
+			state.animate('shift + M1');
+			vi.runAllTimers();
+			expect(heard).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('keeps delivering when a subscriber throws, and reports the error asynchronously', () => {
+		const reported: (() => void)[] = [];
+		const spy = vi.spyOn(globalThis, 'queueMicrotask').mockImplementation((callback) => {
+			reported.push(callback);
+		});
+		try {
+			const state = new ReplicaState();
+			const after = vi.fn();
+			state.subscribe(() => {
+				throw new Error('boom');
+			});
+			state.subscribe(after);
+			state.press('track.2', 'pointer');
+			expect(after).toHaveBeenCalledTimes(1);
+			expect(state.isPressed('track.2')).toBe(true);
+			expect(reported).toHaveLength(1);
+			expect(() => reported[0]()).toThrow('boom');
+		} finally {
+			spy.mockRestore();
+		}
+	});
+});
+
 describe('ReplicaState output', () => {
 	it('sets LEDs per key, with blinking, and clears them', () => {
 		const state = new ReplicaState();

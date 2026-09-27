@@ -1,13 +1,20 @@
 <!--
 @component
-The app header: the name in plain text (no logos, see DECISIONS D6), navigation and the theme switch.
+The app header: the name in plain text (no logos, see DECISIONS D6) and the theme switch. The
+developer pages (styleguide, replica, lab) are linked only in local development, never on the
+published site.
 -->
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import ThemeToggle from './ThemeToggle.svelte';
 
-	const onStyleguide = $derived(page.route.id === '/styleguide');
+	const DEV_LINKS = [
+		{ id: '/styleguide', label: 'styleguide' },
+		{ id: '/replica', label: 'replica' },
+		{ id: '/lab', label: 'lab' }
+	] as const;
 </script>
 
 <header class="header">
@@ -21,11 +28,15 @@ The app header: the name in plain text (no logos, see DECISIONS D6), navigation 
 	</a>
 
 	<nav class="nav" aria-label="primary">
-		<a
-			class={['nav__link', onStyleguide && 'is-current']}
-			href={resolve('/styleguide')}
-			aria-current={onStyleguide ? 'page' : undefined}>styleguide</a
-		>
+		{#if dev}
+			{#each DEV_LINKS as link (link.id)}
+				<a
+					class={['nav__link', page.route.id === link.id && 'is-current']}
+					href={resolve(link.id)}
+					aria-current={page.route.id === link.id ? 'page' : undefined}>{link.label}</a
+				>
+			{/each}
+		{/if}
 		<ThemeToggle />
 	</nav>
 </header>
