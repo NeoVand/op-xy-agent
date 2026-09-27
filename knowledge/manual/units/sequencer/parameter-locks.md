@@ -91,7 +91,13 @@ procedures:
       - keys: hold step n → step m
         note: let go of the first step, then press the target step, which must be empty
     source: https://teenage.engineering/guides/op-xy/sequencer#step-sequencing
-related: [sequencer.step-components, instrument.engine-prism]
+related:
+  [
+    sequencer.step-components,
+    sequencer.component-skip-parameter-lock,
+    sequencer.bar-menu,
+    instrument.engine-prism
+  ]
 ---
 
 A parameter lock pins one value of one parameter to one step. Hold a hi-hat step and open the

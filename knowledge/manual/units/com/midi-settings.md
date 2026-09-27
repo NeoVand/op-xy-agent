@@ -145,7 +145,7 @@ parameters:
     name: value
     note: same as E3
     source: https://teenage.engineering/guides/op-xy/com#system-settings
-related: [hardware.layout]
+related: [com.midi-monitor, com.devices, com.midi-cc-reference, hardware.layout]
 ---
 
 The midi section is where the OP-XY decides how it talks to other gear. Clock, notes and "other"

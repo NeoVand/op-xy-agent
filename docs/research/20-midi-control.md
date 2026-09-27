@@ -45,7 +45,9 @@ nothing here has been checked on 1.1.33 yet — that is what the probe plan in �
 >   runs continuously even while stopped. Incoming `FA`/`FC` start/stop playback.
 > - **CC80: BPM = 2 × value, clamped 40–220** (T16 resolved). **CC9: 0 = unmuted, 1–127 = muted**
 >   (level, not toggle). **CC104 = play, CC105 = stop, CC102 = track select (zero-based)**.
-> - **CC106/107 remote keys: no effect on 1.1.33** (channels 1 and 16; keys 2 and 51).
+> - **CC106/107 remote keys: no effect on 1.1.33** (channels 1 and 16; keys 2 and 51). Per
+>   `21-remote-control.md`, the discoverer reports TE disabled them in 1.0.25; no source shows them
+>   working on ≥ 1.1.15.
 
 1. **The official CC table is tiny**: CC7 volume, CC9 mute, CC10 pan, CC46 "track parameters" on
    channels 1–16; CC80 tempo, CC81 groove, CC82 delayed scene, CC83/84 prev/next scene, CC85 scene,
@@ -614,15 +616,15 @@ consistent with "no CC for encoder rotation" [DAWLESS-CC106].
 
 ### 7.2 Firmware history (the "disagreement")
 
-| Firmware                    | Observation                                                                          | Source                              |
-| --------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------- |
-| ≤ 1.0.21                    | works (down/up); "This let's you do SHIFT + button combos"                           | [SHEET] CC 106/107 tab              |
-| Jan 2025 (1.0.21 era)       | op-xy-generator sends `B0 6A 34` twice then `B0 6A 33` (stop, stop, play — no CC107) | [GEN-MAIN] (last commit 2025-01-25) |
-| ≥ 1.0.25                    | "disabled (or moved to another CC?)"                                                 | [SHEET]                             |
-| 2025 (unspecified)          | "multiple 2025 reports of it not working (possibly removed then restored)"           | [REACT-DESIGN]                      |
-| ≤ 1.1.4 (tested 2026-03-04) | **works**; systematic sweep of 0–127, CC107 release confirmed                        | [DAWLESS-CC106]                     |
-| 1.1.21                      | unverified (opxy-reactive ships a probe step and disables `press` if it fails)       | [REACT-SRC] `src/probe/probe.ts`    |
-| 1.1.33                      | **unknown → probe (§11 T24)**                                                        | –                                   |
+| Firmware                       | Observation                                                                                                                                | Source                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| ≤ 1.0.21                       | works (down/up); "This let's you do SHIFT + button combos"                                                                                 | [SHEET] CC 106/107 tab              |
+| Jan 2025 (1.0.21 era)          | op-xy-generator sends `B0 6A 34` twice then `B0 6A 33` (stop, stop, play — no CC107)                                                       | [GEN-MAIN] (last commit 2025-01-25) |
+| ≥ 1.0.25                       | "disabled (or moved to another CC?)"                                                                                                       | [SHEET]                             |
+| 2025 (unspecified)             | "multiple 2025 reports of it not working (possibly removed then restored)"                                                                 | [REACT-DESIGN]                      |
+| unstated (write-up 2026-03-04) | "works"; systematic sweep of 0–127 — **firmware not stated; the earlier reading "≤ 1.1.4" is unsupported** (see `21-remote-control.md` §3) | [DAWLESS-CC106]                     |
+| 1.1.21                         | unverified (opxy-reactive ships a probe step and disables `press` if it fails)                                                             | [REACT-SRC] `src/probe/probe.ts`    |
+| 1.1.33                         | **unknown → probe (§11 T24)**                                                                                                              | –                                   |
 
 ### 7.3 What works and what doesn't (1.1.4 sweep)
 

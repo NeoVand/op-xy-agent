@@ -1,64 +1,64 @@
 {
 	"guide_version": "1.1.15",
 	"total": 138,
-	"covered": 31,
-	"percent": 22.5,
+	"covered": 138,
+	"percent": 100,
 	"by_area": {
 		"basics": {
 			"total": 10,
-			"covered": 0
+			"covered": 10
 		},
 		"hardware": {
 			"total": 29,
-			"covered": 16
+			"covered": 29
 		},
 		"sequencer": {
 			"total": 11,
-			"covered": 7
+			"covered": 11
 		},
 		"players": {
 			"total": 4,
-			"covered": 0
+			"covered": 4
 		},
 		"instrument": {
 			"total": 19,
-			"covered": 5
+			"covered": 19
 		},
 		"sampler": {
 			"total": 6,
-			"covered": 0
+			"covered": 6
 		},
 		"auxiliary": {
 			"total": 8,
-			"covered": 0
+			"covered": 8
 		},
 		"fx": {
 			"total": 7,
-			"covered": 0
+			"covered": 7
 		},
 		"arrange": {
 			"total": 6,
-			"covered": 0
+			"covered": 6
 		},
 		"mix": {
 			"total": 5,
-			"covered": 0
+			"covered": 5
 		},
 		"project": {
 			"total": 5,
-			"covered": 0
+			"covered": 5
 		},
 		"tempo": {
 			"total": 3,
-			"covered": 0
+			"covered": 3
 		},
 		"com": {
 			"total": 8,
-			"covered": 3
+			"covered": 8
 		},
 		"howto": {
 			"total": 17,
-			"covered": 0
+			"covered": 17
 		}
 	},
 	"releases_after_guide": [
@@ -76,7 +76,7 @@
 		},
 		{
 			"version": "1.1.25",
-			"cited": false
+			"cited": true
 		},
 		{
 			"version": "1.1.32",
@@ -87,115 +87,7 @@
 			"cited": true
 		}
 	],
-	"uncovered": [
-		"https://teenage.engineering/guides/op-xy",
-		"https://teenage.engineering/guides/op-xy#whats-in-the-box",
-		"https://teenage.engineering/guides/op-xy/hardware-overview#electrical-characteristics",
-		"https://teenage.engineering/guides/op-xy/hardware-overview#hardware",
-		"https://teenage.engineering/guides/op-xy/hardware-overview#power-on-charging",
-		"https://teenage.engineering/guides/op-xy/hardware-overview#technical-specifications",
-		"https://teenage.engineering/guides/op-xy/layout#interface-overview",
-		"https://teenage.engineering/guides/op-xy/guide-conventions#guide-conventions",
-		"https://teenage.engineering/guides/op-xy/get-started#4.%20get%20started",
-		"https://teenage.engineering/guides/op-xy/get-started#4.1%20sequencing%20a%20drum%20beat",
-		"https://teenage.engineering/guides/op-xy/get-started#4.2%20recording%20a%20baseline",
-		"https://teenage.engineering/guides/op-xy/get-started#4.3%20adding-chords",
-		"https://teenage.engineering/guides/op-xy/get-started#4.4.%20adding-punch-in-fx",
-		"https://teenage.engineering/guides/op-xy/main-modes",
-		"https://teenage.engineering/guides/op-xy/main-modes#5.1%20main-modes",
-		"https://teenage.engineering/guides/op-xy/main-modes#5.2%20modules",
-		"https://teenage.engineering/guides/op-xy/track-buttons",
-		"https://teenage.engineering/guides/op-xy/track-buttons#6.1%20using-the-track-buttons",
-		"https://teenage.engineering/guides/op-xy/track-buttons#6.2%20linking-tracks",
-		"https://teenage.engineering/guides/op-xy/sequencer#rotate-trigs-functionality",
-		"https://teenage.engineering/guides/op-xy/sequencer#sequencer",
-		"https://teenage.engineering/guides/op-xy/sequencer#step-recording",
-		"https://teenage.engineering/guides/op-xy/step-components#step-components",
-		"https://teenage.engineering/guides/op-xy/players#arpeggio",
-		"https://teenage.engineering/guides/op-xy/players#hold",
-		"https://teenage.engineering/guides/op-xy/players#maestro",
-		"https://teenage.engineering/guides/op-xy/players#players",
-		"https://teenage.engineering/guides/op-xy/project#project",
-		"https://teenage.engineering/guides/op-xy/project#project-folder",
-		"https://teenage.engineering/guides/op-xy/project#project-settings",
-		"https://teenage.engineering/guides/op-xy/project#rename",
-		"https://teenage.engineering/guides/op-xy/project#system-usage-indicators",
-		"https://teenage.engineering/guides/op-xy/tempo#edit-tempo",
-		"https://teenage.engineering/guides/op-xy/tempo#project",
-		"https://teenage.engineering/guides/op-xy/tempo#what-are-grooves",
-		"https://teenage.engineering/guides/op-xy/workflow#creating-a-song",
-		"https://teenage.engineering/guides/op-xy/workflow#patterns-scenes-songs-and-projects",
-		"https://teenage.engineering/guides/op-xy/workflow#workflow",
-		"https://teenage.engineering/guides/op-xy/instrument#duck",
-		"https://teenage.engineering/guides/op-xy/instrument#envelopes",
-		"https://teenage.engineering/guides/op-xy/instrument#filter",
-		"https://teenage.engineering/guides/op-xy/instrument#lfo",
-		"https://teenage.engineering/guides/op-xy/instrument#preset-settings",
-		"https://teenage.engineering/guides/op-xy/instrument#project",
-		"https://teenage.engineering/guides/op-xy/auxiliary#auxiliary",
-		"https://teenage.engineering/guides/op-xy/auxiliary#brain",
-		"https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
-		"https://teenage.engineering/guides/op-xy/auxiliary#external-cv",
-		"https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
-		"https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",
-		"https://teenage.engineering/guides/op-xy/auxiliary#punch-in-fx",
-		"https://teenage.engineering/guides/op-xy/auxiliary#tape",
-		"https://teenage.engineering/guides/op-xy/arrange#arrange",
-		"https://teenage.engineering/guides/op-xy/arrange#edit-controls",
-		"https://teenage.engineering/guides/op-xy/arrange#scenes",
-		"https://teenage.engineering/guides/op-xy/arrange#song-mode",
-		"https://teenage.engineering/guides/op-xy/arrange#sound-link",
-		"https://teenage.engineering/guides/op-xy/arrange#switching-tracks-and-patterns",
-		"https://teenage.engineering/guides/op-xy/mix#arrange",
-		"https://teenage.engineering/guides/op-xy/mix#eq",
-		"https://teenage.engineering/guides/op-xy/mix#levels-pans-and-sends",
-		"https://teenage.engineering/guides/op-xy/mix#master",
-		"https://teenage.engineering/guides/op-xy/mix#saturator",
-		"https://teenage.engineering/guides/op-xy/sample#arrange",
-		"https://teenage.engineering/guides/op-xy/sample#drum-sampler",
-		"https://teenage.engineering/guides/op-xy/sample#multisampler",
-		"https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
-		"https://teenage.engineering/guides/op-xy/sample#sample-folder",
-		"https://teenage.engineering/guides/op-xy/sample#sample-slicer",
-		"https://teenage.engineering/guides/op-xy/com",
-		"https://teenage.engineering/guides/op-xy/com#midi-controller-moder",
-		"https://teenage.engineering/guides/op-xy/com#mtp",
-		"https://teenage.engineering/guides/op-xy/com#setting-the-multi-out-port-and-bluetooth-midi",
-		"https://teenage.engineering/guides/op-xy/synth-engines#axis",
-		"https://teenage.engineering/guides/op-xy/synth-engines#dissolve",
-		"https://teenage.engineering/guides/op-xy/synth-engines#epiano",
-		"https://teenage.engineering/guides/op-xy/synth-engines#external",
-		"https://teenage.engineering/guides/op-xy/synth-engines#hardsync",
-		"https://teenage.engineering/guides/op-xy/synth-engines#organ",
-		"https://teenage.engineering/guides/op-xy/synth-engines#simple",
-		"https://teenage.engineering/guides/op-xy/synth-engines#wavetable",
-		"https://teenage.engineering/guides/op-xy/fx#chorus",
-		"https://teenage.engineering/guides/op-xy/fx#delay",
-		"https://teenage.engineering/guides/op-xy/fx#distorsion",
-		"https://teenage.engineering/guides/op-xy/fx#fx",
-		"https://teenage.engineering/guides/op-xy/fx#lofi",
-		"https://teenage.engineering/guides/op-xy/fx#phaser",
-		"https://teenage.engineering/guides/op-xy/fx#reverb",
-		"https://teenage.engineering/guides/op-xy/how-to#how-to-back-up-your-projects",
-		"https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
-		"https://teenage.engineering/guides/op-xy/how-to#how-to-control-an-analog-synth%20with%20cv%20and%20gate",
-		"https://teenage.engineering/guides/op-xy/how-to#how-to-control-op-xy",
-		"https://teenage.engineering/guides/op-xy/how-to#how-to-enable-velocity",
-		"https://teenage.engineering/guides/op-xy/how-to#how-to-load-samples",
-		"https://teenage.engineering/guides/op-xy/how-to#pitch-bend",
-		"https://teenage.engineering/guides/op-xy/how-to#send-audio-to-and-from-an-external-effect",
-		"https://teenage.engineering/guides/op-xy/how-to#sync-a-pocket-operator",
-		"https://teenage.engineering/guides/op-xy/how-to#sync-a-vintage-drum-machine",
-		"https://teenage.engineering/guides/op-xy/how-to#use-an-audio-interface-with-op-xy",
-		"https://teenage.engineering/guides/op-xy/how-to#write-a-song-fast-with-brain",
-		"https://teenage.engineering/guides/op-xy/midi-references",
-		"https://teenage.engineering/guides/op-xy/te-boot#exiting-te-boot",
-		"https://teenage.engineering/guides/op-xy/te-boot#factory-reset",
-		"https://teenage.engineering/guides/op-xy/te-boot#firmware-update",
-		"https://teenage.engineering/guides/op-xy/te-boot#function-test",
-		"https://teenage.engineering/guides/op-xy/te-boot#reset-volume-potentiometer",
-		"https://teenage.engineering/guides/op-xy/te-boot#te-boot"
-	],
+	"uncovered": [],
 	"excluded": [
 		{
 			"url": "https://teenage.engineering/guides/op-xy#index",

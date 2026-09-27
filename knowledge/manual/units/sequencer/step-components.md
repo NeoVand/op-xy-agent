@@ -68,7 +68,7 @@ procedures:
       - keys: shift + steps → + natural
         note: select the same steps, then press the white key of the component to take off
     source: https://teenage.engineering/guides/op-xy/step-components#adding-step-components-to-a-sequence
-related: [sequencer.parameter-locks, hardware.layout]
+related: [sequencer.step-component-reference, sequencer.parameter-locks, hardware.layout]
 ---
 
 Step components are the OP-XY's answer to trig conditions and ratchets: small rules attached to a

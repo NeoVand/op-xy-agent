@@ -51,7 +51,10 @@ describe('searchManual', () => {
 	});
 
 	it('expands synonyms (ratchet → multiply, arp, bpm …)', () => {
-		expect(top('ratchet hi-hats')[0]).toBe('sequencer.step-components');
+		// the dedicated multiply-component unit is the best answer once it exists; the overview is fine too
+		expect(['sequencer.component-multiply', 'sequencer.step-components']).toContain(
+			top('ratchet hi-hats')[0]
+		);
 	});
 
 	it('returns a snippet from the best-matching fact, a citation and TE’s URL', () => {

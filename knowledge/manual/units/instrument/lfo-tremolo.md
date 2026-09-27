@@ -1,0 +1,67 @@
+---
+id: instrument.lfo-tremolo
+title: Tremolo LFO (vibrato and tremolo)
+aliases: [tremolo, vibrato, tremolo lfo, pitch wobble, volume wobble]
+area: instrument
+order: 44
+context:
+  modes: [instrument]
+  screens: [M4]
+summary: The tremolo LFO is wired straight to pitch and volume — one depth for vibrato, one for tremolo — plus speed, a fade envelope and a waveform shape.
+status: current
+firmware:
+  min: '1.0.9'
+  changed_in: []
+  guide_version: '1.1.15'
+  verified_on: null
+facts:
+  - id: what
+    text: Tremolo varies the track's pitch and volume directly, so it has no destination or parameter to choose.
+    source: https://teenage.engineering/guides/op-xy/instrument#lfo
+  - id: shape
+    text: "`shift + turn E2` sets the tremolo's waveform shape. TE's caption for that control repeats the random LFO's envelope text; its title and diagram point to shape."
+    source: https://teenage.engineering/guides/op-xy/instrument#lfo
+    confidence: derived
+parameters:
+  - screen: M4
+    encoder: E1
+    layer: base
+    name: speed
+    note: synced when turned anti-clockwise, free past the dial icon
+    cc: 40
+    source: https://teenage.engineering/guides/op-xy/instrument#lfo
+  - screen: M4
+    encoder: E2
+    layer: base
+    name: amount
+    note: vibrato depth (pitch)
+    cc: 41
+    source: https://teenage.engineering/guides/op-xy/instrument#lfo
+  - screen: M4
+    encoder: E3
+    layer: base
+    name: volume
+    note: tremolo depth (level)
+    cc: 42
+    source: https://teenage.engineering/guides/op-xy/instrument#lfo
+  - screen: M4
+    encoder: E4
+    layer: base
+    name: envelope
+    note: fades the effect in or out
+    cc: 43
+    source: https://teenage.engineering/guides/op-xy/instrument#lfo
+  - screen: M4
+    encoder: E2
+    layer: shift
+    name: shape
+    note: waveform of the LFO
+    source: https://teenage.engineering/guides/op-xy/instrument#lfo
+    confidence: derived
+related: [instrument.lfo, instrument.engine-organ, instrument.engine-axis]
+---
+
+Tremolo is the quickest way to make a sound move: no routing, just two depths. A little vibrato at a
+moderate speed gives leads and strings a natural wobble, while the volume depth makes the classic
+throbbing tremolo. Use the envelope so the effect grows in after the note starts instead of arriving
+at once.
