@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import type { EngineId } from '$lib/core/opxy';
 import { OpxySim } from './opxy-sim.svelte';
 import { buildFrame, lfoSpeed } from './frames';
-import { defaultState, formatBpm, formatTune, keyName, two } from './params';
+import {
+	ENGINE_LIST,
+	LFO_TYPES,
+	defaultState,
+	formatBpm,
+	formatTune,
+	keyName,
+	two
+} from './params';
 import { SCENARIOS } from './scenarios';
 import type { ScreenFrame } from './screen/frame';
 import { RecordingContext } from './screen/recording';
@@ -252,6 +261,71 @@ describe('OpxySim: encoders', () => {
 		sim.turn(3, 2);
 		sim.click(1);
 		expect(page(sim, 'com')).toMatchObject({ multiOut: 'sync16', advertising: true });
+	});
+});
+
+describe('OpxySim: engines and links', () => {
+	/** Loads `engine` on the selected track through the engine list. */
+	function load(sim: OpxySim, engine: EngineId): void {
+		sim.combo('key.shift', 'key.m1');
+		sim.turn(1, ENGINE_LIST.indexOf(engine) - (sim.state.picker?.index ?? 0));
+		sim.click(1);
+	}
+
+	it('sets a synth aside behind the midi engine only until another engine comes', () => {
+		const sim = new OpxySim();
+		sim.press('track.3');
+		sim.turn(1, -30);
+		load(sim, 'midi');
+		expect(sim.track.parked).toEqual({ engine: 'prism', m1: [50, 80, 80, 80] });
+		load(sim, 'organ');
+		expect(page(sim, 'synth').header.map((c) => c.value)).toEqual(['80', '80', '80', '80']);
+		expect(sim.track.parked).toBeNull();
+		load(sim, 'prism');
+		expect(page(sim, 'synth').header[0].value).toBe('80');
+	});
+
+	it('gives a linked track one primary, never linking two tracks both ways', () => {
+		const sim = new OpxySim();
+		const link = (held: number, pressed: number) => {
+			sim.input({ type: 'press', id: `track.${held}` });
+			sim.press(`track.${pressed}`);
+			sim.input({ type: 'release', id: `track.${held}` });
+		};
+		link(1, 5);
+		link(3, 5);
+		expect([sim.state.tracks[0].links, sim.state.tracks[2].links]).toEqual([[], [4]]);
+		link(5, 3);
+		expect([sim.state.tracks[2].links, sim.state.tracks[4].links]).toEqual([[], [2]]);
+		expect(sim.state.track).toBe(4);
+	});
+
+	it('links only in instrument mode: in mix a key pressed while another is held selects it', () => {
+		const sim = new OpxySim();
+		sim.press('key.mix');
+		sim.input({ type: 'press', id: 'track.1' });
+		sim.press('track.2');
+		expect(sim.state.track).toBe(1);
+		expect(sim.state.tracks[0].links).toEqual([]);
+	});
+
+	it('puts element’s rule and the envelope of random and tremolo only on their frames', () => {
+		const sim = new OpxySim();
+		sim.press('track.3');
+		sim.press('key.m4');
+		const fields = () => ['sourceAt', 'envelope'].filter((f) => f in page(sim, 'lfo'));
+		const seen: Record<string, string[]> = {};
+		for (const type of LFO_TYPES) {
+			sim.state.tracks[2].lfo.type = type;
+			seen[type] = fields();
+		}
+		expect(seen).toEqual({
+			duck: [],
+			element: ['sourceAt'],
+			random: ['envelope'],
+			tremolo: ['envelope'],
+			value: []
+		});
 	});
 });
 
