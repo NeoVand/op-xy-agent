@@ -160,12 +160,11 @@ describe('OpxySim: navigation', () => {
 		expect(page(sim, 'filter').type).toBe('z hipass');
 	});
 
-	it('shows auxiliary and arrange pages as honest text until they are drawn', () => {
+	it('draws the auxiliary tape page, and arrange as honest text until it is drawn', () => {
 		const sim = new OpxySim();
 		sim.press('key.auxiliary');
 		sim.press('track.6');
-		expect(sim.frame).toMatchObject({ page: 'text' });
-		expect((sim.frame as { title: string }).title).toContain('tape');
+		expect(sim.frame).toMatchObject({ page: 'aux-tape' });
 		expect(sim.leds['track.6']).toBe('red');
 		sim.press('key.arrange');
 		expect(sim.frame).toMatchObject({ page: 'text' });
