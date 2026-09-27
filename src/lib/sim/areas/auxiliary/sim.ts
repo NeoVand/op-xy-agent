@@ -530,6 +530,87 @@ function turnFilter(s: SimState, kind: Kind, e: number, delta: number): void {
 	else if (e === 3) p.lowpass = clamp(p.lowpass + delta, 0, 99);
 }
 
+// ─────────────────────────────────────────────────────────────── parameter locks
+
+/** A parameter an aux page's encoder turns, as a step can lock it (manual: parameter-locks). */
+export interface AuxLock {
+	/** The id a step's lock stores it under ("aux.cc.3", "aux.tape.pitch" …). */
+	readonly id: string;
+	readonly min: number;
+	readonly max: number;
+	/** The track's own value. */
+	get(s: SimState): number;
+}
+
+/**
+ * The parameter encoder `e` (0–3) turns on the aux page on screen, or null when it locks nothing:
+ * the external MIDI track's CC values (the guide: its CCs are sequenced and recorded), the audio,
+ * tape and FX tracks' main values, filters, sends and LFO speed and amount. Settings stay unlocked
+ * (ours): the MIDI channel, bank and program, CC numbers (shift), the audio input, the brain, the
+ * routing and the LFO's destination. Mirrors the aux turns above.
+ */
+export function auxLockTarget(s: SimState, e: number): AuxLock | null {
+	if (s.mode !== 'auxiliary' || s.overlay !== null || s.sub !== null || s.picker !== null) {
+		return null;
+	}
+	const aux = s.areas.auxiliary;
+	if (aux.picker) return null;
+	const lock = (id: string, min: number, max: number, get: (s: SimState) => number): AuxLock => ({
+		id: `aux.${id}`,
+		min,
+		max,
+		get
+	});
+	const track = s.auxTrack;
+	switch (kindOf(s)) {
+		case 'cc': {
+			const index = (s.pages.auxiliary === 3 ? 4 : 0) + e;
+			if (s.shift || aux.midi.slots[index]?.cc === null) return null;
+			return lock(`cc.${index + 1}`, 0, 127, (st) => st.areas.auxiliary.midi.slots[index].value);
+		}
+		case 'audio': {
+			const field = (['drive', 'level', 'mix'] as const)[e - 1];
+			return field ? lock(`audio.${field}`, 0, 99, (st) => st.areas.auxiliary.audio[field]) : null;
+		}
+		case 'tape': {
+			const [field, min, max] = (
+				[
+					['pitch', 1, 10],
+					['speed', 50, 200],
+					['length', 1, 10],
+					['mix', 0, 99]
+				] as const
+			)[e];
+			return lock(`tape.${field}`, min, max, (st) => st.areas.auxiliary.tape[field]);
+		}
+		case 'fx': {
+			const slot = track === 6 ? 0 : 1;
+			const max = aux.fx[slot].type === 'delay' && e === 0 ? DELAY_SIZES.length - 1 : 99;
+			return lock(`fx.${e + 1}`, 0, max, (st) => st.areas.auxiliary.fx[slot].params[e]);
+		}
+		case 'filter':
+			if (e === 0)
+				return lock('filter.highpass', 0, 99, (st) => st.areas.auxiliary.pages[track].highpass);
+			if (e === 3)
+				return lock('filter.lowpass', 0, 99, (st) => st.areas.auxiliary.pages[track].lowpass);
+			return null;
+		case 'sends':
+			return SENDS[track].includes(e)
+				? lock(`sends.${e + 1}`, 0, 99, (st) => st.areas.auxiliary.pages[track].sends[e])
+				: null;
+		case 'lfo':
+			if (e === 0) {
+				const max = LFO_SYNC_STEPS.length + 99;
+				return lock('lfo.speed', 0, max, (st) => st.areas.auxiliary.pages[track].lfo.speed);
+			}
+			if (e === 1)
+				return lock('lfo.amount', -99, 99, (st) => st.areas.auxiliary.pages[track].lfo.amount);
+			return null;
+		default:
+			return null;
+	}
+}
+
 // ────────────────────────────────────────────────────────────────── the effect list
 
 /** The list shift + T7 / T8 opens (manual: fx/overview), drawn like the core's pickers. */

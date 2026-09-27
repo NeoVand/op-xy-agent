@@ -16,15 +16,17 @@
 import type { AreaContext } from '../types';
 import type { SimState } from '../../params';
 import { clearAll, recordNote, setLock, STEPS_PER_BAR, type Pattern } from '../../sequencer';
+import { auxLockTarget } from '../auxiliary/sim';
 import { lockTarget, turnedValue } from './locks';
 import {
-	CLEAR_MS,
+	activeBank,
 	activePattern,
 	activeSequence,
 	activeTrack,
+	CLEAR_MS,
 	heldKeys,
-	keyNote,
 	keyboardIndex,
+	keyNote,
 	liveRecording,
 	playingStep,
 	remember,
@@ -249,11 +251,18 @@ export function clearRecordedStep(s: SimState, index: number): void {
  * core still turns the track's own value; manual: live-recording "automation").
  */
 export function recordTurn(s: SimState, e: number, delta: number, fine: boolean): void {
-	const target = lockTarget(s, e);
-	const track = activeTrack(s);
-	if (!target || !track) return;
 	const pattern = activePattern(s);
 	const index = playingStep(s, pattern);
 	if (index < 0) return;
+	if (activeBank(s) === 'auxiliary') {
+		// the aux page turns as usual; the playing step keeps where the value lands
+		const aux = auxLockTarget(s, e);
+		if (aux)
+			setLock(pattern, index, aux.id, Math.min(aux.max, Math.max(aux.min, aux.get(s) + delta)));
+		return;
+	}
+	const target = lockTarget(s, e);
+	const track = activeTrack(s);
+	if (!target || !track) return;
 	setLock(pattern, index, target.id, turnedValue(target, track, {}, delta, fine));
 }

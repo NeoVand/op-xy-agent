@@ -107,8 +107,16 @@ export const keyboardIndex = (name: string) =>
 
 /** The note a keyboard key (0 = F3 … 23 = E5) plays now: the octave moves melodic tracks only. */
 export function keyNote(s: SimState, index: number): number {
-	const octave = isDrumTrack(s) ? 0 : seq(s).octave;
+	const octave = fixedKeys(s) ? 0 : seq(s).octave;
 	return KEYBOARD_BASE + index + 12 * octave;
+}
+
+/**
+ * Whether the 24 keys are fixed sounds rather than pitches, so [-] / [+] leave them in place: a
+ * drum track's kit, and the punch-in track's effects (manual: auxiliary/punch-in-fx).
+ */
+export function fixedKeys(s: SimState): boolean {
+	return activeBank(s) === 'auxiliary' ? s.auxTrack === 1 : isDrumTrack(s);
 }
 
 /** The keyboard key (0–23) that plays `note` now, or −1. */

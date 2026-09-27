@@ -164,7 +164,8 @@ function claimPress(ctx: AreaContext, id: string): boolean {
 			.filter((other) => other !== id)
 			.map((other) => keyNote(s, keyboardIndex(other.slice('keyboard.'.length))));
 		if (playerKey(s, keyNote(s, key), before)) return true;
-		recordKey(s, id, key);
+		// a key with shift held is never a note: a component, maestro's chord, the punch-in shortcut
+		if (!s.shift) recordKey(s, id, key);
 		return false;
 	}
 	// another track: a copied step stays with the one it came from, and so do a player's kept

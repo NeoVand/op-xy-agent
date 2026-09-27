@@ -30,13 +30,14 @@ import {
 	toggleStep,
 	transposePattern
 } from '../../sequencer';
+import { auxLockTarget } from '../auxiliary/sim';
 import { lockTarget, turnedValue } from './locks';
 import {
-	COPY_MS,
-	OCTAVES,
+	activeBank,
 	activePattern,
 	activeSequence,
 	activeTrack,
+	COPY_MS,
 	editHolds,
 	heldKeys,
 	heldNotes,
@@ -44,6 +45,7 @@ import {
 	heldTrackKey,
 	isDrumTrack,
 	keyNote,
+	OCTAVES,
 	remember,
 	seq,
 	stepIndex
@@ -150,21 +152,35 @@ export function keyboardPress(s: SimState, key: number): void {
 
 /**
  * An encoder turned with steps held: each held step stores the parameter under that encoder as a
- * lock, starting from its own lock or the track's value. Returns false when the encoder locks
- * nothing here (the turn then goes on as usual).
+ * lock, starting from its own lock or the track's value (auxiliary tracks' pages included). Returns
+ * false when the encoder locks nothing here (the turn then goes on as usual); either way the held
+ * steps count as edited.
  */
 export function lockTurn(s: SimState, e: number, delta: number, fine: boolean): boolean {
 	const indexes = heldSteps(s);
+	if (indexes.length === 0) return false;
+	// a turn with steps held edits them: letting go of them neither clears nor places a note
+	editHolds(s);
+	const pattern = activePattern(s);
+	if (activeBank(s) === 'auxiliary') {
+		const aux = auxLockTarget(s, e);
+		if (!aux) return false;
+		rememberOnce(s);
+		for (const index of indexes) {
+			const from = pattern.steps[index].locks[aux.id] ?? aux.get(s);
+			setLock(pattern, index, aux.id, Math.min(aux.max, Math.max(aux.min, from + delta)));
+		}
+		seq(s).lastLock = { step: indexes[0], id: aux.id };
+		return true;
+	}
 	const target = lockTarget(s, e);
 	const track = activeTrack(s);
-	if (indexes.length === 0 || !target || !track) return false;
-	const pattern = activePattern(s);
+	if (!target || !track) return false;
 	rememberOnce(s);
 	for (const index of indexes) {
 		const locks = pattern.steps[index].locks;
 		setLock(pattern, index, target.id, turnedValue(target, track, locks, delta, fine));
 	}
-	editHolds(s);
 	seq(s).lastLock = { step: indexes[0], id: target.id };
 	return true;
 }

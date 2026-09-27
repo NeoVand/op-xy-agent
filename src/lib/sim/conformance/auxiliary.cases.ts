@@ -637,10 +637,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.click('key.stop');
 		});
 
-		// bug in src/lib/sim/areas/sequencer/sim.ts: claimPress hands a keyboard key held with shift
-		// to live recording (recordKey) before the punch-in shortcut sees it, so the instrument track
-		// gets a note as well as the punch-in track its effect
-		it.skip('records a shift + key effect, not a note, while recording on an instrument track', async () => {
+		it('records a shift + key effect, not a note, while recording on an instrument track', async () => {
 			const d = await start();
 			await synth(d);
 			await d.click('key.play');
@@ -651,10 +648,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			expect(placed(patternOf(d.state, 2))).toHaveLength(1);
 		});
 
-		// bug in src/lib/sim/areas/sequencer/model.ts: keyNote moves the punch-in track's keys by the
-		// keyboard octave ([-] / [+]), so an effect played after [+] lands on its step as another
-		// effect (the 24 keys are 24 fixed effects, like a drum track's sounds)
-		it.skip('keeps the 24 effects in place after [+]: the effect placed is the one played', async () => {
+		it('keeps the 24 effects in place after [+]: the effect placed is the one played', async () => {
 			const d = await start();
 			await aux(d, 2);
 			await d.click('key.plus');
@@ -771,10 +765,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			expect(placed(patternOf(d.state, 3))).toEqual(['0: 60', '8: 72']);
 		});
 
-		// bug in src/lib/sim/areas/sequencer/locks.ts: lockTarget locks nothing outside instrument
-		// mode, so a turn with a step held on an aux track changes the slot itself, and the step,
-		// never marked as edited, is cleared by its release (sequencer/steps.ts)
-		it.skip('locks a CC value on a held step, keeping the step’s note (CCs are sequenced)', async () => {
+		it('locks a CC value on a held step, keeping the step’s note (CCs are sequenced)', async () => {
 			const d = await start();
 			await aux(d, 3);
 			await play(d, 'c4');
@@ -787,9 +778,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			expect(placed(patternOf(d.state, 3))).toEqual(['0: 60']);
 		});
 
-		// bug in src/lib/sim/areas/sequencer/locks.ts: lockTarget locks nothing outside instrument
-		// mode, so recordTurn stores no automation on an aux track
-		it.skip('records CC moves made while recording live (automation)', async () => {
+		it('records CC moves made while recording live (automation)', async () => {
 			const d = await start();
 			await aux(d, 3, 2);
 			await d.withShift(() => d.turn(1, 75));

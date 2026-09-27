@@ -33,7 +33,13 @@ import type { ReplicaEvent, ReplicaState } from '$lib/replica';
 import { METER_SEGMENTS } from '$lib/replica/geometry';
 import { attachPeaks, samplesInUse } from '$lib/sim/areas/sample/hook';
 import { peaksFromChannels } from '$lib/sim/areas/sample/wave';
-import { activeTrack, keyNote, keyboardIndex, seq } from '$lib/sim/areas/sequencer/model';
+import {
+	KEYBOARD_BASE,
+	activeTrack,
+	keyNote,
+	keyboardIndex,
+	seq
+} from '$lib/sim/areas/sequencer/model';
 import { playerNotes, playerOf } from '$lib/sim/areas/sequencer/players';
 import { maestroEvents } from '$lib/sim/sequencer-playback';
 import { SampleRegistry, sampleChannels, sampleSeconds } from '$lib/sound/samples';
@@ -559,11 +565,18 @@ export class AppSound {
 		// with shift or bar held the keys are functions (octave, track scale…), not notes; on an
 		// auxiliary track they are not this engine's either
 		if (state.held.includes('key.shift') || state.held.includes('key.bar')) return;
-		if (!activeTrack(state)) return;
 		const index = keyboardIndex(key.slice('keyboard.'.length));
 		if (index < 0) return;
-		// in the keyboard's octave (the − and + keys; melodic tracks only)
-		const event: LiveEvent = { kind: 'on', key, track: state.track, note: keyNote(state, index) };
+		let note: number;
+		if (activeTrack(state)) {
+			// in the keyboard's octave (the − and + keys; melodic tracks only)
+			note = keyNote(state, index);
+		} else if (state.mode === 'auxiliary' && (state.auxTrack === 6 || state.auxTrack === 7)) {
+			// the FX tracks' keyboard plays the last instrument track chosen (manual: auxiliary/fx-sends)
+			const drum = state.tracks[state.track].engine === 'drum';
+			note = KEYBOARD_BASE + index + (drum ? 0 : 12 * seq(state).octave);
+		} else return;
+		const event: LiveEvent = { kind: 'on', key, track: state.track, note };
 		this.#live.set(key, event);
 		this.#unlock();
 		this.#send(event);
