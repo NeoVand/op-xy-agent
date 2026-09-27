@@ -1449,10 +1449,8 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect(page(d, 'mix').strips[5]).toMatchObject({ level: 80 / 99, pan: 0 });
 		});
 
-		// bug in src/lib/sim/opxy-sim.svelte.ts: mix M1's E1 / E2 (`#turnMix`) set only instrument
-		// tracks' sends; on an auxiliary track with sends (external audio and tape send to FX I and II,
-		// FX I on to FX II: its own M3 shift page) they do nothing
-		it.skip('sends an auxiliary track to FX I and FX II too, as its own send page shows', async () => {
+		// external audio and tape send to FX I and II, FX I on to FX II: the track's own M3 shift page
+		it('sends an auxiliary track to FX I and FX II too, as its own send page shows', async () => {
 			const d = await start();
 			await d.clicks('key.mix', 'key.mix', track(5)); // external audio
 			await d.turn(1, 20);

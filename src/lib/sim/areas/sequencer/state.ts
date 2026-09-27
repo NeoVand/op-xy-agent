@@ -59,8 +59,12 @@ export interface SequencerState {
 	lastLock: { step: number; id: string } | null;
 
 	// keyboard
-	/** Keyboard octave, −3…3 (`[-]` / `[+]`; synth and sampler tracks). */
-	octave: number;
+	/**
+	 * Keyboard octave per track, −3…3 (`[-]` / `[+]`; synth and sampler tracks), keyed
+	 * "instrument.2" / "auxiliary.0"; a track not listed is at 0. Each track keeps its own (OS 1.0.38:
+	 * a copied track takes its octave along).
+	 */
+	octaves: Record<string, number>;
 	/** Single-sound view: the note whose steps the step keys show, and the key holding it. */
 	single: { note: number; key: string } | null;
 
@@ -110,7 +114,7 @@ export function initialSequencer(): SequencerState {
 		holdUndo: false,
 		clipboard: null,
 		lastLock: null,
-		octave: 0,
+		octaves: {},
 		single: null,
 		armed: false,
 		recLatch: false,

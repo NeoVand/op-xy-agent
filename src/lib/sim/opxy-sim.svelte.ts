@@ -15,6 +15,7 @@
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
 import { AREAS, ownerOf } from './areas/registry';
+import { auxSends } from './areas/auxiliary/sim';
 import { turnSamplerPage } from './areas/sample/m1';
 import type { AreaContext } from './areas/types';
 import { buildFrame, buildLeds } from './frames';
@@ -430,7 +431,8 @@ export class OpxySim {
 		s.active = bank;
 		s.picker = null;
 		if (s.overlay === 'tempo' || s.overlay === 'project' || s.overlay === 'com') s.overlay = null;
-		s.sub = s.shift && s.mode !== 'mix' ? `preset browser · T${index + 1}` : null;
+		// shift + Tn opens the preset browser in instrument mode only (the system area takes it)
+		s.sub = null;
 	}
 
 	/** The track (0–7) whose key was held before `index`'s, or −1. */
@@ -642,10 +644,15 @@ export class OpxySim {
 		const instrument = s.banks.mix === 'instrument';
 		const t = instrument ? s.tracks[s.track] : s.aux[s.auxTrack];
 		if (e === 0 || e === 1) {
-			// FX I / FX II sends: the same values as the track's M3 shift layer
+			// FX I / FX II sends: the same values as the track's M3 shift layer; an auxiliary track
+			// sends only where its own layer has the send (external audio, tape, FX I into FX II)
+			const send = e + 2;
 			if (instrument) {
 				const sends = s.tracks[s.track].sends;
-				sends[e + 2] = clamp(sends[e + 2] + delta, 0, 99);
+				sends[send] = clamp(sends[send] + delta, 0, 99);
+			} else if (auxSends(s.auxTrack).includes(send)) {
+				const sends = s.areas.auxiliary.pages[s.auxTrack].sends;
+				sends[send] = clamp(sends[send] + delta, 0, 99);
 			}
 		} else if (e === 2) t.mix.pan = clamp(t.mix.pan + delta * (fine ? 1 : 2), -100, 100);
 		else t.mix.level = clamp(t.mix.level + delta, 0, 99);

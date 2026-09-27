@@ -142,11 +142,9 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(notesOn(d, 2)).toEqual([60 - 36]);
 		});
 
-		// bug in src/lib/sim/areas/sequencer/model.ts (keyNote) and steps.ts (plusMinus): the
-		// keyboard octave is one setting for every track, but each track keeps its own (OS 1.0.38: a
-		// copied track takes its active octave along; manual instrument/save-copy-scramble). Device
-		// check as well.
-		it.skip('keeps each track’s keyboard octave: an octave up on T3 leaves T4 where it was', async () => {
+		// Each track keeps its own keyboard octave (OS 1.0.38: a copied track takes its active octave
+		// along; manual instrument/save-copy-scramble). Device check as well.
+		it('keeps each track’s keyboard octave: an octave up on T3 leaves T4 where it was', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.plus');
@@ -805,9 +803,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(on(d, 'drum').tune).toBe('+0.23');
 		});
 
-		// bug in src/lib/sim/areas/sample/m1.ts (turnDrumKey): a drum key's start and end move in
-		// whole steps, pushed in or not (guide 18, drum sampler: pushed in they move finer)
-		it.skip('moves a drum key’s start and end finer with the encoder pushed in', async () => {
+		// guide 18, drum sampler: pushed in, start and end move finer
+		it('moves a drum key’s start and end finer with the encoder pushed in', async () => {
 			const d = await start();
 			await d.turn(2, 10);
 			await d.turn(2, 3, { fine: true });
@@ -1103,11 +1100,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(on(d, 'lfo').type).toBe('duck');
 		});
 
-		// bug in src/lib/sim/areas/sequencer/locks.ts: lockTarget still mirrors the LFO page as it was
-		// (element's E1 locks the speed, not the source; shift + E2 locks random's amount, not its
-		// envelope; tremolo's E4 locks nothing and the turn is lost; duck's source stops at 8 instead
-		// of running to 16 and the metronome)
-		it.skip('locks on a held step what each LFO encoder turns on the page', async () => {
+		it('locks on a held step what each LFO encoder turns on the page', async () => {
 			const d = await start();
 			const base = () => on(d, 'lock').base as Page<'lfo'>;
 			await lfo(d, 'element');
@@ -1122,8 +1115,10 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.holding('step.1', async () => {
 				expect(base()).toMatchObject({ amount: 0, envelope: 50 / 99 });
 			});
+			// random's and tremolo's envelope are one value (ours), so tremolo's goes on a new step
 			await lfo(d, 'tremolo');
-			await d.holding('step.1', async () => {
+			await d.click('step.2');
+			await d.holding('step.2', async () => {
 				await d.turn(4, 40);
 				expect(base().envelope).toBeCloseTo(40 / 99, 9);
 			});
@@ -1490,10 +1485,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(header(d)).toEqual(['shape 50', 'ratio 80', 'detune 80', 'stereo 90']);
 		});
 
-		// bug in src/lib/sim/areas/sequencer/locks.ts: the midi engine's program is not lockable
-		// (lockTarget gives nothing on the midi page), so a turn with a step held is lost (manual
-		// instrument/engine-midi: program changes lock per step, fixed in OS 1.1.15)
-		it.skip('locks a program change on a held step, leaving the track’s own program (OS 1.1.15)', async () => {
+		// manual instrument/engine-midi: program changes lock per step (fixed in OS 1.1.15)
+		it('locks a program change on a held step, leaving the track’s own program (OS 1.1.15)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await loadEngine(d, 'midi');

@@ -34,6 +34,7 @@ import { auxLockTarget } from '../auxiliary/sim';
 import { lockTarget, turnedValue } from './locks';
 import {
 	activeBank,
+	activeIndex,
 	activePattern,
 	activeSequence,
 	activeTrack,
@@ -45,10 +46,12 @@ import {
 	heldTrackKey,
 	isDrumTrack,
 	keyNote,
+	octaveKey,
 	OCTAVES,
 	remember,
 	seq,
-	stepIndex
+	stepIndex,
+	trackOctave
 } from './model';
 import { moveCursor } from './recording';
 
@@ -217,6 +220,7 @@ export function plusMinus(s: SimState, direction: -1 | 1): boolean {
 		transposePattern(pattern, direction * (isDrumTrack(s) ? 1 : 12));
 		return true;
 	}
-	st.octave = Math.max(OCTAVES.min, Math.min(OCTAVES.max, st.octave + direction));
+	const key = octaveKey(activeBank(s), activeIndex(s));
+	st.octaves[key] = Math.max(OCTAVES.min, Math.min(OCTAVES.max, trackOctave(s) + direction));
 	return true;
 }

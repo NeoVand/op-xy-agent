@@ -81,6 +81,9 @@ const PAGES: readonly (readonly [Kind, Kind, Kind, Kind])[] = [
  */
 const SENDS: readonly (readonly number[])[] = [[], [], [], [], [1, 2, 3], [2, 3], [3], []];
 
+/** The sends (1 tape, 2 FX I, 3 FX II) auxiliary track `track` (0–7) has on its M3 shift layer. */
+export const auxSends = (track: number): readonly number[] => SENDS[track] ?? [];
+
 /** Which instrument send (aux out, tape, FX I, FX II) each routing page sets; the brain has its own. */
 const ROUTE_SEND: readonly (number | null)[] = [null, null, null, null, 0, 1, 2, 3];
 

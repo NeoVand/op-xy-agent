@@ -107,8 +107,16 @@ export const keyboardIndex = (name: string) =>
 
 /** The note a keyboard key (0 = F3 … 23 = E5) plays now: the octave moves melodic tracks only. */
 export function keyNote(s: SimState, index: number): number {
-	const octave = fixedKeys(s) ? 0 : seq(s).octave;
+	const octave = fixedKeys(s) ? 0 : trackOctave(s);
 	return KEYBOARD_BASE + index + 12 * octave;
+}
+
+/** Where a track's octave is kept in {@link SequencerState.octaves}. */
+export const octaveKey = (bank: Bank, index: number) => `${bank}.${index}`;
+
+/** The keyboard octave of the active track (each track keeps its own). */
+export function trackOctave(s: SimState): number {
+	return seq(s).octaves[octaveKey(activeBank(s), activeIndex(s))] ?? 0;
 }
 
 /**

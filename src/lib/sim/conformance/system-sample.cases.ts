@@ -994,9 +994,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(d.steps()).toBe('w...............');
 		});
 
-		// bug in src/lib/sim/opxy-sim.svelte.ts: #trackKey names a "preset browser · Tn" sub-page for
-		// shift + Tn outside instrument and mix mode, which nothing draws ("this page is not drawn yet")
-		it.skip('opens only in instrument mode: shift + a track key in auxiliary mode brings up no preset page', async () => {
+		it('opens only in instrument mode: shift + a track key in auxiliary mode brings up no preset page', async () => {
 			const d = await start();
 			await d.click('key.auxiliary');
 			await d.withShift(() => d.click('track.3'));

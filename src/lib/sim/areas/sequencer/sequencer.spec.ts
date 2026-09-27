@@ -13,6 +13,7 @@ import {
 } from './components';
 import { flashing } from './leds';
 import { lockParam, lockTarget, lockedTrack, turnedValue } from './locks';
+import { trackOctave } from './model';
 import { COUNT_IN } from './recording';
 
 /** A simulator on a clock the test moves. */
@@ -358,7 +359,7 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		expect(locks(0)).toEqual({ 'filter.cutoff': 79 });
 	});
 
-	it('locks sampler keys (fine tune included) but not the midi engine', () => {
+	it('locks sampler keys (fine tune included) and the midi program, not the midi channel', () => {
 		const { sim } = rig();
 		down(sim, 'step.2'); // T1, drum sampler
 		sim.turn(1, -12);
@@ -375,6 +376,12 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		up(sim, 'step.1');
 		expect(t.midi.channel).toBe(1);
 		expect(pattern(sim).steps[0].locks).toEqual({});
+		// the program locks per step (OS 1.1.15)
+		down(sim, 'step.1');
+		sim.turn(3, 4);
+		up(sim, 'step.1');
+		expect(t.midi.program).toBe(1);
+		expect(pattern(sim).steps[0].locks).toEqual({ 'midi.program': 5 });
 	});
 
 	it('maps encoders to lock ids like the core, and applies locks to a copy of the track', () => {
@@ -392,7 +399,7 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		sim.state.tracks[2].lfo.type = 'duck';
 		expect(lockTarget(s, 0)?.id).toBe('lfo.source');
 		sim.state.tracks[2].lfo.type = 'tremolo';
-		expect(lockTarget(s, 3)).toBeNull();
+		expect(lockTarget(s, 3)?.id).toBe('lfo.envelope');
 		sim.press('track.1');
 		sim.press('key.m1');
 		sim.state.shift = true;
@@ -492,14 +499,14 @@ describe('step gestures (manual: extend-notes, copy-step, nudge, rotate, transpo
 		expect(notesOn(sim, 1)).toEqual([48]);
 		// the keyboard an octave up: C4's key now plays C5
 		sim.press('key.plus');
-		expect(sim.state.areas.sequencer.octave).toBe(1);
+		expect(trackOctave(sim.state)).toBe(1);
 		place(sim, 'c4', [5]);
 		expect(notesOn(sim, 4)).toEqual([72]);
 		down(sim, 'step.5');
 		expect(litKeys(sim)).toEqual(['c4']);
 		up(sim, 'step.5');
 		for (let i = 0; i < 6; i++) sim.press('key.plus');
-		expect(sim.state.areas.sequencer.octave).toBe(3);
+		expect(trackOctave(sim.state)).toBe(3);
 		// drums: a semitone per press, and no octaves on the keys
 		sim.press('track.1');
 		place(sim, 'f3', [1]);

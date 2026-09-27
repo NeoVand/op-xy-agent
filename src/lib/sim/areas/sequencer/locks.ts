@@ -7,11 +7,13 @@
  * can apply a step's locks to its track when the step plays.
  *
  * Lockable: the four module pages and their shift layers on instrument tracks, sampler keys
- * included (OS 1.1.0). Not lockable: the midi engine's channel, bank and program, and players
- * (manual: "players cannot").
+ * included (OS 1.1.0), and the midi engine's program (OS 1.1.15). Not lockable: the midi engine's
+ * channel and bank, and players (manual: "players cannot").
  */
 import {
 	DRUM_PLAY_MODES,
+	DUCK_METRONOME,
+	ELEMENT_SOURCES,
 	LFO_SYNC_STEPS,
 	PLAY_MODES,
 	clamp,
@@ -185,7 +187,7 @@ function samplerParam(id: string, k: number, field: (typeof SAMPLER_FIELDS)[numb
 	}
 }
 
-/** The fixed-id parameters: play mode, filter, sends and LFO. */
+/** The fixed-id parameters: play mode, the midi program, filter, sends and LFO. */
 const TRACK_PARAMS: Readonly<Record<string, LockParam>> = Object.fromEntries(
 	[
 		param('playMode.mode', {
@@ -228,6 +230,17 @@ const TRACK_PARAMS: Readonly<Record<string, LockParam>> = Object.fromEntries(
 			set: (t, v) => {
 				t.playMode.volume = v;
 			}
+		}),
+		param('midi.program', {
+			label: 'program',
+			min: 1,
+			max: 128,
+			step: 1,
+			get: (t) => t.midi.program,
+			set: (t, v) => {
+				t.midi.program = v;
+			},
+			format: (v) => String(Math.round(v))
 		}),
 		param('filter.cutoff', {
 			label: 'cutoff',
@@ -294,7 +307,7 @@ const TRACK_PARAMS: Readonly<Record<string, LockParam>> = Object.fromEntries(
 			format: (v) =>
 				v < LFO_SYNC_STEPS.length ? LFO_SYNC_STEPS[Math.round(v)] : two(v - LFO_SYNC_STEPS.length)
 		}),
-		...(['amount', 'volume'] as const).map((field) =>
+		...(['amount', 'volume', 'envelope'] as const).map((field) =>
 			param(`lfo.${field}`, {
 				label: field,
 				min: -99,
@@ -334,13 +347,34 @@ const TRACK_PARAMS: Readonly<Record<string, LockParam>> = Object.fromEntries(
 		param('lfo.source', {
 			label: 'source',
 			min: 1,
-			max: 8,
+			max: DUCK_METRONOME,
 			step: 1,
 			get: (t) => t.lfo.source,
 			set: (t, v) => {
 				t.lfo.source = v;
 			},
-			format: (v) => String(Math.round(v))
+			format: (v) => (Math.round(v) >= DUCK_METRONOME ? 'metronome' : String(Math.round(v)))
+		}),
+		param('lfo.sensor', {
+			label: 'source',
+			min: 0,
+			max: ELEMENT_SOURCES.length - 1,
+			step: 1,
+			get: (t) => t.lfo.sensor,
+			set: (t, v) => {
+				t.lfo.sensor = v;
+			},
+			format: (v) => ELEMENT_SOURCES[clamp(Math.round(v), 0, ELEMENT_SOURCES.length - 1)].name
+		}),
+		param('lfo.shape', {
+			label: 'shape',
+			min: 0,
+			max: 99,
+			step: 1,
+			get: (t) => t.lfo.shape,
+			set: (t, v) => {
+				t.lfo.shape = v;
+			}
 		}),
 		...(['hold', 'release'] as const).map((field) =>
 			param(`lfo.${field}`, {
@@ -359,8 +393,8 @@ const TRACK_PARAMS: Readonly<Record<string, LockParam>> = Object.fromEntries(
 
 /**
  * The parameter encoder `e` (0–3) turns on the instrument page on screen, with its id, or null
- * when that encoder locks nothing there (no parameter, the midi engine's settings, players, lists,
- * other modes). Mirrors `#turnInstrument`.
+ * when that encoder locks nothing there (no parameter, the midi engine's channel and bank, players,
+ * lists, other modes). Mirrors `#turnInstrument`.
  */
 export function lockTarget(s: SimState, e: number): LockParam | null {
 	if (s.mode !== 'instrument' || s.overlay !== null || s.sub !== null || s.picker !== null) {
@@ -377,7 +411,8 @@ export function lockTarget(s: SimState, e: number): LockParam | null {
 				if (field === 'playMode' && t.engine !== 'drum') return null;
 				return lockParam(`key${t.drumKey}.${field}`);
 			}
-			if (t.engine === 'midi' || engineParams(t.engine)[e] === null) return null;
+			if (t.engine === 'midi') return e === 2 ? lockParam('midi.program') : null;
+			if (engineParams(t.engine)[e] === null) return null;
 			const p = lockParam(`m1.${e + 1}`);
 			return p && { ...p, label: engineParams(t.engine)[e] ?? p.label };
 		}
@@ -394,11 +429,17 @@ export function lockTarget(s: SimState, e: number): LockParam | null {
 			return lockParam(`filter.${['cutoff', 'resonance', 'envAmount', 'keyTracking'][e]}`);
 		case 4: {
 			const lfo = t.lfo;
-			if (lfo.type === 'duck')
+			if (lfo.type === 'duck') {
+				// shift + E1 flips the source type, a switch rather than a value
+				if (e === 0 && s.shift) return null;
 				return lockParam(`lfo.${['source', 'amount', 'hold', 'release'][e]}`);
-			if (e === 0) return lockParam('lfo.speed');
+			}
+			// the shift layer's sub functions on E2: random's envelope, tremolo's shape
+			if (s.shift && e === 1 && lfo.type === 'random') return lockParam('lfo.envelope');
+			if (s.shift && e === 1 && lfo.type === 'tremolo') return lockParam('lfo.shape');
+			if (e === 0) return lockParam(lfo.type === 'element' ? 'lfo.sensor' : 'lfo.speed');
 			if (e === 1) return lockParam('lfo.amount');
-			if (lfo.type === 'tremolo') return e === 2 ? lockParam('lfo.volume') : null;
+			if (lfo.type === 'tremolo') return lockParam(e === 2 ? 'lfo.volume' : 'lfo.envelope');
 			if (e === 2) {
 				const p = lockParam('lfo.destination');
 				const size = lfo.type === 'element' ? SENSOR_DESTINATIONS.length : DESTINATIONS.length;

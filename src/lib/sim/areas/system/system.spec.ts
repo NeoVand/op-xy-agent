@@ -666,11 +666,14 @@ describe('system area: track sounds (manual: save-copy-scramble, save-to-same-sn
 		const { sim: s } = sim();
 		s.state.tracks[4].m1 = [1, 2, 3, 4];
 		s.state.areas.system.presetSettings[4].width = 40;
+		s.state.areas.sequencer.octaves['instrument.4'] = -2;
 		withTrack(s, 5, 'key.m2');
 		withTrack(s, 3, 'key.m3');
 		expect(s.state.tracks[2]).toMatchObject({ engine: 'dissolve', m1: [1, 2, 3, 4] });
 		expect(s.state.areas.system.presetSettings[2].width).toBe(40);
 		expect(s.state.areas.system.trackPresets[2]).toBe('lead/lead 1');
+		// the keyboard octave comes along (OS 1.0.38)
+		expect(s.state.areas.sequencer.octaves['instrument.2']).toBe(-2);
 	});
 
 	it('scrambles a sound (Tn + M1) and leaves the midi engine alone', () => {

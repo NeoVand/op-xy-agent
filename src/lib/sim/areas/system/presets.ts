@@ -8,6 +8,7 @@
 import { ENGINE_IDS, type EngineId } from '$lib/core/opxy';
 import { clamp, defaultTrack, type SimState, type TrackState } from '../../params';
 import type { SamplerTrack } from '../sample/state';
+import { octaveKey } from '../sequencer/model';
 import { PRESET_CATEGORIES, SNAPSHOT_FOLDER, type PresetEntry } from './catalogue';
 import { defaultPresetSettings, type PresetBrowserState, type PresetSettings } from './state';
 
@@ -365,19 +366,30 @@ export function saveSound(s: SimState, track: number, inPlace: boolean): PresetE
 	return preset;
 }
 
-/** `Tn + M2` copies the track's sound (with its preset settings and samples). */
+/** A copied track sound: the saved sound, the track's preset and its keyboard octave. */
+type CopiedSound = SavedSound & { preset: string; octave?: number };
+
+/**
+ * `Tn + M2` copies the track's sound (with its preset settings and samples) and its keyboard
+ * octave (OS 1.0.38: a copied track takes its active octave along).
+ */
 export function copySound(s: SimState, track: number): void {
 	const sys = s.areas.system;
 	const saved = JSON.parse(soundOf(s, track)) as SavedSound;
-	sys.sound = JSON.stringify({ ...saved, preset: sys.trackPresets[track] });
+	const octave = s.areas.sequencer.octaves[octaveKey('instrument', track)] ?? 0;
+	const copied: CopiedSound = { ...saved, preset: sys.trackPresets[track], octave };
+	sys.sound = JSON.stringify(copied);
 }
 
-/** `Tn + M3` pastes the copied sound onto the track (its steps and mixer strip stay). */
+/** `Tn + M3` pastes the copied sound and octave onto the track (its steps and mixer strip stay). */
 export function pasteSound(s: SimState, track: number): boolean {
 	const sys = s.areas.system;
 	if (!sys.sound) return false;
-	const saved = applySound(s, track, sys.sound) as SavedSound & { preset: string };
+	const saved = applySound(s, track, sys.sound) as CopiedSound;
 	sys.trackPresets[track] = saved.preset;
+	if (saved.octave !== undefined) {
+		s.areas.sequencer.octaves[octaveKey('instrument', track)] = saved.octave;
+	}
 	return true;
 }
 

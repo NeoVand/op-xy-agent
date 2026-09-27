@@ -38,6 +38,7 @@ import {
 	activeTrack,
 	keyNote,
 	keyboardIndex,
+	octaveKey,
 	seq
 } from '$lib/sim/areas/sequencer/model';
 import { playerNotes, playerOf } from '$lib/sim/areas/sequencer/players';
@@ -574,7 +575,8 @@ export class AppSound {
 		} else if (state.mode === 'auxiliary' && (state.auxTrack === 6 || state.auxTrack === 7)) {
 			// the FX tracks' keyboard plays the last instrument track chosen (manual: auxiliary/fx-sends)
 			const drum = state.tracks[state.track].engine === 'drum';
-			note = KEYBOARD_BASE + index + (drum ? 0 : 12 * seq(state).octave);
+			const octave = seq(state).octaves[octaveKey('instrument', state.track)] ?? 0;
+			note = KEYBOARD_BASE + index + (drum ? 0 : 12 * octave);
 		} else return;
 		const event: LiveEvent = { kind: 'on', key, track: state.track, note };
 		this.#live.set(key, event);
