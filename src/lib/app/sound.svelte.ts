@@ -409,6 +409,20 @@ export class AppSound {
 		engine.sync(simulator.sim.state);
 		this.#flush();
 		this.#follow();
+		void this.#loadSynth(runtime, context, engine);
+	}
+
+	/**
+	 * Loads the synth core's worklet and hands it the engines it plays; until it is ready (or where
+	 * the browser has no AudioWorklet) the Web Audio voices play them.
+	 */
+	async #loadSynth(runtime: SoundRuntime, context: AudioContext, engine: Engine): Promise<void> {
+		// a runtime without the core (the tests' fakes) keeps the Web Audio voices
+		if (!runtime.SynthHost) return;
+		const host = await runtime.SynthHost.create(context, runtime.synthWorklet);
+		if (!host) return;
+		if (this.#engine !== engine) host.dispose();
+		else engine.useSynth(host);
 	}
 
 	#close(): void {

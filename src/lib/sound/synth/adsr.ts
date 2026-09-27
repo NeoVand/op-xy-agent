@@ -10,6 +10,9 @@
  */
 
 import { TAUS_PER_TIME } from '../envelope';
+import type { AdsrSettings } from './protocol';
+
+export type { AdsrSettings };
 
 /** Envelope stages. */
 export type Stage = 'idle' | 'attack' | 'decay' | 'sustain' | 'release';
@@ -21,14 +24,6 @@ export type Stage = 'idle' | 'attack' | 'decay' | 'sustain' | 'release';
 export function envelopeTime(value: number): number {
 	const x = Math.min(Math.max(value, 0), 99) / 99;
 	return 0.0111 * (Math.exp(10.386 * x) - 1) + 0.001;
-}
-
-/** An envelope's settings: times in seconds, sustain 0–1. */
-export interface AdsrSettings {
-	attack: number;
-	decay: number;
-	sustain: number;
-	release: number;
 }
 
 export class Adsr {

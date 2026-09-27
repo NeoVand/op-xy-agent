@@ -3,7 +3,8 @@
  * instrument track, and eight four-channel inputs carrying each track's LFO. Messages arrive from
  * `host.ts` in batches; the core answers when a voice has ended.
  */
-import { PROCESSOR, SynthCore, type CoreMessage } from './core';
+import { SynthCore } from './core';
+import { PROCESSOR, type CoreMessage } from './protocol';
 
 // the AudioWorklet global scope, which TypeScript's DOM library does not describe
 declare const sampleRate: number;

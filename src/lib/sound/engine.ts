@@ -12,7 +12,7 @@
  * overlapping note without restarting its envelopes, and falls back to a key still held when the
  * newest one lets go.
  */
-import { TRACKS } from '$lib/core/opxy';
+import { TRACKS, type EngineId } from '$lib/core/opxy';
 import { soloed } from '$lib/sim/areas/mixer/meters';
 import { zoneOf } from '$lib/sim/areas/sample/m1';
 import type { Region as SampleRegion, SampleState } from '$lib/sim/areas/sample/state';
@@ -51,8 +51,13 @@ import {
 import { Resources } from './resources';
 import type { SampleRegistry, SampleSource } from './samples';
 import type { ClickEvent, SchedulerSink } from './scheduler';
+import { WorkletVoice, type SynthHost } from './synth/host';
+import { CORE_ENGINES } from './synth/protocol';
 import { ONESHOT_RELEASE, bufferSource, oneshotAmp, synthSource, type SourceGraph } from './synths';
 import { Voice, type VoiceFilter } from './voice';
+
+/** A sounding note: a Web Audio voice, or one the synth core computes in its worklet. */
+type AnyVoice = Voice | WorkletVoice;
 
 /** A note to play. */
 export interface NoteRequest {
@@ -93,6 +98,11 @@ export interface SoundEngineOptions {
 
 /** Levels: synth voices before velocity, drums, samples, the master bus. */
 const VOICE_GAIN = 0.45;
+/**
+ * The synth core's voices before velocity: its engines come out about as loud as each other
+ * (RMS ≈ 0.28), this brings them level with the Web Audio voices.
+ */
+const CORE_GAIN = 0.5;
 const DRUM_GAIN = 0.6;
 const SAMPLE_GAIN = 0.6;
 const MASTER_GAIN = 0.85;
@@ -121,7 +131,7 @@ function softClip(): Float32Array<ArrayBuffer> {
 
 /** Held keys of a mono or legato track, newest last. */
 interface MonoTrack {
-	voice: Voice | null;
+	voice: AnyVoice | null;
 	held: { key: string; note: number; velocity: number }[];
 }
 
@@ -141,7 +151,10 @@ export class SoundEngine {
 	readonly #returns: { level: GainNode; pan: StereoPannerNode }[];
 	readonly #channels: Channel[];
 	readonly #limit: number;
-	#voices: Voice[] = [];
+	#voices: AnyVoice[] = [];
+	/** The synth core in its worklet, once the app has loaded it, and the engines it plays. */
+	#synth: SynthHost | null = null;
+	#coreEngines: ReadonlySet<EngineId> = CORE_ENGINES;
 	#clicks: { source: AudioBufferSourceNode; time: number }[] = [];
 	readonly #mono: MonoTrack[];
 	/** The last note's pitch per track, where portamento glides from. */
@@ -234,6 +247,16 @@ export class SoundEngine {
 		};
 	}
 
+	/**
+	 * Hands the voices of `engines` to the synth core in `host` (the app calls this once the worklet
+	 * has loaded; null goes back to the Web Audio voices for new notes).
+	 */
+	useSynth(host: SynthHost | null, engines: ReadonlySet<EngineId> = CORE_ENGINES): void {
+		this.#synth = host;
+		this.#coreEngines = engines;
+		if (host) this.#channels.forEach((channel, k) => host.connect(k, channel.input));
+	}
+
 	/** Voices sounding or scheduled. */
 	get voices(): number {
 		return this.#voices.length;
@@ -309,14 +332,18 @@ export class SoundEngine {
 				shown.filter = filter;
 				for (const v of voices) {
 					const f = this.#filter(track, v.note);
-					v.setFilter(f.hz, f.q, time);
+					if (v instanceof WorkletVoice) v.setFilter(f.hz, track.filter.resonance, time);
+					else v.setFilter(f.hz, f.q, time);
 				}
 			}
 			const m1 = `${track.engine}|${track.m1.join(',')}`;
 			if (m1 !== shown.m1) {
 				shown.m1 = m1;
 				const controls = engineControls(track.engine, track.m1);
-				if (controls) for (const v of voices) v.update(controls, time);
+				for (const v of voices) {
+					if (v instanceof WorkletVoice) v.update(track.m1, time);
+					else if (controls) v.update(controls, time);
+				}
 			}
 		});
 	}
@@ -462,9 +489,11 @@ export class SoundEngine {
 		}
 	}
 
-	/** Disconnects the whole engine. */
+	/** Disconnects the whole engine (the synth core's worklet with it). */
 	dispose(): void {
 		this.silence();
+		this.#synth?.dispose();
+		this.#synth = null;
 		this.#out.disconnect();
 	}
 
@@ -508,8 +537,11 @@ export class SoundEngine {
 		hz: number,
 		from: number,
 		glide: number
-	): Voice | null {
+	): AnyVoice | null {
 		const { settings, track } = request;
+		if (this.#synth && this.#coreEngines.has(settings.engine)) {
+			return this.#spawnCore(this.#synth, request, time, gate, hz, from, glide);
+		}
 		const source = this.#source(request, hz, time, gate);
 		if (!source) return null;
 		this.#steal(time, track);
@@ -534,6 +566,52 @@ export class SoundEngine {
 			key: request.key ?? null,
 			pan: request.pan
 		});
+		this.#adopt(voice);
+		this.#last[track] = hz;
+		return voice;
+	}
+
+	/** A synth voice the core computes: the same decisions, sent to the worklet. */
+	#spawnCore(
+		host: SynthHost,
+		request: NoteRequest,
+		time: number,
+		gate: number,
+		hz: number,
+		from: number,
+		glide: number
+	): WorkletVoice {
+		const { settings, track } = request;
+		this.#steal(time, track);
+		const filter = this.#filter(settings, request.note);
+		const voice = new WorkletVoice(
+			host,
+			{
+				track,
+				engine: settings.engine,
+				m1: [...settings.m1],
+				velocity: request.velocity,
+				start: time,
+				gate,
+				hz,
+				from,
+				glide,
+				amp: envelopeSeconds(settings.amp),
+				peak: velocityGain(request.velocity) * CORE_GAIN * this.#lockedVolume(track, settings),
+				filter: {
+					type: settings.filter.type,
+					hz: filter.hz,
+					resonance: settings.filter.resonance,
+					envelope: filter.envelope,
+					depth: filter.depth
+				},
+				bend: this.#channels[track].bend,
+				curve: request.bend ?? null,
+				pan: request.pan ?? 0,
+				lfoParam: null
+			},
+			{ note: request.note, key: request.key ?? null, source: request.key ? 'live' : 'sequence' }
+		);
 		this.#adopt(voice);
 		this.#last[track] = hz;
 		return voice;
@@ -691,9 +769,9 @@ export class SoundEngine {
 		victim(candidates, time, track, this.#limit)?.kill(time);
 	}
 
-	#adopt(voice: Voice): void {
+	#adopt(voice: AnyVoice): void {
 		voice.attach(this.#channels[voice.track].modulation());
-		voice.onended = (done) => {
+		voice.onended = (done: AnyVoice) => {
 			this.#voices = this.#voices.filter((v) => v !== done);
 			const mono = this.#mono[done.track];
 			if (mono?.voice === done) mono.voice = null;

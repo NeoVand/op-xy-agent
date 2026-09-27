@@ -15,7 +15,7 @@ import {
 	type CoreMessage,
 	type CoreReply,
 	type VoiceStart
-} from './core';
+} from './protocol';
 
 /** Records nothing: WorkletVoice uses {@link Envelope} only for its timing arithmetic. */
 const NO_PARAM: ParamLike = {
