@@ -11,6 +11,14 @@ answer and date (and into `DECISIONS.md` when they shape the project).
 2. **Device spike session** (changes live state, all reversible): CC probes (tempo, mute, volume,
    scene), remote keys CC106/107, transport/clock, USB audio capture, MTP mode. Schedule when ready.
 3. **App name.** Keep "OP-XY Agent" or pick something else?
+4. **Quick looks at the device** (read-only, nothing sent). The simulator follows TE's guide, but a few
+   things only the unit can settle. Each is pinned by a conformance case
+   (`src/lib/sim/conformance/sequencer.cases.ts`) or noted in the area's code:
+   - Arrange mode: is the label over M1 "new" or "clear"? (TE's text says M1 new, its art the
+     reverse.) Same question for the projects folder (shift + project): M1 load or M1 delete?
+   - How long must a lit step be held before it copies instead of coming off? (Ours: 0.5 s.)
+   - Step component multiply, black key 9: 9 hits, or 3 as TE's table prints?
+   - While playing: does the playhead dim a step that has notes, and light an empty one?
 
 ## Answered
 

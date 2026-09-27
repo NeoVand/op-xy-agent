@@ -85,8 +85,8 @@ export const TONALITIES = [
 	'octave up',
 	'fifth up',
 	'third up',
-	'semitone up',
-	'semitone down',
+	'chromatic up',
+	'chromatic down',
 	'quantise 33',
 	'quantise 66',
 	'quantise 100'
@@ -249,9 +249,9 @@ export function applyTonality(note: number, digit: number, scale: MusicalScale, 
 			return chromatic ? note + 7 : moveInScale(note, 4, scale);
 		case 'third up':
 			return chromatic ? note + 4 : moveInScale(note, 2, scale);
-		case 'semitone up':
+		case 'chromatic up':
 			return note + 1;
-		case 'semitone down':
+		case 'chromatic down':
 			return note - 1;
 		case 'quantise 33':
 			return rng() < 0.33 ? snapToScale(note, scale) : note;

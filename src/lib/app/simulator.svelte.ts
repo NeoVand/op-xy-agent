@@ -7,9 +7,11 @@
  * - **Out:** the screen frame (`frame`, `tick`) and the LED windows. LEDs are applied as changes
  *   only, so what the device bridge lights (the notes the OP-XY plays) stays lit until the
  *   simulator itself changes that key.
- * - **Time:** while it plays, the page's clock moves the playhead, unless a connected OP-XY sends
- *   its clock (COM → clock "both"): then its Start / Stop and every F8 tick drive the transport, so
- *   the steps chase in time with the device.
+ * - **Time:** the page's clock always runs the simulator's timers (holds, flashing LEDs, the record
+ *   countdown, the boot screen) and, while it plays, moves the playhead, unless a connected OP-XY
+ *   sends its clock (COM → clock "both"): then its Start / Stop and every F8 tick drive the
+ *   transport, so the steps chase in time with the device. The simulator's millisecond clock is the
+ *   same page clock.
  * - **Device facts:** the device's tempo (measured, else what the app last set) and the track the
  *   app selected with CC102 carry over.
  *
@@ -49,7 +51,7 @@ const BROWSER_FRAMES: FrameClock = {
 
 /** The replica's virtual OP-XY. Create once (root layout), then `start()` in onMount. */
 export class AppSimulator implements ScreenFrameSource {
-	readonly sim = new OpxySim();
+	readonly sim: OpxySim;
 
 	readonly #replica: ReplicaState;
 	readonly #stack: DeviceStack | null;
@@ -64,6 +66,8 @@ export class AppSimulator implements ScreenFrameSource {
 		this.#stack = options.stack;
 		this.#frames = options.frames ?? BROWSER_FRAMES;
 		this.#hysteresis = options.tempoHysteresis ?? 0.3;
+		const frames = this.#frames;
+		this.sim = new OpxySim({ now: () => frames.now() });
 	}
 
 	/** What the screen shows. */
@@ -90,11 +94,11 @@ export class AppSimulator implements ScreenFrameSource {
 		stops.push(
 			$effect.root(() => {
 				$effect(() => this.#applyLeds(this.sim.leds));
-				$effect(() => this.#runClock());
 				$effect(() => this.#followTempo());
 				$effect(() => this.#followTrack());
 			})
 		);
+		stops.push(this.#runClock());
 		this.#stop = () => {
 			for (const stop of stops) stop();
 			this.#stop = null;
@@ -120,17 +124,19 @@ export class AppSimulator implements ScreenFrameSource {
 		if (any) untrack(() => this.#replica.setLeds(changes));
 	}
 
-	/** The page's clock moves the playhead while playing, unless the device's clock does. */
-	#runClock(): (() => void) | void {
-		if (!this.sim.state.transport.playing || this.deviceClock) return;
-		const { sim } = this;
+	/**
+	 * The page's clock, every frame: the simulator's timers run, and a playing transport moves unless
+	 * the device's clock moves it (its F8 ticks, see {@link #onBus}).
+	 */
+	#runClock(): () => void {
 		const frames = this.#frames;
 		let last = frames.now();
-		let handle = frames.request(function step(now: number) {
-			untrack(() => sim.advance(now - last));
+		const step = (now: number) => {
+			untrack(() => this.sim.advance(now - last, { transport: !this.deviceClock }));
 			last = now;
 			handle = frames.request(step);
-		});
+		};
+		let handle = frames.request(step);
 		return () => frames.cancel(handle);
 	}
 

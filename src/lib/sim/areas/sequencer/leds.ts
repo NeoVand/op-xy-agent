@@ -18,8 +18,8 @@
  * maestro's chord, the arpeggio's note of the moment while playing) [players]; the notes of a held
  * step [step-entry] or of step recording's cursor; with shift and steps selected, the components
  * on them (white keys) and the chosen one's digit (black key); with the bar menu up, the track
- * scale's black key. Flashing follows the simulator clock, which the app advances while playing;
- * stopped, a flashing LED stays lit.
+ * scale's black key. Flashing follows the simulator clock (the app's page clock, which always
+ * runs); the clock is read only while something flashes.
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
@@ -56,8 +56,7 @@ export function sequencerLeds(s: SimState, leds: LedMap): void {
 
 /**
  * Whether an LED is flashing or filling now (armed, counting in, steps selected with shift, the
- * clear gesture): a host should keep advancing the simulator's clock while this is true, even with
- * playback stopped, for the LEDs to move.
+ * clear gesture): the LEDs move with the simulator's clock while this is true, playing or not.
  */
 export function flashing(s: SimState): boolean {
 	const st = seq(s);
@@ -69,7 +68,8 @@ function stepLeds(s: SimState, leds: LedMap): void {
 	const pattern = activePattern(s);
 	const first = shownBar(s) * STEPS_PER_BAR;
 	const head = playingStep(s, pattern);
-	const blink = Math.floor(st.clock / BLINK_MS) % 2 === 0;
+	// read the clock only when an LED flashes: a still row costs nothing as time passes
+	const blink = () => Math.floor(st.clock / BLINK_MS) % 2 === 0;
 	const held = new Set(heldSteps(s));
 	const selected = new Set(st.selection);
 	const shiftLayer =
@@ -96,14 +96,14 @@ function stepLeds(s: SimState, leds: LedMap): void {
 		let led: KeyLedState;
 		if (st.clearSince !== null) led = i < fill ? 'red' : notes ? 'white' : 'off';
 		else if (st.armed || countingIn)
-			led = i === 0 ? (blink ? 'red' : 'off') : notes ? 'white' : 'off';
+			led = i === 0 ? (blink() ? 'red' : 'off') : notes ? 'white' : 'off';
 		else if (barDown(s)) led = index === head ? 'white' : notes ? 'white' : inside ? 'dim' : 'off';
 		else if (st.cursor !== null) led = index === st.cursor ? 'red' : notes ? 'white' : 'off';
 		else if (st.single) {
 			const has = inside && step.notes.some((n) => n.note === st.single?.note);
 			led = index === head ? (has ? 'dim' : 'white') : has ? 'white' : 'off';
 		} else if (shiftLayer) {
-			if (selected.has(index)) led = blink ? 'white' : 'off';
+			if (selected.has(index)) led = blink() ? 'white' : 'off';
 			else led = inside && hasComponents(step) ? 'white' : notes ? 'dim' : 'off';
 		} else if (live) led = index === head ? 'white' : notes ? 'red' : 'off';
 		else if (held.has(index)) led = 'white';
