@@ -1,12 +1,12 @@
 /**
  * What voices share within one audio context: PeriodicWaves (kept in a small LRU cache, since the
  * browser spends about half a megabyte on each), a loop of white noise, the synthesized kit and the
- * metronome rendered into AudioBuffers on first use, recordings from the sample registry turned into
- * AudioBuffers, and the reverb's impulse.
+ * metronome rendered into AudioBuffers on first use, sample files' audio from the registry turned
+ * into AudioBuffers, and the reverb's impulse.
  */
 import { DRUM_SOUNDS, renderClick, renderDrum, renderImpulse } from './kit';
 import { random } from './random';
-import type { Sample, SampleSource } from './samples';
+import type { SampleSource } from './samples';
 import type { Spectrum } from './waves';
 
 /** PeriodicWaves kept at once; the least recently used goes first. */
@@ -42,8 +42,8 @@ export class Resources {
 	readonly #waves = new Map<string, PeriodicWave>();
 	readonly #drums: (AudioBuffer | undefined)[] = [];
 	readonly #reversedDrums: (AudioBuffer | undefined)[] = [];
-	readonly #samples = new WeakMap<Sample, AudioBuffer>();
-	readonly #reversedSamples = new WeakMap<Sample, AudioBuffer>();
+	readonly #samples = new WeakMap<SampleSource, AudioBuffer>();
+	readonly #reversedSamples = new WeakMap<SampleSource, AudioBuffer>();
 	#noise: AudioBuffer | null = null;
 	#clicks: [AudioBuffer, AudioBuffer] | null = null;
 	#impulse: AudioBuffer | null = null;
@@ -132,21 +132,20 @@ export class Resources {
 		return this.#impulse;
 	}
 
-	/** A registry sample as an AudioBuffer (converted once), backwards when `reverse`. */
-	sample(sample: Sample, reverse = false): AudioBuffer {
-		let buffer = this.#samples.get(sample);
+	/** A sample file's audio as an AudioBuffer (converted once), backwards when `reverse`. */
+	sample(source: SampleSource, reverse = false): AudioBuffer {
+		let buffer = this.#samples.get(source);
 		if (!buffer) {
-			const { source } = sample;
 			buffer = isAudioBuffer(source)
 				? source
 				: toBuffer(this.context, source.channels, source.sampleRate);
-			this.#samples.set(sample, buffer);
+			this.#samples.set(source, buffer);
 		}
 		if (!reverse) return buffer;
-		let back = this.#reversedSamples.get(sample);
+		let back = this.#reversedSamples.get(source);
 		if (!back) {
 			back = reversed(this.context, buffer);
-			this.#reversedSamples.set(sample, back);
+			this.#reversedSamples.set(source, back);
 		}
 		return back;
 	}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Biquad, CEILING, Oscillator, ceiling, finish, loudness, peak, render, rms } from './dsp';
-import { DRUM_SOUNDS, renderClick, renderDrum, renderImpulse } from './kit';
+import { DRUM_SOUNDS, kitSound, renderClick, renderDrum, renderImpulse } from './kit';
 
 const SR = 44100;
 
@@ -117,5 +117,17 @@ describe('the synthesized kit (TE factory layout, notes 53–76)', () => {
 		expect(early).toBeGreaterThan(20 * late);
 		// silent before the pre-delay
 		expect(peak(left.subarray(0, Math.round(SR * 0.01)))).toBe(0);
+	});
+
+	it('stands in for a factory file by the sound its name gives, wherever it was loaded', () => {
+		expect(kitSound('kick 1.wav', 5)).toBe(0);
+		expect(kitSound('snare 2.wav', 0)).toBe(DRUM_SOUNDS.indexOf('snare 2'));
+		expect(kitSound('open hat 1.wav', 0)).toBe(DRUM_SOUNDS.indexOf('open hat'));
+		// a third of something the kit has twice at most is still that something
+		expect(kitSound('closed hat 3.wav', 0)).toBe(DRUM_SOUNDS.indexOf('closed hat'));
+		// a recording, a name the kit does not know, no file: the key's own sound
+		expect(kitSound('take 1.wav', 7)).toBe(7);
+		expect(kitSound('my loop.wav', 3)).toBe(3);
+		expect(kitSound(null, 12)).toBe(12);
 	});
 });

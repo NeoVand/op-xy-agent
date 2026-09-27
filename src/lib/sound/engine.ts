@@ -14,11 +14,13 @@
  */
 import { TRACKS } from '$lib/core/opxy';
 import { soloed } from '$lib/sim/areas/mixer/meters';
+import { zoneOf } from '$lib/sim/areas/sample/m1';
+import type { Region as SampleRegion, SampleState } from '$lib/sim/areas/sample/state';
 import { defaultDrumKey, type SimState, type TrackState } from '$lib/sim/params';
 import { VOICE_LIMIT, victim } from './allocator';
 import { Channel } from './channel';
 import { createEffect, type SendEffect } from './fx';
-import { FIRST_DRUM_NOTE } from './kit';
+import { FIRST_DRUM_NOTE, kitSound } from './kit';
 import {
 	EQ_BANDS,
 	bendCents,
@@ -38,6 +40,7 @@ import {
 	panValue,
 	playMode,
 	presetGain,
+	regionSeconds,
 	resonanceQ,
 	sampleRegion,
 	tuneRate,
@@ -46,7 +49,7 @@ import {
 	type PlayMode
 } from './mapping';
 import { Resources } from './resources';
-import type { SampleRegistry } from './samples';
+import type { SampleRegistry, SampleSource } from './samples';
 import type { ClickEvent, SchedulerSink } from './scheduler';
 import { ONESHOT_RELEASE, bufferSource, oneshotAmp, synthSource, type SourceGraph } from './synths';
 import { Voice, type VoiceFilter } from './voice';
@@ -77,7 +80,10 @@ export interface NoteRequest {
 /** Options for {@link SoundEngine}. */
 export interface SoundEngineOptions {
 	readonly context: BaseAudioContext;
-	/** Recordings for the sampler engines and drum keys (else the synthesized kit and soft tone). */
+	/**
+	 * The audio of the simulator's sample files, by id (else a drum key plays the synthesized kit
+	 * and the synth samplers a soft tone).
+	 */
 	readonly samples?: SampleRegistry | null;
 	/** Where the master goes (default the context's destination). */
 	readonly destination?: AudioNode;
@@ -151,6 +157,8 @@ export class SoundEngine {
 	readonly #master: GainNode;
 	/** Master values last applied. */
 	readonly #applied = new Map<string, number>();
+	/** What the simulator's sampler engines hold (from the last sync): which file plays where. */
+	#sampleArea: SampleState | null = null;
 	#bpm = 0;
 	#quiet = 0;
 
@@ -260,6 +268,7 @@ export class SoundEngine {
 			this.#bpm = bpm;
 			for (const fx of this.#effects) fx.setTempo(bpm, time);
 		}
+		this.#sampleArea = state.areas?.sample ?? null;
 		const mixer = state.areas?.mixer;
 		if (mixer) {
 			const { eq, master } = mixer;
@@ -543,7 +552,29 @@ export class SoundEngine {
 		);
 	}
 
-	/** A synth's sources, or a sampler's recording when the registry has one. */
+	/**
+	 * What a synth sampler plays for `note` (manual: synth-sampler, multisampler): the simulator's
+	 * sample on the track, or the zone covering the note, with its root and region, when that file
+	 * has audio in the registry.
+	 */
+	#loaded(
+		track: number,
+		settings: TrackState,
+		note: number
+	): { source: SampleSource; root: number; region: SampleRegion } | null {
+		const held = this.#sampleArea?.tracks[track];
+		if (!held || !this.samples) return null;
+		if (settings.engine === 'sampler') {
+			const source = held.synth.file ? this.samples.file(held.synth.file.id) : null;
+			return source ? { source, root: held.synth.root, region: held.synth.region } : null;
+		}
+		const zone = zoneOf(held.zones, note)?.zone;
+		const source = zone ? this.samples.file(zone.file.id) : null;
+		// a zone sounds unpitched on the note it was sampled on, its top key
+		return zone && source ? { source, root: zone.note, region: zone.region } : null;
+	}
+
+	/** A synth's sources, or a sampler's recording when its file has audio. */
 	#source(
 		request: NoteRequest,
 		hz: number,
@@ -552,28 +583,30 @@ export class SoundEngine {
 	): { graph: SourceGraph; gate: number; gain: number; amp?: Adsr } | null {
 		const { settings, track, note } = request;
 		if (settings.engine === 'sampler' || settings.engine === 'multisampler') {
-			const sample =
-				settings.engine === 'multisampler'
-					? (this.samples?.zone(track, note) ?? this.samples?.sample(track))
-					: this.samples?.sample(track);
-			if (sample) {
-				// the synth samplers' M1 page edits the selected key's settings in the simulator
-				const key = settings.drumKeys[settings.drumKey] ?? defaultDrumKey();
-				const buffer = this.resources.sample(sample, key.reverse);
-				const region = sampleRegion(key.start, key.end, buffer.duration);
-				const loop =
-					sample.loop && sample.loop.end <= buffer.duration
-						? { start: sample.loop.start, end: sample.loop.end }
-						: null;
-				const rate = tuneRate(note - (sample.root ?? 60) + key.tune);
+			const loaded = this.#loaded(track, settings, note);
+			if (loaded) {
+				// the region is what the synth samplers' M1 page edits: points, loop, direction, tune, gain
+				const { region } = loaded;
+				const buffer = this.resources.sample(loaded.source, region.reverse);
+				const play = regionSeconds(region, buffer.duration);
+				const rate = tuneRate(note - loaded.root + region.tune);
 				const graph = bufferSource(
 					this.context,
 					this.resources,
-					{ buffer, rate, region, loop, pan: 0, fade: 0, glides: true, gain: 1 },
+					{
+						buffer,
+						rate,
+						region: play,
+						loop: play.loop,
+						pan: 0,
+						fade: 0,
+						glides: true,
+						gain: dbGain(region.gain)
+					},
 					hz,
 					time
 				);
-				const end = loop ? Infinity : time + (region.end - region.start) / rate;
+				const end = play.loop ? Infinity : time + (play.end - play.start) / rate;
 				return { graph, gate: Math.min(gate, end), gain: SAMPLE_GAIN, amp: bufferAmp(settings) };
 			}
 		}
@@ -586,16 +619,22 @@ export class SoundEngine {
 		};
 	}
 
-	/** A drum key: its sound (a recording or the kit's), tuned, trimmed, panned, in its play mode. */
+	/**
+	 * A drum key: its sample file's audio, or while it has none the kit sound its name stands for;
+	 * tuned, trimmed, panned, in its play mode. An empty key is silent.
+	 */
 	#drum(request: NoteRequest, time: number, gate: number): void {
 		const { track, settings } = request;
 		const index = request.note - FIRST_DRUM_NOTE;
 		if (index < 0 || index >= 24) return;
 		const key = settings.drumKeys[index] ?? defaultDrumKey();
-		const recording = this.samples?.drumKey(track, index) ?? null;
+		const keys = this.#sampleArea?.tracks[track]?.keys;
+		const file = keys ? (keys[index] ?? null) : undefined;
+		if (file === null) return;
+		const recording = file ? this.samples?.file(file.id) : null;
 		const buffer = recording
 			? this.resources.sample(recording, key.reverse)
-			: this.resources.drum(index, key.reverse);
+			: this.resources.drum(kitSound(file?.name ?? null, index), key.reverse);
 		const region = sampleRegion(key.start, key.end, buffer.duration);
 		const rate = tuneRate(key.tune);
 		const looping = key.playMode === 'loop';

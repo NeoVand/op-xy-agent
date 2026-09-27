@@ -15,6 +15,7 @@ export { grooveJitter, grooveTime, grooveVelocity, maxEarlyShift, type Groove } 
 export {
 	DRUM_SOUNDS,
 	FIRST_DRUM_NOTE,
+	kitSound,
 	renderClick,
 	renderDrum,
 	renderImpulse,
@@ -24,10 +25,10 @@ export * from './mapping';
 export { Resources } from './resources';
 export {
 	SampleRegistry,
-	type Sample,
+	sampleChannels,
+	sampleSeconds,
 	type SampleData,
-	type SampleSource,
-	type SampleZone
+	type SampleSource
 } from './samples';
 export {
 	KEY_VELOCITY,

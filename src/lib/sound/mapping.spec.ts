@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { defaultRegion, type Region } from '$lib/sim/areas/sample/state';
 import { defaultTrack, type Lfo } from '$lib/sim/params';
 import {
 	bendCents,
@@ -14,6 +15,7 @@ import {
 	noteHz,
 	playMode,
 	presetGain,
+	regionSeconds,
 	resonanceQ,
 	sampleRegion,
 	sendGain,
@@ -199,5 +201,37 @@ describe('mapping: engine M1 parameters', () => {
 		}
 		expect(engineControls('hardsync', [99, 0, 0, 99])).toMatchObject({ ratio: 6, lowcut: 800 });
 		expect((engineControls('simple', [0, 99, 0, 0]) as { duty: number }).duty).toBeCloseTo(0.04);
+	});
+});
+
+describe("mapping: the synth sampler's region", () => {
+	it('places the points and the loop in seconds of the sample', () => {
+		const play = regionSeconds(defaultRegion(), 2);
+		expect(play.start).toBe(0);
+		expect(play.end).toBe(2);
+		expect(play.loop!.start).toBeCloseTo(0.4);
+		expect(play.loop!.end).toBeCloseTo(1.6);
+	});
+
+	it('loops only while a loop is set: off, loop start at the end, or no length is none', () => {
+		const region = (patch: Partial<Region>): Region => ({ ...defaultRegion(), ...patch });
+		expect(regionSeconds(region({ loop: 'off' }), 2).loop).toBeNull();
+		expect(regionSeconds(region({ loopStart: 1, loopEnd: 1 }), 2).loop).toBeNull();
+		expect(regionSeconds(region({ loopStart: 0.5, loopEnd: 0.5 }), 2).loop).toBeNull();
+		expect(regionSeconds(region({ loop: 'release' }), 2).loop).not.toBeNull();
+	});
+
+	it('mirrors the points when reversed, so the same stretch plays backwards', () => {
+		const play = regionSeconds({ ...defaultRegion(), start: 0.1, end: 0.5, reverse: true }, 1);
+		expect(play.start).toBeCloseTo(0.5);
+		expect(play.end).toBeCloseTo(0.9);
+		// the loop (20–80 %) clipped to the region, mirrored
+		expect(play.loop!.start).toBeCloseTo(0.5);
+		expect(play.loop!.end).toBeCloseTo(0.8);
+	});
+
+	it('never plays less than 5 ms', () => {
+		const play = regionSeconds({ ...defaultRegion(), start: 1, end: 1 }, 1);
+		expect(play.end - play.start).toBeCloseTo(0.005);
 	});
 });

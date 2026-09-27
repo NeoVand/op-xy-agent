@@ -43,6 +43,23 @@ export type DrumSound = (typeof DRUM_SOUNDS)[number];
 /** Keyboard note of the first drum key (F3). */
 export const FIRST_DRUM_NOTE = 53;
 
+/**
+ * The kit sound that stands in for a drum key's sample file while it has no audio: the one its
+ * factory name gives ("snare 2.wav" is the kit's second snare, "open hat 1.wav" its open hat),
+ * wherever the file was loaded; anything else plays the key's own sound.
+ */
+export function kitSound(name: string | null, key: number): number {
+	const match = /^(.+?) (\d+)\.wav$/i.exec(name ?? '');
+	if (match) {
+		const role = match[1].toLowerCase();
+		const sounds: readonly string[] = DRUM_SOUNDS;
+		const found = sounds.indexOf(match[2] === '1' ? role : `${role} ${match[2]}`);
+		const index = found >= 0 ? found : sounds.indexOf(role);
+		if (index >= 0) return index;
+	}
+	return key;
+}
+
 /** A sound: rendered at a sample rate, from a noise source in −1…1. */
 type Recipe = (sampleRate: number, noise: () => number) => Float32Array;
 

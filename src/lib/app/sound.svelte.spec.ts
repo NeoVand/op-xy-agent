@@ -1,6 +1,7 @@
 import { flushSync } from 'svelte';
 import { describe, expect, it } from 'vitest';
 import { ReplicaState } from '$lib/replica';
+import { sampleFile } from '$lib/sim/areas/sample/state';
 import { currentPattern } from '$lib/sim/sequencer';
 import type { NoteRequest } from '$lib/sound/engine';
 import { createFakeRig } from '../../../test/fakes/rig';
@@ -328,6 +329,26 @@ describe('AppSound: the replica sounds while simulated', () => {
 		release('keyboard.e4');
 		expect(schedulers[0].ticks).toBe(ticks + 1);
 		expect(engines[0].calls).toHaveLength(2);
+	});
+
+	it("draws a sample file's measured waveform once its audio arrives, wherever it appears", () => {
+		const { sound, simulator } = setup();
+		const area = simulator.sim.state.areas.sample;
+		const audio = {
+			sampleRate: 1000,
+			channels: [Float32Array.from({ length: 500 }, (_, i) => (i % 2 ? 0.5 : -0.25))]
+		};
+		const kick = area.tracks[0].keys[0]!;
+		expect(kick.peaks).toBeNull();
+		sound.samples.setFile(kick.id, audio);
+		expect(kick.peaks?.channels[0][0]).toBe(0.5);
+		expect(kick.seconds).toBe(0.5);
+		// a file loaded after its audio arrived gets its picture too
+		sound.samples.setFile('user/take 9.wav', audio);
+		area.tracks[0].keys[1] = sampleFile('take 9.wav', 'user', 3);
+		flushSync();
+		expect(area.tracks[0].keys[1]?.peaks).not.toBeNull();
+		expect(area.tracks[0].keys[1]?.seconds).toBe(0.5);
 	});
 
 	it('starts switched off when that was the last choice', async () => {

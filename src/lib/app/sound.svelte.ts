@@ -31,10 +31,12 @@ import {
 } from '$lib/device';
 import type { ReplicaEvent, ReplicaState } from '$lib/replica';
 import { METER_SEGMENTS } from '$lib/replica/geometry';
+import { attachPeaks, samplesInUse } from '$lib/sim/areas/sample/hook';
+import { peaksFromChannels } from '$lib/sim/areas/sample/wave';
 import { activeTrack, keyNote, keyboardIndex, seq } from '$lib/sim/areas/sequencer/model';
 import { playerNotes, playerOf } from '$lib/sim/areas/sequencer/players';
 import { maestroEvents } from '$lib/sim/sequencer-playback';
-import { SampleRegistry } from '$lib/sound/samples';
+import { SampleRegistry, sampleChannels, sampleSeconds } from '$lib/sound/samples';
 import type { AppSimulator } from './simulator.svelte';
 
 /** Where the choice made while simulated is remembered ("on" / "off"). */
@@ -76,7 +78,7 @@ export interface AppSoundOptions {
 	readonly replica: ReplicaState;
 	/** The app's device stack (a ready session means the OP-XY makes the sound); null for none. */
 	readonly stack: DeviceStack | null;
-	/** Recordings for the sampler engines (default a new, empty registry). */
+	/** The audio of the simulator's sample files (default a new, empty registry). */
 	readonly samples?: SampleRegistry;
 	/** Where the choice is remembered (default localStorage, looked up when needed). */
 	readonly storage?: () => Pick<Storage, 'getItem' | 'setItem'> | null;
@@ -95,7 +97,11 @@ export interface AppSoundOptions {
 
 /** The replica's sound. Create once (root layout), then `start()` in onMount, after the simulator. */
 export class AppSound {
-	/** Recordings the sampler engines play: whatever captures or loads audio hands it over here. */
+	/**
+	 * The audio of the simulator's sample files, by file id: whatever captures or decodes audio
+	 * hands it over here (`samples.setFile(file.id, buffer)`), and every key or zone holding that
+	 * file plays it, its measured waveform on the sampler pages.
+	 */
 	readonly samples: SampleRegistry;
 
 	readonly #simulator: AppSimulator;
@@ -198,7 +204,10 @@ export class AppSound {
 	start(): () => void {
 		if (this.#stop) return this.#stop;
 		this.#simulated = this.#recall();
-		const stops: (() => void)[] = [this.#replica.observe((event) => this.#onReplica(event))];
+		const stops: (() => void)[] = [
+			this.#replica.observe((event) => this.#onReplica(event)),
+			this.samples.onChange((id) => this.#measure(id))
+		];
 		const target = this.#gestures();
 		if (target) {
 			const unlock = () => this.#unlock();
@@ -221,6 +230,14 @@ export class AppSound {
 						untrack(() => this.#unlock());
 					}
 				});
+				$effect(() => {
+					// a file loaded after its audio arrived (a kit, a copy) gets its measured picture too
+					const files = samplesInUse(this.#simulator.sim.state.areas.sample);
+					untrack(() => {
+						for (const file of files)
+							if (!file.peaks && this.samples.file(file.id)) this.#measure(file.id);
+					});
+				});
 			})
 		);
 		this.#stop = () => {
@@ -241,6 +258,17 @@ export class AppSound {
 		} catch {
 			return true;
 		}
+	}
+
+	/**
+	 * A sample file's audio arrived: the simulator's sampler pages draw its measured peaks and know
+	 * its true length (the sample area's hook), wherever the file appears.
+	 */
+	#measure(id: string): void {
+		const source = this.samples.file(id);
+		if (!source) return;
+		const peaks = peaksFromChannels(sampleChannels(source), source.sampleRate);
+		attachPeaks(this.#simulator.sim.state.areas.sample, id, peaks, sampleSeconds(source));
 	}
 
 	// ─────────────────────────────────────────────────────────── the audio context

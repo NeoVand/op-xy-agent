@@ -7,6 +7,7 @@
  * Pure, so the engine, the scheduler and the tests share them.
  */
 import type { EngineId } from '$lib/core/opxy';
+import type { Region as SampleRegion } from '$lib/sim/areas/sample/state';
 import { LFO_SYNC_STEPS, type Envelope99, type Lfo } from '$lib/sim/params';
 import type { FilterType } from '$lib/sim/screen/frame';
 import { DESTINATIONS } from '$lib/sim/screen/pages/lfo';
@@ -168,6 +169,34 @@ export function sampleRegion(start: number, end: number, duration: number): Regi
 
 /** Sample fade (0–99): how much of the region's end fades out, in seconds. */
 export const fadeSeconds = (fade: number, length: number): number => unit(fade) * length;
+
+/** Where a synth sampler's region plays in its buffer, in seconds. */
+export interface RegionPlay extends Region {
+	/** The stretch that repeats, or null. */
+	readonly loop: Region | null;
+}
+
+/**
+ * A synth sampler's or multisampler zone's region (manual: synth-sampler; points 0–1 of the
+ * sample) in seconds of a buffer `duration` long, never shorter than 5 ms. A loop plays while it is
+ * set (loop start at the end, or no length, means none; "until release" loops like "forever", its
+ * tail fading with the release). Reversed, the same stretch plays backwards, so the points mirror
+ * onto the reversed buffer.
+ */
+export function regionSeconds(region: SampleRegion, duration: number): RegionPlay {
+	const at = (v: number) => clamp(region.reverse ? 1 - v : v, 0, 1) * duration;
+	const [a, b] = [at(region.start), at(region.end)];
+	const from = Math.min(Math.min(a, b), Math.max(0, duration - 0.005));
+	const to = Math.max(Math.max(a, b), Math.min(duration, from + 0.005));
+	const [la, lb] = [at(region.loopStart), at(region.loopEnd)].map((v) => clamp(v, from, to));
+	const loop = { start: Math.min(la, lb), end: Math.max(la, lb) };
+	const looping = region.loop !== 'off' && region.loopStart < region.end;
+	return {
+		start: from,
+		end: to,
+		loop: looping && loop.end - loop.start >= 0.005 ? loop : null
+	};
+}
 
 // ─────────────────────────────────────────────────────────── LFO (M4)
 
