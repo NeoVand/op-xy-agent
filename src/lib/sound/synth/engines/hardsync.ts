@@ -1,62 +1,66 @@
 /**
- * hardsync: a saw hard-synced to the note, its own pitch swept over three octaves (the moving
- * formant of classic sync leads), a sub at the note, white noise, and a highpass on top of the
- * track's filter. Evidence and open questions: `docs/research/57-synth-engines.md`, §3 (hardsync).
+ * hardsync: a saw hard-synced to the note, its own pitch swept from the note to three octaves up
+ * (the moving formant of classic sync leads), a sub saw at the note, white noise, and a lowcut on
+ * the saws. Evidence: `docs/research/57-synth-engines.md`, §3 (hardsync).
  *
- * Established [E]:
- * - a saw slave hard-synced to a master, freq spanning about three octaves;
- * - the sub sits at the master's pitch; noise is white;
- * - lowcut is a highpass on top of M3 (TE's staff), the source of its thin, tinny sound;
- * - puny without the sub, and loud raw (presets sit at preset volume 24–48 %).
+ * Measured on the owner's device (2026-09-27, OS 1.1.33, `2026-09-27-133212-hardsync`):
+ * - freq moves the synced saw linearly from the note to 8 × it: 1 + 7·freq (at CC 38 the third
+ *   harmonic leads, at 51 the fourth, at 127 the eighth, a plain saw three octaves up); the same on
+ *   A2 and A4;
+ * - the sub is a saw at the note in phase with the synced one (at freq 0 the sum stays a pure saw),
+ *   up to twice the synced saw's level at sub 1 ({@link SUB_LEVEL}), rising a little faster than
+ *   in proportion ({@link SUB_CURVE});
+ * - the lowcut filters the saws only: the noise passes untouched (flat, white) at every setting. It
+ *   is one pole, its corner along {@link LOWCUT} from nothing at 0 to 8 kHz at 127 (fitted on the
+ *   saw's first harmonics within 2 dB): the thin, tinny sound;
+ * - the synced saw is −24.3 dBFS on average over freq and notes (simple's saw −18.9), scattered
+ *   ±1 dB note to note; noise at 100 is white at −64 dBFS/Hz (−20.6 dBFS in all on the device's
+ *   44.1 kHz audio).
  *
- * Our model [I]:
- * - the master is a bare phase at the note; the slave, a band-limited saw at
- *   note × 2^({@link OCTAVES}·freq), restarts at the exact fraction of a sample where the master
- *   wraps, so the pitch stays the note's while freq moves the formant. Continuous, no steps;
- * - the sub is a sine read off the master's own phase, at the note rather than an octave below:
- *   "at the master's pitch" says so, and it gives the synced saw the fundamental it lacks without
- *   moving the pitch; it enters at {@link SUB_LEVEL} × sub;
- * - noise is white, at {@link NOISE_LEVEL} × noise²;
- * - lowcut is a two-pole (Butterworth) TPT highpass on the sum of all three, exponential from
- *   {@link LOWCUT_FROM} to {@link LOWCUT_TO}, gliding a few milliseconds so a jump cannot click. Even
- *   at 0 it clears the DC a synced saw carries;
- * - mono; levels are normalized to our target, not the device's hot output;
- * - the slave stops rising at {@link SLAVE_TOP} × the sample rate, which only notes above about
- *   1.2 kHz with freq near full reach: there Nyquist cuts the synced saw's series off near its
- *   formant, the few harmonics left line up at every reset and the peaks more than double;
- * - a one-pole lowpass at {@link LEAK_CUT} × the sample rate (−0.7 dB at 15 kHz) catches what the
- *   band-limited steps let through just past Nyquist (the slave's third harmonic, at freq 1 on a
- *   1 kHz note);
- * - the default barely touches the soft ceiling of `guard.ts` (a sample in ten thousand: its
- *   lowcut turns the saw's drops into one-sided spikes, so its peaks already sit near 1); the
- *   corners where a full sub and full noise meet the saw's peaks ease into it.
+ * Our model:
+ * - the master is a bare phase at the note; the slave, a band-limited saw at the note × the ratio,
+ *   restarts at the exact fraction of a sample where the master wraps, so the pitch stays the
+ *   note's while freq moves the formant; the sub is a second band-limited saw on the master's
+ *   phase;
+ * - the lowcut is a one-pole TPT highpass on the saws, gliding in octaves so a jump cannot click;
+ *   noise joins after it, ∝ noise² (the curve is not measured yet);
+ * - the slave stops rising at {@link SLAVE_TOP} × the sample rate (the device's aliases there: its
+ *   synced saw at 14 kHz on A6 turns to noise); a one-pole lowpass at {@link LEAK_CUT} × the
+ *   sample rate catches what the band-limited steps let through just past Nyquist;
+ * - the soft ceiling of `guard.ts` stays as a guard; at the device's levels it is not reached.
  */
-import { OnePole, Svf, prewarp } from '../filters';
+import { OnePole, prewarp } from '../filters';
 import { Noise } from '../noise';
 import { Phase, Saw } from '../oscillators';
+import { DEVICE_GAIN_DB } from './device';
 import { ceiling } from './guard';
 import type { EngineVoice } from './index';
 import { Ramp, Smoothing } from './ramp';
 
-// Calibration [I]: starting values, awaiting measurement on the owner's device (57 §6).
-/** The slave's range above the note at freq 1, in octaves. */
-export const OCTAVES = 3;
-/** The sub sine's amplitude at sub 1, against the saw's ±1. */
-export const SUB_LEVEL = 0.8;
-/** Noise at noise 1, against the saw's ±1 (uniform white noise, peak 1). */
-export const NOISE_LEVEL = 0.4;
-/** The lowcut's cutoff at 0 and at 1, in hertz (exponential between). */
-export const LOWCUT_FROM = 20;
-export const LOWCUT_TO = 3000;
-/** Output level: RMS ≈ 0.22 at the default M1, where the lowcut thins the sound into spikes. */
-export const LEVEL = 0.47;
+// Measured on the owner's device (2026-09-27).
+/** The slave's ratio to the note at freq 1 (linear from 1 at freq 0). */
+export const TOP_RATIO = 8;
+/** The sub saw's level at sub 1, against the synced saw's, and its curve: SUB_LEVEL · sub^curve. */
+export const SUB_LEVEL = 2;
+export const SUB_CURVE = 0.8;
+/** The lowcut's corner (Hz, one pole) at CC 0, 13, 25 … 127: read in octaves between them. */
+export const LOWCUT = {
+	at: [0, 13, 25, 38, 51, 64, 76, 89, 102, 114, 127].map((v) => v / 127),
+	hz: [10, 101, 417, 712, 1023, 1888, 2757, 4028, 5006, 5334, 8165]
+} as const;
+/**
+ * The saw's peak at freq 0: −24.1 dBFS RMS, which puts the synced saw at the device's average over
+ * freq (−24.3 dBFS), played {@link DEVICE_GAIN_DB} louder.
+ */
+export const LEVEL = Math.sqrt(3) * Math.pow(10, (-24.1 + DEVICE_GAIN_DB) / 20);
+/** Noise at noise 1: white at this density on the device (dBFS per hertz). */
+export const NOISE_DENSITY_DB = -64;
 
 /** The slave's highest rate, as a fraction of the sample rate (9.6 kHz at 48 kHz). */
 export const SLAVE_TOP = 0.2;
 /** The leakage lowpass's cutoff, as a fraction of the sample rate (20 kHz at 48 kHz). */
 export const LEAK_CUT = 0.42;
 
-const TAU = 2 * Math.PI;
 /** The master's highest rate (cycles a sample). */
 const TOP = 0.45;
 
@@ -66,7 +70,8 @@ export class HardsyncVoice implements EngineVoice {
 	readonly #noise: Noise;
 	readonly #master = new Phase();
 	readonly #slave = new Saw();
-	readonly #lowcut = new Svf(0.5, Math.SQRT2);
+	readonly #subSaw = new Saw();
+	readonly #lowcut = new OnePole();
 	readonly #leak: OnePole;
 	readonly #sub = new Ramp();
 	readonly #noiseLevel = new Ramp();
@@ -76,17 +81,23 @@ export class HardsyncVoice implements EngineVoice {
 	#at = NaN;
 	#dt = 0;
 	#dtSlave = 0;
+	/** Uniform white noise's peak for the measured density at this sample rate. */
+	readonly #noiseFull: number;
 
 	constructor(sampleRate: number, seed: number) {
 		this.#sampleRate = sampleRate;
 		this.#smoothing = new Smoothing(sampleRate);
 		this.#noise = new Noise(seed);
 		this.#leak = new OnePole(prewarp(LEAK_CUT * sampleRate, sampleRate));
+		// uniform noise of peak A has power A²/3, spread over sampleRate/2 hertz
+		const density = Math.pow(10, (NOISE_DENSITY_DB + DEVICE_GAIN_DB) / 10);
+		this.#noiseFull = Math.sqrt((3 * density * sampleRate) / 2);
 	}
 
 	start(hz: number, _velocity: number, params: Float32Array): void {
 		this.#master.value = 0;
 		this.#slave.reset();
+		this.#subSaw.reset();
 		this.#lowcut.reset();
 		this.#leak.reset();
 		this.#set(hz, params);
@@ -102,14 +113,12 @@ export class HardsyncVoice implements EngineVoice {
 	/** Targets and rates for M1 `params` at `hz`. */
 	#set(hz: number, params: Float32Array): void {
 		this.#dt = Math.min(hz / this.#sampleRate, TOP);
-		this.#dtSlave = Math.max(
-			this.#dt,
-			Math.min(this.#dt * Math.pow(2, OCTAVES * params[0]), SLAVE_TOP)
-		);
-		this.#sub.target = LEVEL * SUB_LEVEL * params[1];
+		const ratio = 1 + (TOP_RATIO - 1) * params[0];
+		this.#dtSlave = Math.max(this.#dt, Math.min(this.#dt * ratio, SLAVE_TOP));
+		this.#sub.target = LEVEL * SUB_LEVEL * Math.pow(params[1], SUB_CURVE);
 		const noise = params[2];
-		this.#noiseLevel.target = LEVEL * NOISE_LEVEL * noise * noise;
-		this.#cutoff.target = Math.log2(LOWCUT_FROM) + Math.log2(LOWCUT_TO / LOWCUT_FROM) * params[3];
+		this.#noiseLevel.target = this.#noiseFull * noise * noise;
+		this.#cutoff.target = lowcutOctaves(params[3]);
 	}
 
 	render(left: Float32Array, right: Float32Array, n: number): void {
@@ -125,10 +134,11 @@ export class HardsyncVoice implements EngineVoice {
 		const cutoff = this.#cutoff.value;
 		if (cutoff !== this.#at) {
 			this.#at = cutoff;
-			this.#lowcut.set(prewarp(Math.pow(2, cutoff), this.#sampleRate), Math.SQRT2);
+			this.#lowcut.set(prewarp(Math.pow(2, cutoff), this.#sampleRate));
 		}
 		const master = this.#master;
 		const slave = this.#slave;
+		const subSaw = this.#subSaw;
 		const lowcut = this.#lowcut;
 		const leak = this.#leak;
 		const white = this.#noise;
@@ -137,12 +147,25 @@ export class HardsyncVoice implements EngineVoice {
 		for (let i = 0; i < n; i++) {
 			sub += dSub;
 			noise += dNoise;
-			// the saw at the level, the sub and noise already scaled by theirs
-			let x = LEVEL * slave.next(dtSlave, master.step(dt));
-			if (withSub) x += sub * Math.sin(TAU * master.value);
+			const wrap = master.step(dt);
+			// the saws at their levels through the lowcut (its highpass: the input less the lowpass)
+			let x = LEVEL * slave.next(dtSlave, wrap);
+			if (withSub) x += sub * subSaw.next(dt, wrap);
+			x -= lowcut.process(x);
 			if (withNoise) x += noise * white.next();
-			lowcut.process(x);
-			left[i] = right[i] = ceiling(leak.process(lowcut.high));
+			left[i] = right[i] = ceiling(leak.process(x));
 		}
 	}
+}
+
+/** The lowcut's corner at `x` (0–1), in octaves above 1 Hz, between the measured points. */
+function lowcutOctaves(x: number): number {
+	const { at, hz } = LOWCUT;
+	if (x <= at[0]) return Math.log2(hz[0]);
+	const last = at.length - 1;
+	if (x >= at[last]) return Math.log2(hz[last]);
+	let i = 0;
+	while (x > at[i + 1]) i++;
+	const t = (x - at[i]) / (at[i + 1] - at[i]);
+	return Math.log2(hz[i]) + t * Math.log2(hz[i + 1] / hz[i]);
 }
