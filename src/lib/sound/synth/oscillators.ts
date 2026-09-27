@@ -101,12 +101,20 @@ function naive(m: ShapeMix, w: number, p: number): number {
 }
 
 /**
+ * Where a pulse edge made by the width itself moving lands: just after the previous sample, when
+ * the new width took over (a step's position must stay below one sample).
+ */
+const WIDTH_EDGE_AGO = 0.999;
+
+/**
  * Sine, triangle, saw and pulse from one phase, blended and band-limited together: the saw's and
  * pulse's jumps get band-limited steps, the triangle's corners polynomial ramps. Hard-syncable.
  * The triangle starts at its trough (phase 0) so that it, the saw and the pulse restart alike.
  */
 export class ShapeOscillator {
 	#p: number;
+	/** The pulse width of the last sample, or −1 before the first one (after a reset). */
+	#w = -1;
 	readonly #blep = new BlepBuffer();
 
 	constructor(phase = 0) {
@@ -122,6 +130,13 @@ export class ShapeOscillator {
 		// the width stays a sample away from either end, so each cycle has both edges
 		const w = Math.min(Math.max(m.width, dt), 1 - dt);
 		let p = this.#p;
+		// a width that moved past the phase (a sweep, PWM) flips the pulse where the wave is: an
+		// edge like the others, so it gets a band-limited step instead of jumping in one sample
+		const high = p < w;
+		if (m.pulse !== 0 && this.#w >= 0 && high !== p < this.#w) {
+			this.#blep.add(high ? 2 * m.pulse : -2 * m.pulse, WIDTH_EDGE_AGO);
+		}
+		this.#w = w;
 		if (sync >= 0) {
 			let at = p + dt * (1 - sync);
 			if (at >= 1) at = this.#wrap(at - 1, dt, m, sync);
@@ -160,6 +175,7 @@ export class ShapeOscillator {
 
 	reset(phase = 0): void {
 		this.#p = phase - Math.floor(phase);
+		this.#w = -1;
 		this.#blep.clear();
 	}
 }

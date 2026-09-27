@@ -156,6 +156,33 @@ describe('shape oscillator', () => {
 		}
 	});
 
+	it('flips the pulse with a band-limited edge when its width moves past the phase', () => {
+		const dt = 440 / SR;
+		const largestStep = (x: ArrayLike<number>) => {
+			let s = 0;
+			for (let i = 1; i < x.length; i++) s = Math.max(s, Math.abs(x[i] - x[i - 1]));
+			return s;
+		};
+		// the steepest its own (band-limited) edges get, over many sub-sample positions
+		const plain = new ShapeOscillator();
+		const natural = largestStep(render(4096, () => plain.next(dt, mix({ pulse: 1 }))));
+		// high at phase 0.4 until the width drops to 0.3 (it falls), low until it rises to 0.9
+		for (const [before, after, settled] of [
+			[0.5, 0.3, -1],
+			[0.3, 0.9, 1]
+		]) {
+			const osc = new ShapeOscillator();
+			const m = mix({ pulse: 1, width: before });
+			while (osc.phase < 0.39 || osc.phase > 0.41) osc.next(dt, m);
+			const last = osc.next(dt, m);
+			m.width = after;
+			const x = [last, ...render(24, () => osc.next(dt, m))];
+			// a plain flip would jump the whole 2 in one sample
+			expect(largestStep(x)).toBeLessThanOrEqual(natural + 0.01);
+			expect(x[24]).toBeCloseTo(settled, 2);
+		}
+	});
+
 	it('hard-syncs a blend as cleanly as a saw', () => {
 		const f0 = 180;
 		const master = new Phase();

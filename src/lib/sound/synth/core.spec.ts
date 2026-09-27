@@ -22,7 +22,8 @@ function voice(v: Partial<VoiceStart> = {}): VoiceStart {
 		id: 1,
 		track: 0,
 		engine: 'prism',
-		m1: [50, 50, 50, 50],
+		// shape 0, ratio 1:1, no detune or stereo: one plain saw, whose pitch zero crossings can read
+		m1: [0, 15, 0, 0],
 		velocity: 100,
 		start: 0,
 		gate: Infinity,
