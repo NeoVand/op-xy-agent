@@ -253,7 +253,7 @@ describe('punch-in fx (T2)', () => {
 		expect(lit(jumping)).toHaveLength(lit(still).length);
 		expect(Math.min(...lit(jumping))).toBeLessThan(Math.min(...lit(still)));
 		expect(ground(lit(jumping))).toBe(ground(lit(still)));
-		expect(describeFrame(sim.frame)).toContain('keys 1 8');
+		expect(describeFrame(sim.frame)).toBe('punch-in fx: percussion 1 8');
 	});
 
 	it('plays sequenced effects, lighting their keys', () => {
@@ -261,10 +261,48 @@ describe('punch-in fx (T2)', () => {
 		toggleStep(currentPattern(sim.state.aux[1].sequence), 0, [76]);
 		sim.press('key.play');
 		expect(page(sim, 'aux-punch').active).toEqual([23]);
+		expect(describeFrame(sim.frame)).toBe('punch-in fx: melodic 12');
 		expect(sim.leds['keyboard.e5']).toBe('white');
 		sim.advance(60000 / 120 / 4);
 		expect(page(sim, 'aux-punch').active).toEqual([]);
 		expect(sim.leds['keyboard.e5']).toBe('off');
+	});
+});
+
+describe('punch-in shortcut (shift + key on instrument tracks)', () => {
+	it('fires an effect instead of playing a note', () => {
+		const sim = new OpxySim({ now: () => 0 });
+		sim.press('track.3');
+		sim.combo('key.shift', 'keyboard.d4');
+		expect(sim.state.tracks[2].sequence.lastNote).toBe(60);
+		sim.press('keyboard.d4');
+		expect(sim.state.tracks[2].sequence.lastNote).toBe(62);
+	});
+
+	it('writes the effect to the punch-in track while recording', () => {
+		const sim = new OpxySim({ now: () => 0 });
+		sim.press('track.3');
+		sim.press('key.record');
+		sim.press('key.play');
+		sim.advance((60000 / 120 / 4) * 2);
+		sim.combo('key.shift', 'keyboard.c4');
+		const steps = currentPattern(sim.state.aux[1].sequence).steps;
+		expect(steps[2].notes.map((n) => n.note)).toEqual([60]);
+		// a second press on the same step does not remove it
+		sim.combo('key.shift', 'keyboard.c4');
+		expect(steps[2].notes).toHaveLength(1);
+	});
+
+	it('leaves midi engine tracks and other modes alone', () => {
+		const sim = new OpxySim({ now: () => 0 });
+		sim.press('track.3');
+		sim.state.tracks[2].engine = 'midi';
+		sim.combo('key.shift', 'keyboard.d4');
+		expect(sim.state.tracks[2].sequence.lastNote).toBe(62);
+		sim.press('key.auxiliary');
+		sim.press('track.4');
+		sim.combo('key.shift', 'keyboard.c5');
+		expect(page(sim, 'aux-cv').volts).toBe(1);
 	});
 });
 

@@ -8,13 +8,15 @@
  * Routing into external audio, tape and the FX tracks is the instrument tracks' own sends (the
  * community's project files store it there), so their M3 shift layer and mix M1 show the same
  * values. Aux tracks sequence like instrument tracks: brain notes transpose, punch-in notes fire
- * effects, tape notes play clips, and the CV needle follows the note playing.
+ * effects, tape notes play clips, and the CV needle follows the note playing. `shift + key` on an
+ * instrument track fires punch-in effects from anywhere, so the area claims it.
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
 import { LFO_SYNC_STEPS, clamp, two, type PageNumber, type SimState } from '../../params';
 import type { ListFrame, LfoFrame, ScreenFrame } from '../../screen/frame';
 import type { SoftLabel } from '../../screen/draw';
-import { currentPattern, stepAt } from '../../sequencer';
+import type { SimInput } from '../../input';
+import { currentPattern, stepAt, toggleNote } from '../../sequencer';
 import type { AreaContext, SimArea } from '../types';
 import type {
 	AuxBrainFrame,
@@ -595,10 +597,34 @@ function auxFrame(s: SimState): ScreenFrame {
 	}
 }
 
+/**
+ * The punch-in shortcut (manual: auxiliary/punch-in-fx): on an instrument track `shift + key` fires
+ * that key's effect instead of playing a note (the lower octave on the track, the upper on its
+ * group), and a live recording writes it to the punch-in track at the playhead. Not on a midi
+ * engine track (our reading of OS 1.0.32's "not while external MIDI is in use"). Areas asked
+ * earlier (a player that takes shift + keys for its chord) win.
+ */
+function punchShortcut(s: SimState, input: SimInput): boolean {
+	if (input.type !== 'press' || !s.shift || s.mode !== 'instrument') return false;
+	if (s.overlay !== null || s.sub !== null || s.picker !== null) return false;
+	if (s.tracks[s.track].engine === 'midi') return false;
+	const key = keyboardIndex(input.id);
+	if (key === null || stepHeld(s)) return false;
+	if (s.transport.recording && s.transport.playing) {
+		const pattern = currentPattern(s.aux[1].sequence);
+		const at = stepAt(pattern, s.transport.position);
+		const note = KEYBOARD_BASE + key;
+		if (!pattern.steps[at].notes.some((n) => n.note === note)) toggleNote(pattern, at, note);
+	}
+	return true;
+}
+
 export const auxiliary: SimArea = {
 	id: 'auxiliary',
 	owns: (s) => s.overlay === null && s.sub === null && s.mode === 'auxiliary',
 	frame: auxFrame,
+
+	claim: (ctx: AreaContext, input: SimInput) => punchShortcut(ctx.state, input),
 
 	press(ctx: AreaContext, id: string): boolean {
 		const s = ctx.state;

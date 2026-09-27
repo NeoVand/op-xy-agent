@@ -8,7 +8,6 @@
  */
 import type { AreaDrawers } from '../../screen/areas';
 import type { ScreenCtx } from '../../screen/context';
-import type { TextAlign } from '../../screen/font';
 import {
 	amountRuler,
 	card as plainCard,
@@ -20,7 +19,7 @@ import {
 	text,
 	type SoftLabel
 } from '../../screen/draw';
-import { screenFont } from '../../screen/font';
+import { screenFont, type TextAlign } from '../../screen/font';
 import { PATTERNS, drawIcon } from '../../screen/icons';
 import { cutoffX } from '../../screen/pages/filter';
 import { COLORS, SOFT_KEY_BASELINE, SOFT_KEY_X } from '../../screen/palette';
@@ -709,10 +708,23 @@ export const drawers: AreaDrawers<AuxiliaryFrame> = {
 	},
 	'aux-punch': {
 		draw: (ctx, f) => drawPunch(ctx, f.active.length > 0),
-		describe: (f) =>
-			f.active.length === 0
-				? 'punch-in fx: hold keys for effects'
-				: `punch-in fx: effects on keys ${f.active.map((k) => k + 1).join(' ')}`
+		describe: (f) => {
+			if (f.active.length === 0) return 'punch-in fx: hold keys for effects';
+			// the lower octave acts on the percussion tracks, the upper on the melodic ones
+			const group = (name: string, keys: readonly number[]) =>
+				keys.length ? [`${name} ${keys.map((k) => (k % 12) + 1).join(' ')}`] : [];
+			const effects = [
+				...group(
+					'percussion',
+					f.active.filter((k) => k < 12)
+				),
+				...group(
+					'melodic',
+					f.active.filter((k) => k >= 12)
+				)
+			];
+			return `punch-in fx: ${effects.join(', ')}`;
+		}
 	},
 	'aux-midi': {
 		draw: drawMidi,
