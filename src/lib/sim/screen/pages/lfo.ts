@@ -106,15 +106,53 @@ function destCard(
 	text(ctx, label, x + 30, y + 50, 20, COLORS.ink, 'center');
 }
 
-/** Element's source card: the sensor's letter in a black disc, the rule with the rate's gap. */
+/**
+ * Element's source card: the sensor's letter in a black disc, and the rule whose gap marks where
+ * that sensor sits among the four (ours: TE's art shows the gyroscope with the gap near the left).
+ */
 function sensorCard(ctx: ScreenCtx, frame: LfoFrame, x: number, y: number): void {
 	card(ctx, x, y, 120, 120);
 	encoderDot(ctx, 0, x + 5, y + 5);
 	disc(ctx, x + 60, y + 60, 25, COLORS.ink);
 	text(ctx, frame.source ?? 'G', x + 59.5, y + 74.6, 40, COLORS.white, 'center');
-	const gap = x + 5 + 105 * Math.max(0, Math.min(1, frame.speed.position));
+	const at = frame.sourceAt ?? frame.speed.position;
+	const gap = x + 5 + 105 * Math.max(0, Math.min(1, at));
 	line(ctx, x + 5, y + 115, x + 115, y + 115, COLORS.ink, 1.12);
 	line(ctx, gap, y + 115, gap + 5, y + 115, COLORS.white, 1.5);
+}
+
+/**
+ * An envelope's ramp in its 60 × 60 card at (x, y): random's env card, tremolo's mode card. TE
+ * draws a fade-in as a line across the card (envelope 1); ours for the rest: a shorter fade rises
+ * to the top sooner (straight up at 0, no fade), a fade-out holds the top and falls at the end.
+ */
+function envelopeRamp(ctx: ScreenCtx, x: number, y: number, envelope: number): void {
+	const e = Math.max(-1, Math.min(1, envelope));
+	const [left, right, top, bottom] = [x + 10, x + 50, y + 10, y + 50];
+	const run = 40 * Math.abs(e);
+	const points =
+		e >= 0
+			? [
+					[left, bottom],
+					[left + run, top],
+					[right, top]
+				]
+			: [
+					[left, top],
+					[right - run, top],
+					[right, bottom]
+				];
+	// a full fade is one straight line: drop the corner that meets an end
+	const path = points.filter(
+		([px, py], i) => i === 0 || px !== points[i - 1][0] || py !== points[i - 1][1]
+	);
+	ctx.strokeStyle = COLORS.ink;
+	ctx.lineWidth = 1.67;
+	ctx.lineCap = 'butt';
+	ctx.lineJoin = 'miter';
+	ctx.beginPath();
+	path.forEach(([px, py], i) => (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
+	ctx.stroke();
 }
 
 /** Draws the LFO page. */
@@ -148,7 +186,7 @@ export function drawLfo(ctx: ScreenCtx, frame: LfoFrame): void {
 		destCard(ctx, shown, module, 240, 50);
 		encoderDot(ctx, 2, 245, 55);
 		card(ctx, 240, 110, 60, 60);
-		line(ctx, 250, 160, 290, 120, COLORS.ink, 1.67);
+		envelopeRamp(ctx, 240, 110, frame.envelope ?? 1);
 		text(ctx, 'env', 245.5, 182.5, 10, COLORS.white);
 	} else {
 		text(ctx, 'dest', 240 + dx, 15, 10, COLORS.white);
@@ -192,15 +230,21 @@ function thinCard(ctx: ScreenCtx, x: number, y: number, w: number, h: number): v
 }
 
 /**
- * Duck (instrument-052): the trigger track ("tr 4") with its source type (audio or notes), the
- * amount, the signal it follows, and hold and release.
+ * Duck (instrument-052): the trigger track ("tr 4", or the metronome) with its source type (audio
+ * or notes), the amount, the signal it follows, and hold and release (TE's pictograms: the cards do
+ * not show their values).
  */
 function drawDuck(ctx: ScreenCtx, frame: LfoFrame): void {
 	text(ctx, 'source', 95, 45, 10, COLORS.white);
 	thinCard(ctx, 90, 50, 120, 120);
 	encoderDot(ctx, 0, 95, 55);
-	text(ctx, 'tr', 138.5, 95, 10, COLORS.ink);
-	text(ctx, frame.source ?? '1', 150, 127.4, 40, COLORS.ink, 'center');
+	if (frame.source === 'metronome') {
+		// ours: TE's art shows a track; the metronome gets the tempo page's pictogram
+		drawIcon(ctx, 'tempo.metronome', 127, 60, { scale: 0.5, tint: COLORS.ink });
+	} else {
+		text(ctx, 'tr', 138.5, 95, 10, COLORS.ink);
+		text(ctx, frame.source ?? '1', 150, 127.4, 40, COLORS.ink, 'center');
+	}
 	// the source type: the chosen one black, the other grey
 	const audio = frame.sourceAudio ?? true;
 	drawIcon(ctx, 'lfo.duck.source', 100, 147, {
@@ -228,7 +272,10 @@ function drawDuck(ctx: ScreenCtx, frame: LfoFrame): void {
 	text(ctx, 'release', 335, 182.5, 10, COLORS.white);
 }
 
-/** Tremolo (instrument-082): source, vibrato and volume rulers, mode and shape cards. */
+/**
+ * Tremolo (instrument-082): source, vibrato and volume rulers, the mode card (the envelope's ramp)
+ * and the shape card (TE's saw whatever the shape: no art shows another).
+ */
 function drawTremolo(ctx: ScreenCtx, frame: LfoFrame): void {
 	text(ctx, 'source', 95, 45, 10, COLORS.white);
 	speedCard(ctx, frame, 90, 50);
@@ -243,9 +290,10 @@ function drawTremolo(ctx: ScreenCtx, frame: LfoFrame): void {
 	encoderDot(ctx, 2, 275, 55);
 	amountRuler(ctx, 315, 55, 165, frame.volume);
 
+	// the mode card is the envelope E4 turns (manual: lfo-tremolo); TE's art labels it "mode"
 	text(ctx, 'mode', 335, 45, 10, COLORS.white);
 	card(ctx, 330, 50, 60, 60);
-	drawIcon(ctx, 'lfo.ramp', 338, 58);
+	envelopeRamp(ctx, 330, 50, frame.envelope ?? 1);
 	encoderDot(ctx, 3, 335, 55);
 	card(ctx, 330, 110, 60, 60);
 	drawIcon(ctx, 'lfo.saw', 338, 118);

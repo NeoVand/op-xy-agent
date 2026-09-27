@@ -220,6 +220,85 @@ describe('renderFrame (recorded draw calls)', () => {
 		expect(ctx.fillsOf('#96969b').length).toBeGreaterThan(0);
 	});
 
+	it('draws an envelope’s ramp in random’s env card and tremolo’s mode card', () => {
+		/** The ink lines (1.67 px) stroked inside a card: each as its points. */
+		function ramps(frame: ScreenFrame, x: number, y: number): number[][][] {
+			const ctx = record(frame);
+			const paths: number[][][] = [];
+			let path: number[][] = [];
+			for (const o of ctx.ops) {
+				if (o.op === 'beginPath') path = [];
+				else if (o.op === 'moveTo' || o.op === 'lineTo') path.push(o.args as number[]);
+				else if (o.op === 'stroke' && o.args[0] === 1.67 && o.style === COLORS.ink) {
+					const inside = path.every(
+						([px, py]) => px >= x && px <= x + 60 && py >= y && py <= y + 60
+					);
+					if (path.length && inside) paths.push(path);
+				}
+			}
+			return paths;
+		}
+		const lfo = (type: 'random' | 'tremolo', envelope: number): ScreenFrame => ({
+			page: 'lfo',
+			type,
+			speed: { synced: true, label: '4', position: 0 },
+			amount: 0,
+			volume: 0,
+			destination: { label: 'syn', free: false },
+			fourth: 'shape',
+			parameter: 0,
+			envelope
+		});
+		// a full fade-in is TE's line across the card; none rises at once; a fade-out falls at the end
+		expect(ramps(lfo('random', 1), 240, 110)).toEqual([
+			[
+				[250, 160],
+				[290, 120]
+			]
+		]);
+		expect(ramps(lfo('random', 0), 240, 110)).toEqual([
+			[
+				[250, 160],
+				[250, 120],
+				[290, 120]
+			]
+		]);
+		expect(ramps(lfo('random', -0.5), 240, 110)).toEqual([
+			[
+				[250, 120],
+				[270, 120],
+				[290, 160]
+			]
+		]);
+		expect(ramps(lfo('tremolo', 1), 330, 50)).toEqual([
+			[
+				[340, 100],
+				[380, 60]
+			]
+		]);
+	});
+
+	it('draws the duck’s source: the track’s number, or the metronome in its place', () => {
+		const duck = (source: string): ScreenFrame => ({
+			page: 'lfo',
+			type: 'duck',
+			speed: { synced: true, label: '4', position: 0 },
+			amount: 0,
+			volume: 0,
+			destination: { label: 'syn', free: false },
+			fourth: '',
+			parameter: 0,
+			source,
+			sourceAudio: true
+		});
+		const inCard = (ctx: RecordingContext) =>
+			ctx.fillsOf(COLORS.ink).filter((f) => f.x0 >= 120 && f.x1 <= 180 && f.y0 >= 55);
+		const track = inCard(record(duck('12')));
+		const metronome = inCard(record(duck('metronome')));
+		expect(track.length).toBeGreaterThan(2); // "tr" and two digits
+		expect(metronome).toEqual([expect.objectContaining({ x0: 127.5, x1: 172.5, y1: 135.5 })]);
+	});
+
 	it('draws eight mixer strips, hatching a muted one', () => {
 		const strips = Array.from({ length: 8 }, (_, i) => ({
 			level: 0.5,

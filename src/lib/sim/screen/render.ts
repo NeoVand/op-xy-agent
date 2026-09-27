@@ -120,7 +120,15 @@ export function describeFrame(frame: ScreenFrame): string {
 		case 'sends':
 			return `sends: aux ${frame.values[0]}, tape ${frame.values[1]}, fx I ${frame.values[2]}, fx II ${frame.values[3]}`;
 		case 'lfo':
-			return `${frame.type} lfo: amount ${frame.amount}, destination ${frame.destination.label}`;
+			if (frame.type === 'duck') {
+				const kind = frame.sourceAudio === false ? 'notes' : 'audio';
+				return `duck lfo: source ${frame.source} (${kind}), amount ${frame.amount}`;
+			}
+			return (
+				`${frame.type} lfo: ` +
+				(frame.type === 'element' ? `source ${frame.source}, ` : '') +
+				`amount ${frame.amount}, destination ${frame.destination.label}`
+			);
 		case 'mix':
 			return `mix, ${frame.bank} track ${frame.selected + 1}`;
 		case 'project':

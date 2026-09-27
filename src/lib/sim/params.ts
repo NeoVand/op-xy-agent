@@ -115,6 +115,23 @@ export const LFO_SYNC_STEPS = [
 	'32'
 ] as const;
 
+/**
+ * Element's sources in E1's order (manual: instrument/lfo-element) and the letter its source card
+ * shows: TE's art shows G for the gyroscope; the other letters are ours.
+ */
+export const ELEMENT_SOURCES = [
+	{ name: 'gyroscope', letter: 'G' },
+	{ name: 'microphone', letter: 'M' },
+	{ name: 'amp envelope', letter: 'E' },
+	{ name: 'sum', letter: 'S' }
+] as const;
+
+/**
+ * Duck's last source, after the instrument tracks 1–8 and the auxiliary tracks 9–16: the metronome
+ * (manual: instrument/lfo-duck; its place at the end of the list is ours).
+ */
+export const DUCK_METRONOME = 17;
+
 /** The LFO. `speed` runs over the synced steps then the free range (manual: speed dial). */
 export interface Lfo {
 	type: LfoType;
@@ -128,11 +145,23 @@ export interface Lfo {
 	parameter: number;
 	/** Tremolo's volume depth −99…99. */
 	volume: number;
-	/** Duck: the triggering track (1–8), whether its audio (else its notes) triggers, hold, release. */
+	/**
+	 * Duck: the triggering track (1–16, auxiliary tracks from 9) or {@link DUCK_METRONOME}, whether
+	 * its audio (else its notes) triggers, hold, release.
+	 */
 	source: number;
 	sourceAudio: boolean;
 	hold: number;
 	release: number;
+	/**
+	 * Random's and tremolo's envelope, which fades the modulation in (1…99) or out (−99…−1); 0 is
+	 * none (manual: lfo-random, lfo-tremolo; the signed range is ours).
+	 */
+	envelope: number;
+	/** Tremolo's waveform shape, 0–99 (the guide names no shapes, so ours is a plain value). */
+	shape: number;
+	/** Element's source: an index into {@link ELEMENT_SOURCES}. */
+	sensor: number;
 }
 
 /** An instrument track. */
@@ -162,6 +191,16 @@ export interface TrackState {
 	drumKeys: DrumKey[];
 	/** The midi engine's channel (1–16), bank (null = none) and program. */
 	midi: { channel: number; bank: number | null; program: number };
+	/**
+	 * The engine and M1 values a switch to the midi engine set aside: switching back to that engine
+	 * brings them back (OS 1.0.50; manual: instrument/engine-midi). Null otherwise.
+	 */
+	parked: { engine: EngineId; m1: [number, number, number, number] } | null;
+	/**
+	 * The tracks (0–7) this one plays along when it is the primary of a link: up to three, linked by
+	 * holding this track's key and pressing theirs (manual: basics/linked-tracks).
+	 */
+	links: number[];
 	/** Patterns, notes and the last note played (`sequencer.ts`). */
 	sequence: Sequence;
 }
@@ -293,12 +332,17 @@ export function defaultTrack(engine: EngineId): TrackState {
 			source: 1,
 			sourceAudio: true,
 			hold: 50,
-			release: 50
+			release: 50,
+			envelope: 0,
+			shape: 0,
+			sensor: 0
 		},
 		mix: { level: 80, pan: 0, muted: false },
 		drumKey: 0,
 		drumKeys: Array.from({ length: KEYBOARD_NOTE_NAMES.length }, defaultDrumKey),
 		midi: { channel: 1, bank: null, program: 1 },
+		parked: null,
+		links: [],
 		// drum tracks store sounds (key F3 = 53 first), synths middle C
 		sequence: emptySequence(isSampler(engine) && engine === 'drum' ? 53 : 60)
 	};

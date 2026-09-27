@@ -1,8 +1,8 @@
 /**
  * Our behavioural simulator of the OP-XY's user interface (decision D10). The firmware is closed,
  * so this reproduces what the manual documents: the main modes, the module pages M1–M4 and their
- * shift layers, track selection, the tempo / project / COM pages, encoder turns and clicks with
- * plausible ranges, tap tempo, the transport and the LEDs. Input arrives as the replica's events
+ * shift layers, track selection and links, the tempo / project / COM pages, encoder turns and clicks
+ * with plausible ranges, tap tempo, the transport and the LEDs. Input arrives as the replica's events
  * (press, release, turn, click by control id); `frame` is what the screen shows, `leds` what the
  * key windows light. State is one reactive object, so Svelte views update as it changes.
  *
@@ -20,6 +20,8 @@ import type { AreaContext } from './areas/types';
 import { buildFrame, buildLeds } from './frames';
 import type { SimInput } from './input';
 import {
+	DUCK_METRONOME,
+	ELEMENT_SOURCES,
 	ENGINE_LIST,
 	FILTER_TYPES,
 	GROOVES,
@@ -34,6 +36,7 @@ import {
 	type Bank,
 	type Overlay,
 	type PageNumber,
+	type PickerKind,
 	type SimState,
 	type TrackState
 } from './params';
@@ -68,6 +71,10 @@ const SOFT_PAGES: Readonly<Record<'project' | 'com', readonly string[]>> = {
 	project: ['new project (hold M1)', 'project saved', 'rename project', 'project settings'],
 	com: ['system settings', 'controller mode', 'devices', 'mtp mode']
 };
+/** The module key that opens each list with shift, and confirms it without. */
+const PICKER_KEYS: Readonly<Record<PickerKind, PageNumber>> = { engine: 1, filter: 3, lfo: 4 };
+/** Tracks one link joins at most, the held (primary) track included (manual: linked-tracks). */
+const MAX_LINKED = 4;
 
 const encoderIndex = (id: string) => {
 	const m = /^encoder\.([1-4])$/.exec(id);
@@ -362,7 +369,13 @@ export class OpxySim {
 		if (s.overlay) this.#closeAll();
 		if (s.mode === 'instrument') {
 			if (s.picker) {
-				// the same key again (or any other) leaves the list without changing anything
+				// the key that opened the list confirms it, as M1 does in the engine list (manual:
+				// instrument/engine; M3 and M4 in the filter and LFO lists are ours); any other key, or
+				// shift and a key, leaves the list without changing anything
+				if (page === PICKER_KEYS[s.picker.kind] && !s.shift) {
+					this.#confirmPicker();
+					return;
+				}
 				s.picker = null;
 				if (!s.shift) s.pages.instrument = page;
 				return;
@@ -409,12 +422,48 @@ export class OpxySim {
 		if (this.#isHeld('key.auxiliary')) return toggleMute('auxiliary');
 		const bank = this.#bank();
 		if (s.mode === 'mix' && s.shift) return toggleMute(bank);
+		// another instrument track's key held: this track joins its link instead of taking over
+		const primary = this.#heldTrack(index);
+		if (s.mode === 'instrument' && !s.shift && primary >= 0) return this.#link(primary, index);
 		if (bank === 'instrument') s.track = index;
 		else s.auxTrack = index;
 		s.active = bank;
 		s.picker = null;
 		if (s.overlay === 'tempo' || s.overlay === 'project' || s.overlay === 'com') s.overlay = null;
 		s.sub = s.shift && s.mode !== 'mix' ? `preset browser · T${index + 1}` : null;
+	}
+
+	/** The track (0–7) whose key was held before `index`'s, or −1. */
+	#heldTrack(index: number): number {
+		for (const id of this.state.held) {
+			const m = /^track\.([1-8])$/.exec(id);
+			if (m && Number(m[1]) - 1 !== index) return Number(m[1]) - 1;
+		}
+		return -1;
+	}
+
+	/**
+	 * Links track `index` to the held `primary` (manual: basics/linked-tracks): up to four tracks in
+	 * all, and the primary stays the active track. A track follows one primary at a time, and one
+	 * pressed again while its primary is held leaves the link (ours: the guide does not say how
+	 * links come undone).
+	 */
+	#link(primary: number, index: number): void {
+		const tracks = this.state.tracks;
+		const links = tracks[primary].links;
+		const at = links.indexOf(index);
+		if (at >= 0) {
+			links.splice(at, 1);
+			return;
+		}
+		if (links.length >= MAX_LINKED - 1) return;
+		for (const t of tracks) {
+			const other = t.links.indexOf(index);
+			if (other >= 0) t.links.splice(other, 1);
+		}
+		const back = tracks[index].links.indexOf(primary);
+		if (back >= 0) tracks[index].links.splice(back, 1);
+		links.push(index);
 	}
 
 	/**
@@ -551,16 +600,34 @@ export class OpxySim {
 				const l = t.lfo;
 				const speedMax = LFO_SYNC_STEPS.length + 99;
 				if (l.type === 'duck') {
-					if (e === 0) l.source = step(l.source, 1, 8);
+					// the sources: tracks 1–16, then the metronome (manual: lfo-duck); shift + E1 flips
+					// the source type like a click does (the guide: sub functions take a click, or
+					// shift and a turn; anticlockwise audio, clockwise notes is ours)
+					if (e === 0 && s.shift) l.sourceAudio = delta < 0;
+					else if (e === 0) l.source = step(l.source, 1, DUCK_METRONOME);
 					else if (e === 1) l.amount = step(l.amount, -99, 99);
 					else if (e === 2) l.hold = step(l.hold, 0, 99);
 					else l.release = step(l.release, 0, 99);
 					return;
 				}
-				if (e === 0) l.speed = step(l.speed, 0, speedMax);
+				// the shift layer's sub functions: random's envelope and tremolo's shape on E2
+				// (manual: lfo-random, lfo-tremolo); other shifted turns work as unshifted ones
+				if (s.shift && e === 1 && l.type === 'random') {
+					l.envelope = step(l.envelope, -99, 99);
+					return;
+				}
+				if (s.shift && e === 1 && l.type === 'tremolo') {
+					l.shape = step(l.shape, 0, 99);
+					return;
+				}
+				if (e === 0 && l.type === 'element') {
+					l.sensor = step(l.sensor, 0, ELEMENT_SOURCES.length - 1);
+				} else if (e === 0) l.speed = step(l.speed, 0, speedMax);
 				else if (e === 1) l.amount = step(l.amount, -99, 99);
 				else if (l.type === 'tremolo') {
+					// E3 the volume depth, E4 the envelope (manual: lfo-tremolo)
 					if (e === 2) l.volume = step(l.volume, -99, 99);
+					else l.envelope = step(l.envelope, -99, 99);
 				} else if (e === 2) {
 					const size = l.type === 'element' ? SENSOR_DESTINATIONS.length : DESTINATIONS.length;
 					l.destination = step(l.destination, 0, size - 1);
@@ -632,10 +699,13 @@ export class OpxySim {
 		if (picker.kind === 'engine') {
 			const engine = ENGINE_LIST[picker.index];
 			if (engine !== t.engine) {
-				// a new engine loads with its own M1 defaults; the rest of the track stays
-				const fresh = defaultTrack(engine);
+				// a new engine loads with its own M1 defaults and the rest of the track stays (ours),
+				// except that a synth set aside by the midi engine comes back as it was (OS 1.0.50)
+				const parked = t.parked;
+				if (engine === 'midi') t.parked = { engine: t.engine, m1: [...t.m1] };
+				else t.parked = null;
+				t.m1 = parked?.engine === engine ? [...parked.m1] : defaultTrack(engine).m1;
 				t.engine = engine;
-				t.m1 = fresh.m1;
 			}
 		} else if (picker.kind === 'filter') t.filter.type = FILTER_TYPES[picker.index];
 		else t.lfo.type = LFO_TYPES[picker.index];

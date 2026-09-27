@@ -12,6 +12,8 @@ import { samplerPage } from './areas/sample/m1';
 import { sequencerLeds } from './areas/sequencer/leds';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
 import {
+	DUCK_METRONOME,
+	ELEMENT_SOURCES,
 	ENGINE_LIST,
 	FILTER_TYPES,
 	GROOVES,
@@ -81,20 +83,30 @@ export function lfoSpeed(speed: number): LfoFrame['speed'] {
 }
 
 function lfoFrame(t: TrackState): LfoFrame {
-	const list = t.lfo.type === 'element' ? SENSOR_DESTINATIONS : DESTINATIONS;
-	const d = list[clamp(t.lfo.destination, 0, list.length - 1)];
+	const l = t.lfo;
+	const list = l.type === 'element' ? SENSOR_DESTINATIONS : DESTINATIONS;
+	const d = list[clamp(l.destination, 0, list.length - 1)];
 	const params = destinationParams(t, d.module);
+	const sensor = clamp(l.sensor, 0, ELEMENT_SOURCES.length - 1);
 	return {
 		page: 'lfo',
-		type: t.lfo.type,
-		speed: lfoSpeed(t.lfo.speed),
-		amount: (t.lfo.amount * 100) / 99,
-		volume: (t.lfo.volume * 100) / 99,
+		type: l.type,
+		speed: lfoSpeed(l.speed),
+		amount: (l.amount * 100) / 99,
+		volume: (l.volume * 100) / 99,
 		destination: { label: d.module, free: d.free },
-		fourth: t.lfo.type === 'tremolo' ? 'mode' : (params[t.lfo.parameter] ?? ''),
-		parameter: t.lfo.parameter,
-		source: t.lfo.type === 'duck' ? String(t.lfo.source) : 'G',
-		sourceAudio: t.lfo.sourceAudio
+		fourth: l.type === 'tremolo' ? 'mode' : (params[l.parameter] ?? ''),
+		parameter: l.parameter,
+		source:
+			l.type !== 'duck'
+				? ELEMENT_SOURCES[sensor].letter
+				: l.source >= DUCK_METRONOME
+					? 'metronome'
+					: String(l.source),
+		sourceAudio: l.sourceAudio,
+		// element's rule marks where its source sits among the four (ours)
+		...(l.type === 'element' ? { sourceAt: (sensor + 0.5) / ELEMENT_SOURCES.length } : {}),
+		...(l.type === 'random' || l.type === 'tremolo' ? { envelope: l.envelope / 99 } : {})
 	};
 }
 
@@ -258,11 +270,11 @@ export function buildFrame(s: SimState): ScreenFrame {
 
 /**
  * LED windows for a state: the active track key (white for instrument, red for auxiliary; in mix
- * with shift held, every unmuted track), then the step keys and keyboard (the bar shown of the
- * current pattern with the playhead chasing over it, held keys, a held step's notes, and whatever
- * the sequencer gesture in progress shows: `areas/sequencer/leds.ts`). Every LED key is listed, so
- * applying the map also turns off what went dark. An area that owns the screen may change the map
- * last.
+ * with shift held, every unmuted track; dim for the tracks linked to a held track key), then the
+ * step keys and keyboard (the bar shown of the current pattern with the playhead chasing over it,
+ * held keys, a held step's notes, and whatever the sequencer gesture in progress shows:
+ * `areas/sequencer/leds.ts`). Every LED key is listed, so applying the map also turns off what went
+ * dark. An area that owns the screen may change the map last.
  */
 export function buildLeds(s: SimState): Partial<Record<KeyId, KeyLedState>> {
 	const leds: Partial<Record<KeyId, KeyLedState>> = {};
@@ -274,6 +286,16 @@ export function buildLeds(s: SimState): Partial<Record<KeyId, KeyLedState>> {
 		const id = `track.${i + 1}` as KeyId;
 		if (s.mode === 'mix' && s.shift) leds[id] = tracks[i].mix.muted ? 'off' : color;
 		else leds[id] = i === active ? color : 'off';
+	}
+	// while a primary track's key is held, the tracks linked to it glow dim (guide art 6.2)
+	if (s.mode === 'instrument') {
+		for (const held of s.held) {
+			const m = /^track\.([1-8])$/.exec(held);
+			for (const i of m ? s.tracks[Number(m[1]) - 1].links : []) {
+				const id = `track.${i + 1}` as KeyId;
+				if (leds[id] === 'off') leds[id] = 'dim';
+			}
+		}
 	}
 	sequencerLeds(s, leds);
 	ownerOf(s)?.leds?.(s, leds);

@@ -147,10 +147,14 @@ export interface LfoFrame {
 	readonly fourth: string;
 	/** Which encoder of the destination page is modulated (0–3): the knob's cap colour. */
 	readonly parameter: number;
-	/** Duck: the track that triggers it ("4"); element: the sensor ("G"). */
+	/** Duck: the track that triggers it ("4", or "metronome"); element: the sensor's letter ("G"). */
 	readonly source?: string;
 	/** Duck: whether the trigger is the track's audio (else its notes). */
 	readonly sourceAudio?: boolean;
+	/** Element: where its source sits in the list of four, 0–1 (the gap in the card's rule). */
+	readonly sourceAt?: number;
+	/** Random and tremolo: the envelope, −1 (fades the modulation out) … 1 (fades it in); 0 none. */
+	readonly envelope?: number;
 }
 
 /** One mixer strip. */

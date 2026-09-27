@@ -171,7 +171,7 @@ const CORE_SCENARIOS: readonly Scenario[] = [
 		title: 'M4 · element',
 		page: 'lfo',
 		setup: (sim) => {
-			Object.assign(track(sim, 3).lfo, { type: 'element', speed: 26, amount: 27, destination: 1 });
+			Object.assign(track(sim, 3).lfo, { type: 'element', sensor: 0, amount: 27, destination: 1 });
 			page(sim, 4);
 		}
 	},
@@ -183,7 +183,14 @@ const CORE_SCENARIOS: readonly Scenario[] = [
 		note: 'The parameter card shows the destination parameter’s name (TE’s art says "res").',
 		setup: (sim) => {
 			const t = track(sim, 3);
-			Object.assign(t.lfo, { type: 'random', speed: 3, amount: -63, destination: 0, parameter: 1 });
+			Object.assign(t.lfo, {
+				type: 'random',
+				speed: 3,
+				amount: -63,
+				destination: 0,
+				parameter: 1,
+				envelope: 99
+			});
 			page(sim, 4);
 		}
 	},
@@ -194,7 +201,7 @@ const CORE_SCENARIOS: readonly Scenario[] = [
 		page: 'lfo',
 		setup: (sim) => {
 			const t = track(sim, 3);
-			Object.assign(t.lfo, { type: 'tremolo', speed: 4, amount: 9, volume: -54 });
+			Object.assign(t.lfo, { type: 'tremolo', speed: 4, amount: 9, volume: -54, envelope: 99 });
 			page(sim, 4);
 		}
 	},
