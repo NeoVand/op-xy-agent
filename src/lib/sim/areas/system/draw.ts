@@ -489,22 +489,21 @@ function drawTuning(ctx: ScreenCtx, frame: SystemTuningFrame): void {
 
 /**
  * Our boot sequence (TE's is not in the guide, and its wordmarks stay off the replica, decision
- * D6): the grey ramp fills in as a bar, then the OS version appears under it (manual: power-and-
- * charging: the screen shows the logo and the OS version, then the last selected track).
+ * D6): the grey ramp lights up cell by cell as a bar over the OS version (manual: power-and-
+ * charging: the screen shows the logo and the OS version, then the last selected track). The bar
+ * and the version show from the start, so a boot the clock does not move still reads as one.
  */
 function drawPower(ctx: ScreenCtx, frame: SystemPowerFrame): void {
 	if (frame.phase === 'off') return;
 	const cells = RAMP.slice(1);
-	const lit = Math.min(cells.length, Math.floor((frame.progress / 0.55) * cells.length));
+	const lit = Math.min(cells.length, Math.floor((frame.progress / 0.7) * cells.length) + 1);
 	cells.forEach((color, i) => {
-		if (i < lit) fillBox(ctx, 100 + i * 40, 102, 40, 8, color);
-	});
-	if (frame.progress >= 0.6) {
 		ctx.save();
-		ctx.globalAlpha = Math.min(1, (frame.progress - 0.6) / 0.2);
-		text(ctx, frame.version, 240, 150, 20, COLORS.light, 'center');
+		ctx.globalAlpha = i < lit ? 1 : 0.2;
+		fillBox(ctx, 100 + i * 40, 102, 40, 8, color);
 		ctx.restore();
-	}
+	});
+	text(ctx, frame.version, 240, 150, 20, COLORS.light, 'center');
 }
 
 const selectedOf = (c: SystemListColumn | undefined) =>
