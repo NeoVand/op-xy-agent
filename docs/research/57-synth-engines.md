@@ -495,6 +495,10 @@ Our models:
 - Open: whether decay and release really follow the attack law, the attack's curvature, and whether
   sustain is linear or in dB. It is audible now: under the attack law a new project's bass
   (release 80) rings about 44 s after its last note and the beach bum pluck (69) about 16 s.
+  The session's captures don't settle it. In `offcheck-t3` the bass held a flat level through a
+  0.44 s note, where our decay (31) and sustain (39) would have dropped it 8 dB, and then vanished
+  within 60 ms. That drop is uneven, like the capture script's closing all-notes-off cutting it
+  rather than a release. `relcheck-1` has no cue sheet.
 
 **LFOs.**
 
