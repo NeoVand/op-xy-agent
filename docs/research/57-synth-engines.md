@@ -317,7 +317,11 @@ our name for the unseen table.
 Open: the unseen table's name; warp at high settings (the fit degrades to 3–5 dB there, partly
 the device's aliasing); whether the warp sine's phase is random or carries over from the last note.
 
-### epiano — tone, texture, punch, tine
+### epiano — tone, texture, tine, punch
+
+Named as the device's screen names them (camera, research 59): CC14 (`E3`) is tine and CC15 (`E4`)
+punch, the reverse of the guide (OS 1.1.25 fixed the labels). This section first had them the other
+way round.
 
 Established before measuring: TE calls it a nice electric piano to a filthy synth; reviewers hear
 FM, as TE's OP-Z e-piano was (eight FM algorithms).
@@ -331,13 +335,13 @@ Measured on the owner's device (2026-09-27, `2026-09-27-132638-epiano`, velocity
   (the fundamental cancels near CC 38, where 1:1 FM's J0 = J2). A4 runs 0.82 × A2 (0.9 an octave).
   FM's own level dip is not compensated; past CC 76 the spectrum holds but the level falls 1.3 dB
   by 127.
-- **tine decays the 1:1 index in straight lines**: after a hold (0.2 s at CC 13, none from 64), down
+- **punch decays the 1:1 index in straight lines**: after a hold (0.2 s at CC 13, none from 64), down
   at a fast rate to 0.65 of it, then at a slow rate to nothing; fast = 0.26, 0.4, 0.86, 1.45, 2.24,
   3.0 … 6/s and slow = 0.04, 0.06, 0.13, 0.24, 0.34, 0.45 … 0.92/s (of the starting index) at CC 13
   … 127, the same on A2 and A4. At 127 the index is gone in 0.8 s.
-- **punch is a second modulator at 4× the note**: sidebands 3 and 5, then 7 and 9, in equal pairs;
-  index 1.7·punch^2.95 on A2 (0.86 an octave up), rising over ~40 ms and then decaying by itself
-  even at tine 0 (τ ≈ 1.9 s). Not a decaying partial.
+- **tine is a second modulator at 4× the note**: sidebands 3 and 5, then 7 and 9, in equal pairs;
+  index 1.7·tine^2.95 on A2 (0.86 an octave up), rising over ~40 ms and then decaying by itself
+  even at punch 0 (τ ≈ 1.9 s). Not a decaying partial.
 - **texture blends a soft clipper into the carrier at an unchanged level**: 0.37 of the sine plus
   0.63 of atan(g·sine)/atan(g) (within 0.3–0.8 dB); g = 1.2, 2.2, 3.8, 7.0, 12.4, 19.4, 28.4 at CC
   13 … 89 on A2, the clipped share rising to all of it at the top (where h3 grows past a square's,
@@ -345,11 +349,11 @@ Measured on the owner's device (2026-09-27, `2026-09-27-132638-epiano`, velocity
 
 Model: the above (`epiano.ts`): a phase-modulated carrier read from a band-limited table of clipper
 shapes, the indexes shrinking where the spectrum would pass Nyquist. [I] Velocity scales both
-indexes (0.5 at the softest, 1 at 100); tine's envelope applies to punch too. Against the capture:
-tone and punch partials within 0.1–1 dB, texture within 0.3–0.6 dB (1–1.5 dB at its top on A2),
+indexes (0.5 at the softest, 1 at 100); punch's envelope applies to tine too. Against the capture:
+tone and tine partials within 0.1–1 dB, texture within 0.3–0.6 dB (1–1.5 dB at its top on A2),
 levels within ±0.4 dB except mid tone on A2 (1 dB).
 
-Open: velocity; tine's effect on punch; texture's top (folding?); a slow index drift at tine 0.
+Open: velocity; punch's effect on tine; texture's top (folding?); a slow index drift at punch 0.
 
 ### organ — type, bass, tremolo amount, tremolo speed
 
@@ -603,7 +607,7 @@ every voice per sample instead.
 | simple    | Saw → square blend, width 0.5 − 0.44·pw on the pulse only, the measured noise crossfade, and the measured stereo: a delayed copy per channel, a triangle sweeping it ±6.9–15.2 cents (opposite in L and R), high-passed at 815–490 Hz.                                                                                                                 |
 | hardsync  | Measured: a saw synced at 1 + 7·freq times the note (linear), a sub saw at the note in phase (to 2×), a one-pole lowcut on the saws only (101 Hz–8.2 kHz), white noise at −64 dBFS/Hz after it; levels at the device's.                                                                                                                                |
 | dissolve  | Measured: two sines ±34.3 cents at full detune (the lower 5 dB under), each feeding back into its own phase (fm, β to 0.686), clipped hard inside the loop (am, drive to 2 on A2, key-scaled), swarm a one-pole 50 Hz pitch jitter to 0.13 of the note; run at 2× through a 64-tap decimator.                                                          |
-| epiano    | Measured: a sine carrier phase-modulated 1:1 (tone, index to 3.05, no feedback) and 4:1 (punch, rising then fading), a soft clipper blended in (texture, drive key-scaled), tine's two straight-line decays on the index; key-scaled level.                                                                                                            |
+| epiano    | Measured: a sine carrier phase-modulated 1:1 (tone, index to 3.05, no feedback) and 4:1 (tine, rising then fading), a soft clipper blended in (texture, drive key-scaled), punch's two straight-line decays on the index; key-scaled level.                                                                                                            |
 | axis      | Measured: four feedback operators at one level, copies of the note at −9, −4, +8 cents and op2 at the ratio (0.5 + p, then steps 1 … 32, +4 cents); tone = feedback (per-oscillator tables, band-limited above ~500 Hz), shape = y → y² feedback, 180 Hz highpass, tremolo dips.                                                                       |
 | organ     | Measured registrations: per type, every partial (on the half-note grid, or a few cents off it) at bass 0/½/1 on A1–A5, played as sine oscillators behind a one-pole 54 Hz high-pass. Type 2's bass slides two partials. Tremolo 1 + amount·sin at 10.9 Hz × speed^0.93, free-running on the core's clock.                                              |
 | wavetable | Measured: nine tables in the device's order, each a rule fitted to its harmonics (basic's power-shaped morphs, buzz's saw into fresh noise, crush's quantiser, in-phase drawbars, geometric's powers, zap's chirp …) over 32 crossfaded frames (crush 16); a one-pole at 8.3 kHz; warp = FM by a free-running sine, drift slowing it to half the note. |

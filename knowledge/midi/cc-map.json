@@ -887,7 +887,7 @@
 					"name": "engine param 3",
 					"lane": "M1.light",
 					"range": [0, 127],
-					"semantics": "engine-resolved; moves the M1 page of all eight synth engines (screen-verified 1.1.33, note 59 §3); the drum sampler, synth sampler and multisampler M1 pages ignore CC12-15; epiano: the 1.1.33 screen labels this lane tine (engines.epiano lists punch)",
+					"semantics": "engine-resolved; moves the M1 page of all eight synth engines (screen-verified 1.1.33, note 59 §3); the drum sampler, synth sampler and multisampler M1 pages ignore CC12-15",
 					"confidence": "verified",
 					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE", "DEVICE-CAMERA"],
 					"sideEffect": "project",
@@ -899,7 +899,7 @@
 					"name": "engine param 4",
 					"lane": "M1.white",
 					"range": [0, 127],
-					"semantics": "engine-resolved; moves the M1 page of all eight synth engines (screen-verified 1.1.33, note 59 §3); the drum sampler, synth sampler and multisampler M1 pages ignore CC12-15; epiano: the 1.1.33 screen labels this lane punch (engines.epiano lists tine)",
+					"semantics": "engine-resolved; moves the M1 page of all eight synth engines (screen-verified 1.1.33, note 59 §3); the drum sampler, synth sampler and multisampler M1 pages ignore CC12-15",
 					"confidence": "verified",
 					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE", "DEVICE-CAMERA"],
 					"sideEffect": "project",
@@ -1981,11 +1981,11 @@
 		"epiano": {
 			"p1": "tone",
 			"p2": "texture",
-			"p3": "punch",
-			"p4": "tine",
+			"p3": "tine",
+			"p4": "punch",
 			"confidence": "official",
 			"source": ["TE-SYN", "TE-DL", "DEVICE-CAMERA"],
-			"notes": "1.1.25: 'fix: incorrect parameter names on epiano screen'; screen (1.1.33, DEVICE-CAMERA): the top bar reads tone, texture, tine, punch - CC14 moves tine and CC15 punch, the reverse of p3/p4 here"
+			"notes": "1.1.25: 'fix: incorrect parameter names on epiano screen'; screen (1.1.33, DEVICE-CAMERA): the top bar reads tone, texture, tine, punch - CC14 moves tine and CC15 punch (the guide, from before the fix, has them the other way round)"
 		},
 		"hardsync": {
 			"p1": "freq",

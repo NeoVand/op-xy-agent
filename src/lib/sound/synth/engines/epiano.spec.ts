@@ -1,5 +1,5 @@
 // epiano against the device: a pure sine at 0 at the device's level (lower up the keyboard), tone's
-// 1:1 FM index and its cap, tine's straight-line decays, punch's 4:1 sidebands rising and fading,
+// 1:1 FM index and its cap, punch's straight-line decays, tine's 4:1 sidebands rising and fading,
 // texture's clipper blended with the sine at an unchanged level, and the bounds every engine keeps.
 // Played on its own at 48 kHz, block by block as the core plays it.
 import { describe, expect, it } from 'vitest';
@@ -11,10 +11,10 @@ import {
 	EpianoVoice,
 	INDEX_MAX,
 	LEVEL_PER_OCTAVE,
-	PUNCH_DECAY,
+	TINE_DECAY,
 	SINE_DB,
-	TINE,
-	TINE_BREAK,
+	PUNCH,
+	PUNCH_BREAK,
 	TONE_INDEX
 } from './epiano';
 
@@ -79,29 +79,29 @@ describe('epiano', () => {
 		}
 	});
 
-	it('decays the index along tine’s two straight lines, to a pure sine', () => {
-		// tine 1 on A2 at tone 0.5: the index falls to TINE_BREAK within ~60 ms, then to 0 by ~0.8 s
+	it('decays the index along punch’s two straight lines, to a pure sine', () => {
+		// punch 1 on A2 at tone 0.5: the index falls to PUNCH_BREAK within ~60 ms, then to 0 by ~0.8 s
 		const { left } = playNote(epiano(), { hz: 110, seconds: 1.2, params: [0.5, 0, 0, 1] });
-		const fast = TINE.fast[TINE.fast.length - 1];
-		const slow = TINE.slow[TINE.slow.length - 1];
-		const gone = (1 - TINE_BREAK) / fast + TINE_BREAK / slow;
+		const fast = PUNCH.fast[PUNCH.fast.length - 1];
+		const slow = PUNCH.slow[PUNCH.slow.length - 1];
+		const gone = (1 - PUNCH_BREAK) / fast + PUNCH_BREAK / slow;
 		const window = (from: number) =>
 			left.subarray(Math.round(from * SR), Math.round(from * SR) + 2400);
 		const h2 = (x: Float32Array) => levelAt(x, SR, 220) / levelAt(x, SR, 110);
 		expect(h2(window(gone + 0.1))).toBeLessThan(0.01);
 		// halfway down the slow line the index is about half the break's: h2/h1 ≈ I/2 for small I
-		const mid = (1 - TINE_BREAK) / fast + (TINE_BREAK * 0.5) / slow;
-		const index = TONE_INDEX * 0.5 * TINE_BREAK * 0.5;
+		const mid = (1 - PUNCH_BREAK) / fast + (PUNCH_BREAK * 0.5) / slow;
+		const index = TONE_INDEX * 0.5 * PUNCH_BREAK * 0.5;
 		const r = reference(index, 0, 2);
 		expect(h2(window(mid - 0.025))).toBeCloseTo(r[1] / r[0], 1);
-		// tine 0 holds the index
+		// punch 0 holds the index
 		const held = playNote(epiano(), { hz: 110, seconds: 1.2, params: [0.5, 0, 0, 0] }).left;
 		const early = held.subarray(4800, 7200);
 		const late = held.subarray(SR, SR + 2400);
 		expect(h2(late)).toBeCloseTo(h2(early), 2);
 	});
 
-	it('adds punch as 4:1 sidebands in equal pairs, rising fast and fading on its own', () => {
+	it('adds tine as 4:1 sidebands in equal pairs, rising fast and fading on its own', () => {
 		const { left } = playNote(epiano(), { hz: 110, seconds: 1.3, params: [0, 0, 1, 0] });
 		const at = (from: number) => left.subarray(Math.round(from * SR), Math.round(from * SR) + 4800);
 		const early = at(0.1);
@@ -113,7 +113,7 @@ describe('epiano', () => {
 		expect(h3 / h1).toBeGreaterThan(1);
 		const late = harmonicLevels(at(1.1), SR, 110, 3);
 		expect(db(h3 / h1) - db(late[2] / late[0])).toBeGreaterThan(4);
-		expect(PUNCH_DECAY).toBeGreaterThan(1);
+		expect(TINE_DECAY).toBeGreaterThan(1);
 	});
 
 	it('blends texture’s clipper into the sine at an unchanged level, with less drive up high', () => {
@@ -197,8 +197,8 @@ describe('epiano', () => {
 				expect(roughness(jumping)).toBeLessThan(still * 1.25);
 			}
 		}
-		// tine only changes a decay's speed: jumps in it change nothing at once
-		const tine = playNote(epiano(), {
+		// punch only changes a decay's speed: jumps in it change nothing at once
+		const punch = playNote(epiano(), {
 			hz: 220,
 			seconds: 0.6,
 			params: (t) => [0.8, 0.5, 0, Math.floor(t / 0.05) % 2 === 0 ? 0 : 1]
@@ -206,6 +206,6 @@ describe('epiano', () => {
 		const still = roughness(
 			playNote(epiano(), { hz: 220, seconds: 0.6, params: [0.8, 0.5, 0, 0] }).left
 		);
-		expect(roughness(tine)).toBeLessThan(still * 1.25);
+		expect(roughness(punch)).toBeLessThan(still * 1.25);
 	});
 });

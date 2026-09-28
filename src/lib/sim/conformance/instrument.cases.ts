@@ -1418,7 +1418,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		const engines: [EngineId, number | null, string[]][] = [
 			['axis', 7, ['tone', 'ratio', 'shape', 'tremolo']],
 			['dissolve', 5, ['swarm', 'am', 'fm', 'detune']],
-			['epiano', 4, ['tone', 'texture', 'punch', 'tine']],
+			['epiano', 4, ['tone', 'texture', 'tine', 'punch']],
 			['hardsync', 6, ['freq', 'sub', 'noise', 'lowcut']],
 			['organ', null, ['type', 'bass', 'tremolo amount', 'tremolo speed']],
 			['prism', 3, ['shape', 'ratio', 'detune', 'stereo']],
