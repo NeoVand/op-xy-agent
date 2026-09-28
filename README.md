@@ -1,3 +1,5 @@
+![OP-XY Agent: the replica shows the preset browser while the agent explains shift + M1, key by key](docs/images/banner.png)
+
 # OP-XY Agent
 
 An open-source web app for learning, playing and programming the Teenage Engineering **OP-XY**. It
