@@ -22,6 +22,7 @@ above the composer says what voice is doing while it is on.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
 	import { getReplicaGuide } from '$lib/app/guide.svelte';
 	import { getPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import { getSimPersistence } from '$lib/app/persistence';
@@ -45,6 +46,7 @@ above the composer says what voice is doing while it is on.
 	import Conversation from '$lib/agent/ui/Conversation.svelte';
 	import CostMeter from '$lib/agent/ui/CostMeter.svelte';
 	import KeySettings from '$lib/agent/ui/KeySettings.svelte';
+	import type { CitationTarget } from '$lib/agent/ui/MessageText.svelte';
 	import ListenLight from '$lib/agent/ui/ListenLight.svelte';
 	import PlanView from '$lib/agent/ui/PlanView.svelte';
 	import RevisionList from '$lib/agent/ui/RevisionList.svelte';
@@ -402,6 +404,18 @@ above the composer says what voice is doing while it is on.
 		}
 	}
 
+	/**
+	 * A manual citation as a link to our manual's page for the unit (and the fact), opened in a new
+	 * tab so the conversation keeps its place.
+	 */
+	function manualCitation(ref: string): CitationTarget | null {
+		const found = conductor?.citation(ref);
+		if (!found) return null;
+		const [unit, fact] = ref.trim().toLowerCase().split('#');
+		const page = resolve('/manual/[id]', { id: unit });
+		return { title: found.title, href: fact ? `${page}#${fact}` : page };
+	}
+
 	function showKeys(combo: string): void {
 		try {
 			replica?.animate(combo);
@@ -492,7 +506,7 @@ above the composer says what voice is doing while it is on.
 					running={busy}
 					activity={conductor.activity}
 					onkeys={replica ? showKeys : undefined}
-					cite={(ref) => conductor?.citation(ref) ?? null}
+					cite={manualCitation}
 					onretry={() => void conductor?.retry()}
 					onsettings={openSettings}
 				/>

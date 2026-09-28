@@ -10,8 +10,10 @@ attached through search results are listed underneath. While the answer is still
 	/** What a manual citation points at. */
 	export interface CitationTarget {
 		readonly title: string;
-		/** An https URL, or null when the unit has none. */
+		/** Where the unit is read (our manual's page, or TE's), or null when there is none. */
 		readonly href: string | null;
+		/** Open it in a new tab (the default: a chat keeps its place); false for a page of the app. */
+		readonly external?: boolean;
 	}
 </script>
 
@@ -57,7 +59,12 @@ attached through search results are listed underneath. While the answer is still
 				onclick={() => onkeys?.(node.v)}><Kbd combo={comboForDisplay(node.v)} size="sm" /></button
 			>{:else if node.t === 'link'}<a href={node.href} target="_blank" rel="noopener noreferrer"
 				>{@render inlines(node.c)}</a
-			>{:else if node.t === 'cite'}{@const target = cite?.(node.ref) ?? null}{#if target?.href}<a
+			>{:else if node.t === 'cite'}{@const target =
+				cite?.(node.ref) ?? null}{#if target?.href && target.external === false}<a
+					class="cite"
+					href={target.href}
+					title={node.ref}>{target.title}</a
+				>{:else if target?.href}<a
 					class="cite"
 					href={target.href}
 					target="_blank"
