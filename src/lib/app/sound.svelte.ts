@@ -44,6 +44,7 @@ import {
 } from '$lib/sim/areas/sequencer/model';
 import { playerNotes, playerOf } from '$lib/sim/areas/sequencer/players';
 import { maestroEvents } from '$lib/sim/sequencer-playback';
+import { heldTriggers } from '$lib/sound/punch/held';
 import { SampleRegistry, sampleChannels, sampleSeconds } from '$lib/sound/samples';
 import type { AppSimulator } from './simulator.svelte';
 
@@ -466,6 +467,28 @@ export class AppSound {
 		this.#flush();
 		this.#follow();
 		void this.#loadSynth(runtime, context, engine);
+		void this.#loadPunch(runtime, context, engine);
+	}
+
+	/** Loads the punch-in processor's worklet; until then only the effects on notes are heard. */
+	async #loadPunch(runtime: SoundRuntime, context: AudioContext, engine: Engine): Promise<void> {
+		// a runtime without it (the tests' fakes) goes without
+		if (!runtime.PunchHost) return;
+		const host = await runtime.PunchHost.create(context, runtime.punchWorklet);
+		if (!host) return;
+		if (this.#engine !== engine) {
+			host.dispose();
+			return;
+		}
+		engine.usePunch(host);
+	}
+
+	/** The punch-in keys held now (aux T2, or shift + keys) reach the engine. */
+	#punchKeys(): void {
+		const context = this.#context;
+		if (this.#engine && context) {
+			this.#engine.punch(heldTriggers(this.#simulator.sim.state), context.currentTime);
+		}
 	}
 
 	/**
@@ -533,6 +556,7 @@ export class AppSound {
 		if (!engine || !scheduler || !context || context.state !== 'running' || !this.enabled) return;
 		const state = this.#simulator.sim.state;
 		engine.sync(state);
+		this.#punchKeys();
 		scheduler.tick(this.#hidden() ? HIDDEN_LOOKAHEAD : undefined);
 		// a running arpeggio moves on with the transport
 		if (this.#playerLive.size > 0 || playerOf(state).on) this.#followPlayer();
@@ -566,6 +590,8 @@ export class AppSound {
 
 	#onReplica(event: ReplicaEvent): void {
 		if (!this.enabled) return;
+		// a punch-in effect starts or ends with its key (or shift) at once, not at the next tick
+		if (event.type === 'press' || event.type === 'release') this.#punchKeys();
 		switch (event.type) {
 			case 'press':
 				if (event.id.startsWith('keyboard.')) {

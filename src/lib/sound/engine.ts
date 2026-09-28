@@ -11,6 +11,11 @@
  * gliding from the last note when portamento is up; legato slides a held voice to the next
  * overlapping note without restarting its envelopes, and falls back to a key still held when the
  * newest one lets go.
+ *
+ * Punch-in FX (research 60 §6): the keys held (`punch`, from the app) and the punch-in track's notes
+ * (from the scheduler) say which effects hold on which tracks. Notes starting under short, soft or
+ * the percussion pan take them as they start; mute, stutter and the melodic pan go to the punch-in
+ * processor on each channel (`usePunch`); the effects on the sequencer's notes are the scheduler's.
  */
 import { TRACKS, type EngineId } from '$lib/core/opxy';
 import { soloed } from '$lib/sim/areas/mixer/meters';
@@ -52,6 +57,15 @@ import {
 import { Resources } from './resources';
 import type { SampleRegistry, SampleSource } from './samples';
 import { lockedSettings, type ClickEvent, type SchedulerSink } from './scheduler';
+import {
+	DRUM_PANS,
+	SHORT_SECONDS,
+	SOFT_DRUM_SECONDS,
+	SOFT_SECONDS,
+	type PunchEffect
+} from './punch/effects';
+import type { PunchHost } from './punch/host';
+import { PunchState, type PunchTrigger, type SoundChange } from './punch/state';
 import { WorkletVoice, type SynthHost } from './synth/host';
 import { CORE_ENGINES } from './synth/protocol';
 import { ONESHOT_RELEASE, bufferSource, oneshotAmp, synthSource, type SourceGraph } from './synths';
@@ -81,6 +95,8 @@ export interface NoteRequest {
 	readonly bend?: Float32Array;
 	/** The note's own place in the stereo field, −1…1, on top of the strip's pan (arpeggio stereo). */
 	readonly pan?: number;
+	/** Semitones on top of a drum key's tune (the punch-in octave on the percussion group). */
+	readonly tune?: number;
 }
 
 /** Options for {@link SoundEngine}. */
@@ -131,6 +147,15 @@ function softClip(): Float32Array<ArrayBuffer> {
 	});
 }
 
+/** A note as a voice starts it: the request, and whether the punch-in soft attack holds. */
+interface Started extends NoteRequest {
+	readonly soft?: boolean;
+}
+
+/** An envelope whose attack takes at least the punch-in soft attack's time, when it holds. */
+const softened = (amp: Adsr, soft: boolean | undefined): Adsr =>
+	soft ? { ...amp, attack: Math.max(amp.attack, SOFT_SECONDS) } : amp;
+
 /** Held keys of a mono or legato track, newest last. */
 interface MonoTrack {
 	voice: AnyVoice | null;
@@ -178,6 +203,12 @@ export class SoundEngine {
 	#sampleArea: SampleState | null = null;
 	#bpm = 0;
 	#quiet = 0;
+	/** Punch-in effects over time, the processor for those on the sound, and the latest beat. */
+	readonly #punch = new PunchState();
+	#punchHost: PunchHost | null = null;
+	#beat: { time: number; position: number } | null = null;
+	#gridOrigin = 0;
+	#playing = false;
 
 	constructor(options: SoundEngineOptions) {
 		const context = options.context;
@@ -244,10 +275,23 @@ export class SoundEngine {
 					duration: event.duration,
 					glide: event.glide,
 					bend: event.bend,
-					pan: event.pan
+					pan: event.pan,
+					tune: event.tune
 				}),
 			click: (event) => this.click(event),
-			beat: (time) => this.#duckFrom(DUCK_ON_BEAT, time),
+			beat: (time, position) => {
+				this.#duckFrom(DUCK_ON_BEAT, time);
+				this.#onBeat(time, position);
+			},
+			punch: (event) =>
+				this.#toProcessor(
+					this.#punch.pattern(
+						{ key: event.key, from: null, tracks: event.tracks },
+						event.start,
+						event.end,
+						this.#engines()
+					)
+				),
 			stop: (time) => this.stopSequence(time),
 			automate: (track, locks, time) => this.automate(track, locks, time)
 		};
@@ -287,6 +331,40 @@ export class SoundEngine {
 		if (host) this.#channels.forEach((channel, k) => host.connect(k, channel.input));
 	}
 
+	/**
+	 * Routes every channel through the punch-in processor in `host` (the app calls this once its
+	 * worklet has loaded; null takes it out again). Effects already holding carry on in it.
+	 */
+	usePunch(host: PunchHost | null, time = this.context.currentTime): void {
+		this.#punchHost?.clear();
+		this.#punchHost = host;
+		this.#channels.forEach((channel, k) => channel.insert(host?.node ?? null, k));
+		if (!host) return;
+		this.#sendGrid(time);
+		for (const span of this.#punch.sounding(time)) {
+			host.add(span.track, span.id, span.effect, span.from, span.to);
+		}
+	}
+
+	/**
+	 * The punch-in keys held now (research 60 §6; `heldTriggers` reads them off the simulator): new
+	 * ones take effect at `time`, ones no longer held stop there.
+	 */
+	punch(triggers: readonly PunchTrigger[], time = this.context.currentTime): void {
+		const at = Math.max(time, this.context.currentTime);
+		const changes = this.#punch.live(triggers, at, this.#engines());
+		// with the transport standing still, a stutter or a sweep counts its sixteenths from the key
+		if (!this.#playing && changes.some((c) => c.kind === 'add' && c.span.effect !== 'mute')) {
+			this.#sendGrid(at, at);
+		}
+		this.#toProcessor(changes);
+	}
+
+	/** The punch-in effects holding on `track` at `time` (for tests and the screen). */
+	punchesAt(track: number, time = this.context.currentTime): PunchEffect[] {
+		return this.#punch.at(track, time);
+	}
+
 	/** Voices sounding or scheduled. */
 	get voices(): number {
 		return this.#voices.length;
@@ -317,9 +395,18 @@ export class SoundEngine {
 	 */
 	sync(state: SimState, time = this.context.currentTime): void {
 		const { bpm } = state.tempo;
+		this.#playing = state.transport.playing;
 		if (bpm !== this.#bpm) {
 			this.#bpm = bpm;
 			for (const fx of this.#effects) fx.setTempo(bpm, time);
+			this.#sendGrid(time);
+		}
+		this.#punch.prune(time - 1);
+		// a punch-in processor that threw outputs silence: the channels go round it again
+		const punchHost = this.#punchHost;
+		if (punchHost?.failed) {
+			this.usePunch(null, time);
+			punchHost.dispose();
 		}
 		this.#sampleArea = state.areas?.sample ?? null;
 		const mixer = state.areas?.mixer;
@@ -393,14 +480,23 @@ export class SoundEngine {
 		if (!channel || settings.engine === 'midi') return;
 		this.#settings[k] = settings;
 		const time = Math.max(request.time, this.context.currentTime);
-		const gate =
-			request.duration === undefined ? Infinity : time + Math.max(request.duration, 0.005);
+		const effects = this.#punch.at(k, time);
+		let gate = request.duration === undefined ? Infinity : time + Math.max(request.duration, 0.005);
+		// short: every note lets go right after it starts (research 60 §6)
+		if (effects.includes('short')) gate = Math.min(gate, time + SHORT_SECONDS);
+		const soft = effects.includes('soft');
 		this.#duckFrom(k, time);
 		channel.retrigger(time);
 		if (settings.engine === 'drum') {
-			this.#drum(request, time, gate);
+			// pan on the percussion group places each hit by its sixteenth
+			const pan = effects.includes('pan')
+				? (request.pan ?? 0) + DRUM_PANS[this.#sixteenthAt(time) % DRUM_PANS.length]
+				: request.pan;
+			this.#drum({ ...request, pan }, time, gate, { short: effects.includes('short'), soft });
 			return;
 		}
+		// soft: the note's attack takes at least SOFT_SECONDS
+		const note: Started = soft ? { ...request, soft } : request;
 		const mode = playMode(settings.playMode.mode);
 		// a portamento component glides this note in whatever the track's portamento says
 		const glide = request.glide ?? glideSeconds(settings.playMode.portamento);
@@ -411,10 +507,10 @@ export class SoundEngine {
 				if (v.track === k && v.note === request.note && v.off > time) v.release(time);
 			}
 			const from = glide > 0 ? (this.#last[k] ?? hz) : hz;
-			this.#spawn(request, time, gate, hz, from, glide);
+			this.#spawn(note, time, gate, hz, from, glide);
 			return;
 		}
-		this.#monoOn(request, time, gate, hz, mode, glide);
+		this.#monoOn(note, time, gate, hz, mode, glide);
 	}
 
 	/** A replica key came up. */
@@ -487,6 +583,8 @@ export class SoundEngine {
 	 */
 	stopSequence(time = this.context.currentTime): void {
 		const at = Math.max(time, this.context.currentTime);
+		this.#toProcessor(this.#punch.stop(at));
+		this.#beat = null;
 		for (const v of [...this.#voices]) if (v.source === 'sequence') v.cancel(at);
 		for (const c of this.#clicks) {
 			if (c.time > at) {
@@ -503,6 +601,8 @@ export class SoundEngine {
 	/** Everything stops, quickly: sound switched off, or a device took over. */
 	silence(time = this.context.currentTime): void {
 		const at = Math.max(time, this.context.currentTime);
+		this.#punch.clear();
+		this.#punchHost?.clear();
 		for (const v of [...this.#voices]) {
 			if (v.start >= at) v.cancel(at);
 			else v.kill(at);
@@ -525,13 +625,15 @@ export class SoundEngine {
 		this.silence();
 		this.#synth?.dispose();
 		this.#synth = null;
+		this.#punchHost?.dispose();
+		this.#punchHost = null;
 		this.#out.disconnect();
 	}
 
 	// ─────────────────────────────────────────────────────────── voices
 
 	#monoOn(
-		request: NoteRequest,
+		request: Started,
 		time: number,
 		gate: number,
 		hz: number,
@@ -562,7 +664,7 @@ export class SoundEngine {
 	}
 
 	#spawn(
-		request: NoteRequest,
+		request: Started,
 		time: number,
 		gate: number,
 		hz: number,
@@ -584,7 +686,7 @@ export class SoundEngine {
 			hz,
 			from,
 			glide,
-			amp: source.amp ?? envelopeSeconds(settings.amp),
+			amp: softened(source.amp ?? envelopeSeconds(settings.amp), request.soft),
 			peak:
 				velocityGain(request.velocity) *
 				source.graph.level *
@@ -605,7 +707,7 @@ export class SoundEngine {
 	/** A synth voice the core computes: the same decisions, sent to the worklet. */
 	#spawnCore(
 		host: SynthHost,
-		request: NoteRequest,
+		request: Started,
 		time: number,
 		gate: number,
 		hz: number,
@@ -627,7 +729,7 @@ export class SoundEngine {
 				hz,
 				from,
 				glide,
-				amp: envelopeSeconds(settings.amp),
+				amp: softened(envelopeSeconds(settings.amp), request.soft),
 				peak: velocityGain(request.velocity) * CORE_GAIN * this.#lockedVolume(track, settings),
 				filter: {
 					type: settings.filter.type,
@@ -735,7 +837,12 @@ export class SoundEngine {
 	 * A drum key: its sample file's audio, or while it has none the kit sound its name stands for;
 	 * tuned, trimmed, panned, in its play mode. An empty key is silent.
 	 */
-	#drum(request: NoteRequest, time: number, gate: number): void {
+	#drum(
+		request: NoteRequest,
+		time: number,
+		gate: number,
+		punch: { readonly short: boolean; readonly soft: boolean }
+	): void {
 		const { track, settings } = request;
 		const index = request.note - FIRST_DRUM_NOTE;
 		if (index < 0 || index >= 24) return;
@@ -748,7 +855,8 @@ export class SoundEngine {
 			? this.resources.sample(recording, key.reverse)
 			: this.resources.drum(kitSound(file?.name ?? null, index), key.reverse);
 		const region = sampleRegion(key.start, key.end, buffer.duration);
-		const rate = tuneRate(key.tune);
+		// the punch-in octave plays the sample an octave up
+		const rate = tuneRate(key.tune + (request.tune ?? 0));
 		const looping = key.playMode === 'loop';
 		const held = key.playMode === 'key' || looping;
 		const end = time + (region.end - region.start) / rate;
@@ -766,7 +874,10 @@ export class SoundEngine {
 				region,
 				loop: looping ? region : null,
 				pan: Math.max(-1, Math.min(1, panValue(key.pan) + (request.pan ?? 0))),
-				fade: fadeSeconds(key.fade),
+				// soft: every hit fades in (research 60 §6: drum hits lose their peaks)
+				fade: punch.soft
+					? Math.max(fadeSeconds(key.fade), SOFT_DRUM_SECONDS)
+					: fadeSeconds(key.fade),
 				glides: false,
 				gain: dbGain(key.gain)
 			},
@@ -776,11 +887,16 @@ export class SoundEngine {
 		this.#steal(time, track);
 		const amp = bufferAmp(settings);
 		const hz = noteHz(request.note);
+		// short: the hit is cut right after it starts, whatever its play mode
+		const cut = punch.short ? gate : Infinity;
 		const voice = new Voice(this.context, graph, this.#channels[track].input, {
 			track,
 			note: request.note,
 			start: time,
-			gate: looping ? gate : held ? Math.min(gate, end - ONESHOT_RELEASE) : end - ONESHOT_RELEASE,
+			gate: Math.min(
+				cut,
+				looping ? gate : held ? Math.min(gate, end - ONESHOT_RELEASE) : end - ONESHOT_RELEASE
+			),
 			hz,
 			from: hz,
 			glide: 0,
@@ -836,6 +952,45 @@ export class SoundEngine {
 			envelope: envelopeSeconds(settings.filterEnv),
 			depth: envAmountCents(f.envAmount, f.type, f.cutoff)
 		};
+	}
+
+	/** The tracks' engines (which group each feeds), as last seen. */
+	#engines(): EngineId[] {
+		return this.#settings.map((t) => t?.engine ?? 'midi');
+	}
+
+	/** A beat of the sequence at `time` (transport sixteenth `position`): the tempo's grid. */
+	#onBeat(time: number, position: number): void {
+		this.#beat = { time, position };
+		this.#sendGrid(time, time);
+	}
+
+	/** The transport sixteenth sounding at `time` (from the latest beat; else the audio clock's). */
+	#sixteenthAt(time: number): number {
+		const step = 15 / (this.#bpm || 120);
+		const beat = this.#beat;
+		const position = beat ? beat.position + (time - beat.time) / step : time / step;
+		return ((Math.floor(position + 1e-6) % 16) + 16) % 16;
+	}
+
+	/**
+	 * Tells the punch-in processor the tempo's grid from `at`: sixteenths from `origin` (default:
+	 * the latest beat, else where the grid was).
+	 */
+	#sendGrid(at: number, origin = this.#beat?.time ?? this.#gridOrigin): void {
+		this.#gridOrigin = origin;
+		this.#punchHost?.grid(Math.max(at, this.context.currentTime), origin, 15 / (this.#bpm || 120));
+	}
+
+	/** Hands what changed about the effects on the sound to the punch-in processor. */
+	#toProcessor(changes: readonly SoundChange[]): void {
+		const host = this.#punchHost;
+		if (!host) return;
+		for (const c of changes) {
+			if (c.kind === 'add')
+				host.add(c.span.track, c.span.id, c.span.effect, c.span.from, c.span.to);
+			else host.end(c.track, c.id, c.at);
+		}
 	}
 
 	/** A note on track `source` (or a beat, {@link DUCK_ON_BEAT}) dips every track that ducks on it. */

@@ -18,8 +18,9 @@
     presets). What the captures leave open is in `QUESTIONS.md` and note 59 §4.
   - **The sound** follows a session recorded on the owner's unit (note 60): each filter type's
     curve and resonance (held to the device within 3.5 dB by a test), the envelopes' time laws and
-    curve shapes, the LFO rates and depths, the duck, and the drum key's fade-in. Open: the
-    punch-in effects' sounds (recorded, to be worked out) and the loop crossfade.
+    curve shapes, the LFO rates and depths, the duck, the drum key's fade-in and the 24 punch-in
+    effects (worked out from recordings; a few details wait on the owner). Open: the loop
+    crossfade.
   - **The agent** plans exact steps on a copy of the simulator for any page or value, auxiliary and
     mixer values included. It can read them out, play them on the replica, or walk the user through
     them one lit key at a time. It sets whole sounds and song structures up from an idea (eight tested

@@ -55,6 +55,7 @@ class FakeEngine {
 		this.calls.push('silence');
 	}
 	sync() {}
+	punch() {}
 	dispose() {}
 	level() {
 		return 0.5;

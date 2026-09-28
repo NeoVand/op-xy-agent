@@ -41,7 +41,82 @@ facts:
     source: https://teenage.engineering/downloads/op-xy#1.0.32
     firmware_min: '1.0.32'
   - id: midi-notes
-    text: Over MIDI, notes 53–76 on channel 10 fire the 24 effects as if the keys were held, with the track showing each animation; which effect each note is remains unpublished.
+    text: Over MIDI, notes 53–76 on channel 10 fire the 24 effects as if the keys were held, with the track showing each animation.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: effect-order
+    text: Both octaves hold the same twelve effects in the same order, F to E — mute, stutter, repeat two steps, pan, repeat three steps, octave, follow, fill or ramp up, short, hat fill or ramp down, soft attack, random. Each takes a shape suited to the group it acts on. TE has not named them; these names are descriptive.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: mute-key
+    text: F (either octave) silences its group for as long as it is held.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: stutter-key
+    text: F♯ stutters in time with the project's sixteenths — melodic tracks jump back to the start of each sixteenth several times and drop out for its last part; drums let only the first few tens of milliseconds of each sixteenth through, in mono.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: repeat-keys
+    text: A replays three sixteenths over and over, and G (on melodic tracks) two; the pattern keeps running underneath and carries on in place on release.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: repeat-drums
+    text: G on the drums presumably loops two sixteenths as it does on melodic tracks; the recordings did not show it.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: derived
+  - id: pan-key
+    text: G♯ moves the sound across the stereo field — each drum hit lands left or right by its place in the bar, and melodic tracks swing to one side.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: octave-key
+    text: A♯ drops melodic tracks' sequenced notes an octave.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: octave-drums
+    text: On the drums, A♯ presumably raises the sequenced hits an octave.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: derived
+  - id: follow-key
+    text: B makes the other tracks of the group play the sequenced notes too, each with its own sound.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: derived
+  - id: fill-keys
+    text: On the drums, C adds a kick and snare fill and D a hi-hat groove (closed on every sixteenth, open on the off-beat eighths), both on top of the pattern.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: ramp-up
+    text: On melodic tracks, C makes each step's notes climb higher, gliding between them.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: ramp-down
+    text: On melodic tracks, D makes each step's notes fall lower, gliding between them.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: derived
+  - id: short-key
+    text: C♯ cuts every note or hit to a blip of about 25 ms.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: soft-key
+    text: D♯ softens attacks — drum hits fade in and synth notes swell in.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: random-key
+    text: E randomises — drum steps play random keys of the kit and melodic notes leap by random intervals.
+    source: docs/research/60-sound-session.md#6-punch-in-fx
+    confidence: derived
+  - id: levels
+    text: On the drums, the repeats, octave, follow and random rework the sequencer's own pattern and leave hits arriving over MIDI untouched, while mute, stutter, pan, short and soft change every hit and the fills add hits of their own.
     source: docs/research/60-sound-session.md#6-punch-in-fx
     confidence: verified
     verified_on: '1.1.33'
@@ -69,3 +144,7 @@ related: [auxiliary.overview, howto.first-punch-in]
 
 Punch-in FX are for performing: hold a key for a moment of change, let go and the track snaps back.
 Recorded passes live on their own track, so they can be edited without touching the parts below.
+
+From F to E, each octave runs: mute, stutter, repeat two steps, pan, repeat three steps, octave,
+follow, a fill (drums) or rising ramp (melodic), short, a hi-hat groove (drums) or falling ramp
+(melodic), soft attack and random. The rhythmic ones follow the project tempo.

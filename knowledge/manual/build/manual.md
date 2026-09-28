@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 165 units, 1144 facts, 201 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 165 units, 1160 facts, 201 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -2960,6 +2960,10 @@ The punch-in FX track (`T2`) turns the keyboard into 24 momentary effects — lo
 Punch-in FX are for performing: hold a key for a moment of change, let go and the track snaps back.
 Recorded passes live on their own track, so they can be edited without touching the parts below.
 
+From F to E, each octave runs: mute, stutter, repeat two steps, pan, repeat three steps, octave,
+follow, a fill (drums) or rising ramp (melodic), short, a hi-hat groove (drums) or falling ramp
+(melodic), soft attack and random. The rhythmic ones follow the project tempo.
+
 Facts:
 - On `T2` each of the 24 keys is a different effect that lasts while held; held keys combine. [#keys] [s1]
 - The lower octave acts on the percussion tracks, the upper octave on the melodic tracks. [#octaves] [s2]
@@ -2969,7 +2973,23 @@ Facts:
 - Percussive engines such as the drum sampler form the percussion group; synth engines and the synth sampler the melodic group. [#groups] [s3]
 - When effects conflict, the mute effect takes priority. [#mute-wins] (since 1.0.50) [s4]
 - OS 1.0.32 stopped `shift + key` from triggering punch-in FX while external MIDI is in use. [#midi-shortcut] (since 1.0.32) [s5]
-- Over MIDI, notes 53–76 on channel 10 fire the 24 effects as if the keys were held, with the track showing each animation; which effect each note is remains unpublished. [#midi-notes] (verified 1.1.33) [s6]
+- Over MIDI, notes 53–76 on channel 10 fire the 24 effects as if the keys were held, with the track showing each animation. [#midi-notes] (verified 1.1.33) [s6]
+- Both octaves hold the same twelve effects in the same order, F to E — mute, stutter, repeat two steps, pan, repeat three steps, octave, follow, fill or ramp up, short, hat fill or ramp down, soft attack, random. Each takes a shape suited to the group it acts on. TE has not named them; these names are descriptive. [#effect-order] (verified 1.1.33) [s6]
+- F (either octave) silences its group for as long as it is held. [#mute-key] (verified 1.1.33) [s6]
+- F♯ stutters in time with the project's sixteenths — melodic tracks jump back to the start of each sixteenth several times and drop out for its last part; drums let only the first few tens of milliseconds of each sixteenth through, in mono. [#stutter-key] (verified 1.1.33) [s6]
+- A replays three sixteenths over and over, and G (on melodic tracks) two; the pattern keeps running underneath and carries on in place on release. [#repeat-keys] (verified 1.1.33) [s6]
+- G on the drums presumably loops two sixteenths as it does on melodic tracks; the recordings did not show it. [#repeat-drums] (derived) [s6]
+- G♯ moves the sound across the stereo field — each drum hit lands left or right by its place in the bar, and melodic tracks swing to one side. [#pan-key] (verified 1.1.33) [s6]
+- A♯ drops melodic tracks' sequenced notes an octave. [#octave-key] (verified 1.1.33) [s6]
+- On the drums, A♯ presumably raises the sequenced hits an octave. [#octave-drums] (derived) [s6]
+- B makes the other tracks of the group play the sequenced notes too, each with its own sound. [#follow-key] (derived) [s6]
+- On the drums, C adds a kick and snare fill and D a hi-hat groove (closed on every sixteenth, open on the off-beat eighths), both on top of the pattern. [#fill-keys] (verified 1.1.33) [s6]
+- On melodic tracks, C makes each step's notes climb higher, gliding between them. [#ramp-up] (verified 1.1.33) [s6]
+- On melodic tracks, D makes each step's notes fall lower, gliding between them. [#ramp-down] (derived) [s6]
+- C♯ cuts every note or hit to a blip of about 25 ms. [#short-key] (verified 1.1.33) [s6]
+- D♯ softens attacks — drum hits fade in and synth notes swell in. [#soft-key] (verified 1.1.33) [s6]
+- E randomises — drum steps play random keys of the kit and melodic notes leap by random intervals. [#random-key] (derived) [s6]
+- On the drums, the repeats, octave, follow and random rework the sequencer's own pattern and leave hits arriving over MIDI untouched, while mute, stutter, pan, short and soft change every hit and the fills add hits of their own. [#levels] (verified 1.1.33) [s6]
 - On `T2` each of the 24 keys plays its own animation on the screen — planets, a digit clock, noise, hands, waves, sweeping lines and bars, and more. [#animations] (verified 1.1.33) [s7]
 - With no effect held, the page shows a single dot tracing a heartbeat line across the dot grid, about every three seconds; it starts again from the left edge each time an effect ends. [#idle-heartbeat] (verified 1.1.33) [s7]
 

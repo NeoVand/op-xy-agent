@@ -16,6 +16,9 @@
  * the track's own groove from the bar menu) and the metronome, which also counts in a recording. A pattern's player works on its sequenced notes here (manual: players/*):
  * the arpeggio runs over them while they last, with the active track's held keys joining in, on
  * the same clock; maestro plays its chord from each note; hold sustains each until the next.
+ * The punch-in effects that act on the sequencer's notes (the repeats, octave, follow, the drum
+ * fills and ramps, random; `punch/sequence.ts`) apply here too, from the punch-in keys held and the
+ * punch-in track's pattern, whose notes also go to the sink for the effects on the sound.
  *
  * Each track's walk runs on a random source seeded like the LEDs' walk (`playheadAt`), and is laid
  * down again from the start whenever what it depends on changes (the scale, the length, the flow
@@ -51,6 +54,7 @@ import {
 } from '$lib/sim/sequencer';
 import { grooveJitter, grooveTime, grooveVelocity, maxEarlyShift, type Groove } from './groove';
 import { bendCents, metronomeGain } from './mapping';
+import { PunchSequencer } from './punch/sequence';
 import { seedOf } from './random';
 
 /** A note to play. */
@@ -70,6 +74,19 @@ export interface ScheduledNote {
 	readonly bend?: Float32Array;
 	/** Its own place in the stereo field, −1…1 (the arpeggio's stereo spread). */
 	readonly pan?: number;
+	/** Semitones on top of a drum key's tune (the punch-in octave on the percussion group). */
+	readonly tune?: number;
+}
+
+/**
+ * A note of the punch-in track's pattern (aux T2): its key (0–23) and the tracks it acts on, from
+ * `start` to `end` (audio time).
+ */
+export interface PunchEvent {
+	readonly key: number;
+	readonly tracks: readonly number[];
+	readonly start: number;
+	readonly end: number;
 }
 
 /** A metronome click. */
@@ -86,10 +103,12 @@ export interface SchedulerSink {
 	note(event: ScheduledNote, settings: TrackState): void;
 	click(event: ClickEvent): void;
 	/**
-	 * Every beat while the sequence plays, heard or not: what follows the metronome (a duck LFO with
-	 * the metronome as its source).
+	 * Every beat while the sequence plays, heard or not, with its transport position (sixteenths):
+	 * what follows the metronome (a duck LFO with the metronome as its source) and the tempo's grid.
 	 */
-	beat?(time: number): void;
+	beat?(time: number, position: number): void;
+	/** A punch-in note the punch-in track's pattern plays (research 60 §6). */
+	punch?(event: PunchEvent): void;
 	/** The transport stopped or jumped at `time`: end the sequence's notes, drop what comes later. */
 	stop(time: number): void;
 	/**
@@ -292,7 +311,7 @@ interface Automation {
 type Due =
 	| { readonly kind: 'note'; readonly event: ScheduledNote; readonly settings: TrackState }
 	| { readonly kind: 'click'; readonly event: ClickEvent }
-	| { readonly kind: 'beat'; readonly event: { readonly time: number } }
+	| { readonly kind: 'beat'; readonly event: { readonly time: number; readonly position: number } }
 	| { readonly kind: 'automate'; readonly event: Automation };
 
 /** Whether two steps' locks hold the same values. */
@@ -318,6 +337,9 @@ export class Scheduler {
 	/** Each track's running arpeggio, and the sequenced notes it plays over. */
 	#arps = new Map<number, ArpRun>();
 	#held: Held[][] = [];
+	/** The punch-in effects on the sequencer's notes, and the next sixteenth the fills look at. */
+	readonly #punch = new PunchSequencer();
+	#nextFill = 0;
 
 	constructor(options: SchedulerOptions) {
 		this.#state = options.state;
@@ -343,6 +365,7 @@ export class Scheduler {
 		if (!transport.playing) {
 			this.#arps.clear();
 			this.#held = [];
+			this.#punch.reset();
 			if (this.#anchor) {
 				this.#anchor = null;
 				this.#sink.stop(now);
@@ -366,16 +389,25 @@ export class Scheduler {
 		const anchor = this.#anchor as Anchor;
 		const until = positionAt(anchor, now + lookahead);
 		const arpAhead = lookahead > this.#lookahead ? lookahead : Math.min(lookahead, ARP_LOOKAHEAD);
+		// the punch-in track's notes first: what they do to the sound reaches the engine before the
+		// notes they act on
+		for (const p of this.#punch.update(state, positionAt(anchor, now), until)) {
+			const end = timeAt(anchor, p.to);
+			if (end <= now) continue;
+			const start = Math.max(timeAt(anchor, p.from), now);
+			this.#sink.punch?.({ key: p.trigger.key, tracks: p.trigger.tracks, start, end });
+		}
 		const due = [
 			...this.#notes(state, anchor, until, now),
 			...this.#arpeggios(state, anchor, positionAt(anchor, now + arpAhead), now),
+			...this.#fills(state, anchor, until, now),
 			...this.#clicks(state, anchor, until, now)
 		];
 		due.sort((a, b) => a.event.time - b.event.time);
 		for (const item of due) {
 			if (item.kind === 'note') this.#sink.note(item.event, item.settings);
 			else if (item.kind === 'click') this.#sink.click(item.event);
-			else if (item.kind === 'beat') this.#sink.beat?.(item.event.time);
+			else if (item.kind === 'beat') this.#sink.beat?.(item.event.time, item.event.position);
 			else this.#sink.automate?.(item.event.track, item.event.locks, item.event.time);
 		}
 	}
@@ -398,6 +430,8 @@ export class Scheduler {
 		this.#lastPosition = position;
 		this.#arps.clear();
 		this.#held = [];
+		this.#punch.start(state, Math.max(0, position));
+		this.#nextFill = firstIndex(Math.max(0, position), 1, 0.5);
 	}
 
 	/** A walk from the start, replayed up to slot `slot` without sounding (as the LEDs replay it). */
@@ -443,12 +477,14 @@ export class Scheduler {
 				const slot = walk.slot++;
 				const next = advancePlayhead(pattern, walk.head, walk.rng, options);
 				walk.head = next.head;
-				if (!audible || !next.play) continue;
-				this.#automate(due, k, track, pattern, walk, next.play.locks, slot * scale, anchor, now);
+				// a punch-in repeat plays the slots it holds instead (the walk goes on underneath)
+				const play = this.#punch.replay(k, slot, scale, next.play);
+				if (!audible || !play) continue;
+				this.#automate(due, k, track, pattern, walk, play.locks, slot * scale, anchor, now);
 				const shift = routed ? brainShift(state, brain.key, slot * scale) : 0;
 				const player = pattern.player.on ? pattern.player : null;
 				const played = { walk, pattern, player, shift };
-				this.#play(due, k, track, next.play, slot * scale, scale, groove, anchor, now, played);
+				this.#play(due, k, track, play, slot * scale, scale, groove, anchor, now, played);
 			}
 		});
 		return due;
@@ -567,19 +603,16 @@ export class Scheduler {
 					: [{ note, time: 0 }];
 			for (const hit of chord) {
 				const at = Math.max(time, timeAt(anchor, grooveTime(from + hit.time * scale, groove)));
-				due.push({
-					kind: 'note',
-					settings,
-					event: {
-						track: k,
-						note: hit.note,
-						velocity: clamp(Math.round(velocity), 1, 127),
-						time: at,
-						duration: Math.max(0.01, end - at),
-						glide: n.glide > 0 ? n.glide * stepSeconds : undefined,
-						bend
-					}
-				});
+				const event = {
+					track: k,
+					note: hit.note,
+					velocity: clamp(Math.round(velocity), 1, 127),
+					time: at,
+					duration: Math.max(0.01, end - at),
+					glide: n.glide > 0 ? n.glide * stepSeconds : undefined,
+					bend
+				};
+				this.#emit(due, event, settings, from + hit.time * scale, stepSeconds);
 			}
 		}
 	}
@@ -633,21 +666,54 @@ export class Scheduler {
 				if (end - time < ARP_SHORTEST) continue;
 				const velocity =
 					keys.length > 0 ? KEY_VELOCITY : Math.max(...sounding.map((h) => h.velocity));
-				due.push({
-					kind: 'note',
-					settings: sounding.at(-1)?.settings ?? track,
-					event: {
-						track: k,
-						note: event.note,
-						velocity: clamp(Math.round(velocity), 1, 127),
-						time,
-						duration: end - time,
-						glide: event.glide > 0 ? event.glide * length * sixteenth : undefined,
-						pan: event.pan !== 0 ? event.pan : undefined
-					}
-				});
+				const note = {
+					track: k,
+					note: event.note,
+					velocity: clamp(Math.round(velocity), 1, 127),
+					time,
+					duration: end - time,
+					glide: event.glide > 0 ? event.glide * length * sixteenth : undefined,
+					pan: event.pan !== 0 ? event.pan : undefined
+				};
+				const settings = sounding.at(-1)?.settings ?? track;
+				this.#emit(due, note, settings, event.time, length * sixteenth);
 			}
 		});
+		return due;
+	}
+
+	/**
+	 * A sequenced note at transport position `position`, through the punch-in effects that act on
+	 * the sequencer's notes (octave, random, the ramps; follow adds the group's other tracks).
+	 */
+	#emit(
+		due: Due[],
+		event: ScheduledNote,
+		settings: TrackState,
+		position: number,
+		stepSeconds: number
+	): void {
+		for (const played of this.#punch.expand(event, settings, position, stepSeconds)) {
+			due.push({ kind: 'note', settings: played.settings, event: played.note });
+		}
+	}
+
+	/** The punch-in drum fills up to `until`: their hits, on each track's own groove. */
+	#fills(state: SimState, anchor: Anchor, until: number, now: number): Due[] {
+		const due: Due[] = [];
+		const sixteenth = sixteenthSeconds(anchor.bpm);
+		while (this.#nextFill < until) {
+			const j = this.#nextFill++;
+			for (const hit of this.#punch.fills(j)) {
+				const track = state.tracks[hit.track];
+				if (!track) continue;
+				const groove = trackGroove(state, currentPattern(track.sequence));
+				const time = Math.max(timeAt(anchor, grooveTime(j, groove)), anchor.time);
+				if (time < now - LATE) continue;
+				const event = { ...hit, time, duration: sixteenth };
+				this.#emit(due, event, track, j, sixteenth);
+			}
+		}
 		return due;
 	}
 
@@ -659,7 +725,7 @@ export class Scheduler {
 			const time = Math.max(timeAt(anchor, beat * 4), anchor.time);
 			if (time < now - LATE) continue;
 			// every beat of the sequence itself, not a count-in's, whether the metronome is heard or not
-			if (beat >= 0) due.push({ kind: 'beat', event: { time } });
+			if (beat >= 0) due.push({ kind: 'beat', event: { time, position: beat * 4 } });
 			// the metronome while it is on, and always through a recording's count-in bar
 			if (level <= 0 || (!on && beat >= 0)) continue;
 			due.push({
