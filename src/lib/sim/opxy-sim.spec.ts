@@ -203,7 +203,7 @@ describe('OpxySim: encoders', () => {
 		sim.press('key.tempo');
 		sim.turn(2, 1);
 		sim.turn(3, -99);
-		sim.turn(4, -50);
+		sim.turn(4, -16);
 		sim.click(4);
 		expect(page(sim, 'tempo')).toMatchObject({
 			groove: 'HS',

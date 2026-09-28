@@ -524,7 +524,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				bpm: '120',
 				groove: 'SH',
 				swing: 0,
-				metronome: { level: 1, on: false }
+				// the level a new project's file stores, 0xA8 of 0xFF (research 10 §3.2)
+				metronome: { level: 65 / 99, on: false }
 			});
 		});
 
@@ -633,7 +634,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('sets the metronome’s level with E4 and switches it on and off with a click', async () => {
 			const d = await start();
 			await d.click('key.tempo');
-			await d.turn(4, -49);
+			await d.turn(4, -15);
 			expect(on(d, 'tempo').metronome).toEqual({ level: 50 / 99, on: false });
 			await d.push(4);
 			expect(d.screen()).toBe('tempo 120 bpm, groove SH, metronome on');

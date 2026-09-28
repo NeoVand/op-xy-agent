@@ -347,6 +347,13 @@ function defaultM1(engine: EngineId): [number, number, number, number] {
 /** The mixer level a new project gives every track (the device stores 0x6000 of 0x7FFF). */
 export const DEFAULT_LEVEL = (0x6000 / 0x7fff) * 99;
 
+/**
+ * The metronome level a new project stores: 0xA8 of 0xFF in the `.xy` header (research/10-xy-format
+ * §3.2), 65 on our 0–99 scale and seven of the tempo page's waves. Whether a new project's
+ * metronome clicks is not known, so it starts switched off.
+ */
+export const DEFAULT_METRONOME_LEVEL = Math.round((0xa8 / 0xff) * 99);
+
 /** A fresh instrument track running `engine`. */
 export function defaultTrack(engine: EngineId): TrackState {
 	return {
@@ -425,7 +432,12 @@ export function defaultState(): SimState {
 			mix: { level: DEFAULT_LEVEL, pan: 0, muted: false },
 			sequence: emptySequence()
 		})),
-		tempo: { bpm: 120, groove: 0, swing: 0, metronome: { level: 99, on: false } },
+		tempo: {
+			bpm: 120,
+			groove: 0,
+			swing: 0,
+			metronome: { level: DEFAULT_METRONOME_LEVEL, on: false }
+		},
 		transport: { playing: false, recording: false, position: 0 },
 		project: { name: 'project 1' },
 		com: { advertising: false, multiOut: 'midi', charging: false },

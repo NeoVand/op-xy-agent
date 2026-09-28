@@ -3,6 +3,14 @@
 Re-run with `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5` (needs `ANTHROPIC_API_KEY`
 in `.env`; never printed). Newest first.
 
+## 2026-09-28 — regression after F4 (plan_steps settings, recipes, set_sound), conductor claude-opus-5-5, judge claude-sonnet-5
+
+`node evals/agent/run.mjs --manual ours --judge claude-sonnet-5`, with the new prompt, the five
+recipes (163 units) and 18 tools. Manual Q&A **42/42** (99% of required facts); expected key combos
+61/77, up from 59/77. Device tasks **18/18**. Latency mean 9.8 s, p95 16.1 s. Cost $4.68 agent
+(101 calls) + $0.27 judge, 99% of prompt tokens read from cache. Nothing regressed; the one answer
+short of full facts (`15-fx-change-and-chain`, 75%) still passed.
+
 ## 2026-09-28 — idea to device: whole sounds in one plan, conductor claude-opus-5-5
 
 `plan_steps` now takes several `settings` at once, each planned from where the ones before leave the
