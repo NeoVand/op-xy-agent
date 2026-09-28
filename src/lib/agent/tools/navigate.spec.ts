@@ -161,6 +161,54 @@ describe('plan_steps with show', () => {
 		expect(missing.note).toMatch(/no page shows "flux"/);
 	});
 
+	it('sets a recipe of several parts: arrange, a drum key, the brain, slices, a player', async () => {
+		const { sim, run } = setup(true);
+		const result = json(
+			await run(planStepsTool, {
+				show: true,
+				settings: [
+					{ area: 'arrange', param: 'scene', value: 2 },
+					{ area: 'arrange', track: 3, param: 'pattern', value: 2 },
+					{ area: 'arrange', param: 'song', value: '1 1 2 2' },
+					{ track: 1, param: 'tune', key: 'guiro 1', value: -2 },
+					{ area: 'auxiliary', track: 9, page: 2, param: 'track 5', value: 'out' },
+					{ area: 'bar', track: 9, param: 'track scale', value: 4 },
+					{ area: 'sample', track: 1, key: 'E5', param: 'even slices', value: 16 },
+					{ area: 'player', track: 4, param: 'type', value: 'maestro' }
+				]
+			})
+		);
+		expect(result).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(result.settings[0]).toMatchObject({ param: 'scene', area: 'arrange', reached: true });
+		const s = sim.state;
+		expect(s.areas.arrange.songs[0].order).toEqual([0, 0, 1, 1]);
+		// the guiro's key, D5, is above the sixteen slices laid from F3
+		expect(s.tracks[0].drumKeys[21].tune).toBe(-2);
+		expect(s.areas.auxiliary.brain.patterns[0].routes[4]).toBe(false);
+		expect(s.tracks[0].drumKeys[0].playMode).toBe('mute group');
+		expect(s.tracks[3].sequence.patterns[0].player.type).toBe('maestro');
+	});
+
+	it('plans the record page and COM as pages, and says what the bar menu needs', async () => {
+		const { run } = setup();
+		const record = json(await run(planStepsTool, { show: false, area: 'sample', track: 1 }));
+		expect(record.steps.map((s: { keys: string }) => s.keys)).toEqual(['sample']);
+		expect(record.screen).toMatch(/^drum sampler record: /);
+		const com = json(await run(planStepsTool, { show: false, area: 'com' }));
+		expect(com.screen).toMatch(/^com: /);
+		const bar = await run(planStepsTool, { show: false, area: 'bar', track: 3 });
+		expect(bar.isError).toBe(true);
+		const preset = json(
+			await run(planStepsTool, { show: false, track: 4, param: 'preset', value: 'pad/bandpasser' })
+		);
+		expect(preset.reached).toBe(true);
+		const wrong = await run(planStepsTool, {
+			show: false,
+			settings: [{ area: 'player', track: 12, param: 'speed', value: '1/16' }]
+		});
+		expect(wrong.isError).toBe(true);
+	});
+
 	it('hands the steps to the walkthrough with guide, and moves nothing itself', async () => {
 		const { sim, run, animated, guided } = setup(true);
 		const result = json(

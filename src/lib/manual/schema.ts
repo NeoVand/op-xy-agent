@@ -14,6 +14,7 @@
 import { z } from 'zod';
 import { ConfidenceSchema, FirmwareVersionStringSchema } from '$lib/core/opxy/common.schema';
 import { CONTROL_IDS } from '$lib/core/opxy/ids';
+import { SETTING_AREAS, type SettingArea } from '$lib/sim/settings';
 
 // ---------------------------------------------------------------------------------------------
 // Vocabulary
@@ -243,11 +244,19 @@ export const FactSchema = z.strictObject({
 
 /**
  * What a recipe step sets, as the agent's `plan_steps` names it (`amp decay` to 25, `lfo type` to
- * duck), so the agent can run the recipe on the replica and a test can check that it works.
+ * duck; with `area`, a value another page shows: the brain's `track 5`, arrange's `song`), so the
+ * agent can run the recipe on the replica and a test can check that it works.
  */
 export const StepSetSchema = z.strictObject({
 	param: z.string().trim().min(1).max(60),
-	value: z.union([z.number(), z.string().trim().min(1).max(30)])
+	value: z.union([z.number(), z.string().trim().min(1).max(30)]),
+	/** Where it lives when it is not an instrument track's parameter (plan_steps' areas). */
+	area: z.enum(SETTING_AREAS as [SettingArea, ...SettingArea[]]).optional(),
+	/** 1–16 (9–16 the auxiliary tracks); default: the first track the recipe's steps pick. */
+	track: z.int().min(1).max(16).optional(),
+	page: z.int().min(1).max(4).optional(),
+	/** A sampler track's key (its name, "E5", or 1–24), or the drum key slicing starts from. */
+	key: z.union([z.int().min(1).max(24), z.string().trim().min(1).max(30)]).optional()
 });
 
 /** One step of a procedure: a key combo in the grammar of `core/opxy/keys.ts`. */

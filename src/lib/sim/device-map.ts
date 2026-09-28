@@ -25,13 +25,14 @@ import {
 } from '$lib/core/opxy';
 import { FX_TYPES, type FxType } from './areas/auxiliary/state';
 import { lockTarget } from './areas/sequencer/locks';
-import { activeRegion, tuneText } from './areas/sample/m1';
-import type { Region } from './areas/sample/state';
+import { activeRegion } from './areas/sample/m1';
 import { NEW_PROJECT_TRACKS } from './defaults';
 import { buildFrame } from './frames';
 import {
 	PARAMS,
+	REGION_PARAMS,
 	TEMPO_PARAMS,
+	frameValues,
 	pageValues,
 	planPageValue,
 	planParam,
@@ -44,7 +45,8 @@ import {
 	type Place
 } from './navigator';
 import { OpxySim } from './opxy-sim.svelte';
-import { LFO_TYPES, defaultState, two, type PageNumber, type SimState } from './params';
+import { LFO_TYPES, defaultState, type PageNumber, type SimState } from './params';
+import type { PlayerType } from './sequencer';
 import type { ScreenFrame } from './screen/frame';
 import { describeFrame } from './screen/render';
 
@@ -240,26 +242,13 @@ interface Trio {
 	readonly down: OpxySim;
 }
 
-/** A player-list gesture: shift held while the key is pressed again (`shift + player → + player`). */
-const HELD = /^shift \+ ([\w.]+)((?: → \+ \1)+)$/;
-
 /**
- * Plays a map path on a simulator (the tests replay every page's path on a new project). Steps
- * are the navigator's, plus `shift + player → + player`, which keeps shift down while player is
- * pressed again (the player list moves on with each press).
+ * Plays a map path on a simulator (the tests replay every page's path on a new project): the
+ * navigator's steps, `shift + player → + player` (shift kept down while player is pressed again)
+ * among them.
  */
 export function playPath(sim: OpxySim, steps: readonly MapStep[]): void {
-	for (const step of steps) {
-		const held = HELD.exec(step.keys);
-		if (!held) {
-			playStep(sim, step);
-			continue;
-		}
-		const presses = held[2].split('→').length;
-		sim.input({ type: 'press', id: 'key.shift' });
-		for (let i = 0; i < presses; i++) playStep(sim, { keys: held[1] });
-		sim.input({ type: 'release', id: 'key.shift' });
-	}
+	for (const step of steps) playStep(sim, step);
 }
 
 /** Walks a copy of a new project to a page, keeping the steps. */
@@ -277,6 +266,11 @@ class Walk {
 	/** Follows the navigator's plan that sets a parameter (an engine, a list pick). */
 	param(goal: ParamGoal): void {
 		this.#follow(planParam(this.sim.state, goal));
+	}
+
+	/** Follows the navigator's plan that sets a value a page shows (an FX track's effect). */
+	value(goal: PageValueGoal): void {
+		this.#follow(planPageValue(this.sim.state, goal));
 	}
 
 	#follow(plan: NavPlan): void {
@@ -316,26 +310,7 @@ interface Probe {
 	readonly layer: 'base' | 'shift' | 'alt';
 }
 
-type FrameOf<P extends ScreenFrame['page']> = Extract<ScreenFrame, { readonly page: P }>;
-
-/** A reader that takes its value from the frame the page draws. */
-function fromFrame<P extends ScreenFrame['page']>(
-	page: P,
-	label: string,
-	value: (frame: FrameOf<P>) => string | undefined
-): Reader {
-	return {
-		label,
-		read: (sim) => {
-			const frame = frameOf(sim);
-			return frame.page === page ? value(frame as FrameOf<P>) : undefined;
-		}
-	};
-}
-
 const onOff = (on: boolean) => (on ? 'on' : 'off');
-const picked = (column: { readonly items: readonly string[]; readonly selected: number | null }) =>
-	column.selected === null ? undefined : column.items[column.selected];
 
 /**
  * What the page writes for encoder `e`'s value: an engine page's top-bar cell (a ratio, a table's
@@ -352,50 +327,34 @@ function written(sim: OpxySim, e: number, label: string): string | undefined {
 
 /**
  * Instrument pages: the lock registry says which parameter an encoder turns there (it mirrors the
- * core's turns), with its label, range and format; plan_steps sets the same ids.
+ * core's turns), with its label, range and format; plan_steps sets the same ids (a drum key's as
+ * `key.tune`: the key selected, or the one plan_steps is given).
  */
 function lockReader(p: Probe, e: number): Reader | null {
 	const lock = lockTarget(p.fork.state, e);
 	if (!lock) return null;
+	const param = lock.id.replace(/^key\d+\./, 'key.');
 	return {
 		label: lock.label,
-		...(plannable(lock.id) ? { param: lock.id } : {}),
+		...(plannable(param) ? { param } : {}),
 		read: (sim) => lock.format(lock.get(sim.state.tracks[sim.state.track])),
 		shows: (sim) => written(sim, e, lock.label)
 	};
 }
 
-/** The synth sampler's and a multisampler zone's M1 values (the lock registry keeps drum keys). */
-const REGION: Readonly<
-	Record<'base' | 'shift', readonly (readonly [string, (r: Region) => string])[]>
-> = {
-	base: [
-		['start', (r) => percent(r.start)],
-		['loop start', (r) => percent(r.loopStart)],
-		['loop end', (r) => percent(r.loopEnd)],
-		['end', (r) => percent(r.end)]
-	],
-	shift: [
-		['direction', (r) => (r.reverse ? 'reverse' : 'forward')],
-		['tune', (r) => tuneText(r.tune)],
-		['loop crossfade', (r) => `${r.crossfade}%`],
-		['gain', (r) => String(r.gain)]
-	]
-};
-
-/** A share of the sample, to the tenth of a percent. */
-const percent = (share: number) => `${Math.round(share * 1000) / 10}%`;
-
+/** The synth sampler's and a multisampler zone's M1 values (the lock registry keeps drum keys'). */
 function regionReader(p: Probe, e: number): Reader | null {
 	const s = p.fork.state;
 	if (s.mode !== 'instrument' || s.pages.instrument !== 1 || !activeRegion(s)) return null;
 	if (buildFrame(s).page !== 'drum' || p.layer === 'alt') return null;
-	const [label, value] = REGION[p.layer][e];
+	const region = REGION_PARAMS.find((r) => r.encoder === e && r.shift === (p.layer === 'shift'));
+	if (!region) return null;
 	return {
-		label,
+		label: region.label,
+		param: region.id,
 		read: (sim) => {
-			const region = activeRegion(sim.state);
-			return region ? value(region) : undefined;
+			const r = activeRegion(sim.state);
+			return r ? region.format(region.get(r)) : undefined;
 		}
 	};
 }
@@ -417,70 +376,17 @@ function tempoReader(p: Probe, e: number): Reader | null {
 
 /**
  * Values the page draws but its description leaves out or runs together (a list's boxed item, the
- * brain's link box, a routing page's track boxes, CC slots, the LFO's speed card), read off the
- * frame.
+ * brain's mode and link box, a routing page's track boxes, CC slots, the LFO's speed card, the
+ * player's cards), read off the frame as the navigator reads them, so plan_steps takes the same
+ * names: the first a detent each way reads differently.
  */
-function frameReader(p: Probe, e: number): Reader | null {
-	const frame = buildFrame(p.fork.state);
-	const shift = p.layer === 'shift';
-	switch (frame.page) {
-		case 'list':
-			return fromFrame('list', 'type', (f) => (f.columns[1] ? picked(f.columns[1]) : undefined));
-		case 'system-presets':
-			return e === 0
-				? fromFrame('system-presets', frame.view, (f) => picked(f.groups))
-				: fromFrame('system-presets', 'preset', (f) => picked(f.presets));
-		case 'aux-fx-list':
-			return fromFrame('aux-fx-list', 'effect', (f) => f.items[f.selected]);
-		case 'aux-brain':
-			if (e === 0) return fromFrame('aux-brain', 'mode', (f) => (f.auto ? 'auto' : 'manual'));
-			return e === 3 ? fromFrame('aux-brain', 'link', (f) => f.link ?? 'off') : null;
-		case 'aux-audio':
-			return e === 0 ? fromFrame('aux-audio', 'input', (f) => f.input) : null;
-		case 'aux-route': {
-			const i = frame.half * 4 + e;
-			return fromFrame('aux-route', `track ${i + 1}`, (f) => {
-				const t = f.tracks[i];
-				return t.value || (t.routed ? 'in' : 'out');
-			});
-		}
-		case 'aux-cc': {
-			const n = (frame.set === 'II' ? 4 : 0) + e + 1;
-			return shift
-				? fromFrame('aux-cc', `cc slot ${n} number`, (f) => String(f.slots[e].cc ?? 'off'))
-				: fromFrame('aux-cc', `cc slot ${n}`, (f) =>
-						f.slots[e].cc === null ? 'off' : f.slots[e].value
-					);
-		}
-		case 'midi-engine-cc': {
-			const n = (frame.set - 1) * 4 + e + 1;
-			const label = shift ? `cc slot ${n} number` : `cc slot ${n}`;
-			return fromFrame('midi-engine-cc', label, (f) => f.slots[e].value ?? 'off');
-		}
-		case 'aux-lfo':
-			if (e === 0) {
-				return fromFrame('aux-lfo', 'speed', (f) =>
-					f.speed.synced ? f.speed.label : two(f.speed.position * 99)
-				);
-			}
-			if (e === 1) return fromFrame('aux-lfo', 'amount', (f) => String(Math.round(f.amount)));
-			if (e === 2) return fromFrame('aux-lfo', 'destination', (f) => f.destinations[f.destination]);
-			// the card names the parameter; where it cannot ("-", or external MIDI's "no cc set"
-			// while its slots have none), which encoder of the page it is
-			return fromFrame('aux-lfo', 'parameter', (f) =>
-				/^(-|no cc set)$/.test(f.parameterName) ? `E${f.parameter + 1}` : f.parameterName
-			);
-		case 'player': {
-			const card = frame.cards[e];
-			return card?.label ? fromFrame('player', card.label, (f) => f.cards[e]?.value) : null;
-		}
-		case 'com':
-			if (e === 0) return fromFrame('com', 'bluetooth advertising', (f) => onOff(f.advertising));
-			if (e === 2) return fromFrame('com', 'multi-out', (f) => f.multiOut);
-			return e === 3 ? fromFrame('com', 'charging', (f) => onOff(f.charging)) : null;
-		default:
-			return null;
-	}
+function frameReader(_p: Probe, _e: number, trio: Trio): Reader | null {
+	const values = (sim: OpxySim) => frameValues(frameOf(sim));
+	const [before, up, down] = [values(trio.before), values(trio.up), values(trio.down)];
+	const labels = new Set([...before.keys(), ...up.keys(), ...down.keys()]);
+	const label = [...labels].find((l) => up.has(l) && down.has(l) && up.get(l) !== down.get(l));
+	if (label === undefined) return null;
+	return { label, read: (sim) => values(sim).get(label) };
 }
 
 /**
@@ -899,24 +805,27 @@ function otherReading(range: MapRange, now: string | undefined): string {
 }
 
 /**
- * What plan_steps takes to set the reader's value, tried on a copy from the page: the parameter id
- * for instrument and tempo values, the label for a value an auxiliary, mixer or player page lists;
- * null when the navigator does not get there.
+ * What plan_steps takes to set the reader's value, tried on a copy from the page (`from`: after
+ * the gesture it needs first, where it has one): the parameter id for instrument and tempo values
+ * and list picks, the label for a value another page lists; null when the navigator does not get
+ * there.
  */
 function planned(
 	p: Probe,
 	reader: Reader,
 	range: MapRange,
-	now: string | undefined
+	now: string | undefined,
+	from: SimState
 ): string | null {
 	const spec = p.spec;
 	const value = otherReading(range, now);
-	if (reader.param) {
-		const plan = planParam(spec.home, { track: spec.track, param: reader.param, value });
-		return plan.reached ? reader.param : null;
+	const param = reader.param ?? spec.paramOf?.(reader.label);
+	if (param) {
+		const plan = planParam(from, { track: spec.track, param, value });
+		return plan.reached ? param : null;
 	}
 	if (!spec.pageValue) return null;
-	const plan = planPageValue(spec.home, { ...spec.pageValue, label: reader.label, value });
+	const plan = planPageValue(from, { ...spec.pageValue, label: reader.label, value });
 	return plan.reached ? reader.label : null;
 }
 
@@ -950,7 +859,7 @@ function probeTurns(p: Probe): Found[] {
 			evenSteps(s.readings.map(numberOf)) ? fineStep(fork, e, reader) : undefined
 		);
 		const value = reader.read(fork.sim());
-		const param = planned(p, reader, range, value);
+		const param = planned(p, reader, range, value, needs ? fork.state : p.spec.home);
 		const midi = p.spec.midi?.(p.layer, e);
 		const about = manualEntry(p.spec, p.layer, e)?.note;
 		found.push({
@@ -1021,9 +930,11 @@ function clickEffect(fork: Fork, e: number, found: readonly Found[]): string | n
 	if (fa.page !== fb.page) return `opens ${sa}`;
 	// another view of the page (M2's filter envelope, the browser by category) before its values
 	if (splitDescription(sb).head !== splitDescription(sa).head) return describedChange(sb, sa);
+	// a value the other view does not show (a routing page's tracks 1–4 once 5–8 are on the
+	// encoders) has not changed: the view has
 	const changed = found.flatMap(({ reader }) => {
 		const [x, y] = [reader.read(before), reader.read(after)];
-		return x === y ? [] : [`${reader.label} ${x ?? NONE} → ${y ?? NONE}`];
+		return x === y || y === undefined ? [] : [`${reader.label} ${x ?? NONE} → ${y}`];
 	});
 	if (changed.length > 0) return changed.join(', ');
 	if (sa !== sb) return describedChange(sb, sa);
@@ -1209,8 +1120,10 @@ interface PageSpec {
 	readonly units?: readonly string[];
 	readonly captured?: string;
 	readonly note?: string;
-	/** Where plan_steps finds values by label (auxiliary, mixer and player pages). */
+	/** Where plan_steps finds values by label (the pages whose values no parameter id names). */
 	readonly pageValue?: Omit<PageValueGoal, 'label' | 'value'>;
+	/** The plan_steps parameter a label on the page stands for (a list's type, the browser's). */
+	readonly paramOf?: (label: string) => string | undefined;
 	/** The page's state, once walked (the navigator plans from it). */
 	readonly home: SimState;
 }
@@ -1256,6 +1169,8 @@ function enginePage(engine: EngineId): Spec {
 		midi: lanes(track, kind, 1),
 		screen: 'M1',
 		units: units[engine] ?? [`instrument.engine-${engine}`],
+		// the midi engine's channel and bank are values its page shows, by name
+		pageValue: { area: 'instrument', track, page: 1 },
 		// the owner's unit never listed the midi engine (research 59 §2.6)
 		...(engine === 'midi' ? {} : { captured: '59 §2.5' })
 	};
@@ -1269,6 +1184,8 @@ function instrumentPage(page: PageNumber, fields: Omit<Spec, 'area' | 'track' | 
 		walk: (w) => w.place({ area: 'instrument', track: SYNTH_TRACK, page }),
 		midi: lanes(SYNTH_TRACK, 'synth', page),
 		screen: `M${page}`,
+		// values no parameter id names (a duck's source type) go by the page's names
+		pageValue: { area: 'instrument', track: SYNTH_TRACK, page },
 		...fields
 	};
 }
@@ -1303,7 +1220,8 @@ function midiCcPage(page: 2 | 3): Spec {
 			w.param({ track: SYNTH_TRACK, param: 'engine', value: 'midi' });
 			w.keys(`M${page}`);
 		},
-		units: ['instrument.engine-midi']
+		units: ['instrument.engine-midi'],
+		pageValue: { area: 'instrument', track: SYNTH_TRACK, page }
 	};
 }
 
@@ -1365,28 +1283,23 @@ function fxPage(type: FxType): Spec {
 		id: `${fx.id}.${type}`,
 		walk: (w) => {
 			w.place({ area: 'auxiliary', track: 7, page: 1 });
-			const from = FX_TYPES.indexOf(w.sim.state.areas.auxiliary.fx[0].type);
-			const to = FX_TYPES.indexOf(type);
-			if (from === to) return;
-			w.keys('shift + T7');
-			w.keys('turn E4', to - from);
-			w.keys('click E4');
+			w.value({ area: 'auxiliary', track: 7, label: 'effect', value: type });
 		}
 	};
 }
 
-/** A player page on track 3: arpeggio by default, the others moved to in the player list. */
-function playerPage(type: 'arpeggio' | 'hold' | 'maestro', moves: number): Spec {
+/**
+ * A player page on track 3: arpeggio by default, the others moved to in the player list
+ * (`shift + player → + player`, shift kept down).
+ */
+function playerPage(type: PlayerType): Spec {
 	return {
 		id: `player.${type}`,
 		name: `${type} player`,
 		area: 'player',
 		track: SYNTH_TRACK,
 		frame: 'player',
-		walk: (w) => {
-			w.place({ area: 'player', track: SYNTH_TRACK });
-			if (moves > 0) w.keys(['shift + player', ...Array(moves).fill('+ player')].join(' → '));
-		},
+		walk: (w) => w.place({ area: 'player', track: SYNTH_TRACK, type }),
 		on: 'player',
 		screen: 'player',
 		units: [`players.${type}`, 'players.overview'],
@@ -1428,6 +1341,9 @@ const PAGES: readonly Spec[] = [
 			captured: '59 §2.6'
 		}),
 		midi: undefined,
+		pageValue: undefined,
+		// E1 picks the engine, which plan_steps loads; E2–E4 a preset, which it loads by name
+		paramOf: (label) => (label === 'engine' || label === 'preset' ? label : undefined),
 		walk: (w) => {
 			w.place({ area: 'instrument', track: SYNTH_TRACK, page: 1 });
 			w.keys('shift + M1');
@@ -1444,6 +1360,8 @@ const PAGES: readonly Spec[] = [
 		// a list: no CC lanes, and the manual's tables are the page's under it
 		midi: undefined,
 		screen: undefined,
+		pageValue: undefined,
+		paramOf: (label) => (label === 'type' ? `${kind}.type` : undefined),
 		walk: (w) => {
 			const page = kind === 'filter' ? 3 : 4;
 			w.place({ area: 'instrument', track: SYNTH_TRACK, page });
@@ -1535,6 +1453,7 @@ const PAGES: readonly Spec[] = [
 			w.keys('shift + T7');
 		},
 		units: ['fx.overview'],
+		pageValue: { area: 'auxiliary', track: 7 },
 		captured: '59 §2.13'
 	},
 	{
@@ -1589,9 +1508,9 @@ const PAGES: readonly Spec[] = [
 		captured: '59 §2.11',
 		note: 'tempo pressed again on this page taps the tempo'
 	},
-	playerPage('arpeggio', 0),
-	playerPage('hold', 1),
-	playerPage('maestro', 2),
+	playerPage('arpeggio'),
+	playerPage('hold'),
+	playerPage('maestro'),
 	{
 		id: 'project',
 		name: 'project',
@@ -1607,10 +1526,11 @@ const PAGES: readonly Spec[] = [
 		name: 'COM',
 		area: 'com',
 		frame: 'com',
-		walk: (w) => w.keys('com'),
+		walk: (w) => w.place({ area: 'com' }),
 		keys: true,
 		screen: 'com',
-		units: ['com.overview', 'com.bluetooth-midi', 'com.multi-out']
+		units: ['com.overview', 'com.bluetooth-midi', 'com.multi-out'],
+		pageValue: { area: 'com' }
 	}
 ];
 

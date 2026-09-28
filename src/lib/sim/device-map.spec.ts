@@ -115,8 +115,42 @@ describe('the device map', () => {
 		expect(control('tempo', 'turn E1').param).toBe('tempo.bpm');
 		expect(control('auxiliary.fx-ii.m1', 'turn E1').param).toBe('size');
 		expect(control('mix.m1', 'turn E4').param).toBe('level');
-		// the sampler keys' own settings are not the navigator's yet
-		expect(control('instrument.m1.drum', 'turn E1').param).toBeUndefined();
+		// the sampler keys' own settings: a drum key's (of the key selected, or the one given), the
+		// synth sampler's and a multisampler zone's
+		expect(control('instrument.m1.drum', 'turn E1').param).toBe('key.tune');
+		expect(control('instrument.m1.drum', 'shift + turn E2').param).toBe('key.pan');
+		expect(control('instrument.m1.sampler', 'turn E1').param).toBe('sample.start');
+		expect(control('instrument.m1.multisampler', 'shift + turn E3').param).toBe('sample.crossfade');
+		// values the pages show by name: the brain's mode, link and routing, the aux LFOs' speed,
+		// the arpeggio's play order, maestro's hold, the midi engine's channel and CC slots
+		expect(control('auxiliary.brain.m1', 'turn E1').param).toBe('mode');
+		expect(control('auxiliary.brain.m1', 'turn E4').param).toBe('link');
+		expect(control('auxiliary.brain.m2', 'turn E3').param).toBe('track 3');
+		expect(control('auxiliary.tape.m4', 'turn E1').param).toBe('speed');
+		expect(control('player.arpeggio', 'turn E2').param).toBe('pattern');
+		expect(control('player.maestro', 'turn E4').param).toBe('hold');
+		expect(control('instrument.m1.midi', 'turn E2').param).toBe('bank');
+		expect(control('instrument.m2.midi', 'shift + turn E1').param).toBe('cc slot 1 number');
+		// lists and the browser: their picks, loaded by plan_steps
+		expect(control('instrument.presets', 'turn E2').param).toBe('preset');
+		expect(control('instrument.lfo-types', 'turn E1').param).toBe('lfo.type');
+		expect(control('auxiliary.fx-types', 'turn E4').param).toBe('effect');
+		// every value an encoder turns
+		const turns = map.pages.flatMap((p) =>
+			p.controls.filter((c) => c.layer !== 'click' && c.layer !== 'shift-click')
+		);
+		expect(turns.filter((c) => !c.param)).toEqual([]);
+	});
+
+	it('reaches the hold and maestro players as the planner does, shift kept down in the list', () => {
+		expect(page('player.maestro').path.map((s) => s.keys)).toEqual([
+			'T3',
+			'shift + player → + player → + player',
+			'player'
+		]);
+		expect(control('auxiliary.brain.m2', 'click E1').does).toBe(
+			'tracks 1–4 on the encoders → 5–8 on the encoders'
+		);
 	});
 
 	it('links the pages to our manual', () => {

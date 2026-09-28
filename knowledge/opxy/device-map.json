@@ -232,6 +232,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "tune",
+					"param": "key.tune",
 					"value": "+0.00",
 					"range": {
 						"first": "–48.00",
@@ -252,6 +253,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "start",
+					"param": "key.start",
 					"value": "00",
 					"range": {
 						"first": "00",
@@ -272,6 +274,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "end",
+					"param": "key.end",
 					"value": "99",
 					"range": {
 						"first": "00",
@@ -291,6 +294,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "play mode",
+					"param": "key.playMode",
 					"value": "oneshot",
 					"range": {
 						"first": "key",
@@ -315,6 +319,7 @@
 					"layer": "shift",
 					"encoder": 1,
 					"label": "direction",
+					"param": "key.reverse",
 					"value": "forward",
 					"range": {
 						"first": "reverse",
@@ -337,6 +342,7 @@
 					"layer": "shift",
 					"encoder": 2,
 					"label": "pan",
+					"param": "key.pan",
 					"value": "0",
 					"range": {
 						"first": "-100",
@@ -357,6 +363,7 @@
 					"layer": "shift",
 					"encoder": 3,
 					"label": "fade",
+					"param": "key.fade",
 					"value": "00",
 					"range": {
 						"first": "00",
@@ -376,6 +383,7 @@
 					"layer": "shift",
 					"encoder": 4,
 					"label": "gain",
+					"param": "key.gain",
 					"value": "0",
 					"range": {
 						"first": "-30",
@@ -619,6 +627,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "start",
+					"param": "sample.start",
 					"value": "0%",
 					"range": {
 						"first": "0%",
@@ -639,6 +648,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "loop start",
+					"param": "sample.loopStart",
 					"value": "20%",
 					"range": {
 						"first": "0%",
@@ -659,6 +669,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "loop end",
+					"param": "sample.loopEnd",
 					"value": "80%",
 					"range": {
 						"first": "0%",
@@ -679,6 +690,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "end",
+					"param": "sample.end",
 					"value": "100%",
 					"range": {
 						"first": "0.1%",
@@ -699,6 +711,7 @@
 					"layer": "shift",
 					"encoder": 1,
 					"label": "direction",
+					"param": "sample.reverse",
 					"value": "forward",
 					"range": {
 						"first": "reverse",
@@ -721,6 +734,7 @@
 					"layer": "shift",
 					"encoder": 2,
 					"label": "tune",
+					"param": "sample.tune",
 					"value": "+0.00",
 					"range": {
 						"first": "–48.00",
@@ -741,6 +755,7 @@
 					"layer": "shift",
 					"encoder": 3,
 					"label": "loop crossfade",
+					"param": "sample.crossfade",
 					"value": "0%",
 					"range": {
 						"first": "0%",
@@ -761,6 +776,7 @@
 					"layer": "shift",
 					"encoder": 4,
 					"label": "gain",
+					"param": "sample.gain",
 					"value": "0",
 					"range": {
 						"first": "-30",
@@ -1082,6 +1098,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "start",
+					"param": "sample.start",
 					"value": "0%",
 					"range": {
 						"first": "0%",
@@ -1102,6 +1119,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "loop start",
+					"param": "sample.loopStart",
 					"value": "20%",
 					"range": {
 						"first": "0%",
@@ -1122,6 +1140,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "loop end",
+					"param": "sample.loopEnd",
 					"value": "80%",
 					"range": {
 						"first": "0%",
@@ -1142,6 +1161,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "end",
+					"param": "sample.end",
 					"value": "100%",
 					"range": {
 						"first": "0.1%",
@@ -1162,6 +1182,7 @@
 					"layer": "shift",
 					"encoder": 1,
 					"label": "direction",
+					"param": "sample.reverse",
 					"value": "forward",
 					"range": {
 						"first": "reverse",
@@ -1184,6 +1205,7 @@
 					"layer": "shift",
 					"encoder": 2,
 					"label": "tune",
+					"param": "sample.tune",
 					"value": "+0.00",
 					"range": {
 						"first": "–48.00",
@@ -1204,6 +1226,7 @@
 					"layer": "shift",
 					"encoder": 3,
 					"label": "loop crossfade",
+					"param": "sample.crossfade",
 					"value": "0%",
 					"range": {
 						"first": "0%",
@@ -1224,6 +1247,7 @@
 					"layer": "shift",
 					"encoder": 4,
 					"label": "gain",
+					"param": "sample.gain",
 					"value": "0",
 					"range": {
 						"first": "-30",
@@ -1547,6 +1571,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "channel",
+					"param": "channel",
 					"value": "1",
 					"range": {
 						"first": "1",
@@ -1567,6 +1592,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "bank",
+					"param": "bank",
 					"value": "none",
 					"range": {
 						"first": "none",
@@ -2286,15 +2312,16 @@
 					"keys": "shift + turn E1",
 					"layer": "shift",
 					"encoder": 1,
-					"label": "source",
-					"value": "1 (audio)",
+					"label": "source type",
+					"param": "source type",
+					"value": "audio",
 					"range": {
-						"first": "1 (audio)",
-						"last": "1 (notes)",
+						"first": "audio",
+						"last": "notes",
 						"detents": 1,
 						"values": [
-							"1 (audio)",
-							"1 (notes)"
+							"audio",
+							"notes"
 						]
 					}
 				},
@@ -2915,6 +2942,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "cc slot 1",
+					"param": "cc slot 1",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -2929,6 +2957,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "cc slot 2",
+					"param": "cc slot 2",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -2943,6 +2972,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "cc slot 3",
+					"param": "cc slot 3",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -2957,6 +2987,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "cc slot 4",
+					"param": "cc slot 4",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -2971,6 +3002,7 @@
 					"layer": "shift",
 					"encoder": 1,
 					"label": "cc slot 1 number",
+					"param": "cc slot 1 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -2991,6 +3023,7 @@
 					"layer": "shift",
 					"encoder": 2,
 					"label": "cc slot 2 number",
+					"param": "cc slot 2 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -3011,6 +3044,7 @@
 					"layer": "shift",
 					"encoder": 3,
 					"label": "cc slot 3 number",
+					"param": "cc slot 3 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -3031,6 +3065,7 @@
 					"layer": "shift",
 					"encoder": 4,
 					"label": "cc slot 4 number",
+					"param": "cc slot 4 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -3082,6 +3117,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "cc slot 5",
+					"param": "cc slot 5",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -3096,6 +3132,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "cc slot 6",
+					"param": "cc slot 6",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -3110,6 +3147,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "cc slot 7",
+					"param": "cc slot 7",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -3124,6 +3162,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "cc slot 8",
+					"param": "cc slot 8",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -3138,6 +3177,7 @@
 					"layer": "shift",
 					"encoder": 1,
 					"label": "cc slot 5 number",
+					"param": "cc slot 5 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -3158,6 +3198,7 @@
 					"layer": "shift",
 					"encoder": 2,
 					"label": "cc slot 6 number",
+					"param": "cc slot 6 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -3178,6 +3219,7 @@
 					"layer": "shift",
 					"encoder": 3,
 					"label": "cc slot 7 number",
+					"param": "cc slot 7 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -3198,6 +3240,7 @@
 					"layer": "shift",
 					"encoder": 4,
 					"label": "cc slot 8 number",
+					"param": "cc slot 8 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -3247,6 +3290,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "engine",
+					"param": "engine",
 					"value": "prism",
 					"range": {
 						"first": "axis",
@@ -3273,6 +3317,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "preset",
+					"param": "preset",
 					"value": "shoulder",
 					"range": {
 						"first": "alloy",
@@ -3294,6 +3339,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "preset",
+					"param": "preset",
 					"value": "shoulder",
 					"range": {
 						"first": "alloy",
@@ -3314,6 +3360,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "preset",
+					"param": "preset",
 					"value": "shoulder",
 					"range": {
 						"first": "alloy",
@@ -3385,6 +3432,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "type",
+					"param": "filter.type",
 					"value": "svf",
 					"range": {
 						"first": "ladder",
@@ -3403,6 +3451,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "type",
+					"param": "filter.type",
 					"value": "svf",
 					"range": {
 						"first": "ladder",
@@ -3421,6 +3470,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "type",
+					"param": "filter.type",
 					"value": "svf",
 					"range": {
 						"first": "ladder",
@@ -3439,6 +3489,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "type",
+					"param": "filter.type",
 					"value": "svf",
 					"range": {
 						"first": "ladder",
@@ -3487,6 +3538,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "type",
+					"param": "lfo.type",
 					"value": "tremolo",
 					"range": {
 						"first": "duck",
@@ -3506,6 +3558,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "type",
+					"param": "lfo.type",
 					"value": "tremolo",
 					"range": {
 						"first": "duck",
@@ -3525,6 +3578,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "type",
+					"param": "lfo.type",
 					"value": "tremolo",
 					"range": {
 						"first": "duck",
@@ -3544,6 +3598,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "type",
+					"param": "lfo.type",
 					"value": "tremolo",
 					"range": {
 						"first": "duck",
@@ -3587,6 +3642,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "mode",
+					"param": "mode",
 					"value": "auto",
 					"range": {
 						"first": "manual",
@@ -3671,6 +3727,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "link",
+					"param": "link",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -3728,6 +3785,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "track 1",
+					"param": "track 1",
 					"value": "out",
 					"range": {
 						"first": "out",
@@ -3744,6 +3802,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "track 2",
+					"param": "track 2",
 					"value": "out",
 					"range": {
 						"first": "out",
@@ -3760,6 +3819,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "track 3",
+					"param": "track 3",
 					"value": "in",
 					"range": {
 						"first": "out",
@@ -3776,6 +3836,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "track 4",
+					"param": "track 4",
 					"value": "in",
 					"range": {
 						"first": "out",
@@ -3956,6 +4017,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "cc slot 1",
+					"param": "cc slot 1",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -3976,6 +4038,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "cc slot 2",
+					"param": "cc slot 2",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -3996,6 +4059,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "cc slot 3",
+					"param": "cc slot 3",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4016,6 +4080,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "cc slot 4",
+					"param": "cc slot 4",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4036,6 +4101,7 @@
 					"layer": "shift",
 					"encoder": 1,
 					"label": "cc slot 1 number",
+					"param": "cc slot 1 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -4062,6 +4128,7 @@
 					"layer": "shift",
 					"encoder": 2,
 					"label": "cc slot 2 number",
+					"param": "cc slot 2 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -4088,6 +4155,7 @@
 					"layer": "shift",
 					"encoder": 3,
 					"label": "cc slot 3 number",
+					"param": "cc slot 3 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -4114,6 +4182,7 @@
 					"layer": "shift",
 					"encoder": 4,
 					"label": "cc slot 4 number",
+					"param": "cc slot 4 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -4164,6 +4233,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "cc slot 5",
+					"param": "cc slot 5",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4184,6 +4254,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "cc slot 6",
+					"param": "cc slot 6",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4204,6 +4275,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "cc slot 7",
+					"param": "cc slot 7",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4224,6 +4296,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "cc slot 8",
+					"param": "cc slot 8",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4244,6 +4317,7 @@
 					"layer": "shift",
 					"encoder": 1,
 					"label": "cc slot 5 number",
+					"param": "cc slot 5 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -4270,6 +4344,7 @@
 					"layer": "shift",
 					"encoder": 2,
 					"label": "cc slot 6 number",
+					"param": "cc slot 6 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -4296,6 +4371,7 @@
 					"layer": "shift",
 					"encoder": 3,
 					"label": "cc slot 7 number",
+					"param": "cc slot 7 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -4322,6 +4398,7 @@
 					"layer": "shift",
 					"encoder": 4,
 					"label": "cc slot 8 number",
+					"param": "cc slot 8 number",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -4377,6 +4454,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "speed",
+					"param": "speed",
 					"value": "8",
 					"range": {
 						"first": "1",
@@ -4457,6 +4535,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "parameter",
+					"param": "parameter",
 					"value": "E1",
 					"range": {
 						"first": "E1",
@@ -4530,6 +4609,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "input",
+					"param": "input",
 					"value": "mic",
 					"range": {
 						"first": "mic",
@@ -4648,6 +4728,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "track 1",
+					"param": "track 1",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4661,6 +4742,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "track 2",
+					"param": "track 2",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4674,6 +4756,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "track 3",
+					"param": "track 3",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4687,6 +4770,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "track 4",
+					"param": "track 4",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -4884,6 +4968,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "speed",
+					"param": "speed",
 					"value": "8",
 					"range": {
 						"first": "1",
@@ -4964,6 +5049,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "parameter",
+					"param": "parameter",
 					"value": "param1",
 					"range": {
 						"first": "param1",
@@ -5123,6 +5209,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "track 1",
+					"param": "track 1",
 					"value": "99",
 					"range": {
 						"first": "0",
@@ -5136,6 +5223,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "track 2",
+					"param": "track 2",
 					"value": "99",
 					"range": {
 						"first": "0",
@@ -5149,6 +5237,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "track 3",
+					"param": "track 3",
 					"value": "99",
 					"range": {
 						"first": "0",
@@ -5162,6 +5251,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "track 4",
+					"param": "track 4",
 					"value": "99",
 					"range": {
 						"first": "0",
@@ -5336,6 +5426,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "speed",
+					"param": "speed",
 					"value": "8",
 					"range": {
 						"first": "1",
@@ -5416,6 +5507,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "parameter",
+					"param": "parameter",
 					"value": "param1",
 					"range": {
 						"first": "param1",
@@ -6163,6 +6255,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "track 1",
+					"param": "track 1",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -6176,6 +6269,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "track 2",
+					"param": "track 2",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -6189,6 +6283,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "track 3",
+					"param": "track 3",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -6202,6 +6297,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "track 4",
+					"param": "track 4",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -6355,6 +6451,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "speed",
+					"param": "speed",
 					"value": "8",
 					"range": {
 						"first": "1",
@@ -6435,6 +6532,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "parameter",
+					"param": "parameter",
 					"value": "param1",
 					"range": {
 						"first": "param1",
@@ -6595,6 +6693,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "track 1",
+					"param": "track 1",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -6608,6 +6707,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "track 2",
+					"param": "track 2",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -6621,6 +6721,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "track 3",
+					"param": "track 3",
 					"value": "0",
 					"range": {
 						"first": "0",
@@ -6634,6 +6735,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "track 4",
+					"param": "track 4",
 					"value": "23",
 					"range": {
 						"first": "0",
@@ -6765,6 +6867,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "speed",
+					"param": "speed",
 					"value": "8",
 					"range": {
 						"first": "1",
@@ -6845,6 +6948,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "parameter",
+					"param": "parameter",
 					"value": "param1",
 					"range": {
 						"first": "param1",
@@ -6897,6 +7001,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "effect",
+					"param": "effect",
 					"value": "delay",
 					"range": {
 						"first": "chorus",
@@ -7638,6 +7743,7 @@
 					"layer": "base",
 					"encoder": 2,
 					"label": "pattern",
+					"param": "pattern",
 					"value": "up",
 					"range": {
 						"first": "up",
@@ -7775,9 +7881,6 @@
 					"keys": "T3"
 				},
 				{
-					"keys": "player"
-				},
-				{
 					"keys": "shift + player → + player"
 				},
 				{
@@ -7801,9 +7904,6 @@
 			"path": [
 				{
 					"keys": "T3"
-				},
-				{
-					"keys": "player"
 				},
 				{
 					"keys": "shift + player → + player → + player"
@@ -7860,6 +7960,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "hold",
+					"param": "hold",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -7956,6 +8057,7 @@
 					"layer": "base",
 					"encoder": 1,
 					"label": "bluetooth advertising",
+					"param": "bluetooth advertising",
 					"value": "off",
 					"range": {
 						"first": "off",
@@ -7973,6 +8075,7 @@
 					"layer": "base",
 					"encoder": 3,
 					"label": "multi-out",
+					"param": "multi-out",
 					"value": "midi",
 					"range": {
 						"first": "midi",
@@ -7993,6 +8096,7 @@
 					"layer": "base",
 					"encoder": 4,
 					"label": "charging",
+					"param": "charging",
 					"value": "off",
 					"range": {
 						"first": "off",

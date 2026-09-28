@@ -43,6 +43,20 @@ function cell(text: string | null | number): string {
 	return String(text).replace(/\|/g, '\\|').replace(/\n/g, ' ');
 }
 
+/**
+ * What a recipe step sets, as plan_steps takes it: `amp decay = 25`, or with where it lives
+ * `track 5 = out (area auxiliary, track 9, page 2)`.
+ */
+function setText(set: NonNullable<ManualUnit['procedures'][number]['steps'][number]['set']>) {
+	const where = [
+		set.area ? `area ${set.area}` : null,
+		set.track ? `track ${set.track}` : null,
+		set.page ? `page ${set.page}` : null,
+		set.key !== undefined ? `key ${set.key}` : null
+	].filter(Boolean);
+	return `${set.param} = ${set.value}${where.length ? ` (${where.join(', ')})` : ''}`;
+}
+
 /** Renders one unit. */
 export function renderUnit(unit: ManualUnit): string {
 	const sourceIndex = new Map(unit.sources.map((s, i) => [s.url, i + 1]));
@@ -74,7 +88,7 @@ export function renderUnit(unit: ManualUnit): string {
 			lines.push(`- ${p.goal} [#${p.id}]${tags(p)}${ref(p.source)}`);
 			if (p.preconditions.length > 0) lines.push(`  Needs: ${p.preconditions.join('; ')}`);
 			p.steps.forEach((step, i) => {
-				const set = step.set ? ` {set ${step.set.param} = ${step.set.value}}` : '';
+				const set = step.set ? ` {set ${setText(step.set)}}` : '';
 				lines.push(`  ${i + 1}. \`${step.keys}\`${step.note ? ` — ${step.note}` : ''}${set}`);
 			});
 			if (p.result) lines.push(`  Result: ${p.result}`);
