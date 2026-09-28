@@ -26,9 +26,13 @@ src/lib/
     dsp/       shared signal processing (the FFT)
     voice/     (M8) OpenAI realtime as the voice speaks it: the session it mints, events, its three
                tools, the state machine (turns, barge-in, tool outputs, transcript lines), mic pick
+    listen/    (M9) hearing a recording: loudness (BS.1770), tone, stereo, onsets, tempo, grid and
+               swing, key and chords, silence and dropouts, and the summary the agent reads
   device/      Browser adapters (Web MIDI, workers, audio). Everything injected for tests:
                access, transport (the single send choke point + policy), monitor, device mirror,
-               scheduler + tick worker, session (identity + GREET), expect(), mtp (WebUSB pipe)
+               scheduler + tick worker, session (identity + GREET), expect(), mtp (WebUSB pipe),
+               listen (the OP-XY's USB audio or the replica's master, an AudioWorklet recorder,
+               the analysis in a worker)
   app/         Glue between features, e.g. the replica ⇄ device bridge (replica keys → notes/transport/
                track select through the transport; device notes/clock → replica LEDs), app-wide contexts,
                project transfer (.xy files from disk or the device over MTP, and back)
@@ -90,6 +94,10 @@ Claude.
 - **Evals** (`evals/agent/`): manual Q&A and device tasks (`run.mjs`), how-to and idea-to-device
   cases checked against the simulator's end state (`howto.mjs`), programming the virtual OP-XY
   (`virtual.mjs`), files (`files.mjs`). Results in `evals/agent/RESULTS.md`.
+- **Listening** (note 61): `listen` records the OP-XY's USB audio or the replica's sound
+  (`ListenHost` in the environment; `device/listen` in the browser) and hands the model the
+  summary of `core/listen`; `listen_tracks` hears tracks alone through the mutes (CC9 on a device,
+  through the transport) with approval, and puts every mute back in a `finally`.
 
 ## Rules
 

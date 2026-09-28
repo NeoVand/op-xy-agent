@@ -164,7 +164,9 @@ describe('the conductor tool set', () => {
 			make_kit: 'ui',
 			write_pattern: 'mutate',
 			read_pattern: 'read',
-			write_arrangement: 'mutate'
+			write_arrangement: 'mutate',
+			listen: 'read',
+			listen_tracks: 'mutate'
 		});
 	});
 
@@ -172,7 +174,7 @@ describe('the conductor tool set', () => {
 		const asks = CONDUCTOR_TOOLS.filter(asksForApproval)
 			.map((t) => t.name)
 			.sort();
-		expect(asks).toEqual(['mute_track', 'set_sound', 'set_tempo']);
+		expect(asks).toEqual(['listen_tracks', 'mute_track', 'set_sound', 'set_tempo']);
 	});
 
 	it('runs everything that sends MIDI on the device queue; only panic skips it', () => {
@@ -180,6 +182,7 @@ describe('the conductor tool set', () => {
 			.map((t) => t.name)
 			.sort();
 		expect(device).toEqual([
+			'listen_tracks',
 			'mute_track',
 			'panic',
 			'play_notes',

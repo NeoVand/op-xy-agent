@@ -94,6 +94,12 @@
   approvals checked against what the user said (`research/71-voice.md`). Live: the app's
   session mints on both models and a text round trip hands questions to Claude and approvals to
   the user. Left: the owner's try with a real mic (`QUESTIONS.md` 14).
+- **M9 listening loop: built, not yet heard on the unit** (2026-09-28, note 61). `listen` records
+  the OP-XY's USB audio (or the virtual OP-XY in the browser) and returns what it heard: loudness,
+  tone against pink noise, stereo, tempo against the set tempo, timing and swing, where the kicks,
+  snares and hats sit, key and chords, and flags such as clipping or off-tempo; `listen_tracks` hears
+  each instrument track alone and puts every mute back (on a device only when the app knows them
+  all). The conductor is told to listen, critique and revise. Left: the device session (note 61 §9).
 - **Next:** T28 with the owner (track MIDI channels → notes out), then M5 composer + live playback and
   the M6 device session. M6 continues by **reading the current project over WebUSB-MTP**: it is the
   only way the replica can load what is on the device (steps, tempo, sounds), since the device never
@@ -116,7 +122,7 @@ each with a clear job:
 | **TE SysEx** (GREET, FILE)                  | exact firmware version; a filesystem over MIDI with writable `drum/` and `synth/` | **verified** GREET/ECHO/FILE LIST; FILE PUT untested                                              | [60 §4](research/60-firmware.md), [90](research/90-device-probe.md) |
 | **Native `.xy` projects**                   | the device's own sequencer: notes, p-locks, step components, scenes, songs        | TS codec + compiler done; the 1.1.33 blank = 1.1.4 layout; authored files untested; transfer open | [10](research/10-xy-format.md)                                      |
 | **Presets / samples** (`patch.json` + WAV)  | AI-made drum kits and instruments                                                 | well understood; install path = FILE PUT (spike) or MTP                                           | [30](research/30-presets-samples.md)                                |
-| **USB audio**                               | the agent can listen to what the OP-XY plays                                      | class-compliant UAC1 input; untested                                                              | [90](research/90-device-probe.md)                                   |
+| **USB audio**                               | the agent can listen to what the OP-XY plays                                      | class-compliant UAC1 input; capture + analysis built (M9), not yet tried from the browser         | [61](research/61-listening.md), [90](research/90-device-probe.md)   |
 
 Not possible: decompiling firmware (AES-encrypted Blackfin images; key only on device).
 
@@ -415,6 +421,18 @@ OpenAI realtime (WebRTC) as the voice front-end delegating to the Claude conduct
 
 Capture USB audio; onset/tempo/loudness/spectrum analysis; sequential stem bounce (mute/solo via
 CC9); the agent critiques and revises what it hears.
+
+- [x] **Analysis** (`src/lib/core/listen`, note 61): loudness after BS.1770 with gating and range,
+      peaks and clipping, tone against pink noise, stereo and a mono low end, onsets, tempo against
+      the set tempo, the grid with swing and tightness, the drum picture, key and chords, silence and
+      dropouts, and a summary with flags; tested on synthetic signals with known answers.
+- [x] **Capture** (`src/lib/device/listen`): the OP-XY's input (only it) or the replica's master
+      (`AppSound.listenTap()`), an AudioWorklet recorder, the analysis in a worker; Chromium tests.
+- [x] **Tools**: `listen` (read) and `listen_tracks` (the sequential stem take, approved, every mute
+      put back; on a device only when the app knows all eight mutes); the prompt's critique loop;
+      a listening light in the agent panel.
+- [ ] With the owner's unit: the input's name and rate in Chrome, latency, loudness of a reference
+      project, tempo and chords on real material; a bar-synchronous take for `listen_tracks`.
 
 ### M10 — Launch
 

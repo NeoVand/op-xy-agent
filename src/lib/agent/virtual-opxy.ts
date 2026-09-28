@@ -111,6 +111,8 @@ export interface VirtualStatus {
 	readonly arrangement: VirtualArrangement;
 	/** Whether the browser makes its sound: on, off (the switch), or unavailable (no audio). */
 	readonly sound: 'on' | 'off' | 'unavailable';
+	/** Whether the metronome clicks along (the tempo page); its click is in what the agent hears. */
+	readonly metronome?: boolean;
 }
 
 /** The virtual OP-XY. */

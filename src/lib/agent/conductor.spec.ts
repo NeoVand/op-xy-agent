@@ -101,7 +101,14 @@ function receivedCcs(rig: ReturnType<typeof createFakeRig>): number[][] {
 
 describe('conductor: requests and streaming', () => {
 	/** Tools sent without strict mode, to keep the strict ones under the API's grammar size limit. */
-	const LOOSE_TOOLS = ['device_map', 'make_kit', 'play_notes', 'plan_steps'];
+	const LOOSE_TOOLS = [
+		'device_map',
+		'listen',
+		'listen_tracks',
+		'make_kit',
+		'play_notes',
+		'plan_steps'
+	];
 
 	it('sends a cache-friendly, strict request and streams the answer into the chat', async () => {
 		const { api, conductor, events } = await setup([

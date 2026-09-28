@@ -46,6 +46,7 @@ import {
 	type ModelQuirks,
 	type Transcript
 } from './loop';
+import type { ListenHost } from './listen-host';
 import type { ManualEntry, ManualSource, ManualSourceKind } from './manual-source';
 import { DEFAULT_CONDUCTOR_MODEL, modelOptions, type ModelOption } from './models';
 import { PolicyGate } from './policy';
@@ -97,6 +98,8 @@ export interface ConductorOptions {
 	readonly guide?: GuideHost | null;
 	/** The preset maker's inbox (make_kit); absent when headless. */
 	readonly presets?: PresetInboxHost | null;
+	/** Listening to the OP-XY or the replica (listen, listen_tracks); absent when headless. */
+	readonly listen?: ListenHost | null;
 	readonly manual: ManualSource;
 	readonly store: ThreadStore;
 	/** Remembers the last thread and the chosen model; memory-only when absent. */
@@ -288,6 +291,7 @@ export class Conductor {
 			virtual: options.virtual ?? null,
 			guide: options.guide ?? null,
 			presets: options.presets ?? null,
+			listen: options.listen ?? null,
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,

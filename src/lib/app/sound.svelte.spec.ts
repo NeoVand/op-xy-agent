@@ -13,6 +13,11 @@ class FakeContext extends EventTarget {
 	state: AudioContextState = 'suspended';
 	currentTime = 0;
 	resumes = 0;
+	readonly destination = {};
+	/** The master the engine plays into (where listening taps the sound). */
+	createGain() {
+		return { gain: { value: 1 }, connect: (node: unknown) => node, disconnect() {} };
+	}
 	async resume() {
 		this.resumes++;
 		this.#set('running');
@@ -219,6 +224,19 @@ describe('AppSound: the replica sounds while simulated', () => {
 		await rig.time.advance(100);
 		expect(schedulers[0].ticks).toBeGreaterThanOrEqual(before + 4);
 		expect(simulator.sim.state.transport.playing).toBe(true);
+	});
+
+	it('lends listening its master once the engine plays, waking the audio; none while off', async () => {
+		const { sound, contexts, settle } = setup();
+		// nothing built yet: asking wakes the audio up (as a gesture would), then the master is there
+		expect(sound.listenTap()).toBeNull();
+		await settle();
+		const tap = sound.listenTap();
+		expect(tap?.context).toBe(contexts[0]);
+		expect(tap?.output).toBeTruthy();
+		sound.enabled = false;
+		await settle();
+		expect(sound.listenTap()).toBeNull();
 	});
 
 	it('lights the replica level meter with the output', async () => {
