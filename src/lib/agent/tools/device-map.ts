@@ -211,6 +211,9 @@ export const deviceMapTool = defineTool({
 	name: 'device_map',
 	label: 'device map',
 	kind: 'read',
+	// the strict tool set sits at the API's grammar size limit: with this one strict too, every
+	// request was refused ("compiled grammar is too large"); zod still checks the two strings
+	strict: false,
 	description:
 		'What a page of the OP-XY holds, from the device map exported from the simulator. Pages: every engine’s M1, the envelopes and play mode (M2), filter and sends (M3), each LFO type (M4), the preset browser and type lists, every auxiliary track’s pages, the mixer, tempo, the players, project and COM. For each: the keys from a new project, what the screen shows there, and each encoder per layer (turn, with shift, the other view, click) with its label, range and display format, the plan_steps parameter that sets it, its CC and whether MIDI reaches it on OS 1.1.33. page picks pages by name ("filter", "duck lfo", "tape", "fx i", "mix m2", "prism"); param picks controls by label ("cutoff", "size", "fx ii send"); both narrow a page to its control; neither lists the pages.',
 	input: z.object({

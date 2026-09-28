@@ -16,15 +16,9 @@ const context = (presets: PresetInboxHost | null) =>
 	({ toolCallId: 'toolu_k', agent: 'conductor', env: { presets } }) as unknown as ToolContext;
 const run = (input: unknown, presets: PresetInboxHost | null): Promise<ToolResult> =>
 	makeKitTool.run(makeKitTool.input.parse(input), context(presets));
-const voice = (key: number, type: string, extra: Record<string, number | null> = {}) => ({
+const voice = (key: number, type: string, extra: Record<string, number> = {}) => ({
 	key,
 	type,
-	pitch: null,
-	decay: null,
-	tone: null,
-	snap: null,
-	drive: null,
-	crush: null,
 	...extra
 });
 
@@ -51,10 +45,7 @@ describe('make_kit', () => {
 
 	it('makes a kit of the given voices alone', async () => {
 		const { host, drafts } = inbox();
-		await run(
-			{ name: 'two', style: null, voices: [voice(61, 'closed hat'), voice(53, 'kick')] },
-			host
-		);
+		await run({ name: 'two', voices: [voice(61, 'closed hat'), voice(53, 'kick')] }, host);
 		expect(drafts[0].samples.map((s) => [s.key, s.name])).toEqual([
 			[53, 'kick'],
 			[61, 'closed hat']
@@ -62,16 +53,14 @@ describe('make_kit', () => {
 	});
 
 	it('says so when there is nothing to make or nowhere to leave it', async () => {
-		expect((await run({ name: 'x', style: null, voices: [] }, inbox().host)).isError).toBe(true);
+		expect((await run({ name: 'x', voices: [] }, inbox().host)).isError).toBe(true);
 		expect((await run({ name: 'x', style: '808', voices: [] }, null)).isError).toBe(true);
 	});
 
 	it('refuses keys and values outside the kit, and costs no optional parameters', () => {
+		expect(() => makeKitTool.input.parse({ name: 'x', voices: [voice(52, 'kick')] })).toThrow();
 		expect(() =>
-			makeKitTool.input.parse({ name: 'x', style: null, voices: [voice(52, 'kick')] })
-		).toThrow();
-		expect(() =>
-			makeKitTool.input.parse({ name: 'x', style: null, voices: [voice(53, 'kick', { tone: 2 })] })
+			makeKitTool.input.parse({ name: 'x', voices: [voice(53, 'kick', { tone: 2 })] })
 		).toThrow();
 		const tool = createConductorRegistry()
 			.apiTools()

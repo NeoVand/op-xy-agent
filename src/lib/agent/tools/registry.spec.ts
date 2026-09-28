@@ -131,7 +131,10 @@ describe('ToolRegistry', () => {
 
 describe('the conductor tool set', () => {
 	it('stays within the API’s budget of optional parameters (it refuses more than 24)', () => {
-		const tools = createConductorRegistry().apiTools();
+		// the API compiles only the strict schemas, so only they count
+		const tools = createConductorRegistry()
+			.apiTools()
+			.filter((t) => t.strict);
 		const optional = tools.reduce(
 			(n, t) => n + optionalParameters(t.input_schema as Record<string, unknown>),
 			0
