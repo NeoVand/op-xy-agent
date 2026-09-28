@@ -10,15 +10,17 @@ Keyboard: hold space or enter on the key, or hold the ` key anywhere you are not
 <script lang="ts">
 	import IconButton from '$lib/ui/IconButton.svelte';
 	import { tooltip } from '$lib/ui/tooltip';
-	import type { LedState } from '$lib/ui/types';
+	import type { KeySize, LedState } from '$lib/ui/types';
 	import type { VoiceSession } from '../session.svelte';
 
 	interface Props {
 		voice: VoiceSession;
 		disabled?: boolean;
+		/** Tile size, as `IconButton`'s. */
+		size?: KeySize;
 	}
 
-	let { voice, disabled = false }: Props = $props();
+	let { voice, disabled = false, size = 'sm' }: Props = $props();
 
 	const handsFree = $derived(voice.mode === 'hands-free');
 	const micLive = $derived(
@@ -111,7 +113,7 @@ Keyboard: hold space or enter on the key, or hold the ` key anywhere you are not
 <IconButton
 	{label}
 	icon="mic"
-	size="sm"
+	{size}
 	{led}
 	ledBlink={blink}
 	pressed={handsFree ? voice.active && !voice.muted : voice.keyDown}

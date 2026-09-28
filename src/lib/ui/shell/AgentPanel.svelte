@@ -575,43 +575,37 @@ above the composer says what voice is doing while it is on.
 			</div>
 		{/if}
 
-		{#if files.length > 0 || fileNote}
-			<div class="files">
-				{#if files.length > 0}
-					<ul class="files__list" aria-label="files to send">
-						{#each files as file (file.key)}
-							<li>
-								<AttachmentChip
-									name={file.name}
-									kind={file.kind}
-									detail={file.detail}
-									thumb={file.thumb}
-									status={file.status}
-									error={file.error}
-									onremove={() => removeFile(file.key)}
-								/>
-							</li>
-						{/each}
-					</ul>
-				{/if}
-				{#if fileNote}
-					<p class="files__note" role="status"><Led state="red" size="sm" /> {fileNote}</p>
-				{/if}
-			</div>
-		{/if}
-		{#if voice.visible && !settingsOpen}
-			<VoiceStrip {voice} claudeBusy={busy} onsettings={openSettings} />
-		{/if}
-		<form class="composer" onsubmit={submit}>
-			<div class="composer__row">
-				<IconButton
-					type="button"
-					label="attach files"
-					icon="plus"
-					size="sm"
-					disabled={!canAttach}
-					onclick={() => picker?.click()}
-				/>
+		<!-- the deck: the panel's whole bottom as the device's black glass, typed into, with full
+		     keys for attaching, speaking and sending -->
+		<div class="deck">
+			{#if files.length > 0 || fileNote}
+				<div class="files">
+					{#if files.length > 0}
+						<ul class="files__list" aria-label="files to send">
+							{#each files as file (file.key)}
+								<li>
+									<AttachmentChip
+										name={file.name}
+										kind={file.kind}
+										detail={file.detail}
+										thumb={file.thumb}
+										status={file.status}
+										error={file.error}
+										onremove={() => removeFile(file.key)}
+									/>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+					{#if fileNote}
+						<p class="files__note" role="status"><Led state="red" size="sm" /> {fileNote}</p>
+					{/if}
+				</div>
+			{/if}
+			{#if voice.visible && !settingsOpen}
+				<VoiceStrip {voice} claudeBusy={busy} onsettings={openSettings} />
+			{/if}
+			<form class="composer" onsubmit={submit}>
 				<label class="sr-only" for="{uid}-message">message to the agent</label>
 				<textarea
 					id="{uid}-message"
@@ -631,54 +625,56 @@ above the composer says what voice is doing while it is on.
 					{@attach trackComposer}
 					onkeydown={onKeyDown}
 					onpaste={onPaste}></textarea>
-				<VoiceKey {voice} disabled={!conductor || settingsOpen} />
-				{#if busy}
+				<div class="composer__keys">
 					<IconButton
 						type="button"
-						label="stop"
-						icon="stop"
-						size="sm"
-						onclick={() => conductor?.stop()}
+						label="attach files"
+						icon="plus"
+						disabled={!canAttach}
+						onclick={() => picker?.click()}
 					/>
-				{:else}
-					<IconButton
-						type="submit"
-						label="send"
-						icon="arrow-up"
-						variant={canSend ? 'primary' : 'key'}
-						size="sm"
-						disabled={!canSend}
-					/>
-				{/if}
-			</div>
-			<input
-				{@attach trackPicker}
-				class="sr-only"
-				type="file"
-				multiple
-				accept={ATTACHMENT_ACCEPT}
-				tabindex="-1"
-				aria-hidden="true"
-				onchange={onPick}
-			/>
-		</form>
+					<p class="composer__note">
+						{#if !hasKey}
+							Runs in your browser with your own Anthropic key.
+						{:else if !connected}
+							No OP-XY connected: device tools will ask you to connect it.
+						{:else}
+							Changes to your device always wait for your approval.
+						{/if}
+					</p>
+					<VoiceKey {voice} size="md" disabled={!conductor || settingsOpen} />
+					{#if busy}
+						<IconButton type="button" label="stop" icon="stop" onclick={() => conductor?.stop()} />
+					{:else}
+						<IconButton
+							type="submit"
+							label="send"
+							icon="arrow-up"
+							variant={canSend ? 'primary' : 'key'}
+							disabled={!canSend}
+						/>
+					{/if}
+				</div>
+				<input
+					{@attach trackPicker}
+					class="sr-only"
+					type="file"
+					multiple
+					accept={ATTACHMENT_ACCEPT}
+					tabindex="-1"
+					aria-hidden="true"
+					onchange={onPick}
+				/>
+			</form>
+			{#if conductor && conductor.usage.calls > 0}
+				<div class="deck__cost"><CostMeter usage={conductor.usage} /></div>
+			{/if}
+		</div>
 		{#if dragging}
 			<div class="agent__drop" aria-hidden="true">
 				<span><Led state="white" blink="breathe" size="sm" /> drop files for the agent</span>
 			</div>
 		{/if}
-		<div class="agent__foot">
-			<p class="agent__note">
-				{#if !hasKey}
-					Runs in your browser with your own Anthropic key.
-				{:else if !connected}
-					No OP-XY connected: device tools will ask you to connect it.
-				{:else}
-					Changes to your device always wait for your approval.
-				{/if}
-			</p>
-			{#if conductor && conductor.usage.calls > 0}<CostMeter usage={conductor.usage} />{/if}
-		</div>
 	</div>
 </Panel>
 
@@ -924,71 +920,82 @@ above the composer says what voice is doing while it is on.
 		align-self: center;
 	}
 
-	.composer {
+	/* The deck: black glass to the panel's edges, the device's screen language in both themes. */
+	.deck {
 		display: flex;
 		flex: none;
 		flex-direction: column;
-		margin: 0 0.75rem;
-		padding: 0.375rem;
-		border-radius: var(--xy-radius-tile);
-		background-color: var(--xy-surface-sunken);
-		box-shadow:
-			var(--xy-shadow-recess),
-			0 0 0 1px var(--xy-line-control);
-	}
-
-	.composer:focus-within {
-		box-shadow:
-			var(--xy-shadow-recess),
-			0 0 0 1px var(--xy-fg-muted);
-	}
-
-	.composer__row {
-		display: flex;
-		align-items: flex-end;
 		gap: 0.5rem;
+		padding: 0.75rem 0.75rem 0.875rem;
+		border-radius: 0 0 var(--xy-radius-tile) var(--xy-radius-tile);
+		background-color: var(--xy-scr-bg);
+		color: var(--xy-scr-fg);
+		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+	}
+
+	.deck .files {
+		margin: 0;
+	}
+
+	.deck .files__note {
+		color: var(--xy-scr-muted);
+	}
+
+	.deck__cost {
+		display: flex;
+		justify-content: flex-end;
+		color: var(--xy-scr-muted);
+	}
+
+	.composer {
+		display: flex;
+		flex-direction: column;
+		gap: 0.625rem;
 	}
 
 	.composer__field {
-		flex: 1;
-		min-height: 2.25rem;
-		max-height: 10rem;
-		padding: 0.5rem 0.125rem;
+		width: 100%;
+		min-height: 2.75rem;
+		max-height: 12rem;
+		padding: 0.5rem 0.375rem;
 		border: 0;
 		background: none;
-		color: var(--xy-fg);
+		color: var(--xy-scr-fg);
 		font: inherit;
-		font-size: var(--xy-text-sm);
-		line-height: var(--xy-leading-sm);
+		font-size: var(--xy-text-base);
+		line-height: var(--xy-leading-base);
 		resize: none;
 		field-sizing: content;
+		caret-color: var(--xy-scr-fg);
 	}
 
 	.composer__field:focus {
 		outline: none;
 	}
 
+	.composer__field:focus-visible {
+		box-shadow: inset 0 -1px 0 var(--xy-scr-muted);
+	}
+
 	.composer__field::placeholder {
-		color: var(--xy-fg-faint);
+		color: var(--xy-scr-muted);
 	}
 
 	.composer__field:disabled {
 		cursor: not-allowed;
 	}
 
-	.agent__foot {
+	.composer__keys {
 		display: flex;
-		flex: none;
-		flex-wrap: wrap;
 		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem 0.75rem;
-		padding: 0.625rem 1rem 0.875rem;
+		gap: 0.5rem;
 	}
 
-	.agent__note {
-		margin: 0;
-		color: var(--xy-fg-subtle);
+	.composer__note {
+		flex: 1;
+		min-width: 0;
+		margin: 0 0.25rem;
+		color: var(--xy-scr-muted);
 		font-size: var(--xy-text-2xs);
 		line-height: var(--xy-leading-2xs);
 		font-weight: 450;
