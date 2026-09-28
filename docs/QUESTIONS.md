@@ -40,14 +40,18 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    them, so ours are invented: holding **bar** on a pattern with notes; holding a **step** with
    notes, and one with a parameter lock; **shift + a step**, then a white key; the **arpeggio** or
    **maestro** page; the screen while **recording**.
-7. **Punch-in FX and the tape** (read-only). Their screens are captured (10 fps, every punch-in key;
+7. **The sampler's fade and loop crossfade** (a recording over USB audio at the next session). The
+   device draws a drum key's fade as a ramp rising from the start marker, while the replica plays it
+   as a fade-out over the region's end; and the replica ignores the loop crossfade. A key played at
+   fade 0 and 99, and a looping synth sample at crossfade 0 and 99, would settle both.
+8. **Punch-in FX and the tape** (read-only). Their screens are captured (10 fps, every punch-in key;
    note 59) and the replica now draws them: the idle heartbeat and a still of each key's animation,
    matched to keys by the order they were pressed (please confirm the order if you remember it).
    Their sounds are still needed (USB audio at the next session). The replica's punch-in FX (aux T2) and tape (aux T6)
    patterns light up but make no sound: TE never published which of the 24 keys plays which effect.
    A short phone video pressing each punch-in key in turn over a beat, or notes on what each does,
    would let us build them; the same for the tape's clips.
-8. **Wavetable tables: our approach, and the eighth table's name.** Our wavetable frames are
+9. **Wavetable tables: our approach, and the eighth table's name.** Our wavetable frames are
    formulas fitted to the device's harmonics, not its data. For crush, geometric and basic the
    fitted rules reproduce the device's frames closely; drawbars uses a measured registration (nine
    bar levels per tenth of position). Fine to ship as is (D2 by analogy), or should ours diverge?

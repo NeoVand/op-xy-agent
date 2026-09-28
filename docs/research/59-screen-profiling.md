@@ -673,7 +673,11 @@ Not tested on purpose: ext audio CC12 (input select: could open the mic and feed
   - arrange: the cross-fade when the selected track changes and the stack sliding with E4 (a 10 fps
     run); a queued scene, a muted track, a linked track; two-digit scenes; song mode with loop off
     and a song running out;
-  - the aux tracks' octave popup and "copied".
+  - the aux tracks' octave popup and "copied";
+  - samplers: `shift + click E3` through all three loop types on the synth sampler (until-release and
+    loop-off were never seen); E4's play-mode list one detent at a time from each end; pan at −100, 0
+    and +100; fade 99 with the start moved in, on a short and a long sample; tune to both ends on a
+    drum key and on the synth sampler; the gain wedge at −30 and +20 dB.
   - synth engine pictures, filmed at 10 fps or faster while notes play: prism's rays over a note
     (rise, hold, fade); hardsync's block speed through a long held note; dissolve's deal rate;
     wavetable's drift spin rate (turns per second); organ's drawbar slide time. And stills between
