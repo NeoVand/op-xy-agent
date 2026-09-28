@@ -385,6 +385,12 @@ GetStorageInfo, GetObjectHandles/GetObjectInfo for the top level and `projects/`
    workspace). The card read "saved as projects/user/test 1.xy". On the device `test 1` showed in
    the project list, opened, and played like "agent" (the owner: "identical as far as I can say").
    Nothing else was written, replaced or deleted.
+6. **An authored project** (announced; the owner's click): in the replica the owner lit steps 1, 5,
+   9 and 13 on T1 (fm organ, whose first pattern was empty), then "save to the op-xy…" as `test 2`
+   (the same operations as `test 1`: one new file, `projects/user/test 2.xy`, written over the
+   open project). On the unit `test 2` opened and played an organ hit on every beat of the first
+   scene, with the same four step keys lit (the owner: "it worked fully"). Notes written by the
+   replica (`simToXy` over the device's own project) load and play on OS 1.1.33.
 
 ## Session 1 runbook (owner present, ≈20–30 min)
 

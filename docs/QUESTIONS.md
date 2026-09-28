@@ -83,16 +83,11 @@ answer and date (and into `DECISIONS.md` when they shape the project).
     device info, storage, listings, a 49 KB download of the open project (TE's factory project
     "agent"), and the OP-XY left MTP mode by itself on disconnect. The Claude app's built-in browser
     cannot do it (no WebUSB device picker).
-13. **Projects to and from the device** — half answered (2026-09-28, `90-device-probe.md`): "load
-    from the op-xy" brought TE's factory project "agent" into the replica, and "save to the op-xy…"
-    wrote it back as `projects/user/test 1.xy`, which opened and played like the original on the
-    unit. Still open: a project the replica changed (authored notes) playing on the unit, 16
-    patterns, the cutoff lock. Original ask (the save writes one new file; nothing is replaced). With
-    the OP-XY in MTP mode: "project" under the replica → "load from the op-xy" should bring the open
-    project into the replica (tempo, patterns, scenes, songs, presets). Then "save to the op-xy…"
-    as `test 1` adds `projects/user/test 1.xy`, written over the open project. On the device: does
-    `test 1` show in the project list and open, and does it play the replica's patterns with the
-    device's sounds? (note 10 §7.7 lists what else to check: 16 patterns, the cutoff lock.)
+13. ~~**Projects to and from the device**~~ Answered (2026-09-28, `90-device-probe.md`): "load from
+    the op-xy" brought TE's factory project "agent" into the replica; "save to the op-xy…" wrote it
+    back as `test 1` (played like the original) and, with four organ notes added on T1, as
+    `test 2`, which played them on the unit with the right step keys lit. Still to try some day:
+    16 patterns on a track and a cutoff lock (note 10 §7.7).
 14. **Voice with a real mic** (nothing goes to the device unless you approve a change). With both
     keys in settings, hold the mic key beside send (or the backquote key) and ask something; then
     try hands-free (the switch in the voice strip), talking over the voice, and a change by voice
