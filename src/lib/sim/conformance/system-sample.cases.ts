@@ -492,7 +492,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 		it('shows and changes the groove type that the tempo page turns', async () => {
 			const d = await start();
 			await d.click('key.tempo');
-			await d.turn(2, 2);
+			await d.turn(2, 3);
 			expect(d.screen()).toBe('tempo 120 bpm, groove BO, metronome off'); // ours: the two letters
 			await d.clicks('key.project', 'key.m4');
 			await d.turn(1, 1);

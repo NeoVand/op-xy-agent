@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 158 units, 940 facts, 187 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 158 units, 941 facts, 187 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -4034,10 +4034,10 @@ Sources: s1 guide:tempo#project · s2 guide:tempo#edit-tempo · s3 research:90-d
 
 ### Grooves, swing and shuffle [tempo.grooves]
 current · OS ≥ 1.0.9 · guide v1.1.15
-Also called: groove, swing, shuffle, groove type, groove amount, humanize, feel, half shuffle, bombora, gaussian, island nod
+Also called: groove, swing, shuffle, groove type, groove amount, humanize, feel, half shuffle, bombora, gaussian, island nod, danish, disfunk, roll over, prophetic
 Where: screens tempo, bar
 
-A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of seven types with E2 on the tempo screen and dial swing or shuffle with E3; the bar menu can override the amount per track.
+A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of eleven types with E2 on the tempo screen and dial swing or shuffle with E3; the bar menu can override the amount per track.
 
 Start with shuffle and a little swing, then try the other types on the same pattern; give a single
 track its own amount in the bar menu.
@@ -4046,12 +4046,13 @@ Facts:
 - A groove changes the feel of the sequencer by moving the timing of notes and changing their velocity. [#what] [s1]
 - Grooves also vary timing and velocity slightly at random, so the swing sounds less mechanical. [#human] [s1]
 - On the tempo screen, `turn E3` clockwise past the centre for swing or anticlockwise for shuffle; the two push notes in opposite directions. [#amount] [s2]
-- `turn E2` on the tempo screen picks the groove type: shuffle, half shuffle, bombora, wobbly, gaussian, accents or island nod. [#types] [s1]
+- `turn E2` on the tempo screen picks the groove type, in this order: shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over and prophetic. [#types] (community-verified) [s3]
 - Shuffle is the everyday swing and half shuffle a lighter version of it; accents emphasises the important beats. [#plain-types] [s1]
 - Bombora breaks up the beats on 2 and 4, and wobbly deliberately loosens the timing for a funkier, messier feel. [#wild-types] [s1]
 - TE describes gaussian and island nod only in jokes, so judge them by ear. [#joke-types] [s1]
-- `bar + turn E3` sets a groove amount for the current track that replaces the tempo screen's swing value; the groove type still comes from the tempo screen. [#per-track] [s3]
-- Over MIDI, CC81 on any channel sets the groove; community tables treat 63 as no groove. [#cc81] (community) [s4]
+- The online guide leaves out four types. Danish relaxes the beat, disfunk turns funky one way and groovy the other, and roll over gives a slow, lazy hip-hop feel. TE gives prophetic no description at all. [#extra-types] [s3]
+- `bar + turn E3` sets a groove amount for the current track that replaces the tempo screen's swing value; the groove type still comes from the tempo screen. [#per-track] [s4]
+- Over MIDI, CC81 on any channel sets the groove; community tables treat 63 as no groove. [#cc81] (community) [s5]
 
 Procedures:
 - Add swing to the whole project [#swing] [s2]
@@ -4061,7 +4062,7 @@ Procedures:
 
 Related: [tempo.tempo-screen], [project.settings]
 
-Sources: s1 guide:tempo#what-are-grooves · s2 guide:tempo#edit-tempo · s3 guide:sequencer#extend-with-bar · s4 research:20-midi-control#31-global-ccs
+Sources: s1 guide:tempo#what-are-grooves · s2 guide:tempo#edit-tempo · s3 research:40-official-docs#52-older-gaps-and-contradictions-true-even-for-1115 · s4 guide:sequencer#extend-with-bar · s5 research:20-midi-control#31-global-ccs
 
 ## Connectivity
 

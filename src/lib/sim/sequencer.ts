@@ -55,6 +55,11 @@ export interface SeqNote {
 	length: number;
 	/** Micro-timing, −0.5…0.5 of a step (live recording, nudge). */
 	offset: number;
+	/**
+	 * The note keeps a length of its own (recorded live, extended, or written whole): the bar menu's
+	 * length leaves it alone (manual: sequencer/bar-menu). Step-entered notes follow it.
+	 */
+	ownLength?: boolean;
 }
 
 /** A component on a step: its kind and its digit (0–9; 0 means random for most). */
@@ -375,8 +380,21 @@ export function extendNotes(pattern: Pattern, from: number, to: number): 'full' 
 	if (!step || !hasNotes(step) || to <= from || to >= pattern.length) return null;
 	const full = to - from + 1;
 	const ending = step.notes.every((n) => n.length === full) ? 'overlap' : 'full';
-	for (const n of step.notes) n.length = ending === 'full' ? full : full + OVERLAP;
+	for (const n of step.notes) {
+		n.length = ending === 'full' ? full : full + OVERLAP;
+		n.ownLength = true;
+	}
 	return ending;
+}
+
+/**
+ * Gives the pattern's step-entered notes its note length (the bar menu's E2; manual:
+ * sequencer/bar-menu): notes recorded live, extended or written whole keep their own.
+ */
+export function applyNoteLength(pattern: Pattern): void {
+	for (const step of pattern.steps) {
+		for (const n of step.notes) if (!n.ownLength) n.length = pattern.noteLength;
+	}
 }
 
 /** One nudge press moves notes by this much of a step: 20 of the sequencer's 480 ticks (ours). */
@@ -445,11 +463,11 @@ export function recordNote(
 	const step = pattern.steps[index];
 	const existing = step.notes.find((n) => n.note === note);
 	if (existing) {
-		Object.assign(existing, { velocity, length, offset });
+		Object.assign(existing, { velocity, length, offset, ownLength: true });
 		return { index, offset };
 	}
 	if (noteCount(pattern) >= MAX_NOTES) return null;
-	step.notes.push({ note, velocity, length, offset });
+	step.notes.push({ note, velocity, length, offset, ownLength: true });
 	return { index, offset };
 }
 

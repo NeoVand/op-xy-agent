@@ -8,7 +8,9 @@
  * walks its current pattern slot by slot (`advancePlayhead`, one slot per track-scale sixteenths),
  * with every step component — pulse repeats and holds, multiply, velocity, ramps, random, tonality,
  * jump, the skips — its notes' quantised timing, lengths, glides and bends, and the step's parameter
- * locks, which reach the voice through the track settings the note starts with. On top come the
+ * locks, which reach the voice through the track settings the note starts with. Tracks routed into
+ * the brain move their ramps, random and tonality in its key and follow its transposition (manual:
+ * auxiliary/brain; the brain's pattern holds each chord change until the next). On top come the
  * tempo page's groove (or the track's own groove from the bar menu) and the metronome, which also
  * counts in a recording. The active track's arpeggio player runs here too while the transport plays
  * (manual: players/arpeggio), over the keys held or the notes its hold kept, on the same clock.
@@ -21,6 +23,7 @@
  * re-anchors when the tempo changes, follows the position while a device's clock drives it, and
  * ends the sequence's notes when the transport stops.
  */
+import { brainInfluence, brainShift } from '$lib/sim/areas/auxiliary/sim';
 import { lockParam } from '$lib/sim/areas/sequencer/locks';
 import { activeTrack, heldNotes, seq } from '$lib/sim/areas/sequencer/model';
 import { playerOf } from '$lib/sim/areas/sequencer/players';
@@ -343,7 +346,11 @@ export class Scheduler {
 
 	#notes(state: SimState, anchor: Anchor, until: number, now: number): Due[] {
 		const due: Due[] = [];
+		const brain = brainInfluence(state);
 		state.tracks.forEach((track, k) => {
+			// a track routed into the brain moves in its key and follows its transposition
+			const routed = brain !== null && brain.routes[k] === true;
+			const options = routed ? { scale: brain.scale } : {};
 			const pattern = currentPattern(track.sequence);
 			const scale = scaleOf(pattern);
 			let walk = this.#walks[k];
@@ -359,16 +366,17 @@ export class Scheduler {
 			const audible = !track.mix.muted && track.engine !== 'midi';
 			while (walk.slot * scale - lead < until) {
 				const slot = walk.slot++;
-				const next = advancePlayhead(pattern, walk.head, walk.rng);
+				const next = advancePlayhead(pattern, walk.head, walk.rng, options);
 				walk.head = next.head;
 				if (!audible || !next.play) continue;
-				this.#play(due, k, track, next.play, slot * scale, scale, groove, anchor, now);
+				const shift = routed ? brainShift(state, brain.key, slot * scale) : 0;
+				this.#play(due, k, track, next.play, slot * scale, scale, groove, anchor, now, shift);
 			}
 		});
 		return due;
 	}
 
-	/** Turns what one slot plays into notes on the audio clock. */
+	/** Turns what one slot plays into notes on the audio clock, `shift` semitones transposed. */
 	#play(
 		due: Due[],
 		k: number,
@@ -378,7 +386,8 @@ export class Scheduler {
 		scale: number,
 		groove: Groove,
 		anchor: Anchor,
-		now: number
+		now: number,
+		shift = 0
 	): void {
 		if (play.notes.length === 0) return;
 		const settings = lockedSettings(track, play.locks);
@@ -406,7 +415,7 @@ export class Scheduler {
 				settings,
 				event: {
 					track: k,
-					note: n.note,
+					note: clamp(n.note + shift, 0, 127),
 					velocity: clamp(Math.round(velocity), 1, 127),
 					time,
 					duration: Math.max(0.01, end - time),

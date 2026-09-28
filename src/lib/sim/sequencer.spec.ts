@@ -343,7 +343,10 @@ describe('editing gestures on the model', () => {
 		expect(p.steps[3].notes[0]).toMatchObject({ note: 60, offset: 0.3, length: 0.5 });
 		// the same note again on that step replaces it
 		recordNote(p, 3.1, 60, 90, 2);
-		expect(p.steps[3].notes).toEqual([{ note: 60, velocity: 90, length: 2, offset: 0.1 }]);
+		// a live note keeps its own length: the bar menu's length leaves it alone
+		expect(p.steps[3].notes).toEqual([
+			{ note: 60, velocity: 90, length: 2, offset: 0.1, ownLength: true }
+		]);
 	});
 });
 

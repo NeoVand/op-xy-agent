@@ -21,9 +21,9 @@ import { DEFAULT_LEVEL, defaultState, type SimState } from '$lib/sim/params';
 
 /**
  * Bumped when a save can no longer simply be merged onto the defaults; older versions that can be
- * brought up to date are ({@link upgradeV1}).
+ * brought up to date are ({@link upgradeV1}, {@link upgradeGrooves}).
  */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 /** What is stored. */
 export interface SavedSim {
@@ -134,6 +134,16 @@ export function upgradeV1(project: unknown, library: unknown): void {
 	}
 }
 
+/** Where the seven grooves of versions 1–2 sit in the device's eleven (danish came in third). */
+const OLD_GROOVES = [0, 1, 3, 4, 5, 6, 7];
+
+/** A version 1–2 save's groove type, moved to the same groove in today's list. In place. */
+export function upgradeGrooves(project: unknown): void {
+	if (!isObject(project) || !isObject(project.tempo)) return;
+	const groove = project.tempo.groove;
+	if (typeof groove === 'number') project.tempo.groove = OLD_GROOVES[groove] ?? 0;
+}
+
 // ───────────────────────────────────────────────────────────────────── capture / apply
 
 /** The state's work, ready to store. */
@@ -184,7 +194,8 @@ export function settleSession(state: SimState): void {
  * changing nothing, when the save is from an incompatible version or does not parse.
  */
 export function applySaved(state: SimState, saved: SavedSim): boolean {
-	if (saved.version !== SAVE_VERSION && saved.version !== 1) return false;
+	const { version } = saved;
+	if (!Number.isInteger(version) || version < 1 || version > SAVE_VERSION) return false;
 	let project: unknown;
 	let library: unknown;
 	try {
@@ -193,7 +204,8 @@ export function applySaved(state: SimState, saved: SavedSim): boolean {
 	} catch {
 		return false;
 	}
-	if (saved.version === 1) upgradeV1(project, library);
+	if (version === 1) upgradeV1(project, library);
+	if (version < 3) upgradeGrooves(project);
 	const fresh = defaultState();
 	const freshProject = JSON.parse(snapshot(fresh)) as Record<string, unknown>;
 	restore(state, JSON.stringify(mergeDefaults(project, freshProject)), saved.name);

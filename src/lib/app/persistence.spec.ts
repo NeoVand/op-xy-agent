@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ReplicaState } from '$lib/replica';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
-import { DEFAULT_LEVEL } from '$lib/sim/params';
+import { DEFAULT_LEVEL, GROOVES } from '$lib/sim/params';
 import { currentPattern } from '$lib/sim/sequencer';
 import { FakeTime } from '../../../test/fakes/fake-time';
 import {
@@ -105,6 +105,16 @@ describe('saving the virtual OP-XY’s work', () => {
 		expect(sim.state.tempo.bpm).toBe(128);
 		const own = sim.state.areas.system.presets.library.filter((p) => p.user);
 		expect(own.map((p) => p.name)).toEqual(['mine']);
+	});
+
+	it('keeps an older save’s groove when the device’s four extra grooves come in', () => {
+		const work = withWork();
+		const saved = captureSim(work.state);
+		const project = JSON.parse(saved.project);
+		project.tempo.groove = 2; // bombora in the old seven
+		const sim = new OpxySim({ now: () => 0 });
+		applySaved(sim.state, { ...saved, version: 2, project: JSON.stringify(project) });
+		expect(GROOVES[sim.state.tempo.groove]).toBe('bombora');
 	});
 
 	it('leaves the state alone for a save it cannot read', () => {

@@ -552,7 +552,7 @@ describe('live recording (manual: sequencer/live-recording)', () => {
 		sim.advance(SIXTEENTH * 2);
 		up(sim, 'keyboard.c4');
 		expect(pattern(sim).steps[0].notes).toEqual([
-			{ note: 48, velocity: 100, length: 2, offset: 0 }
+			{ note: 48, velocity: 100, length: 2, offset: 0, ownLength: true }
 		]);
 		sim.advance(SIXTEENTH * 2.3);
 		sim.press('keyboard.e4');

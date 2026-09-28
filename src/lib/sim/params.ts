@@ -66,15 +66,22 @@ export const PLAY_MODES = ['poly', 'mono', 'legato'] as const;
 export const LFO_TYPES: readonly LfoType[] = ['duck', 'element', 'random', 'tremolo', 'value'];
 /** Filter types (the four factory presets use; the manual says more may exist). */
 export const FILTER_TYPES: readonly FilterType[] = ['svf', 'ladder', 'z lowpass', 'z hipass'];
-/** Groove types on the tempo page (manual: tempo/grooves). */
+/**
+ * Groove types on the tempo page, in the order the device stores them (project header byte 3;
+ * `10-xy-format.md` §3). The online guide describes seven; TE's printed guide v1.1.5 all eleven.
+ */
 export const GROOVES = [
 	'shuffle',
 	'half shuffle',
+	'danish',
 	'bombora',
 	'wobbly',
 	'gaussian',
 	'accents',
-	'island nod'
+	'island nod',
+	'disfunk',
+	'roll over',
+	'prophetic'
 ] as const;
 /**
  * Two-letter names on the metronome. TE's art shows "SH" for shuffle; the others are our
@@ -83,11 +90,15 @@ export const GROOVES = [
 export const GROOVE_ABBREVIATIONS: Readonly<Record<(typeof GROOVES)[number], string>> = {
 	shuffle: 'SH',
 	'half shuffle': 'HS',
+	danish: 'DA',
 	bombora: 'BO',
 	wobbly: 'WO',
 	gaussian: 'GA',
 	accents: 'AC',
-	'island nod': 'IN'
+	'island nod': 'IN',
+	disfunk: 'DF',
+	'roll over': 'RO',
+	prophetic: 'PR'
 };
 /** Multi-out modes in E3's order (manual: com/multi-out). */
 export const MULTI_OUT_MODES: readonly MultiOutMode[] = [

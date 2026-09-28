@@ -1,11 +1,12 @@
 /**
  * Recording (manual: sequencer/live-recording, step-recording, single-sound, clear-and-undo):
  *
- * - live: `record + play` while stopped arms recording (step 1 flashes red) and the first note
- *   starts playback and recording together; `record + play → play` counts in a bar first; during
- *   playback, holding `record` records until it comes up and `record + play` latches it. Notes land
- *   on the nearest step with the rest as their offset, last as long as their key was held, and turn
- *   their steps red until stop; encoder turns store locks on the step that plays (automation).
+ * - live: `record + play` while stopped arms recording (step 1 flashes red); the first note, or
+ *   play, starts playback and recording together (the guide's get-started); play again with record
+ *   still held counts in a bar first (sequencer/live-recording "count-in"); during playback,
+ *   holding `record` records until it comes up and `record + play` latches it. Notes land on the
+ *   nearest step with the rest as their offset, last as long as their key was held, and turn their
+ *   steps red until stop; encoder turns store locks on the step that plays (automation).
  * - step recording: `record` held with playback stopped puts a red cursor on the first step of the
  *   bar shown; each key (or chord) fills the cursor step, which moves on when the keys come up;
  *   `record + [+]` / `[-]` move it, `record + step` clears a step.
@@ -124,6 +125,16 @@ export function recordRelease(ctx: AreaContext): void {
 	if (!st.recLatch && !st.countIn) finishTakes(s);
 }
 
+/** An armed take starts: playback and recording from the top of the pattern at once. */
+function startTake(s: SimState): void {
+	const st = seq(s);
+	st.armed = false;
+	st.recLatch = true;
+	remember(s);
+	s.transport.playing = true;
+	s.transport.position = 0;
+}
+
 /** Starts the count-in: playback runs a bar ahead of the pattern, then records. */
 function startCountIn(s: SimState): void {
 	const st = seq(s);
@@ -151,7 +162,7 @@ export function playPress(ctx: AreaContext): boolean {
 		return true;
 	}
 	if (st.armed) {
-		startCountIn(s);
+		startTake(s);
 		return true;
 	}
 	return false;
@@ -198,13 +209,7 @@ export function recordKey(s: SimState, id: string, key: number): void {
 		st.cursorFilled = true;
 		return;
 	}
-	if (st.armed) {
-		st.armed = false;
-		st.recLatch = true;
-		remember(s);
-		s.transport.playing = true;
-		s.transport.position = 0;
-	}
+	if (st.armed) startTake(s);
 	if (!liveRecording(s)) return;
 	const start = playhead(s, pattern);
 	const at = recordNote(pattern, start, note, 100, pattern.noteLength);

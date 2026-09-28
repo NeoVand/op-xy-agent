@@ -13,13 +13,17 @@ aliases:
     half shuffle,
     bombora,
     gaussian,
-    island nod
+    island nod,
+    danish,
+    disfunk,
+    roll over,
+    prophetic
   ]
 area: tempo
 order: 10
 context:
   screens: [tempo, bar]
-summary: A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of seven types with E2 on the tempo screen and dial swing or shuffle with E3; the bar menu can override the amount per track.
+summary: A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of eleven types with E2 on the tempo screen and dial swing or shuffle with E3; the bar menu can override the amount per track.
 status: current
 firmware:
   min: '1.0.9'
@@ -37,8 +41,9 @@ facts:
     text: On the tempo screen, `turn E3` clockwise past the centre for swing or anticlockwise for shuffle; the two push notes in opposite directions.
     source: https://teenage.engineering/guides/op-xy/tempo#edit-tempo
   - id: types
-    text: '`turn E2` on the tempo screen picks the groove type: shuffle, half shuffle, bombora, wobbly, gaussian, accents or island nod.'
-    source: https://teenage.engineering/guides/op-xy/tempo#what-are-grooves
+    text: '`turn E2` on the tempo screen picks the groove type, in this order: shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over and prophetic.'
+    source: docs/research/40-official-docs.md#52-older-gaps-and-contradictions-true-even-for-1115
+    confidence: community-verified
   - id: plain-types
     text: Shuffle is the everyday swing and half shuffle a lighter version of it; accents emphasises the important beats.
     source: https://teenage.engineering/guides/op-xy/tempo#what-are-grooves
@@ -48,6 +53,10 @@ facts:
   - id: joke-types
     text: TE describes gaussian and island nod only in jokes, so judge them by ear.
     source: https://teenage.engineering/guides/op-xy/tempo#what-are-grooves
+  - id: extra-types
+    text: The online guide leaves out four types. Danish relaxes the beat, disfunk turns funky one way and groovy the other, and roll over gives a slow, lazy hip-hop feel. TE gives prophetic no description at all.
+    source: docs/research/40-official-docs.md#52-older-gaps-and-contradictions-true-even-for-1115
+    confidence: official
   - id: per-track
     text: "`bar + turn E3` sets a groove amount for the current track that replaces the tempo screen's swing value; the groove type still comes from the tempo screen."
     source: https://teenage.engineering/guides/op-xy/sequencer#extend-with-bar

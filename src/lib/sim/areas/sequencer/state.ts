@@ -54,6 +54,11 @@ export interface SequencerState {
 	holds: Record<string, StepHold>;
 	/** The steps held now have had their first edit, which remembered the sequence for undo. */
 	holdUndo: boolean;
+	/**
+	 * A nudge whose [-] / [+] is still down: it repeats, faster and faster, from `next` (clock ms;
+	 * manual: sequencer/nudge "hold them to make faster changes").
+	 */
+	nudge: { direction: -1 | 1; next: number; repeats: number } | null;
 	/** A step copied by holding it: the next empty step pressed gets it. */
 	clipboard: SeqStep | null;
 	/** The lock turned last (pattern step and parameter id), for the screen. */
@@ -113,6 +118,7 @@ export function initialSequencer(): SequencerState {
 		component: null,
 		holds: {},
 		holdUndo: false,
+		nudge: null,
 		clipboard: null,
 		lastLock: null,
 		// a new project's keyboard octaves: T3 and T6 an octave down, T4 up (the device's own);

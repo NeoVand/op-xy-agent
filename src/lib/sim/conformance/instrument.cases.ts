@@ -643,16 +643,30 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 	});
 
 	describe('11.2 what are grooves?', () => {
-		it('turns E2 through the seven grooves in the guide’s order, stopping at the ends (ours)', async () => {
+		it('turns E2 through the eleven grooves in the device’s order, stopping at the ends (ours)', async () => {
 			const d = await start();
 			await d.click('key.tempo');
 			const seen: string[] = [];
-			for (let i = 0; i < 8; i++) {
+			for (let i = 0; i < 12; i++) {
 				seen.push(on(d, 'tempo').groove);
 				await d.turn(2, 1);
 			}
-			// shuffle, half shuffle, bombora, wobbly, gaussian, accents, island nod: only "SH" is TE's
-			expect(seen).toEqual(['SH', 'HS', 'BO', 'WO', 'GA', 'AC', 'IN', 'IN']);
+			// the guide's seven, with danish, disfunk, roll over and prophetic where the device keeps
+			// them (TE's printed guide names all eleven); only "SH" is TE's abbreviation
+			expect(seen).toEqual([
+				'SH',
+				'HS',
+				'DA',
+				'BO',
+				'WO',
+				'GA',
+				'AC',
+				'IN',
+				'DF',
+				'RO',
+				'PR',
+				'PR'
+			]);
 			await d.turn(2, -20);
 			expect(on(d, 'tempo').groove).toBe('SH');
 		});

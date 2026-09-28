@@ -12,6 +12,7 @@ import {
 	MAX_BARS,
 	STEPS_PER_BAR,
 	addBar,
+	applyNoteLength,
 	clearAll,
 	clearLocks,
 	clearNotes,
@@ -158,7 +159,9 @@ export function barTurn(s: SimState, e: number, delta: number): void {
 			pattern.quantise = clamp(pattern.quantise + delta, 0, 100);
 			break;
 		case 1:
+			// the step-entered notes already there take the new length too
 			pattern.noteLength = clamp(Math.round(pattern.noteLength * 100) + delta, 1, 100) / 100;
+			applyNoteLength(pattern);
 			break;
 		case 2:
 			pattern.groove = stepGroove(pattern.groove, delta);

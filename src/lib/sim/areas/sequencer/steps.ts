@@ -188,6 +188,33 @@ export function lockTurn(s: SimState, e: number, delta: number, fine: boolean): 
 	return true;
 }
 
+/** A nudge key held this long starts repeating (ms; ours). */
+export const NUDGE_REPEAT_MS = 400;
+/** The repeats start this far apart and close in to the second (ms; ours). */
+const NUDGE_SLOW_MS = 80;
+const NUDGE_FAST_MS = 20;
+
+/**
+ * Repeats a nudge while its [-] / [+] and the steps stay down, faster the longer they are held
+ * (manual: sequencer/nudge); called as time passes.
+ */
+export function repeatNudge(s: SimState): void {
+	const st = seq(s);
+	const n = st.nudge;
+	if (!n) return;
+	const held = heldSteps(s);
+	const pattern = activePattern(s);
+	if (!s.held.includes(n.direction > 0 ? 'key.plus' : 'key.minus') || held.length === 0) {
+		st.nudge = null;
+		return;
+	}
+	while (st.clock >= n.next && canNudge(pattern)) {
+		for (const index of held) nudgeStep(pattern, index, n.direction);
+		n.repeats++;
+		n.next += Math.max(NUDGE_FAST_MS, NUDGE_SLOW_MS - 10 * n.repeats);
+	}
+}
+
 /**
  * `[-]` / `[+]` (bar menu aside): step recording's cursor, a nudge of the held steps, a rotation of
  * the held track, a transposition with shift (instrument tracks: an octave, or a semitone on drums),
@@ -205,6 +232,7 @@ export function plusMinus(s: SimState, direction: -1 | 1): boolean {
 		if (canNudge(pattern)) {
 			rememberOnce(s);
 			for (const index of held) nudgeStep(pattern, index, direction);
+			st.nudge = { direction, next: st.clock + NUDGE_REPEAT_MS, repeats: 0 };
 		}
 		editHolds(s);
 		return true;

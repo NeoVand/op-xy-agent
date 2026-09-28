@@ -18,6 +18,7 @@ import type { ListFrame, LfoFrame, ScreenFrame } from '../../screen/frame';
 import type { SoftLabel } from '../../screen/draw';
 import type { SimInput } from '../../input';
 import { currentPattern, recordNote, stepAt, type Pattern } from '../../sequencer';
+import type { MusicalScale } from '../../sequencer-playback';
 import type { AreaContext, SimArea } from '../types';
 import type {
 	AuxBrainFrame,
@@ -152,20 +153,28 @@ function soundingNotes(s: SimState, track: number): number[] {
 }
 
 /**
- * The note an aux track's pattern started last, at or before the playhead: the pattern loops, so
- * it holds until the next one. A chord gives its lowest note (ours). Null when stopped, counting
- * in or with an empty pattern.
+ * The note an aux track's pattern started last at or before transport `position`: the pattern
+ * loops, so it holds until the next one. A chord gives its lowest note (ours). Null with an empty
+ * pattern.
  */
-function latestNote(s: SimState, track: number): number | null {
-	const t = s.transport;
-	if (!t.playing || t.position < 0) return null;
+function noteAt(s: SimState, track: number, position: number): number | null {
 	const pattern = currentPattern(s.aux[track].sequence);
-	const at = stepAt(pattern, t.position);
+	const at = stepAt(pattern, position);
 	for (let back = 0; back < pattern.length; back++) {
 		const notes = pattern.steps[(at - back + pattern.length) % pattern.length].notes;
 		if (notes.length > 0) return Math.min(...notes.map((n) => n.note));
 	}
 	return null;
+}
+
+/**
+ * The note an aux track's pattern started last, at or before the playhead ({@link noteAt}); null
+ * when stopped or counting in.
+ */
+function latestNote(s: SimState, track: number): number | null {
+	const t = s.transport;
+	if (!t.playing || t.position < 0) return null;
+	return noteAt(s, track, t.position);
 }
 
 /** Keyboard keys (0–23) of notes, where they fall on the keyboard. */
@@ -238,6 +247,40 @@ function brainNote(s: SimState): number | null {
 
 /** The settings of the pattern the brain track plays. */
 const currentBrain = (s: SimState) => brainSettings(s.areas.auxiliary, s.aux[0].sequence.current);
+
+/** What the brain does to the tracks routed into it, from {@link brainInfluence}. */
+export interface BrainInfluence {
+	/** Instrument tracks 0–7 routed in: the only ones it acts on. */
+	readonly routes: readonly boolean[];
+	/** The key it detected or was set to (0–11), which transpositions are measured from. */
+	readonly key: number;
+	/** That key and its scale: what ramps, random and tonality move in ("the current scale"). */
+	readonly scale: MusicalScale;
+}
+
+/**
+ * What the brain does now to the tracks routed into it (manual: auxiliary/brain; step components'
+ * "current scale"): their step components move in its key and scale, and their notes follow its
+ * transposition ({@link brainShift}). Null while the brain track is muted (ours).
+ */
+export function brainInfluence(s: SimState): BrainInfluence | null {
+	if (s.aux[0].mix.muted) return null;
+	const b = currentBrain(s);
+	const { key, scale } = brainKey(s, b);
+	return { routes: b.routes, key, scale: { root: key, degrees: SCALES[scale].steps } };
+}
+
+/**
+ * The transposition in force at transport `position`, in semitones: the brain pattern's latest note
+ * then (a chord change holds until the next), else the last note played on its keyboard, taken
+ * from `key` to that note's pitch class the short way round (−5…+6; ours). 0 without either.
+ */
+export function brainShift(s: SimState, key: number, position: number): number {
+	const note = noteAt(s, 0, position) ?? s.areas.auxiliary.brain.note;
+	if (note === null) return 0;
+	const up = (((note - key) % 12) + 12) % 12;
+	return up > 6 ? up - 12 : up;
+}
 
 /**
  * Brain page: the title is the key the routed tracks play in now (the root moved to the brain note

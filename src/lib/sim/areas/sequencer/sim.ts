@@ -53,7 +53,7 @@ import {
 	stopPress,
 	stopRelease
 } from './recording';
-import { lockTurn, plusMinus } from './steps';
+import { lockTurn, plusMinus, repeatNudge } from './steps';
 
 const encoderIndex = (id: string) => {
 	const m = /^encoder\.([1-4])$/.exec(id);
@@ -249,6 +249,7 @@ export const sequencer: SimArea = {
 	advance(s: SimState, ms: number): void {
 		const st = seq(s);
 		st.clock += ms;
+		repeatNudge(s);
 		if (st.clearClock !== null && st.clock - st.clearClock >= CLEAR_MS) clearTrack(s);
 		if (recordingAny(s) || s.transport.recording) syncRecordingFlag(s);
 	}

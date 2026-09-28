@@ -219,7 +219,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					note,
 					velocity: clampInt(n.velocity, 1, 127),
 					length: Math.max(0.05, Math.min(MAX_STEPS, n.length)),
-					offset: 0
+					offset: 0,
+					ownLength: true
 				});
 			}
 			playPattern(s, t, pattern - 1);

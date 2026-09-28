@@ -326,6 +326,12 @@ resolve to anchors in our scrape. Six OS releases have shipped since.
 - **MIDI CC map:** the official table has 12 rows ("track parameters: 46" is ambiguous). Full per-parameter CCs
   must come from community research and device probing (see `00-initial-deep-research.md`, CC106/107).
 - **Display:** the product page says 480 × 222 px; guide §1.4 says 480 × 220.
+- **Grooves:** §11.2 describes seven types; the device stores eleven (project header byte 3,
+  `10-xy-format.md` §3) and TE's printed guide v1.1.5 describes all of them. In the device's order:
+  shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over,
+  prophetic. The printed guide, in short: danish is a relaxed, laid-back feel; disfunk leans funky
+  one way and groovy the other; roll over is a slow, lazy hip-hop feel; TE gives prophetic no
+  meaning at all.
 
 ### 5.3 TE errata we keep verbatim (and our manual must not copy)
 

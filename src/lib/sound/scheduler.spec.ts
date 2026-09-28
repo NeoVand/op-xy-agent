@@ -199,6 +199,42 @@ describe('the lookahead scheduler', () => {
 		expect(curve[curve.length - 1]).toBeCloseTo(-300);
 	});
 
+	it("moves a routed track's ramps in the brain's key; unrouted tracks climb in semitones", () => {
+		const { state, play, run, notes, pattern } = rig();
+		state.areas.auxiliary.brain.patterns[0].auto = false; // c major, set by hand
+		for (const k of [0, 2]) {
+			toggleStep(pattern(k), 0, [60]);
+			setComponentValue(pattern(k), [0], 'ramp up', 3); // four stages over an octave
+		}
+		play();
+		run(4.5);
+		const passes = (k: number) => notes.filter((n) => n.track === k).map((n) => n.note);
+		// T3 is routed into the brain (a new project routes T3–T8); the drums on T1 are not
+		expect(passes(2)).toEqual([60, 64, 69]);
+		expect(passes(0)).toEqual([60, 64, 68]);
+	});
+
+	it("transposes the routed tracks by the brain pattern's note until the next one", () => {
+		const { state, play, run, notes, pattern } = rig();
+		state.areas.auxiliary.brain.patterns[0].auto = false;
+		const brain = currentPattern(state.aux[0].sequence);
+		toggleStep(brain, 0, [62]); // d: up a tone from c
+		toggleStep(brain, 8, [58]); // a#: down a tone, the short way
+		for (const step of [0, 4, 8, 12]) {
+			toggleStep(pattern(2), step, [60]);
+			toggleStep(pattern(0), step, [53]);
+		}
+		play();
+		run(1.9);
+		const bar = (k: number) =>
+			notes
+				.filter((n) => n.track === k)
+				.slice(0, 4)
+				.map((n) => n.note);
+		expect(bar(2)).toEqual([62, 62, 58, 58]);
+		expect(bar(0)).toEqual([53, 53, 53, 53]);
+	});
+
 	it('hands a locked step its settings: the lock reaches the note, the track stays as it was', () => {
 		const { play, run, settings, pattern, state } = rig();
 		const p = pattern(2);

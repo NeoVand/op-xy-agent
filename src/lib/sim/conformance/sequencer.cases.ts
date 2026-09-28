@@ -231,6 +231,25 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			expect(notes(d, 5)).toEqual([48]);
 		});
 
+		it('nudges faster while [+] or [-] stays down (the repeat timing is ours)', async () => {
+			const d = await start();
+			await synth(d);
+			await play(d, 'c4');
+			await d.click(step(5));
+			await d.holding('key.bar', () => d.turn(1, -10));
+			const offset = () => at(d, 5).notes[0].offset;
+			await d.holding(step(5), async () => {
+				await d.down('key.plus');
+				await d.wait(700);
+				await d.up('key.plus');
+			});
+			// one press moves a note by one nudge; held, it keeps going
+			expect(offset()).toBeGreaterThan(4 * NUDGE);
+			const reached = offset();
+			await d.wait(500);
+			expect(offset()).toBe(reached);
+		});
+
 		it('shows only one sound’s steps with its key held and record tapped, and sequences it', async () => {
 			const d = await start();
 			await play(d, 'f3');
@@ -440,6 +459,20 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.click('key.stop');
 		});
 
+		it('starts recording at once with play after arming: no count-in (get-started 4.2)', async () => {
+			const d = await start();
+			await synth(d);
+			await d.holding('key.record', () => d.click('key.play'));
+			expect(d.state.transport.playing).toBe(false);
+			await d.click('key.play');
+			expect(d.state.transport.playing).toBe(true);
+			expect(d.state.transport.position).toBeGreaterThanOrEqual(0);
+			await d.wait(STEP_MS);
+			await d.click(key('d4'));
+			expect(pattern(d).steps.some((s) => s.notes.some((n) => n.note === 50))).toBe(true);
+			await d.click('key.stop');
+		});
+
 		it('counts in a bar with record + play, then play again', async () => {
 			const d = await start();
 			await synth(d);
@@ -593,6 +626,20 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			expect(p().noteLength).not.toBe(before.noteLength);
 			expect(p().groove).not.toBe(before.groove);
 			expect(p().smoothing).toBeGreaterThan(before.smoothing);
+		});
+
+		it('sets the length of step-entered notes with E2, old ones too; extended notes keep theirs', async () => {
+			const d = await start();
+			await synth(d);
+			await play(d, 'c4');
+			await d.clicks(step(1), step(5));
+			await d.holding(step(5), () => d.click(step(8))); // extended to the end of step 8
+			await d.holding('key.bar', () => d.turn(2, 30)); // a new project's 50 → 80
+			expect(at(d, 1).notes[0].length).toBeCloseTo(0.8);
+			expect(at(d, 5).notes[0].length).toBe(4);
+			await play(d, 'd4');
+			await d.click(step(9));
+			expect(at(d, 9).notes[0].length).toBeCloseTo(0.8);
 		});
 
 		it('clears notes (M1), locks (M2) or both (M4) from the bar menu', async () => {

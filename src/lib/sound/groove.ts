@@ -27,8 +27,11 @@ interface Warp {
 /**
  * Per type: the warp, the random timing spread (sixteenths at full amount) and the accents. Shuffle
  * delays every second sixteenth by up to half a sixteenth (a 3:1 feel at 99); half shuffle half as
- * far; bombora drags beats 2 and 4; wobbly swings a little and wanders a lot; gaussian only jitters;
- * accents leans on the beats; island nod lays back the off-beat of each beat.
+ * far; danish lays every off-beat back a little, loosely; bombora drags beats 2 and 4; wobbly swings
+ * a little and wanders a lot; gaussian only jitters; accents leans on the beats; island nod lays
+ * back the off-beat of each beat; disfunk swings the sixteenths either side of each eighth (its
+ * disco-to-funk turn is the amount's two directions); roll over drags a lazy hip-hop beat; prophetic
+ * is an odd two-beat lilt of our own.
  */
 const TYPES: Readonly<Record<GrooveName, { warp: Warp; spread: number; gaussian?: true }>> = {
 	shuffle: { warp: { cycle: 2, points: [[1, 0.5]] }, spread: 0.02 },
@@ -36,6 +39,7 @@ const TYPES: Readonly<Record<GrooveName, { warp: Warp; spread: number; gaussian?
 	bombora: { warp: { cycle: 8, points: [[4, 0.75]] }, spread: 0.03 },
 	wobbly: { warp: { cycle: 2, points: [[1, 0.3]] }, spread: 0.18 },
 	gaussian: { warp: { cycle: 1, points: [] }, spread: 0.1, gaussian: true },
+	danish: { warp: { cycle: 2, points: [[1, 0.35]] }, spread: 0.05 },
 	accents: { warp: { cycle: 2, points: [[1, 0.15]] }, spread: 0.02 },
 	'island nod': {
 		warp: {
@@ -46,6 +50,40 @@ const TYPES: Readonly<Record<GrooveName, { warp: Warp; spread: number; gaussian?
 			]
 		},
 		spread: 0.03
+	},
+	disfunk: {
+		warp: {
+			cycle: 4,
+			points: [
+				[1, 0.45],
+				[2, 0.1],
+				[3, 0.45]
+			]
+		},
+		spread: 0.03
+	},
+	'roll over': {
+		warp: {
+			cycle: 4,
+			points: [
+				[1, 0.6],
+				[2, 0.25],
+				[3, 0.8]
+			]
+		},
+		spread: 0.05
+	},
+	prophetic: {
+		warp: {
+			cycle: 8,
+			points: [
+				[2, 0.3],
+				[3, 0.6],
+				[5, -0.2],
+				[6, 0.4]
+			]
+		},
+		spread: 0.04
 	}
 };
 
@@ -98,6 +136,10 @@ export function grooveVelocity(position: number, groove: Groove): number {
 		}
 		case 'island nod':
 			return inBeat === 2 ? 1 + 0.15 * a : 1;
+		case 'danish':
+			return inBeat % 2 === 1 ? 1 - 0.1 * a : 1;
+		case 'disfunk':
+			return inBeat === 2 ? 1 + 0.2 * a : 1;
 		case 'bombora':
 			return ((Math.round(position) % 8) + 8) % 8 === 4 ? 1 + 0.15 * a : 1;
 		default:
