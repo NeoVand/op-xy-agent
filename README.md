@@ -14,16 +14,20 @@ star in [`docs/VISION.md`](docs/VISION.md).
   every key, encoder, LED and legend sits where it does on the device. Its screen runs our own
   simulator of the OP-XY's interface: the four modes, M1–M4 with their shift layers, engine / filter /
   LFO pickers, tempo, project, COM and the mixer. Pages are drawn at the display's 480 × 222 pixels
-  in the device's screen font, extracted from the guide's illustrations. It plays, too: the synth
-  engines, the drum kit and the sequencer sound in the browser, and your work is kept across
-  reloads.
+  in the device's screen font. Where the guide has no picture, or the device differs from it, they
+  are rebuilt from camera captures of a real unit, to within about half a pixel. It plays, too: the
+  synth engines (calibrated against the device's audio), the drum kit and the sequencer sound in the
+  browser, and your work is kept across reloads.
 - **Connect your OP-XY over USB.** Connection uses Web MIDI (Chrome, Edge). The replica mirrors
   what the device plays (notes in any octave, pitch bend, transport, a clock-driven playhead). It
-  also drives the device: notes, play/stop and track select. The agent can also set the tempo and
-  mute tracks.
+  also drives the device: notes, play/stop and track select. The agent can also set the tempo, mute
+  tracks and set a track's sound (engine values, envelopes, filter, level, pan).
 - **An agent that teaches and does.** Claude answers from our own reworded manual and cites the
-  section. It shows key combos on the replica, reads the simulated screen, and controls the device.
-  Every change asks for your approval and can be undone. You can attach sheet music (photos or
+  section. For "how do I…" it gives the exact keys and encoder turns from where you are, tried on the
+  simulator first. It can play them on the replica, or walk you through them: the next key lights,
+  and the replica waits until you press it. It turns ideas into settings: "make the bass pump with
+  the kick" or "a plucky bass". It reads the simulated screen and controls the device. Every change
+  asks for your approval and can be undone. You can attach sheet music (photos or
   PDFs), MIDI files or text (ABC, lyrics, notes), and the agent reads them and plays them. Without
   a device it plays the virtual OP-XY on screen, and it can program it: patterns note by note,
   scenes and a song, which you then hear in the browser.
