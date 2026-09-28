@@ -126,6 +126,52 @@ export function lockBit(column: number): number {
 	return column === 0 ? 41 : column - 1;
 }
 
+/** A pair of modulation words: the target and the amount. */
+export type XyModulation = readonly [target: number, amount: number];
+
+/**
+ * A pattern's sound settings (§3.6), each word as q15 (0–32767; signed controls centre on 16384),
+ * as `knowledge/presets/new-project.json` holds a new project's. The engine-specific parts (a drum
+ * kit's keys, a sampler's sample) are not read here.
+ */
+export interface XySoundState {
+	/** M1: the engine's four encoders, then four words the engine keeps. */
+	readonly params: readonly number[];
+	readonly amp: readonly number[];
+	readonly filterEnv: readonly number[];
+	/** The play mode word, raw ({@link playModeOf}). */
+	readonly playMode: number;
+	readonly portamento: { readonly amount: number; readonly type: number };
+	readonly bend: number;
+	/** The preset volume (shift + M2), not the mixer's level. */
+	readonly volume: number;
+	/** The M3 filter: its type byte ({@link XY_FILTERS}), switch and four encoders. */
+	readonly filter: {
+		readonly type: number;
+		readonly on: boolean;
+		readonly params: readonly number[];
+	};
+	/** Aux out, tape, FX I, FX II. */
+	readonly sends: readonly number[];
+	/** M4: its type byte ({@link XY_LFOS}), switch and eight words. */
+	readonly lfo: { readonly type: number; readonly on: boolean; readonly params: readonly number[] };
+	readonly velocity: {
+		readonly sensitivity: number;
+		readonly target: number;
+		readonly amount: number;
+	};
+	readonly width: number;
+	readonly highpass: number;
+	readonly tuning: { readonly scale: number; readonly root: number };
+	readonly modulation: {
+		readonly modwheel: XyModulation;
+		readonly aftertouch: XyModulation;
+		readonly pitchbend: XyModulation;
+	};
+	/** The mixer's level and pan words, as q15. */
+	readonly mix: { readonly level: number; readonly pan: number };
+}
+
 /** What a pattern plays (read-only here: the writer keeps the template's sound). */
 export interface XySound {
 	/** Engine byte ({@link XY_ENGINES}); FX I and FX II keep their effect type here. */
@@ -136,6 +182,8 @@ export interface XySound {
 	readonly volume: number;
 	/** Track pan, Q31 (0x40000000 centre). */
 	readonly pan: number;
+	/** Every setting of the sound, as q15 words. */
+	readonly state: XySoundState;
 }
 
 /** One pattern: its sequence and the bar menu's settings (§3.4). */
@@ -267,8 +315,7 @@ export const XY_SCENE_LENGTHS = ['longest', 'shortest', 'time signature'] as con
 
 /**
  * Engines by their byte (§3.12), named as `core/opxy` names them; 0x1D is the external MIDI engine.
- * FX I and FX II use the same byte for their effect: delay 0x00, reverb 0x05, chorus 0x0C, phaser
- * 0x0D, distortion 0x0E, lofi 0x0F.
+ * FX I and FX II use the same byte for their effect ({@link XY_EFFECTS}).
  */
 export const XY_ENGINES: Readonly<Record<number, string>> = {
 	0x02: 'sampler',
@@ -284,6 +331,41 @@ export const XY_ENGINES: Readonly<Record<number, string>> = {
 	0x1f: 'wavetable',
 	0x20: 'simple'
 };
+
+/** FX I and FX II's effects by their engine byte. */
+export const XY_EFFECTS: Readonly<Record<number, string>> = {
+	0x00: 'delay',
+	0x05: 'reverb',
+	0x0c: 'chorus',
+	0x0d: 'phaser',
+	0x0e: 'distortion',
+	0x0f: 'lofi'
+};
+
+/** Filter types by their byte (`xy/patch_json.py` FX_TYPE_BYTES). */
+export const XY_FILTERS: Readonly<Record<number, string>> = {
+	0x09: 'z lowpass',
+	0x0a: 'svf',
+	0x10: 'ladder',
+	0x11: 'z hipass'
+};
+
+/** LFO types by their byte (`xy/patch_json.py` LFO_TYPE_BYTES); duck's byte is not known yet. */
+export const XY_LFOS: Readonly<Record<number, string>> = {
+	0x00: 'tremolo',
+	0x01: 'value',
+	0x02: 'random',
+	0x03: 'element'
+};
+
+/**
+ * A play mode from its word: poly 0x15555555 and mono 0x3FFFFFFF are stored (research 30 §2.3),
+ * legato above them (the new project's lead/gaussian), the range split in thirds.
+ */
+export function playModeOf(word: number): 'poly' | 'mono' | 'legato' {
+	const third = 0x80000000 / 3;
+	return word < third ? 'poly' : word < 2 * third ? 'mono' : 'legato';
+}
 
 /**
  * The track scale bytes decoded so far (u20–u22), as sixteenths per step. The odd scales OS 1.1.25

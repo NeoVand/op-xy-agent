@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { createVirtualOpxy } from '$lib/app/virtual';
-import { selectScene } from '$lib/sim/areas/arrange/model';
+import { playPattern, selectScene } from '$lib/sim/areas/arrange/model';
+import { fromQ15 } from '$lib/sim/defaults';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { defaultState, type SimState } from '$lib/sim/params';
 import {
@@ -15,8 +16,10 @@ import {
 	toggleComponent,
 	toggleStep
 } from '$lib/sim/sequencer';
+import { setU32 } from '$lib/core/xy/bytes';
 import { decodeXy, encodeXy } from '$lib/core/xy/container';
 import { XyModelError } from '$lib/core/xy/errors';
+import { PATTERN, SOUND, walkProject } from '$lib/core/xy/layout';
 import { XY_STEP_COMPONENTS } from '$lib/core/xy/model';
 import { readProject } from '$lib/core/xy/read';
 import { writeProject } from '$lib/core/xy/write';
@@ -25,6 +28,28 @@ import { simToXy, xyToSim } from './xy';
 const fixture = (name: string) =>
 	new Uint8Array(readFileSync(new URL(`../core/xy/fixtures/${name}`, import.meta.url)));
 const blank = fixture('blank-1.1.4.xy');
+
+/** An edit to a pattern's bytes: a Q31 word, or bytes, at an offset from the pattern's base. */
+interface Edit {
+	t: number;
+	p?: number;
+	offset: number;
+	word?: number;
+	bytes?: number[];
+}
+
+/** `file` with its image edited. */
+function patched(file: Uint8Array, edits: readonly Edit[]): Uint8Array {
+	const { header, image } = decodeXy(file);
+	const edited = image.slice();
+	const layout = walkProject(header, edited);
+	for (const edit of edits) {
+		const at = layout.tracks[edit.t][edit.p ?? 0].base + edit.offset;
+		if (edit.word !== undefined) setU32(edited, at, edit.word);
+		else edited.set(edit.bytes ?? [], at);
+	}
+	return encodeXy(header, edited);
+}
 
 /** Offsets where two files' images differ. */
 function differences(a: Uint8Array, b: Uint8Array): number[] {
@@ -448,6 +473,82 @@ describe('xyToSim', () => {
 			'T3 pattern 1: 1 note(s) before the first step or past the last',
 			'T3 pattern 1: 1 lock(s) in column 40, which the replica does not show (kept in the file)'
 		]);
+	});
+});
+
+describe('xyToSim: the sounds a project stores', () => {
+	it('plays each track’s stored settings over its preset, and saves back untouched', () => {
+		const file = patched(blank, [
+			{ t: 2, offset: SOUND.params, word: 0x7fff0000 },
+			{ t: 2, offset: SOUND.amp, word: 0x20000000 },
+			{ t: 2, offset: SOUND.filter, word: 0x40000000 },
+			{ t: 2, offset: SOUND.filterType, bytes: [0x10] },
+			{ t: 2, offset: SOUND.lfoType, bytes: [0x02] },
+			{ t: 2, offset: SOUND.lfoOn, bytes: [1] }
+		]);
+		const { state, skipped } = xyToSim(file);
+		expect(skipped).toEqual([]);
+		const t3 = state.tracks[2];
+		expect(t3.engine).toBe('prism');
+		expect(state.areas.system.trackPresets[2]).toBe('bass/shoulder');
+		expect(t3.m1[0]).toBe(99);
+		expect(t3.amp.attack).toBeCloseTo(fromQ15(0x2000), 9);
+		expect(t3.filter).toMatchObject({ type: 'ladder', on: true });
+		expect(t3.filter.cutoff).toBeCloseTo(fromQ15(0x4000), 9);
+		expect(t3.lfo).toMatchObject({ type: 'random', on: true });
+		// the file already holds these settings: saved over it, nothing is noted and nothing changes
+		const saved = simToXy(state, file);
+		expect(saved.skipped).toEqual([]);
+		expect(saved.bytes).toEqual(file);
+		// a setting changed in the replica is noted, since sounds are not written yet
+		t3.filter.cutoff = 10;
+		expect(simToXy(state, file).skipped).toEqual([
+			"T3: the changes to bass/shoulder's sound (sounds are not written yet)"
+		]);
+	});
+
+	it('keeps each pattern’s own sound for when that pattern plays', () => {
+		// locks.xy's scene plays T4's second pattern: the first one's sound waits in its slot
+		const file = patched(fixture('locks.xy'), [
+			{ t: 3, p: 0, offset: SOUND.amp, word: 0x7fff0000 }
+		]);
+		const { state } = xyToSim(file);
+		expect(state.tracks[3].sequence.current).toBe(1);
+		expect(state.tracks[3].amp.attack).not.toBe(99);
+		expect(state.areas.arrange.sounds[3][0]?.amp.attack).toBe(99);
+		playPattern(state, 3, 0);
+		expect(state.tracks[3].amp.attack).toBe(99);
+	});
+
+	it('loads FX I and FX II: the effect each runs and its four settings', () => {
+		const file = patched(blank, [
+			{ t: 14, offset: PATTERN.engine, bytes: [0x0c] },
+			{ t: 14, offset: SOUND.params, word: 0x7fff0000 }
+		]);
+		const { state } = xyToSim(file);
+		const [fx1, fx2] = state.areas.auxiliary.fx;
+		expect(fx1.type).toBe('chorus');
+		expect(fx1.params[0]).toBe(99);
+		expect(fx2.type).toBe('reverb');
+		expect(fx2).toEqual(defaultState().areas.auxiliary.fx[1]);
+	});
+
+	it('names what the settings cannot carry: an unknown filter or LFO type, TE’s samples', () => {
+		const path = [...'drum/other kit'].map((c) => c.charCodeAt(0));
+		const file = patched(blank, [
+			{ t: 0, offset: PATTERN.presetPath, bytes: [...path, 0] },
+			{ t: 2, offset: SOUND.filterType, bytes: [0x33] },
+			{ t: 2, offset: SOUND.lfoType, bytes: [0x09] },
+			{ t: 14, offset: PATTERN.engine, bytes: [0x3f] }
+		]);
+		const { state, skipped } = xyToSim(file);
+		expect(skipped).toEqual([
+			"T1: drum/other kit's samples are TE's and not in the replica, so its own kit plays",
+			'T3: filter type byte 0x33 is not one we know (svf plays)',
+			'T3: LFO type byte 0x09 is not one we know (tremolo plays)',
+			'T15: effect byte 0x3f is not one we know (delay kept)'
+		]);
+		expect(state.tracks[2].filter.type).toBe('svf');
 	});
 });
 

@@ -549,6 +549,16 @@ Byte view: the "level byte" upstream sometimes quotes (e.g. volume "byte @ `+0x3
 the word at `+0x38FB`. For UI-ish levels upstream uses `byte<<24`, with 0 → min and `0x7F` →
 `0x7FFFFFFF` (`ImageProject._encode_mix_u32_from_byte`).
 
+**In the app (2026-09-28).** `readSoundState` (`src/lib/core/xy/read.ts`) reads these lanes as q15
+for every pattern, with the filter and LFO type bytes and switches (`+0x21`, `+0x25`, `+0x1C`, `+0x20`).
+On the OS 1.1.4 blank it returns exactly the eight sounds and two effects of
+`knowledge/presets/new-project.json` (read from the owner's 1.1.33 blank). `xyToSim` puts each track's
+playing pattern's settings over its preset, keeps the other patterns' for when they play, and loads
+FX I and FX II from T15 and T16. It is read-only: the writer still keeps the template's sound.
+TE's factory project "agent" loads with its real settings on its four synth tracks (two prism, two
+dissolve); its three sampler tracks and the drum kit name TE's samples, which the replica does not
+have.
+
 ### 3.7 Notes and performance lanes
 
 **Note record, 12 B** (`docs/format/decoded_image_map.md`; `ImageProject.add_note`):

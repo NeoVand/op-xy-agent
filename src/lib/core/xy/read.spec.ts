@@ -4,7 +4,15 @@ import { concat } from './bytes';
 import { decodeXy, encodeXy } from './container';
 import { XyFormatError } from './errors';
 import { PATTERN, laneCounts, walkProject } from './layout';
-import { XY_ENGINES, XY_STEP_COMPONENTS, type XyPattern } from './model';
+import {
+	XY_EFFECTS,
+	XY_ENGINES,
+	XY_FILTERS,
+	XY_LFOS,
+	XY_STEP_COMPONENTS,
+	playModeOf,
+	type XyPattern
+} from './model';
 import { readProject } from './read';
 import expected from './fixtures/expected.json';
 
@@ -155,6 +163,63 @@ describe('readProject', () => {
 		});
 		expect(project.tracks[0].patterns[0].sound.volume).toBe(0x60000000);
 		expect(project.songs).toEqual(Array(14).fill({ scenes: [0], loop: true }));
+	});
+
+	it('reads each sound’s settings as knowledge/presets/new-project.json holds a new project’s', () => {
+		const stored = JSON.parse(
+			readFileSync(
+				new URL('../../../../knowledge/presets/new-project.json', import.meta.url),
+				'utf8'
+			)
+		) as {
+			tracks: Record<string, unknown>[];
+			effects: Record<'fx1' | 'fx2', { type: string; params: number[] }>;
+		};
+		const project = readProject(fixture('blank-1.1.4.xy'));
+		stored.tracks.forEach((want, t) => {
+			const { state } = project.tracks[t].patterns[0].sound;
+			expect({
+				params: state.params.slice(0, 4),
+				amp: state.amp,
+				filterEnv: state.filterEnv,
+				playMode: playModeOf(state.playMode),
+				portamento: state.portamento,
+				bend: state.bend,
+				volume: state.volume,
+				filter: { ...state.filter, type: XY_FILTERS[state.filter.type] },
+				sends: state.sends,
+				lfo: { ...state.lfo, type: XY_LFOS[state.lfo.type] },
+				velocity: state.velocity,
+				width: state.width,
+				highpass: state.highpass,
+				tuning: state.tuning,
+				modulation: state.modulation,
+				mix: state.mix
+			}).toEqual({
+				params: want.params,
+				amp: want.amp,
+				filterEnv: want.filterEnv,
+				playMode: want.playMode,
+				portamento: want.portamento,
+				bend: want.bend,
+				volume: want.volume,
+				filter: want.filter,
+				sends: want.sends,
+				lfo: want.lfo,
+				velocity: want.velocity,
+				width: want.width,
+				highpass: want.highpass,
+				tuning: want.tuning,
+				modulation: want.modulation,
+				mix: want.mix
+			});
+		});
+		// FX I and FX II: the effect in the engine byte, its M1 in the first four parameter words
+		const effect = (t: number) => {
+			const { engine, state } = project.tracks[t].patterns[0].sound;
+			return { type: XY_EFFECTS[engine], params: state.params.slice(0, 4) };
+		};
+		expect([effect(14), effect(15)]).toEqual([stored.effects.fx1, stored.effects.fx2]);
 	});
 
 	it('reads any non-zero mute byte as muted (probe 06: 1, 2 and 3 all mute on the device)', () => {

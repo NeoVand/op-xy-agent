@@ -12,6 +12,31 @@ import type { Lfo, TrackState } from './params';
 
 const MAX = 32767;
 
+/**
+ * A sound as the device stores it, in q15 lanes: a new project's (`new-project.json`) or any
+ * pattern's in a project file (`$lib/sim/xy`).
+ */
+export type StoredSound = Pick<
+	NewProjectTrack,
+	| 'engine'
+	| 'params'
+	| 'amp'
+	| 'filterEnv'
+	| 'playMode'
+	| 'portamento'
+	| 'bend'
+	| 'volume'
+	| 'filter'
+	| 'sends'
+	| 'lfo'
+	| 'velocity'
+	| 'width'
+	| 'highpass'
+	| 'tuning'
+	| 'modulation'
+	| 'mix'
+>;
+
 /** An unsigned lane (0–32767) on our 0–99 scale, unrounded. */
 export const fromQ15 = (raw: number): number => (raw / MAX) * 99;
 
@@ -66,7 +91,7 @@ function envelopeOf([attack, decay, sustain, release]: readonly number[]) {
 }
 
 /** The LFO a stored sound carries, over `base` for the fields its type does not store. */
-function lfoOf(stored: NewProjectTrack['lfo'], base: Lfo, synced: number): Lfo {
+function lfoOf(stored: StoredSound['lfo'], base: Lfo, synced: number): Lfo {
 	const [p0, p1, p2, p3, , , , p7] = stored.params;
 	const lfo: Lfo = { ...base, type: stored.type, on: stored.on };
 	switch (stored.type) {
@@ -109,7 +134,7 @@ function lfoOf(stored: NewProjectTrack['lfo'], base: Lfo, synced: number): Lfo {
  * A stored sound laid over `base` (a fresh track of the same engine): everything the device stores
  * for the preset, the rest of `base` left alone. `synced` is the LFO dial's count of tempo steps.
  */
-export function soundOf(stored: NewProjectTrack, base: TrackState, synced: number): TrackState {
+export function soundOf(stored: StoredSound, base: TrackState, synced: number): TrackState {
 	const [cutoff, resonance, envAmount, keyTracking] = stored.filter.params;
 	const [aux, tape, fx1, fx2] = stored.sends;
 	return {
@@ -143,7 +168,7 @@ export function soundOf(stored: NewProjectTrack, base: TrackState, synced: numbe
 }
 
 /** A stored sound's preset settings, over `base` for what we do not decode (tunings, mod targets). */
-export function presetSettingsOf(stored: NewProjectTrack, base: PresetSettings): PresetSettings {
+export function presetSettingsOf(stored: StoredSound, base: PresetSettings): PresetSettings {
 	return {
 		...base,
 		highPass: fromQ15(stored.highpass),

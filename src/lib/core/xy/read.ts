@@ -1,7 +1,7 @@
 // Portions derived from kmorrill/xy-format (MIT, Copyright (c) 2026 Kevin Morrill): the readers of
-// xy/project_config_inspection.py, xy/bar_menu_inspection.py, xy/scene_volume_inspection.py and
-// xy/song_footer_inspection.py, and the note, step-component and p-lock layouts of
-// xy/image_writer.py, rebased on the lane-aware walk (docs/research/10-xy-format.md A.1).
+// xy/project_config_inspection.py, xy/bar_menu_inspection.py, xy/scene_volume_inspection.py,
+// xy/song_footer_inspection.py and xy/patch_sound_state.py, and the note, step-component and p-lock
+// layouts of xy/image_writer.py, rebased on the lane-aware walk (docs/research/10-xy-format.md A.1).
 //
 // Bytes → model: `readProject` decodes a `.xy` file into what `model.ts` describes.
 
@@ -18,6 +18,7 @@ import {
 	PRESET_PATH_SIZE,
 	SCENE_SIZE,
 	SCENE_SLOTS,
+	SOUND,
 	STEPS,
 	TRACKS,
 	walkProject,
@@ -34,6 +35,7 @@ import {
 	type XyScene,
 	type XySettings,
 	type XySong,
+	type XySoundState,
 	type XyStepComponent
 } from './model';
 
@@ -128,8 +130,53 @@ export function readPattern(image: Uint8Array, span: PatternSpan): XyPattern {
 			engine: image[base + PATTERN.engine],
 			preset: latin1(image, base + PATTERN.presetPath, PRESET_PATH_SIZE),
 			volume: u32(image, base + PATTERN.volume),
-			pan: u32(image, base + PATTERN.pan)
+			pan: u32(image, base + PATTERN.pan),
+			state: readSoundState(image, base)
 		}
+	};
+}
+
+/**
+ * The sound settings of the pattern at `base` (§3.6), each word as q15 (xy-format's
+ * `patch_sound_state`).
+ */
+export function readSoundState(image: Uint8Array, base: number): XySoundState {
+	const q15 = (offset: number) => u32(image, base + offset) >>> 16;
+	const run = (offset: number, words: number) =>
+		Array.from({ length: words }, (_, k) => q15(offset + 4 * k));
+	return {
+		params: run(SOUND.params, 8),
+		amp: run(SOUND.amp, 4),
+		filterEnv: run(SOUND.filterEnv, 4),
+		playMode: u32(image, base + SOUND.playMode),
+		portamento: { amount: q15(SOUND.portamento), type: q15(SOUND.portamentoType) },
+		bend: q15(SOUND.bend),
+		volume: q15(SOUND.volume),
+		filter: {
+			type: image[base + SOUND.filterType],
+			on: image[base + SOUND.filterOn] !== 0,
+			params: run(SOUND.filter, 4)
+		},
+		sends: run(SOUND.sends, 4),
+		lfo: {
+			type: image[base + SOUND.lfoType],
+			on: image[base + SOUND.lfoOn] !== 0,
+			params: run(SOUND.lfo, 8)
+		},
+		velocity: {
+			sensitivity: q15(SOUND.velocitySensitivity),
+			target: q15(SOUND.velocityTarget),
+			amount: q15(SOUND.velocityAmount)
+		},
+		width: q15(SOUND.width),
+		highpass: q15(SOUND.highpass),
+		tuning: { scale: q15(SOUND.tuningScale), root: q15(SOUND.tuningRoot) },
+		modulation: {
+			modwheel: [q15(SOUND.modwheel), q15(SOUND.modwheel + 4)],
+			aftertouch: [q15(SOUND.aftertouch), q15(SOUND.aftertouch + 4)],
+			pitchbend: [q15(SOUND.pitchbend), q15(SOUND.pitchbend + 4)]
+		},
+		mix: { level: q15(PATTERN.volume), pan: q15(PATTERN.pan) }
 	};
 }
 

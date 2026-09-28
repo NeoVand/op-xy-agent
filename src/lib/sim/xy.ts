@@ -11,13 +11,28 @@
  * touched writes back as its template.
  */
 import type { EngineId } from '$lib/core/opxy';
-import { captureScene, lengthSettings } from '$lib/sim/areas/arrange/model';
+import { captureScene, copy, lengthSettings } from '$lib/sim/areas/arrange/model';
 import { SCENES as SIM_SCENES, type PatternSound } from '$lib/sim/areas/arrange/state';
 import { octaveKey } from '$lib/sim/areas/sequencer/model';
+import { FX_TYPES, type FxSlot } from '$lib/sim/areas/auxiliary/state';
 import { SCENE_LENGTH_MODES, SIGNATURES } from '$lib/sim/areas/system/catalogue';
 import { loadEngineSound, loadPreset, presetKey } from '$lib/sim/areas/system/presets';
-import { fromQ15 } from '$lib/sim/defaults';
-import { defaultState, storedPresetSound, type SimState } from '$lib/sim/params';
+import {
+	NEW_PROJECT_PRESETS,
+	fromQ15,
+	presetSettingsOf,
+	soundOf,
+	type StoredSound
+} from '$lib/sim/defaults';
+import {
+	FILTER_TYPES,
+	LFO_SYNC_STEPS,
+	LFO_TYPES,
+	defaultState,
+	defaultTrack,
+	type SimState,
+	type TrackState
+} from '$lib/sim/params';
 import {
 	MAX_STEPS,
 	STEPS_PER_BAR,
@@ -28,11 +43,15 @@ import {
 import { hex2 } from '$lib/core/xy/bytes';
 import { SCENES, TICKS_PER_STEP, TRACKS } from '$lib/core/xy/layout';
 import {
+	XY_EFFECTS,
 	XY_ENGINES,
+	XY_FILTERS,
+	XY_LFOS,
 	XY_SCALES,
 	XY_SCENE_LENGTHS,
 	XY_TIME_SIGNATURES,
 	blankPattern,
+	playModeOf,
 	quantizeByte,
 	quantizePercent,
 	timeSignatureOf,
@@ -43,6 +62,7 @@ import {
 	type XyNote,
 	type XyPattern,
 	type XyProject,
+	type XySoundState,
 	type XyStepComponent
 } from '$lib/core/xy/model';
 import { readProject } from '$lib/core/xy/read';
@@ -316,9 +336,10 @@ function sameList<T>(a: readonly T[], b: readonly T[], key: (item: T) => string)
 		.every((k, i) => k === keys[i]);
 }
 
-// ─── what stays the template's ──────────────────────────────────────────────────────────────────
+// ─── sounds ─────────────────────────────────────────────────────────────────────────────────────
 
-const SOUND_KEYS: readonly (keyof PatternSound)[] = [
+/** The fields of a track's sound that a pattern's settings hold (the mixer is read apart). */
+const LANE_KEYS = [
 	'engine',
 	'm1',
 	'amp',
@@ -326,18 +347,92 @@ const SOUND_KEYS: readonly (keyof PatternSound)[] = [
 	'playMode',
 	'filter',
 	'sends',
-	'lfo',
+	'lfo'
+] as const satisfies readonly (keyof PatternSound)[];
+
+/** The fields a pattern's sound slot keeps (the arrange area's {@link PatternSound}). */
+const SLOT_KEYS = [
+	...LANE_KEYS,
 	'drumKeys',
 	'midi'
-];
+] as const satisfies readonly (keyof PatternSound)[];
 
-/** Whether two sounds are the same, field by field. */
-const sameSound = (a: PatternSound, b: PatternSound) =>
-	SOUND_KEYS.every((k) => JSON.stringify(a[k]) === JSON.stringify(b[k]));
+/**
+ * A pattern's settings in the shape `knowledge/presets/new-project.json` stores a new project's
+ * sounds, for `soundOf`. A filter or LFO type we cannot name keeps `base`'s, and says so.
+ */
+function storedOf(
+	state: XySoundState,
+	engine: EngineId,
+	base: TrackState,
+	where: string,
+	skipped?: string[]
+): StoredSound {
+	const filter = FILTER_TYPES.find((f) => f === XY_FILTERS[state.filter.type]);
+	const lfo = LFO_TYPES.find((l) => l === XY_LFOS[state.lfo.type]);
+	if (!filter) {
+		skipped?.push(
+			`${where}: filter type byte ${hex2(state.filter.type)} is not one we know (${base.filter.type} plays)`
+		);
+	}
+	if (!lfo) {
+		skipped?.push(
+			`${where}: LFO type byte ${hex2(state.lfo.type)} is not one we know (${base.lfo.type} plays)`
+		);
+	}
+	const four = (words: readonly number[]) => [words[0], words[1], words[2], words[3]] as const;
+	return {
+		engine,
+		params: [...four(state.params)],
+		amp: [...four(state.amp)],
+		filterEnv: [...four(state.filterEnv)],
+		playMode: playModeOf(state.playMode),
+		portamento: { ...state.portamento },
+		bend: state.bend,
+		volume: state.volume,
+		filter: {
+			type: filter ?? base.filter.type,
+			on: state.filter.on,
+			params: [...four(state.filter.params)]
+		},
+		sends: [...four(state.sends)],
+		lfo: { type: lfo ?? base.lfo.type, on: state.lfo.on, params: [...state.lfo.params] },
+		velocity: { ...state.velocity },
+		width: state.width,
+		highpass: state.highpass,
+		tuning: { ...state.tuning },
+		modulation: {
+			modwheel: [...state.modulation.modwheel],
+			aftertouch: [...state.modulation.aftertouch],
+			pitchbend: [...state.modulation.pitchbend]
+		},
+		mix: { ...state.mix }
+	};
+}
+
+/** The sound a pattern's settings make over `base` (a track of the same engine). */
+const soundFrom = (stored: StoredSound, base: TrackState) =>
+	soundOf(stored, base, LFO_SYNC_STEPS.length);
+
+/** The listed fields of a sound, copied. */
+function pick<K extends keyof TrackState>(
+	sound: TrackState,
+	keys: readonly K[]
+): Pick<TrackState, K> {
+	return copy(Object.fromEntries(keys.map((k) => [k, sound[k]])) as Pick<TrackState, K>);
+}
+
+/** Whether a track plays what a pattern's settings say, field by field. */
+function playsSettings(track: TrackState, state: XySoundState, engine: EngineId): boolean {
+	const filed = soundFrom(storedOf(state, engine, track, ''), track);
+	return LANE_KEYS.every((k) => JSON.stringify(track[k]) === JSON.stringify(filed[k]));
+}
+
+// ─── what stays the template's ──────────────────────────────────────────────────────────────────
 
 /**
  * Notes where the track's sound differs from the template's, which the file keeps: another engine
- * on a pattern, another preset, or a stored preset whose settings were changed; then the mixer.
+ * on a pattern, another preset, or settings changed from the file's; then the mixer.
  */
 function reportSound(state: SimState, t: number, base: XyProject, skipped: string[]): void {
 	const aux = t >= 8;
@@ -358,11 +453,12 @@ function reportSound(state: SimState, t: number, base: XyProject, skipped: strin
 		const preset = state.areas.system.trackPresets[t];
 		const current = filed(sequence.current);
 		if (track.engine === XY_ENGINES[current.engine]) {
-			const stored = preset ? storedPresetSound(preset) : null;
 			if (preset && preset !== current.preset) {
 				skipped.push(`${name}: preset ${preset}; the file keeps the template's ${current.preset}`);
-			} else if (stored && !sameSound(track, stored)) {
-				skipped.push(`${name}: the changes to ${preset}'s sound (sounds are not written yet)`);
+			} else if (!playsSettings(track, current.state, track.engine)) {
+				skipped.push(
+					`${name}: the changes to ${preset ? `${preset}'s` : 'its'} sound (sounds are not written yet)`
+				);
 			}
 		}
 	}
@@ -434,10 +530,11 @@ const LOCK_IDS: Readonly<Record<number, string>> = Object.fromEntries(
 /**
  * Loads a project file into the simulator: the reverse of {@link simToXy}. It starts from `base`
  * (a new project by default) and takes the file's settings, every track's patterns with their
- * notes, step components and locks, the scenes, the songs, and for each instrument track the
- * engine and preset its playing pattern names: a preset the library knows loads its sound as the
- * preset browser would; any other keeps the engine's starting sound, and says so in `skipped`. The
- * mixer takes each track's level and pan from its playing pattern and its mute from the scene.
+ * notes, step components and locks, the scenes, the songs, each instrument track's sound (the
+ * preset its playing pattern names, with that pattern's stored settings over it; the other
+ * patterns' sounds load when they play) and FX I and FX II. What the file names but the replica
+ * lacks (TE's samples, a type byte we cannot name) is said in `skipped`. The mixer takes each
+ * track's level and pan from its playing pattern and its mute from the scene.
  * @throws XyFormatError when the bytes are not a project we can read.
  */
 export function xyToSim(file: Uint8Array | XyProject, base?: SimState): XyToSimResult {
@@ -465,6 +562,7 @@ export function xyToSim(file: Uint8Array | XyProject, base?: SimState): XyToSimR
 		mix.pan = (((sound.pan >>> 16) - 16384) / 16383) * 100;
 		mix.muted = scene?.mutes[t] ?? false;
 	}
+	readEffects(project, state, skipped);
 	// after the sounds: a loaded preset brings its own octave, the file's says where the keys are
 	readOctaves(project, state);
 	readScenes(project, state);
@@ -572,8 +670,11 @@ function readPattern(p: XyPattern, where: string, skipped: string[]): Pattern {
 }
 
 /**
- * An instrument track's sound from its playing pattern: the preset, loaded as the preset browser
- * does when the library knows it, else the engine's starting sound.
+ * An instrument track's sound from its playing pattern: the preset it names loads as the preset
+ * browser would (the library's, or the engine's starting sound), then the pattern's own settings
+ * go over it, so the track plays what the file stores: M1, the envelopes, play mode, filter, sends,
+ * LFO and the preset settings. The other patterns' settings wait in their sound slots and load
+ * when those patterns play. What the settings cannot carry (TE's samples) says so in `skipped`.
  */
 function readSound(
 	project: XyProject,
@@ -590,25 +691,62 @@ function readSound(
 		skipped.push(`${name}: engine byte ${hex2(sound.engine)} is not one we know (its sound kept)`);
 		return;
 	}
-	const known = state.areas.system.presets.library.find((p) => presetKey(p) === sound.preset);
+	const system = state.areas.system;
+	const known = system.presets.library.find((p) => presetKey(p) === sound.preset);
 	if (known && known.engine === engine) loadPreset(state, t, known);
 	else {
 		loadEngineSound(state, t, engine);
-		if (sound.preset && sound.preset !== '/') {
-			state.areas.system.trackPresets[t] = sound.preset;
-			skipped.push(
-				`${name}: preset ${sound.preset} is not in the library, so ${engine}'s starting sound plays`
-			);
-		}
+		if (sound.preset && sound.preset !== '/') system.trackPresets[t] = sound.preset;
 	}
+	const track = state.tracks[t];
+	const stored = storedOf(sound.state, engine, track, name, skipped);
+	Object.assign(track, pick(soundFrom(stored, track), LANE_KEYS));
+	system.presetSettings[t] = presetSettingsOf(stored, system.presetSettings[t]);
+	// a new project's kits and pad play the replica's stand-ins, as they do in a new project
+	if (SAMPLE_ENGINES.has(engine) && !known?.sound && !NEW_PROJECT_PRESETS.includes(sound.preset)) {
+		skipped.push(
+			`${name}: ${sound.preset && sound.preset !== '/' ? sound.preset : engine}'s samples are TE's and not in the replica, so its own ${engine === 'drum' ? 'kit' : 'tone'} plays`
+		);
+	}
+	const slots = state.areas.arrange.sounds[t];
 	patterns.forEach((p, i) => {
-		if (i !== current && p.sound.engine !== sound.engine) {
+		if (i === current) return;
+		const own = XY_ENGINES[p.sound.engine] as EngineId | undefined;
+		if (!own) {
 			skipped.push(
-				`${name} pattern ${i + 1}: its own engine (${XY_ENGINES[p.sound.engine] ?? hex2(p.sound.engine)}), which the simulator fills in when the pattern plays`
+				`${name} pattern ${i + 1}: engine byte ${hex2(p.sound.engine)} is not one we know (the track's sound plays)`
 			);
+			return;
 		}
+		const base = own === engine ? track : defaultTrack(own);
+		const where = `${name} pattern ${i + 1}`;
+		slots[i] = pick(soundFrom(storedOf(p.sound.state, own, base, where, skipped), base), SLOT_KEYS);
 	});
 }
+
+/**
+ * FX I and FX II (T15, T16): the effect their playing pattern names in its engine byte, and its
+ * four M1 settings.
+ */
+function readEffects(project: XyProject, state: SimState, skipped: string[]): void {
+	state.areas.auxiliary.fx.forEach((slot, k) => {
+		const t = 14 + k;
+		const patterns = project.tracks[t].patterns;
+		const sound = (patterns[state.aux[t - 8].sequence.current] ?? patterns[0]).sound;
+		const type = FX_TYPES.find((f) => f === XY_EFFECTS[sound.engine]);
+		if (!type) {
+			skipped.push(
+				`T${t + 1}: effect byte ${hex2(sound.engine)} is not one we know (${slot.type} kept)`
+			);
+			return;
+		}
+		slot.type = type;
+		slot.params = [0, 1, 2, 3].map((i) => fromQ15(sound.state.params[i])) as FxSlot['params'];
+	});
+}
+
+/** Engines that play samples, which a project file names but does not hold. */
+const SAMPLE_ENGINES: ReadonlySet<EngineId> = new Set(['drum', 'sampler', 'multisampler']);
 
 /** The scenes the file uses: the pattern each track plays and its mute; the mix is the tracks'. */
 function readScenes(project: XyProject, state: SimState): void {

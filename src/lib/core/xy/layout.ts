@@ -95,6 +95,52 @@ export const PATTERN = {
 	notes: 0x4570
 } as const;
 
+/**
+ * Offsets of a pattern's sound, from its base (§3.6): four bytes for the LFO and filter types and
+ * switches, then Q31 words read as q15 (the word's top 16 bits), xy-format's `patch_sound_state`
+ * lanes. Runs are counted in words.
+ */
+export const SOUND = {
+	/** The M4 type byte. */
+	lfoType: 0x001c,
+	/** M4 on (non-zero) or off. */
+	lfoOn: 0x0020,
+	/** The M3 filter type byte. */
+	filterType: 0x0021,
+	/** M3 on (non-zero) or off. */
+	filterOn: 0x0025,
+	/** Eight words: M1's four encoders, then four the engine keeps. */
+	params: 0x3857,
+	/** Four words: attack, decay, sustain, release. */
+	amp: 0x3877,
+	/** poly 0x15555555, mono 0x3FFFFFFF, legato above. */
+	playMode: 0x3887,
+	portamento: 0x388b,
+	bend: 0x388f,
+	/** The preset volume (shift + M2), not the mixer's level. */
+	volume: 0x3893,
+	/** Four words: cutoff, resonance, envelope amount, key tracking. */
+	filter: 0x3897,
+	/** Four words: aux out, tape, FX I, FX II. */
+	sends: 0x38a7,
+	/** Eight words: M4's E1–E4, three unused, then shift + E2. */
+	lfo: 0x38b7,
+	/** Four words: attack, decay, sustain, release. */
+	filterEnv: 0x38d7,
+	/** Target and amount words of each: mod wheel, aftertouch, pitch bend. */
+	modwheel: 0x38ff,
+	aftertouch: 0x3907,
+	pitchbend: 0x390f,
+	velocitySensitivity: 0x3917,
+	portamentoType: 0x391b,
+	tuningScale: 0x391f,
+	width: 0x3923,
+	tuningRoot: 0x392b,
+	highpass: 0x392f,
+	velocityTarget: 0x3933,
+	velocityAmount: 0x3937
+} as const;
+
 /** A leader struct's size with no notes and empty lanes. */
 export const PATTERN_SIZE = 17876;
 /** Bytes per note record. */
