@@ -12,6 +12,7 @@ import {
 	type NavPlan
 } from './navigator';
 import { shown } from './params';
+import { ARP_STYLES, currentPattern } from './sequencer';
 import { OpxySim } from './opxy-sim.svelte';
 
 const boot = () => new OpxySim({ now: () => 0 });
@@ -273,6 +274,30 @@ describe('the navigator: values on the auxiliary and mixer pages', () => {
 		expect(low.reached).toBe(true);
 		expect(keys(low).slice(0, 2)).toEqual(['mix', 'M2']);
 		expect(low.steps.at(-1)?.clicks).toBeLessThan(0);
+	});
+
+	it('sets the player page’s values, its shift layer turned with shift held', () => {
+		const sim = boot();
+		const speed = planPageValue(sim.state, {
+			area: 'player',
+			track: 3,
+			label: 'speed',
+			value: '1/16'
+		});
+		expect(speed.steps.map((s) => s.keys)).toEqual(['T3', 'player', 'turn E1']);
+		expect(speed.screen).toMatch(/speed 1\/16/);
+		const style = planPageValue(sim.state, {
+			area: 'player',
+			track: 3,
+			label: 'style',
+			value: 'converge'
+		});
+		expect(style.reached).toBe(true);
+		expect(style.steps.at(-1)?.keys).toBe('shift + turn E2');
+		grammatical(style);
+		for (const step of style.steps) playStep(sim, step);
+		const player = currentPattern(sim.state.tracks[2].sequence).player;
+		expect(player.arp.style).toBe(ARP_STYLES.indexOf('converge'));
 	});
 
 	it('says which values the pages do show when it cannot find one', () => {

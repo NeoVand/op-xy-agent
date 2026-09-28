@@ -562,8 +562,11 @@ export function planSettings(state: SimState, goals: readonly ParamGoal[]): Sett
  * says which encoder carries it: the navigator turns each one on a copy and watches the page.
  */
 export interface PageValueGoal {
-	readonly area: 'auxiliary' | 'mix';
-	/** Auxiliary track 1–8; on mix M1 the track whose strip it is, 1–16 (9–16 auxiliary). */
+	readonly area: 'auxiliary' | 'mix' | 'player';
+	/**
+	 * Auxiliary track 1–8; on mix M1 the track whose strip it is, 1–16 (9–16 auxiliary); for the
+	 * player, the instrument track 1–8.
+	 */
 	readonly track?: number;
 	/** The M-page; default: the first page that shows the value. */
 	readonly page?: PageNumber;
@@ -609,22 +612,32 @@ function pageLabel(values: Map<string, string>, wanted: string): string | null {
 	return null;
 }
 
-const readValue = (sim: OpxySim, label: string) => pageValues(screenOf(sim)).get(label);
+/** A page's values, with shift held for its shift layer (read on a copy). */
+function valuesOf(sim: OpxySim, shifted = false): Map<string, string> {
+	if (!shifted) return pageValues(screenOf(sim));
+	const view = copy(sim.state);
+	view.input({ type: 'press', id: 'key.shift' });
+	return pageValues(screenOf(view));
+}
+
+const readValue = (sim: OpxySim, label: string, shifted = false) =>
+	valuesOf(sim, shifted).get(label);
 
 /**
  * The turn that moves `label` where the simulator stands: the first encoder, then shift. A detent
  * each way must read differently (or differ from now), so an encoder that only calls up the popup
  * showing the value (mix M1's sends) does not count.
  */
-function probe(sim: OpxySim, label: string): string | null {
-	const before = readValue(sim, label);
-	for (const shift of [false, true]) {
+function probe(sim: OpxySim, label: string, shifted = false): string | null {
+	const before = readValue(sim, label, shifted);
+	// a value of the shift layer is turned with shift held
+	for (const shift of shifted ? [true] : [false, true]) {
 		for (let e = 1; e <= 4; e++) {
 			const keys = `${shift ? 'shift + ' : ''}turn E${e}`;
 			const [up, down] = [1, -1].map((dir) => {
 				const trial = copy(sim.state);
 				play(trial, keys, dir);
-				return readValue(trial, label);
+				return readValue(trial, label, shifted);
 			});
 			const moved = up !== down || (before !== undefined && up !== undefined && up !== before);
 			if (moved && (up !== undefined || down !== undefined)) return keys;
@@ -642,7 +655,8 @@ function detentsTo(
 	sim: OpxySim,
 	keys: string,
 	label: string,
-	value: number | string
+	value: number | string,
+	shifted = false
 ): number | null {
 	const target = Number(value);
 	const want = String(value).trim().toLowerCase();
@@ -653,15 +667,15 @@ function detentsTo(
 		(Number.isFinite(target) && Number.isFinite(num(v))
 			? num(v) === target
 			: v.toLowerCase() === want);
-	if (hit(readValue(sim, label))) return 0;
+	if (hit(readValue(sim, label, shifted))) return 0;
 	for (const dir of [1, -1]) {
 		const trial = copy(sim.state);
 		// (a popup's value can be missing until the first detent calls the popup up)
-		let last = readValue(trial, label);
+		let last = readValue(trial, label, shifted);
 		let still = 0;
 		for (let n = 1; n <= 400; n++) {
 			play(trial, keys, dir);
-			const v = readValue(trial, label);
+			const v = readValue(trial, label, shifted);
 			if (hit(v)) return n * dir;
 			const [now, before] = [num(v) - target, num(last) - target];
 			if (Number.isFinite(now) && Number.isFinite(before) && now !== before) {
@@ -692,6 +706,10 @@ function revealed(sim: OpxySim, wanted: string): string | null {
 
 /** Walks to the page (and on mix M1 the track) of a page-value goal. */
 function walkToPage(rec: Recorder, goal: PageValueGoal, page: PageNumber): void {
+	if (goal.area === 'player') {
+		walk(rec, { area: 'player', track: goal.track ?? rec.sim.state.track + 1 });
+		return;
+	}
 	if (goal.area === 'auxiliary') {
 		walk(rec, { area: 'auxiliary', track: goal.track ?? rec.sim.state.auxTrack + 1, page });
 		return;
@@ -708,22 +726,31 @@ function walkToPage(rec: Recorder, goal: PageValueGoal, page: PageNumber): void 
 
 /** Steps that set a value an auxiliary or mixer page shows, run on a copy of the simulator. */
 export function planPageValue(state: SimState, goal: PageValueGoal): NavPlan {
-	const pages: readonly PageNumber[] = goal.page ? [goal.page] : [1, 2, 3, 4];
+	// the player is one page; the others have four
+	const pages: readonly PageNumber[] =
+		goal.area === 'player' ? [1] : goal.page ? [goal.page] : [1, 2, 3, 4];
 	let seen: string[] = [];
 	for (const page of pages) {
 		const rec = new Recorder(copy(state));
 		walkToPage(rec, goal, page);
-		const values = pageValues(screenOf(rec.sim));
-		const label = pageLabel(values, goal.label) ?? revealed(rec.sim, goal.label);
+		const values = valuesOf(rec.sim);
+		const shiftValues = valuesOf(rec.sim, true);
+		const base = pageLabel(values, goal.label) ?? revealed(rec.sim, goal.label);
+		// not on the page itself: its shift layer
+		const shifted = base === null && pageLabel(shiftValues, goal.label) !== null;
+		const label = base ?? pageLabel(shiftValues, goal.label);
+		const where = goal.area === 'player' ? 'the player page' : `M${page}`;
 		if (!label) {
-			seen = [...seen, ...[...values.keys()].map((k) => `${k} (M${page})`)];
+			const names = new Set([...values.keys(), ...shiftValues.keys()]);
+			seen = [...seen, ...[...names].map((k) => `${k} (${where})`)];
 			continue;
 		}
-		const keys = probe(rec.sim, label);
-		if (!keys) return rec.plan(false, `no encoder moves ${label} on M${page}`);
-		const detents = detentsTo(rec.sim, keys, label, goal.value);
+		const keys = probe(rec.sim, label, shifted);
+		if (!keys) return rec.plan(false, `no encoder moves ${label} on ${where}`);
+		const detents = detentsTo(rec.sim, keys, label, goal.value, shifted);
 		if (detents === null) {
-			return rec.plan(false, `${label} never reads ${goal.value} (it reads ${values.get(label)})`);
+			const now = (shifted ? shiftValues : values).get(label);
+			return rec.plan(false, `${label} never reads ${goal.value} (it reads ${now})`);
 		}
 		if (detents !== 0) rec.do(keys, detents);
 		return rec.plan(true);
