@@ -50,7 +50,12 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: roll
-    text: A faint mini piano roll on the right of the card shows a dash for each note in the pattern.
+    text: A faint mini piano roll on the right of the card shows a dash for each note in the shown bar, as long as the note.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: boxes-live
+    text: With the card up, `bar + [+]` or `bar + [-]` adds or removes a bar box at once; the shown bar's box is filled and the other bars are outlined.
     source: docs/research/59-screen-profiling.md#28-bar-steps
     confidence: verified
     verified_on: '1.1.33'

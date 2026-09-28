@@ -47,6 +47,21 @@ facts:
     source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
     confidence: verified
     verified_on: '1.1.33'
+  - id: count
+    text: The box beside count at the top right shows how many scenes the song holds.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: cursor-with-shift
+    text: The white cursor line shows only while `shift` is held, together with the lit footer.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: ring
+    text: During playback the playing scene wears a white ring with a small notch that goes round once while the scene plays; after stop the ring stays on the scene that was playing.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
   - id: footer
     text: Holding `shift` lights the footer with clear all, ←, → and delete over `M1`…`M4`, the song editing keys.
     source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode

@@ -49,10 +49,14 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: pendulum
-    text: While the sequencer plays, the pendulum swings and leaves motion trails.
+    text: While the sequencer plays, the pendulum swings from one end to the other on every beat, and the beat's dot below it lights; stopped, it rests at the left end with no dot lit.
     source: docs/research/59-screen-profiling.md#211-tempo
     confidence: verified
     verified_on: '1.1.33'
+  - id: smear
+    text: The swinging pendulum looks smeared, as if it left trails; the copies come from the screen's slow response rather than being drawn.
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: derived
 procedures:
   - id: tap
     goal: Set the tempo by tapping

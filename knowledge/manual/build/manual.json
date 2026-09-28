@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "5f5ee9de",
+	"bundle_hash": "a9b8989a",
 	"stats": {
 		"units": 163,
-		"facts": 1080,
+		"facts": 1086,
 		"procedures": 196,
 		"parameters": 207,
-		"verified_items": 182,
-		"words": 40129,
+		"verified_items": 187,
+		"words": 40302,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -4546,6 +4546,14 @@
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "copy-during-hold",
+					"text": "The copy is taken while you are still holding the step, about half a second in, which is when copied appears; the word stays for a second or two after you let go.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -7296,7 +7304,15 @@
 				},
 				{
 					"id": "roll",
-					"text": "A faint mini piano roll on the right of the card shows a dash for each note in the pattern.",
+					"text": "A faint mini piano roll on the right of the card shows a dash for each note in the shown bar, as long as the note.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "boxes-live",
+					"text": "With the card up, `bar + [+]` or `bar + [-]` adds or removes a bar box at once; the shown bar's box is filled and the other bars are outlined.",
 					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -19739,6 +19755,30 @@
 					"confidence": "verified"
 				},
 				{
+					"id": "count",
+					"text": "The box beside count at the top right shows how many scenes the song holds.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "cursor-with-shift",
+					"text": "The white cursor line shows only while `shift` is held, together with the lit footer.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "ring",
+					"text": "During playback the playing scene wears a white ring with a small notch that goes round once while the scene plays; after stop the ring stays on the scene that was playing.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "footer",
 					"text": "Holding `shift` lights the footer with clear all, ←, → and delete over `M1`…`M4`, the song editing keys.",
 					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
@@ -22647,11 +22687,19 @@
 				},
 				{
 					"id": "pendulum",
-					"text": "While the sequencer plays, the pendulum swings and leaves motion trails.",
+					"text": "While the sequencer plays, the pendulum swings from one end to the other on every beat, and the beat's dot below it lights; stopped, it rests at the left end with no dot lit.",
 					"source": "docs/research/59-screen-profiling.md#211-tempo",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "smear",
+					"text": "The swinging pendulum looks smeared, as if it left trails; the copies come from the screen's slow response rather than being drawn.",
+					"source": "docs/research/59-screen-profiling.md#211-tempo",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				}
 			],
 			"procedures": [

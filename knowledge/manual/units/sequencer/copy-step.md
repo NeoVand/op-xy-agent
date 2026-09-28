@@ -28,6 +28,11 @@ facts:
     source: docs/research/59-screen-profiling.md#28-bar-steps
     confidence: verified
     verified_on: '1.1.33'
+  - id: copy-during-hold
+    text: The copy is taken while you are still holding the step, about half a second in, which is when copied appears; the word stays for a second or two after you let go.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: copy-paste
     goal: Copy one step to another

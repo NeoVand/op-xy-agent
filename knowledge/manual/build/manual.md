@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1080 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1086 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -786,6 +786,7 @@ Facts:
 - After you let go, pressing an empty step pastes the copy onto it. [#paste] [s1]
 - Copying by holding a step arrived in OS 1.0.13. [#since] [s2]
 - When a held step is copied, its number box on the screen adds the word copied. [#copied] (verified 1.1.33) [s3]
+- The copy is taken while you are still holding the step, about half a second in, which is when copied appears; the word stays for a second or two after you let go. [#copy-during-hold] (verified 1.1.33) [s3]
 
 Procedures:
 - Copy one step to another [#copy-paste] [s1]
@@ -1313,7 +1314,8 @@ Facts:
 - The groove type (shuffle, bombora and the rest) is picked on the tempo page; the bar menu sets only this track's amount. [#groove-type] [s1]
 - Decoded project files store length, track scale, quantisation, groove and smoothing in each pattern, so a track's patterns can differ. [#per-pattern] (community-verified) [s4]
 - Holding `bar` lays a white card over the dimmed page — bar numbers 1 to 4 along the top with the current one inverted, the track scale beside them, then rows for quant, length, groove and shape, each marked with its encoder's dot. The card fades when `bar` is let go. [#card] (verified 1.1.33) [s2]
-- A faint mini piano roll on the right of the card shows a dash for each note in the pattern. [#roll] (verified 1.1.33) [s2]
+- A faint mini piano roll on the right of the card shows a dash for each note in the shown bar, as long as the note. [#roll] (verified 1.1.33) [s2]
+- With the card up, `bar + [+]` or `bar + [-]` adds or removes a bar box at once; the shown bar's box is filled and the other bars are outlined. [#boxes-live] (verified 1.1.33) [s2]
 - The card's footer names the clearing keys — clr notes on `M1`, clr params on `M2`, clr all on `M4`. [#clear-labels] (verified 1.1.33) [s2]
 
 Procedures:
@@ -3581,6 +3583,9 @@ Facts:
 - `shift + M1` empties the whole song order without deleting any scene. [#clear] [s1]
 - OS 1.0.45 added the option of stopping playback when the song reaches its end. [#stop-at-end] (since 1.0.45) [s3]
 - The song page is headed song 1 with a loop icon and shows a grid of 32 slots, eight across in four rows marked 1, 9, 17 and 25; scenes appear as numbered circles, a white line marks where the next scene goes, and a ring walks along the order during playback. [#screen] (verified 1.1.33) [s4]
+- The box beside count at the top right shows how many scenes the song holds. [#count] (verified 1.1.33) [s4]
+- The white cursor line shows only while `shift` is held, together with the lit footer. [#cursor-with-shift] (verified 1.1.33) [s4]
+- During playback the playing scene wears a white ring with a small notch that goes round once while the scene plays; after stop the ring stays on the scene that was playing. [#ring] (verified 1.1.33) [s4]
 - Holding `shift` lights the footer with clear all, ←, → and delete over `M1`…`M4`, the song editing keys. [#footer] (verified 1.1.33) [s4]
 
 Procedures:
@@ -4130,7 +4135,8 @@ Facts:
 - The tempo page has a light background, the BPM as a large number on the left and a metronome in the middle carrying the groove type's two-letter abbreviation. [#screen] (verified 1.1.33) [s2]
 - The metronome's weight slides down its arm as the tempo rises, from the top at 40 BPM to the bottom at 220. [#weight] (verified 1.1.33) [s2]
 - The speaker icon at the top right loses its sound waves as `E4` turns the metronome down. [#speaker] (verified 1.1.33) [s2]
-- While the sequencer plays, the pendulum swings and leaves motion trails. [#pendulum] (verified 1.1.33) [s2]
+- While the sequencer plays, the pendulum swings from one end to the other on every beat, and the beat's dot below it lights; stopped, it rests at the left end with no dot lit. [#pendulum] (verified 1.1.33) [s2]
+- The swinging pendulum looks smeared, as if it left trails; the copies come from the screen's slow response rather than being drawn. [#smear] (derived) [s2]
 
 Procedures:
 - Set the tempo by tapping [#tap] [s1]
