@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ReplicaState } from '$lib/replica';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { DEFAULT_LEVEL, GROOVES } from '$lib/sim/params';
-import { currentPattern } from '$lib/sim/sequencer';
+import { ARP_SPEEDS, currentPattern } from '$lib/sim/sequencer';
 import { FakeTime } from '../../../test/fakes/fake-time';
 import {
 	SAVE_VERSION,
@@ -115,6 +115,19 @@ describe('saving the virtual OP-XY’s work', () => {
 		const sim = new OpxySim({ now: () => 0 });
 		applySaved(sim.state, { ...saved, version: 2, project: JSON.stringify(project) });
 		expect(GROOVES[sim.state.tempo.groove]).toBe('bombora');
+	});
+
+	it('keeps an older save’s arpeggio speed when the list becomes the device’s', () => {
+		const work = withWork();
+		const saved = captureSim(work.state);
+		const project = JSON.parse(saved.project);
+		project.tracks[2].sequence.patterns[0].player.arp.speed = 2; // 1/16 in the old list
+		project.tracks[3].sequence.patterns[0].player.arp.speed = 8; // 1/1, which the device lacks
+		const sim = new OpxySim({ now: () => 0 });
+		applySaved(sim.state, { ...saved, version: 3, project: JSON.stringify(project) });
+		const speed = (t: number) =>
+			ARP_SPEEDS[sim.state.tracks[t].sequence.patterns[0].player.arp.speed].label;
+		expect([speed(2), speed(3)]).toEqual(['1/16', '1/4']);
 	});
 
 	it('leaves the state alone for a save it cannot read', () => {

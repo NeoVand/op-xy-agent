@@ -599,7 +599,7 @@ function converge<T>(items: readonly T[]): T[] {
  * One cycle of the arpeggio over the notes held (in the order they were pressed; manual:
  * players/arpeggio): spread over `range` octaves, ordered by the pattern (up, down, up/down
  * without repeating the ends, up/repeat/down with them, random, play order), then reordered by the
- * style (ours: straight, converge, diverge, pinky, thumb).
+ * style (off, then ours: converge, diverge, pinky, thumb).
  */
 export function arpeggio(
 	held: readonly number[],
@@ -635,7 +635,7 @@ export function arpeggio(
 	}
 	const top = Math.max(...run);
 	const bottom = Math.min(...run);
-	switch (ARP_STYLES[arp.style] ?? 'straight') {
+	switch (ARP_STYLES[arp.style] ?? 'off') {
 		case 'converge':
 			run = converge(run);
 			break;

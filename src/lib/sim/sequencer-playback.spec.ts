@@ -365,7 +365,7 @@ describe('the walk (pulse, pulse hold, jump) and playheadAt', () => {
 
 describe('players (manual: players/*)', () => {
 	const arp = (over: Partial<ArpSettings> = {}): ArpSettings => ({
-		speed: 2,
+		speed: 3, // sixteenths
 		pattern: 0,
 		range: 1,
 		hold: false,
@@ -404,7 +404,7 @@ describe('players (manual: players/*)', () => {
 	});
 
 	it('times the arpeggio: step length, note length, glide and alternating pan', () => {
-		const a = arp({ speed: 4, length: 25, glide: 99, stereo: 99 }); // eighths
+		const a = arp({ speed: 1, length: 25, glide: 99, stereo: 99 }); // eighths
 		expect(arpEvent([60, 64], a, 0)).toEqual({ note: 60, time: 0, length: 0.5, glide: 1, pan: -1 });
 		expect(arpEvent([60, 64], a, 3)).toMatchObject({ note: 64, time: 6, pan: 1 });
 		expect(arpEvent([], a, 0)).toBeNull();

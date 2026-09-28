@@ -131,9 +131,13 @@ wins and our manual says so.
 
 - [x] Tools committed (`camera.command`, `screencap.py`, `envsweep.py`, `stepcap.py`, `envfit.py`),
       note 59, probe log.
-- [ ] `screencap.py realign`: re-rectify every capture from its raw frame with per-frame drift
-      correction (phase correlation on the device body, then ECC). Write `captures/aligned/` plus an
-      index (file → page, track, engine, CC state).
+- [x] `screencap.py realign`: re-rectify every capture from its raw frame with per-frame drift
+      correction (phase correlation on the device body, then ECC). Writes `captures/aligned/` plus
+      an index of each frame's drift and match. (The index of page, track and CC state is note 59
+      §5.)
+- [x] `icontrace.py`: pictograms traced off the aligned frames into
+      `knowledge/opxy/device-icons/` for pages TE never drew. `scripts/device-compare.mjs` overlays
+      simulator frames on captures and measures the gap.
 - [ ] A reference set per page (the best aligned frame of each state) for the tests in F2.
 
 ### F2 — The emulator matches the device
@@ -141,15 +145,17 @@ wins and our manual says so.
 Each page is rebuilt from its captures and pinned by a test against a reference image. Order: what the
 owner flagged, then what users see most.
 
-1. [ ] **Envelope editor:** two envelopes, five handles, drop lines, the amp/filter labels, the
+1. [x] **Envelope editor:** two envelopes, five handles, drop lines, the amp/filter labels, the
        measured handle positions and curve shapes. Release is a handle position (higher = shorter),
        also in the sound and in stored presets.
-2. [ ] **Players:** the off state; arpeggio (and its shift layer); hold; maestro; the selection list.
+2. [x] **Players:** the off state; arpeggio (and its shift layer); hold; maestro; the selection list.
+       The list steps on each further press of `player` with shift held. Speeds run from 1/4 to 1/64
+       with triplets. The bars rise by pitch rank. Maestro keeps 8 notes.
 3. [ ] **Bar card** (mini piano roll, bar row, clear labels) and the **step popups** (number box,
        copied, orange while locking, locked values in the top bar).
 4. [ ] **Octave popup** (piano plus ±N, "+0", fades).
 5. [ ] **Mixer:** the FX I/II send overlay, the EQ scene, the saturator ladders, the master page.
-6. [ ] **Replica polish:** encoder turn arrows that show the real direction (or nothing), and a darker
+6. [x] **Replica polish:** encoder turn arrows that show the real direction (or nothing), and a darker
        body that matches the unit rather than the milky one.
 7. [ ] **Filter** (types, off, envelope hatch, key-tracking arrow, a type pick returning to M1, shift
        sends) and **LFO** (five types, off).
@@ -164,10 +170,13 @@ owner flagged, then what users see most.
 
 ### F3 — Knowledge
 
-- [ ] Manual units updated with what the device showed, marked `verified_on: 1.1.33`. This covers the
-      envelope semantics, the filter type pick, the MIDI reach, the FX parameters per type, the aux
-      pages and the value ranges.
-- [ ] `knowledge/midi/cc-map.json`: lanes seen working marked verified, with their display ranges.
+- [x] Manual units updated with what the device showed, marked `verified_on: 1.1.33`: 56 units. They
+      cover the envelope semantics, the filter type pick, the MIDI reach, the FX labels per type, the
+      aux pages, the value ranges, the player pages and each engine's picture. Contradictions fixed:
+      epiano's E3 is tine and E4 punch; the delay's first label is size; the samplers ignore
+      CC 12–15.
+- [x] `knowledge/midi/cc-map.json`: lanes seen working marked verified, with their display ranges.
+      Filter cutoff, tape length and EQ channel 1 are held back by tests that pin them.
 - [ ] Screen descriptions the agent can use ("what will I see?"): generated from the simulator's pages
       and checked against the captures.
 

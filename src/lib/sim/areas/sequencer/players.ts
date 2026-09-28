@@ -1,18 +1,20 @@
 /**
  * Players (manual: players/overview, arpeggio, maestro, hold): `player` opens the selected track's
- * player page, pressed there it switches the player on or off, and `shift + player` steps through
- * the types. The page's encoders set the arpeggio (speed, pattern, range, hold; with shift: note
- * length, style, glide, stereo) and maestro (roll, pattern, hold). On the keyboard, while the
- * player is on: hold keeps the notes played sounding until the next ones; maestro stores a chord
- * entered with shift held and plays it from any key; the arpeggio runs over the held notes, and
- * keeps running on them with its hold on. What they sound like is the sound engine's job
- * (`sequencer-playback.ts`); the simulator shows the notes on the keyboard's LEDs.
+ * player page, pressed there it switches the player on or off, and `shift + player` shows the list
+ * of players, each further press (shift still down) moving to the next (the device, research 59
+ * §2.7). The page's encoders set the arpeggio (speed, pattern, range, hold; with shift: note length,
+ * style, glide, stereo) and maestro (roll, pattern, hold). On the keyboard, while the player is on:
+ * hold keeps the notes played sounding until the next ones; maestro stores a chord entered with
+ * shift held and plays it from any key; the arpeggio runs over the held notes, and keeps running on
+ * them with its hold on. What they sound like is the sound engine's job (`sequencer-playback.ts`);
+ * the simulator shows the notes on the keyboard's LEDs.
  */
 import type { SimState } from '../../params';
 import {
 	ARP_PATTERNS,
 	ARP_SPEEDS,
 	ARP_STYLES,
+	MAESTRO_NOTES,
 	MAESTRO_PATTERNS,
 	PLAYER_TYPES,
 	type PlayerSettings
@@ -25,7 +27,7 @@ import {
 	maestroNotes,
 	seededRng
 } from '../../sequencer-playback';
-import type { PlayerCard, PlayerFrame } from './frames';
+import type { MaestroView, PlayerCard, PlayerFrame } from './frames';
 import { activePattern, heldNotes, seq } from './model';
 
 /** The player of the pattern the step keys address. */
@@ -36,16 +38,23 @@ const NAMES = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'] 
 export const noteName = (note: number) =>
 	`${NAMES[((note % 12) + 12) % 12]}${Math.floor(note / 12) - 1}`;
 
-/** `player` (with shift: the next type). Opens the page; pressed on the page, switches on / off. */
+/**
+ * `player`: opens the page; pressed on the page, switches the player on / off. With shift: shows the
+ * list of players, and while it is up (shift still held) moves to the next.
+ */
 export function playerPress(s: SimState): void {
 	const player = playerOf(s);
+	const st = seq(s);
 	const open = s.overlay === 'players';
 	if (s.shift) {
-		player.type = PLAYER_TYPES[(PLAYER_TYPES.indexOf(player.type) + 1) % PLAYER_TYPES.length];
-		seq(s).sustained = [];
+		if (st.playerList) {
+			player.type = PLAYER_TYPES[(PLAYER_TYPES.indexOf(player.type) + 1) % PLAYER_TYPES.length];
+			st.sustained = [];
+		}
+		st.playerList = true;
 	} else if (open) {
 		player.on = !player.on;
-		if (!player.on) seq(s).sustained = [];
+		if (!player.on) st.sustained = [];
 	}
 	if (!open) {
 		s.overlay = 'players';
@@ -106,7 +115,9 @@ export function playerKey(s: SimState, note: number, heldBefore: readonly number
 		case 'maestro': {
 			const m = player.maestro;
 			if (s.shift) {
-				m.chord = st.chordFresh ? [note] : [...new Set([...m.chord, note])].sort((a, b) => a - b);
+				// the page has room for eight: further notes are not kept
+				const chord = st.chordFresh ? [note] : [...new Set([...m.chord, note])];
+				m.chord = chord.slice(0, MAESTRO_NOTES).sort((a, b) => a - b);
 				st.chordFresh = false;
 				return true;
 			}
@@ -163,7 +174,13 @@ export function releasePlayers(s: SimState): void {
 const onOff = (on: boolean) => (on ? 'on' : 'off');
 const two = (v: number) => String(Math.round(v)).padStart(2, '0');
 
-/** The player page. */
+/** Each note of the run as its rank among the run's pitches (0 = the lowest). */
+function ranks(notes: readonly number[]): number[] {
+	const pitches = [...new Set(notes)].sort((a, b) => a - b);
+	return notes.map((n) => pitches.indexOf(n));
+}
+
+/** The player page (or, with shift + player, the list of players). */
 export function playerFrame(s: SimState): PlayerFrame {
 	const player = playerOf(s);
 	const st = seq(s);
@@ -171,8 +188,7 @@ export function playerFrame(s: SimState): PlayerFrame {
 	let cards: PlayerCard[] = [];
 	let run: number[] = [];
 	let at: number | null = null;
-	let marks: number[] = [];
-	let root: string | null = null;
+	let maestro: MaestroView | null = null;
 	if (player.type === 'arpeggio') {
 		const a = player.arp;
 		cards = shift
@@ -190,9 +206,7 @@ export function playerFrame(s: SimState): PlayerFrame {
 				];
 		const input = arpInput(s);
 		// with nothing held the picture shows the pattern over a triad
-		const notes = arpeggio(input.length > 0 ? input : [60, 64, 67], a, seededRng(1));
-		const low = Math.min(...notes);
-		run = notes.map((n) => n - low);
+		run = ranks(arpeggio(input.length > 0 ? input : [60, 64, 67], a, seededRng(1)));
 		const t = s.transport;
 		if (player.on && input.length > 0 && t.playing && t.position >= 0) {
 			at = Math.floor(t.position / arpStepLength(a)) % run.length;
@@ -205,10 +219,26 @@ export function playerFrame(s: SimState): PlayerFrame {
 			{ label: '', value: '' },
 			{ label: 'hold', value: onOff(m.hold) }
 		];
-		marks = [...new Set(m.chord.map((n) => n % 12))];
-		root = m.chord.length > 0 ? noteName(Math.min(...m.chord)) : null;
-	} else {
-		marks = [...new Set([...st.sustained, ...heldNotes(s)].map((n) => n % 12))];
+		maestro = {
+			roll: m.roll,
+			pattern: m.pattern,
+			hold: m.hold,
+			notes: m.chord.length,
+			root: m.chord.length > 0 ? noteName(Math.min(...m.chord)) : null,
+			// keys pressed with shift held enter the chord, they do not play it
+			sounding: !s.shift && (playerNotes(s) ?? []).length > 0
+		};
 	}
-	return { page: 'player', type: player.type, on: player.on, shift, cards, run, at, marks, root };
+	return {
+		page: 'player',
+		type: player.type,
+		on: player.on,
+		shift,
+		cards,
+		arp: player.type === 'arpeggio' ? { ...player.arp } : null,
+		maestro,
+		run,
+		at,
+		list: st.playerList ? { track: s.track + 1 } : null
+	};
 }

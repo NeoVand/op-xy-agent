@@ -1,9 +1,9 @@
 /**
  * Frames the sequencer area draws (see `../types.ts`): plain data in the units the pages draw. TE's
- * guide has no picture of any of these pages, so their layouts are ours, in the visual language of
- * the pages it does show (research 55 §5).
+ * guide has no picture of any of these pages: the player pages follow the device (research 59 §2.7),
+ * the others are ours, in the visual language of the pages the guide does show (research 55 §5).
  */
-import type { PlayerType } from '../../sequencer';
+import type { ArpSettings, PlayerType } from '../../sequencer';
 import type { HeaderCell, SoftLabel } from '../../screen/draw';
 import type { ScreenFrame } from '../../screen/frame';
 
@@ -54,13 +54,27 @@ export interface ComponentsFrame {
 	} | null;
 }
 
-/** One encoder's card on the player page; an empty label leaves the encoder unused. */
+/** One encoder's card on the player page, in words (the page draws pictures). */
 export interface PlayerCard {
 	readonly label: string;
 	readonly value: string;
 }
 
-/** The player page (`player`; manual: players/*). */
+/** Maestro as its page shows it. */
+export interface MaestroView {
+	readonly roll: number;
+	/** Index into MAESTRO_PATTERNS. */
+	readonly pattern: number;
+	readonly hold: boolean;
+	/** Notes in the stored chord (a slab stands for each, up to eight). */
+	readonly notes: number;
+	/** The chord's lowest note ("d5"), or null. */
+	readonly root: string | null;
+	/** The chord is sounding (the slabs stand tall). */
+	readonly sounding: boolean;
+}
+
+/** The player page (`player`; manual: players/*), as the device draws it (research 59 §2.7). */
 export interface PlayerFrame {
 	readonly page: 'player';
 	readonly type: PlayerType;
@@ -68,16 +82,18 @@ export interface PlayerFrame {
 	readonly on: boolean;
 	/** The arpeggio's shift layer (note length, style, glide, stereo). */
 	readonly shift: boolean;
-	/** E1–E4. */
+	/** E1–E4 in words, for screen readers and the agent; an empty label leaves the encoder unused. */
 	readonly cards: readonly PlayerCard[];
-	/** Arpeggio: one cycle of the run, as semitones above its lowest note (the picture). */
+	/** The arpeggio's settings, which its cards picture; null on the other players. */
+	readonly arp: ArpSettings | null;
+	/** Maestro's settings and chord; null on the other players. */
+	readonly maestro: MaestroView | null;
+	/** Arpeggio: one cycle of the run, each note as its rank among the run's pitches (0 = lowest). */
 	readonly run: readonly number[];
 	/** The run's note sounding now (index into `run`), or null. */
 	readonly at: number | null;
-	/** Maestro and hold: pitch classes (0 = C) to mark on the octave picture. */
-	readonly marks: readonly number[];
-	/** Maestro: the stored chord's lowest note ("C4"), or null. */
-	readonly root: string | null;
+	/** `shift + player`: the list of players over the page, for this track (numbered from 1). */
+	readonly list: { readonly track: number } | null;
 }
 
 /**

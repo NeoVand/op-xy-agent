@@ -3,7 +3,8 @@
  * `scripts/extract-screen-font.mjs` (knowledge/opxy/screen-icons.json, plus one file per area in
  * knowledge/opxy/screen-icons/; decisions D9/D10, credited in NOTICE.md): the metronome, pen nib,
  * engine illustrations, card icons and so on, as filled or stroked paths in screen pixels with
- * their original colours.
+ * their original colours. Pages the guide never drew get theirs traced from the device's screen
+ * (knowledge/opxy/device-icons/).
  */
 import iconsJson from '$knowledge/opxy/screen-icons.json';
 import type { ScreenCtx } from './context';
@@ -54,7 +55,16 @@ const areaFiles = import.meta.glob<IconsFile>('../../../../knowledge/opxy/screen
 	import: 'default'
 });
 
-const files = [iconsJson as IconsFile, ...Object.values(areaFiles)];
+/**
+ * Pictograms of pages the guide never drew, traced off the device's own screen by camera
+ * (`research/device/icontrace.py`; docs/research/59-screen-profiling.md).
+ */
+const deviceFiles = import.meta.glob<IconsFile>('../../../../knowledge/opxy/device-icons/*.json', {
+	eager: true,
+	import: 'default'
+});
+
+const files = [iconsJson as IconsFile, ...Object.values(areaFiles), ...Object.values(deviceFiles)];
 for (const file of files) {
 	if (file.format !== 1) throw new Error(`unsupported screen icons format ${file.format}`);
 }
@@ -134,7 +144,8 @@ export function drawIcon(
 	const color = (c: string) => tint ?? colors?.[c] ?? c;
 	for (const shape of icon(name).shapes) {
 		ctx.save();
-		ctx.globalAlpha = alpha * (shape.alpha ?? 1);
+		// on top of whatever the page is fading by
+		ctx.globalAlpha *= alpha * (shape.alpha ?? 1);
 		if (shape.clip) {
 			ctx.beginPath();
 			tracePath(ctx, compiled(shape.clip), x, y, scale);

@@ -189,6 +189,7 @@ function claimRelease(ctx: AreaContext, id: string): boolean {
 			return true;
 		case 'key.shift':
 			seq(s).chordFresh = true;
+			seq(s).playerList = false;
 			endComponents(s);
 			return false;
 		case 'key.record':

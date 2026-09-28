@@ -187,19 +187,19 @@ E3 light grey, E4 white).
 
 ### 2.5 Engine pages (instrument M1)
 
-| Engine        | Picture                                                                                                                                                            | Knobs as seen                                                                                                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| prism         | triangle, convex lens, concave lens, wedge; light rays through the lenses on every note                                                                            | shape grows the triangle; ratio thickens the convex lens in 9 steps (2:1, 1:1, 2:3, 1:2, 1:4, 1:6, 1:8, 1:12, 1:16); detune slides the concave lens; stereo opens the wedge into an arrowhead |
-| simple        | isometric glass jar on stacked slabs                                                                                                                               | stereo splits it into two jars                                                                                                                                                                |
-| organ         | four drawbars with scales 8…1, icons on the caps; they slide (animated)                                                                                            | each knob one drawbar                                                                                                                                                                         |
-| epiano        | isometric stack of layers with tines; coloured top bar (tone, texture, tine, punch)                                                                                |                                                                                                                                                                                               |
-| dissolve      | full-screen mosaic of squares, always moving                                                                                                                       | fm and detune whiten it                                                                                                                                                                       |
-| hardsync      | a hair dryer blowing animated blocks; two sub dots; a low-cut S-curve                                                                                              | lowcut slides the S-curve right                                                                                                                                                               |
-| axis          | isometric three-armed structure of cubes; plain top bar                                                                                                            | each knob lengthens or reshapes an arm                                                                                                                                                        |
-| wavetable     | the waveform morphing with trails; the first top-bar cell shows the **table name** (basic, buzz, trash, drawbars, fibonacci, fractal, geometric, primes, zap seen) | drift fans the wave into moving ghost copies                                                                                                                                                  |
-| drum sampler  | the key's waveform; skipped parts tinted blue                                                                                                                      | tune "♩ −16.10" (0.1 steps), start and end markers, play mode icons (→\|, →, →G, ⟲). Shift: direction, pan (L▮▮R bar), fade (draws a dark ramp over the wave), gain (scales the wave)         |
-| synth sampler | overview strip on top (base layer only), L and R waveforms, start / loop / end markers                                                                             | shift: direction, tune "♩ −12.00", crossfade % (a dark wedge at the loop), gain                                                                                                               |
-| multisampler  | top strip is a full keyboard; the played sample's zone lights and jumps with the octave                                                                            | each zone brings its own waveform and markers; shift as the sampler                                                                                                                           |
+| Engine        | Picture                                                                                                                                                            | Knobs as seen                                                                                                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| prism         | triangle, convex lens, concave lens, wedge; light rays through the lenses on every note                                                                            | shape grows the triangle; ratio thickens the convex lens in 10 steps (2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12, 1:16; the sweep skipped 1:3, which note 57's audio fit found); detune slides the concave lens; stereo opens the wedge into an arrowhead |
+| simple        | isometric glass jar on stacked slabs                                                                                                                               | stereo splits it into two jars                                                                                                                                                                                                                              |
+| organ         | four drawbars with scales 8…1, icons on the caps; they slide (animated)                                                                                            | each knob one drawbar                                                                                                                                                                                                                                       |
+| epiano        | isometric stack of layers with tines; coloured top bar (tone, texture, tine, punch)                                                                                |                                                                                                                                                                                                                                                             |
+| dissolve      | full-screen mosaic of squares, always moving                                                                                                                       | fm and detune whiten it                                                                                                                                                                                                                                     |
+| hardsync      | a hair dryer blowing animated blocks; two sub dots; a low-cut S-curve                                                                                              | lowcut slides the S-curve right                                                                                                                                                                                                                             |
+| axis          | isometric three-armed structure of cubes; plain top bar                                                                                                            | each knob lengthens or reshapes an arm                                                                                                                                                                                                                      |
+| wavetable     | the waveform morphing with trails; the first top-bar cell shows the **table name** (basic, buzz, crush, drawbars, fibonacci, fractal, geometric, primes, zap seen) | drift fans the wave into moving ghost copies                                                                                                                                                                                                                |
+| drum sampler  | the key's waveform; skipped parts tinted blue                                                                                                                      | tune "♩ −16.10" (0.1 steps), start and end markers, play mode icons (→\|, →, →G, ⟲). Shift: direction, pan (L▮▮R bar), fade (draws a dark ramp over the wave), gain (scales the wave)                                                                       |
+| synth sampler | overview strip on top (base layer only), L and R waveforms, start / loop / end markers                                                                             | shift: direction, tune "♩ −12.00", crossfade % (a dark wedge at the loop), gain                                                                                                                                                                             |
+| multisampler  | top strip is a full keyboard; the played sample's zone lights and jumps with the octave                                                                            | each zone brings its own waveform and markers; shift as the sampler                                                                                                                                                                                         |
 
 **The three sampler engines ignore CC 12–15**: nothing on their M1 pages moves.
 
@@ -213,23 +213,67 @@ E3 light grey, E4 white).
 
 ### 2.7 Players
 
-- **Switching on:** the first press of `player` shows the page ("off" boxed over dim bars); the second
-  press switches the player on.
+Measured on the realigned frames b1-313…477 (arpeggio 313–379, list 391–411, hold 412–434, maestro
+435–477) and rebuilt in `src/lib/sim/areas/sequencer/player-draw.ts`; `scripts/device-compare.mjs`
+overlays agree to about a pixel. Pictograms TE never drew are traced off the frames by
+`research/device/icontrace.py` into `knowledge/opxy/device-icons/players.json`. Coordinates below
+are design px (capture rows × 220/222).
+
+- **Switching on:** the first press of `player` shows the page at about 40 % brightness, with "off"
+  (30 px, bold) in a black box, 60 × 40 at (210.5, 90.5), outlined white. The second press switches
+  the player on.
+- **Selection:** the first `shift + player` shows the list with the current player boxed. Each
+  further press of `player` (shift still down) moves the box on, and letting go of shift opens that
+  player's page. Layout: the track number and "player" at x 4 (baselines 25.3 and 45.3), the list at
+  x 111 with baselines 20 px apart, in the order arpeggio, hold, maestro. The box is a 1.5 px outline,
+  125 × 21 at x 105.25. All text on these pages is in the heavier weight.
+- **Cards:** four 50 × 50 cards (radius about 3) at y 20, in the encoders' greys: dark, mid, light,
+  white. White pictograms sit on the first two, ink on the other two, and pale blue marks what is
+  off or not reached. The arpeggio's cards are at x 135 + 53·i; maestro's are wider apart, at
+  130, 184.75, 239.5 and 294.25.
 - **arpeggio:**
-  - an icon row of four boxes (note value, pattern, range ladder, hand) plus an arrow;
-  - each knob swaps its icon, and range reshapes the bars into a staircase;
-  - the shift layer has another row: two notes, "off", a curve, a circle.
-- **Selection** (shift + player): "N / player" on the left, the list arpeggio · hold · maestro, the
-  current one boxed.
-- **hold:** "hold" over a large infinity ribbon of concentric bands. The knobs do nothing; latched
-  notes may animate the ribbon (to check).
+  - E1 speed is a note value only. TE's LFO note glyphs at 0.59 stand on y 62.4, centred on the card:
+    a quarter (the slowest), an eighth, sixteenth, 32nd and a 64th (four flags, the fastest), with
+    triplets drawn as three notes under an arc and a 3. The frames caught in passing suggest 1/4,
+    1/8, 1/8t, 1/16, 1/16t, 1/32, 1/32t, 1/64. Whether 1/4t or slower values exist is to check.
+  - E2 pattern pictograms, in the guide's order: up (a rising staircase), down, up/down (a stepped
+    peak), up/repeat/down (the peak split in two), random (scattered blocks) and play order (an
+    arrow to a dot).
+  - E3 range is a ladder: rails 3 px wide at card x 17.25 and 31.75, four rungs 7.7 apart, and the
+    octave count (10 px, grey) at the top right.
+  - E4 hold is a hand, pale blue when off and ink when on.
+  - A white ↗ arrow at (347, 14) appears on the base layer only: it marks a page with a shift layer.
+  - "arpeggio" is 18 px bold, centred at 243.25, baseline 95.5 (smaller than 20 px, as if fitted to
+    about 75 px). Maestro's name is 20 px at 241.
+  - The run is fourteen isometric bars, 10 px wide from x 172.5, standing on the bottom edge. The
+    front top is at 159.55 − 3.96·rank, where rank is the note's place among the run's pitches (not
+    semitones), with a depth of (5, −5). Fill pale blue, edges a darker blue, 1 px. The run repeats
+    across the fourteen: a triad at range 1 gives 1-2-3 heights, and at range 4 a twelve-step climb
+    then 1, 2. The default screen's triad is the picture with nothing held.
+  - The shift layer (no arrow):
+    - length: two quarter notes (0.42 scale, the right one 4 px higher) with a tie under them that is
+      white as far as the length reaches (half at 50) and pale beyond;
+    - style: "off" (20 px) for the first, bar charts of seven 4 px bars for the others (seen:
+      1-2-3-4-6-5-1 and 1-1-3-3-5-5-1; which style is which is unknown);
+    - glide: a rising squiggle of three waves, inked from the left as far as glide reaches;
+    - stereo: an ink ring (r 13.2, 2 px) with a pale ring behind it that parts to the right as
+      stereo rises (about ±6 px apart at the value seen).
+- **hold:** "hold" (20 px bold, centred at 239.5, baseline 45.6) over an infinity ribbon. Its
+  loops are centred at (200.25, 121) and (278.75, 121), with eight lanes of 5.56 px from a 5.5 px
+  hole to a 50 px rim. A lane at radius r on one loop is at 55.5 − r on the other, so the crossing
+  lanes run at 45°, and the band falling to the right lies over the rising one. The knobs do nothing.
+  The frames show no animation (to check with notes latched).
 - **maestro:**
-  - E1 roll (icon plus 0, 10, 12, …);
-  - E2 pattern (up, down, up/down, random icons);
-  - E3 crossed out (no job);
-  - E4 hold (a hand, filled when on);
-  - two isometric slab stacks show the stored chord;
-  - a chord is recorded with shift held while playing keys.
+  - E1 roll: a wavy arpeggio sign with the value (14 px, bold) at its top right: 0, 10, 12…
+  - E2 pattern: up, down, up/down, random, the arpeggio's pictograms.
+  - E3 has no job: its card is crossed corner to corner in 1 px ink.
+  - E4 hold: the hand.
+  - Two stacks of four slabs, the stacks' front slabs at (160, 176.4) and (250, 176.4). Each slab is
+    35 × 31.7 across, 5 deep, and 10 px further back and up than the one before. A slab stands for
+    each stored note, filling the left stack from the back and then the right. Entering a new chord
+    (shift + keys) lays them all flat, then raises one per note: 1, 4, then 4 + 2… Standing slabs
+    are 19.8 px tall, and 39.6 while the chord sounds (tall for the frames while it played).
+    Eight slabs suggest at most eight notes per chord (the simulator keeps eight).
 
 ### 2.8 Bar, steps
 
@@ -302,15 +346,15 @@ E3 light grey, E4 white).
 
 ### 2.13 Auxiliary tracks
 
-| Track                  | M1                                                                                                                                                                                                                                             | Other pages                                                                                                                                                                                                                                |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| T1 brain (ch 9)        | title "c major"; E1 auto (a brain head) / manual (a hand, with root and scale fields); E2 root (12); E3 scale (major, dorian, phrygian, lydian, mixo, minor, locrian); E4 link (crossed = off, then 02 04 06 08); a mini piano marks the scale | M2 routing: an "in" bracket from the brain to track boxes 1–8 with on/off, sliding in from M1. No filter page (CC32/35 do nothing)                                                                                                         |
-| T2 punch-in FX         | 24 keys, each its own animation (planets, a digit clock, noise, hands, waves, line and bar sweeps…); 10 fps recordings of every key                                                                                                            | sounds not yet recorded                                                                                                                                                                                                                    |
-| T3 external MIDI (11)  | "midi", a DIN icon; channel 01–16 (CC12); bank and program crossed at 0, then 1–128 (CC13, CC14); CC15 nothing                                                                                                                                 | M2/M3 CC slots slide in: each slot crossed (off) or a big value with "cc N" under it; shift + turn picks the CC. M4 LFO: destinations are the slots, the parameter reads "no cc set"                                                       |
-| T4 external CV (12)    | a "cv" voltmeter, −5 … +5 V; CC 12–15 move nothing                                                                                                                                                                                             | notes move the needle (to confirm)                                                                                                                                                                                                         |
-| T5 external audio (13) | signal flow: "fdbk block" mic (crossed while blocking) → input → drive (00–20, CC13) → level (75) → mix (CC15, 00–99)                                                                                                                          | M2 routing boxes 1–8 and an "out" box; M3 filter: off by default, high-pass (CC32, rising from the left) and low-pass (CC35, falling from the right); M4 LFO with syn / filter / amp and parameters param1, hi pass, volume, pan           |
-| T6 tape (14)           | a reel icon and speed % (CC13: 50–200 %; 63 → 99 %, 64 → 101 %); a tape strip with a length digit 1–16 (CC14); mix (CC15, 00–99); CC12 small change                                                                                            |                                                                                                                                                                                                                                            |
-| T7 FX I (15)           | "FX I" boxed plus the type; four columns 100 px wide at x 40, 140, 240, 340, labels above and values below, partial strips at both edges; each column a bar split by a marker at the value's height                                            | types (shift + T7 lists them): chorus (rate, depth, feedback, stereo), delay (time e.g. "1/8 dotted", fine, feedback, dry), dist (…, clip, lo cut, hi cut), lofi, phaser (frequency, depth, rate, feedback), reverb (size, mod, tone, dry) |
+| Track                  | M1                                                                                                                                                                                                                                             | Other pages                                                                                                                                                                                                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T1 brain (ch 9)        | title "c major"; E1 auto (a brain head) / manual (a hand, with root and scale fields); E2 root (12); E3 scale (major, dorian, phrygian, lydian, mixo, minor, locrian); E4 link (crossed = off, then 02 04 06 08); a mini piano marks the scale | M2 routing: an "in" bracket from the brain to track boxes 1–8 with on/off, sliding in from M1. No filter page (CC32/35 do nothing)                                                                                                                                   |
+| T2 punch-in FX         | 24 keys, each its own animation (planets, a digit clock, noise, hands, waves, line and bar sweeps…); 10 fps recordings of every key                                                                                                            | sounds not yet recorded                                                                                                                                                                                                                                              |
+| T3 external MIDI (11)  | "midi", a DIN icon; channel 01–16 (CC12); bank and program crossed at 0, then 1–128 (CC13, CC14); CC15 nothing                                                                                                                                 | M2/M3 CC slots slide in: each slot crossed (off) or a big value with "cc N" under it; shift + turn picks the CC. M4 LFO: destinations are the slots, the parameter reads "no cc set"                                                                                 |
+| T4 external CV (12)    | a "cv" voltmeter, −5 … +5 V; CC 12–15 move nothing                                                                                                                                                                                             | notes move the needle (to confirm)                                                                                                                                                                                                                                   |
+| T5 external audio (13) | signal flow: "fdbk block" mic (crossed while blocking) → input → drive (00–20, CC13) → level (75) → mix (CC15, 00–99)                                                                                                                          | M2 routing boxes 1–8 and an "out" box; M3 filter: off by default, high-pass (CC32, rising from the left) and low-pass (CC35, falling from the right); M4 LFO with syn / filter / amp and parameters param1, hi pass, volume, pan                                     |
+| T6 tape (14)           | a reel icon and speed % (CC13: 50–200 %; 63 → 99 %, 64 → 101 %); a tape strip with a length digit 1–16 (CC14); mix (CC15, 00–99); CC12 small change                                                                                            |                                                                                                                                                                                                                                                                      |
+| T7 FX I (15)           | "FX I" boxed plus the type; four columns 100 px wide at x 40, 140, 240, 340, labels above and values below, partial strips at both edges; each column a bar split by a marker at the value's height                                            | types (shift + T7 lists them): chorus (rate, depth, feedback, stereo), delay (size, shown as a note value such as "1/8 dotted"; fine, feedback, dry), dist (…, clip, lo cut, hi cut), lofi, phaser (frequency, depth, rate, feedback), reverb (size, mod, tone, dry) |
 
 ## 3. MIDI reach on 1.1.33 (verified on screen)
 

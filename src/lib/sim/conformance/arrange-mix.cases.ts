@@ -432,10 +432,10 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 		it('gives a new pattern the player type in use (OS 1.1.25)', async () => {
 			const d = await start();
 			await d.click(track(3));
-			await d.withShift(() => d.click('key.player'));
+			await d.withShift(() => d.clicks('key.player', 'key.player', 'key.player'));
 			expect(page(d, 'player').type).toBe('maestro');
 			await d.clicks('key.arrange', NEW, 'key.player');
-			expect(d.screen()).toBe('maestro player off: roll 00, pattern up, hold off');
+			expect(d.screen()).toBe('maestro player off: roll 00, pattern up, hold off; no chord stored');
 		});
 
 		it('copies a pattern with M2 and pastes it on its own track with M3, as a new pattern to vary', async () => {

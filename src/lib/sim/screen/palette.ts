@@ -52,7 +52,14 @@ export const COLORS = {
 	/** The active pattern box. */
 	red: '#e5371b',
 	/** Record dots and thresholds. */
-	record: '#ff4d00'
+	record: '#ff4d00',
+	/**
+	 * The pale blue of the player pictures (the arpeggio's bars, hold's ribbon, maestro's slabs, the
+	 * hand while hold is off), and their edges. The guide never shows it; seen on the device by
+	 * camera, whose colour is only approximate (docs/research/59-screen-profiling.md §2.7).
+	 */
+	blue: '#a2cce0',
+	blueEdge: '#3e6d8a'
 } as const;
 
 /**

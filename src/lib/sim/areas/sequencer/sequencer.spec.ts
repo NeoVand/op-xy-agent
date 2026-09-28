@@ -707,18 +707,30 @@ describe('clearing and undo (manual: sequencer/clear-and-undo)', () => {
 });
 
 describe('players (manual: players/*)', () => {
-	it('opens with player, switches on with player again, and steps through types with shift', () => {
+	it('opens with player, switches on with player again, and lists the players with shift', () => {
 		const { sim } = rig();
 		sim.press('track.3');
 		sim.press('key.player');
-		expect(page(sim, 'player')).toMatchObject({ type: 'arpeggio', on: false });
+		expect(page(sim, 'player')).toMatchObject({ type: 'arpeggio', on: false, list: null });
 		sim.press('key.player');
 		expect(page(sim, 'player').on).toBe(true);
-		sim.combo('key.shift', 'key.player');
+		// shift + player shows the list with the current player boxed; each further press moves on
+		down(sim, 'key.shift');
+		sim.press('key.player');
+		expect(page(sim, 'player')).toMatchObject({ type: 'arpeggio', list: { track: 3 } });
+		sim.press('key.player');
+		expect(page(sim, 'player').type).toBe('hold');
+		sim.press('key.player');
 		expect(page(sim, 'player').type).toBe('maestro');
-		sim.combo('key.shift', 'key.player');
-		expect(page(sim, 'player')).toMatchObject({ type: 'hold', cards: [] });
-		sim.combo('key.shift', 'key.player');
+		expect(describeFrame(sim.frame)).toBe(
+			'player list for track 3: arpeggio, hold, maestro; maestro chosen'
+		);
+		up(sim, 'key.shift');
+		expect(page(sim, 'player')).toMatchObject({ type: 'maestro', list: null });
+		down(sim, 'key.shift');
+		sim.press('key.player');
+		sim.press('key.player');
+		up(sim, 'key.shift');
 		expect(page(sim, 'player').type).toBe('arpeggio');
 		sim.press('key.m1');
 		expect(sim.frame.page).toBe('synth');
@@ -736,8 +748,9 @@ describe('players (manual: players/*)', () => {
 		sim.turn(3, 1);
 		sim.turn(4, 1);
 		const frame = page(sim, 'player');
-		expect(frame.cards.map((c) => c.value)).toEqual(['1/8', 'up/down', '2 oct', 'on']);
-		expect(frame.run).toEqual([0, 4, 7, 12, 16, 19, 16, 12, 7, 4]);
+		expect(frame.cards.map((c) => c.value)).toEqual(['1/16', 'up/down', '2 oct', 'on']);
+		// the bars climb a step per pitch of the run, not per semitone
+		expect(frame.run).toEqual([0, 1, 2, 3, 4, 5, 4, 3, 2, 1]);
 		down(sim, 'key.shift');
 		sim.turn(1, -20);
 		sim.turn(2, 1);
@@ -755,7 +768,7 @@ describe('players (manual: players/*)', () => {
 		sim.click(4); // hold off again
 		expect(pattern(sim).player.arp.hold).toBe(false);
 		expect(describeFrame(sim.frame)).toBe(
-			'arpeggio player off: speed 1/8, pattern up/down, range 2 oct, hold off'
+			'arpeggio player off: speed 1/16, pattern up/down, range 2 oct, hold off'
 		);
 	});
 
@@ -771,6 +784,9 @@ describe('players (manual: players/*)', () => {
 		expect(litKeys(sim).sort()).toEqual(['c4', 'e4', 'g4']);
 		sim.press('key.play');
 		expect(litKeys(sim)).toEqual(['c4']);
+		// a new pattern's arpeggio plays eighths
+		sim.advance(SIXTEENTH);
+		expect(litKeys(sim)).toEqual(['c4']);
 		sim.advance(SIXTEENTH);
 		expect(litKeys(sim)).toEqual(['e4']);
 		sim.press('key.stop');
@@ -781,7 +797,7 @@ describe('players (manual: players/*)', () => {
 		expect(litKeys(sim).sort()).toEqual(['a4', 'd4']);
 		sim.press('key.play');
 		expect(litKeys(sim)).toEqual(['d4']);
-		sim.advance(SIXTEENTH);
+		sim.advance(2 * SIXTEENTH);
 		expect(litKeys(sim)).toEqual(['a4']);
 		up(sim, 'keyboard.d4');
 		up(sim, 'keyboard.a4');
@@ -790,12 +806,14 @@ describe('players (manual: players/*)', () => {
 	it('holds notes until the next ones with the hold player', () => {
 		const { sim } = rig();
 		sim.press('track.3');
-		sim.combo('key.shift', 'key.player');
-		sim.combo('key.shift', 'key.player');
+		down(sim, 'key.shift');
+		sim.press('key.player');
+		sim.press('key.player');
+		up(sim, 'key.shift');
 		sim.press('key.player'); // hold, on
+		expect(page(sim, 'player')).toMatchObject({ type: 'hold', on: true, cards: [] });
 		sim.press('keyboard.c4');
 		expect(litKeys(sim)).toEqual(['c4']);
-		expect(page(sim, 'player').marks).toEqual([0]);
 		sim.press('keyboard.e4');
 		expect(litKeys(sim)).toEqual(['e4']);
 		down(sim, 'keyboard.g4');
@@ -813,7 +831,9 @@ describe('players (manual: players/*)', () => {
 	it('stores a maestro chord with shift held and plays it from any key', () => {
 		const { sim } = rig();
 		sim.press('track.4');
-		sim.combo('key.shift', 'key.player');
+		down(sim, 'key.shift');
+		for (let i = 0; i < 3; i++) sim.press('key.player'); // the list, hold, maestro
+		up(sim, 'key.shift');
 		sim.press('key.player'); // maestro, on
 		down(sim, 'key.shift');
 		for (const key of ['d4', 'f4', 'a4']) sim.press(`keyboard.${key}`);
@@ -821,10 +841,12 @@ describe('players (manual: players/*)', () => {
 		// a new project has T4's keyboard an octave up: the keys marked D4 F4 A4 play D5 F5 A5
 		expect(pattern(sim).player.maestro.chord).toEqual([74, 77, 81]);
 		const frame = page(sim, 'player');
-		expect(frame).toMatchObject({ root: 'd5', marks: [2, 5, 9] });
+		expect(frame.maestro).toMatchObject({ root: 'd5', notes: 3, sounding: false });
 		expect(frame.cards.map((c) => c.label)).toEqual(['roll', 'pattern', '', 'hold']);
 		down(sim, 'keyboard.c4');
 		expect(litKeys(sim).sort()).toEqual(['c4', 'ds4', 'g4']);
+		// the slabs stand tall while the chord sounds
+		expect(page(sim, 'player').maestro?.sounding).toBe(true);
 		up(sim, 'keyboard.c4');
 		expect(litKeys(sim)).toEqual([]);
 		// a new chord replaces the old one
@@ -838,6 +860,13 @@ describe('players (manual: players/*)', () => {
 		expect(page(sim, 'player').cards.map((c) => c.value)).toEqual(['40', 'random', '', 'on']);
 		sim.press('keyboard.g4');
 		expect(litKeys(sim)).toEqual(['g4']);
+		// eight notes at most: the page has eight slabs
+		down(sim, 'key.shift');
+		for (const key of ['f3', 'g3', 'a3', 'b3', 'c4', 'd4', 'e4', 'f4', 'g4', 'a4']) {
+			sim.press(`keyboard.${key}`);
+		}
+		up(sim, 'key.shift');
+		expect(pattern(sim).player.maestro.chord).toHaveLength(8);
 	});
 });
 
@@ -894,10 +923,13 @@ describe('auxiliary tracks and rendering', () => {
 		up(sim, 'key.shift');
 		sim.press('key.player');
 		frames.push(sim.frame);
-		sim.combo('key.shift', 'key.player');
-		frames.push(sim.frame);
-		sim.combo('key.shift', 'key.player');
-		frames.push(sim.frame);
+		down(sim, 'key.shift');
+		sim.press('key.player');
+		frames.push(sim.frame); // the list
+		sim.press('key.player');
+		sim.press('key.player');
+		up(sim, 'key.shift');
+		frames.push(sim.frame); // maestro
 		sim.press('key.m1');
 		down(sim, 'step.1');
 		sim.turn(2, 3);

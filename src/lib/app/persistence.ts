@@ -21,9 +21,9 @@ import { DEFAULT_LEVEL, defaultState, type SimState } from '$lib/sim/params';
 
 /**
  * Bumped when a save can no longer simply be merged onto the defaults; older versions that can be
- * brought up to date are ({@link upgradeV1}, {@link upgradeGrooves}).
+ * brought up to date are ({@link upgradeV1}, {@link upgradeGrooves}, {@link upgradeArpSpeeds}).
  */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 /** What is stored. */
 export interface SavedSim {
@@ -144,6 +144,30 @@ export function upgradeGrooves(project: unknown): void {
 	if (typeof groove === 'number') project.tempo.groove = OLD_GROOVES[groove] ?? 0;
 }
 
+/**
+ * Where the arpeggio speeds of versions 1–3 (1/32, 1/16t, 1/16, 1/8t, 1/8, 1/4t, 1/4, 1/2, 1/1) sit
+ * among the device's (1/4 … 1/64, research 59 §2.7); the slower ones it lacks become quarters.
+ */
+const OLD_ARP_SPEEDS = [5, 4, 3, 2, 1, 0, 0, 0, 0];
+
+/** A version 1–3 save's arpeggio speeds, moved to the same note value in today's list. In place. */
+export function upgradeArpSpeeds(project: unknown): void {
+	if (!isObject(project)) return;
+	for (const tracks of [project.tracks, project.aux]) {
+		if (!Array.isArray(tracks)) continue;
+		for (const track of tracks) {
+			const patterns = isObject(track) && isObject(track.sequence) ? track.sequence.patterns : null;
+			if (!Array.isArray(patterns)) continue;
+			for (const pattern of patterns) {
+				const arp = isObject(pattern) && isObject(pattern.player) ? pattern.player.arp : null;
+				if (isObject(arp) && typeof arp.speed === 'number') {
+					arp.speed = OLD_ARP_SPEEDS[arp.speed] ?? 1;
+				}
+			}
+		}
+	}
+}
+
 // ───────────────────────────────────────────────────────────────────── capture / apply
 
 /** The state's work, ready to store. */
@@ -206,6 +230,7 @@ export function applySaved(state: SimState, saved: SavedSim): boolean {
 	}
 	if (version === 1) upgradeV1(project, library);
 	if (version < 3) upgradeGrooves(project);
+	if (version < 4) upgradeArpSpeeds(project);
 	const fresh = defaultState();
 	const freshProject = JSON.parse(snapshot(fresh)) as Record<string, unknown>;
 	restore(state, JSON.stringify(mergeDefaults(project, freshProject)), saved.name);

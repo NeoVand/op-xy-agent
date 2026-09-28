@@ -98,6 +98,8 @@ export interface SequencerState {
 	sustained: number[];
 	/** Maestro: shift is held and the next key starts a new chord. */
 	chordFresh: boolean;
+	/** `shift + player` showed the list of players; it goes when shift comes up. */
+	playerList: boolean;
 	/** Maestro chord hits so far (its up/down strum alternates). */
 	hits: number;
 
@@ -138,6 +140,7 @@ export function initialSequencer(): SequencerState {
 		undo: null,
 		sustained: [],
 		chordFresh: true,
+		playerList: false,
 		hits: 0,
 		clock: 0
 	};

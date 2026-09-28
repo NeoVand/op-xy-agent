@@ -108,24 +108,28 @@ export function formatScale(scale: number): string {
 
 // ─────────────────────────────────────────────────────────────────────────── players
 
-/** Player types, in the order `shift + player` steps through them (manual: players/overview). */
-export const PLAYER_TYPES = ['arpeggio', 'maestro', 'hold'] as const;
+/**
+ * Player types, in the order the device lists them and `shift + player` steps through them
+ * (manual: players/overview; camera, OS 1.1.33).
+ */
+export const PLAYER_TYPES = ['arpeggio', 'hold', 'maestro'] as const;
 export type PlayerType = (typeof PLAYER_TYPES)[number];
 
 /**
- * Arpeggio speeds (E1): a note value and its length in steps. The guide names no values; these are
- * ours, with triplets between the straight values.
+ * Arpeggio speeds (E1), slowest first: a note value, its length in steps, and how the page draws it
+ * (a note with 0–4 flags, or three under a 3). The device shows only the note; turned through its
+ * range on camera it ran from a quarter to a 64th with triplets among them (OS 1.1.33, research 59
+ * §2.7). Which triplets there are is inferred from the frames caught between.
  */
 export const ARP_SPEEDS = [
-	{ label: '1/32', steps: 0.5 },
-	{ label: '1/16t', steps: 2 / 3 },
-	{ label: '1/16', steps: 1 },
-	{ label: '1/8t', steps: 4 / 3 },
-	{ label: '1/8', steps: 2 },
-	{ label: '1/4t', steps: 8 / 3 },
-	{ label: '1/4', steps: 4 },
-	{ label: '1/2', steps: 8 },
-	{ label: '1/1', steps: 16 }
+	{ label: '1/4', steps: 4, flags: 0, triplet: false },
+	{ label: '1/8', steps: 2, flags: 1, triplet: false },
+	{ label: '1/8t', steps: 4 / 3, flags: 1, triplet: true },
+	{ label: '1/16', steps: 1, flags: 2, triplet: false },
+	{ label: '1/16t', steps: 2 / 3, flags: 2, triplet: true },
+	{ label: '1/32', steps: 0.5, flags: 3, triplet: false },
+	{ label: '1/32t', steps: 1 / 3, flags: 3, triplet: true },
+	{ label: '1/64', steps: 0.25, flags: 4, triplet: false }
 ] as const;
 
 /** Arpeggio patterns (E2; manual: players/arpeggio). */
@@ -139,11 +143,12 @@ export const ARP_PATTERNS = [
 ] as const;
 
 /**
- * Arpeggio styles (shift + E2). The guide says only that style also changes the note order; these
- * five are ours: as the pattern, outside-in, inside-out, and each note alternating with the top
- * (pinky) or the bottom (thumb) note.
+ * Arpeggio styles (shift + E2). The guide says only that style also changes the note order, and the
+ * device draws the first as "off" and the others as bar pictures (research 59 §2.7). Past off, these
+ * four are ours: outside-in, inside-out, and each note alternating with the top (pinky) or the
+ * bottom (thumb) note.
  */
-export const ARP_STYLES = ['straight', 'converge', 'diverge', 'pinky', 'thumb'] as const;
+export const ARP_STYLES = ['off', 'converge', 'diverge', 'pinky', 'thumb'] as const;
 
 /** Maestro strum orders (E2; manual: players/maestro). */
 export const MAESTRO_PATTERNS = ['up', 'down', 'up/down', 'random'] as const;
@@ -168,6 +173,9 @@ export interface ArpSettings {
 	stereo: number;
 }
 
+/** Notes maestro keeps: its page has a slab for each of eight (research 59 §2.7). */
+export const MAESTRO_NOTES = 8;
+
 /** Maestro: the stored chord and how it is strummed. */
 export interface MaestroSettings {
 	/** 0 (block chord) … 99 (slow strum). */
@@ -188,12 +196,15 @@ export interface PlayerSettings {
 	maestro: MaestroSettings;
 }
 
-/** A player as a new pattern has it: arpeggio, off, sixteenths up over one octave. */
+/**
+ * A player as a new pattern has it: arpeggio, off, eighths up over one octave (the page as the
+ * device first showed it in the owner's scratch project, research 59 §2.7).
+ */
 export function defaultPlayer(): PlayerSettings {
 	return {
 		type: 'arpeggio',
 		on: false,
-		arp: { speed: 2, pattern: 0, range: 1, hold: false, length: 50, style: 0, glide: 0, stereo: 0 },
+		arp: { speed: 1, pattern: 0, range: 1, hold: false, length: 50, style: 0, glide: 0, stereo: 0 },
 		maestro: { roll: 0, pattern: 0, hold: false, chord: [] }
 	};
 }

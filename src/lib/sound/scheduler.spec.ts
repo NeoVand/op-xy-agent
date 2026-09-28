@@ -285,7 +285,8 @@ describe('the lookahead scheduler', () => {
 		const p = pattern(2);
 		toggleStep(p, 0, [48, 52, 55], 90);
 		for (const n of p.steps[0].notes) n.length = 4;
-		p.player.on = true; // arpeggio, sixteenths, up over an octave
+		p.player.on = true; // arpeggio, up over an octave
+		p.player.arp.speed = 3; // sixteenths (a new pattern's play eighths)
 		play();
 		run(0.9);
 		expect(notes.map((n) => n.note)).toEqual([48, 52, 55, 48]);
@@ -489,6 +490,7 @@ describe("the active track's arpeggio", () => {
 		r.state.track = 2;
 		const player = r.pattern(2).player;
 		player.on = true;
+		player.arp.speed = 3; // sixteenths (a new pattern's play eighths)
 		r.state.held = keys;
 		return { ...r, player, arpNotes: () => r.notes.filter((n) => n.track === 2) };
 	}
@@ -510,7 +512,7 @@ describe("the active track's arpeggio", () => {
 		const { play, run, arpNotes, player, state, scheduler } = arp();
 		player.arp.pattern = 4; // random
 		player.arp.range = 2;
-		player.arp.speed = 4; // eighths
+		player.arp.speed = 1; // eighths
 		play();
 		run(2);
 		const input = arpeggioInput(state)!.notes;
