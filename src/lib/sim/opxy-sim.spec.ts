@@ -406,6 +406,7 @@ describe('frames and formats', () => {
 		expect(two(120)).toBe('99');
 		expect(formatTune(-1.22)).toBe('–1.22');
 		expect(formatTune(0.5)).toBe('+0.50');
+		expect(formatTune(0)).toBe('+0.00');
 		expect(formatBpm(120)).toBe('120');
 		expect(formatBpm(96.25)).toBe('96.3');
 		expect(keyName(1)).toBe('F#3');

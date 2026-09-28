@@ -46,7 +46,7 @@ export type DrumPlayMode = (typeof DRUM_PLAY_MODES)[number];
 
 /** One drum key's settings (manual: sampler/drum-key-settings). */
 export interface DrumKey {
-	/** Semitones, −12…12 in hundredths. */
+	/** Semitones, ±{@link SAMPLER_TUNE_RANGE} in hundredths. */
 	tune: number;
 	/** 0–99 of the sample. */
 	start: number;
@@ -318,9 +318,15 @@ export function keyName(index: number): string {
 /** Tune as the sampler shows it: "0.00", "+1.50", "–1.22" (en dash like TE's art). */
 export function formatTune(semitones: number): string {
 	const v = Math.round(semitones * 100) / 100;
-	if (v === 0) return '0.00';
+	// always signed: the device writes zero as "+0.00" (research 59, the sampler pages)
 	return `${v < 0 ? '–' : '+'}${Math.abs(v).toFixed(2)}`;
 }
+
+/**
+ * How far a sampler's tune reaches either way, in semitones: the device showed −16.10 on a drum key
+ * (research 59, the sampler pages); 48 is the reach of the stored value (research 30 §2.7).
+ */
+export const SAMPLER_TUNE_RANGE = 48;
 
 /** BPM as the tempo page shows it: whole tempos without decimals ("120", "120.5"). */
 export function formatBpm(bpm: number): string {

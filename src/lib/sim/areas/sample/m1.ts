@@ -12,7 +12,14 @@
  *   selected key, with the keyboard on top lighting that zone.
  */
 import type { DrumFrame } from '../../screen/frame';
-import { DRUM_PLAY_MODES, clamp, keyName, type DrumKey, type SimState } from '../../params';
+import {
+	DRUM_PLAY_MODES,
+	SAMPLER_TUNE_RANGE,
+	clamp,
+	keyName,
+	type DrumKey,
+	type SimState
+} from '../../params';
 import type { SamplerView } from './frames';
 import { keyNote } from './record';
 import { LOOP_TYPES, defaultRegion, type Region, type SampleFile, type Zone } from './state';
@@ -30,7 +37,7 @@ export const LANE_COLUMNS = 469;
  * (docs/research/30-presets-samples.md §2.7). The same reach for the synth sampler and the
  * multisampler is ours.
  */
-export const TUNE_RANGE = 48;
+export const TUNE_RANGE = SAMPLER_TUNE_RANGE;
 
 /**
  * Tune as the M1 page shows it, in semitones to hundredths, always signed ("+0.00", "–0.10",

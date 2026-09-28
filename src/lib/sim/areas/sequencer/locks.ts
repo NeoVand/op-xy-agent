@@ -20,6 +20,7 @@ import {
 	detent,
 	engineParams,
 	formatTune,
+	SAMPLER_TUNE_RANGE,
 	isSampler,
 	two,
 	type Envelope99,
@@ -114,8 +115,8 @@ function samplerParam(id: string, k: number, field: (typeof SAMPLER_FIELDS)[numb
 		case 'tune':
 			return param(id, {
 				label: 'tune',
-				min: -12,
-				max: 12,
+				min: -SAMPLER_TUNE_RANGE,
+				max: SAMPLER_TUNE_RANGE,
 				step: 0.1,
 				fine: 0.01,
 				get: (t) => at(t).tune,
