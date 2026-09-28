@@ -15,11 +15,14 @@ src/lib/
     opxy/      The OP-XY as data: controls inventory, tracks/channels, CC map, remote keys,
                firmware profile — loaded from knowledge/*.json and validated with zod
     music/     notation, melodies, harmony; later SongIR, arranger, MIDI-file import
-    xy/        (M6) .xy codec, ported from kmorrill/xy-format
+    xy/        (M6) the device's .xy project files, ported from kmorrill/xy-format: container and
+               RLE, project model, reader, template writer (sim/xy.ts compiles the simulator's
+               project into one)
     presets/   (M7) sample presets: WAV/AIFF in and out, resampling, pitch and loop finding,
-               patch.json, the drum/multisample/sampler builder, zip (the page is /presets)
+               patch.json, the drum/multisample/sampler builder, slicer, zip (the page is /presets)
     mtp/       MTP with the OP-XY in MTP mode: containers, datasets, a session over any byte pipe,
                the write policy (reads; new files only after approval; never delete/move), installPreset
+    dsp/       shared signal processing (the FFT)
   device/      Browser adapters (Web MIDI, workers, audio). Everything injected for tests:
                access, transport (the single send choke point + policy), monitor, device mirror,
                scheduler + tick worker, session (identity + GREET), expect(), mtp (WebUSB pipe)
@@ -28,8 +31,9 @@ src/lib/
   agent/       (M3) conductor harness on @anthropic-ai/sdk, tools, subagents, approvals, journal
   replica/     (M2) SVG digital twin: geometry model (mm), components, screen canvas, animations
   sim/         (M2.5) the virtual OP-XY: state, input → state, frames → the screen's pages (drawn
-               from TE's art and the device captures), the sequencer, and the navigator
-               (exact steps to any page or value, tried on a copy of the simulator)
+               from TE's art and the device captures), the sequencer, the navigator (exact steps
+               to any page or value, tried on a copy of the simulator), and xy.ts (the project as a
+               .xy file, M6)
   sound/       the replica's sound in the browser: synth engines, drum kit, samplers, effects
   manual/      (M4) our manual: schema, loader, search
   ui/          design tokens, primitives, shared components
