@@ -209,7 +209,7 @@ owner flagged, then what users see most.
       sampling and slicing, and a song from scenes as runnable recipes (the prose units exist), and
       values taken from the factory presets.
 - [x] **Evals:** `evals/agent/howto.mjs` checks how-to answers and idea-to-device set-ups against the
-      simulator's end state (9 cases, the reverb and the mix included). Left: screen Q&A.
+      simulator's end state, and screen questions asked from elsewhere on the replica (12 cases).
 
 ### F5 — Next capture session (with the owner)
 

@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "8ab6fa7c",
+	"bundle_hash": "5f5ee9de",
 	"stats": {
 		"units": 163,
 		"facts": 1080,
 		"procedures": 196,
 		"parameters": 207,
 		"verified_items": 182,
-		"words": 40119,
+		"words": 40129,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -20781,7 +20781,7 @@
 				},
 				{
 					"id": "bands-drawn",
-					"text": "Each band tilts its own group of panels, lying flat at the minimum and upright at the maximum; in a new project all three bands sat at the middle value, 64.",
+					"text": "Each band tilts its own group of panels, flat at the minimum and rising with the value to lean at about 60° at the maximum, never fully upright; in a new project all three bands sat at the middle value, 64.",
 					"source": "docs/research/59-screen-profiling.md#210-mixer",
 					"firmware_min": null,
 					"verified_on": "1.1.33",

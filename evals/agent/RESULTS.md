@@ -22,7 +22,14 @@ to the how-to eval.
 | `reverb`      | FX II's size to 85 and more of track 7 into it                 | pass   | plan_steps ×2 (show)         |
 | `mix`         | track 2 down to 40 in the mix, panned a little left            | pass   | plan_steps ×3 (show)         |
 
-The last two came with the navigator's reach into the auxiliary and mixer pages (a run of three,
+| `screen-off` | "a box on my screen says off": what, and how to clear it | pass | read_screen → show_on_replica |
+| `screen-page` | what is this page doing to my sound (a duck on the metronome) | pass | read_screen |
+| `screen-lost` | "tilted panels on a grid": what, and back to track 3's filter | pass | read_screen → plan_steps |
+
+The screen cases start the replica somewhere else (a switched-off filter, a duck LFO, the master
+EQ) and pass 3/3 for $0.30. One answer called the EQ's panels upright at full boost. The manual
+said so; the device leans them to about 60°, and the unit now says that. The reverb and mix cases
+came with the navigator's reach into the auxiliary and mixer pages (a run of three,
 duck included, $1.10). The agent walked to `auxiliary` → `T8` and turned `E1` 16 detents for the
 reverb; for the mix it went `mix` → `T2`, `E4` down to 40 and `E3` to −16. $1.34 for the first seven ($0.84 of it the manual cache on the first). Each set-up now takes one call
 instead of two to four, and the answers explain every change: "with sustain at 0, the decay alone

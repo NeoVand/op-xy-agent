@@ -3774,7 +3774,7 @@ Facts:
 - Over MIDI, CC90 moves the EQ bands, the channel choosing which — 1 low, 2 mid, 3 high. [#midi] (verified 1.1.33) [s2]
 - CC90 on channel 4 changed nothing visible on the EQ page, so no MIDI control for blend is confirmed. [#midi-blend] (verified 1.1.33) [s2]
 - The EQ page pictures the three bands as groups of panels standing on an isometric grid floor, next to a slider track with an N at one end. [#screen] (verified 1.1.33) [s2]
-- Each band tilts its own group of panels, lying flat at the minimum and upright at the maximum; in a new project all three bands sat at the middle value, 64. [#bands-drawn] (verified 1.1.33) [s2]
+- Each band tilts its own group of panels, flat at the minimum and rising with the value to lean at about 60° at the maximum, never fully upright; in a new project all three bands sat at the middle value, 64. [#bands-drawn] (verified 1.1.33) [s2]
 - Turning `E4` slides a knob along that track and reshapes the whole scene; as it travels, the low and high panels flatten and the mid panels stand up. [#blend-drawn] (verified 1.1.33) [s2]
 
 Procedures:

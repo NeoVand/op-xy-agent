@@ -16,6 +16,7 @@ import type { ScreenReader } from '$lib/agent/tools';
 import { createVirtualOpxy } from '$lib/app/virtual';
 import { ReplicaState } from '$lib/replica';
 import { buildFrame } from '$lib/sim/frames';
+import { planSettings, playStep } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { PLAY_MODES, shown, type SimState } from '$lib/sim/params';
 import { describeFrame } from '$lib/sim/screen/render';
@@ -31,6 +32,8 @@ interface Outcome {
 interface HowtoCase {
 	readonly id: string;
 	readonly prompt: string;
+	/** Where the replica stands when the user asks (a new project otherwise). */
+	setup?(sim: OpxySim): void;
 	/** Failures in words (empty: passed). */
 	check(o: Outcome): string[];
 }
@@ -41,6 +44,11 @@ const showed = (o: Outcome) =>
 	o.tools.some((t) => t.name === 'plan_steps' && (t.input as { show?: boolean }).show === true);
 const mentions = (o: Outcome, ...words: string[]) =>
 	words.filter((w) => !o.answer.toLowerCase().includes(w.toLowerCase()));
+
+/** Presses on the simulator, in the key grammar of the navigator's steps. */
+function press(sim: OpxySim, ...steps: string[]) {
+	for (const keys of steps) playStep(sim, { keys });
+}
 
 const CASES: readonly HowtoCase[] = [
 	{
@@ -151,6 +159,49 @@ const CASES: readonly HowtoCase[] = [
 		}
 	},
 	{
+		id: 'screen-off',
+		prompt:
+			'There is a box on my screen that just says "off". What does it mean, and how do I get rid of it?',
+		setup: (sim) => press(sim, 'T5', 'M3'),
+		check(o) {
+			const fails: string[] = [];
+			if (!used(o, 'read_screen')) fails.push('did not look at the screen');
+			for (const w of mentions(o, 'filter', 'M3')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
+		id: 'screen-page',
+		prompt: 'What is this page on my screen, and what is it doing to my sound?',
+		setup(sim) {
+			const plan = planSettings(sim.state, [
+				{ track: 3, param: 'lfo type', value: 'duck' },
+				{ track: 3, param: 'duck source', value: 'metronome' },
+				{ track: 3, param: 'lfo amount', value: 60 }
+			]);
+			for (const step of plan.steps) playStep(sim, step);
+		},
+		check(o) {
+			const fails: string[] = [];
+			if (!used(o, 'read_screen')) fails.push('did not look at the screen');
+			for (const w of mentions(o, 'duck', 'metronome')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
+		id: 'screen-lost',
+		prompt:
+			'I pressed something and now my screen shows a bunch of tilted panels on a grid. What is this, and how do I get back to the filter of track 3?',
+		setup: (sim) => press(sim, 'mix', 'M2'),
+		check(o) {
+			const fails: string[] = [];
+			if (!used(o, 'read_screen')) fails.push('did not look at the screen');
+			if (!/\beq\b/i.test(o.answer)) fails.push('does not say it is the master EQ');
+			for (const w of mentions(o, 'instrument', 'T3', 'M3')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
 		id: 'pluck',
 		prompt:
 			'I want a plucky bass on track 3: a short decay, no sustain and a bit more resonance. Set it up for me on the virtual OP-XY and tell me what you changed.',
@@ -177,6 +228,7 @@ interface CaseResult {
 
 async function runCase(c: HowtoCase, model: string, apiKey: string): Promise<CaseResult> {
 	const sim = new OpxySim();
+	c.setup?.(sim);
 	// the app's wiring: every replica event, the agent's animations included, reaches the simulator
 	const replica = new ReplicaState();
 	replica.observe((event) => sim.input(event));

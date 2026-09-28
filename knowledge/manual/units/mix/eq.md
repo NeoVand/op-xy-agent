@@ -44,7 +44,7 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: bands-drawn
-    text: Each band tilts its own group of panels, lying flat at the minimum and upright at the maximum; in a new project all three bands sat at the middle value, 64.
+    text: Each band tilts its own group of panels, flat at the minimum and rising with the value to lean at about 60° at the maximum, never fully upright; in a new project all three bands sat at the middle value, 64.
     source: docs/research/59-screen-profiling.md#210-mixer
     confidence: verified
     verified_on: '1.1.33'
