@@ -12,7 +12,17 @@
 import { OpxySim } from './opxy-sim.svelte';
 import { buildFrame } from './frames';
 import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
-import { engineParams, GROOVES, TEMPO_RANGE, type PageNumber, type SimState } from './params';
+import {
+	ENGINE_LIST,
+	FILTER_TYPES,
+	GROOVES,
+	LFO_TYPES,
+	TEMPO_RANGE,
+	engineParams,
+	type PageNumber,
+	type SimState,
+	type TrackState
+} from './params';
 import { describeFrame } from './screen/render';
 
 /** A place on the device. Tracks are numbered as printed: 1–8 in each set. */
@@ -113,8 +123,24 @@ const TEMPO_PARAMS: Record<
 	}
 };
 
+/**
+ * The lists shift + M1 / M3 / M4 open: the module page, the list, and what the track has now. A
+ * type is picked by turning E1 to it and clicking E1.
+ */
+const PICKERS: Record<
+	string,
+	{ page: PageNumber; key: string; list: readonly string[]; get(t: TrackState): string }
+> = {
+	engine: { page: 1, key: 'M1', list: ENGINE_LIST, get: (t) => t.engine },
+	'filter.type': { page: 3, key: 'M3', list: FILTER_TYPES, get: (t) => t.filter.type },
+	'lfo.type': { page: 4, key: 'M4', list: LFO_TYPES, get: (t) => t.lfo.type }
+};
+
 /** Every parameter the navigator can set, with the words that find it. */
 export const PARAMS: readonly ParamInfo[] = [
+	{ id: 'engine', names: ['engine', 'synth engine', 'sound engine'], page: 'shift M1 (list)' },
+	{ id: 'filter.type', names: ['filter type', 'filter mode'], page: 'shift M3 (list)' },
+	{ id: 'lfo.type', names: ['lfo type', 'lfo mode', 'lfo'], page: 'shift M4 (list)' },
 	...[1, 2, 3, 4].map((n) => ({
 		id: `m1.${n}`,
 		names: [`p${n}`, `engine ${n}`, `m1 e${n}`],
@@ -160,6 +186,13 @@ export const PARAMS: readonly ParamInfo[] = [
 	{ id: 'lfo.amount', names: ['lfo amount', 'lfo depth', 'amount'], page: 'M4' },
 	{ id: 'lfo.destination', names: ['lfo destination', 'destination'], page: 'M4' },
 	{ id: 'lfo.parameter', names: ['lfo parameter', 'lfo target parameter'], page: 'M4' },
+	{
+		id: 'lfo.source',
+		names: ['duck source', 'lfo source', 'sidechain source', 'trigger track'],
+		page: 'M4 (duck)'
+	},
+	{ id: 'lfo.hold', names: ['duck hold', 'lfo hold'], page: 'M4 (duck)' },
+	{ id: 'lfo.release', names: ['duck release', 'lfo release'], page: 'M4 (duck)' },
 	{ id: 'midi.program', names: ['program', 'program change'], page: 'M1 on a midi track' },
 	{ id: 'tempo.bpm', names: ['tempo', 'bpm'], page: 'tempo' },
 	{ id: 'tempo.groove', names: ['groove', 'groove type'], page: 'tempo' },
@@ -400,6 +433,25 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 		const read = () => tempo.get(rec.sim.state);
 		const ok = turnTo(rec, tempo.encoder, false, read, target, (v) => Math.abs(v - target) < 0.05);
 		return rec.plan(ok, ok ? undefined : `${id} stopped at ${tempo.format(read())}`);
+	}
+
+	const picker = PICKERS[id];
+	if (picker) {
+		walk(rec, { area: 'instrument', track, page: picker.page });
+		const want = String(goal.value).trim().toLowerCase();
+		const target = picker.list.indexOf(want);
+		if (target < 0) {
+			return rec.plan(false, `"${goal.value}" is not one of: ${picker.list.join(', ')}`);
+		}
+		const t = () => rec.sim.state.tracks[track - 1];
+		if (picker.get(t()) === picker.list[target])
+			return rec.plan(true, `already ${picker.list[target]}`);
+		rec.do(`shift + ${picker.key}`);
+		const from = rec.sim.state.picker?.index ?? 0;
+		if (target !== from) rec.do('turn E1', target - from);
+		rec.do('click E1');
+		const ok = picker.get(t()) === picker.list[target];
+		return rec.plan(ok, ok ? undefined : `the list did not take ${picker.list[target]}`);
 	}
 
 	const place = placeOfParam(id, track);

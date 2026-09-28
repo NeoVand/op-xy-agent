@@ -324,11 +324,12 @@ below gave: M1 popup 1.0 / 0.3 px, EQ 0.26 / 0.17, saturator 0.33 / 0.25, master
     - A bar rises from the foot, top = 215 − 185·send/99: a 5 px stub at 0, up to y 30 at full.
     - On T3, FX I is near black and FX II the second grey; edges and numerals are black.
     - There is no fade: it snaps back about a second after the last turn.
-  - The core page under it still differs:
-    - The level bar thickens with the level, even stopped: top 215 − 186.6·L, bottom 219.1 − 170.2·L
-      (L 0–1), so 4 px at 0 and 20.5 px at full.
-    - T3's number and pan dot are black on the device.
-    - The pan dot's centre is at y 210.4 and x = strip left + 25.9 + 21.45·pan.
+  - The strips (now drawn so, `screen/pages/mix.ts`):
+    - the level bar thickens with the level, even stopped: top 215 − 186.6·L, bottom 219.1 − 170.2·L
+      (L 0–1), so 4 px at 0 and 20.5 px at full;
+    - the selected track's number and pan dot take the strip's ink (white on T1–T2, black from T3);
+    - the pan dot (about 8.5 px across) sits at y 209.4, x = strip middle + 24·pan (CC10 0 → −24,
+      64 → centre, 127 → +24).
 - **M2 EQ:** an isometric scene of panels on a grid floor, and a slider track with an "N" end.
   - The floor grid slopes ±2/3, with cells of 29.9 × 19.9 px.
   - Panels: low is two 4 × 4-cell panels, mid four 2 × 2, high eight 1 × 1. Every row spans eight

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tryParseKeys } from '$lib/core/opxy';
-import { findParam, planParam, planPlace, type NavPlan } from './navigator';
+import { findParam, planParam, planPlace, playStep, type NavPlan } from './navigator';
 import { OpxySim } from './opxy-sim.svelte';
 
 const boot = () => new OpxySim({ now: () => 0 });
@@ -106,6 +106,46 @@ describe('the navigator: parameters', () => {
 		const groove = planParam(sim.state, { param: 'groove', value: 'danish' });
 		expect(groove.reached).toBe(true);
 		expect(keys(groove)).toEqual(['tempo', 'turn E2 2']);
+	});
+
+	it('picks engines, filter types and LFO types from their lists', () => {
+		const sim = boot();
+		const duck = planParam(sim.state, { track: 3, param: 'lfo type', value: 'duck' });
+		expect(duck.reached).toBe(true);
+		expect(keys(duck).slice(0, 3)).toEqual(['T3', 'M4', 'shift + M4']);
+		expect(keys(duck).at(-1)).toBe('click E1');
+		expect(duck.screen).toMatch(/^duck lfo/);
+		const engine = planParam(sim.state, { track: 3, param: 'engine', value: 'wavetable' });
+		expect(engine.reached).toBe(true);
+		expect(engine.screen).toMatch(/^wavetable: /);
+		// a filter pick lands on the engine page, as on the device
+		const filter = planParam(sim.state, { track: 3, param: 'filter type', value: 'ladder' });
+		expect(filter.reached).toBe(true);
+		expect(filter.screen).toMatch(/^prism: /);
+		expect(planParam(sim.state, { track: 3, param: 'lfo type', value: 'wobble' }).note).toMatch(
+			/not one of/
+		);
+		for (const plan of [duck, engine, filter]) grammatical(plan);
+	});
+
+	it('sets up a sidechain duck: the type, the track that triggers it, the amount', () => {
+		const sim = boot();
+		sim.reset(JSON.parse(JSON.stringify(sim.state)));
+		const plans = [
+			planParam(sim.state, { track: 3, param: 'lfo type', value: 'duck' }),
+			{ param: 'duck source', value: 1 },
+			{ param: 'lfo amount', value: 60 }
+		];
+		const first = plans[0] as ReturnType<typeof planParam>;
+		for (const step of first.steps) playStep(sim, step);
+		for (const goal of plans.slice(1) as { param: string; value: number }[]) {
+			const plan = planParam(sim.state, { track: 3, ...goal });
+			expect(plan.reached, goal.param).toBe(true);
+			for (const step of plan.steps) playStep(sim, step);
+		}
+		const lfo = sim.state.tracks[2].lfo;
+		expect(lfo).toMatchObject({ type: 'duck', on: true, source: 1 });
+		expect(Math.round(lfo.amount)).toBe(60);
 	});
 
 	it('says why when it cannot', () => {

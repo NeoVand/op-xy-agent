@@ -36,7 +36,7 @@ const goalInput = z.object({
 		.max(60)
 		.optional()
 		.describe(
-			'To set a parameter: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "tempo", "groove", an engine parameter such as "shape" or "detune"), or an id ("filter.cutoff")'
+			'To set a parameter: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "tempo", "groove", an engine parameter such as "shape" or "detune"), a list ("engine", "filter type", "lfo type": value is the name, e.g. "wavetable", "ladder", "duck"), the duck LFO\'s "duck source" (the triggering track 1–8), or an id ("filter.cutoff")'
 		),
 	value: z
 		.union([z.number(), z.string().min(1).max(30)])
