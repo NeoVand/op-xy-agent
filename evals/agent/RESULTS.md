@@ -33,8 +33,9 @@ to the how-to eval.
 | `screen-off` | "a box on my screen says off": what, and how to clear it | pass | read_screen → show_on_replica |
 | `screen-page` | what is this page doing to my sound (a duck on the metronome) | pass | read_screen |
 | `screen-lost` | "tilted panels on a grid": what, and back to track 3's filter | pass | read_screen → plan_steps |
+| `guide` | "walk me through finding the cutoff, I will press the keys" | pass | plan_steps (guide) |
 
-The screen cases start the replica somewhere else (a switched-off filter, a duck LFO, the master
+The guide case came with the walkthroughs. The agent handed the steps to the replica and told the user to follow the lit keys, and it did not play them itself ($0.81, most of it the cache). The screen cases start the replica somewhere else (a switched-off filter, a duck LFO, the master
 EQ) and pass 3/3 for $0.30. One answer called the EQ's panels upright at full boost. The manual
 said so; the device leans them to about 60°, and the unit now says that. The reverb and mix cases
 came with the navigator's reach into the auxiliary and mixer pages (a run of three,
