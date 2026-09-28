@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { OpxySim } from '../../opxy-sim.svelte';
 import type { DrumFrame } from '../../screen/frame';
 import { attachPeaks, samplesInUse } from './hook';
+import { LANE_COLUMNS } from './m1';
 import { decodeWave, peaksFromChannels } from './wave';
 
 describe('the sound engine hook', () => {
@@ -23,8 +24,10 @@ describe('the sound engine hook', () => {
 		const peaks = peaksFromChannels([audio], 44100, 100);
 		const changed = attachPeaks(sim.state.areas.sample, 'drum/kit 2/kick 1.wav', peaks, 0.1);
 		expect(changed).toBe(2);
+		// loud for the first tenth of the sample: the lane's first tenth of columns
 		const lane = decodeWave((sim.frame as DrumFrame).sampler?.waves?.[0] ?? '');
-		expect(lane.slice(0, 20).every((v) => v === 16)).toBe(true);
-		expect(lane.slice(30).every((v) => v === 0)).toBe(true);
+		const tenth = Math.round(LANE_COLUMNS / 10);
+		expect(lane.slice(0, tenth - 3).every((v) => v === 16)).toBe(true);
+		expect(lane.slice(tenth + 3).every((v) => v === 0)).toBe(true);
 	});
 });

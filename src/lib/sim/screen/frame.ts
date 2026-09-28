@@ -85,12 +85,15 @@ export interface SynthFrame {
 	readonly time?: number;
 }
 
-/** The drum sampler's M1 page for the selected key (shift: the second layer's header). */
+/**
+ * The M1 page of the sampler engines (drum sampler: the selected key; synth sampler; multisampler:
+ * the selected key's zone), with the shift layer's header while shift is held.
+ */
 export interface DrumFrame {
 	readonly page: 'drum';
-	/** Selected key, as shown ("F3"). */
+	/** Selected key, root or zone note ("F3", "F3 +2" with more keys selected; not drawn). */
 	readonly key: string;
-	/** Tune in semitones, as shown ("0.00", "−1.22"). */
+	/** Tune in semitones, as the device shows it ("+0.00", "–1.22"). */
 	readonly tune: string;
 	/** Sample start and end, 0–1 of the sample. */
 	readonly start: number;
@@ -101,9 +104,9 @@ export interface DrumFrame {
 	readonly reverse: boolean;
 	/** −1…1. */
 	readonly pan: number;
-	/** 0–1 crossfade (the shaded wedge before the end marker). */
+	/** 0–1 of the 0–99 fade (drum sampler: the ramp from the start) or loop crossfade. */
 	readonly fade: number;
-	/** 0–1. */
+	/** 0–1 of −30…+20 dB: the gain wedge's fill; it scales the drawn wave. */
 	readonly gain: number;
 	/** Seeds the placeholder waveform (we have no sample audio). */
 	readonly seed: number;

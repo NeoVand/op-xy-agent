@@ -4,6 +4,7 @@ import { SCENARIOS } from '../../scenarios';
 import { RecordingContext } from '../../screen/recording';
 import { describeFrame, renderFrame } from '../../screen/render';
 import type { ScreenFrame } from '../../screen/frame';
+import { TINT } from '../../screen/pages/drum';
 import { COLORS } from '../../screen/palette';
 import { scenarios } from './scenarios';
 
@@ -103,35 +104,44 @@ describe('the library (sample-132, 140)', () => {
 	});
 });
 
-describe('the sampler M1 pages (sample-025, 056, 113)', () => {
-	it('draws the synth sampler’s root badge and hides loop markers under start and end', () => {
+describe('the sampler M1 pages as the device draws them (screen/pages/drum.spec.ts measures them)', () => {
+	/** Handles (10 × 5) of one shade, by their centre x. */
+	const handles = (ctx: RecordingContext, shade: string) =>
+		ctx
+			.fillsOf(shade)
+			.filter((f) => near(f.x1 - f.x0, 10, 0.01) && near(f.y1 - f.y0, 5, 0.01))
+			.map((f) => Math.round((f.x0 + f.x1) * 50) / 100);
+
+	it('draws the synth sampler’s whole sample small on top, and no root badge', () => {
 		const ctx = draw(scenario('sampler'));
-		expect(ctx.fillsOf('#484850').some((f) => near(f.x0, 440) && near(f.y0, 5))).toBe(true);
-		// start handles in TE's synth grey, end handles white
-		const start = ctx.fillsOf(COLORS.grey4).filter((f) => near(f.x0, 50) && near(f.x1 - f.x0, 10));
-		expect(start).toHaveLength(3);
+		// the overview strip around y 12.75: white from the start to the end, tinted outside
+		const strip = (color: string) => ctx.fillsOf(color).filter((f) => f.y0 < 12.5 && f.y1 < 24);
+		expect(strip(COLORS.white)).toHaveLength(1);
+		expect(strip(TINT)).toHaveLength(2);
+		expect(ctx.fillsOf('#484850').some((f) => near(f.x0, 440) && near(f.y0, 5))).toBe(false);
+		// start, loop start, loop end and end in E1…E4's shades, three handles each
+		expect(new Set(handles(ctx, COLORS.dark)).size).toBe(1);
+		expect(handles(ctx, COLORS.dark)).toHaveLength(3);
+		expect(handles(ctx, COLORS.white)).toHaveLength(3);
 	});
 
-	it('draws the multisampler’s key strip with the selected zone white', () => {
+	it('draws the multisampler’s keyboard with the selected zone lit', () => {
 		const ctx = draw(scenario('sample-multi'));
-		const cells = ctx.fills.filter((f) => f.y0 === 0 && near(f.y1, 25) && near(f.x1 - f.x0, 5));
-		expect(cells).toHaveLength(96);
-		const zone = cells.filter((c) => c.color === COLORS.white);
-		expect(zone.map((c) => c.x0)).toEqual(Array.from({ length: 12 }, (_, i) => 175 + 5 * i));
+		const keys = ctx.fills.filter((f) => f.y0 === 0 && near(f.y1, 20.7) && near(f.x1 - f.x0, 5.38));
+		expect(keys).toHaveLength(75);
+		// the first key an octave up plays F4, in the zone F4…C6: 12 white keys
+		expect(keys.filter((c) => c.color === COLORS.white)).toHaveLength(12);
 	});
 
-	it('draws loop markers with grey handles when the loop does not sit on start and end', () => {
+	it('draws the loop points with E2 and E3 handles, the loop off or not (ours)', () => {
 		const sim = new OpxySim({ now: () => 0 });
 		sim.press('track.3');
 		sim.state.tracks[2].engine = 'sampler';
 		const ctx = draw(sim.frame);
-		expect(ctx.fillsOf(COLORS.grey2).filter((f) => near(f.x1 - f.x0, 10))).toHaveLength(6);
+		expect(handles(ctx, COLORS.grey3)).toHaveLength(3);
+		expect(handles(ctx, COLORS.light)).toHaveLength(3);
 		sim.state.areas.sample.tracks[2].synth.region.loop = 'off';
-		expect(
-			draw(sim.frame)
-				.fillsOf(COLORS.grey2)
-				.filter((f) => near(f.x1 - f.x0, 10))
-		).toHaveLength(0);
+		expect(handles(draw(sim.frame), COLORS.grey3)).toHaveLength(3);
 	});
 });
 

@@ -43,7 +43,7 @@ describe('OpxySim: a new project', () => {
 			'multisampler'
 		]);
 		const drum = page(sim, 'drum');
-		expect(drum).toMatchObject({ key: 'F3', tune: '0.00', playMode: 'oneshot', shift: false });
+		expect(drum).toMatchObject({ key: 'F3', tune: '+0.00', playMode: 'oneshot', shift: false });
 	});
 
 	it('lights the active track white and nothing else', () => {
@@ -243,7 +243,7 @@ describe('OpxySim: encoders', () => {
 		expect(page(sim, 'drum')).toMatchObject({ shift: true, reverse: true, pan: 0.2 });
 		sim.input({ type: 'release', id: 'key.shift' });
 		sim.press('keyboard.f3');
-		expect(page(sim, 'drum')).toMatchObject({ key: 'F3', tune: '0.00', reverse: false });
+		expect(page(sim, 'drum')).toMatchObject({ key: 'F3', tune: '+0.00', reverse: false });
 	});
 
 	it('sets the mixer level, pan (click to centre) and shares FX sends with M3 shift', () => {

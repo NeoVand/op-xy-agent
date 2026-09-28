@@ -1360,7 +1360,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.wait(GAP_MS);
 			expect(d.screen()).toBe('synth sampler record: ready, take 1.wav, mic, gain 0');
 			await d.click('track.3');
-			expect(d.screen()).toBe('sampler, root A: tune 0.00');
+			expect(d.screen()).toBe('sampler, root A: tune +0.00');
 			expect(smp(d).tracks[2].synth.root).toBe(noteOf('a3'));
 		});
 
@@ -1392,7 +1392,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await loadEngine(d, 'sampler');
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('sampler, root C (shift): tune 0.00');
+				expect(d.screen()).toBe('sampler, root C (shift): tune +0.00');
 				await d.turn(1, -1);
 				await d.turn(2, 5);
 				await d.turn(3, 40);
@@ -1468,7 +1468,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 		it('M1: E1 tunes the selected key, E2 and E3 move its start and end (finer pushed in), E4 sets its play mode', async () => {
 			const d = await start();
 			const f = () => on(d, 'drum');
-			expect(d.screen()).toBe('drum key F3: tune 0.00, play mode oneshot');
+			expect(d.screen()).toBe('drum key F3: tune +0.00, play mode oneshot');
 			await d.turn(1, 5);
 			await d.turn(1, 3, { fine: true });
 			expect(f().tune).toBe('+0.53');
@@ -1490,7 +1490,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 		it('M1 with shift: E1 the direction, E2 the pan, E3 the fade, E4 the gain of the selected key', async () => {
 			const d = await start();
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('drum key F3 (shift): tune 0.00, play mode oneshot');
+				expect(d.screen()).toBe('drum key F3 (shift): tune +0.00, play mode oneshot');
 				await d.turn(1, -1);
 				await d.turn(2, 10);
 				await d.turn(3, 30);
@@ -1507,7 +1507,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.turn(1, 10);
 			await d.click(key('g3'));
-			expect(d.screen()).toBe('drum key G3: tune 0.00, play mode oneshot');
+			expect(d.screen()).toBe('drum key G3: tune +0.00, play mode oneshot');
 			await d.click(key('f3'));
 			expect(d.screen()).toBe('drum key F3: tune +1.00, play mode oneshot');
 		});
@@ -1525,7 +1525,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.holding(key('f3'), () => d.click('key.m4'));
 			await d.holding(key('g3'), () => d.click('key.m4'));
-			expect(d.screen()).toBe('drum key G3 +1: tune 0.00, play mode oneshot');
+			expect(d.screen()).toBe('drum key G3 +1: tune +0.00, play mode oneshot');
 			await d.turn(1, 5);
 			expect(d.state.tracks[0].drumKeys.slice(0, 3).map((k) => k.tune)).toEqual([0.5, 0, 0.5]);
 			await d.holding(key('f3'), () => d.click('key.m4')); // ours: again leaves the selection
@@ -1616,7 +1616,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.turn(1, 1);
 			await d.turn(4, -4);
 			await d.click('key.m3');
-			expect(d.screen()).toBe('drum key C4: tune 0.00, play mode oneshot');
+			expect(d.screen()).toBe('drum key C4: tune +0.00, play mode oneshot');
 			expect(smp(d).tracks[0].keys[0]?.name).toBe('kick 1.wav');
 			await d.holding(key('c4'), () => d.click('key.m1'));
 			await d.turn(1, 1);
@@ -1663,7 +1663,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toBe('multisampler record: ready, take 1.wav, mic, gain 0');
 			expect(on(d, 'sample-record').keyboard?.tops).toEqual([57, 60, 64, 71, 76]);
 			await d.clicks('track.8', key('as3'));
-			expect(d.screen()).toBe('multisampler zone A#3: tune 0.00');
+			expect(d.screen()).toBe('multisampler zone A#3: tune +0.00');
 			expect(on(d, 'drum').sampler?.zone).toEqual({ lo: 58, hi: 60 });
 		});
 
@@ -1695,13 +1695,13 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.push(2);
 			expect(smp(d).tracks[7].zones).toHaveLength(24);
 			await d.click('track.8');
-			expect(d.screen()).toBe('multisampler zone E6: tune 0.00, empty');
+			expect(d.screen()).toBe('multisampler zone E6: tune +0.00, empty');
 		});
 
 		it('edits the selected key’s zone on M1 like the synth sampler, loop type included', async () => {
 			const d = await start();
 			await d.clicks('track.8', key('b3'));
-			expect(d.screen()).toBe('multisampler zone B3: tune 0.00');
+			expect(d.screen()).toBe('multisampler zone B3: tune +0.00');
 			expect(on(d, 'drum').sampler?.zone).toEqual({ lo: 58, hi: 64 });
 			await d.turn(1, 10);
 			await d.withShift(() => d.push(3));
@@ -1716,7 +1716,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.clicks('track.8', key('b3'));
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('multisampler zone B3 (shift): tune 0.00');
+				expect(d.screen()).toBe('multisampler zone B3 (shift): tune +0.00');
 				await d.turn(1, -1);
 				await d.turn(2, 12);
 				await d.turn(3, 20);
@@ -1778,7 +1778,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(smp(d).tracks[0].keys[7]?.name).toBe('cherry.wav');
 			expect(smp(d).library.previewing).toBe(false);
 			await d.click('track.1');
-			expect(d.screen()).toBe('drum key C4: tune 0.00, play mode oneshot');
+			expect(d.screen()).toBe('drum key C4: tune +0.00, play mode oneshot');
 		});
 
 		it('steps through filled keys with M2 / M3 and clears with M4 on the drum sampler and multisampler only', async () => {

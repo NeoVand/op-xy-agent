@@ -799,7 +799,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('edits the drum key last played on a drum track’s M1: tune, start, end, play mode', async () => {
 			const d = await start();
 			await play(d, 'a3');
-			expect(d.screen()).toMatch(/^drum key A3: tune 0\.00, play mode oneshot/);
+			expect(d.screen()).toMatch(/^drum key A3: tune \+0\.00, play mode oneshot/);
 			await d.turn(1, -12);
 			await d.turn(2, 10);
 			await d.turn(3, -20);
@@ -813,7 +813,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			});
 			// each key keeps its own
 			await play(d, 'f3');
-			expect(d.screen()).toMatch(/^drum key F3: tune 0\.00, play mode oneshot/);
+			expect(d.screen()).toMatch(/^drum key F3: tune \+0\.00, play mode oneshot/);
 			await play(d, 'a3');
 			expect(d.screen()).toMatch(/^drum key A3: tune –1\.20, play mode key/);
 		});
@@ -865,7 +865,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 					gain: 33 / 50
 				});
 			});
-			expect(on(d, 'drum')).toMatchObject({ shift: false, reverse: true, tune: '0.00' });
+			expect(on(d, 'drum')).toMatchObject({ shift: false, reverse: true, tune: '+0.00' });
 		});
 
 		it('edits a synth sampler’s sample on M1, and its tune on the shift layer', async () => {

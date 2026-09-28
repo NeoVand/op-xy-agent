@@ -274,6 +274,46 @@ runs; design px, lanes 0–1; the code and the rest of the numbers are in
   level-scaled frame, within 4 %); warp bends the drawing across (two sine terms, fitted on zap);
   drift turns the bend round and trails fading copies.
 
+**The sampler engines' M1 page, measured (2026-09-28, b1-2440…2590 drum sampler, b1-2600…2708 synth
+sampler, b1-2718…2782 multisampler; design px; the code and tests are in
+`src/lib/sim/screen/pages/drum.ts`, the pictograms in `knowledge/opxy/device-icons/sampler.json`):**
+
+- **Alignment and glare:** the frames from b1-2665 on agree to 0.1 px on the badges; the drum
+  sampler's sit up to 0.5 px left and 0.3–1.1 px higher (a slight turn), and are moved to match.
+  White on black reads about 0.7 px a side wider than it is (TE's 10 px handles read 11.4 white,
+  10.4 dark grey; the font's digits 1.5 px wide), so sizes below have the glare taken off.
+- **Lanes:** TE's dark grey, 89.7 tall from y 30.3 and 124.9, full width; a 1 px centre line 45.5
+  below each top. The sample spans x 6.72 → 475.67 on every engine; the wave is one-pixel columns,
+  a column the centre pixel and whole pixels either side (full scale fills the lane's half; gain
+  scales it as amplitude, the gain wedge and the wave agreeing from −17 to +17 dB). What the sample
+  skips (before the start, after the end, the margins) is a pale blue (#687d8b) at #7a7a82's
+  brightness, bluer than any of TE's greys there. White 20 px L / R badges at x 6.2, 5.4 below each
+  lane's top, over the markers.
+- **Points:** a 2 px black line from y 25.45 to the bottom with TE's 10 × 5 handles above, between
+  and below the lanes, each in its encoder's shade (#2f2f37, #7a7a82, #afafb4, #f7f5f5 for E1…E4:
+  the drum sampler's start and end are E2 and E3). The drum sampler's fade darkens (TE's panel tone)
+  above a line from the start marker at a lane's bottom to its top fade/255 of the sample further
+  on (fades 26…70 within 2.5 px); the loop crossfade darkens a wedge ending at the loop end, its top
+  that share of the loop back (five values within 0.7 px). Both show on the base layer too.
+- **Top row:** the drum sampler's tune "♩ +0.00" (zero with a plus; the sign centred in a figure's
+  cell, figures after it) from x 15.7, 20 px on baseline 20.7, and its play mode at the right (→|
+  oneshot, → key, →G mute group, ⟲ loop). The synth sampler shows its whole sample in a strip
+  centred at y 12.75, x 3.4 → 477, heights in whole pixels (about 1/7 of the lanes'). The
+  multisampler draws all 128 notes as 75 white keys 5.9837 px apart (C−1 from x 16.4, G9 ending at
+  465; 0.6 px gaps, black keys 5 × 13.8), the played note's zone lit and the rest pale blue; the
+  lit zone went C−1…C4, C#4…C5, C#5…C6 as the octave rose.
+- **Shift layer:** a boxed arrow (direction) at the left, then the drum sampler's pan (a 40 × 14.85
+  dark box between L and R with a white bar) or the others' tune (sign cell from x 116.7); the ramp
+  pictogram with the fade (a number) or the crossfade (a percentage, from x 313.2), the multisampler's
+  ramp carrying ∞; and the gain wedge (x 425.2 → 469.5, white up to 451.8 at 0 dB, grey beyond).
+  The direction never mirrors the wave.
+- **Tune** went to −16.10 on a drum key and −12.20 on the synth sampler, past the simulator's old
+  ±12 (now ±48: the drum sampler stores a transpose of ±48).
+- **Not seen:** the loop-until-release and loop-off pictograms (the synth sampler's plain ramp is
+  taken for until release), pan at a known value, a fade with the start moved in, the play modes'
+  order in E4's list (the frames fit key / oneshot / mute group / loop as well as oneshot first), an
+  empty key or zone.
+
 ### 2.6 Preset browser (shift + M1)
 
 - **Layout:** "N / preset" on the left, the engine list in the middle, that engine's presets on the

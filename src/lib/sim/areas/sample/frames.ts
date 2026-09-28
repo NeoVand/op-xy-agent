@@ -119,23 +119,29 @@ export interface SampleLibraryFrame {
 }
 
 /**
- * What the M1 page of a sampler track adds to the core's drum frame (sample-025 synth sampler,
- * sample-056 drum sampler, sample-113 multisampler).
+ * What the M1 page of a sampler track adds to the core's drum frame (the device's page:
+ * docs/research/59-screen-profiling.md §2.5; guide art sample-025, sample-056, sample-113).
  */
 export interface SamplerView {
 	readonly engine: 'drum' | 'sampler' | 'multisampler';
-	/** Left and right lanes, one column per 2.07 px, or null when the key or zone is empty. */
+	/**
+	 * Left and right lanes, one column per pixel of the sample's width on the lanes (the synth
+	 * sampler's overview strip draws the louder of the two), or null when the key or zone is empty.
+	 */
 	readonly waves: readonly [Wave, Wave] | null;
-	/** Loop points (0–1 of the sample), type and crossfade (0–1); null on the drum sampler. */
+	/**
+	 * Loop points (0–1 of the sample), type and crossfade (0–1 of the 0–99 %, the share of the loop
+	 * the wedge covers); null on the drum sampler.
+	 */
 	readonly loop: {
 		readonly start: number;
 		readonly end: number;
 		readonly type: LoopType;
 		readonly crossfade: number;
 	} | null;
-	/** The note the synth sampler is tuned to, as its badge shows it ("G"). */
+	/** The note the synth sampler is tuned to ("G"; the device's page does not show it). */
 	readonly root: string;
-	/** Multisampler: the selected zone on the key strip (MIDI notes), or null. */
+	/** Multisampler: the selected zone, lit on the keyboard (MIDI notes), or null. */
 	readonly zone: { readonly lo: number; readonly hi: number } | null;
 }
 

@@ -1,31 +1,45 @@
 /**
- * The M1 page of sampler tracks (the core's drum page; guide art sample-025, sample-056,
- * sample-113) and its encoders, for the three sampler engines:
+ * The M1 page of sampler tracks (the core's drum page, drawn as the device draws it by
+ * `screen/pages/drum.ts`; docs/research/59-screen-profiling.md §2.5) and its encoders, for the
+ * three sampler engines:
  *
  * - drum sampler (manual: sampler/drum-key-settings): tune, start, end, play mode of the selected
  *   key; shift: direction, pan, fade, gain. Keys selected with key + M4 change together.
  * - synth sampler (manual: sampler/synth-sampler): sample start, loop start, loop end, sample end
  *   (push to turn finer); shift: direction, tune, loop crossfade, gain; shift + click E3 steps the
- *   loop type. The header shows the tune and the root key it was sampled on.
+ *   loop type. The top row shows the whole sample small.
  * - multisampler (manual: sampler/multisampler): the synth sampler's controls on the zone of the
- *   selected key, with the key strip on top showing that zone.
+ *   selected key, with the keyboard on top lighting that zone.
  */
 import type { DrumFrame } from '../../screen/frame';
-import {
-	DRUM_PLAY_MODES,
-	clamp,
-	formatTune,
-	keyName,
-	type DrumKey,
-	type SimState
-} from '../../params';
+import { DRUM_PLAY_MODES, clamp, keyName, type DrumKey, type SimState } from '../../params';
 import type { SamplerView } from './frames';
 import { keyNote } from './record';
 import { LOOP_TYPES, defaultRegion, type Region, type SampleFile, type Zone } from './state';
 import { wave, type Wave } from './wave';
 
-/** Columns of an M1 lane: 2.07 px each across the screen. */
-export const LANE_COLUMNS = 232;
+/**
+ * Columns of an M1 lane: one per pixel of the 469 px the device draws a sample across (its wave is
+ * one-pixel columns; research 59 §2.5).
+ */
+export const LANE_COLUMNS = 469;
+
+/**
+ * How far tune reaches, semitones either way. The device went to −16.10 on a drum key (b1-2477) and
+ * −12.20 on the synth sampler (b1-2680); the drum sampler stores a transpose of −48…+48 semitones
+ * (docs/research/30-presets-samples.md §2.7). The same reach for the synth sampler and the
+ * multisampler is ours.
+ */
+export const TUNE_RANGE = 48;
+
+/**
+ * Tune as the M1 page shows it, in semitones to hundredths, always signed ("+0.00", "–0.10",
+ * "–16.10"; the device writes zero with a plus, b1-2440).
+ */
+export function tuneText(semitones: number): string {
+	const v = Math.round(semitones * 100) / 100;
+	return `${v < 0 ? '–' : '+'}${Math.abs(v).toFixed(2)}`;
+}
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
 
@@ -71,7 +85,7 @@ function regionFrame(
 	return {
 		page: 'drum',
 		key,
-		tune: formatTune(region.tune),
+		tune: tuneText(region.tune),
 		start: region.start,
 		end: region.end,
 		playMode: '',
@@ -128,7 +142,7 @@ export function samplerPage(s: SimState): DrumFrame {
 	return {
 		page: 'drum',
 		key: others > 0 ? `${keyName(t.drumKey)} +${others}` : keyName(t.drumKey),
-		tune: formatTune(k.tune),
+		tune: tuneText(k.tune),
 		start: k.start / 99,
 		end: k.end / 99,
 		playMode: k.playMode,
@@ -162,7 +176,7 @@ function turnDrumKey(k: DrumKey, e: number, delta: number, fine: boolean, shift:
 		else if (e === 2) k.fade = step(k.fade, 0, 99);
 		else k.gain = step(k.gain, -30, 20);
 	} else if (e === 0) {
-		k.tune = Math.round(step(k.tune, -12, 12, fine ? 0.01 : 0.1) * 100) / 100;
+		k.tune = Math.round(step(k.tune, -TUNE_RANGE, TUNE_RANGE, fine ? 0.01 : 0.1) * 100) / 100;
 	} else if (e === 1) k.start = tenths(step(k.start, 0, k.end, fine ? 0.1 : 1));
 	else if (e === 2) k.end = tenths(step(k.end, k.start, 99, fine ? 0.1 : 1));
 	else {
@@ -189,7 +203,9 @@ export function turnRegion(
 	if (shift) {
 		if (e === 0) r.reverse = delta < 0;
 		else if (e === 1)
-			r.tune = Math.round(clamp(r.tune + delta * (fine ? 0.01 : 0.1), -12, 12) * 100) / 100;
+			r.tune =
+				Math.round(clamp(r.tune + delta * (fine ? 0.01 : 0.1), -TUNE_RANGE, TUNE_RANGE) * 100) /
+				100;
 		else if (e === 2) r.crossfade = clamp(r.crossfade + delta, 0, 99);
 		else r.gain = clamp(r.gain + delta, -30, 20);
 		return;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { OpxySim } from '../../opxy-sim.svelte';
 import type { DrumFrame } from '../../screen/frame';
 import { demoFile } from './demo';
-import { noteLetter, noteName, turnRegion, zoneOf } from './m1';
+import { LANE_COLUMNS, noteLetter, noteName, turnRegion, zoneOf } from './m1';
 import { defaultRegion } from './state';
 import { decodeWave } from './wave';
 
@@ -23,7 +23,7 @@ describe('the drum sampler’s M1 page (manual: sampler/drum-key-settings)', () 
 		const sim = new OpxySim({ now: () => 0 });
 		const view = drum(sim).sampler;
 		expect(view?.engine).toBe('drum');
-		expect(view?.waves?.[0]).toHaveLength(232);
+		expect(view?.waves?.[0]).toHaveLength(LANE_COLUMNS);
 		expect(view?.waves?.[0]).toBe(view?.waves?.[1]);
 		expect(decodeWave(view?.waves?.[0] ?? '')[0]).toBeGreaterThan(0);
 		sim.state.areas.sample.tracks[0].keys[1] = null;

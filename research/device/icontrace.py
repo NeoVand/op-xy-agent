@@ -189,7 +189,47 @@ MODULES = {
                        polarity="light"),
 }
 
-GROUPS = {"players": PLAYERS, "tempo": TEMPO, "arrange": ARRANGE, "auxiliary": AUXILIARY, "modules": MODULES}
+# The sampler engines' M1 pages (docs/research/59-screen-profiling.md §2.5): the header pictograms,
+# white on black, bolder than TE's guide art (sampler.*) draws them. Traced on the synth sampler's
+# shift layer (b1-2673…2699, the best aligned frames), the multisampler's (b1-2754…2762) and, for
+# the play modes only the drum sampler shows, its settled frames (b1-2440…2458 at rest, b1-2519…2532
+# the other modes). Those last frames sit (−1.0, −0.43) px from the rest frames at the icon (their
+# lanes and badges say the same), so their boxes are moved by as much: every box is where the page
+# draws its icon, in the rest frames' place.
+DRUM_REST = frames(range(2440, 2459))
+SYNTH_SHIFT = frames(range(2678, 2700))
+# White on black, the half level sits about 0.7 px outside a shape's edge: the screen font's digits
+# measure 1.5 px wider and taller than their outlines, the white handles 1.4 px wider than TE's
+# 10 px boxes. The ∞'s dark strokes are widened a little the other way (ours: 0.3 px).
+GLARE = -0.7
+SAMPLER = {
+    "sampler.device.note": dict(frames=SYNTH_SHIFT, box=(102, 2, 12, 21), region=(0, 0, 12, 21),
+                                polarity="light", grow=GLARE),
+    "sampler.device.play.oneshot": dict(frames=DRUM_REST, box=(438, 1, 42, 22), region=(0, 0, 42, 22),
+                                        polarity="light", grow=GLARE),
+    "sampler.device.play.key": dict(frames=frames(2519, 2520, 2526, 2532), box=(437, 0.57, 42, 22),
+                                    region=(0, 0, 42, 22), polarity="light", grow=GLARE),
+    "sampler.device.play.group": dict(frames=frames(2521, 2525), box=(437, 0.57, 42, 22), region=(0, 0, 42, 22),
+                                      polarity="light", grow=GLARE),
+    "sampler.device.play.loop": dict(frames=frames(2522, 2523, 2524, 2530), box=(437, 0.57, 42, 22),
+                                     region=(0, 0, 42, 22), polarity="light", grow=GLARE),
+    "sampler.device.direction.forward": dict(frames=frames(2673, 2674) + SYNTH_SHIFT, box=(1, 1, 38, 23),
+                                             region=(0, 0, 38, 23), polarity="light", grow=GLARE),
+    "sampler.device.direction.backward": dict(frames=frames(2675, 2676, 2677, 2754), box=(1, 1, 38, 23),
+                                              region=(0, 0, 38, 23), polarity="light", grow=GLARE),
+    # the drum sampler's fade and the samplers' loop crossfade share this ramp (the drum's frames match
+    # it to 0.96 IoU); traced on the better aligned synth sampler frames
+    "sampler.device.ramp": dict(frames=SYNTH_SHIFT, box=(253, 1, 55, 23), region=(0, 0, 55, 23),
+                                polarity="light", grow=GLARE),
+    # the loop-forever sign cut out of the crossfade ramp: dark strokes on the white
+    "sampler.device.forever": dict(frames=frames(range(2755, 2763)), box=(285, 8, 18, 11), region=(0, 0, 18, 11),
+                                   polarity="dark", grow=0.3),
+    "sampler.device.percent": dict(frames=frames(range(2689, 2700)), box=(334, 1, 18, 23), region=(0, 0, 18, 23),
+                                   polarity="light", grow=GLARE),
+}
+
+GROUPS = {"players": PLAYERS, "tempo": TEMPO, "arrange": ARRANGE, "auxiliary": AUXILIARY, "modules": MODULES,
+          "sampler": SAMPLER}
 
 
 def grey(name: str, channel: str = "grey") -> np.ndarray:
@@ -229,6 +269,12 @@ def trace(spec: dict, name: str, show: Path | None) -> dict:
     level = (card + ink) / 2
     mask = (up > level) if spec["polarity"] == "light" else (up < level)
     mask = mask.astype(np.uint8) * 255
+    if spec.get("grow"):
+        # the camera's glare puts a bright shape's half level about 0.7 px outside its edge (a dark
+        # shape's inside it): `grow` (design px, negative to shrink) moves the outline back
+        r = int(round(abs(spec["grow"]) * 2 * UP))
+        disk = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+        mask = cv2.dilate(mask, disk) if spec["grow"] > 0 else cv2.erode(mask, disk)
     contours, _ = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
     parts = []
     for c in contours:
