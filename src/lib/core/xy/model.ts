@@ -210,8 +210,8 @@ export interface XySettings {
 	transpose: number;
 	/**
 	 * 0x10 3/4, 0x11 4/4 … 0x15 12/8: `0x10 + ` the index in {@link XY_TIME_SIGNATURES}, as OS 1.1.4
-	 * new projects store it; the owner's OS 1.1.33 project stores the bare index (4/4 as 1). Read it
-	 * with {@link timeSignatureOf}.
+	 * new projects store it; TE's factory project "agent" on the owner's unit (saved by an older
+	 * firmware, the owner thinks) stores the bare index (4/4 as 1). Read it with {@link timeSignatureOf}.
 	 */
 	timeSignature: number;
 	/** Keyboard octave of T1–T16 (★ §3.2: a new project has T3 −1, T4 +1, T6 −1, T10 +4). */

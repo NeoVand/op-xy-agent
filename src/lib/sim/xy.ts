@@ -130,7 +130,7 @@ export function simToXy(state: SimState, template: Uint8Array): SimToXyResult {
 	writeScenes(state, base, project, skipped);
 	project.songs = state.areas.arrange.songs.map((song, i) => {
 		const was = base.songs[i];
-		// OS 1.1.33 stores a song never edited as empty, where the simulator holds scene 1
+		// a song never edited can be stored empty (TE's factory project "agent"); the simulator holds scene 1
 		const untouched = was?.scenes.length === 0 && song.order.length === 1 && song.order[0] === 0;
 		return untouched && was.loop === song.loop ? was : { scenes: [...song.order], loop: song.loop };
 	});

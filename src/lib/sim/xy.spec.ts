@@ -451,7 +451,8 @@ describe('xyToSim', () => {
 	});
 });
 
-/** The owner's open project on 2026-09-28: 4/4 stored as 1, untouched songs empty (local only). */
+/** TE's factory project "agent", read off the owner's unit on 2026-09-28: 4/4 stored as 1, untouched
+ * songs empty (local only). */
 const OWNER_PROJECT = fileURLToPath(
 	new URL(
 		'../../../research/device/captures/mtp/projects__workspace-2026-09-28.xy',
