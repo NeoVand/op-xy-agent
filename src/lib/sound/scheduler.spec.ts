@@ -25,6 +25,8 @@ import {
 /** A scheduler on a hand-turned audio clock, recording what it plays. */
 function rig(options: { follow?: () => boolean } = {}) {
 	const state: SimState = defaultState();
+	// a new project's metronome is on; these tests start it off and switch it on where they need it
+	state.tempo.metronome.on = false;
 	const clock = { now: 0 };
 	const notes: ScheduledNote[] = [];
 	const settings: TrackState[] = [];

@@ -15,25 +15,31 @@ src/lib/
     opxy/      The OP-XY as data: controls inventory, tracks/channels, CC map, remote keys,
                firmware profile — loaded from knowledge/*.json and validated with zod
     music/     notation, melodies, harmony; later SongIR, arranger, MIDI-file import
-    xy/        (M6) .xy codec, ported from kmorrill/xy-format
+    xy/        (M6) the device's .xy project files, ported from kmorrill/xy-format: container and
+               RLE, project model, reader, template writer (sim/xy.ts compiles the simulator's
+               project into one)
     presets/   (M7) sample presets: WAV/AIFF in and out, resampling, pitch and loop finding,
-               patch.json, the drum/multisample/sampler builder, zip (the page is /presets)
+               patch.json, the drum/multisample/sampler builder, slicer, generated drum voices and
+               kits, zip (the page is /presets)
     mtp/       MTP with the OP-XY in MTP mode: containers, datasets, a session over any byte pipe,
                the write policy (reads; new files only after approval; never delete/move), installPreset
+    dsp/       shared signal processing (the FFT)
     voice/     (M8) OpenAI realtime as the voice speaks it: the session it mints, events, its three
                tools, the state machine (turns, barge-in, tool outputs, transcript lines), mic pick
   device/      Browser adapters (Web MIDI, workers, audio). Everything injected for tests:
                access, transport (the single send choke point + policy), monitor, device mirror,
                scheduler + tick worker, session (identity + GREET), expect(), mtp (WebUSB pipe)
   app/         Glue between features, e.g. the replica ⇄ device bridge (replica keys → notes/transport/
-               track select through the transport; device notes/clock → replica LEDs), app-wide contexts
+               track select through the transport; device notes/clock → replica LEDs), app-wide contexts,
+               project transfer (.xy files from disk or the device over MTP, and back)
   agent/       (M3) conductor harness on @anthropic-ai/sdk, tools, subagents, approvals, journal
   voice/       (M8) the voice front end: WebRTC call (rtc), VoiceSession, the ask_claude bridge to the
                conductor, spoken summaries, the mic key and voice strip
   replica/     (M2) SVG digital twin: geometry model (mm), components, screen canvas, animations
   sim/         (M2.5) the virtual OP-XY: state, input → state, frames → the screen's pages (drawn
-               from TE's art and the device captures), the sequencer, and the navigator
-               (exact steps to any page or value, tried on a copy of the simulator)
+               from TE's art and the device captures), the sequencer, the navigator (exact steps
+               to any page or value, tried on a copy of the simulator), and xy.ts (the project as a
+               .xy file, M6)
   sound/       the replica's sound in the browser: synth engines, drum kit, samplers, effects
   manual/      (M4) our manual: schema, loader, search
   ui/          design tokens, primitives, shared components
@@ -70,6 +76,11 @@ Claude.
 - **`plan_steps`** reads the plan out, plays it on the replica (`show`, which leaves the virtual
   OP-XY there), or hands it to the walkthrough (`guide`, `app/guide.svelte.ts`). The walkthrough
   lights one step at a time and moves on when the replica's screen shows where the step leads.
+- **Device map** (`sim/device-map.ts` → `knowledge/opxy/device-map.json`, rebuilt with
+  `node scripts/build-device-map.mjs`; a test fails while it is stale): every page with its keys
+  from a new project, what its screen says, and each encoder per layer (found by turning it on a
+  copy) with its range, display format, CC and MIDI reach on OS 1.1.33. The agent reads it with
+  `device_map`.
 - **Recipes** (`knowledge/manual/units/howto/*`) mark the steps that set values
   (`set: { param, value }`); `sim/recipes.spec.ts` runs every recipe on a new project.
 - **Device**: `set_sound` sends a connected OP-XY's sound parameters over the lane CCs verified on

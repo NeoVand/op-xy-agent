@@ -23,6 +23,7 @@ above the composer says what voice is doing while it is on.
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { getReplicaGuide } from '$lib/app/guide.svelte';
+	import { getPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import { getSimPersistence } from '$lib/app/persistence';
 	import { getAppSimulator } from '$lib/app/simulator.svelte';
 	import { getAppSound } from '$lib/app/sound.svelte';
@@ -81,6 +82,7 @@ above the composer says what voice is doing while it is on.
 	const sound = fromContext(getAppSound);
 	const persistence = fromContext(getSimPersistence);
 	const guide = fromContext(getReplicaGuide);
+	const presets = fromContext(getPresetInbox);
 	const keys = new KeyStore();
 	const uid = $props.id();
 
@@ -240,7 +242,8 @@ above the composer says what voice is doing while it is on.
 				simulator,
 				sound,
 				persistence,
-				guide
+				guide,
+				presets
 			});
 			conductor = next;
 			booting = false;

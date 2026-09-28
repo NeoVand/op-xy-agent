@@ -22,3 +22,7 @@ export type { PcmAudio } from './wav';
 export { zip, crc32 } from './zip';
 export { parseAiff } from './aiff';
 export { parsePcm } from './pcm';
+export { findOnsets, equalSlices, sliceAudio, snapToZero } from './slice';
+export type { OnsetOptions } from './slice';
+export { generateKit, renderVoice, KIT_STYLES, MAX_DECAY, VOICE_TYPES } from './generate';
+export type { KitStyle, Voice, VoiceType } from './generate';

@@ -33,6 +33,10 @@ facts:
     text: A new empty project on the owner's unit ran at 120 BPM.
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
     verified_on: '1.1.33'
+  - id: new-metronome
+    text: A new project starts with the metronome on, at about two thirds of its volume (the project file stores the click volume, with 0 for off).
+    source: docs/research/10-xy-format.md#32-projectsettings-0x00000x0094
+    confidence: derived
   - id: screen
     text: The tempo page has a light background, the BPM as a large number on the left and a metronome in the middle carrying the groove type's two-letter abbreviation.
     source: docs/research/59-screen-profiling.md#211-tempo

@@ -23,6 +23,7 @@ import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
 import type { ManualSource } from '../manual-source';
 import type { AgentName, InverseCall, Todo, ToolKind, ToolPreview } from '../types';
+import type { SampleInput } from '$lib/core/presets';
 import type { VirtualOpxy } from '../virtual-opxy';
 
 /** `setTimeout` / `clearTimeout`, injectable for tests. */
@@ -53,6 +54,8 @@ export interface AgentEnvironment {
 	readonly virtual?: VirtualOpxy | null;
 	/** Walks the user through steps on the replica, one lit step at a time; absent when headless. */
 	readonly guide?: GuideHost | null;
+	/** The preset maker's inbox, where make_kit leaves a kit; absent when headless. */
+	readonly presets?: PresetInboxHost | null;
 	readonly manual: ManualSource;
 	readonly timers: AgentTimers;
 	/** How long device tools wait to see the device confirm a change (e.g. echoed start); 0 = no wait. */
@@ -67,6 +70,13 @@ export interface AgentEnvironment {
 		description: string,
 		ctx: ToolContext
 	) => Promise<SubagentResult>;
+}
+
+/** Where make_kit leaves a kit: the app's preset inbox (`$lib/app/preset-inbox.svelte.ts`). */
+export interface PresetInboxHost {
+	put(draft: { readonly name: string; readonly samples: readonly SampleInput[] }): void;
+	/** The preset maker's address, for the answer's link. */
+	readonly href: string;
 }
 
 /** The app's walkthrough (`$lib/app/guide.svelte.ts`) as the tools see it. */

@@ -12,10 +12,17 @@ import { createMemoryThreadStore } from '$lib/agent/threads';
 import { createVirtualOpxy } from '$lib/app/virtual';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import type { VirtualOpxy } from '$lib/agent/virtual-opxy';
+import type { SampleInput } from '$lib/core/presets';
 import { anthropicKey } from './key';
 
+/** A kit make_kit left for the preset maker. */
+interface Draft {
+	readonly name: string;
+	readonly samples: readonly SampleInput[];
+}
+
 /** A check on what the agent left; returns failures in words (empty: passed). */
-type Check = (v: VirtualOpxy) => string[];
+type Check = (v: VirtualOpxy, drafts: readonly Draft[]) => string[];
 
 interface VirtualCase {
 	readonly id: string;
@@ -28,7 +35,38 @@ const pitchClasses = (notes: readonly number[]) =>
 const notesAt = (v: VirtualOpxy, track: number, step: number, pattern?: number) =>
 	v.readPattern(track, pattern).notes.filter((n) => n.step === step);
 
+/** A sound's pitch from its zero crossings between 0.15 s and 0.5 s (a kick's settled body). */
+function pitchOf(sample: SampleInput): number {
+	const x = sample.audio.channels[0];
+	const sr = sample.audio.sampleRate;
+	let crossings = 0;
+	const from = Math.round(0.15 * sr);
+	const to = Math.min(x.length, Math.round(0.5 * sr));
+	for (let i = from + 1; i < to; i++) if (x[i - 1] < 0 !== x[i] < 0) crossings++;
+	return crossings / 2 / ((to - from) / sr);
+}
+
 const CASES: readonly VirtualCase[] = [
+	{
+		id: 'kit',
+		prompt:
+			'Make me a dark, crushed lo-fi drum kit called "dust" with a long, deep kick at about 45 Hz.',
+		check(_v, drafts) {
+			const kit = drafts.at(-1);
+			if (!kit) return ['no kit left in the preset maker'];
+			const fails: string[] = [];
+			if (kit.name !== 'dust') fails.push(`named "${kit.name}"`);
+			const kick = kit.samples.find((s) => s.key === 53);
+			if (!kick) fails.push('no sound on key 53 (kick)');
+			else {
+				const pitch = pitchOf(kick);
+				if (pitch < 38 || pitch > 52) fails.push(`kick at ${pitch.toFixed(1)} Hz`);
+				if (kick.audio.channels[0].length / kick.audio.sampleRate < 0.6) fails.push('a short kick');
+			}
+			if (kit.samples.length < 8) fails.push(`only ${kit.samples.length} sounds`);
+			return fails;
+		}
+	},
 	{
 		id: 'beat',
 		prompt:
@@ -118,11 +156,13 @@ interface CaseResult {
 async function runCase(c: VirtualCase, model: string, apiKey: string): Promise<CaseResult> {
 	const sim = new OpxySim();
 	const virtual = createVirtualOpxy({ sim });
+	const drafts: Draft[] = [];
 	const conductor = await Conductor.create({
 		client: createAnthropicClient({ apiKey }),
 		device: null,
 		replica: null,
 		virtual,
+		presets: { put: (draft) => drafts.push(draft), href: '/presets' },
 		manual: await loadManualSource({ dev: false }),
 		store: createMemoryThreadStore(),
 		autoApprove: true,
@@ -146,7 +186,11 @@ async function runCase(c: VirtualCase, model: string, apiKey: string): Promise<C
 		.join('\n\n');
 	return {
 		id: c.id,
-		fails: error ? [`error: ${error}`] : c.check(virtual),
+		fails: error
+			? [`error: ${error}`]
+			: conductor.lastError
+				? [`agent error: ${conductor.lastError.code} ${conductor.lastError.message}`]
+				: c.check(virtual, drafts),
 		tools,
 		usd: conductor.usage.usd,
 		seconds: (performance.now() - started) / 1000,
