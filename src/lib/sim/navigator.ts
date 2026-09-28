@@ -407,6 +407,10 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 	if (!place || !p) return rec.plan(false, `${id} is not a parameter the navigator can set yet`);
 	walk(rec, place);
 	if (!isAt(rec.sim.state, place)) return rec.plan(false, 'could not reach the page');
+	// a filter or LFO that is off does nothing: M3 / M4 again on its page switches it on
+	const module = rec.sim.state.tracks[track - 1];
+	if (id.startsWith('filter.') && !module.filter.on) rec.do('M3');
+	if (id.startsWith('lfo.') && !module.lfo.on) rec.do('M4');
 	const where = encoderFor(rec.sim, id);
 	if (!where) {
 		return rec.plan(

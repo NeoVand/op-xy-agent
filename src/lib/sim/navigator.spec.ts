@@ -79,6 +79,16 @@ describe('the navigator: parameters', () => {
 		for (const plan of [release, attack, glide, reverb]) grammatical(plan);
 	});
 
+	it('switches an off filter on before turning its cutoff', () => {
+		const sim = boot();
+		sim.press('track.4'); // a new project's T4 filter is off
+		expect(sim.state.tracks[3].filter.on).toBe(false);
+		const plan = planParam(sim.state, { param: 'cutoff', value: 50 });
+		expect(keys(plan).slice(0, 2)).toEqual(['M3', 'M3']);
+		expect(plan.steps[1].screen).not.toMatch(/filter off/);
+		expect(plan.reached).toBe(true);
+	});
+
 	it('finds an engine’s parameters by the names its page shows', () => {
 		const sim = boot();
 		expect(findParam('shape', sim.state, 3)).toBe('m1.1'); // T3 is prism
