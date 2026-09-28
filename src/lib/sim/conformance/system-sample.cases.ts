@@ -17,13 +17,20 @@
  * need a take turn the threshold down to 0 first.
  */
 import { describe, expect, it } from 'vitest';
-import type { EngineId } from '$lib/core/opxy';
 import { NAME_CHARACTERS, NAME_MAX } from '../areas/system/catalogue';
+import { currentGroup, groups } from '../areas/system/presets';
 import { usageOf } from '../areas/system/usage';
-import { ENGINE_LIST } from '../params';
 import type { ScreenFrame } from '../screen/frame';
 import { currentPattern } from '../sequencer';
-import { GAP_MS, HOLD_MS, KEYBOARD, noteOf, type Driver } from '../testing/driver';
+import {
+	GAP_MS,
+	HOLD_MS,
+	KEYBOARD,
+	addMidiPreset,
+	loadEngine,
+	noteOf,
+	type Driver
+} from '../testing/driver';
 
 /** The screen, narrowed to one page (the case fails on any other page). */
 function on<P extends ScreenFrame['page']>(d: Driver, page: P): Extract<ScreenFrame, { page: P }> {
@@ -57,12 +64,20 @@ const presetsIn = (d: Driver, folder: string) =>
 /** The date a saved sound is named after on a unit fresh from the box (our clock default). */
 const TODAY = '2026-09-26';
 
-/** Loads `engine` on the selected track from the engine list: shift + M1, turn E1, click E1. */
-async function loadEngine(d: Driver, engine: EngineId): Promise<void> {
-	await d.withShift(() => d.click('key.m1'));
-	const from = ENGINE_LIST.indexOf(d.state.tracks[d.state.track].engine);
-	await d.turn(1, ENGINE_LIST.indexOf(engine) - from);
-	await d.push(1);
+/** The preset browser's page (research 59 §2.6). */
+const browser = (d: Driver) => on(d, 'system-presets');
+/** What the preset browser has chosen: the engine or folder, and the highlighted preset. */
+const chosen = (d: Driver) =>
+	[browser(d).groups, browser(d).presets].map((c) =>
+		c.selected === null ? null : c.items[c.selected]
+	);
+
+/** Turns E1 of the preset browser to `group` (an engine or a folder), as someone reading it. */
+async function toGroup(d: Driver, group: string): Promise<void> {
+	const b = sys(d).presets;
+	const by = groups(b).indexOf(group) - currentGroup(b).index;
+	if (by !== 0) await d.turn(1, by);
+	expect(chosen(d)[0]).toBe(group);
 }
 
 /**
@@ -948,49 +963,64 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 		it('opens with shift + a track key in instrument mode, on the preset that track plays, the track key lit', async () => {
 			const d = await start();
 			await d.withShift(() => d.click('track.3'));
-			// a new project's track 3 plays the device's bass/shoulder
-			expect(d.screen()).toBe('presets for track 3, category view: bass, shoulder');
+			// a new project's track 3 plays the device's bass/shoulder, by engine as on the owner's
+			// unit (device, b1-1495)
+			expect(d.screen()).toBe('presets for track 3, by engine: prism, shoulder');
 			expect(d.led('track.3')).toBe('white');
-			expect(rows(d, 1).slice(0, 4)).toEqual(['bass', 'bells', 'drum', 'fx']);
+			expect(browser(d).groups.items.slice(0, 4)).toEqual(['axis', 'dissolve', 'drum', 'epiano']);
 		});
 
-		it('switches between category and engine view with a click of E1 (TE’s art names the midi engine external)', async () => {
+		it('switches between engine and category view with a click of E1, a popup saying which (device, b1-1523…1535)', async () => {
 			const d = await start();
 			await d.withShift(() => d.click('track.3'));
 			await d.push(1);
-			expect(d.screen()).toBe('presets for track 3, engine view: prism, shoulder');
-			expect(rows(d, 1)).toContain('external');
-			expect(rows(d, 1)).not.toContain('midi');
+			expect(d.screen()).toBe('presets for track 3, by category (view popup): bass, shoulder');
+			expect(browser(d).groups.items).toEqual([
+				...['bass', 'drum', 'keys', 'lead'],
+				...['organ', 'pad', 'pluck', 'strings']
+			]);
+			await d.wait(1500);
+			expect(d.screen()).toBe('presets for track 3, by category: bass, shoulder');
 			await d.push(1);
-			expect(d.screen()).toBe('presets for track 3, category view: bass, shoulder');
-			// the external engine's preset makes the track a MIDI track
-			await d.push(1);
-			await d.turn(1, -4);
-			expect(picks(d)).toEqual([null, 'external', 'midi 1']);
+			expect(d.screen()).toBe('presets for track 3, by engine (view popup): prism, shoulder');
+			// the device's eleven engines, then midi (ours: a new unit listed no midi, b1-1500); with no
+			// preset of its own, a load gives the engine's starting sound and makes the track a MIDI track
+			expect(groups(sys(d).presets).at(-1)).toBe('midi');
+			await toGroup(d, 'midi');
+			expect(chosen(d)[0]).toBe('midi');
 			await d.push(2);
-			await d.click('track.3');
-			expect(d.screen()).toBe('midi: channel 1, bank none, program 1');
+			expect(d.screen()).toMatch(/^midi: channel 1, bank none, program /);
+			// a midi preset of the user's is listed and loads as any preset does
+			addMidiPreset(d);
+			await d.withShift(() => d.click('track.3'));
+			await toGroup(d, 'midi');
+			expect(chosen(d)).toEqual(['midi', 'my midi']);
 		});
 
-		it('picks a category with E1 and a preset with E2, E3 or E4; a click loads it: the whole sound changes, the steps stay', async () => {
+		it('picks an engine or category with E1 and a preset with E2, E3 or E4; a click loads it and leaves for M1: the whole sound changes, the steps stay', async () => {
 			const d = await start();
 			await d.clicks('track.3', key('c4'), step(1));
 			await d.withShift(() => d.click('track.3'));
-			await d.turn(1, 5);
-			expect(picks(d)).toEqual([null, 'lead', 'gaussian']); // a new project's, first in lead
+			await d.push(1); // by category
+			await toGroup(d, 'lead');
+			expect(chosen(d)).toEqual(['lead', 'asinine']); // the first, by name
 			await d.turn(2, 1);
 			await d.turn(3, 1);
 			await d.turn(4, -1);
-			expect(picks(d)).toEqual([null, 'lead', 'lead 2']);
+			expect(chosen(d)).toEqual(['lead', 'azimuth']);
 			await d.push(3);
-			expect(d.state.tracks[2].engine).toBe('hardsync');
+			// the device shows the new sound's M1 straight after (b1-1568 → 1569)
+			expect(d.state.tracks[2].engine).toBe('sampler');
+			expect(d.screen()).toMatch(/^sampler, root /);
+			await d.withShift(() => d.click('track.3'));
+			expect(chosen(d)).toEqual(['lead', 'azimuth']); // the view it was left in
 			await d.turn(2, 2);
-			await d.push(2); // lead 4
+			await d.push(2); // bowed
 			expect(d.state.tracks[2].engine).toBe('axis');
+			await d.withShift(() => d.click('track.3'));
 			await d.turn(4, 1);
-			await d.push(4); // lead 5
+			await d.push(4); // burbie
 			expect(d.state.tracks[2].engine).toBe('simple');
-			await d.click('track.3'); // ours: a track key leaves the browser
 			expect(d.frame.page).toBe('synth');
 			expect(d.screen()).toMatch(/^simple: /);
 			expect(d.steps()).toBe('w...............');
@@ -1008,7 +1038,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.withShift(() => d.click('track.3'));
 			await d.withShift(() => d.click('track.1'));
-			expect(d.screen()).toBe('presets for track 1, category view: drum, boop'); // a new project's
+			expect(d.screen()).toBe('presets for track 1, by engine: drum, boop'); // a new project's
 			expect(d.led('track.1')).toBe('white');
 		});
 
@@ -1016,16 +1046,19 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.holding('track.3', () => d.click('key.m4')); // a user preset
 			await d.withShift(() => d.click('track.3'));
-			expect(picks(d)).toEqual([null, 'snapshot', `${TODAY} (1)`]);
+			await d.push(1); // by category: the folders
+			expect(chosen(d)).toEqual(['snapshot', `${TODAY} (1)`]);
+			// a user preset brings up cut · paste · rename · delete (device, b1-1531)
+			expect(browser(d).soft.map((l) => l?.text)).toEqual(['cut', 'paste', 'rename', 'delete']);
 			await d.withShift(() => d.click('key.m1'));
 			await d.click('key.m1'); // a new folder, named "folder 1"
-			expect(picks(d)).toEqual([null, 'folder 1', null]);
-			await d.turn(1, -1);
+			expect(chosen(d)).toEqual(['folder 1', null]);
+			await toGroup(d, 'snapshot');
 			await d.click('key.m1');
-			expect(on(d, 'system-list').columns[2].dim).toEqual([0]); // ours: dim until pasted
-			await d.turn(1, 1);
+			expect(browser(d).presets.dim).toEqual([0]); // ours: dim until pasted
+			await toGroup(d, 'folder 1');
 			await d.click('key.m2');
-			expect(picks(d)).toEqual([null, 'folder 1', `${TODAY} (1)`]);
+			expect(chosen(d)).toEqual(['folder 1', `${TODAY} (1)`]);
 			expect(presetsIn(d, 'snapshot')).toEqual([]);
 			// the track still knows where its sound lives
 			expect(sys(d).trackPresets[2]).toBe(`folder 1/${TODAY} (1)`);
@@ -1035,18 +1068,20 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.holding('track.3', () => d.click('key.m4'));
 			await d.withShift(() => d.click('track.3'));
+			await d.push(1);
 			await d.withShift(() => d.click('key.m1'));
 			await d.click('key.m1');
-			await d.turn(1, -1);
+			await toGroup(d, 'snapshot');
 			await d.click('key.m1');
-			await d.turn(1, 1);
+			await toGroup(d, 'folder 1');
 			await d.click('key.m2');
 			// the next save takes the free name in the snapshot folder again
 			await d.holding('track.3', () => d.click('key.m4'));
 			await d.withShift(() => d.click('track.3'));
-			expect(picks(d)).toEqual([null, 'snapshot', `${TODAY} (1)`]);
+			expect(chosen(d)).toEqual(['snapshot', `${TODAY} (1)`]);
 			await d.click('key.m1');
-			await d.turn(1, 1);
+			await toGroup(d, 'folder 1');
+			expect(browser(d).soft[1]).toEqual({ text: 'paste', tone: 'dim' });
 			await d.click('key.m2');
 			expect(presetsIn(d, 'folder 1')).toEqual([`${TODAY} (1)`]);
 			expect(presetsIn(d, 'snapshot')).toEqual([`${TODAY} (1)`]);
@@ -1060,7 +1095,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toBe(`rename preset: "${TODAY} (1)", character 14 is ")"`);
 			await spell(d, 'fat bass');
 			await d.click('key.m1');
-			expect(picks(d)).toEqual([null, 'snapshot', 'fat bass']);
+			expect(chosen(d)).toEqual(['prism', 'fat bass']);
 			expect(sys(d).trackPresets[2]).toBe('snapshot/fat bass');
 		});
 
@@ -1068,11 +1103,14 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.holding('track.3', () => d.click('key.m4'));
 			await d.withShift(() => d.click('track.3'));
+			// dates sort before letters: the snapshot is prism's first preset
+			expect(chosen(d)).toEqual(['prism', `${TODAY} (1)`]);
 			await d.click('key.m4');
-			expect(picks(d)).toEqual([null, 'snapshot', null]);
+			expect(chosen(d)).toEqual(['prism', 'alloy']);
 			await d.turn(1, -20);
 			await d.click('key.m4');
-			expect(picks(d)).toEqual([null, 'bass', 'shoulder']); // a new project's bass preset
+			expect(chosen(d)).toEqual(['axis', 'bellissimo']);
+			expect(presetsIn(d, 'pluck')).toContain('bellissimo');
 		});
 
 		it('keeps its soft keys while a note sounds: a held key and M4 still delete the preset (ours)', async () => {
@@ -1080,37 +1118,36 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.holding('track.1', () => d.click('key.m4'));
 			await d.withShift(() => d.click('track.1'));
 			await d.holding(key('c4'), () => d.click('key.m4'));
-			expect(picks(d)).toEqual([null, 'snapshot', null]);
+			expect(chosen(d)).toEqual(['drum', 'boop']);
+			expect(presetsIn(d, 'snapshot')).toEqual([]);
 			expect(smp(d).tracks[0].selection).toEqual([]);
 		});
 
 		it('makes a folder with shift + M1, renames it with shift + M3, deletes it with shift + M4 once it is empty', async () => {
 			const d = await start();
 			await d.withShift(() => d.click('track.3'));
+			await d.push(1); // by category: the folders
 			await d.withShift(() => d.click('key.m1'));
 			expect(d.screen()).toBe('new folder: "folder 1", character 8 is "1"'); // ours
 			await d.click('key.m1');
-			expect(picks(d)).toEqual([null, 'folder 1', null]);
+			expect(chosen(d)).toEqual(['folder 1', null]);
 			await d.withShift(() => d.click('key.m3'));
 			await spell(d, 'mine');
 			await d.click('key.m1');
-			expect(picks(d)).toEqual([null, 'mine', null]);
+			expect(chosen(d)).toEqual(['mine', null]);
 			// a folder with a preset in it stays
 			await d.holding('track.3', () => d.click('key.m4'));
 			await d.withShift(() => d.click('track.3'));
 			await d.click('key.m1');
-			await d.turn(1, 1);
+			await toGroup(d, 'mine');
 			await d.click('key.m2');
 			await d.withShift(() => d.click('key.m4'));
-			expect(picks(d)).toEqual([null, 'mine', `${TODAY} (1)`]);
+			expect(chosen(d)).toEqual(['mine', `${TODAY} (1)`]);
 			// emptied, it goes
-			await d.click('key.m1');
-			await d.turn(1, -1);
-			await d.click('key.m2');
-			await d.turn(1, 1);
-			expect(picks(d)).toEqual([null, 'mine', null]);
+			await d.click('key.m4');
+			expect(chosen(d)).toEqual(['mine', null]);
 			await d.withShift(() => d.click('key.m4'));
-			expect(rows(d, 1)).not.toContain('mine');
+			expect(browser(d).groups.items).not.toContain('mine');
 		});
 
 		it('scrambles a track’s sound with its key held and M1, differently each time', async () => {
@@ -1128,6 +1165,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 		it('leaves a MIDI track as it is when scrambled (OS 1.0.45)', async () => {
 			const d = await start();
 			await d.click('track.3');
+			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			const before = d.screen();
 			await d.holding('track.3', () => d.click('key.m1'));
@@ -1165,8 +1203,10 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.click('track.1');
 			await d.holding('track.1', () => d.click('key.m4'));
 			await d.withShift(() => d.click('track.2'));
-			await d.turn(1, 9); // from drum to the snapshot folder
-			expect(picks(d)).toEqual([null, 'snapshot', `${TODAY} (1)`]);
+			// by engine, on track 2's in phase: the snapshot is the drum sampler's first preset
+			expect(chosen(d)).toEqual(['drum', 'in phase']);
+			await d.turn(2, -20);
+			expect(chosen(d)).toEqual(['drum', `${TODAY} (1)`]);
 			await d.push(2);
 			await d.clicks('track.2', 'key.sample');
 			expect(d.screen()).toBe('drum sampler record: ready, take 1.wav, mic, gain 0');
@@ -1178,7 +1218,9 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.holding('track.3', () => d.click('key.m4'));
 			expect(presetsIn(d, 'snapshot')).toEqual([`${TODAY} (1)`, `${TODAY} (2)`]);
 			await d.withShift(() => d.click('track.3'));
-			expect(picks(d)).toEqual([null, 'snapshot', `${TODAY} (2)`]);
+			expect(chosen(d)).toEqual(['prism', `${TODAY} (2)`]);
+			await d.push(1);
+			expect(chosen(d)).toEqual(['snapshot', `${TODAY} (2)`]);
 		});
 
 		it('writes back into the snapshot the sound came from with shift added before M4 (OS 1.1.17; ours: track key first)', async () => {
@@ -1189,10 +1231,10 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(presetsIn(d, 'snapshot')).toEqual([`${TODAY} (1)`]);
 			// loaded onto track 4, it has the change
 			await d.withShift(() => d.click('track.4'));
-			await d.turn(1, 3);
-			expect(picks(d)).toEqual([null, 'snapshot', `${TODAY} (1)`]);
+			await toGroup(d, 'prism');
+			expect(chosen(d)).toEqual(['prism', `${TODAY} (1)`]);
 			await d.push(2);
-			await d.click('track.4');
+			expect(d.state.track).toBe(3);
 			expect(d.screen()).toMatch(/^prism: shape 20, /);
 		});
 	});
@@ -1938,7 +1980,8 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.holding('track.3', () => d.click('key.m4'));
 			// the saved sound brings its preset settings and bend range along to another track
 			await d.withShift(() => d.click('track.4'));
-			await d.turn(1, 3);
+			await toGroup(d, 'prism');
+			expect(chosen(d)).toEqual(['prism', `${TODAY} (1)`]);
 			await d.push(2);
 			await d.click('track.4');
 			await d.withShift(() => d.click('key.instrument'));

@@ -107,6 +107,29 @@ describe('saving the virtual OP-XY’s work', () => {
 		expect(own.map((p) => p.name)).toEqual(['mine']);
 	});
 
+	it('gives an older save the device’s factory presets, keeping the owner’s own', () => {
+		const work = withWork();
+		const saved = captureSim(work.state);
+		const library = JSON.parse(saved.library);
+		library.presets.library = [
+			{ name: 'bass 2', folder: 'bass', engine: 'simple', user: false }, // a placeholder of ours
+			{ name: 'mine', folder: 'bells', engine: 'epiano', user: true }, // a category that went
+			{ name: 'kept', folder: 'bass', engine: 'prism', user: true }
+		];
+		library.presets.view = 'category';
+		library.presets.group = 'wind';
+		const sim = new OpxySim({ now: () => 0 });
+		applySaved(sim.state, { ...saved, version: 5, library: JSON.stringify(library) });
+		const presets = sim.state.areas.system.presets;
+		const fresh = new OpxySim().state.areas.system.presets;
+		expect(presets.library.filter((p) => !p.user)).toEqual(fresh.library);
+		expect(presets.library.filter((p) => p.user).map((p) => [p.name, p.folder])).toEqual([
+			['mine', 'snapshot'],
+			['kept', 'bass']
+		]);
+		expect([presets.view, presets.group]).toEqual([fresh.view, fresh.group]);
+	});
+
 	it('keeps an older save’s groove when the device’s four extra grooves come in', () => {
 		const work = withWork();
 		const saved = captureSim(work.state);

@@ -4,9 +4,10 @@ import { DEFAULT_LEVEL } from '../../params';
 import type { ScreenFrame } from '../../screen/frame';
 import { RecordingContext } from '../../screen/recording';
 import { describeFrame, renderFrame } from '../../screen/render';
-import type { SystemListFrame } from './frames';
-import { loadPreset } from './presets';
-import { HOLD_MS } from './state';
+import { PRESET_CATEGORIES } from './catalogue';
+import type { SystemListFrame, SystemPresetsFrame } from './frames';
+import { groups, loadPreset, presetsIn } from './presets';
+import { HOLD_MS, VIEW_POPUP_MS } from './state';
 
 /** A simulator with a clock the test moves. */
 function sim(): { sim: OpxySim; clock: { now: number } } {
@@ -27,6 +28,10 @@ function page<P extends ScreenFrame['page']>(
 /** The selected item of each column of a list page. */
 const picks = (f: SystemListFrame) =>
 	f.columns.map((c) => (c.selected === null ? null : c.items[c.selected]));
+
+/** The preset browser's chosen group and highlighted preset. */
+const chosen = (f: SystemPresetsFrame) =>
+	[f.groups, f.presets].map((c) => (c.selected === null ? null : c.items[c.selected]));
 
 /** Holds a key for `ms` on the test clock. */
 function hold(s: OpxySim, clock: { now: number }, id: string, ms = HOLD_MS + 50): void {
@@ -489,33 +494,185 @@ describe('system area: COM (manual: com/overview, system-settings, midi-settings
 });
 
 describe('system area: presets (manual: instrument/preset-browser, preset-management)', () => {
-	it('opens the browser on the track’s preset with shift + Tn', () => {
+	it('opens the browser on the track’s preset with shift + Tn, by engine as on the device', () => {
 		const { sim: s } = sim();
 		s.combo('key.shift', 'track.3');
-		const f = page(s, 'system-list');
-		expect(f.layout).toBe('presets');
+		const f = page(s, 'system-presets');
 		expect(s.state.track).toBe(2);
-		// a new project's track 3 plays the device's bass/shoulder
-		expect(picks(f)).toEqual([null, 'bass', 'shoulder']);
-		expect(f.columns[0].items).toEqual(['3', 'category']);
+		// a new project's track 3 plays the device's bass/shoulder (b1-1495)
+		expect([f.track, f.view, ...chosen(f)]).toEqual([3, 'engine', 'prism', 'shoulder']);
+		expect(describeFrame(s.frame)).toBe('presets for track 3, by engine: prism, shoulder');
 	});
 
-	it('switches to engine view with an E1 click and loads a preset with E2–E4 clicks', () => {
+	it('lists the device’s eleven engines and their factory presets by name (b1-1495…1568), then midi (ours)', () => {
+		const { sim: s } = sim();
+		const b = s.state.areas.system.presets;
+		expect(groups(b, 'engine')).toEqual([
+			'axis',
+			'dissolve',
+			'drum',
+			'epiano',
+			'hardsync',
+			'multisampler',
+			'organ',
+			'prism',
+			'sampler',
+			'simple',
+			'wavetable',
+			'midi'
+		]);
+		const names = (engine: string) => presetsIn(b, engine, 'engine').map((p) => p.name);
+		expect(names('organ')).toEqual([
+			'avant garde',
+			'chorale',
+			'chunk',
+			'dingus',
+			'manual',
+			'vestigial'
+		]);
+		expect(names('axis')).toHaveLength(14);
+		expect(names('axis').at(-1)).toBe('whitness');
+		expect(names('wavetable')).toHaveLength(13);
+		expect(names('sampler').slice(0, 3)).toEqual(['80s lover', 'ambi piano', 'any time']);
+		expect(b.library).toHaveLength(156);
+		expect(groups(b, 'category')).toEqual([...PRESET_CATEGORIES]);
+		const pluck = presetsIn(b, 'pluck', 'category').map((p) => p.name);
+		expect(pluck.slice(0, 3)).toEqual(['avant garde', 'beach bum', 'bellissimo']);
+		expect(pluck).toHaveLength(23);
+	});
+
+	it('scrolls each list only as far as the highlight needs (b1-1495, 1507, 1517, 1518)', () => {
 		const { sim: s } = sim();
 		s.combo('key.shift', 'track.3');
-		s.click(1);
-		let f = page(s, 'system-list');
-		expect(f.columns[0].items[1]).toBe('synth');
-		expect(picks(f)).toEqual([null, 'prism', 'shoulder']);
-		s.turn(1, -3); // hardsync (listed alphabetically by name, the midi engine as external)
+		let f = page(s, 'system-presets');
+		// shoulder, prism's 14th preset, on the bottom row
+		expect([f.groups.first, f.presets.first, f.presets.selected]).toEqual([0, 5, 8]);
+		expect(f.presets.items[0]).toBe('gradient');
+		s.turn(1, 3); // wavetable, the last engine: the column scrolls by two
+		f = page(s, 'system-presets');
+		expect(chosen(f)).toEqual(['wavetable', 'asinine']);
+		expect([f.groups.first, f.groups.selected, f.presets.first]).toEqual([2, 8, 0]);
+		s.turn(2, 11);
+		expect(page(s, 'system-presets').presets.items).toEqual([
+			'corporate',
+			'meat org',
+			'modulus',
+			'not fm',
+			'post order',
+			'sad triangle',
+			'spacious',
+			'ulysses',
+			'wobbler'
+		]);
 		s.turn(2, 1);
-		f = page(s, 'system-list');
-		expect(picks(f)).toEqual([null, 'hardsync', 'lead 2']);
+		f = page(s, 'system-presets');
+		expect([f.presets.first, f.presets.items.at(-1), chosen(f)[1]]).toEqual([4, 'zafu', 'zafu']);
+		// back up to organ: the engine column stays where it is, the presets start from the top
+		s.turn(1, -4);
+		f = page(s, 'system-presets');
+		expect([f.groups.first, ...chosen(f), f.presets.first]).toEqual([2, 'organ', 'avant garde', 0]);
+	});
+
+	it('swaps the view with an E1 click, keeping the preset and saying which in a popup', () => {
+		const { sim: s } = sim();
+		s.combo('key.shift', 'track.3');
+		s.turn(1, -7); // axis: its first preset, bellissimo
+		s.click(1);
+		let f = page(s, 'system-presets');
+		// b1-1524: pluck, where bellissimo lives, under the popup
+		expect([f.view, ...chosen(f)]).toEqual(['category', 'pluck', 'bellissimo']);
+		expect(f.popup).toEqual({ view: 'category', alpha: 1 });
+		expect(describeFrame(s.frame)).toBe(
+			'presets for track 3, by category (view popup): pluck, bellissimo'
+		);
+		s.advance(VIEW_POPUP_MS);
+		expect(page(s, 'system-presets').popup).toBeNull();
+		// b1-1528, 1536: strings' draemy, then back by engine with draemy still highlighted
+		s.turn(1, 1);
+		expect(chosen(page(s, 'system-presets'))).toEqual(['strings', 'draemy']);
+		s.click(1);
+		f = page(s, 'system-presets');
+		expect([f.view, ...chosen(f)]).toEqual(['engine', 'axis', 'draemy']);
+		// any other input ends the popup (ours)
+		s.turn(2, 1);
+		expect(page(s, 'system-presets').popup).toBeNull();
+	});
+
+	it('loads a preset with an E2–E4 click and leaves for the track’s M1 page (b1-1568 → 1569)', () => {
+		const { sim: s } = sim();
+		s.press('key.m3');
+		s.combo('key.shift', 'track.3');
+		s.turn(1, 2); // simple: belch bass
+		expect(chosen(page(s, 'system-presets'))).toEqual(['simple', 'belch bass']);
 		s.click(3);
-		expect(s.state.tracks[2].engine).toBe('hardsync');
-		expect(s.state.areas.system.trackPresets[2]).toBe('lead/lead 2');
+		expect(page(s, 'synth').engine).toBe('simple');
+		expect(s.state.pages.instrument).toBe(1);
+		expect(s.state.areas.system.page).toBeNull();
+		expect(s.state.areas.system.trackPresets[2]).toBe('bass/belch bass');
 		// steps and mixer stay with the track (a new project's level)
 		expect(s.state.tracks[2].mix.level).toBe(DEFAULT_LEVEL);
+	});
+
+	it('opens with shift + M1 on the selected track too, on the device in place of an engine list', () => {
+		const { sim: s } = sim();
+		s.press('track.6');
+		s.press('key.m4');
+		s.combo('key.shift', 'key.m1');
+		expect(chosen(page(s, 'system-presets'))).toEqual(['hardsync', 'dielectric']);
+		expect(s.state.picker).toBeNull();
+		s.turn(1, 1); // multisampler
+		s.click(2);
+		expect(s.state.tracks[5].engine).toBe('multisampler');
+		expect(s.state.pages.instrument).toBe(1);
+	});
+
+	it('lists midi after the engines with presets until one of its own takes it into its place, and the snapshot folder once it holds one', () => {
+		const { sim: s } = sim();
+		const b = s.state.areas.system.presets;
+		expect(groups(b, 'engine').at(-1)).toBe('midi');
+		expect(groups(b, 'category')).not.toContain('snapshot');
+		b.library.push({ name: 'my synth', folder: 'snapshot', engine: 'midi', user: true });
+		expect(groups(b, 'engine').indexOf('midi')).toBe(groups(b, 'engine').indexOf('hardsync') + 1);
+		expect(groups(b, 'category')).toContain('snapshot');
+		// by character code: a folder named with a capital first (b1-1524: Nostalgic Synths)
+		b.library.push({
+			name: 'bass 01',
+			folder: 'Nostalgic Synths',
+			engine: 'multisampler',
+			user: true
+		});
+		expect(groups(b, 'category').slice(0, 2)).toEqual(['Nostalgic Synths', 'bass']);
+		expect(
+			presetsIn(b, 'multisampler', 'engine')
+				.map((p) => p.name)
+				.slice(0, 3)
+		).toEqual(['bandpasser', 'bass 01', 'ensemble']);
+	});
+
+	it('shows cut, paste, rename and delete while a user preset is highlighted (b1-1531)', () => {
+		const { sim: s } = sim();
+		const b = s.state.areas.system.presets;
+		b.library.push({
+			name: 'bass 01',
+			folder: 'Nostalgic Synths',
+			engine: 'multisampler',
+			user: true
+		});
+		s.combo('key.shift', 'track.8');
+		expect(page(s, 'system-presets').soft).toEqual([]);
+		s.click(1);
+		s.turn(1, -20); // Nostalgic Synths, above the factory categories
+		const f = page(s, 'system-presets');
+		expect(chosen(f)).toEqual(['Nostalgic Synths', 'bass 01']);
+		expect(f.soft).toEqual([
+			{ text: 'cut', tone: 'normal' },
+			{ text: 'paste', tone: 'dim' },
+			{ text: 'rename', tone: 'normal' },
+			{ text: 'delete', tone: 'normal' }
+		]);
+		expect(describeFrame(s.frame)).toMatch(
+			/: Nostalgic Synths, bass 01; M1 cut, M3 rename, M4 delete$/
+		);
 	});
 
 	it('brings a stored preset’s keyboard octave along when it loads', () => {
@@ -539,20 +696,25 @@ describe('system area: presets (manual: instrument/preset-browser, preset-manage
 		const b = s.state.areas.system.presets;
 		b.library.push({ name: 'my bass', folder: 'snapshot', engine: 'prism', user: true });
 		s.combo('key.shift', 'track.3');
+		s.click(1); // by category
 		// shift + M1: a new folder
 		s.combo('key.shift', 'key.m1');
 		expect(page(s, 'system-naming')).toMatchObject({ title: 'new folder', text: 'folder 1' });
 		s.press('key.m1');
 		expect(b.folders).toEqual(['folder 1']);
-		expect(picks(page(s, 'system-list'))[1]).toBe('folder 1');
+		expect(chosen(page(s, 'system-presets'))).toEqual(['folder 1', null]);
 		// cut the user preset from the snapshot folder, paste it into the new folder
-		s.turn(1, -1);
-		expect(picks(page(s, 'system-list'))).toEqual([null, 'snapshot', 'my bass']);
+		const at = (folder: string) => groups(b).indexOf(folder);
+		s.turn(1, at('snapshot') - at('folder 1'));
+		expect(chosen(page(s, 'system-presets'))).toEqual(['snapshot', 'my bass']);
 		s.press('key.m1');
-		expect(page(s, 'system-list').columns[2].dim).toEqual([0]);
-		s.turn(1, 1);
+		expect(page(s, 'system-presets').presets.dim).toEqual([0]);
+		s.turn(1, at('folder 1') - at('snapshot'));
+		expect(page(s, 'system-presets').soft[1]).toEqual({ text: 'paste', tone: 'normal' });
 		s.press('key.m2');
-		expect(picks(page(s, 'system-list'))).toEqual([null, 'folder 1', 'my bass']);
+		expect(chosen(page(s, 'system-presets'))).toEqual(['folder 1', 'my bass']);
+		// the snapshot folder, empty now, is gone from the list
+		expect(groups(b)).not.toContain('snapshot');
 		// shift + M4 only deletes an empty folder
 		s.combo('key.shift', 'key.m4');
 		expect(b.folders).toEqual(['folder 1']);
@@ -570,6 +732,7 @@ describe('system area: presets (manual: instrument/preset-browser, preset-manage
 		expect(b.folders).toEqual(['folder']);
 		s.combo('key.shift', 'key.m4');
 		expect(b.folders).toEqual([]);
+		expect(chosen(page(s, 'system-presets'))[0]).toBe('keys');
 	});
 
 	it('leaves factory presets alone', () => {
@@ -580,7 +743,7 @@ describe('system area: presets (manual: instrument/preset-browser, preset-manage
 		s.press('key.m1');
 		s.press('key.m3');
 		expect(s.state.areas.system.presets.library).toHaveLength(count);
-		expect(s.frame.page).toBe('system-list');
+		expect(s.frame.page).toBe('system-presets');
 	});
 });
 
@@ -667,9 +830,10 @@ describe('system area: track sounds (manual: save-copy-scramble, save-to-same-sn
 		expect(b.library.filter((p) => p.user)).toHaveLength(1);
 		withTrack(s, 3, 'key.m4');
 		expect(b.library.at(-1)?.name).toBe('2026-09-26 (2)');
-		// the browser opens on the new snapshot; loading the first one brings back its sound
+		// the browser opens on the new snapshot (dates sort before letters under prism); loading the
+		// first one brings back its sound
 		s.combo('key.shift', 'track.3');
-		expect(picks(page(s, 'system-list'))).toEqual([null, 'snapshot', '2026-09-26 (2)']);
+		expect(chosen(page(s, 'system-presets'))).toEqual(['prism', '2026-09-26 (2)']);
 		s.turn(2, -1);
 		s.click(2);
 		expect(s.state.tracks[2].m1[0]).toBe(6);
@@ -707,6 +871,7 @@ describe('system area: track sounds (manual: save-copy-scramble, save-to-same-sn
 		withTrack(s, 3, 'key.m4');
 		expect(keys[2]).toBe('snapshot/2026-09-26 (1)');
 		s.combo('key.shift', 'track.3');
+		s.click(1); // by category: folders take pastes
 		s.press('key.m3');
 		expect(page(s, 'system-naming').text).toBe('2026-09-26 (1)');
 		s.turn(1, -1);

@@ -19,9 +19,9 @@
 import { describe, expect, it } from 'vitest';
 import type { EngineId } from '$lib/core/opxy';
 import { currentPattern } from '../sequencer';
-import { ENGINE_LIST, FILTER_TYPES, LFO_SYNC_STEPS, LFO_TYPES, engineCell, shown } from '../params';
+import { FILTER_TYPES, LFO_SYNC_STEPS, LFO_TYPES, engineCell, shown } from '../params';
 import type { ScreenFrame } from '../screen/frame';
-import { CLICK_MS, GAP_MS, type Driver } from '../testing/driver';
+import { CLICK_MS, GAP_MS, addMidiPreset, loadEngine, type Driver } from '../testing/driver';
 
 /** A sixteenth at the new project's 120 BPM. */
 const STEP_MS = 125;
@@ -52,7 +52,10 @@ const notesOn = (d: Driver, n: number) =>
 /** A synth engine's header as the screen reads it: "label value" for E1…E4. */
 const header = (d: Driver) => on(d, 'synth').header.map((c) => `${c.label} ${c.value}`.trim());
 
-/** Opens the list shift + M1 / M3 / M4 opens: engines, filter types, LFO types. */
+/**
+ * Opens what shift + M1 / M3 / M4 opens: the preset browser (on OS 1.1.33, in place of the guide's
+ * engine list), the filter types, the LFO types.
+ */
 const openList = (d: Driver, m: 1 | 3 | 4) => d.withShift(() => d.click(`key.m${m}`));
 
 /** Scrolls an open list with E1 from the item it highlights to `item`, as someone reading it. */
@@ -61,11 +64,10 @@ async function scrollTo(d: Driver, list: readonly string[], item: string): Promi
 	expect(d.screen()).toBe(item);
 }
 
-/** Loads an engine on the selected track the guide's way: shift + M1, E1 to it, a click of E1. */
-async function loadEngine(d: Driver, engine: EngineId): Promise<void> {
-	await openList(d, 1);
-	await scrollTo(d, ENGINE_LIST, engine);
-	await d.push(1);
+/** The preset browser's chosen engine (or folder) and highlighted preset. */
+function browsing(d: Driver): (string | null)[] {
+	const f = on(d, 'system-presets');
+	return [f.groups, f.presets].map((c) => (c.selected === null ? null : c.items[c.selected]));
 }
 
 /** Taps the tempo key `ms` after the previous tap went down. */
@@ -707,68 +709,66 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 	});
 
 	describe('14.1 engine', () => {
-		it('opens the engine list at the track’s engine with shift + M1; E1 scrolls, a click loads', async () => {
+		it('brings up the preset browser with shift + M1 on the track’s preset; E1 picks the engine, a click of E2 loads its first preset (device, b1-1494…1569)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await openList(d, 1);
-			expect(d.screen()).toBe('prism');
-			expect(on(d, 'list').columns[0].items).toEqual(['3', 'engine']);
+			// OS 1.1.33 has no engine list here: the browser, by engine, on bass/shoulder
+			expect(d.screen()).toBe('presets for track 3, by engine: prism, shoulder');
 			await d.turn(1, 2);
-			expect(d.screen()).toBe('simple');
-			await d.push(1);
-			// an engine picked without a preset starts from the device's own values
+			expect(browsing(d)).toEqual(['simple', 'belch bass']);
+			await d.push(2);
+			// straight back to M1 with the new sound, as on the device (b1-1569, which showed belch
+			// bass's own 46 · 66 · 20 · 18: its values are not in our library, so simple's own start)
 			expect(d.screen()).toBe('simple: shape 99, pw 00, noise 18, stereo 00');
 			expect(d.state.tracks[2].engine).toBe('simple');
+			expect(d.state.areas.system.trackPresets[2]).toBe('bass/belch bass');
 		});
 
-		it('lists all twelve engines: eight synths, three samplers and midi (the order and the stops at the ends are ours; device check)', async () => {
+		it('lists the engines that have presets, the eleven of a new unit as the device does (b1-1500), then midi (ours: how 1.1.33 picks it is open; the stop at the end too)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await openList(d, 1);
 			await d.turn(1, -20);
-			const seen: string[] = [];
+			const seen: (string | null)[] = [];
 			for (let i = 0; i < 13; i++) {
-				seen.push(d.screen());
+				seen.push(browsing(d)[0]);
 				await d.turn(1, 1);
 			}
-			expect(seen.slice(0, 12)).toEqual([...ENGINE_LIST]);
-			expect(seen[12]).toBe('midi');
-			expect([...ENGINE_LIST].sort()).toEqual(
-				[
-					...['axis', 'dissolve', 'epiano', 'hardsync', 'organ', 'prism', 'simple', 'wavetable'],
-					...['drum', 'sampler', 'multisampler'],
-					'midi'
-				].sort()
-			);
+			expect(seen).toEqual([
+				...['axis', 'dissolve', 'drum', 'epiano', 'hardsync', 'multisampler'],
+				...['organ', 'prism', 'sampler', 'simple', 'wavetable', 'midi', 'midi']
+			]);
 		});
 
-		it('leaves the list unchanged with another module key, or shift + M1 again (ours)', async () => {
+		it('keeps the browser up under the module keys, which cut, paste, rename and delete there; a mode key leaves it unchanged (ours)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await openList(d, 1);
-			await scrollTo(d, ENGINE_LIST, 'wavetable');
-			await d.click('key.m2');
-			expect(d.screen()).toMatch(/^amp envelope/);
-			expect(d.state.tracks[2].engine).toBe('prism');
-			await openList(d, 1);
-			expect(d.screen()).toBe('prism');
-			await d.turn(1, 1);
-			await openList(d, 1);
+			await d.turn(1, 3);
+			expect(browsing(d)).toEqual(['wavetable', 'asinine']);
+			await d.click('key.m2'); // paste, with nothing cut
+			expect(browsing(d)).toEqual(['wavetable', 'asinine']);
+			await d.click('key.instrument');
 			expect(d.screen()).toMatch(/^prism: shape 15/);
+			expect(d.state.tracks[2].engine).toBe('prism');
 		});
 
-		it('scrolls a list with any encoder; only E1’s click loads (ours: the guide names E1)', async () => {
+		it('turns the presets with E2, E3 or E4; a click of E1 swaps the view instead of loading (device, b1-1523/1524)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await openList(d, 1);
 			await d.turn(4, 1);
-			expect(d.screen()).toBe('sampler');
+			expect(browsing(d)).toEqual(['prism', 'slush']);
 			await d.turn(2, -2);
-			expect(d.screen()).toBe('organ');
-			await d.push(4);
-			expect(d.screen()).toBe('organ');
+			expect(browsing(d)).toEqual(['prism', 'shine']);
+			await d.turn(3, 1);
+			expect(browsing(d)).toEqual(['prism', 'shoulder']);
 			await d.push(1);
-			expect(header(d)[0]).toBe('type 40');
+			expect(browsing(d)).toEqual(['bass', 'shoulder']);
+			expect(d.state.tracks[2].engine).toBe('prism');
+			await d.push(4);
+			expect(header(d)[0]).toBe('shape 15'); // a new project's shoulder, as the device stores it
 		});
 
 		it('closes the list when another track is picked (ours)', async () => {
@@ -781,19 +781,19 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(d.state.tracks[2].engine).toBe('prism');
 		});
 
-		it('swaps only the engine: M1 gets the new engine’s values, envelopes, filter and LFO stay', async () => {
+		it('changes the whole sound with the engine: the preset brings its own envelopes, filter and LFO', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m3');
 			await d.turn(1, 50);
+			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
 			await d.click('key.m1');
-			await d.turn(1, 5);
-			expect(header(d)[0]).toBe('shape 20');
 			await loadEngine(d, 'wavetable');
 			// the device writes wavetable's table by name, with no number (research 59 §2.5)
 			expect(header(d)).toEqual(['basic', 'position 00', 'warp 00', 'drift 00']);
+			// asinine, wavetable's first preset: its values are not in our library, so a fresh sound
 			await d.click('key.m3');
-			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
+			expect(d.screen()).toBe('svf filter: cutoff 99, resonance 00');
 		});
 
 		it('edits the drum key last played on a drum track’s M1: tune, start, end, play mode', async () => {
@@ -1044,7 +1044,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toBe('ladder filter: cutoff 00, resonance 09');
 		});
 
-		it('confirms the highlighted filter type with M3 as well (ours, like M1 in the engine list; device check)', async () => {
+		it('confirms the highlighted filter type with M3 as well (ours, like M1 in the guide’s engine list; device check)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m3');
@@ -1117,7 +1117,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(on(d, 'lfo').type).toBe('random');
 		});
 
-		it('confirms the highlighted LFO type with M4 as well (ours, like M1 in the engine list; device check)', async () => {
+		it('confirms the highlighted LFO type with M4 as well (ours, like M1 in the guide’s engine list; device check)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m4');
@@ -1411,15 +1411,18 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 	});
 
 	describe('20 synth engines', () => {
-		it('changes the engine the guide’s way: track, shift + M1, E1 to it, then M1 confirms', async () => {
+		it('changes the engine as OS 1.1.33 does: track, shift + M1, E1 to it, a click of E2 (the guide’s M1 confirm cuts user presets there)', async () => {
 			const d = await start();
 			await d.click('key.instrument');
 			await d.click('track.6');
 			await openList(d, 1);
-			expect(d.screen()).toBe('hardsync');
-			await scrollTo(d, ENGINE_LIST, 'organ');
-			await d.click('key.m1');
-			// with no preset, the device's own starting values
+			expect(browsing(d)).toEqual(['hardsync', 'dielectric']);
+			await d.turn(1, 2);
+			expect(browsing(d)).toEqual(['organ', 'avant garde']);
+			await d.click('key.m1'); // a factory preset: nothing to cut
+			expect(browsing(d)).toEqual(['organ', 'avant garde']);
+			await d.push(2);
+			// avant garde's values are not in our library: organ's own starting values
 			expect(d.screen()).toBe('organ: type 40, bass 53, tremolo amount 82, tremolo speed 09');
 			expect(d.state.tracks[5].engine).toBe('organ');
 		});
@@ -1473,15 +1476,18 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(1, -30);
 			await loadEngine(d, 'organ');
 			await loadEngine(d, 'prism');
-			// prism picked with no preset: the device's shape 50, not the bass preset's 15
+			// prism's first preset, alloy, whose values are not in our library: prism's own shape 50,
+			// not the bass preset's 15
 			expect(header(d)[0]).toBe('shape 50');
 		});
 	});
 
 	describe('20.4 external (the midi engine)', () => {
+		// a new unit's browser lists no midi engine (b1-1500): these tracks load a midi preset
 		it('sets channel, bank and program on M1 with E1, E2 and E3', async () => {
 			const d = await start();
 			await d.click('track.3');
+			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			expect(d.screen()).toBe('midi: channel 1, bank none, program 1');
 			await d.turn(1, 15);
@@ -1502,6 +1508,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('keeps its CCs on M2 and M3: shift + turn switches a slot on and picks its number, a turn sets it', async () => {
 			const d = await start();
 			await d.click('track.3');
+			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			await d.click('key.m2');
 			expect(d.screen()).toBe('midi cc set I: off, off, off, off');
@@ -1519,37 +1526,44 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('goes to the second CC page with shift + M3 (ours: the midi engine has no filter)', async () => {
 			const d = await start();
 			await d.click('track.3');
+			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			await d.click('key.m2');
 			await openList(d, 3);
 			expect(d.screen()).toBe('midi cc set II: off, off, off, off');
 			await openList(d, 1);
-			expect(d.screen()).toBe('midi');
+			// a user preset: the footer's cut, rename and delete are lit (paste has nothing)
+			expect(d.screen()).toBe(
+				'presets for track 3, by engine: midi, my midi; M1 cut, M3 rename, M4 delete'
+			);
 		});
 
 		it('keeps the LFO on M4 of a midi track (ours: the guide names only M1–M3)', async () => {
 			const d = await start();
 			await d.click('track.3');
+			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			await d.click('key.m4');
-			expect(d.screen()).toBe('tremolo lfo off: amount 0, destination syn');
+			expect(d.screen()).toBe('value lfo: amount 0, destination syn');
 		});
 
-		it('keeps the synth’s settings through a switch to midi and back (OS 1.0.50)', async () => {
+		it('takes the next preset’s own sound after the midi engine (OS 1.1.33 loads presets: the synth set aside by OS 1.0.50’s engine list does not come back)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.turn(1, 30);
-			await d.turn(4, 10);
+			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			await loadEngine(d, 'prism');
-			// the bass preset's shape 15, ratio 2:1, detune 05, stereo 22, as turned
-			expect(header(d)).toEqual(['shape 45', 'ratio 2:1', 'detune 05', 'stereo 32']);
+			// alloy: prism's own starting values, not the bass preset as turned (shape 45)
+			expect(header(d)[0]).toBe('shape 50');
+			expect(d.state.areas.system.trackPresets[2]).toBe('bass/alloy');
 		});
 
 		// manual instrument/engine-midi: program changes lock per step (fixed in OS 1.1.15)
 		it('locks a program change on a held step, leaving the track’s own program (OS 1.1.15)', async () => {
 			const d = await start();
 			await d.click('track.3');
+			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			await play(d, 'c4');
 			await d.click('step.1');

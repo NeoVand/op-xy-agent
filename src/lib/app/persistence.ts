@@ -15,6 +15,7 @@
  */
 import { createContext } from 'svelte';
 import type { ReplicaState } from '$lib/replica';
+import { PRESET_CATEGORIES, SNAPSHOT_FOLDER } from '$lib/sim/areas/system/catalogue';
 import { restore, snapshot } from '$lib/sim/areas/system/projects';
 import type { SystemState } from '$lib/sim/areas/system/state';
 import { DEFAULT_LEVEL, defaultState, type SimState } from '$lib/sim/params';
@@ -22,9 +23,9 @@ import { DEFAULT_LEVEL, defaultState, type SimState } from '$lib/sim/params';
 /**
  * Bumped when a save can no longer simply be merged onto the defaults; older versions that can be
  * brought up to date are ({@link upgradeV1}, {@link upgradeGrooves}, {@link upgradeArpSpeeds},
- * {@link upgradeAuxScales}, {@link upgradeEnvAmounts}).
+ * {@link upgradeAuxScales}, {@link upgradeEnvAmounts}, {@link upgradePresetLibrary}).
  */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 /** What is stored. */
 export interface SavedSim {
@@ -92,12 +93,11 @@ export function mergeDefaults<T>(saved: unknown, defaults: T): T {
 const V1_LEVEL = 80;
 
 /**
- * A version 1 save predates the device's own new-project sounds: its patterns, songs, settings and
- * the owner's own presets come back, but the instrument tracks take a new project's sounds and
- * presets, levels still at the old default take the new one, and the factory presets their device
- * names. Works on the parsed JSON, in place.
+ * A version 1 save predates the device's own new-project sounds: its patterns, songs and settings
+ * come back, but the instrument tracks take a new project's sounds and presets and levels still at
+ * the old default take the new one. Works on the parsed JSON, in place.
  */
-export function upgradeV1(project: unknown, library: unknown): void {
+export function upgradeV1(project: unknown): void {
 	const fresh = defaultState();
 	const level = (mix: unknown) =>
 		isObject(mix) && mix.level === V1_LEVEL ? { ...mix, level: DEFAULT_LEVEL } : mix;
@@ -116,7 +116,6 @@ export function upgradeV1(project: unknown, library: unknown): void {
 					filter: sound.filter,
 					sends: sound.sends,
 					lfo: sound.lfo,
-					parked: null,
 					mix: level(track.mix)
 				};
 			});
@@ -129,10 +128,35 @@ export function upgradeV1(project: unknown, library: unknown): void {
 		project.trackPresets = fresh.areas.system.trackPresets;
 		project.presetSettings = fresh.areas.system.presetSettings;
 	}
-	if (isObject(library) && isObject(library.presets) && Array.isArray(library.presets.library)) {
-		const own = library.presets.library.filter((p: unknown) => isObject(p) && p.user === true);
-		library.presets.library = [...fresh.areas.system.presets.library, ...own];
-	}
+}
+
+/**
+ * Versions 1–5 kept placeholder factory presets of ours: the library takes the device's factory
+ * list, the owner's own presets stay (those in a category the device lacks move to the snapshot
+ * folder, so the category view still lists them) and the browser starts where a new unit's does.
+ */
+export function upgradePresetLibrary(library: unknown): void {
+	if (!isObject(library) || !isObject(library.presets)) return;
+	const presets = library.presets;
+	const fresh = defaultState().areas.system.presets;
+	const folders = new Set<unknown>([
+		...PRESET_CATEGORIES,
+		SNAPSHOT_FOLDER,
+		...(Array.isArray(presets.folders) ? presets.folders : [])
+	]);
+	const saved: unknown[] = Array.isArray(presets.library) ? presets.library : [];
+	const own = saved
+		.filter((p): p is Record<string, unknown> => isObject(p) && p.user === true)
+		.map((p) => (folders.has(p.folder) ? p : { ...p, folder: SNAPSHOT_FOLDER }));
+	library.presets = {
+		...presets,
+		library: [...fresh.library, ...own],
+		view: fresh.view,
+		group: fresh.group,
+		row: fresh.row,
+		groupTop: fresh.groupTop,
+		rowTop: fresh.rowTop
+	};
 }
 
 /** Where the seven grooves of versions 1–2 sit in the device's eleven (danish came in third). */
@@ -300,9 +324,10 @@ export function applySaved(state: SimState, saved: SavedSim): boolean {
 	} catch {
 		return false;
 	}
-	if (version === 1) upgradeV1(project, library);
+	if (version === 1) upgradeV1(project);
 	upgradeProject(project, version);
 	upgradeStoredProjects(library, version);
+	if (version < 6) upgradePresetLibrary(library);
 	const fresh = defaultState();
 	const freshProject = JSON.parse(snapshot(fresh)) as Record<string, unknown>;
 	restore(state, JSON.stringify(mergeDefaults(project, freshProject)), saved.name);

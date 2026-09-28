@@ -1,9 +1,10 @@
 /**
  * Drawing the system area's frames on the 480 × 220 screen (see `../../screen/areas.ts`): one entry
  * per frame page, with a short spoken description. List pages follow TE's art for each page
- * (project-019, com-014, instrument-103, instrument-118, project-014), which place their columns
- * and selection boxes a little differently; the devices page follows com-030, controller and MTP
- * mode com-022 and com-039. The naming, confirm, tuning and power pages have no art: ours.
+ * (project-019, com-014, instrument-103, project-014), which place their columns and selection
+ * boxes a little differently; the devices page follows com-030, controller and MTP mode com-022
+ * and com-039. The preset browser is drawn as the device draws it (`presets-draw.ts`). The naming,
+ * confirm, tuning and power pages have no art: ours.
  */
 import type { AreaDrawers } from '../../screen/areas';
 import type { ScreenCtx } from '../../screen/context';
@@ -32,6 +33,7 @@ import type {
 	SystemPowerFrame,
 	SystemTuningFrame
 } from './frames';
+import { describePresetBrowser, drawPresetBrowser } from './presets-draw';
 
 /** Soft-label colours by tone (the core's; project-014 draws its main label in #dcdcde). */
 const SOFT: Readonly<Record<SoftTone, string>> = {
@@ -65,7 +67,7 @@ function soft(
 interface ColumnStyle {
 	readonly x: number;
 	readonly box: readonly [number, number];
-	readonly select: 'outline' | 'ring' | 'dark' | 'white' | 'none';
+	readonly select: 'outline' | 'ring' | 'dark' | 'white';
 }
 
 /** A scroll bar beside a column: a thin track with a fixed-length thumb (TE's art: 80 px). */
@@ -113,7 +115,10 @@ interface ListStyle {
 
 const WHITE_TEXT = COLORS.white;
 
-/** The five list drawings, measured from TE's SVGs (screen pixels). */
+/**
+ * The list drawings, measured from TE's SVGs (screen pixels). The preset browser is the device's
+ * own page (`presets-draw.ts`).
+ */
 const LISTS: Readonly<Record<ListLayout, ListStyle>> = {
 	// project-019: rows start 5 px lower than the other lists
 	'project-settings': {
@@ -197,47 +202,6 @@ const LISTS: Readonly<Record<ListLayout, ListStyle>> = {
 		scroll: [],
 		soft: { dx: 0, baseline: SOFT_KEY_BASELINE, colors: SOFT }
 	},
-	// instrument-118: the track and view, the groups (outlined) and the presets (white)
-	presets: {
-		baseline: 35,
-		columns: [
-			{ x: 5.06, box: [0, 0], select: 'none' },
-			{ x: 120.11, box: [115.28, 159.23], select: 'outline' },
-			{ x: 300.06, box: [295, 165], select: 'white' }
-		],
-		text: WHITE_TEXT,
-		onWhite: COLORS.ink,
-		white: COLORS.white,
-		dark: COLORS.dark,
-		dim: COLORS.dim,
-		boxTop: -15.61,
-		boxHeight: 20,
-		radius: 2.5,
-		outline: { color: COLORS.white, width: 0.56, top: -16.08, height: 19.44, radius: 2.2 },
-		scroll: [
-			{
-				column: 1,
-				x: 285,
-				top: 9.39,
-				bottom: 200,
-				track: 0.56,
-				width: 4.47,
-				thumb: 80,
-				color: COLORS.dark
-			},
-			{
-				column: 2,
-				x: 470,
-				top: 9.39,
-				bottom: 200,
-				track: 0.56,
-				width: 4.47,
-				thumb: 80,
-				color: COLORS.white
-			}
-		],
-		soft: { dx: 0, baseline: SOFT_KEY_BASELINE, colors: SOFT }
-	},
 	// project-014: softer greys throughout, a 1 px ring for the folder
 	folder: folderStyle(),
 	history: folderStyle()
@@ -302,8 +266,6 @@ function drawColumn(
 				case 'white':
 					fillBox(ctx, x, baseline + style.boxTop, w, style.boxHeight, style.white, style.radius);
 					ink = style.onWhite;
-					break;
-				case 'none':
 					break;
 			}
 		}
@@ -517,6 +479,10 @@ export const drawers: AreaDrawers<SystemFrame> = {
 			const parts = [selectedOf(a), selectedOf(b), selectedOf(c)].filter(Boolean);
 			return `${frame.title}: ${parts.join(', ') || 'empty'}`;
 		}
+	},
+	'system-presets': {
+		draw: drawPresetBrowser,
+		describe: describePresetBrowser
 	},
 	'system-naming': {
 		draw: drawNaming,

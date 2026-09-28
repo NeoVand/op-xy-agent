@@ -28,11 +28,11 @@ export function drawMidi(ctx: ScreenCtx, frame: MidiFrame): void {
 }
 
 /**
- * The pickers' lists (shift + M1 / M3 / M4) as the device draws them (camera, OS 1.1.33: the filter
- * and LFO types b1-2998, b1-3190 and the preset browser's engines b1-1500, which agree; research 59
+ * The pickers' lists (shift + M3 / M4) as the device draws them (camera, OS 1.1.33: the filter and
+ * LFO types b1-2998, b1-3190 and the preset browser's engines b1-1500, which agree; research 59
  * §2.3, §2.6): 20 px text in the heavier weight on rows 20 px apart from baseline 25.3, the current
  * item boxed by a 1.5 px outline 20.9 px tall from 16.85 px above the baseline, 3.9 px left of the
- * text. The player list is drawn the same way.
+ * text. The player list and the preset browser's middle column are drawn the same way.
  */
 const LIST = {
 	first: 25.3,

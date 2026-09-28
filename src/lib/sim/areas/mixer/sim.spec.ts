@@ -357,7 +357,7 @@ describe('midi engine M2 / M3: CC slots (manual: instrument/engine-midi)', () =>
 		expect(sim.state.areas.mixer.midiCc[3][4].cc).toBeNull();
 	});
 
-	it('keeps shift + M3 on the CC pages (no filter list) while shift + M1 still lists engines', () => {
+	it('keeps shift + M3 on the CC pages (no filter list) while shift + M1 still brings up the preset browser', () => {
 		const sim = midi(2);
 		sim.combo('key.shift', 'key.m3');
 		expect(sim.state.picker).toBeNull();
@@ -365,8 +365,8 @@ describe('midi engine M2 / M3: CC slots (manual: instrument/engine-midi)', () =>
 		sim.combo('key.shift', 'key.m2');
 		expect(page(sim, 'midi-engine-cc').set).toBe(1);
 		sim.combo('key.shift', 'key.m1');
-		expect(sim.state.picker?.kind).toBe('engine');
-		expect(sim.frame.page).toBe('list');
+		expect(sim.state.areas.system.page).toBe('presets');
+		expect(sim.frame.page).toBe('system-presets');
 	});
 
 	it('keeps a track’s slots through an engine change and back', () => {

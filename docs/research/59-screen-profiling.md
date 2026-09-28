@@ -316,11 +316,51 @@ sampler, b1-2718…2782 multisampler; design px; the code and tests are in
 
 ### 2.6 Preset browser (shift + M1)
 
-- **Layout:** "N / preset" on the left, the engine list in the middle, that engine's presets on the
-  right with the current one highlighted.
-- **E1** opens a "by engine / by category" choice. The category view lists Nostalgic Synths, bass,
-  drum, keys, ….
-- **Footer:** cut · paste · rename · delete.
+Read off b1-1494…1569 (the owner used shift + M1 on track 3, browsed, and loaded simple's first
+preset) and rebuilt in `src/lib/sim/areas/system/presets-draw.ts`; `scripts/device-compare.mjs`
+overlays agree to about a pixel (the camera's greys decide what counts as lit, not the geometry).
+
+- **There is no engine list on 1.1.33.** shift + M1 (b1-1494 → 1495) brings up the preset browser
+  on the track's preset: "3 / preset" at the left, the engines in the middle with prism boxed, and
+  prism's presets on the right with shoulder (a new project's bass) highlighted.
+- **Engine view** lists eleven engines, alphabetically: axis, dissolve, drum, epiano, hardsync,
+  multisampler, organ, prism, sampler, simple, wavetable. No midi (or "external") engine: the scroll
+  thumb covers 9/11 of its track. Whether the midi engine can still be reached is open (§4).
+- **Presets** sort by name, factory and user together (multisampler: bandpasser, then the owner's
+  "bass 01"…, then ensemble). Every list seen matches xy-format's OS 1.1.21 factory list
+  (research 10, appendix D), lengths included (axis 14, wavetable 13, pluck 23). Moving the engine
+  starts its presets from the top, the first highlighted (b1-1502/1504: back on prism, alloy).
+- **Scrolling:** a list moves only as far as the highlight needs (shoulder, 14th of 21, opens on
+  the bottom row; wobbler and zafu at the bottom, b1-1517/1518).
+- **Category view** (b1-1524…1534): Nostalgic Synths (the owner's pack, capital N, sorted first), bass,
+  drum, keys, lead, organ, pad, pluck, strings; no scroll bar, so nothing more, and no snapshot folder
+  although the unit has one (empty, presumably). Switching views keeps the highlighted preset: axis's
+  bellissimo shows under pluck, strings' draemy under axis (b1-1536).
+- **A click of E1 swaps the view** (the 1.1.15 changelog's "encoder click to toggle browser sorting
+  mode"), and a popup says which: two cards 200.5 × 36.6 at x 139.5, tops 71.7 and 111.5 (the
+  sends cards' place), "by engine" over "by category", 20 px regular text centred 25 px below the
+  top; the chosen view's card white with E1's dark dot 6 px in from its right edge and 5 px down,
+  the other grey; the page behind at 40 %. It fades within a second or two (b1-1523…1525,
+  1535/1536, 1565…1568). The owner clicked E1 three times meaning to confirm, as the guide says for
+  the old engine list, and got the view popup each time.
+- **Loading** leaves the browser for the track's M1 page at once (b1-1568 → 1569: simple's page
+  with belch bass's values, shape 46, pw 66, noise 20, stereo 18). The key pressed was not seen;
+  the guide's click of E2–E4 fits.
+- **Footer** (b1-1531 only): cut · paste · rename · delete over M1–M4, 20 px bold in #afafb4 (the
+  arrange labels read the same), paste in #646464, while the owner's Nostalgic Synths was chosen
+  with its "bass 01" highlighted. With a factory preset highlighted there is none.
+- **Measured** (design px):
+  - The left labels and the middle column are the type lists' style (§2.3): x 4.5 and 109.2,
+    baselines 25.3 + 20i, the box's 1.5 px outline centred at x 105.3–230.05, 16.85 above the
+    baseline to 4.05 below. A long name loses whole characters at the box's right edge ("Nostalgic
+    Sy"); the chosen one loses them from its start instead ("talgic Synths", b1-1531; perhaps a
+    ticker caught at its end).
+  - Presets: text at x 254.1; the highlight a pale blue bar (the players' blue) x 249.1–460.35,
+    18.55 above the baseline to 4.6 below, radius about 2.5, the name on it in ink.
+  - Scroll bars, drawn only when a list runs past nine rows: 1 px tracks at x 240.05 and 469.65
+    from y 6.85 to 189.95; thumbs 7.8 and 6.2 px wide, as long as the share of the list in view.
+    The middle one is about three quarters as bright as the right one; by brightness against the
+    player cards, #616169 and #7a7a82 thumbs, #afafb4 and white tracks.
 
 ### 2.7 Players
 
@@ -658,6 +698,11 @@ Not tested on purpose: ext audio CC12 (input select: could open the mic and feed
   - project view, settings and folder (browse only);
   - com pages (system, devices, MIDI, MTP);
   - preset settings;
+  - the preset browser (§2.6): which key loads (click E2, E3, E4; M1?), whether shift + Tn opens
+    the same page in the view last chosen, where a load from shift + Tn lands, whether the midi
+    engine can be picked anywhere (a track already on midi, then shift + M1), the footer with
+    shift held and on an empty user folder, a long name over a few seconds (ticker or fixed), and a
+    10 fps run of the view popup fading;
   - the volume-knob popup;
   - sampling flows.
 - **Drum track:** M2–M4 pages.
@@ -701,34 +746,35 @@ Not tested on purpose: ext audio CC12 (input select: could open the mic and feed
   latency.
 - **`b1-NNNN.png`**: the watcher's settled screens (`b1.json`: times restart after midnight). By step:
 
-  | Frames     | Step                        |
-  | ---------- | --------------------------- |
-  | 69–96      | mixer sends                 |
-  | 136–170    | EQ                          |
-  | 171–204    | saturator                   |
-  | 205–253    | master                      |
-  | 254–283    | octave                      |
-  | 284–379    | arpeggio                    |
-  | 380–402    | player list                 |
-  | 403–429    | hold                        |
-  | 430–475    | maestro                     |
-  | 476–550    | bar                         |
-  | 551–649    | step entry and the bar card |
-  | 650–720    | held steps and locks        |
-  | 721–837    | arrange and scenes          |
-  | 838–874    | song mode                   |
-  | 875–991    | punch-in (white keys)       |
-  | ~1380–1556 | engine picker and presets   |
-  | 2452–2585  | drum                        |
-  | 2611–2702  | sampler                     |
-  | 2703–2775  | multisampler                |
-  | 2776–2819  | M2 shift layer              |
-  | 2917–3108  | filter types                |
-  | 3846–3915  | tempo by hand               |
-  | 3984–4036  | brain routing               |
-  | 4103–4159  | ext MIDI slots              |
-  | 4242–4329  | CV and ext audio            |
-  | 4640–4780  | FX types                    |
+  | Frames    | Step                        |
+  | --------- | --------------------------- |
+  | 69–96     | mixer sends                 |
+  | 136–170   | EQ                          |
+  | 171–204   | saturator                   |
+  | 205–253   | master                      |
+  | 254–283   | octave                      |
+  | 284–379   | arpeggio                    |
+  | 380–402   | player list                 |
+  | 403–429   | hold                        |
+  | 430–475   | maestro                     |
+  | 476–550   | bar                         |
+  | 551–649   | step entry and the bar card |
+  | 650–720   | held steps and locks        |
+  | 721–837   | arrange and scenes          |
+  | 838–874   | song mode                   |
+  | 875–991   | punch-in (white keys)       |
+  | 1360–1494 | prism M1 sweeps             |
+  | 1495–1568 | preset browser (shift + M1) |
+  | 2452–2585 | drum                        |
+  | 2611–2702 | sampler                     |
+  | 2703–2775 | multisampler                |
+  | 2776–2819 | M2 shift layer              |
+  | 2917–3108 | filter types                |
+  | 3846–3915 | tempo by hand               |
+  | 3984–4036 | brain routing               |
+  | 4103–4159 | ext MIDI slots              |
+  | 4242–4329 | CV and ext audio            |
+  | 4640–4780 | FX types                    |
 
 - **`punch-black/`, `punch-white/`**: 10 fps, every punch-in key.
 - **`dissolve-anim/`**: the dissolve and hardsync animations, then the whole session 00:05–01:10 at

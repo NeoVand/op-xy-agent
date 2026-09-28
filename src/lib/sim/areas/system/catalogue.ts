@@ -1,28 +1,29 @@
 /**
  * The content a new virtual OP-XY ships with, as far as the system area needs it: the preset
  * library the browser lists, the factory projects, the connected MIDI devices and the options of
- * the settings pages. Our manual names the factory preset categories (instrument/preset-browser)
- * and the snapshot naming (instrument/save-copy-scramble); the eight presets of a new project have
- * their device names (`defaults.ts`), the rest are placeholders of ours ("bass 2", "demo 1").
- * Imports only `$lib/core` and `defaults.ts` (which imports only `$lib/core`) so the state module
- * can use it without an import cycle through `params.ts`.
+ * the settings pages. The factory presets carry the device's own names, categories and engines
+ * (below); the snapshot naming is our manual's (instrument/save-copy-scramble); the factory
+ * projects are placeholders of ours ("demo 1"). Imports only `$lib/core` and `defaults.ts` (which
+ * imports only `$lib/core`) so the state module can use it without an import cycle through
+ * `params.ts`.
  */
-import { ENGINE_IDS, type EngineId } from '$lib/core/opxy';
-import { NEW_PROJECT_PRESETS, NEW_PROJECT_TRACKS } from '../../defaults';
+import type { EngineId } from '$lib/core/opxy';
+import { NEW_PROJECT_PRESETS } from '../../defaults';
 
-/** Factory preset categories (manual: instrument/preset-browser). */
+/**
+ * The factory preset categories: the eight the preset browser lists on the owner's unit (OS
+ * 1.1.33, camera b1-1524…1534) and xy-format's OS 1.1.21 capture names (docs/research/10-xy-format.md
+ * appendix D).
+ */
 export const PRESET_CATEGORIES = [
 	'bass',
-	'bells',
 	'drum',
-	'fx',
 	'keys',
 	'lead',
 	'organ',
 	'pad',
 	'pluck',
-	'strings',
-	'wind'
+	'strings'
 ] as const;
 
 /** The folder the device saves track sounds into (`Tn + M4`; manual: save-copy-scramble). */
@@ -31,7 +32,7 @@ export const SNAPSHOT_FOLDER = 'snapshot';
 /** One preset in the library. */
 export interface PresetEntry {
 	name: string;
-	/** Category or user folder; '' for presets only engine view lists. */
+	/** Category or user folder ('' in libraries saved before categories were the device's). */
 	folder: string;
 	readonly engine: EngineId;
 	/** User presets can be cut, pasted, renamed and deleted (manual: preset-management). */
@@ -40,49 +41,95 @@ export interface PresetEntry {
 	readonly sound?: string;
 }
 
-/**
- * Our placeholder factory library: a few presets per category on engines that suit it, so both
- * browser views have something to show. The first of each engine pair matches a new project's
- * sounds (manual: project-view: drums, bass, pluck, lead, soft pluck, strings, pad).
- */
-const FACTORY_TABLE: readonly (readonly [string, readonly EngineId[]])[] = [
-	['bass', ['prism', 'simple', 'hardsync', 'wavetable', 'sampler']],
-	['bells', ['epiano', 'wavetable', 'prism']],
-	['drum', ['drum', 'drum', 'drum', 'drum']],
-	['fx', ['dissolve', 'sampler', 'axis']],
-	['keys', ['epiano', 'organ', 'multisampler']],
-	['lead', ['dissolve', 'hardsync', 'prism', 'axis', 'simple']],
-	['organ', ['organ', 'organ', 'organ']],
-	['pad', ['multisampler', 'dissolve', 'wavetable', 'axis']],
-	['pluck', ['epiano', 'hardsync', 'prism', 'simple']],
-	['strings', ['axis', 'multisampler', 'wavetable', 'dissolve']],
-	['wind', ['multisampler', 'axis']]
-];
+type Category = (typeof PRESET_CATEGORIES)[number];
 
 /**
- * The factory presets of a new unit: a new project's eight under their device names, the first of
- * their folder and engine; placeholders for the rest (every engine has at least one).
+ * The factory presets: 156, by category and engine. Names, categories and engines are xy-format's
+ * OS 1.1.21 capture list (MIT; docs/research/10-xy-format.md appendix D), and every list the
+ * owner's OS 1.1.33 browser showed agrees with it, lengths included (camera b1-1495…1568: each
+ * engine's presets, the bass, pluck and strings categories). The midi engine has none, so the
+ * browser lists no midi engine (it lists eleven engines on the device). Which sounds they make is
+ * not known here, apart from a new project's eight (`defaults.ts`): the others load as their
+ * engine's starting sound.
  */
+const FACTORY: Readonly<Record<Category, readonly (readonly [EngineId, string])[]>> = {
+	bass: [
+		['prism', 'alloy, flyby, mineral, shoulder, sonorous, valves'],
+		['sampler', 'any time, guitar low, iguana, rear 424'],
+		['wavetable', 'bark, not fm, wobbler'],
+		['simple', 'belch bass, big square, blank, essex, line check, pressure, shark attack'],
+		['hardsync', 'corduroy'],
+		['dissolve', 'haymaker, loney bass, off guard, pocket, trunk, under bron'],
+		['epiano', 'jacket']
+	],
+	drum: [
+		[
+			'drum',
+			'boop, chamine, dead spot, fletcher, in phase, kerf, martini, mushroom, playwood, sugar, wood box, zebra'
+		]
+	],
+	keys: [
+		[
+			'sampler',
+			'80s lover, ambi piano, drodezzz, elect piano, newshour, piano 1, piano 2, whurl xy'
+		],
+		['wavetable', 'corporate, spacious'],
+		['prism', 'dark, man stage, medieval, shine, slush, swelvet, tonk 5, wakeup'],
+		['hardsync', 'electric'],
+		['epiano', 'foal, jeans, needs tuning'],
+		['simple', 'key keys, missing you'],
+		['multisampler', 'refelt piano, vintage']
+	],
+	lead: [
+		['wavetable', 'asinine, modulus, sad triangle'],
+		['sampler', 'azimuth, far field, saw 101, wide saw'],
+		['prism', 'beam, gradient, open cell'],
+		['axis', 'bowed'],
+		['simple', 'burbie, low ride, massage, millinery, top spin, whirrs, wool'],
+		['dissolve', 'dustmite, gaussian, insomniac, sonar, spud mate'],
+		['hardsync', 'runway, swell, wub'],
+		['multisampler', 'uknowaxel']
+	],
+	organ: [
+		['organ', 'chorale, chunk, manual, vestigial'],
+		['sampler', 'dusty org, fm organ, hammy xy3, joker'],
+		['multisampler', 'harmonium'],
+		['wavetable', 'meat org, post order']
+	],
+	pad: [
+		['axis', 'chambre, confucius, kowalski, separee'],
+		['wavetable', 'chuba, ulysses, zafu'],
+		['sampler', 'dark choir, dream choir, op1 pad, padawan, qiviut, rich pad, there is hope'],
+		['prism', 'frontier, murmel, night sky, uranium'],
+		['multisampler', 'bandpasser, spectre, subsun'],
+		['dissolve', 'unravel']
+	],
+	pluck: [
+		['organ', 'avant garde, dingus'],
+		['axis', 'bellissimo, coin, layered, rift'],
+		[
+			'sampler',
+			'bellonboards, endless, guitar, kvarnofon, marimba, on tape, resobubble, synth bell'
+		],
+		['simple', 'deep luck, pale crepe, rally'],
+		['epiano', 'beach bum, leftovers'],
+		['hardsync', 'dielectric, odorant'],
+		['dissolve', 'soft tines, whorl']
+	],
+	strings: [
+		['axis', 'draemy, nachtmusik, pointe, soutenu, whitness'],
+		['multisampler', 'ensemble'],
+		['sampler', 'intimate str']
+	]
+};
+
+/** The factory presets of a new unit (a new project's eight among them, under their names). */
 export function factoryPresets(): PresetEntry[] {
-	const presets: PresetEntry[] = FACTORY_TABLE.flatMap(([folder, engines]) =>
-		engines.map((engine, i) => ({ name: `${folder} ${i + 1}`, folder, engine, user: false }))
+	return PRESET_CATEGORIES.flatMap((folder) =>
+		FACTORY[folder].flatMap(([engine, names]) =>
+			names.split(', ').map((name) => ({ name, folder, engine, user: false }))
+		)
 	);
-	const named = new Set<PresetEntry>();
-	for (const { preset, engine } of NEW_PROJECT_TRACKS) {
-		const [folder, name] = preset.split('/');
-		const slot = presets.find((p) => p.folder === folder && p.engine === engine && !named.has(p));
-		if (slot) {
-			slot.name = name;
-			named.add(slot);
-		}
-	}
-	// the midi engine has no category: engine view lists its preset on its own
-	for (const engine of ENGINE_IDS) {
-		if (!presets.some((p) => p.engine === engine)) {
-			presets.push({ name: `${engine} 1`, folder: '', engine, user: false });
-		}
-	}
-	return presets;
 }
 
 /** The preset each track of a new project starts with (`folder/name`, the device's). */

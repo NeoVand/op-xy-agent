@@ -1762,10 +1762,10 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 		it('moves a track to the percussion group by itself when its engine becomes the drum sampler', async () => {
 			const d = await start();
 			await d.click(track(3));
-			await d.withShift(() => d.click('key.m1')); // the engine list
+			await d.withShift(() => d.click('key.m1')); // the preset browser, by engine
 			await d.turn(1, -5);
-			expect(d.screen()).toBe('drum');
-			await d.push(1);
+			expect(d.screen()).toBe('presets for track 3, by engine: drum, boop');
+			await d.push(2);
 			await d.clicks('key.mix', 'key.m4');
 			expect(page(d, 'mix-master').groups).toEqual(['1 2 3', '4 5 6 7 8']);
 		});

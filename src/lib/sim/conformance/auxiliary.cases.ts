@@ -20,7 +20,14 @@ import { describe, expect, it } from 'vitest';
 import type { SimState } from '../params';
 import type { ScreenFrame } from '../screen/frame';
 import { currentPattern, type Pattern } from '../sequencer';
-import { GAP_MS, accidental, noteOf, type Driver } from '../testing/driver';
+import {
+	GAP_MS,
+	accidental,
+	addMidiPreset,
+	loadEngine,
+	noteOf,
+	type Driver
+} from '../testing/driver';
 
 /** A sixteenth at the new project's 120 BPM. */
 const STEP_MS = 125;
@@ -609,11 +616,10 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.withShift(() => play(d, 'a3'));
 			await d.click(step(1));
 			expect(placed(patternOf(d.state, 1, true))).toEqual([`0: ${noteOf('gs3')}`]);
-			// track 3 on the midi engine: shift + M1, the last engine, an E1 click
+			// track 3 on the midi engine: a midi preset, loaded from the browser shift + M1 brings up
 			await synth(d);
-			await d.withShift(() => d.click('key.m1'));
-			await d.turn(1, 20);
-			await d.push(1);
+			addMidiPreset(d);
+			await loadEngine(d, 'midi');
 			expect(d.frame.page).toBe('midi');
 			await play(d, 'c4');
 			await d.withShift(() => play(d, 'e4'));

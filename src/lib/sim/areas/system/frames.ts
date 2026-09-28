@@ -8,10 +8,10 @@ import type { SoftLabel } from '../../screen/draw';
 /**
  * Which of TE's list drawings a list page follows. The drawings place the columns a few pixels
  * apart from one another (and project-014 uses softer greys), so each page keeps its own art's
- * geometry (guide art project-019, com-014, instrument-103, instrument-118, project-014).
+ * geometry (guide art project-019, com-014, instrument-103, project-014).
  */
 export type ListLayout =
-	'project-settings' | 'system-settings' | 'preset-settings' | 'presets' | 'folder' | 'history';
+	'project-settings' | 'system-settings' | 'preset-settings' | 'folder' | 'history';
 
 /** One column of a list page: the rows in view. */
 export interface SystemListColumn {
@@ -34,6 +34,28 @@ export interface SystemListFrame {
 	readonly soft: readonly (SoftLabel | null)[];
 	/** What the page is (spoken). */
 	readonly title: string;
+}
+
+/**
+ * The preset browser as the device draws it on OS 1.1.33 (shift + M1, shift + Tn; camera
+ * b1-1495…1568, research 59 §2.6): the track number over "preset", the engines or categories in
+ * the middle with the chosen one boxed, its presets on the right with the highlighted one on a pale
+ * bar, a scroll bar beside each list that overflows.
+ */
+export interface SystemPresetsFrame {
+	readonly page: 'system-presets';
+	/** The track, 1–8. */
+	readonly track: number;
+	/** By engine or by category. */
+	readonly view: 'engine' | 'category';
+	/** The middle column. */
+	readonly groups: SystemListColumn;
+	/** The right column (a cut preset's row drawn dim). */
+	readonly presets: SystemListColumn;
+	/** Cut, paste, rename and delete over M1–M4, shown while a user preset is highlighted. */
+	readonly soft: readonly (SoftLabel | null)[];
+	/** The view choice after a click of E1: the chosen view, and the popup's opacity (0–1). */
+	readonly popup: { readonly view: 'engine' | 'category'; readonly alpha: number } | null;
 }
 
 /** The naming screen (rename, save as, preset and folder names). */
@@ -107,6 +129,7 @@ export interface SystemPowerFrame {
 /** Every frame of the system area. */
 export type SystemFrame =
 	| SystemListFrame
+	| SystemPresetsFrame
 	| SystemNamingFrame
 	| SystemConfirmFrame
 	| SystemLinkFrame

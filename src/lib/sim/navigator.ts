@@ -12,8 +12,8 @@
 import { OpxySim } from './opxy-sim.svelte';
 import { buildFrame } from './frames';
 import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
+import { currentGroup, groups } from './areas/system/presets';
 import {
-	ENGINE_LIST,
 	FILTER_TYPES,
 	GROOVES,
 	LFO_TYPES,
@@ -137,21 +137,25 @@ const TEMPO_PARAMS: Record<
 };
 
 /**
- * The lists shift + M1 / M3 / M4 open: the module page, the list, and what the track has now. A
- * type is picked by turning E1 to it and clicking E1.
+ * The lists shift + M3 / M4 open: the module page, the list, and what the track has now. A type is
+ * picked by turning E1 to it and clicking E1. (The engine is loaded from the preset browser that
+ * shift + M1 brings up: {@link planEngine}.)
  */
 const PICKERS: Record<
 	string,
 	{ page: PageNumber; key: string; list: readonly string[]; get(t: TrackState): string }
 > = {
-	engine: { page: 1, key: 'M1', list: ENGINE_LIST, get: (t) => t.engine },
 	'filter.type': { page: 3, key: 'M3', list: FILTER_TYPES, get: (t) => t.filter.type },
 	'lfo.type': { page: 4, key: 'M4', list: LFO_TYPES, get: (t) => t.lfo.type }
 };
 
 /** Every parameter the navigator can set, with the words that find it. */
 export const PARAMS: readonly ParamInfo[] = [
-	{ id: 'engine', names: ['engine', 'synth engine', 'sound engine'], page: 'shift M1 (list)' },
+	{
+		id: 'engine',
+		names: ['engine', 'synth engine', 'sound engine'],
+		page: 'shift M1 (the preset browser: loads the engine’s first preset, the whole sound)'
+	},
 	{ id: 'filter.type', names: ['filter type', 'filter mode'], page: 'shift M3 (list)' },
 	{ id: 'lfo.type', names: ['lfo type', 'lfo mode', 'lfo'], page: 'shift M4 (list)' },
 	...[1, 2, 3, 4].map((n) => ({
@@ -284,7 +288,8 @@ class Recorder {
 
 // ─────────────────────────────────────────────────────────────────────────── places
 
-const idle = (s: SimState) => s.overlay === null && s.sub === null && s.picker === null;
+const idle = (s: SimState) =>
+	s.overlay === null && s.sub === null && s.picker === null && s.areas.system.page === null;
 
 /** Whether the simulator shows `place`. */
 export function isAt(s: SimState, place: Place): boolean {
@@ -432,6 +437,35 @@ function turnTo(
 	return matches(read());
 }
 
+/**
+ * Loads an engine as OS 1.1.33 does (research 59 §2.6): shift + M1 brings up the preset browser
+ * on the track's preset, a click of E1 turns it to "by engine" when it lists categories, E1 moves
+ * the engine column to the engine (its first preset highlighted), and a click of E2 loads that
+ * preset and leaves the browser for M1. The preset replaces the whole sound, so an engine goes
+ * before the parameters set after it. The browser lists the engines that have presets, then midi
+ * with its starting sound (ours: the owner's unit listed no midi engine, research 59 §2.6).
+ */
+function planEngine(rec: Recorder, track: number, value: number | string): NavPlan {
+	const want = String(value).trim().toLowerCase();
+	const t = () => rec.sim.state.tracks[track - 1];
+	const b = () => rec.sim.state.areas.system.presets;
+	const engines = groups(b(), 'engine');
+	if (t().engine !== want && !engines.includes(want)) {
+		return rec.plan(false, `"${value}" is not one of the browser's engines: ${engines.join(', ')}`);
+	}
+	// shift + M1 works from any page of the track
+	walk(rec, { area: 'instrument', track, page: rec.sim.state.pages.instrument });
+	if (t().engine === want) return rec.plan(true, `already ${want}`);
+	rec.do('shift + M1');
+	if (b().view !== 'engine') rec.do('click E1');
+	const from = currentGroup(b()).index;
+	const target = groups(b()).indexOf(want);
+	if (target !== from) rec.do('turn E1', target - from);
+	rec.do('click E2');
+	const ok = t().engine === want;
+	return rec.plan(ok, ok ? undefined : `the preset browser did not load ${want}`);
+}
+
 /** Steps that set a parameter to a value, run on a copy of the simulator. */
 export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 	const track = goal.track ?? state.track + 1;
@@ -452,6 +486,8 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 		const ok = turnTo(rec, tempo.encoder, false, read, target, (v) => Math.abs(v - target) < 0.05);
 		return rec.plan(ok, ok ? undefined : `${id} stopped at ${tempo.format(read())}`);
 	}
+
+	if (id === 'engine') return planEngine(rec, track, goal.value);
 
 	const picker = PICKERS[id];
 	if (picker) {
@@ -509,6 +545,7 @@ export function reads(state: SimState, goal: ParamGoal): boolean {
 	}
 	const t = state.tracks[track - 1];
 	if (!t) return false;
+	if (id === 'engine') return t.engine === String(goal.value).trim().toLowerCase();
 	const picker = PICKERS[id];
 	if (picker) return picker.get(t) === String(goal.value).trim().toLowerCase();
 	const p = lockParam(id);

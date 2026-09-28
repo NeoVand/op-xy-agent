@@ -8,7 +8,9 @@
  * - `AppDriver` (`src/lib/app/testing/app-driver.ts`): the app itself in a browser, the rendered
  *   replica clicked with pointer events and the LEDs read from the page.
  */
+import type { EngineId } from '$lib/core/opxy';
 import type { KeyLedState } from '$lib/replica/state.svelte';
+import { currentGroup, groups } from '../areas/system/presets';
 import { OpxySim } from '../opxy-sim.svelte';
 import type { SimState } from '../params';
 import type { ScreenFrame } from '../screen/frame';
@@ -112,6 +114,34 @@ export function stepRow(led: (id: string) => KeyLedState): string {
 /** The lit keyboard keys as {@link Driver.lit} lists them. */
 export function litKeys(led: (id: string) => KeyLedState): string[] {
 	return KEYBOARD.filter((k) => led(`keyboard.${k}`) === 'white');
+}
+
+/**
+ * Loads `engine` on the selected instrument track the way OS 1.1.33 does (research 59 §2.6):
+ * shift + M1 brings up the preset browser, a click of E1 turns it to "by engine" when it lists
+ * categories, E1 moves the engine column to `engine` (its first preset highlighted), and a click of
+ * E2 loads that preset, the whole sound, which leaves the browser for M1.
+ */
+export async function loadEngine(d: Driver, engine: EngineId): Promise<void> {
+	await d.withShift(() => d.click('key.m1'));
+	const browser = () => d.state.areas.system.presets;
+	if (browser().view !== 'engine') await d.push(1);
+	const list = groups(browser());
+	if (!list.includes(engine)) throw new Error(`the preset browser lists no ${engine} engine`);
+	const by = list.indexOf(engine) - currentGroup(browser()).index;
+	if (by !== 0) await d.turn(1, by);
+	await d.push(2);
+}
+
+/**
+ * Puts a user preset on the midi engine into the library, as a unit where one was saved from a
+ * midi track has: the browser lists only engines that have presets, and a new unit has none for
+ * midi (b1-1500), so the midi engine is reached through one.
+ */
+export function addMidiPreset(d: Driver): void {
+	const library = d.state.areas.system.presets.library;
+	if (library.some((p) => p.engine === 'midi')) return;
+	library.push({ name: 'my midi', folder: 'snapshot', engine: 'midi', user: true });
 }
 
 /** Shared action helpers on top of down / up / wait. */

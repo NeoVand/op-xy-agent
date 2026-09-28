@@ -29,8 +29,11 @@ export type Overlay = 'tempo' | 'project' | 'com' | 'sample' | 'players' | 'bar'
 export type PageNumber = 1 | 2 | 3 | 4;
 /** Which set of eight tracks the track keys address. */
 export type Bank = 'instrument' | 'auxiliary';
-/** Lists opened with shift + M1 / M3 / M4 on instrument tracks. */
-export type PickerKind = 'engine' | 'filter' | 'lfo';
+/**
+ * Lists opened with shift + M3 / M4 on instrument tracks (shift + M1 brings up the preset browser
+ * on OS 1.1.33: the system area's).
+ */
+export type PickerKind = 'filter' | 'lfo';
 
 /** An envelope on the 0–99 scale. */
 export interface Envelope99 {
@@ -214,11 +217,6 @@ export interface TrackState {
 	/** The midi engine's channel (1–16), bank (null = none) and program. */
 	midi: { channel: number; bank: number | null; program: number };
 	/**
-	 * The engine and M1 values a switch to the midi engine set aside: switching back to that engine
-	 * brings them back (OS 1.0.50; manual: instrument/engine-midi). Null otherwise.
-	 */
-	parked: { engine: EngineId; m1: [number, number, number, number] } | null;
-	/**
 	 * The tracks (0–7) this one plays along when it is the primary of a link: up to three, linked by
 	 * holding this track's key and pressing theirs (manual: basics/linked-tracks).
 	 */
@@ -399,7 +397,6 @@ export function defaultTrack(engine: EngineId): TrackState {
 		drumKey: 0,
 		drumKeys: Array.from({ length: KEYBOARD_NOTE_NAMES.length }, defaultDrumKey),
 		midi: { channel: 1, bank: null, program: 1 },
-		parked: null,
 		links: [],
 		// drum tracks store sounds (key F3 = 53 first), synths middle C
 		sequence: emptySequence(isSampler(engine) && engine === 'drum' ? 53 : 60)
@@ -459,9 +456,6 @@ export function defaultState(): SimState {
 		areas: initialAreaStates()
 	};
 }
-
-/** Engines in the list shift + M1 opens (the manual: all twelve). */
-export const ENGINE_LIST: readonly EngineId[] = ENGINES.map((e) => e.id);
 
 /** An engine's M1 parameter names (from the CC map). */
 /**

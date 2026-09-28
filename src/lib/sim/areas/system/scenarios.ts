@@ -148,8 +148,8 @@ export const scenarios: readonly Scenario[] = [
 		id: 'preset-browser',
 		png: 'instrument-118-category-engine.png',
 		title: 'preset browser · engine view',
-		page: 'system-list',
-		note: 'The presets are TE’s example names on a unit with four engines’ presets; TE’s art still calls the midi engine by its old name, "external", which also sorts it before hardsync.',
+		page: 'system-presets',
+		note: 'The presets are TE’s example names on a unit with four engines’ presets. Our page is the device’s on OS 1.1.33 (camera, research 59 §2.6), not this older art: "6 / preset" where the art has "synth", the list style of the type lists, a pale blue bar where the art has a white one, and the midi engine under its name since OS 1.0.15, "midi", where the art still says "external".',
 		setup: (sim) => {
 			const b = sim.state.areas.system.presets;
 			const preset = (name: string, folder: string, id: EngineId): PresetEntry => ({

@@ -16,7 +16,6 @@ import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
 import {
 	DUCK_METRONOME,
 	ELEMENT_SOURCES,
-	ENGINE_LIST,
 	FILTER_TYPES,
 	GROOVES,
 	GROOVE_ABBREVIATIONS,
@@ -125,14 +124,13 @@ function window<T>(items: readonly T[], index: number, rows: number) {
 }
 
 /**
- * The picker shift + M1 / M3 / M4 opens: the track and the kind ("3", "filter") at the left, the
- * list with the current item boxed, laid out as the device's filter and LFO type lists (camera,
- * 1.1.33; the engine picker is ours after them).
+ * The picker shift + M3 / M4 opens: the track and the kind ("3", "filter") at the left, the list
+ * with the current item boxed, laid out as the device's filter and LFO type lists (camera, 1.1.33).
+ * Shift + M1 brings up the preset browser instead (the system area's page).
  */
 function pickerFrame(s: SimState): ListFrame {
-	const picker = s.picker ?? { kind: 'engine', index: 0 };
+	const picker = s.picker ?? { kind: 'filter', index: 0 };
 	const lists = {
-		engine: { title: 'engine', items: ENGINE_LIST as readonly string[] },
 		filter: { title: 'filter', items: FILTER_TYPES as readonly string[] },
 		lfo: { title: 'lfo', items: LFO_TYPES as readonly string[] }
 	};

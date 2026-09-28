@@ -32,11 +32,11 @@ describe('AppSimulator: the replica drives the virtual OP-XY', () => {
 		replica.release('key.m2', 'pointer');
 		expect(simulator.frame.page).toBe('envelope');
 		// a teaching animation (never sent to the device) still moves the simulator: shift + M1
-		// opens the engine list
+		// brings up the preset browser
 		replica.animate('shift + M1');
 		await rig.time.advance(3000);
-		expect(simulator.frame.page).toBe('list');
-		expect(simulator.sim.state.picker?.kind).toBe('engine');
+		expect(simulator.frame.page).toBe('system-presets');
+		expect(simulator.sim.state.areas.system.page).toBe('presets');
 	});
 
 	it('lights LED windows, and leaves what another writer lit until it changes that key', async () => {

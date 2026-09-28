@@ -35,6 +35,13 @@ export const HOLD_MS = 800;
 export const BOOT_MS = 2400;
 /** How long a soft label keeps saying what just happened ("saved"). */
 export const FLASH_MS = 1500;
+/**
+ * How long the preset browser's "by engine / by category" popup stays after a click of E1: gone
+ * within a second or two on the device (camera b1-1523…1525, 1535/1536, 1565…1568; 1 s is ours).
+ */
+export const VIEW_POPUP_MS = 1000;
+/** The popup fades out over its last … (ours: no frame caught it going). */
+export const VIEW_POPUP_FADE_MS = 150;
 
 /** Where a settings list stands: the section (left column) and the row within it. */
 export interface ListCursor {
@@ -168,10 +175,17 @@ export interface PresetBrowserState {
 	library: PresetEntry[];
 	/** User folders besides the snapshot folder, in creation order. */
 	folders: string[];
+	/** The device's "by engine" / "by category" choice (a click of E1 swaps it). */
 	view: 'category' | 'engine';
 	/** The chosen category / folder (category view) or engine (engine view). */
 	group: string;
 	row: number;
+	/**
+	 * The first row in view of the group column and of the preset column: the device scrolls a
+	 * list only as far as the highlight needs (camera b1-1495…1568).
+	 */
+	groupTop: number;
+	rowTop: number;
 	/** The instrument track the browser loads onto (0–7). */
 	track: number;
 	/** `folder/name` of the preset cut with M1. */
@@ -211,6 +225,8 @@ export interface SystemState {
 	/** Incoming MIDI the monitor page lists, newest last (a connected device may feed it). */
 	monitor: string[];
 	presets: PresetBrowserState;
+	/** Milliseconds left of the preset browser's "by engine / by category" popup (0: none). */
+	presetPopup: number;
 	/** The preset each instrument track was loaded from (`folder/name`). */
 	trackPresets: string[];
 	presetSettings: PresetSettings[];
@@ -310,12 +326,16 @@ export function initialSystem(): SystemState {
 		presets: {
 			library: factoryPresets(),
 			folders: [],
-			view: 'category',
+			// the owner's unit showed engine view the first time (b1-1495)
+			view: 'engine',
 			group: 'drum',
 			row: 0,
+			groupTop: 0,
+			rowTop: 0,
 			track: 0,
 			clipboard: null
 		},
+		presetPopup: 0,
 		trackPresets: [...DEFAULT_TRACK_PRESETS],
 		presetSettings: newProjectPresetSettings(),
 		presetCursor: { section: 0, row: 0 },

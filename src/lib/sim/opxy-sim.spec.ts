@@ -1,16 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { EngineId } from '$lib/core/opxy';
 import { OpxySim } from './opxy-sim.svelte';
+import { currentGroup, groups } from './areas/system/presets';
 import { buildFrame, lfoSpeed } from './frames';
-import {
-	ENGINE_LIST,
-	LFO_TYPES,
-	defaultState,
-	formatBpm,
-	formatTune,
-	keyName,
-	two
-} from './params';
+import { LFO_TYPES, defaultState, formatBpm, formatTune, keyName, two } from './params';
 import { SCENARIOS } from './scenarios';
 import type { ScreenFrame } from './screen/frame';
 import { RecordingContext } from './screen/recording';
@@ -147,14 +140,14 @@ describe('OpxySim: navigation', () => {
 		expect(page(sim, 'mix').strips[0].muted).toBe(true);
 	});
 
-	it('chooses an engine with shift + M1, E1 and a click', () => {
+	it('brings up the preset browser with shift + M1: E1 picks the engine, an E2 click loads its first preset (OS 1.1.33)', () => {
 		const sim = new OpxySim();
 		sim.press('track.3');
 		sim.combo('key.shift', 'key.m1');
-		const list = page(sim, 'list');
-		expect(list.columns[1].items[list.columns[1].selected ?? -1]).toBe('prism');
+		const browser = page(sim, 'system-presets');
+		expect(browser.groups.items[browser.groups.selected ?? -1]).toBe('prism');
 		sim.turn(1, 1);
-		sim.click(1);
+		sim.click(2);
 		expect(sim.track.engine).toBe('sampler');
 		expect(sim.frame.page).toBe('drum');
 	});
@@ -275,26 +268,24 @@ describe('OpxySim: encoders', () => {
 });
 
 describe('OpxySim: engines and links', () => {
-	/** Loads `engine` on the selected track through the engine list. */
+	/** Loads `engine`'s first preset on the selected track from the browser shift + M1 brings up. */
 	function load(sim: OpxySim, engine: EngineId): void {
 		sim.combo('key.shift', 'key.m1');
-		sim.turn(1, ENGINE_LIST.indexOf(engine) - (sim.state.picker?.index ?? 0));
-		sim.click(1);
+		const b = sim.state.areas.system.presets;
+		sim.turn(1, groups(b).indexOf(engine) - currentGroup(b).index);
+		sim.click(2);
 	}
 
-	it('sets a synth aside behind the midi engine only until another engine comes', () => {
+	it('loads an engine’s first preset, from the engine’s own values where we lack the preset’s', () => {
 		const sim = new OpxySim();
 		sim.press('track.3');
-		const [, ...rest] = sim.track.m1;
 		sim.turn(1, 30);
-		load(sim, 'midi');
-		expect(sim.track.parked).toEqual({ engine: 'prism', m1: [45, ...rest] });
 		load(sim, 'organ');
-		// engines picked with no preset start from the device's own values
+		// avant garde: the device's organ values when picked with no preset
 		expect(page(sim, 'synth').header.map((c) => c.value)).toEqual(['40', '53', '82', '09']);
-		expect(sim.track.parked).toBeNull();
 		load(sim, 'prism');
 		expect(page(sim, 'synth').header[0].value).toBe('50');
+		expect(sim.state.areas.system.trackPresets[2]).toBe('bass/alloy');
 	});
 
 	it('gives a linked track one primary, never linking two tracks both ways', () => {

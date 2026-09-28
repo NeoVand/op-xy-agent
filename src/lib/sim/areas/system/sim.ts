@@ -1,12 +1,14 @@
 /**
  * The system area: the power switch and boot, the project page and everything behind it (new, save,
  * save as, rename, the project settings, the projects folder and its history), the COM page and its
- * sub-pages (system settings, controller mode, devices, MTP), the preset browser (shift + Tn), the
- * preset settings (shift + instrument) with the user tuning editor, and the track-sound combos that
- * fill the preset library (Tn + M1–M4) (guide art project-004 … 019, com-014 … 039,
- * instrument-103, 118). Behaviour follows our manual; the unit ids are cited where each rule
- * lives, and choices the manual leaves open are marked as ours.
+ * sub-pages (system settings, controller mode, devices, MTP), the preset browser (shift + Tn, and
+ * shift + M1 on OS 1.1.33, as the device runs it: research 59 §2.6), the preset settings (shift +
+ * instrument) with the user tuning editor, and the track-sound combos that fill the preset library
+ * (Tn + M1–M4) (guide art project-004 … 019, com-014 … 039, instrument-103). Behaviour follows our
+ * manual and the device's screens; the unit ids are cited where each rule lives, and choices the
+ * manual leaves open are marked as ours.
  */
+import { ENGINE_IDS, type EngineId } from '$lib/core/opxy';
 import { MULTI_OUT_MODES, clamp, type PageNumber, type SimState } from '../../params';
 import type { SimInput } from '../../input';
 import type { AreaContext, LedMap, SimArea } from '../types';
@@ -21,11 +23,13 @@ import {
 } from './naming';
 import {
 	copySound,
+	currentGroup,
 	cutPreset,
 	deleteFolder,
 	deletePreset,
 	findPreset,
 	highlighted,
+	loadEngineSound,
 	loadPreset,
 	newFolder,
 	openBrowser,
@@ -67,6 +71,7 @@ import {
 	FLASH_MS,
 	HOLD_MS,
 	PROJECT_FOLDERS,
+	VIEW_POPUP_MS,
 	type ListCursor,
 	type SystemPage,
 	type SystemState
@@ -108,6 +113,7 @@ function closePage(s: SimState): void {
 	sys.confirm = null;
 	sys.hold = null;
 	sys.notice = null;
+	sys.presetPopup = 0;
 }
 
 /** Opens one of the area's pages over `overlay` (null: over the mode). */
@@ -560,12 +566,42 @@ function trackCombo(s: SimState, track: number, key: PageNumber): void {
 	else saveSound(s, track, s.shift);
 }
 
-/** Opens the preset browser on instrument track `track` (manual: preset-browser). */
-function openPresets(s: SimState, track: number): void {
+/**
+ * Opens the preset browser on instrument track `track`: shift + Tn (manual: preset-browser), and
+ * shift + M1 on the selected track, which on OS 1.1.33 brings up this browser rather than an
+ * engine list (camera b1-1494/1495; the core calls it).
+ */
+export function openPresets(s: SimState, track: number): void {
 	s.track = track;
 	s.active = 'instrument';
 	openPage(s, 'presets', null);
 	openBrowser(s, track);
+}
+
+/** Whether a browser group names an engine (engine view's groups do). */
+const isEngine = (group: string | undefined): group is EngineId =>
+	group !== undefined && (ENGINE_IDS as readonly string[]).includes(group);
+
+/**
+ * Loads the highlighted preset and leaves the browser for the track's M1 page, where the device
+ * showed the new sound straight after a load (b1-1568 → 1569: simple's page with belch bass's
+ * values; after shift + Tn the same page is ours).
+ */
+function loadHighlighted(s: SimState): void {
+	const b = sysOf(s).presets;
+	const preset = highlighted(b);
+	const { list, index } = currentGroup(b);
+	const engine = list[index];
+	// an engine listed with no preset (midi) loads its starting sound (ours, see presets.ts)
+	if (!preset && b.view === 'engine' && isEngine(engine)) {
+		loadEngineSound(s, b.track, engine);
+	} else if (preset) loadPreset(s, b.track, preset);
+	else return;
+	closePage(s);
+	s.mode = 'instrument';
+	s.active = 'instrument';
+	s.track = b.track;
+	s.pages.instrument = 1;
 }
 
 /** The system area (see the module comment); first in the registry, so power comes first. */
@@ -639,9 +675,10 @@ export const system: SimArea = {
 	press(ctx: AreaContext, id: string): boolean {
 		const s = ctx.state;
 		const sys = sysOf(s);
-		// a brief label ("saved", "hold", "calibrated") lasts until the next key
+		// a brief label ("saved", "hold", "calibrated") or popup lasts until the next key
 		sys.flash = null;
 		sys.notice = null;
+		sys.presetPopup = 0;
 		switch (sys.page) {
 			case null:
 				if (s.overlay === 'project') return projectKey(ctx, id);
@@ -755,7 +792,8 @@ export const system: SimArea = {
 				return;
 			}
 			case 'presets':
-				// manual: preset-browser: E1 category / engine, E2–E4 preset
+				// manual: preset-browser: E1 category / engine, E2–E4 preset (the popup goes, ours)
+				sys.presetPopup = 0;
 				if (e === 0) turnGroup(sys.presets, delta);
 				else turnPreset(sys.presets, delta);
 				return;
@@ -781,13 +819,12 @@ export const system: SimArea = {
 			return;
 		}
 		if (sys.page !== 'presets') return;
-		const b = sys.presets;
-		// manual: preset-browser: click E1 switches the view, click E2–E4 loads
-		if (e === 0) toggleView(b);
-		else {
-			const preset = highlighted(b);
-			if (preset) loadPreset(s, b.track, preset);
-		}
+		// manual: preset-browser: click E1 switches the view (the device says which in a popup:
+		// b1-1523/1524, 1535, 1565…1567), click E2–E4 loads
+		if (e === 0) {
+			toggleView(sys.presets);
+			sys.presetPopup = VIEW_POPUP_MS;
+		} else loadHighlighted(s);
 	},
 
 	leds(state: SimState, leds: LedMap): void {
@@ -813,5 +850,6 @@ export const system: SimArea = {
 			sys.flash.ms -= ms;
 			if (sys.flash.ms <= 0) sys.flash = null;
 		}
+		if (sys.presetPopup > 0) sys.presetPopup = Math.max(0, sys.presetPopup - ms);
 	}
 };

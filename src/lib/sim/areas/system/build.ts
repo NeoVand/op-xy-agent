@@ -1,10 +1,10 @@
 /**
  * From state to what the system area's screen shows (pure). Each page lists what its columns hold
- * and what is selected; `draw.ts` places it the way TE's art does.
+ * and what is selected; `draw.ts` places it the way TE's art does (the preset browser as the
+ * device draws it: `presets-draw.ts`).
  */
-import type { EngineId } from '$lib/core/opxy';
 import { clamp, type SimState } from '../../params';
-import type { SoftLabel } from '../../screen/draw';
+import type { SoftLabel, SoftTone } from '../../screen/draw';
 import type { ProjectFrame, ScreenFrame } from '../../screen/frame';
 import { NOTE_NAMES } from './catalogue';
 import type {
@@ -12,10 +12,20 @@ import type {
 	SystemDevicesFrame,
 	SystemListColumn,
 	SystemListFrame,
-	SystemNamingFrame
+	SystemNamingFrame,
+	SystemPresetsFrame
 } from './frames';
 import { neighbours } from './naming';
-import { currentGroup, engineLabel, findPreset, presetKey, presetsIn } from './presets';
+import {
+	BROWSER_ROWS,
+	canPaste,
+	currentGroup,
+	findPreset,
+	highlighted,
+	presetKey,
+	presetsIn,
+	scrolled
+} from './presets';
 import {
 	DEVICE_ROWS,
 	OS_VERSION,
@@ -26,7 +36,13 @@ import {
 	TUNING_ROW,
 	type Section
 } from './settings';
-import { BOOT_MS, PROJECT_FOLDERS, type ListCursor, type NamingPurpose } from './state';
+import {
+	BOOT_MS,
+	PROJECT_FOLDERS,
+	VIEW_POPUP_FADE_MS,
+	type ListCursor,
+	type NamingPurpose
+} from './state';
 import { indicators } from './usage';
 
 /** Rows each list shows at once (TE's art: up to eight above the soft labels). */
@@ -34,7 +50,6 @@ const ROWS: Readonly<Record<ListLayout, number>> = {
 	'project-settings': 8,
 	'system-settings': 8,
 	'preset-settings': 9,
-	presets: 9,
 	folder: 8,
 	history: 8
 };
@@ -170,32 +185,71 @@ function historyFrame(s: SimState): SystemListFrame {
 	};
 }
 
-/** The preset browser (guide art instrument-118). */
-function presetsFrame(s: SimState): SystemListFrame {
+/**
+ * A browser column: the rows in view from the stored first row (moved only as far as the
+ * highlight needs, as on the device), `index` highlighted.
+ */
+function browserColumn(
+	items: readonly string[],
+	index: number | null,
+	top: number,
+	dim?: (i: number) => boolean
+): SystemListColumn {
+	const first = scrolled(top, index ?? 0, items.length);
+	const inView = items.slice(first, first + BROWSER_ROWS);
+	const dimRows = dim ? inView.flatMap((_, i) => (dim(first + i) ? [i] : [])) : [];
+	return {
+		items: inView,
+		selected: index === null || items.length === 0 ? null : index - first,
+		...(dimRows.length ? { dim: dimRows } : {}),
+		first,
+		total: items.length
+	};
+}
+
+/**
+ * The footer over M1–M4: cut, paste, rename and delete, paste dim with nothing cut (b1-1531, with
+ * a user preset of the owner's Nostalgic Synths highlighted). With a factory preset highlighted the
+ * device showed none (the rest of b1-1495…1568); a paste waiting for a user folder shows it too
+ * (ours).
+ */
+function presetSoft(s: SimState): (SoftLabel | null)[] {
 	const b = s.areas.system.presets;
+	const user = highlighted(b)?.user === true;
+	const paste = canPaste(b);
+	if (!user && !paste) return [];
+	const tone = (lit: boolean): SoftTone => (lit ? 'normal' : 'dim');
+	return [
+		{ text: 'cut', tone: tone(user) },
+		{ text: 'paste', tone: tone(paste) },
+		{ text: 'rename', tone: tone(user) },
+		{ text: 'delete', tone: tone(user) }
+	];
+}
+
+/** The preset browser (shift + M1, shift + Tn), as the device draws it (research 59 §2.6). */
+function presetsFrame(s: SimState): SystemPresetsFrame {
+	const sys = s.areas.system;
+	const b = sys.presets;
 	const { list, index } = currentGroup(b);
 	const presets = presetsIn(b, list[index] ?? '');
 	const cut = findPreset(b, b.clipboard);
 	return {
-		page: 'system-list',
-		layout: 'presets',
-		title: `presets for track ${b.track + 1}, ${b.view} view`,
-		columns: [
-			// TE's art labels engine view "synth" beside the track; "category" is ours
-			column([String(b.track + 1), b.view === 'engine' ? 'synth' : 'category'], null, 2),
-			column(
-				b.view === 'engine' ? list.map((e) => engineLabel(e as EngineId)) : list,
-				list.length ? index : null,
-				ROWS.presets
-			),
-			column(
-				presets.map((p) => p.name),
-				presets.length ? clamp(b.row, 0, presets.length - 1) : null,
-				ROWS.presets,
-				(i) => cut !== undefined && presetKey(presets[i]) === presetKey(cut)
-			)
-		],
-		soft: []
+		page: 'system-presets',
+		track: b.track + 1,
+		view: b.view,
+		groups: browserColumn(list, list.length ? index : null, b.groupTop),
+		presets: browserColumn(
+			presets.map((p) => p.name),
+			presets.length ? clamp(b.row, 0, presets.length - 1) : null,
+			b.rowTop,
+			(i) => cut !== undefined && presetKey(presets[i]) === presetKey(cut)
+		),
+		soft: presetSoft(s),
+		popup:
+			sys.presetPopup > 0
+				? { view: b.view, alpha: Math.min(1, sys.presetPopup / VIEW_POPUP_FADE_MS) }
+				: null
 	};
 }
 

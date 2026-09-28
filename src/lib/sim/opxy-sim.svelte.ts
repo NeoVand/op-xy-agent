@@ -17,6 +17,7 @@ import type { KeyLedState } from '$lib/replica/state.svelte';
 import { AREAS, ownerOf } from './areas/registry';
 import { auxSends } from './areas/auxiliary/sim';
 import { turnSamplerPage } from './areas/sample/m1';
+import { openPresets } from './areas/system/sim';
 import type { AreaContext } from './areas/types';
 import { nextBendRange } from './defaults';
 import { buildFrame, buildLeds } from './frames';
@@ -25,7 +26,6 @@ import { advanceMotion } from './motion';
 import {
 	DUCK_METRONOME,
 	ELEMENT_SOURCES,
-	ENGINE_LIST,
 	FILTER_TYPES,
 	GROOVES,
 	LFO_SYNC_STEPS,
@@ -34,7 +34,6 @@ import {
 	TEMPO_RANGE,
 	clamp,
 	defaultState,
-	defaultTrack,
 	detent,
 	isSampler,
 	type Bank,
@@ -76,7 +75,7 @@ const SOFT_PAGES: Readonly<Record<'project' | 'com', readonly string[]>> = {
 	com: ['system settings', 'controller mode', 'devices', 'mtp mode']
 };
 /** The module key that opens each list with shift, and confirms it without. */
-const PICKER_KEYS: Readonly<Record<PickerKind, PageNumber>> = { engine: 1, filter: 3, lfo: 4 };
+const PICKER_KEYS: Readonly<Record<PickerKind, PageNumber>> = { filter: 3, lfo: 4 };
 /** Tracks one link joins at most, the held (primary) track included (manual: linked-tracks). */
 const MAX_LINKED = 4;
 
@@ -374,9 +373,9 @@ export class OpxySim {
 		if (s.overlay) this.#closeAll();
 		if (s.mode === 'instrument') {
 			if (s.picker) {
-				// the key that opened the list confirms it, as M1 does in the engine list (manual:
-				// instrument/engine; M3 and M4 in the filter and LFO lists are ours); any other key, or
-				// shift and a key, leaves the list without changing anything
+				// the key that opened the list confirms it (ours, after the guide's M1 in its older
+				// engine list); any other key, or shift and a key, leaves the list without changing
+				// anything
 				if (page === PICKER_KEYS[s.picker.kind] && !s.shift) {
 					this.#confirmPicker();
 					return;
@@ -389,7 +388,10 @@ export class OpxySim {
 			const filterless = page === 3 && this.track.engine === 'midi';
 			if (s.shift && page !== 2 && !filterless) {
 				s.pages.instrument = page;
-				this.#openPicker(page === 1 ? 'engine' : page === 3 ? 'filter' : 'lfo');
+				// on OS 1.1.33 shift + M1 brings up the preset browser in place of an engine list
+				// (research 59 §2.6; the system area runs it); shift + M3 and M4 list the types
+				if (page === 1) openPresets(s, s.track);
+				else this.#openPicker(page === 3 ? 'filter' : 'lfo');
 				return;
 			}
 			// pressed on its own page, M3 switches the filter on or off and M4 the LFO (the device
@@ -404,14 +406,10 @@ export class OpxySim {
 		else if (s.mode === 'mix') s.pages.mix = page;
 	}
 
-	#openPicker(kind: 'engine' | 'filter' | 'lfo'): void {
+	#openPicker(kind: PickerKind): void {
 		const t = this.track;
 		const index =
-			kind === 'engine'
-				? ENGINE_LIST.indexOf(t.engine)
-				: kind === 'filter'
-					? FILTER_TYPES.indexOf(t.filter.type)
-					: LFO_TYPES.indexOf(t.lfo.type);
+			kind === 'filter' ? FILTER_TYPES.indexOf(t.filter.type) : LFO_TYPES.indexOf(t.lfo.type);
 		this.state.picker = { kind, index: Math.max(0, index) };
 	}
 
@@ -518,12 +516,7 @@ export class OpxySim {
 			return;
 		}
 		if (s.picker) {
-			const size =
-				s.picker.kind === 'engine'
-					? ENGINE_LIST.length
-					: s.picker.kind === 'filter'
-						? FILTER_TYPES.length
-						: LFO_TYPES.length;
+			const size = s.picker.kind === 'filter' ? FILTER_TYPES.length : LFO_TYPES.length;
 			s.picker.index = clamp(s.picker.index + delta, 0, size - 1);
 			return;
 		}
@@ -714,18 +707,7 @@ export class OpxySim {
 		const picker = s.picker;
 		if (!picker) return;
 		const t = this.track;
-		if (picker.kind === 'engine') {
-			const engine = ENGINE_LIST[picker.index];
-			if (engine !== t.engine) {
-				// a new engine loads with its own M1 defaults and the rest of the track stays (ours),
-				// except that a synth set aside by the midi engine comes back as it was (OS 1.0.50)
-				const parked = t.parked;
-				if (engine === 'midi') t.parked = { engine: t.engine, m1: [...t.m1] };
-				else t.parked = null;
-				t.m1 = parked?.engine === engine ? [...parked.m1] : defaultTrack(engine).m1;
-				t.engine = engine;
-			}
-		} else if (picker.kind === 'filter') {
+		if (picker.kind === 'filter') {
 			t.filter.type = FILTER_TYPES[picker.index];
 			t.filter.on = true;
 			// the device goes back to the engine page after a filter type is picked (research 59

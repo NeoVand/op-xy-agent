@@ -293,7 +293,8 @@ export const mixer: SimArea = {
 		const s = ctx.state;
 		if (midiCcPage(s) === null) return false;
 		// the midi engine has no filter: shift + M3 goes to the second CC page rather than opening
-		// the filter types (ours; shift + M1 and shift + M4 still open the engine and LFO lists)
+		// the filter types (ours; shift + M1 still brings up the preset browser, shift + M4 the LFO
+		// types)
 		const m = /^key\.m([23])$/.exec(id);
 		if (!m) return false;
 		s.pages.instrument = m[1] === '2' ? 2 : 3;

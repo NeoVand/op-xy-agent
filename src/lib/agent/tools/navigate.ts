@@ -42,7 +42,7 @@ const goalInput = z.object({
 		.max(60)
 		.optional()
 		.describe(
-			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "tempo", "groove", an engine parameter such as "shape" or "detune"), a list ("engine", "filter type", "lfo type": value is the name, e.g. "wavetable", "ladder", "duck"), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome"), or an id ("filter.cutoff"). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II, "speed" on the tape, "root" or "scale" on the brain, "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii"; "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). With area player: the values of the player page ("speed", "pattern", "range", "hold"; its shift layer "length", "style", "glide", "stereo"). Without page, the first page that shows it.'
+			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "tempo", "groove", an engine parameter such as "shape" or "detune"), a list ("engine", "filter type", "lfo type": value is the name, e.g. "wavetable", "ladder", "duck"; an engine is loaded from the preset browser shift + M1 brings up, as its first preset, which replaces the whole sound; the replica lists the external midi engine last, which the owner\'s unit did not show), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome"), or an id ("filter.cutoff"). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II, "speed" on the tape, "root" or "scale" on the brain, "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii"; "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). With area player: the values of the player page ("speed", "pattern", "range", "hold"; its shift layer "length", "style", "glide", "stereo"). Without page, the first page that shows it.'
 		),
 	value: z
 		.union([z.number(), z.string().min(1).max(30)])
@@ -62,7 +62,7 @@ const goalInput = z.object({
 		.max(16)
 		.optional()
 		.describe(
-			'Several parameters in one go, in order, instead of param and value: each is planned from where the ones before leave the device. Use it to set up a sound from an idea (a pluck: amp decay, sustain, release, resonance; a sidechain duck: lfo type duck, duck source, lfo amount). Put a list pick (engine, filter type, lfo type) before the parameters that depend on it.'
+			'Several parameters in one go, in order, instead of param and value: each is planned from where the ones before leave the device. Use it to set up a sound from an idea (a pluck: amp decay, sustain, release, resonance; a sidechain duck: lfo type duck, duck source, lfo amount). Put a list pick (engine, filter type, lfo type) before the parameters that depend on it, the engine first of all (its preset resets the sound).'
 		)
 });
 

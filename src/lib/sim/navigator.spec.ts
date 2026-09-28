@@ -140,6 +140,58 @@ describe('the navigator: parameters', () => {
 		for (const plan of [duck, engine, filter]) grammatical(plan);
 	});
 
+	it('loads an engine from the preset browser shift + M1 brings up, as OS 1.1.33 does (research 59 §2.6)', () => {
+		const sim = boot();
+		const plan = planParam(sim.state, { track: 3, param: 'engine', value: 'wavetable' });
+		// E1 walks the engine column from prism to wavetable; a click of E2 loads its first preset
+		expect(keys(plan)).toEqual(['T3', 'shift + M1', 'turn E1 3', 'click E2']);
+		expect(plan.steps[1].screen).toBe('presets for track 3, by engine: prism, shoulder');
+		expect(plan.steps[2].screen).toBe('presets for track 3, by engine: wavetable, asinine');
+		// the load leaves the browser for M1, where the device showed the new sound (b1-1569)
+		expect(plan.screen).toMatch(/^wavetable: basic, position 00/);
+		grammatical(plan);
+		// from another page of the track, and with the browser left by category: E1's click first
+		sim.press('track.3');
+		sim.press('key.m3');
+		sim.combo('key.shift', 'key.m1');
+		sim.click(1);
+		sim.press('key.instrument');
+		expect(sim.state.areas.system.presets.view).toBe('category');
+		const back = planParam(sim.state, { track: 3, param: 'engine', value: 'drum' });
+		expect(keys(back)).toEqual(['shift + M1', 'click E1', 'turn E1 -5', 'click E2']);
+		expect(back.reached).toBe(true);
+		expect(back.screen).toMatch(/^drum key /);
+	});
+
+	it('reaches the midi engine at the end of the browser’s engines, with its starting sound (ours)', () => {
+		const sim = boot();
+		const midi = planParam(sim.state, { track: 3, param: 'engine', value: 'midi' });
+		expect(midi.reached).toBe(true);
+		expect(midi.steps.at(-1)?.keys).toBe('click E2');
+		expect(midi.screen).toMatch(/^midi: channel /);
+		for (const step of midi.steps) playStep(sim, step);
+		expect(sim.state.tracks[2].engine).toBe('midi');
+	});
+
+	it('puts an engine first in a sound set up from an idea: the preset changes the whole sound', () => {
+		const sim = boot();
+		const plan = planSettings(sim.state, [
+			{ track: 3, param: 'engine', value: 'simple' },
+			{ track: 3, param: 'cutoff', value: 40 }
+		]);
+		expect(plan.reached).toBe(true);
+		expect(plan.parts[0].steps.map((s) => s.keys)).toEqual([
+			'T3',
+			'shift + M1',
+			'turn E1',
+			'click E2'
+		]);
+		for (const step of plan.steps) playStep(sim, step);
+		expect(sim.state.tracks[2].engine).toBe('simple');
+		expect(reads(sim.state, { track: 3, param: 'cutoff', value: 40 })).toBe(true);
+		expect(reads(sim.state, { track: 3, param: 'engine', value: 'simple' })).toBe(true);
+	});
+
 	it('sets up a sidechain duck: the type, the track that triggers it, the amount', () => {
 		const sim = boot();
 		sim.reset(JSON.parse(JSON.stringify(sim.state)));
