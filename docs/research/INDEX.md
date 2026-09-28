@@ -34,6 +34,7 @@
 | `knowledge/firmware/changelog-midi-usb.json`      | MIDI/USB/MTP-relevant changelog items (paraphrased)                  |
 | `knowledge/presets/patch-schema.json`             | JSON Schema for `patch.json`                                         |
 | `knowledge/presets/new-project.json`              | A new project's eight sounds and FX, and each engine's init M1       |
+| `knowledge/opxy/device-map.json`                  | Every page: keys, screen, encoders' ranges, CCs (from the simulator) |
 
 ## Local-only inputs (git-ignored; regenerate with scripts)
 
