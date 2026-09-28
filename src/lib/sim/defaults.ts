@@ -81,7 +81,7 @@ function lfoOf(stored: NewProjectTrack['lfo'], base: Lfo, synced: number): Lfo {
 			};
 		case 'element':
 			// sources, destinations and parameters: gyroscope / microphone / amp envelope / sum,
-			// syn / env / filter / lfo, E1–E4
+			// syn / env / filter / amp (the device's list, research 59 §2.4), E1–E4
 			return {
 				...lfo,
 				sensor: stepOf(p0, 4),
@@ -91,12 +91,12 @@ function lfoOf(stored: NewProjectTrack['lfo'], base: Lfo, synced: number): Lfo {
 			};
 		case 'value':
 		case 'random':
-			// every module twice (normal, free), then E1–E4
+			// syn, env and filter, each twice (normal, free): the device's six (research 59 §2.4)
 			return {
 				...lfo,
 				speed: lfoSpeedOf(p0, synced),
 				amount: fromSignedQ15(p1),
-				destination: stepOf(p2, 8),
+				destination: stepOf(p2, 6),
 				parameter: stepOf(p3, 4),
 				envelope: stored.type === 'random' ? fromSignedQ15(p7) : base.envelope
 			};
