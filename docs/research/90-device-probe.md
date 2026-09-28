@@ -226,6 +226,70 @@ Runs (appended as they happen):
    epiano, dissolve, hardsync, axis and wavetable, the last with its tables' rules, warp as FM by a
    sine and drift's slide to half the note. Nothing else was sent to the device after the chain.
 
+## 2026-09-27 — Screen profiling by camera (owner present, new project, OS 1.1.33)
+
+Setup by the owner: an iPhone on a mount over the screen (Continuity Camera); a **new empty
+project**, T3 selected, its M2 (envelope) page showing. Terminal.app runs
+`research/device/camera.command` (the agent's shell cannot get camera access), which writes the
+camera's latest frame ten times a second; `screencap.py` maps the screen onto its own 480 × 222 grid.
+The camera alone sends nothing.
+
+What we send (`research/device/envsweep.py`, allow-listed in the script): **CC 20–27 on channel 3
+only** (T3's amp envelope A/D/S/R and filter envelope A/D/S/R). No notes, no other CCs, no SysEx.
+T3's envelopes in the scratch project are the only state changed.
+
+1. 21:50–21:51, approved in chat ("ready"): the first sweep, 152 messages. Every other stage sat at
+   attack 0, decay 64, sustain 64, release 64 while one stage stepped 0, 8, …, 120, 127. It ended
+   with both envelopes at that base. The captures (`env-*`) were taken 0.45 s after each CC and show
+   the **previous** state: the camera runs about 0.8 s behind. Found:
+   - each encoder moves one handle;
+   - the release lane is a handle position, so a higher value gives a shorter release;
+   - there is no flat segment after the attack.
+2. 22:16–22:20, after the camera was knocked and re-calibrated (22:13) ("Please take all the pictures you need"):
+   `--plan amp` (`env2-amp-*`), 194 states and 270 messages. Each state waits until the screen has
+   changed and held still (0.8–0.9 s), then averages three frames. The run covers:
+   - the amp envelope stage by stage (25 values each, fine near 0 and 127), with the filter
+     envelope out of the way (0, 0, 0, 127);
+   - decay and release against four sustain levels;
+   - the extreme layouts;
+   - the filter envelope as drawn when not selected;
+   - both envelopes together.
+3. 22:23–22:25, after the owner clicked an encoder (M2 then shows the filter envelope): `--plan filter`
+   (`env2-filter-*`), 119 states and 178 messages. The run covers:
+   - the filter envelope stage by stage (13 values each), with the amp envelope out of the way;
+   - decay and release against sustain;
+   - the extreme layouts;
+   - the amp envelope drawn dim.
+     T3's envelopes end at amp 0/0/0/127 and filter 0/64/64/64. Every state in runs 2 and 3 changed
+     the screen visibly. CC 24–27 move the filter envelope whichever envelope M2 shows (and CC 20–23
+     the amp), so the note from the calibration session that CC 20–23 edit "whichever envelope M2
+     shows" was wrong. Its long releases fit the inverted release lane instead: we had sent release 10,
+     which is a long release.
+4. 22:30–00:53, step by step with the owner (`research/device/stepcap.py`, allow-listed; log in
+   `captures/screens/steps.json`). The owner opened each page by hand; the script moved its
+   parameters and saved the screen after every value. A watcher (`screencap.py watch`) also saved every
+   page the owner opened. There were 1,049 CC messages, and nothing but CCs:
+   - **Instrument T3 (channel 3):** CC 7 and 10 (level, pan), 12–15 (M1 on all eight synth engines,
+     plus a probe on the sampler), 32–35 (filter), 38 (FX I send), 40–43 (all five LFO types).
+   - **Drum T1 (channel 1):** CC 12–15, which the drum sampler ignores.
+   - **Channel 1:** CC 102 (track select, once), 80 and 81 (tempo, groove).
+   - **Master EQ:** CC 90 on channels 1–4.
+   - **Aux tracks:** brain (channel 9: 12–15, plus a probe of 32 and 35); external MIDI (11: 12–15,
+     40–43); external CV (12: 12–15); external audio (13: 13–15, 32, 35, 40–43; never CC12, the input
+     select, so the mic could not open); tape (14: 12–15); FX I (15: 12–15).
+     After each sweep the values were set back to what the page showed first (read off the captures),
+     except the tape speed (99 %; 100 % lies between two CC values). The owner meanwhile played notes,
+     switched players, filter and LFO types, effect types and engines, and entered a short pattern on T3.
+     All of it stayed in the scratch project, and nothing was saved, loaded or deleted.
+
+   Findings (in full in note 59):
+   - The drum sampler, synth sampler and multisampler ignore CC 12–15, as does the external CV page.
+   - Every other page answered its lanes.
+   - After a filter type is picked, the device returns to M1.
+   - The phone's view shifted about 115 camera px between roughly 00:30 and 01:00 and came back
+     (found by phase correlation against the device body). Captures of that stretch are re-rectified
+     per frame, and the calibration is now fitted on the lit tempo page (`screencap.py calib --lit`).
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers

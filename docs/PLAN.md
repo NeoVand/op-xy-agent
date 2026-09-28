@@ -4,8 +4,13 @@
 > Decisions: [`DECISIONS.md`](DECISIONS.md). Questions for the owner: [`QUESTIONS.md`](QUESTIONS.md).
 > Update the **Status** block whenever a milestone moves.
 
-## Status (2026-09-27)
+## Status (2026-09-28)
 
+- **Now: Phase F, faithful emulator + expert agent** (plan below, "Phase F"). The camera sessions
+  (`research/59-screen-profiling.md`) showed what the device really draws. Every screen the guide art
+  missed is now captured: the sequencer and player screens, the envelope editor, the aux tracks and the
+  engines. We also know which pages MIDI can drive. Phase F turns that into the replica, our manual and
+  the agent. It runs until the next capture session.
 - **M0 research, M1 foundations: done.** Core MIDI/TE-SysEx/OP-XY data, design system + shell, device
   layer (Web MIDI, single send choke point, GREET session, mirror, monitor), `/lab`; verified by the
   owner on the live site.
@@ -110,6 +115,83 @@ Browser-only (static SvelteKit). No backend; users bring their own keys.
 Principles (from `VISION.md`): the LLM emits typed intent, deterministic code emits bytes; every
 device change is **propose → preview on replica → approve → apply → verify → journal**; firmware is
 first-class state; nothing dangerous (DFU, factory reset, project delete) exists as a tool.
+
+## Phase F — Faithful emulator + expert agent (from 2026-09-28)
+
+Goal, in the owner's words: "the smartest possible agent when it comes to doing things on OP-XY".
+At the least it shows the user how to do things; beyond that it breaks an idea into the right steps
+and helps set complicated things up. And "a perfect emulator where we pretty much 100% copy the
+device". The bar is that Teenage Engineering is impressed.
+
+Sources, in order of authority: the device captures (note 59, `research/device/captures/`), then
+TE's guide and changelog, then community findings. When the device and the guide disagree, the device
+wins and our manual says so.
+
+### F1 — Capture data you can build against
+
+- [x] Tools committed (`camera.command`, `screencap.py`, `envsweep.py`, `stepcap.py`, `envfit.py`),
+      note 59, probe log.
+- [ ] `screencap.py realign`: re-rectify every capture from its raw frame with per-frame drift
+      correction (phase correlation on the device body, then ECC). Write `captures/aligned/` plus an
+      index (file → page, track, engine, CC state).
+- [ ] A reference set per page (the best aligned frame of each state) for the tests in F2.
+
+### F2 — The emulator matches the device
+
+Each page is rebuilt from its captures and pinned by a test against a reference image. Order: what the
+owner flagged, then what users see most.
+
+1. [ ] **Envelope editor:** two envelopes, five handles, drop lines, the amp/filter labels, the
+       measured handle positions and curve shapes. Release is a handle position (higher = shorter),
+       also in the sound and in stored presets.
+2. [ ] **Players:** the off state; arpeggio (and its shift layer); hold; maestro; the selection list.
+3. [ ] **Bar card** (mini piano roll, bar row, clear labels) and the **step popups** (number box,
+       copied, orange while locking, locked values in the top bar).
+4. [ ] **Octave popup** (piano plus ±N, "+0", fades).
+5. [ ] **Mixer:** the FX I/II send overlay, the EQ scene, the saturator ladders, the master page.
+6. [ ] **Replica polish:** encoder turn arrows that show the real direction (or nothing), and a darker
+       body that matches the unit rather than the milky one.
+7. [ ] **Filter** (types, off, envelope hatch, key-tracking arrow, a type pick returning to M1, shift
+       sends) and **LFO** (five types, off).
+8. [ ] **Arrange and song mode** (footer labels, pattern column, scene box, 32-slot song grid).
+9. [ ] **Tempo** (metronome weight by BPM, groove slider, speaker waves, pendulum).
+10. [ ] **Engine pages:** top-bar styles, each engine's picture and its motion; sampler pages and their
+        shift layers; the preset browser.
+11. [ ] **Aux tracks:** brain M1/M2 (slide), external MIDI (CC slots, LFO), external CV (meter),
+        external audio (signal flow), tape, FX I/II (four columns per type); punch-in animations.
+12. [ ] **Behaviour:** the MIDI reach table (sampler M1 and CV ignore CCs); value formats read off the
+        captures (tape %, drive 0–20, bank/program crossed at 0, brain link, prism ratio steps).
+
+### F3 — Knowledge
+
+- [ ] Manual units updated with what the device showed, marked `verified_on: 1.1.33`. This covers the
+      envelope semantics, the filter type pick, the MIDI reach, the FX parameters per type, the aux
+      pages and the value ranges.
+- [ ] `knowledge/midi/cc-map.json`: lanes seen working marked verified, with their display ranges.
+- [ ] Screen descriptions the agent can use ("what will I see?"): generated from the simulator's pages
+      and checked against the captures.
+
+### F4 — The agent: from idea to steps
+
+- [ ] **Device map:** exported from the simulator. For each page it records how to reach it, the
+      parameters per encoder and layer, ranges and formats, the CC lane, and whether MIDI can set it.
+      It is data, so the agent never has to guess a key combo.
+- [ ] **Navigator:** a deterministic path from the replica's current state to any page or parameter
+      value, as key presses and encoder turns. It is checked by running it on the simulator.
+- [ ] **Tools:** `how_to` (exact steps for a goal), `guide` (an interactive walkthrough on the replica,
+      step by step, with the screen each step leads to), and `set_params` (virtual OP-XY, and the
+      device through CCs where it listens).
+- [ ] **Recipes:** multi-step setups (a sidechain duck, routing tracks into the brain, sampling and
+      slicing, a song from scenes, sound design from an idea, grounded in the factory presets'
+      parameter values).
+- [ ] **Evals:** how-to steps executed on the simulator must reach the goal state; idea-to-device tasks
+      judged by rubric plus state checks; screen Q&A.
+
+### F5 — Next capture session (with the owner)
+
+The list is in note 59 §4: step components, recording, the system pages, the drum track's pages,
+mute/solo, sounds over USB audio (punch-in, tape, filters, LFOs, envelope times). Calibrate on the
+tempo page and check every ~30 minutes.
 
 ## Milestones
 

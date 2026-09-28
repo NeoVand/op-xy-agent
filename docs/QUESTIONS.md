@@ -14,8 +14,8 @@ answer and date (and into `DECISIONS.md` when they shape the project).
 4. **Quick looks at the device** (read-only, nothing sent). The simulator follows TE's guide, but a few
    things only the unit can settle. Each is pinned by a conformance case
    (`src/lib/sim/conformance/sequencer.cases.ts`) or noted in the area's code:
-   - Arrange mode: is the label over M1 "new" or "clear"? (TE's text says M1 new, its art the
-     reverse.) Same question for the projects folder (shift + project): M1 load or M1 delete?
+   - ~~Arrange mode: M1 "new" or "clear"?~~ **New** (camera, 2026-09-28; M4 reads clear with one
+     pattern, delete with more). Still open: the projects folder (shift + project), M1 load or delete?
    - How long must a lit step be held before it copies instead of coming off? (Ours: 0.5 s.)
    - Step component multiply, black key 9: 9 hits, or 3 as TE's table prints?
    - While playing: does the playhead dim a step that has notes, and light an empty one?
@@ -33,11 +33,14 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    session should time the envelopes' decay and release: we apply the attack's law to them, which
    gives T3's bass a 44 s release. Approve when ready, and say whether loading three test samples (impulse,
    noise, sine) as presets is fine for the filter measurements.
-6. **Photos of the sequencer's screens** (read-only; a phone photo each). None of our sources shows
+6. ~~**Photos of the sequencer's screens**~~ Captured by camera on 2026-09-28 (note 59): bar card, held
+   steps and locks, the players. Still to capture: step components and the recording screens.
+   Original ask (read-only; a phone photo each). None of our sources shows
    them, so ours are invented: holding **bar** on a pattern with notes; holding a **step** with
    notes, and one with a parameter lock; **shift + a step**, then a white key; the **arpeggio** or
    **maestro** page; the screen while **recording**.
-7. **Punch-in FX and the tape** (read-only). The replica's punch-in FX (aux T2) and tape (aux T6)
+7. **Punch-in FX and the tape** (read-only). Their screens are captured (10 fps, every punch-in key;
+   note 59); their sounds are still needed (USB audio at the next session). The replica's punch-in FX (aux T2) and tape (aux T6)
    patterns light up but make no sound: TE never published which of the 24 keys plays which effect.
    A short phone video pressing each punch-in key in turn over a beat, or notes on what each does,
    would let us build them; the same for the tape's clips.
