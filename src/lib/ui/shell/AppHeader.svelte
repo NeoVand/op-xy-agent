@@ -1,8 +1,8 @@
 <!--
 @component
-The app header: the name in plain text (no logos, see DECISIONS D6) and the theme switch. The
-developer pages (styleguide, replica, lab) are linked only in local development, never on the
-published site.
+The app header: the name in plain text (no logos, see DECISIONS D6), the preset maker and the
+theme switch. The developer pages (styleguide, replica, lab) are linked only in local development,
+never on the published site.
 -->
 <script lang="ts">
 	import { dev } from '$app/environment';
@@ -10,11 +10,13 @@ published site.
 	import { resolve } from '$app/paths';
 	import ThemeToggle from './ThemeToggle.svelte';
 
+	const LINKS = [{ id: '/presets', label: 'preset maker' }] as const;
 	const DEV_LINKS = [
 		{ id: '/styleguide', label: 'styleguide' },
 		{ id: '/replica', label: 'replica' },
 		{ id: '/lab', label: 'lab' }
 	] as const;
+	const links = dev ? [...LINKS, ...DEV_LINKS] : LINKS;
 </script>
 
 <header class="header">
@@ -28,15 +30,13 @@ published site.
 	</a>
 
 	<nav class="nav" aria-label="primary">
-		{#if dev}
-			{#each DEV_LINKS as link (link.id)}
-				<a
-					class={['nav__link', page.route.id === link.id && 'is-current']}
-					href={resolve(link.id)}
-					aria-current={page.route.id === link.id ? 'page' : undefined}>{link.label}</a
-				>
-			{/each}
-		{/if}
+		{#each links as link (link.id)}
+			<a
+				class={['nav__link', page.route.id === link.id && 'is-current']}
+				href={resolve(link.id)}
+				aria-current={page.route.id === link.id ? 'page' : undefined}>{link.label}</a
+			>
+		{/each}
 		<ThemeToggle />
 	</nav>
 </header>

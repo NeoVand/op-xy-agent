@@ -72,6 +72,12 @@ answer and date (and into `DECISIONS.md` when they shape the project).
     Until we know, the replica lists midi after the eleven (ours). Two smaller things while there:
     which key loads a preset (E2, E3 or E4 all fit the guide) and where shift + Tn opens the browser
     (the track's preset, or where it was last left).
+11. **Does the device load our presets?** (writes files over MTP; nothing else changes). The preset
+    maker (`/presets`) writes kits and multisamples the way the device writes its own (note 30 §3),
+    but none has been tried on a unit yet. Copy one drum kit and one multisample from it into a
+    folder such as `presets/mine/`, then check each loads, plays in tune on its keys, loops as set,
+    and survives a project save and reload. Also worth a look: whether a `.preset` put straight into
+    `presets/` (no folder) shows up at all.
 
 ## Answered
 

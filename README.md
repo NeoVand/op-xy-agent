@@ -33,6 +33,11 @@ star in [`docs/VISION.md`](docs/VISION.md).
   PDFs), MIDI files or text (ABC, lyrics, notes), and the agent reads them and plays them. Without
   a device it plays the virtual OP-XY on screen, and it can program it: patterns note by note,
   scenes and a song, which you then hear in the browser.
+- **Make your own presets.** The [preset maker](https://neovand.github.io/op-xy-agent/presets)
+  turns your samples (WAV, AIFF, …) into a drum kit, a multisample or a synth sampler preset. Drum
+  hits land where TE's factory kits keep them, notes are found from the file (or by ear), and
+  sustained samples get loop points. You download the `.preset` folder, ready to copy over with
+  field kit / MTP. Everything runs in your browser.
 - **Bring your own key.** API keys are kept in your browser and sent only to their provider
   (Anthropic for the agent; an OpenAI key will power voice). There is no server: the app is static
   files.

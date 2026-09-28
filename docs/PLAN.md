@@ -72,6 +72,9 @@
   instrument page or value, tried on a copy of the simulator. `plan_steps` reads them out or plays
   them on the replica, one setting or a whole sound at a time. Five sound-design recipes run as
   written (tested). The how-to eval checks the virtual OP-XY's end state.
+- **M7 preset maker** (2026-09-28): `/presets` turns your own samples into a drum kit, multisample
+  or synth sampler preset in the browser and downloads it for field kit / MTP (M7 below). Left: a
+  try on the owner's unit (`QUESTIONS.md` 11).
 - **Next:** T28 with the owner (track MIDI channels → notes out), then M5 composer + live playback and
   M6 native projects. M6 starts by **reading the current project over WebUSB-MTP**: it is the only way
   the replica can load what is on the device (steps, tempo, sounds), since the device never reports
@@ -322,6 +325,17 @@ to `kmorrill/xy-format`.
 
 Preset builder (drum + multisample `patch.json`), slicer (transients, zero crossings), pitch detect,
 generated sources; install via FILE PUT if the spike confirms it, otherwise export for Field Kit.
+
+- [x] **Preset maker** (`/presets`, `src/lib/presets`, 2026-09-28): a drum kit, multisample or
+      synth sampler from your own WAV, AIFF or anything the browser decodes. Drum hits land on TE's
+      factory key layout by name; roots come from `smpl`, `INST`, a note in the name or pitch
+      detection (YIN); sustained samples get loop points and a crossfade. Samples are written as the
+      device writes them (16-bit, 44.1 kHz, `smpl` root), names and path lengths follow note 30 §3.5,
+      and the preset downloads zipped for field kit / MTP. Not yet loaded on a unit (`QUESTIONS.md`
+      11).
+- [ ] Try the presets on the owner's device; an agent tool that builds one from a request.
+- [ ] Slicer (transients, zero crossings) and generated sources.
+- [ ] Install over FILE PUT, after the spike (`QUESTIONS.md` 1).
 
 ### M8 — Voice
 
