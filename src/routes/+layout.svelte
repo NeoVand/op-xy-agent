@@ -5,7 +5,8 @@
 	import '@fontsource-variable/red-hat-mono';
 	import workSansLatin from '@fontsource-variable/work-sans/files/work-sans-latin-wght-normal.woff2?url';
 	import { onMount } from 'svelte';
-	import { asset } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
+	import { PresetInbox, setPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import {
 		AppSimulator,
 		AppSound,
@@ -62,6 +63,9 @@
 		timers: browserTimers
 	});
 	setReplicaGuide(guide);
+
+	// Kits the agent makes wait here for the preset maker.
+	setPresetInbox(new PresetInbox(resolve('/presets')));
 
 	// Its sound while no OP-XY makes one: synthesized in the browser, silent while a device is
 	// connected unless asked. Nothing is loaded or started until the first key press.

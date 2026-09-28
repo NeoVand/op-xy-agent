@@ -12,7 +12,7 @@ import { createAnthropicClient } from './client';
 import { Conductor, type PreferenceStore } from './conductor.svelte';
 import { loadManualSource } from './manual-source';
 import { createIdbThreadStore } from './threads';
-import type { GuideHost, ScreenReader } from './tools';
+import type { GuideHost, PresetInboxHost, ScreenReader } from './tools';
 
 /** What the panel hands over. */
 export interface BrowserConductorOptions {
@@ -28,6 +28,8 @@ export interface BrowserConductorOptions {
 	readonly persistence?: { markDirty(): void } | null;
 	/** The replica walkthrough that plan_steps with guide starts. */
 	readonly guide?: GuideHost | null;
+	/** The preset maker's inbox, where make_kit leaves a kit. */
+	readonly presets?: PresetInboxHost | null;
 }
 
 /** read_screen's view of the simulator: the page in words plus where the interface stands. */
@@ -98,6 +100,7 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 				})
 			: null,
 		guide: options.guide ?? null,
+		presets: options.presets ?? null,
 		manual,
 		store: createIdbThreadStore(),
 		preferences: browserPreferences()

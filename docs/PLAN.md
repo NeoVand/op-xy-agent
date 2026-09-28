@@ -374,7 +374,10 @@ generated sources; install via FILE PUT if the spike confirms it, otherwise expo
 - [x] **Slicer** (2026-09-28): a loop cut at its hits (spectral flux, refined where the level jumps,
       each start just before the hit and on a zero crossing when one is near) or into 8/16/24 equal
       parts; the slices go on f3 upwards and choke each other, as the device's slicer sets them.
-- [ ] Generated sources.
+- [x] **Generated sources** (2026-09-28): sixteen drum-machine voices from typed parameters
+      (`core/presets/generate.ts`: kick, snare, clap, hats and cymbals from six squares, toms, congas,
+      cowbell…), whole kits in five styles on TE's key order, a "generate a kit" control in the preset
+      maker, and the agent's `make_kit`, which leaves a kit it describes in the preset maker.
 - [x] **Install over USB** (MTP through WebUSB, 2026-09-28): `core/mtp` (session, policy, installer)
       and `device/mtp` (WebUSB pipe); the preset maker says what it will add and where, and writes
       only after the click. Never deletes, moves or replaces. Tested on an emulated unit only.

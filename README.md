@@ -36,7 +36,8 @@ star in [`docs/VISION.md`](docs/VISION.md).
 - **Make your own presets.** The [preset maker](https://neovand.github.io/op-xy-agent/presets)
   turns your samples (WAV, AIFF, …) into a drum kit, a sliced loop, a multisample or a synth
   sampler preset. Drum hits land where TE's factory kits keep them, a loop is cut at its hits, notes
-  are found from the file (or by ear), and sustained samples get loop points. Download the
+  are found from the file (or by ear), and sustained samples get loop points. No samples? Generate
+  a kit in one of five styles, or ask the agent for one. Download the
   `.preset` folder, or install it on your OP-XY over USB (Chrome, Edge) after you confirm what it
   adds. Everything runs in your browser.
 - **Bring your own key.** API keys are kept in your browser and sent only to their provider

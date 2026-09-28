@@ -6,6 +6,7 @@ import { DEVICE_TOOLS } from './device';
 import { DEVICE_MAP_TOOLS } from './device-map';
 import { KNOWLEDGE_TOOLS } from './knowledge';
 import { NAVIGATE_TOOLS } from './navigate';
+import { PRESET_TOOLS } from './presets';
 import { VIRTUAL_TOOLS } from './virtual';
 import { ToolRegistry, type AnyTool } from './define';
 
@@ -14,6 +15,7 @@ export * from './device';
 export * from './device-map';
 export * from './knowledge';
 export * from './navigate';
+export * from './presets';
 export * from './virtual';
 
 /** Every tool the conductor may use. */
@@ -22,6 +24,7 @@ export const CONDUCTOR_TOOLS: readonly AnyTool[] = [
 	...DEVICE_MAP_TOOLS,
 	...KNOWLEDGE_TOOLS,
 	...NAVIGATE_TOOLS,
+	...PRESET_TOOLS,
 	...VIRTUAL_TOOLS
 ];
 

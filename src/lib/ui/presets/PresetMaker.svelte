@@ -7,26 +7,32 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 (`PresetInstall`). Everything runs in the browser; nothing is uploaded anywhere.
 -->
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { getPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import { Button, IconButton, Legend, Switch } from '$lib/ui';
 	import {
 		DRUM_FIRST_KEY,
 		DRUM_KEYS,
 		DRUM_LAYOUT,
+		KIT_STYLES,
 		MAX_ZONES,
 		buildPreset,
 		detectNote,
 		drumKeys,
 		equalSlices,
 		findOnsets,
+		generateKit,
 		noteFromName,
 		noteName,
 		safeStem,
 		sliceAudio,
 		zipPreset,
 		type BuiltPreset,
+		type KitStyle,
 		type LoopMode,
 		type PcmAudio,
-		type PresetKind
+		type PresetKind,
+		type SampleInput
 	} from '$lib/core/presets';
 	import { decodeAudioFile } from './decode';
 	import PresetInstall from './PresetInstall.svelte';
@@ -69,6 +75,7 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 	const NOTES = Array.from({ length: 88 }, (_, i) => 21 + i);
 
 	let mode = $state<Mode>('drum');
+	let style = $state<KitStyle>('808');
 	let cut = $state<(typeof CUTS)[number]['id']>('hits');
 	let sensitivity = $state(50);
 	let name = $state('');
@@ -125,6 +132,27 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 			busy = false;
 		}
 	}
+
+	/** Puts a whole kit in the list (generated here, or made by the agent): a drum kit on its keys. */
+	function useKit(kitName: string, samples: readonly SampleInput[]) {
+		stop();
+		mode = 'drum';
+		name = kitName;
+		problems = [];
+		warnings = [];
+		items = samples.map((sample) => ({
+			id: nextId++,
+			name: sample.name,
+			audio: sample.audio,
+			found: null,
+			root: null,
+			key: sample.key ?? null
+		}));
+	}
+
+	// a kit the agent made waits in the inbox; one made while the page is open comes at once
+	const inbox = getPresetInbox();
+	onMount(() => inbox?.listen((draft) => useKit(draft.name, draft.samples)));
 
 	function remove(id: number) {
 		items = items.filter((item) => item.id !== id);
@@ -267,6 +295,20 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 			<Legend size="sm" tone="muted">drop wav or aiff files here, or</Legend>
 			<Button size="sm" {busy} onclick={choose}>choose files</Button>
 		</div>
+
+		{#if mode === 'drum'}
+			<div class="generate">
+				<Legend size="xs" tone="muted">or make one from generated sounds:</Legend>
+				<select class="row__select" aria-label="kit style" bind:value={style}>
+					{#each KIT_STYLES as option (option)}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
+				<Button size="sm" onclick={() => useKit(`${style} kit`, generateKit(style))}>
+					{items.length > 0 ? 'replace with a generated kit' : 'generate a kit'}
+				</Button>
+			</div>
+		{/if}
 
 		{#if items.length > 0}
 			<ol class="list" aria-label="samples">
@@ -518,6 +560,13 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 
 	.help code {
 		font-family: var(--xy-font-mono);
+	}
+
+	.generate {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
 	}
 
 	.cut {

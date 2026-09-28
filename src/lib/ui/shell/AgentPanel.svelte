@@ -19,6 +19,7 @@ waits for you to ask); production builds drop that code.
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { getReplicaGuide } from '$lib/app/guide.svelte';
+	import { getPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import { getSimPersistence } from '$lib/app/persistence';
 	import { getAppSimulator } from '$lib/app/simulator.svelte';
 	import { getAppSound } from '$lib/app/sound.svelte';
@@ -74,6 +75,7 @@ waits for you to ask); production builds drop that code.
 	const sound = fromContext(getAppSound);
 	const persistence = fromContext(getSimPersistence);
 	const guide = fromContext(getReplicaGuide);
+	const presets = fromContext(getPresetInbox);
 	const keys = new KeyStore();
 	const uid = $props.id();
 
@@ -226,7 +228,8 @@ waits for you to ask); production builds drop that code.
 				simulator,
 				sound,
 				persistence,
-				guide
+				guide,
+				presets
 			});
 			conductor = next;
 			booting = false;
