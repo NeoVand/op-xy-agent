@@ -39,21 +39,21 @@ to the how-to eval.
 | `starter-loop`        | "build a little house loop and play it"                        | pass     | write_pattern ×3 → set_tempo → transport  |
 
 The starter cases are the agent panel's new suggestions, typed as a user would: all three pass
-($1.05; a 124 BPM loop with drums, bass and chords, playing). The house loop needs patterns and
-sound design together. It failed once, in 3 runs, on the check: the agent ducked the bass on the
-metronome, reasoning that the hats share track 1. That is a fair call for a kick on every beat, so
-the check now takes the metronome when the answer says so, and the duck recipe carries that case.
-The guide case came with the walkthroughs. The agent handed the steps to the replica and told the
-user to follow the lit keys, and it did not play them itself ($0.81, most of it the cache). The
-screen cases start the replica somewhere else (a switched-off filter, a duck LFO, the master EQ) and
-pass 3/3 for $0.30. One answer called the EQ's panels upright at full boost. The manual said so; the
-device leans them to about 60°, and the unit now says that. The reverb and mix cases came with the
-navigator's reach into the auxiliary and mixer pages (a run of three, duck included, $1.10). The
-agent walked to `auxiliary` → `T8` and turned `E1` 16 detents for the reverb; for the mix it went
-`mix` → `T2`, `E4` down to 40 and `E3` to −16. $1.34 for the first seven ($0.84 of it the manual
-cache on the first). Each set-up now takes one call instead of two to four, and the answers explain
-every change: "with sustain at 0, the decay alone sets how long each note lasts". For the acid bass
-the agent picked the ladder filter and noted that the pick returns to `M1`, as on the device.
+($1.05; a 124 BPM loop on three tracks, playing). The house loop needs patterns and sound design
+together. It failed once, in 3 runs, on the check: the agent ducked the bass on the metronome,
+reasoning that the hats share track 1. That is a fair call for a kick on every beat, so the check
+now takes the metronome when the answer says so, and the duck recipe carries that case. The guide
+case came with the walkthroughs. The agent handed the steps to the replica and told the user to
+follow the lit keys, and it did not play them itself ($0.81, most of it the cache). The screen cases
+start the replica somewhere else (a switched-off filter, a duck LFO, the master EQ) and pass 3/3 for
+$0.30. One answer called the EQ's panels upright at full boost. The manual said so; the device leans
+them to about 60°, and the unit now says that. The reverb and mix cases came with the navigator's
+reach into the auxiliary and mixer pages (a run of three, duck included, $1.10). The agent walked to
+`auxiliary` → `T8` and turned `E1` 16 detents for the reverb; for the mix it went `mix` → `T2`, `E4`
+down to 40 and `E3` to −16. $1.34 for the first seven ($0.84 of it the manual cache on the first).
+Each set-up now takes one call instead of two to four, and the answers explain every change: "with
+sustain at 0, the decay alone sets how long each note lasts". For the acid bass the agent picked the
+ladder filter and noted that the pick returns to `M1`, as on the device.
 
 ## 2026-09-28 — how-to: exact steps and the replica, conductor claude-opus-5-5
 
