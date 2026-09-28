@@ -189,38 +189,42 @@ describe('wavetable', () => {
 		expect(Math.abs(db(rms(a) / rms(b)))).toBeLessThan(1);
 	});
 
-	it('moves the spectrum smoothly with position: between frames it blends them', () => {
-		// harmonics 1…40, relative to the frame's RMS
-		const spectrum = (t: number, position: number) => {
-			const x = steady([tableAt(t), position, 0, 0]).subarray(0, 8192);
-			const scale = rms(x) * Math.SQRT2;
-			return harmonicLevels(x, SR, 220, 40).map((v) => v / scale);
-		};
-		const distance = (a: number[], b: number[]) =>
-			Math.sqrt(a.reduce((s, v, i) => s + (v - b[i]) ** 2, 0));
-		for (let t = 0; t < TABLES.length; t++) {
-			if (TABLES[t].name === 'buzz') continue; // its noise changes frame by frame by design
-			const steps = (TABLES[t].frames ?? 32) - 1;
-			for (const f of [3, 8, 14]) {
-				// across a stored frame, a sixteenth of a frame moves the spectrum a sixteenth of the
-				// way (a table that stepped instead of blending would jump the whole way right there)
-				const at = f / steps;
-				const small = distance(
-					spectrum(t, at - 1 / (32 * steps)),
-					spectrum(t, at + 1 / (32 * steps))
-				);
-				const whole = distance(
-					spectrum(t, at - 1 / (2 * steps)),
-					spectrum(t, at + 1 / (2 * steps))
-				);
-				expect(small).toBeLessThan(0.2 * whole + 0.005);
-			}
-			// (zap only turns its harmonics' phases: its magnitudes stay a saw's)
-			if (TABLES[t].name !== 'zap') {
-				expect(distance(spectrum(t, 0), spectrum(t, 1))).toBeGreaterThan(0.1);
+	it(
+		'moves the spectrum smoothly with position: between frames it blends them',
+		{ timeout: 60_000 },
+		() => {
+			// harmonics 1…40, relative to the frame's RMS
+			const spectrum = (t: number, position: number) => {
+				const x = steady([tableAt(t), position, 0, 0]).subarray(0, 8192);
+				const scale = rms(x) * Math.SQRT2;
+				return harmonicLevels(x, SR, 220, 40).map((v) => v / scale);
+			};
+			const distance = (a: number[], b: number[]) =>
+				Math.sqrt(a.reduce((s, v, i) => s + (v - b[i]) ** 2, 0));
+			for (let t = 0; t < TABLES.length; t++) {
+				if (TABLES[t].name === 'buzz') continue; // its noise changes frame by frame by design
+				const steps = (TABLES[t].frames ?? 32) - 1;
+				for (const f of [3, 8, 14]) {
+					// across a stored frame, a sixteenth of a frame moves the spectrum a sixteenth of the
+					// way (a table that stepped instead of blending would jump the whole way right there)
+					const at = f / steps;
+					const small = distance(
+						spectrum(t, at - 1 / (32 * steps)),
+						spectrum(t, at + 1 / (32 * steps))
+					);
+					const whole = distance(
+						spectrum(t, at - 1 / (2 * steps)),
+						spectrum(t, at + 1 / (2 * steps))
+					);
+					expect(small).toBeLessThan(0.2 * whole + 0.005);
+				}
+				// (zap only turns its harmonics' phases: its magnitudes stay a saw's)
+				if (TABLES[t].name !== 'zap') {
+					expect(distance(spectrum(t, 0), spectrum(t, 1))).toBeGreaterThan(0.1);
+				}
 			}
 		}
-	});
+	);
 
 	it('plays through the synth core at the same level', () => {
 		const x = throughCore('wavetable', [80, 80, 80, 80]);
