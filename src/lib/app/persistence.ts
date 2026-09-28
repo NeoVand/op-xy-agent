@@ -22,7 +22,7 @@ import { DEFAULT_LEVEL, defaultState, type SimState } from '$lib/sim/params';
 /**
  * Bumped when a save can no longer simply be merged onto the defaults; older versions that can be
  * brought up to date are ({@link upgradeV1}, {@link upgradeGrooves}, {@link upgradeArpSpeeds},
- * {@link upgradeAuxScales}).
+ * {@link upgradeAuxScales}, {@link upgradeEnvAmounts}).
  */
 export const SAVE_VERSION = 5;
 
@@ -190,11 +190,26 @@ export function upgradeAuxScales(project: unknown): void {
 	}
 }
 
+/**
+ * A version 1–4 save's filter envelope amounts, which could go below zero: the device's run from
+ * none to full (research 59 §2.3). In place.
+ */
+export function upgradeEnvAmounts(project: unknown): void {
+	if (!isObject(project)) return;
+	for (const track of Array.isArray(project.tracks) ? project.tracks : []) {
+		const filter = isObject(track) ? track.filter : null;
+		if (isObject(filter) && typeof filter.envAmount === 'number' && filter.envAmount < 0) {
+			filter.envAmount = 0;
+		}
+	}
+}
+
 /** The upgrades a project saved by `version` needs (all but version 1's, which spans the library). */
 function upgradeProject(project: unknown, version: number): void {
 	if (version < 3) upgradeGrooves(project);
 	if (version < 4) upgradeArpSpeeds(project);
 	if (version < 5) upgradeAuxScales(project);
+	if (version < 5) upgradeEnvAmounts(project);
 }
 
 /** The same upgrades for the projects kept in the projects folder (their content is JSON). */

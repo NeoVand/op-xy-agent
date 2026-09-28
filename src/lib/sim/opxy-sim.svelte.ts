@@ -603,7 +603,7 @@ export class OpxySim {
 				const f = t.filter;
 				if (e === 0) f.cutoff = step(f.cutoff, 0, 99);
 				else if (e === 1) f.resonance = step(f.resonance, 0, 99);
-				else if (e === 2) f.envAmount = step(f.envAmount, -99, 99);
+				else if (e === 2) f.envAmount = step(f.envAmount, 0, 99);
 				else f.keyTracking = step(f.keyTracking, 0, 99);
 				return;
 			}

@@ -265,7 +265,7 @@ const TRACK_PARAMS: Readonly<Record<string, LockParam>> = Object.fromEntries(
 		}),
 		param('filter.envAmount', {
 			label: 'env amount',
-			min: -99,
+			min: 0,
 			max: 99,
 			step: 1,
 			get: (t) => t.filter.envAmount,

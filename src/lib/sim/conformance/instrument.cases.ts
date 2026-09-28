@@ -348,8 +348,9 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('key.m3');
 			await d.withShift(() => d.turn(3, 40));
 			await d.turn(3, -20);
-			// the bass's envelope amount, 34, less 20; its tape send is full, as on every new track
-			expect(on(d, 'filter').envAmount).toBeCloseTo(14 / 99, 9);
+			// the bass's envelope amount as the screen reads it, 33, less 20; its tape send is full, as on
+			// every new track
+			expect(on(d, 'filter').envAmount).toBeCloseTo(13 / 99, 9);
 			await d.withShift(async () => {
 				expect(on(d, 'sends').values).toEqual(['00', '99', '40', '00']);
 			});
@@ -995,28 +996,28 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m3');
-			// from the bass preset's cutoff 0, resonance 09, envelope amount 34 and key tracking 17
+			// from the bass preset's cutoff 0, resonance 09, envelope amount 33 and key tracking 17
 			await d.turn(1, 50);
 			await d.turn(2, 31);
-			await d.turn(3, -64);
+			await d.turn(3, -20);
 			await d.turn(4, 43);
 			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 40');
 			expect(on(d, 'filter')).toMatchObject({
 				cutoff: 50 / 99,
 				resonance: 40 / 99,
-				envAmount: -30 / 99,
+				envAmount: 13 / 99,
 				keyTracking: 60 / 99
 			});
 		});
 
-		it('runs the envelope amount both ways from zero (ours: −99…99)', async () => {
+		it('runs the envelope amount from none to full, as the device’s CC34 does (research 59 §2.3)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m3');
 			await d.turn(3, 150);
 			expect(on(d, 'filter').envAmount).toBe(1);
 			await d.turn(3, -300);
-			expect(on(d, 'filter').envAmount).toBe(-1);
+			expect(on(d, 'filter').envAmount).toBe(0);
 		});
 
 		it('opens the filter types at the track’s type with shift + M3; a click of E1 loads one', async () => {

@@ -196,7 +196,10 @@ export interface TrackState {
 		on: boolean;
 		cutoff: number;
 		resonance: number;
-		/** −99…99. */
+		/**
+		 * 0–99: how far the filter envelope opens the cutoff. The device's CC34 runs from none to
+		 * full, drawing no hatch at 0 (research 59 §2.3), and presets store it unsigned.
+		 */
 		envAmount: number;
 		keyTracking: number;
 	};
