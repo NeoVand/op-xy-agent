@@ -65,6 +65,31 @@ facts:
     text: No MIDI CC is known for the filter type.
     source: docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
     confidence: community-verified
+  - id: types-sound
+    text: 'Ladder and svf are 24 dB lowpasses modelled on analog circuits: the ladder four stages with feedback, the bass thinning as resonance rises; the svf two state-variable stages with a soft knee at resonance 0. z lowpass and z hipass are single two-pole digital filters, very gentle at resonance 0; the z lowpass rises to a whistling, nearly self-oscillating peak while the z hipass only reaches a mild one.'
+    source: docs/research/60-sound-session.md#2-filters
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: cutoff-range
+    text: Cutoff spans from about 25 Hz to past 20 kHz; at the same setting the z hipass sits an octave below the z lowpass, and the svf a little above the ladder.
+    source: docs/research/60-sound-session.md#2-filters
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: svf-shift
+    text: On the svf, raising resonance also lowers the peak by up to about half an octave and takes away up to 9 dB of level.
+    source: docs/research/60-sound-session.md#2-filters
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: key-tracking-law
+    text: 'Key tracking pivots on C2: at 0 the cutoff ignores the note, at the middle it follows half an octave per octave, at the top an octave per octave.'
+    source: docs/research/60-sound-session.md#2-filters
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: env-amount-law
+    text: At the envelope's peak, envelope amount opens the cutoff by about 0.85 of its own steps on the cutoff's scale, so a full amount from a closed filter opens it almost all the way.
+    source: docs/research/60-sound-session.md#2-filters
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: type
     goal: Change the filter type of the selected track

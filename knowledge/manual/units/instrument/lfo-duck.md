@@ -33,6 +33,16 @@ facts:
     source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
     confidence: verified
     verified_on: '1.1.33'
+  - id: timing
+    text: At full amount the duck dips the track to silence in about 6 ms. Hold keeps it down from about 50 ms at 0 to 0.4 s at the top; release brings the level back within 0.64 s at 0 down to almost at once at the top, so a higher release is faster.
+    source: docs/research/60-sound-session.md#4-lfos
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: notes-trigger
+    text: With a track as its source, the source card shows a MIDI plug when the track's notes trigger the duck, so even a silenced source track still ducks.
+    source: docs/research/60-sound-session.md#4-lfos
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M4
     encoder: E1

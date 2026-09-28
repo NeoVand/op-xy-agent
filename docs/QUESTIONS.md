@@ -26,7 +26,11 @@ answer and date (and into `DECISIONS.md` when they shape the project).
      bend range read (we expect 2 semitones)? On T8 (we expect an octave)?
    - ~~Are presets inside a category listed alphabetically, or in some other order?~~ By name,
      factory and user presets together (camera, 2026-09-28; note 59 §2.6).
-5. **Filter and LFO session** (changes device state the same way as the engine session: CCs and
+5. ~~**Filter and LFO session**~~ Done on 2026-09-28 (note 60): the four filters, both envelopes'
+   time laws, the LFO rates and depths and the duck, measured and now in the replica's sound.
+   Still open from it: the synced LFO steps between the multiples of 8, the random LFO's steps and
+   env card, element's depth, and the filter envelope's own times (assumed the amp envelope's).
+   Original ask (changes device state the same way as the engine session: CCs and
    notes on a new throwaway project; nothing saved, loaded or deleted). The engines were measured
    with filters and LFOs off; the four filters (slopes, resonance, envelope depth) and the LFO shapes
    need their own sweeps. The replica now plays a new project's real presets, several of which lean
@@ -41,14 +45,17 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    them, so ours are invented: holding **bar** on a pattern with notes; holding a **step** with
    notes, and one with a parameter lock; **shift + a step**, then a white key; the **arpeggio** or
    **maestro** page; the screen while **recording**.
-7. **The sampler's fade and loop crossfade** (a recording over USB audio at the next session). The
-   device draws a drum key's fade as a ramp rising from the start marker, while the replica plays it
-   as a fade-out over the region's end; and the replica ignores the loop crossfade. A key played at
-   fade 0 and 99, and a looping synth sample at crossfade 0 and 99, would settle both.
+7. **The sampler's loop crossfade** (the fade is settled: a fixed-time fade-in from the start
+   marker, 0.95 s at 99, now in the replica; note 60 §5). The crossfade tops out at 75 % and is
+   drawn over the end of the loop, but "80s lover" changes over time by itself, so its sound was not
+   isolated. A plain sustained sample (a held synth note recorded into the sampler, say) looped at
+   crossfade 0 and 75 % would settle it.
 8. **Punch-in FX and the tape** (read-only). Their screens are captured (10 fps, every punch-in key;
    note 59) and the replica now draws them: the idle heartbeat and a still of each key's animation,
    matched to keys by the order they were pressed (please confirm the order if you remember it).
-   Their sounds are still needed (USB audio at the next session). The replica's punch-in FX (aux T2) and tape (aux T6)
+   All 24 punch-in keys are now recorded over a playing project, fired over MIDI (channel 10, 6 s
+   each; note 60 §6); what each effect is still has to be worked out from that, and your notes on
+   them would speed it up. The tape's sounds are still needed. The replica's punch-in FX (aux T2) and tape (aux T6)
    patterns light up but make no sound: TE never published which of the 24 keys plays which effect.
    A short phone video pressing each punch-in key in turn over a beat, or notes on what each does,
    would let us build them; the same for the tape's clips.

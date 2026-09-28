@@ -37,6 +37,16 @@ facts:
     source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
     confidence: verified
     verified_on: '1.1.33'
+  - id: depths
+    text: The vol ladder dips the level to about a fifth at full; vib wobbles the pitch by about ±25 cents at a quarter, ±190 at half and more than an octave at full, growing ever faster.
+    source: docs/research/60-sound-session.md#4-lfos
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: env-sound
+    text: Env at 64 keeps the tremolo steady; toward 0 it fades the tremolo in slowly, toward 127 it fades it out, at 127 at once.
+    source: docs/research/60-sound-session.md#4-lfos
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M4
     encoder: E1

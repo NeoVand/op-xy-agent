@@ -61,6 +61,11 @@ facts:
     source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
     confidence: verified
     verified_on: '1.1.33'
+  - id: fade-sound
+    text: The sample fade is a fade-in from the start marker lasting a fixed time, about 0.25 s at 50 and 0.95 s at 99, so a short hit at a high fade never reaches full level.
+    source: docs/research/60-sound-session.md#5-samplers
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

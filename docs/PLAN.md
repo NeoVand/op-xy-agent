@@ -16,6 +16,10 @@
     song mode, the filter and LFO pages, the auxiliary tracks, all eleven engine pages with their
     motion, and the preset browser (shift + M1 on 1.1.33, where an engine loads as one of its
     presets). What the captures leave open is in `QUESTIONS.md` and note 59 §4.
+  - **The sound** follows a session recorded on the owner's unit (note 60): each filter type's
+    curve and resonance (held to the device within 3.5 dB by a test), the envelopes' time laws and
+    curve shapes, the LFO rates and depths, the duck, and the drum key's fade-in. Open: the
+    punch-in effects' sounds (recorded, to be worked out) and the loop crossfade.
   - **The agent** plans exact steps on a copy of the simulator for any page or value, auxiliary and
     mixer values included. It can read them out, play them on the replica, or walk the user through
     them one lit key at a time. It sets whole sounds up from an idea (five tested recipes) and sets a

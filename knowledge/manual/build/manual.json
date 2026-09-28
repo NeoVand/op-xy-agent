@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "ddbe3e3b",
+	"bundle_hash": "e5c83d71",
 	"stats": {
 		"units": 163,
-		"facts": 1098,
+		"facts": 1117,
 		"procedures": 196,
 		"parameters": 207,
-		"verified_items": 200,
-		"words": 40969,
+		"verified_items": 220,
+		"words": 41620,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -9191,6 +9191,38 @@
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "attack-time",
+					"text": "The attack runs from instant at 0 to about 1.4 s at the middle and six minutes at the top, doubling every 6 or so steps; it rises like a charging capacitor, fastest at first, and stops at the peak.",
+					"source": "docs/research/60-sound-session.md#3-envelopes",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "decay-release-time",
+					"text": "Decay and release fall exponentially on one law, halving in about 5 ms at the short end, 0.28 s in the middle and 5 s at the long end (release runs the other way round); the law is gentle up to the middle and steepens past it.",
+					"source": "docs/research/60-sound-session.md#3-envelopes",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "decay-cut",
+					"text": "A decay down to sustain 0 cuts to silence at about −41 dB, and a release ends at about −66 dB.",
+					"source": "docs/research/60-sound-session.md#3-envelopes",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "sustain-level",
+					"text": "Sustain is linear in level: a quarter, half and three quarters of the way up give a quarter, half and three quarters of the peak.",
+					"source": "docs/research/60-sound-session.md#3-envelopes",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -9362,6 +9394,10 @@
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/60-sound-session.md#3-envelopes",
 					"kind": "research"
 				}
 			],
@@ -9699,6 +9735,46 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community-verified"
+				},
+				{
+					"id": "types-sound",
+					"text": "Ladder and svf are 24 dB lowpasses modelled on analog circuits: the ladder four stages with feedback, the bass thinning as resonance rises; the svf two state-variable stages with a soft knee at resonance 0. z lowpass and z hipass are single two-pole digital filters, very gentle at resonance 0; the z lowpass rises to a whistling, nearly self-oscillating peak while the z hipass only reaches a mild one.",
+					"source": "docs/research/60-sound-session.md#2-filters",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "cutoff-range",
+					"text": "Cutoff spans from about 25 Hz to past 20 kHz; at the same setting the z hipass sits an octave below the z lowpass, and the svf a little above the ladder.",
+					"source": "docs/research/60-sound-session.md#2-filters",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "svf-shift",
+					"text": "On the svf, raising resonance also lowers the peak by up to about half an octave and takes away up to 9 dB of level.",
+					"source": "docs/research/60-sound-session.md#2-filters",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "key-tracking-law",
+					"text": "Key tracking pivots on C2: at 0 the cutoff ignores the note, at the middle it follows half an octave per octave, at the top an octave per octave.",
+					"source": "docs/research/60-sound-session.md#2-filters",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "env-amount-law",
+					"text": "At the envelope's peak, envelope amount opens the cutoff by about 0.85 of its own steps on the cutoff's scale, so a full amount from a closed filter opens it almost all the way.",
+					"source": "docs/research/60-sound-session.md#2-filters",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -9814,6 +9890,10 @@
 				},
 				{
 					"url": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/60-sound-session.md#2-filters",
 					"kind": "research"
 				}
 			],
@@ -10130,6 +10210,38 @@
 					"confidence": "verified"
 				},
 				{
+					"id": "synced-rates",
+					"text": "Synced, the speed doubles every eighth of the lane: in the middle of the synced range one cycle lasts a quarter note, anticlockwise an eighth, a 16th, a 32nd and a 64th, clockwise a half note and a bar.",
+					"source": "docs/research/60-sound-session.md#4-lfos",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "free-rates",
+					"text": "Free, the LFO stands still at the dial's first position and speeds up ever faster, to about 21.5 cycles a second at the end.",
+					"source": "docs/research/60-sound-session.md#4-lfos",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "amount-centre",
+					"text": "Amount ladders are centred on zero (CC 64 over MIDI); either side of it sets the same depth with the modulation inverted.",
+					"source": "docs/research/60-sound-session.md#4-lfos",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "cutoff-depth",
+					"text": "Aimed at a filter's cutoff, value and random sweep its whole range at full amount; half the amount from a middle cutoff already reaches both ends.",
+					"source": "docs/research/60-sound-session.md#4-lfos",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "negative",
 					"text": "The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn.",
 					"source": "https://teenage.engineering/downloads/op-xy#1.1.3",
@@ -10213,6 +10325,10 @@
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/60-sound-session.md#4-lfos",
 					"kind": "research"
 				},
 				{
@@ -10307,6 +10423,22 @@
 					"id": "screen",
 					"text": "Duck shows its source as a track number (tr 1 and on), the last position a metronome icon, then amount, a live signal box and cards for hold and release.",
 					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "timing",
+					"text": "At full amount the duck dips the track to silence in about 6 ms. Hold keeps it down from about 50 ms at 0 to 0.4 s at the top; release brings the level back within 0.64 s at 0 down to almost at once at the top, so a higher release is faster.",
+					"source": "docs/research/60-sound-session.md#4-lfos",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "notes-trigger",
+					"text": "With a track as its source, the source card shows a MIDI plug when the track's notes trigger the duck, so even a silenced source track still ducks.",
+					"source": "docs/research/60-sound-session.md#4-lfos",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
@@ -10415,6 +10547,10 @@
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/60-sound-session.md#4-lfos",
 					"kind": "research"
 				}
 			],
@@ -10835,6 +10971,22 @@
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "depths",
+					"text": "The vol ladder dips the level to about a fifth at full; vib wobbles the pitch by about ±25 cents at a quarter, ±190 at half and more than an octave at full, growing ever faster.",
+					"source": "docs/research/60-sound-session.md#4-lfos",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "env-sound",
+					"text": "Env at 64 keeps the tremolo steady; toward 0 it fades the tremolo in slowly, toward 127 it fades it out, at 127 at once.",
+					"source": "docs/research/60-sound-session.md#4-lfos",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -10933,6 +11085,10 @@
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/60-sound-session.md#4-lfos",
 					"kind": "research"
 				}
 			],
@@ -14416,6 +14572,14 @@
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "crossfade-range",
+					"text": "Loop crossfade runs from 0 to 75 %, drawn as a dark wedge sloping down into the loop end over that share of the loop.",
+					"source": "docs/research/60-sound-session.md#5-samplers",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -14586,6 +14750,10 @@
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/60-sound-session.md#5-samplers",
 					"kind": "research"
 				}
 			],
@@ -14914,6 +15082,14 @@
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "fade-sound",
+					"text": "The sample fade is a fade-in from the start marker lasting a fixed time, about 0.25 s at 50 and 0.95 s at 99, so a short hit at a high fade never reaches full level.",
+					"source": "docs/research/60-sound-session.md#5-samplers",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -15079,6 +15255,10 @@
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/60-sound-session.md#5-samplers",
 					"kind": "research"
 				}
 			],
@@ -16406,11 +16586,11 @@
 				},
 				{
 					"id": "midi-notes",
-					"text": "Notes on MIDI channel 10 trigger punch-in FX; which note fires which effect is unpublished.",
-					"source": "docs/research/20-midi-control.md#43-punch-in-fx-notes-ch10",
+					"text": "Over MIDI, notes 53–76 on channel 10 fire the 24 effects as if the keys were held, with the track showing each animation; which effect each note is remains unpublished.",
+					"source": "docs/research/60-sound-session.md#6-punch-in-fx",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community-verified"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "animations",
@@ -16483,7 +16663,7 @@
 					"kind": "changelog"
 				},
 				{
-					"url": "docs/research/20-midi-control.md#43-punch-in-fx-notes-ch10",
+					"url": "docs/research/60-sound-session.md#6-punch-in-fx",
 					"kind": "research"
 				},
 				{

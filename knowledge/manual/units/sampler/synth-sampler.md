@@ -54,6 +54,11 @@ facts:
     source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
     confidence: verified
     verified_on: '1.1.33'
+  - id: crossfade-range
+    text: 'Loop crossfade runs from 0 to 75 %, drawn as a dark wedge sloping down into the loop end over that share of the loop.'
+    source: docs/research/60-sound-session.md#5-samplers
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

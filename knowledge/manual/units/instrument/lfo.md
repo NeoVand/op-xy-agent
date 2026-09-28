@@ -39,6 +39,26 @@ facts:
     source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
     confidence: verified
     verified_on: '1.1.33'
+  - id: synced-rates
+    text: 'Synced, the speed doubles every eighth of the lane: in the middle of the synced range one cycle lasts a quarter note, anticlockwise an eighth, a 16th, a 32nd and a 64th, clockwise a half note and a bar.'
+    source: docs/research/60-sound-session.md#4-lfos
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: free-rates
+    text: Free, the LFO stands still at the dial's first position and speeds up ever faster, to about 21.5 cycles a second at the end.
+    source: docs/research/60-sound-session.md#4-lfos
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: amount-centre
+    text: Amount ladders are centred on zero (CC 64 over MIDI); either side of it sets the same depth with the modulation inverted.
+    source: docs/research/60-sound-session.md#4-lfos
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: cutoff-depth
+    text: Aimed at a filter's cutoff, value and random sweep its whole range at full amount; half the amount from a middle cutoff already reaches both ends.
+    source: docs/research/60-sound-session.md#4-lfos
+    confidence: verified
+    verified_on: '1.1.33'
   - id: negative
     text: The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn.
     source: https://teenage.engineering/downloads/op-xy#1.1.3

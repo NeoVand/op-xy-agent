@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1098 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1117 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -1648,6 +1648,10 @@ Facts:
 - Release is set by where its handle sits, so turning E4 clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade. [#release-direction] (verified 1.1.33) [s3]
 - There is no plateau after the attack; the decay starts at the peak. The attack rises steeply and bends into the peak, and decay and release fall steeply and level off. [#shape] (verified 1.1.33) [s3]
 - The filter envelope is always drawn at full height; its real reach is set by envelope amount on `M3`. [#full-height] (verified 1.1.33) [s3]
+- The attack runs from instant at 0 to about 1.4 s at the middle and six minutes at the top, doubling every 6 or so steps; it rises like a charging capacitor, fastest at first, and stops at the peak. [#attack-time] (verified 1.1.33) [s4]
+- Decay and release fall exponentially on one law, halving in about 5 ms at the short end, 0.28 s in the middle and 5 s at the long end (release runs the other way round); the law is gentle up to the middle and steepens past it. [#decay-release-time] (verified 1.1.33) [s4]
+- A decay down to sustain 0 cuts to silence at about −41 dB, and a release ends at about −66 dB. [#decay-cut] (verified 1.1.33) [s4]
+- Sustain is linear in level: a quarter, half and three quarters of the way up give a quarter, half and three quarters of the peak. [#sustain-level] (verified 1.1.33) [s4]
 
 Procedures:
 - Show the other envelope on M2 [#switch] [s1]
@@ -1669,7 +1673,7 @@ Parameters:
 
 Related: [instrument.play-mode], [instrument.filter], [instrument.overview]
 
-Sources: s1 guide:instrument#envelopes · s2 guide:instrument#filter · s3 note 59
+Sources: s1 guide:instrument#envelopes · s2 guide:instrument#filter · s3 note 59 · s4 note 60
 
 ### Play mode, portamento, bend range and preset volume (M2 + shift) [instrument.play-mode]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -1732,6 +1736,11 @@ Facts:
 - Envelope amount runs from none at 0 to full at 99; there is no negative setting that would sweep the cutoff down. [#env-range] (verified 1.1.33) [s2]
 - Over MIDI, CC32–35 on the track's channel move cutoff, resonance, envelope amount and key tracking, and the page redraws as they arrive. [#midi-ccs] (verified 1.1.33) [s4]
 - No MIDI CC is known for the filter type. [#no-type-cc] (community-verified) [s5]
+- Ladder and svf are 24 dB lowpasses modelled on analog circuits: the ladder four stages with feedback, the bass thinning as resonance rises; the svf two state-variable stages with a soft knee at resonance 0. z lowpass and z hipass are single two-pole digital filters, very gentle at resonance 0; the z lowpass rises to a whistling, nearly self-oscillating peak while the z hipass only reaches a mild one. [#types-sound] (verified 1.1.33) [s6]
+- Cutoff spans from about 25 Hz to past 20 kHz; at the same setting the z hipass sits an octave below the z lowpass, and the svf a little above the ladder. [#cutoff-range] (verified 1.1.33) [s6]
+- On the svf, raising resonance also lowers the peak by up to about half an octave and takes away up to 9 dB of level. [#svf-shift] (verified 1.1.33) [s6]
+- Key tracking pivots on C2: at 0 the cutoff ignores the note, at the middle it follows half an octave per octave, at the top an octave per octave. [#key-tracking-law] (verified 1.1.33) [s6]
+- At the envelope's peak, envelope amount opens the cutoff by about 0.85 of its own steps on the cutoff's scale, so a full amount from a closed filter opens it almost all the way. [#env-amount-law] (verified 1.1.33) [s6]
 
 Procedures:
 - Change the filter type of the selected track [#type] [s1]
@@ -1749,7 +1758,7 @@ Parameters:
 
 Related: [instrument.envelopes], [instrument.track-sends], [instrument.lfo]
 
-Sources: s1 guide:instrument#filter · s2 note 59 · s3 note 30 · s4 note 59 · s5 note 20
+Sources: s1 guide:instrument#filter · s2 note 59 · s3 note 30 · s4 note 59 · s5 note 20 · s6 note 60
 
 ### Track sends to aux out, tape, FX I and FX II (M3 + shift) [instrument.track-sends]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -1807,10 +1816,14 @@ Facts:
 - Extra settings sit behind encoder clicks or `shift` plus a turn; on some types a click on `E1` changes the waveform shape. [#sub-functions] [s1]
 - Speed controls are tempo-synced over their anti-clockwise range; turned clockwise until a dial icon appears, they run at a free rate. [#speed] [s1]
 - On screen a synced speed reads as a count beside a note value, 8 with a 32nd at the slow end, then 6 with a 16th, 4 with a quarter and 2 with a whole note as it turns; from the middle of its range a clock dial shows the free rate. [#speed-screen] (verified 1.1.33) [s3]
-- The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn. [#negative] (since 1.1.3) (derived) [s4]
-- On drum tracks the LFO restarts with every new note. [#drum-reset] (since 1.0.15) [s5]
-- Over MIDI, CC40–43 on the track's channel drive the four `M4` encoders in order, in all five LFO types. [#midi-ccs] (verified 1.1.33) [s6]
-- No MIDI CC is known for the LFO type. [#no-type-cc] (community-verified) [s7]
+- Synced, the speed doubles every eighth of the lane: in the middle of the synced range one cycle lasts a quarter note, anticlockwise an eighth, a 16th, a 32nd and a 64th, clockwise a half note and a bar. [#synced-rates] (verified 1.1.33) [s4]
+- Free, the LFO stands still at the dial's first position and speeds up ever faster, to about 21.5 cycles a second at the end. [#free-rates] (verified 1.1.33) [s4]
+- Amount ladders are centred on zero (CC 64 over MIDI); either side of it sets the same depth with the modulation inverted. [#amount-centre] (verified 1.1.33) [s4]
+- Aimed at a filter's cutoff, value and random sweep its whole range at full amount; half the amount from a middle cutoff already reaches both ends. [#cutoff-depth] (verified 1.1.33) [s4]
+- The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn. [#negative] (since 1.1.3) (derived) [s5]
+- On drum tracks the LFO restarts with every new note. [#drum-reset] (since 1.0.15) [s6]
+- Over MIDI, CC40–43 on the track's channel drive the four `M4` encoders in order, in all five LFO types. [#midi-ccs] (verified 1.1.33) [s7]
+- No MIDI CC is known for the LFO type. [#no-type-cc] (community-verified) [s8]
 - With the LFO off, the page is dimmed under an off box; pressing `M4` again switches the LFO on. [#off] (verified 1.1.33) [s3]
 
 Procedures:
@@ -1820,7 +1833,7 @@ Procedures:
 
 Related: [instrument.lfo-duck], [instrument.lfo-element], [instrument.lfo-random], [instrument.lfo-tremolo], [instrument.lfo-value], [sequencer.parameter-locks]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.1.0 · s3 note 59 · s4 changelog:1.1.3 · s5 changelog:1.0.15 · s6 note 59 · s7 note 20
+Sources: s1 guide:instrument#lfo · s2 changelog:1.1.0 · s3 note 59 · s4 note 60 · s5 changelog:1.1.3 · s6 changelog:1.0.15 · s7 note 59 · s8 note 20
 
 ### Duck LFO (sidechain pumping) [instrument.lfo-duck]
 current · OS ≥ 1.1.0 · changed in 1.1.3 · guide v1.1.15 · verified on 1.1.33
@@ -1840,6 +1853,8 @@ Facts:
 - Any of the 16 tracks can be the source — instrument tracks 1–8 or auxiliary tracks 9–16 — and so can the metronome, for an even duck on every beat. [#sources] [s1]
 - OS 1.1.3 fixed using a MIDI track as the duck source. [#midi-source] (since 1.1.3) [s3]
 - Duck shows its source as a track number (tr 1 and on), the last position a metronome icon, then amount, a live signal box and cards for hold and release. [#screen] (verified 1.1.33) [s4]
+- At full amount the duck dips the track to silence in about 6 ms. Hold keeps it down from about 50 ms at 0 to 0.4 s at the top; release brings the level back within 0.64 s at 0 down to almost at once at the top, so a higher release is faster. [#timing] (verified 1.1.33) [s5]
+- With a track as its source, the source card shows a MIDI plug when the track's notes trigger the duck, so even a silenced source track still ducks. [#notes-trigger] (verified 1.1.33) [s5]
 
 Parameters:
 
@@ -1853,7 +1868,7 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.lfo-tremolo]
 
-Sources: s1 guide:instrument#duck · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 note 59
+Sources: s1 guide:instrument#duck · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 note 59 · s5 note 60
 
 ### Element LFO (gyroscope, microphone, envelope) [instrument.lfo-element]
 current · OS ≥ 1.0.9 · changed in 1.0.50, 1.1.0 · guide v1.1.15 · verified on 1.1.33
@@ -1934,6 +1949,8 @@ Facts:
 - The tremolo page labels its fields rate, vib, vol and env, with a card labelled shape under env that shows the waveform (sine, square …); vib and vol are pointers on tick ladders. [#screen] (verified 1.1.33) [s2]
 - While synced, rate shows a note-value icon with a multiplier (8, 6, 4, 2 …); turned further clockwise it becomes a clock dial whose hand turns, and the rate runs free. [#rate-drawn] (verified 1.1.33) [s2]
 - Env is drawn as a line that rises at 0, lies flat at 64 and falls at 127. [#env-drawn] (verified 1.1.33) [s2]
+- The vol ladder dips the level to about a fifth at full; vib wobbles the pitch by about ±25 cents at a quarter, ±190 at half and more than an octave at full, growing ever faster. [#depths] (verified 1.1.33) [s3]
+- Env at 64 keeps the tremolo steady; toward 0 it fades the tremolo in slowly, toward 127 it fades it out, at 127 at once. [#env-sound] (verified 1.1.33) [s3]
 
 Parameters:
 
@@ -1947,7 +1964,7 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.engine-organ], [instrument.engine-axis]
 
-Sources: s1 guide:instrument#lfo · s2 note 59
+Sources: s1 guide:instrument#lfo · s2 note 59 · s3 note 60
 
 ### Value LFO [instrument.lfo-value]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15 · verified on 1.1.33
@@ -2632,6 +2649,7 @@ Facts:
 - The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers. [#screen] (verified 1.1.33) [s4]
 - With `shift` held it shows direction, tune as a note symbol and a value such as −12.00, crossfade as a percentage drawn as a dark wedge at the loop, and gain. [#shift-screen] (verified 1.1.33) [s4]
 - CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s4]
+- Loop crossfade runs from 0 to 75 %, drawn as a dark wedge sloping down into the loop end over that share of the loop. [#crossfade-range] (verified 1.1.33) [s5]
 
 Parameters:
 
@@ -2649,7 +2667,7 @@ Parameters:
 
 Related: [sampler.overview], [sampler.sampling], [sampler.multisampler]
 
-Sources: s1 guide:sample#one-shot-synth-sampler · s2 note 30 · s3 changelog:1.1.0 · s4 note 59
+Sources: s1 guide:sample#one-shot-synth-sampler · s2 note 30 · s3 changelog:1.1.0 · s4 note 59 · s5 note 60
 
 ### Drum sampler [sampler.drum-sampler]
 current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15
@@ -2705,6 +2723,7 @@ Facts:
 - With `shift` held the page shows direction, pan as a bar from L to R, fade as a dark ramp that rises from the start marker over the wave, and gain, which scales the drawn wave. [#shift-screen] (verified 1.1.33) [s7]
 - Tune is always signed, so no transposition reads +0.00, and it reaches well past an octave (−16.10 was seen on a key). [#tune-reading] (verified 1.1.33) [s7]
 - CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s7]
+- The sample fade is a fade-in from the start marker lasting a fixed time, about 0.25 s at 50 and 0.95 s at 99, so a short hit at a high fade never reaches full level. [#fade-sound] (verified 1.1.33) [s8]
 
 Parameters:
 
@@ -2721,7 +2740,7 @@ Parameters:
 
 Related: [sampler.drum-sampler], [sampler.slicing]
 
-Sources: s1 guide:sample#drum-sampler · s2 note 30 · s3 changelog:1.0.45 · s4 note 30 · s5 changelog:1.1.15 · s6 note 40 · s7 note 59
+Sources: s1 guide:sample#drum-sampler · s2 note 30 · s3 changelog:1.0.45 · s4 note 30 · s5 changelog:1.1.15 · s6 note 40 · s7 note 59 · s8 note 60
 
 ### Slicing a sample across the keys [sampler.slicing]
 current · OS ≥ 1.1.0 · guide v1.1.15
@@ -2950,7 +2969,7 @@ Facts:
 - Percussive engines such as the drum sampler form the percussion group; synth engines and the synth sampler the melodic group. [#groups] [s3]
 - When effects conflict, the mute effect takes priority. [#mute-wins] (since 1.0.50) [s4]
 - OS 1.0.32 stopped `shift + key` from triggering punch-in FX while external MIDI is in use. [#midi-shortcut] (since 1.0.32) [s5]
-- Notes on MIDI channel 10 trigger punch-in FX; which note fires which effect is unpublished. [#midi-notes] (community-verified) [s6]
+- Over MIDI, notes 53–76 on channel 10 fire the 24 effects as if the keys were held, with the track showing each animation; which effect each note is remains unpublished. [#midi-notes] (verified 1.1.33) [s6]
 - On `T2` each of the 24 keys plays its own animation on the screen — planets, a digit clock, noise, hands, waves, sweeping lines and bars, and more. [#animations] (verified 1.1.33) [s7]
 - With no effect held, the page shows a single dot tracing a heartbeat line across the dot grid, about every three seconds; it starts again from the left edge each time an effect ends. [#idle-heartbeat] (verified 1.1.33) [s7]
 
@@ -2962,7 +2981,7 @@ Procedures:
 
 Related: [auxiliary.overview], [howto.first-punch-in]
 
-Sources: s1 guide:get-started#4.4.%20adding-punch-in-fx · s2 guide:auxiliary#punch-in-fx · s3 guide:mix#master · s4 changelog:1.0.50 · s5 changelog:1.0.32 · s6 note 20 · s7 note 59
+Sources: s1 guide:get-started#4.4.%20adding-punch-in-fx · s2 guide:auxiliary#punch-in-fx · s3 guide:mix#master · s4 changelog:1.0.50 · s5 changelog:1.0.32 · s6 note 60 · s7 note 59
 
 ### External MIDI track [auxiliary.external-midi]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15 · verified on 1.1.33

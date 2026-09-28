@@ -55,6 +55,26 @@ facts:
     source: docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2
     confidence: verified
     verified_on: '1.1.33'
+  - id: attack-time
+    text: The attack runs from instant at 0 to about 1.4 s at the middle and six minutes at the top, doubling every 6 or so steps; it rises like a charging capacitor, fastest at first, and stops at the peak.
+    source: docs/research/60-sound-session.md#3-envelopes
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: decay-release-time
+    text: Decay and release fall exponentially on one law, halving in about 5 ms at the short end, 0.28 s in the middle and 5 s at the long end (release runs the other way round); the law is gentle up to the middle and steepens past it.
+    source: docs/research/60-sound-session.md#3-envelopes
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: decay-cut
+    text: A decay down to sustain 0 cuts to silence at about −41 dB, and a release ends at about −66 dB.
+    source: docs/research/60-sound-session.md#3-envelopes
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: sustain-level
+    text: 'Sustain is linear in level: a quarter, half and three quarters of the way up give a quarter, half and three quarters of the peak.'
+    source: docs/research/60-sound-session.md#3-envelopes
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: switch
     goal: Show the other envelope on M2
