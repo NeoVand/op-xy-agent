@@ -16,7 +16,8 @@ src/lib/
                firmware profile — loaded from knowledge/*.json and validated with zod
     music/     notation, melodies, harmony; later SongIR, arranger, MIDI-file import
     xy/        (M6) .xy codec, ported from kmorrill/xy-format
-    presets/   (M7) patch.json builder, slicer
+    presets/   (M7) sample presets: WAV/AIFF in and out, resampling, pitch and loop finding,
+               patch.json, the drum/multisample/sampler builder, zip (the page is /presets)
   device/      Browser adapters (Web MIDI, workers, audio). Everything injected for tests:
                access, transport (the single send choke point + policy), monitor, device mirror,
                scheduler + tick worker, session (identity + GREET), expect()
@@ -30,7 +31,7 @@ src/lib/
   sound/       the replica's sound in the browser: synth engines, drum kit, samplers, effects
   manual/      (M4) our manual: schema, loader, search
   ui/          design tokens, primitives, shared components
-src/routes/    pages: / (app), /lab (device console, dev tool)
+src/routes/    pages: / (app), /presets (preset maker), /lab (device console, dev tool)
 test/fakes/    fakes shared by tests (e.g. FakeMIDIAccess with an emulated OP-XY)
 knowledge/     committed data the app imports via the `$knowledge` alias
 ```

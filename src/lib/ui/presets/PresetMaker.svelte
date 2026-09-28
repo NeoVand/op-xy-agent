@@ -14,7 +14,6 @@ a device.
 		DRUM_LAYOUT,
 		MAX_ZONES,
 		buildPreset,
-		decodeAudioFile,
 		detectNote,
 		drumKeys,
 		noteFromName,
@@ -23,7 +22,8 @@ a device.
 		type LoopMode,
 		type PcmAudio,
 		type PresetKind
-	} from '$lib/presets';
+	} from '$lib/core/presets';
+	import { decodeAudioFile } from './decode';
 
 	interface Item {
 		readonly id: number;
