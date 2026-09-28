@@ -2,7 +2,7 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "0407aa93",
+	"bundle_hash": "b3767f8d",
 	"stats": {
 		"units": 163,
 		"facts": 1087,

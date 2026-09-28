@@ -102,7 +102,7 @@ describe('shortSource', () => {
 		expect(shortSource(`${GUIDE_URL}/layout#modules`)).toBe('guide:layout#modules');
 		expect(shortSource(`${GUIDE_URL}#whats-in-the-box`)).toBe('guide:#whats-in-the-box');
 		expect(shortSource(`${CHANGELOG_URL}#1.0.28`)).toBe('changelog:1.0.29');
-		expect(shortSource('docs/research/90-device-probe.md#x')).toBe('research:90-device-probe#x');
+		expect(shortSource('docs/research/90-device-probe.md#x')).toBe('note 90');
 		expect(shortSource('https://github.com/a/b')).toBe('github.com/a/b');
 		expect(shortSource('not a source')).toBe('not a source');
 	});

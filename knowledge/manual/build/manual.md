@@ -9,7 +9,7 @@ Our own reworded, agent-oriented manual for the teenage engineering OP-XY, writt
 - Status: current = the guide (v1.1.15) still matches; outdated-in-guide = firmware after the guide changed it; changelog-only = the guide is silent and the OS changelog documents it; unverified = community or inferred, not yet confirmed.
 - Tags: (since X) = needs OS X or newer; (verified X) = observed on a real unit running OS X; (community), (derived), … = confidence below official.
 - Cite a unit as [unit-id] and a fact as [unit-id#fact-id]. Items end with [sN], a source listed at the end of their unit; send users to TE’s page for the original.
-- Sources: guide:X = https://teenage.engineering/guides/op-xy/X (guide:#Y = https://teenage.engineering/guides/op-xy#Y); changelog:V = the OS V entry at https://teenage.engineering/downloads/op-xy; research:N = docs/research/N.md in the op-xy-agent repository (our own notes, e.g. the device probe log). Link a release with https://teenage.engineering/downloads/op-xy#1.1.21 (1.0.29 is the one exception: https://teenage.engineering/downloads/op-xy#1.0.28).
+- Sources: guide:X = https://teenage.engineering/guides/op-xy/X (guide:#Y = https://teenage.engineering/guides/op-xy#Y); changelog:V = the OS V entry at https://teenage.engineering/downloads/op-xy; note N = our research note N (docs/research in the op-xy-agent repository, e.g. note 90, the device probe log), not a page to link. Link a release with https://teenage.engineering/downloads/op-xy#1.1.21 (1.0.29 is the one exception: https://teenage.engineering/downloads/op-xy#1.0.28).
 
 ## Basics
 
@@ -34,7 +34,7 @@ Facts:
 
 Related: [hardware.layout], [basics.modules]
 
-Sources: s1 guide:guide-conventions#guide-conventions · s2 research:40-official-docs#53-te-errata-we-keep-verbatim-and-our-manual-must-not-copy · s3 research:40-official-docs#4-key-combos-replica-how-to-data
+Sources: s1 guide:guide-conventions#guide-conventions · s2 note 40 · s3 note 40
 
 ### Main modes [basics.main-modes]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -87,7 +87,7 @@ Procedures:
 
 Related: [basics.main-modes], [instrument.engine-prism], [sequencer.parameter-locks]
 
-Sources: s1 guide:main-modes#5.2%20modules · s2 guide:instrument · s3 guide:auxiliary#brain · s4 guide:mix · s5 research:59-screen-profiling#2-what-the-screens-show · s6 research:59-screen-profiling#21-general
+Sources: s1 guide:main-modes#5.2%20modules · s2 guide:instrument · s3 guide:auxiliary#brain · s4 guide:mix · s5 note 59 · s6 note 59
 
 ### Track keys and the active track [basics.track-buttons]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -112,7 +112,7 @@ Procedures:
 
 Related: [basics.linked-tracks], [basics.main-modes], [instrument.save-to-same-snapshot]
 
-Sources: s1 guide:track-buttons · s2 guide:auxiliary · s3 guide:track-buttons#6.1%20using-the-track-buttons · s4 guide:instrument#project · s5 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+Sources: s1 guide:track-buttons · s2 guide:auxiliary · s3 guide:track-buttons#6.1%20using-the-track-buttons · s4 guide:instrument#project · s5 note 90
 
 ### Linking tracks [basics.linked-tracks]
 current · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.15 · guide v1.1.15
@@ -215,7 +215,7 @@ Facts:
 
 Related: [hardware.firmware-update], [hardware.te-boot]
 
-Sources: s1 guide: · s2 changelog:1.1.33 · s3 research:90-device-probe#2026-09-26--te-sysex-protocol-read-only-te_sysex_probepy · s4 guide:hardware-overview#power-on-charging
+Sources: s1 guide: · s2 changelog:1.1.33 · s3 note 90 · s4 guide:hardware-overview#power-on-charging
 
 ## Hardware
 
@@ -291,7 +291,7 @@ Procedures:
 
 Related: [sequencer.step-components], [com.midi-settings]
 
-Sources: s1 research:50-hardware-ui#14-the-grid-plan-view · s2 guide:layout#main-modes · s3 guide:layout#modules · s4 guide:layout#track-buttons · s5 guide:layout#sequencer · s6 guide:layout#transport-controls · s7 research:59-screen-profiling#212-octave-popup · s8 guide:layout#keyboard · s9 guide:step-components#adding-step-components-to-a-sequence · s10 guide:step-components#step-components-ref-table · s11 guide:layout#sample · s12 guide:layout#projects · s13 guide:layout#tempo · s14 guide:layout#com · s15 guide:layout#players · s16 guide:layout#bar · s17 guide:layout#volume · s18 guide:layout#encoders · s19 guide:hardware-overview#speaker-volume-pitchbend · s20 guide:hardware-overview#inputs-outputs · s21 changelog:1.0.36
+Sources: s1 note 50 · s2 guide:layout#main-modes · s3 guide:layout#modules · s4 guide:layout#track-buttons · s5 guide:layout#sequencer · s6 guide:layout#transport-controls · s7 note 59 · s8 guide:layout#keyboard · s9 guide:step-components#adding-step-components-to-a-sequence · s10 guide:step-components#step-components-ref-table · s11 guide:layout#sample · s12 guide:layout#projects · s13 guide:layout#tempo · s14 guide:layout#com · s15 guide:layout#players · s16 guide:layout#bar · s17 guide:layout#volume · s18 guide:layout#encoders · s19 guide:hardware-overview#speaker-volume-pitchbend · s20 guide:hardware-overview#inputs-outputs · s21 changelog:1.0.36
 
 ### Power, battery and charging [hardware.power-and-charging]
 current · OS ≥ 1.0.9 · changed in 1.0.36 · guide v1.1.15
@@ -341,7 +341,7 @@ Facts:
 
 Related: [com.usb], [hardware.specifications], [hardware.layout]
 
-Sources: s1 research:50-hardware-ui#15-edges-ports-and-non-key-features · s2 guide:hardware-overview#inputs-outputs · s3 guide:hardware-overview#technical-specifications
+Sources: s1 note 50 · s2 guide:hardware-overview#inputs-outputs · s3 guide:hardware-overview#technical-specifications
 
 ### Technical specifications [hardware.specifications]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -370,7 +370,7 @@ Facts:
 
 Related: [hardware.connectors], [hardware.power-and-charging], [hardware.layout]
 
-Sources: s1 guide:hardware-overview#hardware · s2 teenage.engineering/store/op-xy · s3 teenage.engineering/products/op-xy · s4 guide:hardware-overview#technical-specifications · s5 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133 · s6 guide:project#project-settings · s7 research:90-device-probe#2026-09-26--te-sysex-protocol-read-only-te_sysex_probepy · s8 guide:hardware-overview#electrical-characteristics
+Sources: s1 guide:hardware-overview#hardware · s2 teenage.engineering/store/op-xy · s3 teenage.engineering/products/op-xy · s4 guide:hardware-overview#technical-specifications · s5 note 90 · s6 guide:project#project-settings · s7 note 90 · s8 guide:hardware-overview#electrical-characteristics
 
 ### TE boot (bootloader menu) [hardware.te-boot]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -605,7 +605,7 @@ Procedures:
 
 Related: [sequencer.single-sound], [sequencer.extend-notes], [sequencer.copy-step]
 
-Sources: s1 guide:sequencer#step-sequencing · s2 guide:get-started#4.1%20sequencing%20a%20drum%20beat · s3 changelog:1.1.25 · s4 research:59-screen-profiling#28-bar-steps
+Sources: s1 guide:sequencer#step-sequencing · s2 guide:get-started#4.1%20sequencing%20a%20drum%20beat · s3 changelog:1.1.25 · s4 note 59
 
 ### Step recording [sequencer.step-recording]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -670,7 +670,7 @@ Procedures:
 
 Related: [sequencer.bar-menu], [sequencer.parameter-locks], [sequencer.bars-and-length]
 
-Sources: s1 guide:sequencer#live-recording · s2 guide:get-started#4.2%20recording%20a%20baseline · s3 research:20-midi-control#45-recording-into-the-op-xys-own-sequencer-over-midi-live
+Sources: s1 guide:sequencer#live-recording · s2 guide:get-started#4.2%20recording%20a%20baseline · s3 note 20
 
 ### Extended notes and note length [sequencer.extend-notes]
 current · OS ≥ 1.0.9 · changed in 1.0.45 · guide v1.1.15
@@ -695,7 +695,7 @@ Procedures:
 
 Related: [sequencer.bar-menu], [sequencer.component-pulse-hold], [instrument.play-mode]
 
-Sources: s1 guide:sequencer#step-sequencing · s2 changelog:1.0.45 · s3 guide:sequencer#extend-with-bar · s4 research:10-xy-format#34-patternstruct-base-clones-walking
+Sources: s1 guide:sequencer#step-sequencing · s2 changelog:1.0.45 · s3 guide:sequencer#extend-with-bar · s4 note 10
 
 ### Nudging steps off the grid [sequencer.nudge]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -720,7 +720,7 @@ Procedures:
 
 Related: [sequencer.bar-menu], [sequencer.rotate]
 
-Sources: s1 guide:sequencer#step-sequencing · s2 research:10-xy-format#34-patternstruct-base-clones-walking
+Sources: s1 guide:sequencer#step-sequencing · s2 note 10
 
 ### Sequencing one sound at a time [sequencer.single-sound]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -769,7 +769,7 @@ Procedures:
 
 Related: [sequencer.transpose-sequence], [sequencer.nudge]
 
-Sources: s1 guide:sequencer#rotate-trigs-functionality · s2 changelog:1.1.15 · s3 changelog:1.1.21 · s4 research:10-xy-format#39-p-locks-and-automation
+Sources: s1 guide:sequencer#rotate-trigs-functionality · s2 changelog:1.1.15 · s3 changelog:1.1.21 · s4 note 10
 
 ### Copying and pasting steps [sequencer.copy-step]
 current · OS ≥ 1.0.13 · guide v1.1.15
@@ -794,7 +794,7 @@ Procedures:
 
 Related: [sequencer.bars-and-length], [arrange.patterns]
 
-Sources: s1 guide:sequencer#step-sequencing · s2 changelog:1.0.13 · s3 research:59-screen-profiling#28-bar-steps
+Sources: s1 guide:sequencer#step-sequencing · s2 changelog:1.0.13 · s3 note 59
 
 ### Transposing a track's sequence [sequencer.transpose-sequence]
 current · OS ≥ 1.0.9 · changed in 1.0.45 · guide v1.1.15
@@ -873,7 +873,7 @@ Procedures:
 
 Related: [sequencer.step-components], [sequencer.component-skip-parameter-lock], [sequencer.bar-menu], [instrument.engine-prism]
 
-Sources: s1 research:59-screen-profiling#28-bar-steps · s2 guide:sequencer#step-sequencing · s3 guide:sequencer#extend-with-bar · s4 guide:sequencer#live-recording · s5 changelog:1.0.15 · s6 guide:step-components · s7 changelog:1.1.0 · s8 changelog:1.1.3 · s9 changelog:1.1.21 · s10 changelog:1.1.33
+Sources: s1 note 59 · s2 guide:sequencer#step-sequencing · s3 guide:sequencer#extend-with-bar · s4 guide:sequencer#live-recording · s5 changelog:1.0.15 · s6 guide:step-components · s7 changelog:1.1.0 · s8 changelog:1.1.3 · s9 changelog:1.1.21 · s10 changelog:1.1.33
 
 ### Clearing a sequence and undo [sequencer.clear-and-undo]
 current · OS ≥ 1.0.9 · changed in 1.0.15 · guide v1.1.15
@@ -978,7 +978,7 @@ Facts:
 
 Related: [sequencer.step-components]
 
-Sources: s1 guide:step-components#step-components-ref-table · s2 research:10-xy-format#38-step-components-16-b-per-step-64-steps-at-0x3057 · s3 guide:auxiliary#brain · s4 research:50-hardware-ui#25-octave-shift-and-naturals-row-5-y--897-mm
+Sources: s1 guide:step-components#step-components-ref-table · s2 note 10 · s3 guide:auxiliary#brain · s4 note 50
 
 ### Pulse (step component) [sequencer.component-pulse]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -1334,7 +1334,7 @@ Parameters:
 
 Related: [sequencer.track-scale], [sequencer.bars-and-length], [sequencer.clear-and-undo]
 
-Sources: s1 guide:sequencer#extend-with-bar · s2 research:59-screen-profiling#28-bar-steps · s3 changelog:1.1.25 · s4 research:10-xy-format#34-patternstruct-base-clones-walking · s5 changelog:1.1.15
+Sources: s1 guide:sequencer#extend-with-bar · s2 note 59 · s3 changelog:1.1.25 · s4 note 10 · s5 changelog:1.1.15
 
 ### Track scale [sequencer.track-scale]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.25 · guide v1.1.15
@@ -1391,7 +1391,7 @@ Procedures:
 
 Related: [sequencer.bar-menu], [sequencer.track-scale], [basics.patterns-scenes-songs]
 
-Sources: s1 guide:sequencer#extend-with-bar · s2 changelog:1.1.3 · s3 research:10-xy-format#44-constraints-and-limits
+Sources: s1 guide:sequencer#extend-with-bar · s2 changelog:1.1.3 · s3 note 10
 
 ## Players
 
@@ -1430,7 +1430,7 @@ Procedures:
 
 Related: [players.arpeggio], [players.maestro], [players.hold], [arrange.patterns], [sequencer.parameter-locks]
 
-Sources: s1 guide:players#players · s2 research:59-screen-profiling#27-players · s3 guide:sequencer#step-sequencing · s4 changelog:1.1.25
+Sources: s1 guide:players#players · s2 note 59 · s3 guide:sequencer#step-sequencing · s4 changelog:1.1.25
 
 ### Arpeggio player [players.arpeggio]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.0, 1.1.17, 1.1.21 · guide v1.1.15
@@ -1477,7 +1477,7 @@ Parameters:
 
 Related: [players.overview], [players.hold], [basics.linked-tracks]
 
-Sources: s1 guide:players#arpeggio · s2 changelog:1.0.15 · s3 changelog:1.1.0 · s4 changelog:1.1.17 · s5 changelog:1.1.21 · s6 research:59-screen-profiling#27-players
+Sources: s1 guide:players#arpeggio · s2 changelog:1.0.15 · s3 changelog:1.1.0 · s4 changelog:1.1.17 · s5 changelog:1.1.21 · s6 note 59
 
 ### Maestro player [players.maestro]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -1515,7 +1515,7 @@ Parameters:
 
 Related: [players.overview], [players.hold]
 
-Sources: s1 guide:players#maestro · s2 research:59-screen-profiling#27-players
+Sources: s1 guide:players#maestro · s2 note 59
 
 ### Hold player [players.hold]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.3, 1.1.25 · guide v1.1.15
@@ -1547,7 +1547,7 @@ Procedures:
 
 Related: [players.overview], [players.maestro]
 
-Sources: s1 guide:players#hold · s2 changelog:1.1.3 · s3 changelog:1.1.25 · s4 research:59-screen-profiling#27-players
+Sources: s1 guide:players#hold · s2 changelog:1.1.3 · s3 changelog:1.1.25 · s4 note 59
 
 ## Instrument
 
@@ -1583,7 +1583,7 @@ Procedures:
 
 Related: [instrument.engine], [instrument.envelopes], [instrument.filter], [instrument.lfo], [instrument.preset-browser], [instrument.preset-settings], [instrument.save-copy-scramble], [basics.modules], [auxiliary.overview]
 
-Sources: s1 guide:instrument#project · s2 guide:instrument · s3 guide:instrument#preset-settings · s4 guide:instrument#view-and-create-preset · s5 guide:get-started#4.%20get%20started · s6 research:20-midi-control#21-the-16-tracks-and-their-default-channels
+Sources: s1 guide:instrument#project · s2 guide:instrument · s3 guide:instrument#preset-settings · s4 guide:instrument#view-and-create-preset · s5 guide:get-started#4.%20get%20started · s6 note 20
 
 ### Engine page and engine list (M1) [instrument.engine]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -1617,7 +1617,7 @@ Procedures:
 
 Related: [instrument.overview], [instrument.engine-axis], [instrument.engine-dissolve], [instrument.engine-epiano], [instrument.engine-hardsync], [instrument.engine-midi], [instrument.engine-organ], [instrument.engine-prism], [instrument.engine-simple], [instrument.engine-wavetable], [instrument.preset-browser], [sampler.overview], [com.midi-track-ccs]
 
-Sources: s1 guide:instrument#engine · s2 guide:synth-engines · s3 guide:sample · s4 guide:synth-engines#external · s5 research:20-midi-control#21-the-16-tracks-and-their-default-channels · s6 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s7 research:59-screen-profiling#21-general · s8 research:59-screen-profiling#26-preset-browser-shift--m1 · s9 guide:synth-engines#change-engine
+Sources: s1 guide:instrument#engine · s2 guide:synth-engines · s3 guide:sample · s4 guide:synth-engines#external · s5 note 20 · s6 note 59 · s7 note 59 · s8 note 59 · s9 guide:synth-engines#change-engine
 
 ### Amp and filter envelopes (M2) [instrument.envelopes]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -1664,7 +1664,7 @@ Parameters:
 
 Related: [instrument.play-mode], [instrument.filter], [instrument.overview]
 
-Sources: s1 guide:instrument#envelopes · s2 guide:instrument#filter · s3 research:59-screen-profiling#22-envelope-editor-instrument-m2
+Sources: s1 guide:instrument#envelopes · s2 guide:instrument#filter · s3 note 59
 
 ### Play mode, portamento, bend range and preset volume (M2 + shift) [instrument.play-mode]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -1702,7 +1702,7 @@ Parameters:
 
 Related: [instrument.envelopes], [instrument.preset-settings], [instrument.overview]
 
-Sources: s1 guide:instrument#envelopes · s2 guide:instrument#preset-settings · s3 guide:how-to#pitch-bend · s4 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s5 research:59-screen-profiling#22-envelope-editor-instrument-m2
+Sources: s1 guide:instrument#envelopes · s2 guide:instrument#preset-settings · s3 guide:how-to#pitch-bend · s4 note 20 · s5 note 59
 
 ### Filter (M3) [instrument.filter]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -1743,7 +1743,7 @@ Parameters:
 
 Related: [instrument.envelopes], [instrument.track-sends], [instrument.lfo]
 
-Sources: s1 guide:instrument#filter · s2 research:59-screen-profiling#23-filter-instrument-m3 · s3 research:30-presets-samples#25-fx-m3-filter-and-lfo-m4 · s4 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s5 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+Sources: s1 guide:instrument#filter · s2 note 59 · s3 note 30 · s4 note 59 · s5 note 20
 
 ### Track sends to aux out, tape, FX I and FX II (M3 + shift) [instrument.track-sends]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -1780,7 +1780,7 @@ Parameters:
 
 Related: [instrument.filter], [auxiliary.fx-sends], [auxiliary.tape], [auxiliary.external-audio], [mix.levels-pans-sends]
 
-Sources: s1 research:59-screen-profiling#23-filter-instrument-m3 · s2 guide:auxiliary#external-audio · s3 guide:auxiliary#tape · s4 guide:auxiliary#fx-i-and-fx-ii · s5 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s6 guide:instrument#filter
+Sources: s1 note 59 · s2 guide:auxiliary#external-audio · s3 guide:auxiliary#tape · s4 guide:auxiliary#fx-i-and-fx-ii · s5 note 20 · s6 guide:instrument#filter
 
 ### LFO page and LFO types (M4) [instrument.lfo]
 current · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.0, 1.1.3 · guide v1.1.15 · verified on 1.1.33
@@ -1813,7 +1813,7 @@ Procedures:
 
 Related: [instrument.lfo-duck], [instrument.lfo-element], [instrument.lfo-random], [instrument.lfo-tremolo], [instrument.lfo-value], [sequencer.parameter-locks]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 changelog:1.0.15 · s5 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s6 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s7 research:59-screen-profiling#24-lfo-instrument-m4-five-types
+Sources: s1 guide:instrument#lfo · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 changelog:1.0.15 · s5 note 59 · s6 note 20 · s7 note 59
 
 ### Duck LFO (sidechain pumping) [instrument.lfo-duck]
 current · OS ≥ 1.1.0 · changed in 1.1.3 · guide v1.1.15 · verified on 1.1.33
@@ -1846,7 +1846,7 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.lfo-tremolo]
 
-Sources: s1 guide:instrument#duck · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 research:59-screen-profiling#24-lfo-instrument-m4-five-types
+Sources: s1 guide:instrument#duck · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 note 59
 
 ### Element LFO (gyroscope, microphone, envelope) [instrument.lfo-element]
 current · OS ≥ 1.0.9 · changed in 1.0.50, 1.1.0 · guide v1.1.15 · verified on 1.1.33
@@ -1876,7 +1876,7 @@ Parameters:
 
 Related: [instrument.lfo]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.0.50 · s3 changelog:1.1.0 · s4 research:59-screen-profiling#24-lfo-instrument-m4-five-types
+Sources: s1 guide:instrument#lfo · s2 changelog:1.0.50 · s3 changelog:1.1.0 · s4 note 59
 
 ### Random LFO [instrument.lfo-random]
 current · OS ≥ 1.0.9 · changed in 1.0.38 · guide v1.1.15 · verified on 1.1.33
@@ -1907,7 +1907,7 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.lfo-value]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.0.38 · s3 research:59-screen-profiling#24-lfo-instrument-m4-five-types
+Sources: s1 guide:instrument#lfo · s2 changelog:1.0.38 · s3 note 59
 
 ### Tremolo LFO (vibrato and tremolo) [instrument.lfo-tremolo]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -1940,7 +1940,7 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.engine-organ], [instrument.engine-axis]
 
-Sources: s1 guide:instrument#lfo · s2 research:59-screen-profiling#24-lfo-instrument-m4-five-types
+Sources: s1 guide:instrument#lfo · s2 note 59
 
 ### Value LFO [instrument.lfo-value]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15 · verified on 1.1.33
@@ -1980,7 +1980,7 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.lfo-random]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.1.15 · s3 research:59-screen-profiling#24-lfo-instrument-m4-five-types
+Sources: s1 guide:instrument#lfo · s2 changelog:1.1.15 · s3 note 59
 
 ### Axis synth engine [instrument.engine-axis]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -2010,7 +2010,7 @@ Parameters:
 
 Related: [instrument.engine], [instrument.lfo-tremolo]
 
-Sources: s1 guide:synth-engines#axis · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:synth-engines#axis · s2 note 59
 
 ### Dissolve synth engine [instrument.engine-dissolve]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -2039,7 +2039,7 @@ Parameters:
 
 Related: [instrument.engine]
 
-Sources: s1 guide:synth-engines#dissolve · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:synth-engines#dissolve · s2 note 59
 
 ### Epiano synth engine [instrument.engine-epiano]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15 · verified on 1.1.33
@@ -2071,7 +2071,7 @@ Parameters:
 
 Related: [instrument.engine]
 
-Sources: s1 guide:synth-engines#epiano · s2 changelog:1.1.25 · s3 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:synth-engines#epiano · s2 changelog:1.1.25 · s3 note 59
 
 ### Hardsync synth engine [instrument.engine-hardsync]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -2100,7 +2100,7 @@ Parameters:
 
 Related: [instrument.engine]
 
-Sources: s1 guide:synth-engines#hardsync · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:synth-engines#hardsync · s2 note 59
 
 ### Midi engine (called external in the guide) [instrument.engine-midi]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.0.15, 1.0.45, 1.0.50, 1.1.15, 1.1.32 · guide v1.1.15
@@ -2172,7 +2172,7 @@ Parameters:
 
 Related: [instrument.engine], [instrument.lfo-tremolo]
 
-Sources: s1 guide:synth-engines#organ · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:synth-engines#organ · s2 note 59
 
 ### Prism synth engine [instrument.engine-prism]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -2219,7 +2219,7 @@ Parameters:
 
 Related: [sequencer.parameter-locks], [instrument.save-to-same-snapshot]
 
-Sources: s1 guide:synth-engines#arrange · s2 guide:synth-engines#prism · s3 guide:instrument#engine · s4 guide:sequencer#step-sequencing · s5 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s6 research:59-screen-profiling#25-engine-pages-instrument-m1 · s7 research:57-synth-engines#prism--shape-ratio-detune-stereo · s8 guide:synth-engines#change-engine
+Sources: s1 guide:synth-engines#arrange · s2 guide:synth-engines#prism · s3 guide:instrument#engine · s4 guide:sequencer#step-sequencing · s5 note 59 · s6 note 59 · s7 note 57 · s8 guide:synth-engines#change-engine
 
 ### Simple synth engine [instrument.engine-simple]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -2247,7 +2247,7 @@ Parameters:
 
 Related: [instrument.engine], [instrument.filter]
 
-Sources: s1 guide:synth-engines#simple · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:synth-engines#simple · s2 note 59
 
 ### Wavetable synth engine [instrument.engine-wavetable]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -2278,7 +2278,7 @@ Parameters:
 
 Related: [instrument.engine], [instrument.lfo-value]
 
-Sources: s1 guide:synth-engines#wavetable · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:synth-engines#wavetable · s2 note 59
 
 ### Preset settings (tuning, velocity, width, mod routing) [instrument.preset-settings]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -2319,7 +2319,7 @@ Parameters:
 
 Related: [instrument.user-tunings], [instrument.play-mode], [howto.enable-velocity]
 
-Sources: s1 guide:instrument#preset-settings · s2 research:30-presets-samples#23-engine · s3 guide:how-to#pitch-bend · s4 guide:how-to#how-to-enable-velocity · s5 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+Sources: s1 guide:instrument#preset-settings · s2 note 30 · s3 guide:how-to#pitch-bend · s4 guide:how-to#how-to-enable-velocity · s5 note 20
 
 ### User tunings (microtonal) [instrument.user-tunings]
 current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
@@ -2353,7 +2353,7 @@ Procedures:
 
 Related: [instrument.preset-settings]
 
-Sources: s1 guide:instrument#preset-settings · s2 research:30-presets-samples#23-engine · s3 changelog:1.1.25
+Sources: s1 guide:instrument#preset-settings · s2 note 30 · s3 changelog:1.1.25
 
 ### Preset browser (find and load sounds) [instrument.preset-browser]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
@@ -2398,7 +2398,7 @@ Parameters:
 
 Related: [instrument.preset-management], [instrument.save-copy-scramble], [instrument.save-to-same-snapshot], [com.mtp]
 
-Sources: s1 guide:instrument#view-and-create-preset · s2 research:30-presets-samples#42-how-a-project-points-at-a-preset-decoded-xy · s3 research:30-presets-samples#41-what-mtp-shows · s4 changelog:1.1.15 · s5 research:59-screen-profiling#26-preset-browser-shift--m1
+Sources: s1 guide:instrument#view-and-create-preset · s2 note 30 · s3 note 30 · s4 changelog:1.1.15 · s5 note 59
 
 ### Organise presets (cut, paste, rename, delete, folders) [instrument.preset-management]
 current · OS ≥ 1.0.9 · changed in 1.1.15, 1.1.25 · guide v1.1.15
@@ -2466,7 +2466,7 @@ Procedures:
 
 Related: [instrument.save-to-same-snapshot], [instrument.preset-browser], [instrument.preset-management]
 
-Sources: s1 guide:instrument#view-and-create-preset · s2 research:30-presets-samples#41-what-mtp-shows · s3 research:30-presets-samples#42-how-a-project-points-at-a-preset-decoded-xy · s4 changelog:1.0.38 · s5 changelog:1.1.32
+Sources: s1 guide:instrument#view-and-create-preset · s2 note 30 · s3 note 30 · s4 changelog:1.0.38 · s5 changelog:1.1.32
 
 ### Save over the same preset snapshot [instrument.save-to-same-snapshot]
 changelog-only · OS ≥ 1.1.17 · changed in 1.1.18 · guide v1.1.15
@@ -2500,7 +2500,7 @@ Procedures:
 
 Related: [instrument.engine-prism]
 
-Sources: s1 guide:instrument#view-and-create-preset · s2 changelog:1.1.17 · s3 changelog:1.1.18 · s4 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+Sources: s1 guide:instrument#view-and-create-preset · s2 changelog:1.1.17 · s3 changelog:1.1.18 · s4 note 90
 
 ### Sustain pedal [instrument.sustain-pedal]
 changelog-only · OS ≥ 1.1.15 · changed in 1.1.17 · guide v1.1.15
@@ -2522,7 +2522,7 @@ Facts:
 
 Related: [players.arpeggio], [com.midi-settings]
 
-Sources: s1 changelog:1.1.15 · s2 changelog:1.1.17 · s3 guide:hardware-overview#inputs-outputs · s4 research:20-midi-control#36-channel-voice--performance-messages-receive-side
+Sources: s1 changelog:1.1.15 · s2 changelog:1.1.17 · s3 guide:hardware-overview#inputs-outputs · s4 note 20
 
 ## Sampler
 
@@ -2557,7 +2557,7 @@ Procedures:
 
 Related: [sampler.sampling], [sampler.synth-sampler], [sampler.drum-sampler], [sampler.multisampler], [instrument.preset-browser]
 
-Sources: s1 guide:sample#one-shot-synth-sampler · s2 guide:sample#drum-sampler · s3 guide:sample#multisampler · s4 guide:instrument#engine · s5 guide:mix#master · s6 changelog:1.1.0 · s7 research:10-xy-format#312-enumerations · s8 research:20-midi-control#34-engine-resolved-names-for-cc1215-p1p4 · s9 guide:synth-engines#change-engine
+Sources: s1 guide:sample#one-shot-synth-sampler · s2 guide:sample#drum-sampler · s3 guide:sample#multisampler · s4 guide:instrument#engine · s5 guide:mix#master · s6 changelog:1.1.0 · s7 note 10 · s8 note 20 · s9 guide:synth-engines#change-engine
 
 ### Sampling with the sample key [sampler.sampling]
 current · OS ≥ 1.0.9 · changed in 1.0.29 · guide v1.1.15
@@ -2638,7 +2638,7 @@ Parameters:
 
 Related: [sampler.overview], [sampler.sampling], [sampler.multisampler]
 
-Sources: s1 guide:sample#one-shot-synth-sampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 changelog:1.1.0 · s4 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:sample#one-shot-synth-sampler · s2 note 30 · s3 changelog:1.1.0 · s4 note 59
 
 ### Drum sampler [sampler.drum-sampler]
 current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15
@@ -2670,7 +2670,7 @@ Procedures:
 
 Related: [sampler.drum-key-settings], [sampler.slicing], [sampler.sampling]
 
-Sources: s1 guide:sample#drum-sampler · s2 research:20-midi-control#42-drum-key-mapping · s3 changelog:1.0.29 · s4 changelog:1.0.32 · s5 research:30-presets-samples#74-te-drum-layout-use-it-for-role--key
+Sources: s1 guide:sample#drum-sampler · s2 note 20 · s3 changelog:1.0.29 · s4 changelog:1.0.32 · s5 note 30
 
 ### Drum sampler key settings [sampler.drum-key-settings]
 current · OS ≥ 1.0.9 · changed in 1.0.45, 1.1.15 · guide v1.1.15
@@ -2709,7 +2709,7 @@ Parameters:
 
 Related: [sampler.drum-sampler], [sampler.slicing]
 
-Sources: s1 guide:sample#drum-sampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 changelog:1.0.45 · s4 research:30-presets-samples#26-regions-how-each-field-reaches-the-device-decoded · s5 changelog:1.1.15 · s6 research:40-official-docs#53-te-errata-we-keep-verbatim-and-our-manual-must-not-copy · s7 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:sample#drum-sampler · s2 note 30 · s3 changelog:1.0.45 · s4 note 30 · s5 changelog:1.1.15 · s6 note 40 · s7 note 59
 
 ### Slicing a sample across the keys [sampler.slicing]
 current · OS ≥ 1.1.0 · guide v1.1.15
@@ -2742,7 +2742,7 @@ Procedures:
 
 Related: [sampler.drum-sampler], [sampler.drum-key-settings]
 
-Sources: s1 changelog:1.1.0 · s2 guide:sample#sample-slicer · s3 research:30-presets-samples#32-counts-and-structure-limits · s4 research:50-hardware-ui#33-page-catalogue
+Sources: s1 changelog:1.1.0 · s2 guide:sample#sample-slicer · s3 note 30 · s4 note 50
 
 ### Multisampler [sampler.multisampler]
 current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
@@ -2775,7 +2775,7 @@ Procedures:
 
 Related: [sampler.synth-sampler], [sampler.sampling]
 
-Sources: s1 guide:sample#multisampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 research:30-presets-samples#32-counts-and-structure-limits · s4 changelog:1.1.25 · s5 research:59-screen-profiling#25-engine-pages-instrument-m1
+Sources: s1 guide:sample#multisampler · s2 note 30 · s3 note 30 · s4 changelog:1.1.25 · s5 note 59
 
 ### Sample library [sampler.sample-library]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.0, 1.1.15, 1.1.17 · guide v1.1.15
@@ -2839,7 +2839,7 @@ Facts:
 
 Related: [sampler.sample-library], [com.mtp], [project.system-usage-indicators]
 
-Sources: s1 guide:sample#sample-folder · s2 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133 · s3 changelog:1.0.45 · s4 research:30-presets-samples#34-note-names-in-file-names-the-octave-question · s5 research:30-presets-samples#31-formats · s6 guide:how-to#how-to-load-samples · s7 changelog:1.1.15 · s8 changelog:1.0.25
+Sources: s1 guide:sample#sample-folder · s2 note 90 · s3 changelog:1.0.45 · s4 note 30 · s5 note 30 · s6 guide:how-to#how-to-load-samples · s7 changelog:1.1.15 · s8 changelog:1.0.25
 
 ## Auxiliary
 
@@ -2871,7 +2871,7 @@ Procedures:
 
 Related: [auxiliary.brain], [auxiliary.punch-in-fx], [auxiliary.external-midi], [auxiliary.external-cv], [auxiliary.external-audio], [auxiliary.tape], [auxiliary.fx-sends], [auxiliary.routing-filter-lfo]
 
-Sources: s1 guide:auxiliary#auxiliary · s2 guide:auxiliary · s3 guide:track-buttons#6.1%20using-the-track-buttons · s4 research:10-xy-format#311-auxiliary-tracks-t9t16 · s5 research:20-midi-control#21-the-16-tracks-and-their-default-channels · s6 guide:mix#levels-pans-and-sends
+Sources: s1 guide:auxiliary#auxiliary · s2 guide:auxiliary · s3 guide:track-buttons#6.1%20using-the-track-buttons · s4 note 10 · s5 note 20 · s6 guide:mix#levels-pans-and-sends
 
 ### Brain [auxiliary.brain]
 current · OS ≥ 1.0.9 · changed in 1.0.25, 1.0.29, 1.1.17 · guide v1.1.15 · verified on 1.1.33
@@ -2917,7 +2917,7 @@ Parameters:
 
 Related: [auxiliary.overview], [auxiliary.routing-filter-lfo]
 
-Sources: s1 guide:auxiliary#brain · s2 guide:how-to#write-a-song-fast-with-brain · s3 research:10-xy-format#34-patternstruct-base-clones-walking · s4 research:59-screen-profiling#213-auxiliary-tracks · s5 changelog:1.0.25 · s6 changelog:1.0.29 · s7 changelog:1.1.17
+Sources: s1 guide:auxiliary#brain · s2 guide:how-to#write-a-song-fast-with-brain · s3 note 10 · s4 note 59 · s5 changelog:1.0.25 · s6 changelog:1.0.29 · s7 changelog:1.1.17
 
 ### Punch-in FX [auxiliary.punch-in-fx]
 current · OS ≥ 1.0.9 · changed in 1.0.32, 1.0.50 · guide v1.1.15
@@ -2949,7 +2949,7 @@ Procedures:
 
 Related: [auxiliary.overview], [howto.first-punch-in]
 
-Sources: s1 guide:get-started#4.4.%20adding-punch-in-fx · s2 guide:auxiliary#punch-in-fx · s3 guide:mix#master · s4 changelog:1.0.50 · s5 changelog:1.0.32 · s6 research:20-midi-control#43-punch-in-fx-notes-ch10 · s7 research:59-screen-profiling#213-auxiliary-tracks
+Sources: s1 guide:get-started#4.4.%20adding-punch-in-fx · s2 guide:auxiliary#punch-in-fx · s3 guide:mix#master · s4 changelog:1.0.50 · s5 changelog:1.0.32 · s6 note 20 · s7 note 59
 
 ### External MIDI track [auxiliary.external-midi]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15 · verified on 1.1.33
@@ -2991,7 +2991,7 @@ Parameters:
 
 Related: [instrument.engine-midi], [com.multi-out], [sequencer.parameter-locks]
 
-Sources: s1 guide:auxiliary#external-midi · s2 changelog:1.1.15 · s3 research:20-midi-control#35-auxiliary-tracks-916 · s4 research:59-screen-profiling#213-auxiliary-tracks · s5 guide:how-to#how-to-control-a-synth-with-midi
+Sources: s1 guide:auxiliary#external-midi · s2 changelog:1.1.15 · s3 note 20 · s4 note 59 · s5 guide:how-to#how-to-control-a-synth-with-midi
 
 ### External CV track [auxiliary.external-cv]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3020,7 +3020,7 @@ Procedures:
 
 Related: [com.multi-out], [howto.control-cv-synth]
 
-Sources: s1 guide:auxiliary#external-cv · s2 guide:how-to#how-to-control-an-analog-synth%20with%20cv%20and%20gate · s3 research:59-screen-profiling#213-auxiliary-tracks
+Sources: s1 guide:auxiliary#external-cv · s2 guide:how-to#how-to-control-an-analog-synth%20with%20cv%20and%20gate · s3 note 59
 
 ### External audio track [auxiliary.external-audio]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3057,7 +3057,7 @@ Parameters:
 
 Related: [auxiliary.routing-filter-lfo], [instrument.track-sends], [com.multi-out]
 
-Sources: s1 guide:auxiliary#external-audio · s2 guide:how-to#send-audio-to-and-from-an-external-effect · s3 research:20-midi-control#35-auxiliary-tracks-916 · s4 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s5 research:59-screen-profiling#213-auxiliary-tracks
+Sources: s1 guide:auxiliary#external-audio · s2 guide:how-to#send-audio-to-and-from-an-external-effect · s3 note 20 · s4 note 59 · s5 note 59
 
 ### Tape track [auxiliary.tape]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
@@ -3090,7 +3090,7 @@ Parameters:
 
 Related: [auxiliary.routing-filter-lfo], [instrument.track-sends]
 
-Sources: s1 guide:auxiliary#tape · s2 research:20-midi-control#35-auxiliary-tracks-916 · s3 research:59-screen-profiling#213-auxiliary-tracks · s4 changelog:1.1.15
+Sources: s1 guide:auxiliary#tape · s2 note 20 · s3 note 59 · s4 changelog:1.1.15
 
 ### FX I and FX II send tracks [auxiliary.fx-sends]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3117,7 +3117,7 @@ Facts:
 
 Related: [fx.overview], [auxiliary.routing-filter-lfo], [mix.levels-pans-sends]
 
-Sources: s1 guide:auxiliary#fx-i-and-fx-ii · s2 guide:instrument#filter · s3 guide:mix#levels-pans-and-sends · s4 research:59-screen-profiling#213-auxiliary-tracks · s5 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen
+Sources: s1 guide:auxiliary#fx-i-and-fx-ii · s2 guide:instrument#filter · s3 guide:mix#levels-pans-and-sends · s4 note 59 · s5 note 59
 
 ### Aux routing, filter and LFO pages [auxiliary.routing-filter-lfo]
 current · OS ≥ 1.0.9 · changed in 1.1.32 · guide v1.1.15
@@ -3154,7 +3154,7 @@ Parameters:
 
 Related: [auxiliary.overview], [auxiliary.external-audio], [auxiliary.tape], [auxiliary.fx-sends]
 
-Sources: s1 guide:auxiliary · s2 guide:auxiliary#tape · s3 changelog:1.1.32 · s4 research:20-midi-control#35-auxiliary-tracks-916 · s5 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s6 research:59-screen-profiling#213-auxiliary-tracks · s7 guide:auxiliary#external-audio
+Sources: s1 guide:auxiliary · s2 guide:auxiliary#tape · s3 changelog:1.1.32 · s4 note 20 · s5 note 59 · s6 note 59 · s7 guide:auxiliary#external-audio
 
 ## Effects
 
@@ -3191,7 +3191,7 @@ Procedures:
 
 Related: [fx.chorus], [fx.delay], [fx.distortion], [fx.lofi], [fx.phaser], [fx.reverb], [auxiliary.fx-sends], [mix.levels-pans-sends]
 
-Sources: s1 guide:fx#fx · s2 guide:auxiliary#fx-i-and-fx-ii · s3 research:20-midi-control#35-auxiliary-tracks-916 · s4 research:59-screen-profiling#213-auxiliary-tracks
+Sources: s1 guide:fx#fx · s2 guide:auxiliary#fx-i-and-fx-ii · s3 note 20 · s4 note 59
 
 ### Chorus effect [fx.chorus]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -3221,7 +3221,7 @@ Parameters:
 
 Related: [fx.overview], [fx.phaser]
 
-Sources: s1 guide:fx#chorus · s2 research:59-screen-profiling#213-auxiliary-tracks
+Sources: s1 guide:fx#chorus · s2 note 59
 
 ### Delay effect [fx.delay]
 current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15 · verified on 1.1.33
@@ -3254,7 +3254,7 @@ Parameters:
 
 Related: [fx.overview], [fx.reverb]
 
-Sources: s1 guide:fx#delay · s2 research:59-screen-profiling#213-auxiliary-tracks · s3 changelog:1.1.25
+Sources: s1 guide:fx#delay · s2 note 59 · s3 changelog:1.1.25
 
 ### Distortion effect [fx.distortion]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -3284,7 +3284,7 @@ Parameters:
 
 Related: [fx.overview], [fx.lofi], [mix.saturator]
 
-Sources: s1 guide:fx#distorsion · s2 research:59-screen-profiling#213-auxiliary-tracks
+Sources: s1 guide:fx#distorsion · s2 note 59
 
 ### Lofi effect [fx.lofi]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3343,7 +3343,7 @@ Parameters:
 
 Related: [fx.overview], [fx.chorus]
 
-Sources: s1 guide:fx#phaser · s2 research:59-screen-profiling#213-auxiliary-tracks
+Sources: s1 guide:fx#phaser · s2 note 59
 
 ### Reverb effect [fx.reverb]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -3374,7 +3374,7 @@ Parameters:
 
 Related: [fx.overview], [fx.delay]
 
-Sources: s1 guide:fx#reverb · s2 research:59-screen-profiling#213-auxiliary-tracks
+Sources: s1 guide:fx#reverb · s2 note 59
 
 ## Arrange
 
@@ -3415,7 +3415,7 @@ Procedures:
 
 Related: [arrange.patterns], [arrange.sound-link], [arrange.scenes], [arrange.song-mode], [basics.patterns-scenes-songs], [mix.mute-solo]
 
-Sources: s1 guide:arrange#arrange · s2 guide:arrange#switching-tracks-and-patterns · s3 research:59-screen-profiling#29-arrange-and-song-mode · s4 guide:arrange#sound-link
+Sources: s1 guide:arrange#arrange · s2 guide:arrange#switching-tracks-and-patterns · s3 note 59 · s4 guide:arrange#sound-link
 
 ### New, copy, paste and remove patterns [arrange.patterns]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.15, 1.1.25 · guide v1.1.15
@@ -3456,7 +3456,7 @@ Procedures:
 
 Related: [arrange.overview], [arrange.sound-link], [arrange.scenes], [players.overview], [sequencer.overview]
 
-Sources: s1 guide:arrange#edit-controls · s2 changelog:1.1.15 · s3 research:59-screen-profiling#29-arrange-and-song-mode · s4 changelog:1.1.25
+Sources: s1 guide:arrange#edit-controls · s2 changelog:1.1.15 · s3 note 59 · s4 changelog:1.1.25
 
 ### Sound link [arrange.sound-link]
 current · OS ≥ 1.1.0 · changed in 1.1.3 · guide v1.1.15
@@ -3529,7 +3529,7 @@ Procedures:
 
 Related: [arrange.scene-queue], [arrange.song-mode], [arrange.patterns], [mix.overview], [project.settings]
 
-Sources: s1 guide:arrange#scenes · s2 research:10-xy-format#32-projectsettings-0x00000x0094 · s3 guide:midi-references · s4 research:20-midi-control#31-global-ccs · s5 research:59-screen-profiling#29-arrange-and-song-mode
+Sources: s1 guide:arrange#scenes · s2 note 10 · s3 guide:midi-references · s4 note 20 · s5 note 59
 
 ### Queued scene switching [arrange.scene-queue]
 current · OS ≥ 1.1.0 · guide v1.1.15
@@ -3559,7 +3559,7 @@ Procedures:
 
 Related: [arrange.scenes], [arrange.songs]
 
-Sources: s1 changelog:1.1.0 · s2 guide:arrange#scenes · s3 research:20-midi-control#31-global-ccs · s4 guide:midi-references
+Sources: s1 changelog:1.1.0 · s2 guide:arrange#scenes · s3 note 20 · s4 guide:midi-references
 
 ### Song mode [arrange.song-mode]
 current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.45, 1.1.0 · guide v1.1.15
@@ -3610,7 +3610,7 @@ Parameters:
 
 Related: [arrange.songs], [arrange.scenes], [arrange.scene-queue]
 
-Sources: s1 guide:arrange#song-mode · s2 changelog:1.1.0 · s3 changelog:1.0.45 · s4 research:59-screen-profiling#29-arrange-and-song-mode
+Sources: s1 guide:arrange#song-mode · s2 changelog:1.1.0 · s3 changelog:1.0.45 · s4 note 59
 
 ### Multiple songs and cueing [arrange.songs]
 current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15
@@ -3723,7 +3723,7 @@ Parameters:
 
 Related: [mix.overview], [mix.mute-solo], [fx.overview], [auxiliary.fx-sends], [instrument.track-sends]
 
-Sources: s1 guide:mix#levels-pans-and-sends · s2 guide:midi-references · s3 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s4 research:59-screen-profiling#23-filter-instrument-m3 · s5 research:59-screen-profiling#210-mixer
+Sources: s1 guide:mix#levels-pans-and-sends · s2 guide:midi-references · s3 note 20 · s4 note 59 · s5 note 59
 
 ### Mute and solo [mix.mute-solo]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3758,7 +3758,7 @@ Procedures:
 
 Related: [mix.levels-pans-sends], [mix.overview], [arrange.overview]
 
-Sources: s1 guide:mix#levels-pans-and-sends · s2 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+Sources: s1 guide:mix#levels-pans-and-sends · s2 note 90
 
 ### Master EQ [mix.eq]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
@@ -3801,7 +3801,7 @@ Parameters:
 
 Related: [mix.overview], [mix.saturator], [mix.master]
 
-Sources: s1 guide:mix#eq · s2 research:59-screen-profiling#210-mixer
+Sources: s1 guide:mix#eq · s2 note 59
 
 ### Master saturator [mix.saturator]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3836,7 +3836,7 @@ Parameters:
 
 Related: [mix.overview], [mix.eq], [mix.master], [fx.distortion]
 
-Sources: s1 guide:mix#saturator · s2 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s3 research:59-screen-profiling#210-mixer
+Sources: s1 guide:mix#saturator · s2 note 20 · s3 note 59
 
 ### Master groups, compressor and output [mix.master]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3871,7 +3871,7 @@ Parameters:
 
 Related: [mix.overview], [mix.saturator], [mix.eq]
 
-Sources: s1 guide:mix#master · s2 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s3 research:59-screen-profiling#210-mixer
+Sources: s1 guide:mix#master · s2 note 20 · s3 note 59
 
 ## Project
 
@@ -3910,7 +3910,7 @@ Procedures:
 
 Related: [project.versions-and-autosave], [project.projects-folder], [project.settings], [basics.patterns-scenes-songs]
 
-Sources: s1 guide:project#project · s2 guide:project#rename · s3 guide:get-started#4.%20get%20started · s4 guide:instrument#view-and-create-preset · s5 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+Sources: s1 guide:project#project · s2 guide:project#rename · s3 guide:get-started#4.%20get%20started · s4 guide:instrument#view-and-create-preset · s5 note 90
 
 ### Autosave, versions and history [project.versions-and-autosave]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3938,7 +3938,7 @@ Procedures:
 
 Related: [project.project-view], [project.projects-folder], [hardware.power-and-charging]
 
-Sources: s1 guide:project#rename · s2 guide:project#project-folder · s3 guide:com#system-settings · s4 guide:how-to#how-to-back-up-your-projects · s5 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+Sources: s1 guide:project#rename · s2 guide:project#project-folder · s3 guide:com#system-settings · s4 guide:how-to#how-to-back-up-your-projects · s5 note 90
 
 ### Projects folder — load, duplicate, delete [project.projects-folder]
 current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
@@ -3972,7 +3972,7 @@ Procedures:
 
 Related: [project.project-view], [project.versions-and-autosave], [project.templates]
 
-Sources: s1 guide:project#project-folder · s2 research:50-hardware-ui#33-page-catalogue · s3 changelog:1.1.25 · s4 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+Sources: s1 guide:project#project-folder · s2 note 50 · s3 changelog:1.1.25 · s4 note 90
 
 ### Project templates [project.templates]
 outdated-in-guide · OS ≥ 1.1.15 · changed in 1.1.17 · guide v1.1.15
@@ -4000,7 +4000,7 @@ Procedures:
 
 Related: [project.projects-folder], [project.project-view]
 
-Sources: s1 guide:project#project-folder · s2 changelog:1.1.15 · s3 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133 · s4 changelog:1.1.17
+Sources: s1 guide:project#project-folder · s2 changelog:1.1.15 · s3 note 90 · s4 changelog:1.1.17
 
 ### System usage indicators (voices, CPU, sample memory) [project.system-usage-indicators]
 outdated-in-guide · OS ≥ 1.1.15 · changed in 1.1.25, 1.1.32 · guide v1.1.15
@@ -4110,7 +4110,7 @@ Procedures:
 
 Related: [project.settings], [com.midi-settings]
 
-Sources: s1 guide:project#project-settings · s2 research:20-midi-control#22-receive-routing-what-a-channel-reaches · s3 research:20-midi-control#23-transmit-routing · s4 research:20-midi-control#21-the-16-tracks-and-their-default-channels
+Sources: s1 guide:project#project-settings · s2 note 20 · s3 note 20 · s4 note 20
 
 ## Tempo
 
@@ -4156,7 +4156,7 @@ Parameters:
 
 Related: [tempo.grooves], [com.midi-settings]
 
-Sources: s1 guide:tempo#project · s2 research:59-screen-profiling#211-tempo · s3 guide:tempo#edit-tempo · s4 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+Sources: s1 guide:tempo#project · s2 note 59 · s3 guide:tempo#edit-tempo · s4 note 90
 
 ### Grooves, swing and shuffle [tempo.grooves]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -4189,7 +4189,7 @@ Procedures:
 
 Related: [tempo.tempo-screen], [project.settings]
 
-Sources: s1 guide:tempo#what-are-grooves · s2 guide:tempo#edit-tempo · s3 research:59-screen-profiling#211-tempo · s4 research:40-official-docs#52-older-gaps-and-contradictions-true-even-for-1115 · s5 guide:sequencer#extend-with-bar · s6 research:20-midi-control#31-global-ccs
+Sources: s1 guide:tempo#what-are-grooves · s2 guide:tempo#edit-tempo · s3 note 59 · s4 note 40 · s5 guide:sequencer#extend-with-bar · s6 note 20
 
 ## Connectivity
 
@@ -4322,7 +4322,7 @@ Parameters:
 
 Related: [com.midi-monitor], [com.devices], [com.midi-cc-reference], [hardware.layout]
 
-Sources: s1 guide:com#system-settings · s2 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133 · s3 research:20-midi-control#91-settings-that-gate-midi · s4 changelog:1.0.15 · s5 changelog:1.0.29 · s6 guide:com#midi-monitor · s7 guide:com#devices
+Sources: s1 guide:com#system-settings · s2 note 90 · s3 note 20 · s4 changelog:1.0.15 · s5 changelog:1.0.29 · s6 guide:com#midi-monitor · s7 guide:com#devices
 
 ### MIDI monitor [com.midi-monitor]
 current · OS ≥ 1.1.15 · guide v1.1.15
@@ -4384,7 +4384,7 @@ Procedures:
 
 Related: [com.midi-settings], [com.midi-monitor], [com.usb], [howto.midi-keyboard]
 
-Sources: s1 guide:com#devices · s2 guide:how-to#how-to-control-op-xy · s3 research:20-midi-control#91-settings-that-gate-midi · s4 guide:how-to#how-to-control-a-synth-with-midi
+Sources: s1 guide:com#devices · s2 guide:how-to#how-to-control-op-xy · s3 note 20 · s4 guide:how-to#how-to-control-a-synth-with-midi
 
 ### USB connections [com.usb]
 current · OS ≥ 1.0.9 · changed in 1.1.32 · guide v1.1.15
@@ -4407,7 +4407,7 @@ Facts:
 
 Related: [hardware.connectors], [com.devices], [com.mtp], [howto.midi-keyboard], [howto.audio-interface]
 
-Sources: s1 guide:hardware-overview#technical-specifications · s2 research:90-device-probe#2026-09-26--first-contact-read-only · s3 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133 · s4 guide:how-to#how-to-control-op-xy · s5 guide:how-to#use-an-audio-interface-with-op-xy · s6 changelog:1.1.32
+Sources: s1 guide:hardware-overview#technical-specifications · s2 note 90 · s3 note 90 · s4 guide:how-to#how-to-control-op-xy · s5 guide:how-to#use-an-audio-interface-with-op-xy · s6 changelog:1.1.32
 
 ### MIDI controller mode [com.controller-mode]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -4445,7 +4445,7 @@ Parameters:
 
 Related: [com.overview], [com.midi-cc-reference], [com.usb]
 
-Sources: s1 guide:com#midi-controller-moder · s2 research:20-midi-control#82-controller-mode-com--m2--full-emit-map
+Sources: s1 guide:com#midi-controller-moder · s2 note 20
 
 ### Multi-out jack modes [com.multi-out]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -4547,7 +4547,7 @@ Procedures:
 
 Related: [howto.back-up-projects], [howto.load-samples], [com.usb], [sampler.sample-files]
 
-Sources: s1 guide:com#mtp · s2 teenage.engineering/guides/fieldkit · s3 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133 · s4 changelog:1.0.32 · s5 changelog:1.1.15
+Sources: s1 guide:com#mtp · s2 teenage.engineering/guides/fieldkit · s3 note 90 · s4 changelog:1.0.32 · s5 changelog:1.1.15
 
 ### MIDI CC reference [com.midi-cc-reference]
 current · OS ≥ 1.0.9 · changed in 1.1.0 · guide v1.1.15
@@ -4576,7 +4576,7 @@ Facts:
 
 Related: [com.midi-track-ccs], [com.midi-settings], [com.controller-mode], [howto.midi-keyboard]
 
-Sources: s1 guide:midi-references · s2 research:20-midi-control#31-global-ccs · s3 changelog:1.1.0 · s4 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133 · s5 research:20-midi-control#21-the-16-tracks-and-their-default-channels · s6 research:20-midi-control#81-normal-operation
+Sources: s1 guide:midi-references · s2 note 20 · s3 changelog:1.1.0 · s4 note 90 · s5 note 20 · s6 note 20
 
 ### Track parameter CCs [com.midi-track-ccs]
 unverified · OS ≥ 1.0.9 · guide v1.1.15
@@ -4600,7 +4600,7 @@ Facts:
 
 Related: [com.midi-cc-reference], [instrument.engine-prism], [com.controller-mode]
 
-Sources: s1 research:20-midi-control#30-the-lane-model-derived · s2 research:20-midi-control#34-engine-resolved-names-for-cc1215-p1p4 · s3 research:20-midi-control#37-known-conflicts--errata-in-the-sources · s4 guide:midi-references · s5 research:20-midi-control#42-drum-key-mapping
+Sources: s1 note 20 · s2 note 20 · s3 note 20 · s4 guide:midi-references · s5 note 20
 
 ## How-to recipes
 
@@ -5171,7 +5171,7 @@ Procedures:
 
 Related: [instrument.lfo-duck], [instrument.lfo], [howto.first-drum-beat], [howto.first-bassline]
 
-Sources: s1 guide:instrument#duck · s2 guide:synth-engines#change-engine · s3 research:30-presets-samples#11-a-new-projects-sounds
+Sources: s1 guide:instrument#duck · s2 guide:synth-engines#change-engine · s3 note 30
 
 ### Recipe — turn a sound into a pluck [howto.pluck]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -5213,7 +5213,7 @@ Procedures:
 
 Related: [instrument.envelopes], [instrument.filter], [howto.first-bassline], [howto.pad-swell]
 
-Sources: s1 guide:instrument#envelopes · s2 research:59-screen-profiling#22-envelope-editor-instrument-m2 · s3 guide:instrument#filter
+Sources: s1 guide:instrument#envelopes · s2 note 59 · s3 guide:instrument#filter
 
 ### Recipe — a pad that swells in and fades slowly [howto.pad-swell]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -5253,7 +5253,7 @@ Procedures:
 
 Related: [instrument.envelopes], [instrument.play-mode], [instrument.track-sends], [howto.first-chords]
 
-Sources: s1 guide:instrument#envelopes · s2 research:59-screen-profiling#22-envelope-editor-instrument-m2 · s3 guide:instrument#filter · s4 research:30-presets-samples#11-a-new-projects-sounds
+Sources: s1 guide:instrument#envelopes · s2 note 59 · s3 guide:instrument#filter · s4 note 30
 
 ### Recipe — a filter wobble in time with the beat [howto.wobble]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -5331,4 +5331,4 @@ Procedures:
 
 Related: [instrument.filter], [instrument.play-mode], [sequencer.parameter-locks], [howto.wobble]
 
-Sources: s1 research:59-screen-profiling#23-filter-instrument-m3 · s2 guide:instrument#filter · s3 guide:instrument#envelopes · s4 guide:sequencer#step-sequencing
+Sources: s1 note 59 · s2 guide:instrument#filter · s3 guide:instrument#envelopes · s4 guide:sequencer#step-sequencing

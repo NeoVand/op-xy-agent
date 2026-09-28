@@ -169,8 +169,8 @@ export function parseSource(raw: string, versions?: ReadonlySet<string>): Source
 
 /**
  * A compact spelling for the prompt bundle: `guide:layout#modules`, `changelog:1.1.21`,
- * `research:90-device-probe#…`; other URLs lose their `https://`. {@link BUNDLE_SOURCE_LEGEND}
- * tells the agent how to expand them.
+ * `note 90`; other URLs lose their `https://`. {@link BUNDLE_SOURCE_LEGEND} tells the agent how to
+ * expand them.
  */
 export function shortSource(url: string): string {
 	const parsed = parseSource(url);
@@ -183,15 +183,18 @@ export function shortSource(url: string): string {
 			return `guide:${source.slug ?? ''}${fragment}`;
 		case 'changelog':
 			return `changelog:${source.version}`;
-		case 'research':
-			return `research:${(source.path ?? '').replace(/^docs\/research\//, '').replace(/\.md$/, '')}${fragment}`;
+		case 'research': {
+			// our notes are not public pages: their number is enough (no anchor to link)
+			const name = (source.path ?? '').replace(/^docs\/research\//, '').replace(/\.md$/, '');
+			return `note ${/^\d+/.exec(name)?.[0] ?? name}`;
+		}
 		default:
 			return url.replace(/^https:\/\//, '');
 	}
 }
 
 /** How to expand {@link shortSource} spellings (part of the prompt bundle's legend). */
-export const BUNDLE_SOURCE_LEGEND = `Sources: guide:X = ${GUIDE_URL}/X (guide:#Y = ${GUIDE_URL}#Y); changelog:V = the OS V entry at ${CHANGELOG_URL}; research:N = docs/research/N.md in the op-xy-agent repository (our own notes, e.g. the device probe log).`;
+export const BUNDLE_SOURCE_LEGEND = `Sources: guide:X = ${GUIDE_URL}/X (guide:#Y = ${GUIDE_URL}#Y); changelog:V = the OS V entry at ${CHANGELOG_URL}; note N = our research note N (docs/research in the op-xy-agent repository, e.g. note 90, the device probe log), not a page to link.`;
 
 /** True for sources published by teenage engineering. */
 export function isOfficial(kind: SourceKind): boolean {
