@@ -16,11 +16,12 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    (`src/lib/sim/conformance/sequencer.cases.ts`) or noted in the area's code:
    - ~~Arrange mode: M1 "new" or "clear"?~~ **New** (camera, 2026-09-28; M4 reads clear with one
      pattern, delete with more). Still open: the projects folder (shift + project), M1 load or delete?
-   - How long must a lit step be held before it copies instead of coming off? (Ours: 0.5 s.)
+   - ~~How long must a lit step be held before it copies instead of coming off?~~ About half a
+     second, and the copy happens during the hold, when "copied" appears (camera, 2026-09-28).
    - Step component multiply, black key 9: 9 hits, or 3 as TE's table prints?
    - While playing: does the playhead dim a step that has notes, and light an empty one?
-   - The new project's sounds (`research/30-presets-samples.md` §11): how do you switch a filter or
-     an LFO off (you did it by hand for the engine session), and what does its page show then?
+   - ~~How do you switch a filter or an LFO off, and what does its page show then?~~ `M3` / `M4`
+     again on its own page; the page dims under an "off" box (camera, 2026-09-28).
    - On a new project's T3, hold shift on M2: does portamento read `00` or `off`, and what does the
      bend range read (we expect 2 semitones)? On T8 (we expect an octave)?
    - Are presets inside a category listed alphabetically, or in some other order?
@@ -40,7 +41,9 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    notes, and one with a parameter lock; **shift + a step**, then a white key; the **arpeggio** or
    **maestro** page; the screen while **recording**.
 7. **Punch-in FX and the tape** (read-only). Their screens are captured (10 fps, every punch-in key;
-   note 59); their sounds are still needed (USB audio at the next session). The replica's punch-in FX (aux T2) and tape (aux T6)
+   note 59) and the replica now draws them: the idle heartbeat and a still of each key's animation,
+   matched to keys by the order they were pressed (please confirm the order if you remember it).
+   Their sounds are still needed (USB audio at the next session). The replica's punch-in FX (aux T2) and tape (aux T6)
    patterns light up but make no sound: TE never published which of the 24 keys plays which effect.
    A short phone video pressing each punch-in key in turn over a beat, or notes on what each does,
    would let us build them; the same for the tape's clips.
