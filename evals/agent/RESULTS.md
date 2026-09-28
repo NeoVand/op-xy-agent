@@ -3,6 +3,21 @@
 Re-run with `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5` (needs `ANTHROPIC_API_KEY`
 in `.env`; never printed). Newest first.
 
+## 2026-09-28 — changing engine through the preset browser, conductor claude-opus-5-5
+
+On OS 1.1.33 shift + M1 brings up the preset browser, and the replica now does too, so the navigator
+loads an engine as one of its presets: shift + M1, `E1` to the engine, a click of `E2`. Two how-to
+cases cover it (`node evals/agent/howto.mjs --ids engine,engine-pad`).
+
+| Case         | Request                                                | Result | Tools it used               |
+| ------------ | ------------------------------------------------------ | ------ | --------------------------- |
+| `engine`     | wavetable on track 4, then the steps for my own unit   | pass   | plan_steps (show)           |
+| `engine-pad` | a slow wavetable pad on track 5 (amp attack around 60) | pass   | plan_steps (show, settings) |
+
+$0.90 for the two (most of the first's $0.81 writing the manual cache). The steps are the device's
+(`shift + M1`, `turn E1` 9 clockwise from dissolve to wavetable, `click E2`), and the attack is set
+after the engine, whose preset resets the envelope.
+
 ## 2026-09-28 — regression after F4 (plan_steps settings, recipes, set_sound), conductor claude-opus-5-5, judge claude-sonnet-5
 
 `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5`, with the new prompt, the five

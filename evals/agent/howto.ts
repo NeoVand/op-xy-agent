@@ -288,6 +288,33 @@ const CASES: readonly HowtoCase[] = [
 		}
 	},
 	{
+		id: 'engine',
+		prompt:
+			'Put the wavetable engine on track 4 of the virtual OP-XY, and tell me how to do it on my own unit.',
+		check(o) {
+			const fails: string[] = [];
+			const engine = o.state.tracks[3].engine;
+			if (engine !== 'wavetable') fails.push(`track 4 runs ${engine}`);
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			for (const w of mentions(o, 'shift + M1', 'E1', 'E2')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
+		id: 'engine-pad',
+		prompt:
+			'Turn track 5 into a slow wavetable pad on the virtual OP-XY: the wavetable engine, with an amp attack around 60.',
+		check(o) {
+			const fails: string[] = [];
+			const t = o.state.tracks[4];
+			if (t.engine !== 'wavetable') fails.push(`track 5 runs ${t.engine}`);
+			// the engine's preset resets the envelope, so the attack must be set after it
+			if (Math.abs(shown(t.amp.attack) - 60) > 3) fails.push(`amp attack ${shown(t.amp.attack)}`);
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			return fails;
+		}
+	},
+	{
 		id: 'pluck',
 		prompt:
 			'I want a plucky bass on track 3: a short decay, no sustain and a bit more resonance. Set it up for me on the virtual OP-XY and tell me what you changed.',
