@@ -4,7 +4,7 @@
  * instead of validating, so an incoherent file can crash it) is an {@link XyModelError}.
  */
 
-/** Base class of every error raised by `src/lib/xy`. */
+/** Base class of every error raised by `src/lib/core/xy`. */
 export class XyError extends Error {
 	name = 'XyError';
 }

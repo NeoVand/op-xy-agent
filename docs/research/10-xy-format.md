@@ -19,7 +19,7 @@
 > (`docs/DECISIONS.md` D3). Upstream evidence stops at **1.1.25**, so every claim here still has to be
 > re-verified on 1.1.33 (§8).
 >
-> **Port status (2026-09-28).** The TypeScript port is in `src/lib/xy/`: container, lane-aware walk,
+> **Port status (2026-09-28).** The TypeScript port is in `src/lib/core/xy/`: container, lane-aware walk,
 > project model, reader, template writer, and `simToXy`, the compiler from the simulator's state. It
 > reproduces the Python library byte for byte, 17 device captures included, and walks the owner's
 > 1.1.33 blank project, whose layout is the 1.1.4 one. What is ported and verified, and what is left for
@@ -1068,27 +1068,27 @@ proves) and the MIT notice (§9).
 
 ### 7.2 Module list and size estimates
 
-| Module (suggest `src/lib/xy/`) | Responsibility                                                                                      | LOC (est.)                   |
-| ------------------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------- |
-| `rle.ts`                       | `rleDecode` (two-pass alloc), `rleEncode` (canonical greedy)                                        | 70                           |
-| `container.ts`                 | Header parse/validate, layout family (header[5] → T1 base), version tag, write policy (`0x13` only) | 60                           |
-| `layout.ts`                    | Offset constants, `walkPatterns` (clones + lanes), footer parse/serialize, invariants               | 200                          |
-| `image.ts`                     | `XyImage` wrapper: typed get/set (u8/i8/u16/u32/i32/Q31), splice, copy-on-write, pristine clearing  | 150                          |
-| `fields.ts`                    | Descriptor tables: global, pattern header, sound words, sample region, enums, confidence            | 350                          |
-| `notes.ts`                     | Read/insert/remove/sort notes, 120 cap, validation                                                  | 120                          |
-| `plocks.ts`                    | Set/clear lock (value + mask + union + current row + carry), rotate, column table                   | 180                          |
-| `stepComponents.ts`            | Bit/value tables with guide labels, set/clear, rotate                                               | 90                           |
-| `scenes.ts`, `songs.ts`        | Scene rows (sel/mute/flag), active scene/song, variable-length song slots                           | 160                          |
-| `arrangement.ts`               | Build from spec: baseline → pattern structs (clones), scenes, songs, per-pattern sound              | 260                          |
-| `presets.ts`                   | Donor copy (regions + octave), factory donor index, preset path                                     | 160                          |
-| `samples.ts`                   | SampleRegion read/write (drum kit/sampler) with the corrected record model                          | 160                          |
-| `lanes.ts`                     | Performance lanes read (write later)                                                                | 80                           |
-| `inspect.ts`                   | Image → `ProjectModel` JSON (for agent context and replica), with confidence                        | 350                          |
-| `validate.ts`                  | Pre-export invariants (§2.3) + "firmware target" checks (e.g. >9 patterns on <1.1.15)               | 150                          |
-| `spec.ts`                      | zod schema for the LLM-facing musical spec, compile to arrangement calls                            | 200                          |
-| `assets/`                      | `baseline-1.1.4.xy` (9.5 KB) + factory donors (24 files, 191 KB), lazily loaded                     | data                         |
-| tests                          | Unit, corpus, golden, differential, property                                                        | 1,000                        |
-| **Total**                      |                                                                                                     | **~3,000 TS + ~1,000 tests** |
+| Module (suggest `src/lib/core/xy/`) | Responsibility                                                                                      | LOC (est.)                   |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `rle.ts`                            | `rleDecode` (two-pass alloc), `rleEncode` (canonical greedy)                                        | 70                           |
+| `container.ts`                      | Header parse/validate, layout family (header[5] → T1 base), version tag, write policy (`0x13` only) | 60                           |
+| `layout.ts`                         | Offset constants, `walkPatterns` (clones + lanes), footer parse/serialize, invariants               | 200                          |
+| `image.ts`                          | `XyImage` wrapper: typed get/set (u8/i8/u16/u32/i32/Q31), splice, copy-on-write, pristine clearing  | 150                          |
+| `fields.ts`                         | Descriptor tables: global, pattern header, sound words, sample region, enums, confidence            | 350                          |
+| `notes.ts`                          | Read/insert/remove/sort notes, 120 cap, validation                                                  | 120                          |
+| `plocks.ts`                         | Set/clear lock (value + mask + union + current row + carry), rotate, column table                   | 180                          |
+| `stepComponents.ts`                 | Bit/value tables with guide labels, set/clear, rotate                                               | 90                           |
+| `scenes.ts`, `songs.ts`             | Scene rows (sel/mute/flag), active scene/song, variable-length song slots                           | 160                          |
+| `arrangement.ts`                    | Build from spec: baseline → pattern structs (clones), scenes, songs, per-pattern sound              | 260                          |
+| `presets.ts`                        | Donor copy (regions + octave), factory donor index, preset path                                     | 160                          |
+| `samples.ts`                        | SampleRegion read/write (drum kit/sampler) with the corrected record model                          | 160                          |
+| `lanes.ts`                          | Performance lanes read (write later)                                                                | 80                           |
+| `inspect.ts`                        | Image → `ProjectModel` JSON (for agent context and replica), with confidence                        | 350                          |
+| `validate.ts`                       | Pre-export invariants (§2.3) + "firmware target" checks (e.g. >9 patterns on <1.1.15)               | 150                          |
+| `spec.ts`                           | zod schema for the LLM-facing musical spec, compile to arrangement calls                            | 200                          |
+| `assets/`                           | `baseline-1.1.4.xy` (9.5 KB) + factory donors (24 files, 191 KB), lazily loaded                     | data                         |
+| tests                               | Unit, corpus, golden, differential, property                                                        | 1,000                        |
+| **Total**                           |                                                                                                     | **~3,000 TS + ~1,000 tests** |
 
 ### 7.3 MVP (first milestone)
 
@@ -1153,7 +1153,7 @@ user's 1.1.33 device.
 
 - **Pin the oracle.** Upstream commit `7a74acc`. Run with
   `uv venv --python 3.12` + `uv pip install pytest mido` (Appendix C). Upstream runs 1570 tests in 16 s.
-- **Fixture vendoring.** Copy the §6.2 set into `src/lib/xy/__fixtures__/kmorrill/` with `LICENSE`
+- **Fixture vendoring.** Copy the §6.2 set into `src/lib/core/xy/__fixtures__/kmorrill/` with `LICENSE`
   (MIT text) and `manifest.json`. Because `research/repos/` is git-ignored (DECISIONS D1), CI can't rely
   on it. An optional "full corpus" vitest suite runs only when `research/repos/kmorrill_xy-format`
   exists.
@@ -1186,11 +1186,11 @@ The core code is in Appendix B.
 
 ### 7.7 What is ported and verified (2026-09-28)
 
-The port lives in `src/lib/xy/`: about 1,500 lines of TypeScript for the codec, 400 for `simToXy`
-and 1,500 of tests. All of it is pure except `from-sim.ts`, which reads the simulator. It follows the
+The port lives in `src/lib/core/xy/`: about 1,500 lines of TypeScript for the codec, 400 for `simToXy`
+and 1,500 of tests. All of it is pure; `simToXy` lives in `src/lib/sim/xy.ts`, since it reads the simulator. It follows the
 plan of §7.2 for the MVP of §7.3, steps 1–3, plus step components and locks from milestone 2. Every
 ported file names its upstream source (MIT notice in `NOTICE.md` and
-`src/lib/xy/fixtures/README.md`). The small `bytes.ts`, `errors.ts` and `index.ts` are not listed.
+`src/lib/core/xy/fixtures/README.md`). The small `bytes.ts`, `errors.ts` and `index.ts` are not listed.
 
 | Module         | Lines | Upstream source                                                                | What it does                                                                                       |
 | -------------- | ----: | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
@@ -1200,7 +1200,7 @@ ported file names its upstream source (MIT notice in `NOTICE.md` and
 | `model.ts`     |   338 | enums of `project_config_inspection`, `PLOCK_PARAMS`, `bar_menu_inspection`    | The project model; lock columns, step components, engines, scales, groove detents, conversions     |
 | `read.ts`      |   185 | the inspection modules                                                         | `readProject`: settings, 100 scenes, every pattern's bar settings, notes, components, locks, lanes |
 | `write.ts`     |   488 | `ImageProject` setters, `set_plock`, `set_step_component`, `build_arrangement` | `writeProject(model, template)`: writes what differs from the template, keeps every other byte     |
-| `from-sim.ts`  |   394 | —                                                                              | `simToXy(state, template)`: the simulator's project as a file, and what it could not take          |
+| `sim/xy.ts`    |   394 | —                                                                              | `simToXy(state, template)`: the simulator's project as a file, and what it could not take          |
 
 The model holds the file's own values where the file is exact (ticks, bytes, 0–32767 lock values),
 so a project read and written again comes back byte for byte; a pattern's `sound` (engine, preset
@@ -1234,7 +1234,7 @@ keyboard octave (−1 where 1.1.4 has 0), scene 1's flag (set on 1.1.33), sound 
 `0x3FFFFFE7` on T1–T8 where 1.1.4 has 0), two framecount bytes of T1's region 18, and five
 crossfade words of T8's regions (zero on 1.1.33). None of it is sequence data.
 
-**Fixtures** (`src/lib/xy/fixtures/`, about 140 KB): the blank 1.1.4 template, four of upstream's
+**Fixtures** (`src/lib/core/xy/fixtures/`, about 140 KB): the blank 1.1.4 template, four of upstream's
 device-tested image probes (01, 02, 06, 07), two projects the library writes from our op lists
 (`song.xy`, `locks.xy`), and the JSON above. `scripts/xy-fixtures.py` regenerates them with the
 library as the oracle and checks each claimed device equality. No TE factory projects, factory
@@ -1345,7 +1345,7 @@ cheapest (Q1).
   "all copies or substantial portions".
 - **What to do in our repo:**
   1. Put the MIT text and Kevin Morrill's copyright in `THIRD_PARTY_NOTICES.md` (or
-     `src/lib/xy/LICENSE-kmorrill`).
+     `src/lib/core/xy/LICENSE-kmorrill`).
   2. Add a header comment in each ported module ("Portions derived from kmorrill/xy-format, MIT").
   3. Keep the notice with vendored fixtures.
   4. Credit the project in the app's About screen and README.

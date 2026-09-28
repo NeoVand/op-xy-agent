@@ -2,7 +2,7 @@
  * The OP-XY's native project files (`.xy`, milestone M6), ported from kmorrill/xy-format (MIT):
  * the container and RLE, the decoded project model, a reader and a template-based writer
  * (docs/research/10-xy-format.md). All of it is pure: no DOM, no simulator. The compiler from the
- * simulator's state, which does depend on `sim/`, is imported on its own from `$lib/xy/from-sim`.
+ * simulator's state, which does depend on `sim/`, lives in `$lib/sim/xy`.
  */
 export { XyError, XyFormatError, XyModelError } from './errors';
 export { rleDecode, rleEncode } from './rle';

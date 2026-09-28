@@ -9,14 +9,14 @@ trademarks of their owner and are used here only to describe compatibility.
 | Source                                                                            | Licence                                         | What we use                                                                    | Where                                                                          |
 | --------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | [MIDI Lab](https://github.com/NeoVand/midilab) (NeoVand)                          | the owner's own code, relicensed here under MIT | MIDI protocol core, SMF codec, notation, melodies, harmony, Web MIDI patterns  | `src/lib/core/midi/`, `src/lib/core/music/` (files carry a provenance comment) |
-| [kmorrill/xy-format](https://github.com/kmorrill/xy-format) (Kevin Morrill)       | MIT                                             | `.xy` project format: the TS port (RLE, layout, reader, writer), test fixtures | `docs/research/10-xy-format.md`, `src/lib/xy/`, `scripts/xy-fixtures.py`       |
+| [kmorrill/xy-format](https://github.com/kmorrill/xy-format) (Kevin Morrill)       | MIT                                             | `.xy` project format: the TS port (RLE, layout, reader, writer), test fixtures | `docs/research/10-xy-format.md`, `src/lib/core/xy/`, `scripts/xy-fixtures.py`  |
 | [kmorrill/op-xy-vibing](https://github.com/kmorrill/op-xy-vibing) (Kevin Morrill) | MIT                                             | live-loop IR and scheduling ideas                                              | `docs/research/20-midi-control.md`                                             |
 
 Every ported file names its source in a header comment. Projects without a licence (for example
 `jshph/opxy-reactive`, `benjaminr/mcp-koii`) were read for facts only; none of their code is used.
 
-`src/lib/xy/` ports kmorrill/xy-format, and `src/lib/xy/fixtures/` holds `.xy` files written by or
-taken from it (what each one is: `src/lib/xy/fixtures/README.md`). Its licence:
+`src/lib/core/xy/` ports kmorrill/xy-format, and `src/lib/core/xy/fixtures/` holds `.xy` files written by or
+taken from it (what each one is: `src/lib/core/xy/fixtures/README.md`). Its licence:
 
 ```text
 MIT License

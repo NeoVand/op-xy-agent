@@ -16,8 +16,8 @@ import { octaveKey } from '$lib/sim/areas/sequencer/model';
 import { fromQ15 } from '$lib/sim/defaults';
 import { storedPresetSound, type SimState } from '$lib/sim/params';
 import { formatScale, type Pattern } from '$lib/sim/sequencer';
-import { hex2 } from './bytes';
-import { SCENES, TICKS_PER_STEP, TRACKS } from './layout';
+import { hex2 } from '$lib/core/xy/bytes';
+import { SCENES, TICKS_PER_STEP, TRACKS } from '$lib/core/xy/layout';
 import {
 	XY_ENGINES,
 	XY_SCALES,
@@ -34,9 +34,9 @@ import {
 	type XyPattern,
 	type XyProject,
 	type XyStepComponent
-} from './model';
-import { readProject } from './read';
-import { writeProject } from './write';
+} from '$lib/core/xy/model';
+import { readProject } from '$lib/core/xy/read';
+import { writeProject } from '$lib/core/xy/write';
 
 /** What {@link simToXy} made. */
 export interface SimToXyResult {

@@ -13,7 +13,7 @@ import { readProject } from './read';
 import { writeProject } from './write';
 import type { XyPattern, XyProject } from './model';
 
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+const ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
 const UPSTREAM = path.join(ROOT, 'research/repos/kmorrill_xy-format');
 const OWNER_BLANK = path.join(ROOT, 'research/device/captures/mtp/projects__workspace.xy');
 const blank = new Uint8Array(readFileSync(new URL('./fixtures/blank-1.1.4.xy', import.meta.url)));

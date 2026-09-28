@@ -330,7 +330,7 @@ TS port of `xy-format` (~3k lines; golden tests against the upstream corpus + Py
 Field Kit first; WebUSB-MTP if the spike allows), load via CC86. Upstream the corrections we found
 to `kmorrill/xy-format`.
 
-- [x] Codec (`src/lib/xy/`): container and RLE, lane-aware walk, project model, `readProject`,
+- [x] Codec (`src/lib/core/xy/`): container and RLE, lane-aware walk, project model, `readProject`,
       `writeProject` over a template (1.1.4 or 1.1.33). Fixtures and goldens from the Python library
       (`scripts/xy-fixtures.py`); the full upstream corpus runs locally (note 10 §7.7).
 - [x] Simulator → `.xy`: `simToXy(state, template)` with a `skipped` list; the agent's patterns,

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Regenerate the .xy test fixtures of src/lib/xy/ with kmorrill/xy-format (MIT), the Python library
+"""Regenerate the .xy test fixtures of src/lib/core/xy/ with kmorrill/xy-format (MIT), the Python library
 our TypeScript port follows. It is the oracle: the TS reader must read what it reads, and the TS
 writer must write what it writes.
 
 Needs the upstream clone at research/repos/kmorrill_xy-format (scripts/fetch-research.sh), pinned at
 commit 7a74acc (docs/research/10-xy-format.md). No dependencies beyond the standard library:
 
-    uv run --quiet python scripts/xy-fixtures.py            # write src/lib/xy/fixtures/
+    uv run --quiet python scripts/xy-fixtures.py            # write src/lib/core/xy/fixtures/
     uv run --quiet python scripts/xy-fixtures.py --check    # exit 1 if anything would change
 
-What it writes (see src/lib/xy/fixtures/README.md):
+What it writes (see src/lib/core/xy/fixtures/README.md):
 
 - the .xy fixtures: the blank template, four of upstream's device-tested image probes, and two
   projects the library writes from our op lists (`song.xy`, `locks.xy`);
@@ -31,7 +31,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 UPSTREAM = ROOT / "research/repos/kmorrill_xy-format"
-OUT = ROOT / "src/lib/xy/fixtures"
+OUT = ROOT / "src/lib/core/xy/fixtures"
 BASE = UPSTREAM / "src/one-off-changes-from-default/unnamed 1.xy"
 
 if not (UPSTREAM / "xy/image_writer.py").exists():
@@ -65,7 +65,7 @@ COMPONENT_NAMES = {bit: name for name, bit in ImageProject.STEP_COMPONENTS.items
 
 # ─── op lists ───────────────────────────────────────────────────────────────────────────────────
 # Tracks, patterns and steps are 1-based, as the library's calls take them. The TS side replays the
-# same lists on its model (src/lib/xy/goldens.spec.ts).
+# same lists on its model (src/lib/core/xy/goldens.spec.ts).
 
 SONG_OPS = [
     {
@@ -527,7 +527,7 @@ def main() -> int:
         if stale:
             print("stale:", ", ".join(stale))
             return 1
-        print(f"src/lib/xy/fixtures is up to date ({len(files)} .xy files, {len(goldens)} goldens)")
+        print(f"src/lib/core/xy/fixtures is up to date ({len(files)} .xy files, {len(goldens)} goldens)")
         return 0
     OUT.mkdir(parents=True, exist_ok=True)
     for name, data in files.items():
@@ -535,7 +535,7 @@ def main() -> int:
     for name, doc in documents.items():
         (OUT / name).write_text(json.dumps(doc, indent="\t") + "\n")
     print(f"wrote {len(files)} .xy files and {len(goldens)} goldens to {OUT.relative_to(ROOT)}")
-    print("run `pnpm exec prettier --write src/lib/xy/fixtures` to format the JSON")
+    print("run `pnpm exec prettier --write src/lib/core/xy/fixtures` to format the JSON")
     return 0
 
 

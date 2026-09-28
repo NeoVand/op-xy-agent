@@ -14,14 +14,14 @@ import {
 	toggleComponent,
 	toggleStep
 } from '$lib/sim/sequencer';
-import { decodeXy, encodeXy } from './container';
-import { XyModelError } from './errors';
-import { XY_STEP_COMPONENTS } from './model';
-import { readProject } from './read';
-import { simToXy } from './from-sim';
+import { decodeXy, encodeXy } from '$lib/core/xy/container';
+import { XyModelError } from '$lib/core/xy/errors';
+import { XY_STEP_COMPONENTS } from '$lib/core/xy/model';
+import { readProject } from '$lib/core/xy/read';
+import { simToXy } from './xy';
 
 const fixture = (name: string) =>
-	new Uint8Array(readFileSync(new URL(`./fixtures/${name}`, import.meta.url)));
+	new Uint8Array(readFileSync(new URL(`../core/xy/fixtures/${name}`, import.meta.url)));
 const blank = fixture('blank-1.1.4.xy');
 
 /** Offsets where two files' images differ. */

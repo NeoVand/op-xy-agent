@@ -1,13 +1,13 @@
 # `.xy` test fixtures
 
-Test data for `src/lib/xy/`, written by or taken from
+Test data for `src/lib/core/xy/`, written by or taken from
 [kmorrill/xy-format](https://github.com/kmorrill/xy-format) (MIT, Copyright (c) 2026 Kevin
 Morrill; licence below), the Python library our TypeScript port follows. Regenerate everything with
 the upstream clone in place (`scripts/fetch-research.sh`):
 
 ```bash
 uv run --quiet python scripts/xy-fixtures.py            # write
-pnpm exec prettier --write src/lib/xy/fixtures          # format the JSON
+pnpm exec prettier --write src/lib/core/xy/fixtures          # format the JSON
 uv run --quiet python scripts/xy-fixtures.py --check    # verify
 ```
 
