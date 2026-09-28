@@ -1,2 +1,3 @@
 allowBuilds:
+  '@hugeicons/svelte': false
   esbuild: true

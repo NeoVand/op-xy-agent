@@ -408,12 +408,14 @@ export function lockTarget(s: SimState, e: number): LockParam | null {
 	switch (s.pages.instrument) {
 		case 1: {
 			if (isSampler(t.engine)) {
+				// the synth sampler and the multisampler turn a sample region here (start, loop, end;
+				// shift: direction, tune, crossfade, gain), which the locks cannot hold yet: no lock
+				// rather than one of the drum key's values
+				if (t.engine !== 'drum') return null;
 				const fields = s.shift
 					? (['reverse', 'pan', 'fade', 'gain'] as const)
 					: (['tune', 'start', 'end', 'playMode'] as const);
-				const field = fields[e];
-				if (field === 'playMode' && t.engine !== 'drum') return null;
-				return lockParam(`key${t.drumKey}.${field}`);
+				return lockParam(`key${t.drumKey}.${fields[e]}`);
 			}
 			if (t.engine === 'midi') return e === 2 ? lockParam('midi.program') : null;
 			if (engineParams(t.engine)[e] === null) return null;

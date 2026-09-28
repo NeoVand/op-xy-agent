@@ -451,6 +451,26 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		expect(pattern(sim).steps[0].locks).toEqual({ 'midi.program': 5 });
 	});
 
+	it('locks nothing on the synth sampler’s and multisampler’s M1, never a drum key’s value', () => {
+		const { sim } = rig();
+		const s = sim.state;
+		sim.press('track.8'); // a new project's T8: the multisampler pad
+		sim.press('key.m1');
+		expect(s.tracks[7].engine).toBe('multisampler');
+		expect([0, 1, 2, 3].map((e) => lockTarget(s, e))).toEqual([null, null, null, null]);
+		s.tracks[7].engine = 'sampler';
+		s.shift = true;
+		expect([0, 1, 2, 3].map((e) => lockTarget(s, e))).toEqual([null, null, null, null]);
+		s.shift = false;
+		// a turn with a step held still turns the region, and stores no lock
+		const keys = JSON.stringify(s.tracks[7].drumKeys);
+		down(sim, 'step.3');
+		sim.turn(2, 2);
+		up(sim, 'step.3');
+		expect(s.tracks[7].sequence.patterns[0].steps[2].locks).toEqual({});
+		expect(JSON.stringify(s.tracks[7].drumKeys)).toBe(keys);
+	});
+
 	it('maps encoders to lock ids like the core, and applies locks to a copy of the track', () => {
 		const { sim } = rig();
 		const s = sim.state;
