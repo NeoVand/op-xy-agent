@@ -1,6 +1,6 @@
 /**
  * Device tools: read the device state, start and stop playback, set the tempo, select and mute
- * tracks, preview notes, panic. Each one builds typed MIDI messages with core/opxy (CC map, tempo
+ * tracks, set sound parameters, preview notes, panic. Each one builds typed MIDI messages with core/opxy (CC map, tempo
  * scaling) and sends them through the device layer's transport, the app's single send choke point,
  * with `source: 'agent'` (or `'user'` for undo) and the tool call id as `cause`.
  *
@@ -26,6 +26,7 @@ import {
 	tempoToCc
 } from '$lib/core/opxy';
 import type { DeviceStack } from '$lib/device';
+import { shown } from '$lib/sim/params';
 import { DeviceError } from '$lib/device/errors';
 import { deviceSnapshot } from '../device-state';
 import type { VirtualOpxy } from '../virtual-opxy';
@@ -488,6 +489,140 @@ export const muteTrackTool = defineTool({
 	}
 });
 
+// ─── set_sound ──────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The sound parameters `set_sound` may send, by the name the model uses, with their CC-map ids.
+ * Only lanes seen answering on the owner's unit on OS 1.1.33 (note 59 §3, probe log session 1):
+ * FX II's send (CC39) and the play-mode page (CC28–31) were never tried, so they are left out.
+ */
+export const SOUND_PARAMS = {
+	'engine p1': 'engine.p1',
+	'engine p2': 'engine.p2',
+	'engine p3': 'engine.p3',
+	'engine p4': 'engine.p4',
+	'amp attack': 'ampEnv.attack',
+	'amp decay': 'ampEnv.decay',
+	'amp sustain': 'ampEnv.sustain',
+	'amp release': 'ampEnv.release',
+	'filter attack': 'filterEnv.attack',
+	'filter decay': 'filterEnv.decay',
+	'filter sustain': 'filterEnv.sustain',
+	'filter release': 'filterEnv.release',
+	cutoff: 'filter.cutoff',
+	resonance: 'filter.resonance',
+	'env amount': 'filter.envAmount',
+	'key tracking': 'filter.keyTracking',
+	'fx i send': 'send.fx1',
+	level: 'level',
+	pan: 'pan'
+} as const;
+
+type SoundParam = keyof typeof SOUND_PARAMS;
+const SOUND_PARAM_NAMES = Object.keys(SOUND_PARAMS) as [SoundParam, ...SoundParam[]];
+
+/** What a 0–99 lane shows for a CC value (the envelope sweeps' law: `shown(cc × 99 / 127)`). */
+export function laneShows(cc: number): number {
+	return shown((cc * 99) / 127);
+}
+
+/** The CC value that makes a 0–99 lane show `value`: the lowest that does, and 127 for 99. */
+export function laneCc(value: number): number {
+	const want = Math.min(99, Math.max(0, Math.round(value)));
+	// 126 shows 99 too, but only 127 turns the lane fully up (a release of 99 stops notes at once)
+	if (want === 99) return 127;
+	for (let cc = 0; cc <= 127; cc++) if (laneShows(cc) >= want) return cc;
+	return 127;
+}
+
+/** Pan −100…100 as CC10 (64 = centre). */
+const panCc = (pan: number) => Math.min(127, Math.max(0, Math.round(64 + (pan * 64) / 100)));
+const ccPan = (cc: number) => Math.max(-100, Math.min(100, Math.round(((cc - 64) * 100) / 64)));
+
+/** A value as `set_sound` takes it back from a CC it sent. */
+const fromCc = (param: SoundParam, cc: number) => (param === 'pan' ? ccPan(cc) : laneShows(cc));
+
+interface SoundSnapshot {
+	/** The value this app last sent for the parameter; null = never (the device reports none). */
+	readonly value: number | null;
+}
+
+export const setSoundTool = defineTool({
+	name: 'set_sound',
+	label: 'set sound',
+	kind: 'mutate',
+	device: true,
+	description:
+		"Set one sound parameter of an instrument track on the connected OP-XY over MIDI (its CC on the track's channel): engine p1–p4 (the four M1 values; synth engines only, the samplers ignore them), the amp and filter envelopes, cutoff, resonance, env amount, key tracking, the FX I send, the track's mix level and pan. Values as the screen shows them, 0–99 (pan −100 left … 100 right). Changes the project's sound, so the user approves it. The device never reports parameter values: what it had before is known only if this app set it. Only for a connected OP-XY; for the virtual OP-XY use plan_steps with show, which also shows the keys.",
+	input: z.object({
+		track: z.int().min(1).max(8).describe('Instrument track 1–8'),
+		param: z.enum(SOUND_PARAM_NAMES).describe('Which parameter'),
+		value: z.number().min(-100).max(100).describe('As the screen shows it: 0–99; pan −100…100')
+	}),
+	snapshot(input, env): SoundSnapshot {
+		const target = resolveCc({ track: input.track, param: SOUND_PARAMS[input.param] });
+		const sent = env.device?.mirror.sentCcs[`${target.channel}:${target.cc}`];
+		return { value: sent ? fromCc(input.param, sent.value) : null };
+	},
+	preview(input, before) {
+		const name = getTrack(input.track).name;
+		return {
+			label: `${name} ${input.param} ${before.value !== null ? `${before.value} → ` : ''}${input.value}`,
+			before: before.value === null ? 'unknown' : `${before.value} (last sent by the app)`,
+			after: String(input.value)
+		};
+	},
+	inverse(input, before) {
+		if (before.value === null || before.value === input.value) return null;
+		return {
+			tool: 'set_sound',
+			input: { track: input.track, param: input.param, value: before.value },
+			label: `${getTrack(input.track).name} ${input.param} back to ${before.value}`
+		};
+	},
+	async run(input, ctx) {
+		const stack = ctx.env.device;
+		if (!stack || stack.session.phase !== 'ready') {
+			return errorResult(
+				'No OP-XY is connected, so nothing was sent. To set it on the virtual OP-XY, use plan_steps with show.',
+				'no op-xy connected'
+			);
+		}
+		const target = resolveCc({ track: input.track, param: SOUND_PARAMS[input.param] });
+		const value = input.param === 'pan' ? panCc(input.value) : laneCc(input.value);
+		try {
+			send(stack, ctx, {
+				type: 'controlChange',
+				channel: target.channel,
+				controller: target.cc,
+				value
+			});
+		} catch (error) {
+			return sendError(error);
+		}
+		const shows = fromCc(input.param, value);
+		const name = getTrack(input.track).name;
+		return jsonResult(
+			{
+				sent: `CC${target.cc} = ${value} on channel ${target.channel + 1}`,
+				track: input.track,
+				param: input.param,
+				shows,
+				note: [
+					input.param.startsWith('engine')
+						? 'A sampler engine ignores its M1 CCs; a synth engine shows the new value.'
+						: null,
+					'The device does not confirm parameter changes; its screen shows the new value if the page is open.'
+				]
+					.filter(Boolean)
+					.join(' ')
+			},
+			`${name} ${input.param} ${shows}`,
+			{ applied: true, after: shows }
+		);
+	}
+});
+
 // ─── play_notes ─────────────────────────────────────────────────────────────────────────────────
 
 /** Longest preview, in seconds. */
@@ -667,6 +802,7 @@ export const DEVICE_TOOLS = [
 	setTempoTool,
 	selectTrackTool,
 	muteTrackTool,
+	setSoundTool,
 	playNotesTool,
 	panicTool
 ];

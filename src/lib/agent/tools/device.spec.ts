@@ -12,7 +12,10 @@ import {
 	muteTrackTool,
 	panicTool,
 	playNotesTool,
+	laneCc,
+	laneShows,
 	selectTrackTool,
+	setSoundTool,
 	setTempoTool,
 	transportTool
 } from './device';
@@ -141,6 +144,55 @@ describe('mute_track and select_track', () => {
 		expect(sent().at(-1)).toEqual([0xb0, 102, 2]);
 		expect(rig.opxy.selectedTrack).toBe(3);
 		expect(result.summary).toBe('track 3 selected');
+	});
+});
+
+describe('set_sound', () => {
+	it('sends the lane CC that makes the screen show the value, on the track channel', async () => {
+		const { rig, sent, run } = await setup();
+		const cutoff = await run(setSoundTool, { track: 3, param: 'cutoff', value: 40 });
+		await run(setSoundTool, { track: 3, param: 'amp release', value: 99 });
+		await run(setSoundTool, { track: 5, param: 'engine p2', value: 0 });
+		await run(setSoundTool, { track: 3, param: 'pan', value: -50 });
+		await rig.time.advance(5);
+		expect(sent().slice(-4)).toEqual([
+			[0xb2, 32, 51],
+			[0xb2, 23, 127],
+			[0xb4, 13, 0],
+			[0xb2, 10, 32]
+		]);
+		expect(cutoff.summary).toBe('track 3 cutoff 40');
+		expect(json(cutoff)).toMatchObject({ sent: 'CC32 = 51 on channel 3', shows: 40 });
+	});
+
+	it('maps every value 0–99 to a CC that reads it back', () => {
+		for (let v = 0; v <= 99; v++) expect(laneShows(laneCc(v)), `value ${v}`).toBe(v);
+		expect(laneCc(0)).toBe(0);
+		expect(laneCc(99)).toBe(127);
+	});
+
+	it('knows the value before only if the app sent it, and undoes to it', async () => {
+		const { env, run, rig } = await setup();
+		const input = { track: 3, param: 'resonance', value: 70 } as const;
+		expect(setSoundTool.snapshot!(input, env)).toEqual({ value: null });
+		expect(setSoundTool.inverse!(input, { value: null }, env)).toBeNull();
+		await run(setSoundTool, { track: 3, param: 'resonance', value: 20 });
+		await rig.time.advance(5);
+		const before = setSoundTool.snapshot!(input, env);
+		expect(before).toEqual({ value: 20 });
+		expect(setSoundTool.inverse!(input, before, env)).toEqual({
+			tool: 'set_sound',
+			input: { track: 3, param: 'resonance', value: 20 },
+			label: 'track 3 resonance back to 20'
+		});
+	});
+
+	it('sends nothing without a device, and points to plan_steps for the virtual OP-XY', async () => {
+		const { sent, run } = await setup({ connect: false });
+		const result = await run(setSoundTool, { track: 3, param: 'cutoff', value: 40 });
+		expect(result.isError).toBe(true);
+		expect(String(result.content)).toMatch(/plan_steps/);
+		expect(sent()).toEqual([]);
 	});
 });
 

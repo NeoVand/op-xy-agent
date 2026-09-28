@@ -202,7 +202,8 @@ owner flagged, then what users see most.
       each encoder on a copy to see which one moves the value, so no table has to list them.
 - [x] **Tools:** one `plan_steps` tool gives the exact steps for a page, a value or several
       settings. With `show` it walks the replica through them, step by step, so the virtual OP-XY
-      ends up there. Left: setting values on the device through CCs where it listens.
+      ends up there. `set_sound` sets a connected device's sound parameters over the lane CCs
+      verified on 1.1.33, with approval and undo when the app knows the value before.
 - [x] **Recipes:** five sound-design recipes (`howto.sidechain-duck`, `pluck`, `pad-swell`,
       `wobble`, `acid-bass`). Their steps carry machine-readable settings, and
       `src/lib/sim/recipes.spec.ts` runs every recipe on a new project. Left: brain routing,

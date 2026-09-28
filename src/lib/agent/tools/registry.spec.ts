@@ -147,6 +147,7 @@ describe('the conductor tool set', () => {
 			set_tempo: 'mutate',
 			select_track: 'ui',
 			mute_track: 'mutate',
+			set_sound: 'mutate',
 			play_notes: 'mutate',
 			panic: 'mutate',
 			search_manual: 'read',
@@ -166,7 +167,7 @@ describe('the conductor tool set', () => {
 		const asks = CONDUCTOR_TOOLS.filter(asksForApproval)
 			.map((t) => t.name)
 			.sort();
-		expect(asks).toEqual(['mute_track', 'set_tempo']);
+		expect(asks).toEqual(['mute_track', 'set_sound', 'set_tempo']);
 	});
 
 	it('runs everything that sends MIDI on the device queue; only panic skips it', () => {
@@ -178,6 +179,7 @@ describe('the conductor tool set', () => {
 			'panic',
 			'play_notes',
 			'select_track',
+			'set_sound',
 			'set_tempo',
 			'transport'
 		]);
