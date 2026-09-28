@@ -37,7 +37,7 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: top-bar
-    text: A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis — above a picture that, on most engines, never stops moving.
+    text: A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis, none on organ — above a picture drawn from the four values; prism, dissolve and hardsync animate while notes sound, organ's drawbars glide to new values and wavetable's drift keeps its copies turning.
     source: docs/research/59-screen-profiling.md#21-general
     confidence: verified
     verified_on: '1.1.33'

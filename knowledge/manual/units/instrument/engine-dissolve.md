@@ -19,7 +19,7 @@ facts:
     text: Dissolve mixes noise into pitched oscillators, which suits ambient pads and bright, rough-edged leads.
     source: https://teenage.engineering/guides/op-xy/synth-engines#dissolve
   - id: picture
-    text: Dissolve fills the screen with a mosaic of squares that never stops moving; raising fm or detune whitens it.
+    text: Dissolve fills the screen with a mosaic of squares, re-dealt many times a second while notes sound and frozen when they stop; am raises the share of lit squares, fm lifts the brightest grey to white and swarm evens the greys.
     source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
     confidence: verified
     verified_on: '1.1.33'

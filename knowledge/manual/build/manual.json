@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "bdab053f",
+	"bundle_hash": "9e6ff43d",
 	"stats": {
 		"units": 163,
 		"facts": 1090,
 		"procedures": 196,
 		"parameters": 207,
 		"verified_items": 190,
-		"words": 40459,
+		"words": 40520,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -8942,7 +8942,7 @@
 				},
 				{
 					"id": "top-bar",
-					"text": "A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis — above a picture that, on most engines, never stops moving.",
+					"text": "A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis, none on organ — above a picture drawn from the four values; prism, dissolve and hardsync animate while notes sound, organ's drawbars glide to new values and wavetable's drift keeps its copies turning.",
 					"source": "docs/research/59-screen-profiling.md#21-general",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -11302,7 +11302,7 @@
 				},
 				{
 					"id": "picture",
-					"text": "Dissolve fills the screen with a mosaic of squares that never stops moving; raising fm or detune whitens it.",
+					"text": "Dissolve fills the screen with a mosaic of squares, re-dealt many times a second while notes sound and frozen when they stop; am raises the share of lit squares, fm lifts the brightest grey to white and swarm evens the greys.",
 					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -11595,7 +11595,7 @@
 				},
 				{
 					"id": "picture",
-					"text": "Hardsync's picture is a hair dryer blowing animated blocks, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises.",
+					"text": "Hardsync's picture is a hair dryer whose blocks blow away while notes sound (fast at each note's start, slower as it holds), smaller as freq rises, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises.",
 					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",

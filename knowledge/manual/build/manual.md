@@ -1604,7 +1604,7 @@ Facts:
 - The midi engine makes no sound of its own; it turns the track into a MIDI sequencer for external gear and uses `M2` and `M3` for CC controls. [#midi] [s4]
 - The engine list holds all twelve — the eight synths, the three samplers and midi. [#list] (derived) [s5]
 - Over MIDI, CC12–15 on the track's channel move the four `M1` parameters of every synth engine; the drum sampler, synth sampler and multisampler pages ignore them. [#midi-ccs] (verified 1.1.33) [s6]
-- A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis — above a picture that, on most engines, never stops moving. [#top-bar] (verified 1.1.33) [s7]
+- A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis, none on organ — above a picture drawn from the four values; prism, dissolve and hardsync animate while notes sound, organ's drawbars glide to new values and wavetable's drift keeps its copies turning. [#top-bar] (verified 1.1.33) [s7]
 - On OS 1.1.33, `shift + M1` brings up a browser headed with the track number and the word preset, with the engine list in the middle and the highlighted engine's presets on the right. [#browser] (verified 1.1.33) [s8]
 
 Procedures:
@@ -2028,7 +2028,7 @@ noisy plucks. Load it with `shift + M1`.
 
 Facts:
 - Dissolve mixes noise into pitched oscillators, which suits ambient pads and bright, rough-edged leads. [#character] [s1]
-- Dissolve fills the screen with a mosaic of squares that never stops moving; raising fm or detune whitens it. [#picture] (verified 1.1.33) [s2]
+- Dissolve fills the screen with a mosaic of squares, re-dealt many times a second while notes sound and frozen when they stop; am raises the share of lit squares, fm lifts the brightest grey to white and swarm evens the greys. [#picture] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -2089,7 +2089,7 @@ Load it with `shift + M1`.
 
 Facts:
 - Hardsync is built for short stabs and firm, solid bass lines. [#character] [s1]
-- Hardsync's picture is a hair dryer blowing animated blocks, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises. [#picture] (verified 1.1.33) [s2]
+- Hardsync's picture is a hair dryer whose blocks blow away while notes sound (fast at each note's start, slower as it holds), smaller as freq rises, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises. [#picture] (verified 1.1.33) [s2]
 
 Parameters:
 

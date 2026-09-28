@@ -19,7 +19,7 @@ facts:
     text: Hardsync is built for short stabs and firm, solid bass lines.
     source: https://teenage.engineering/guides/op-xy/synth-engines#hardsync
   - id: picture
-    text: Hardsync's picture is a hair dryer blowing animated blocks, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises.
+    text: Hardsync's picture is a hair dryer whose blocks blow away while notes sound (fast at each note's start, slower as it holds), smaller as freq rises, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises.
     source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
     confidence: verified
     verified_on: '1.1.33'
