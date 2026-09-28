@@ -1,6 +1,7 @@
 /**
- * An instrument track's strip: voices in, then tremolo, duck, preset volume (M2 + shift), the mixer's
- * level and pan, and post-fader sends to FX I and FX II (M3 + shift, or mix M1). It also runs the
+ * An instrument track's strip: voices in, then the punch-in processor's effects on its sound (once
+ * loaded, see {@link Channel.insert}), tremolo, duck, preset volume (M2 + shift), the mixer's level
+ * and pan, and post-fader sends to FX I and FX II (M3 + shift, or mix M1). It also runs the
  * track's LFO (M4) — a wave the voices wire into their filter, pitch or M1 parameters, or that
  * wobbles the level (tremolo) — the engine's own tremolo (organ, axis), and the duck that dips the
  * level when another track plays. Settings arrive as the simulator's track state; only what changed
@@ -64,6 +65,8 @@ export class Channel {
 	#engineTremolo: { osc: OscillatorNode; depth: GainNode; amount: number } | null = null;
 	#lfoVolume = 0;
 	#applied = new Map<string, number | string>();
+	/** The punch-in processor's output this strip goes through, when there is one. */
+	#inserted: { node: AudioNode; index: number } | null = null;
 
 	constructor(
 		context: BaseAudioContext,
@@ -101,6 +104,24 @@ export class Channel {
 	/** Where the LFO goes now. */
 	get route(): LfoRoute {
 		return this.#route;
+	}
+
+	/**
+	 * Puts output `index` of the punch-in processor between the voices and the rest of the strip
+	 * (input `index` takes the voices), or takes it out again (null): its effects reach the sends
+	 * too, as a muted track sends nothing on.
+	 */
+	insert(node: AudioNode | null, index = 0): void {
+		const was = this.#inserted;
+		if (was) {
+			this.input.disconnect(was.node, 0, was.index);
+			was.node.disconnect(this.#tremolo, was.index, 0);
+		} else this.input.disconnect(this.#tremolo);
+		this.#inserted = node ? { node, index } : null;
+		if (node) {
+			this.input.connect(node, 0, index);
+			node.connect(this.#tremolo, index, 0);
+		} else this.input.connect(this.#tremolo);
 	}
 
 	/**
