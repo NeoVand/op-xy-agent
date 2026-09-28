@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "4fc351d4",
+	"bundle_hash": "8ab6fa7c",
 	"stats": {
-		"units": 158,
-		"facts": 1053,
-		"procedures": 187,
+		"units": 163,
+		"facts": 1080,
+		"procedures": 196,
 		"parameters": 207,
-		"verified_items": 181,
-		"words": 38498,
+		"verified_items": 182,
+		"words": 40119,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -24,10 +24,10 @@
 			"project": 8,
 			"tempo": 2,
 			"com": 12,
-			"howto": 17
+			"howto": 22
 		},
 		"by_status": {
-			"current": 141,
+			"current": 146,
 			"outdated-in-guide": 14,
 			"changelog-only": 2,
 			"unverified": 1
@@ -287,7 +287,12 @@
 				"howto.pitchbend-modulation",
 				"howto.back-up-projects",
 				"howto.load-samples",
-				"howto.song-with-brain"
+				"howto.song-with-brain",
+				"howto.sidechain-duck",
+				"howto.pluck",
+				"howto.pad-swell",
+				"howto.wobble",
+				"howto.acid-bass"
 			]
 		}
 	],
@@ -651,7 +656,8 @@
 					"steps": [
 						{
 							"keys": "shift + turn E1…E4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -787,7 +793,8 @@
 					"steps": [
 						{
 							"keys": "shift + Tn",
-							"note": "opens the preset browser for that track"
+							"note": "opens the preset browser for that track",
+							"set": null
 						}
 					],
 					"result": null,
@@ -942,7 +949,8 @@
 					"steps": [
 						{
 							"keys": "Tn + Tm",
-							"note": "keep the first key held and press up to three more track keys"
+							"note": "keep the first key held and press up to three more track keys",
+							"set": null
 						}
 					],
 					"result": "The held track is the primary; playing it also plays the linked tracks.",
@@ -1203,15 +1211,18 @@
 					"steps": [
 						{
 							"keys": "instrument",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "T1…T8",
-							"note": "choose the track"
+							"note": "choose the track",
+							"set": null
 						},
 						{
 							"keys": "key → step n",
-							"note": "play a note on the keyboard, then press the step where it should go"
+							"note": "play a note on the keyboard, then press the step where it should go",
+							"set": null
 						}
 					],
 					"result": "The note plays on that step every time the pattern comes round.",
@@ -1230,11 +1241,13 @@
 					"steps": [
 						{
 							"keys": "shift + arrange",
-							"note": "opens song mode"
+							"note": "opens song mode",
+							"set": null
 						},
 						{
 							"keys": "shift + accidentals",
-							"note": "type the scene numbers in playing order"
+							"note": "type the scene numbers in playing order",
+							"set": null
 						}
 					],
 					"result": null,
@@ -1700,7 +1713,8 @@
 					"steps": [
 						{
 							"keys": "instrument/auxiliary/arrange/mix",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -1716,7 +1730,8 @@
 					"steps": [
 						{
 							"keys": "M1…M4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -1732,7 +1747,8 @@
 					"steps": [
 						{
 							"keys": "hold shift",
-							"note": "the extra parameters stay while shift is down"
+							"note": "the extra parameters stay while shift is down",
+							"set": null
 						}
 					],
 					"result": null,
@@ -1748,7 +1764,8 @@
 					"steps": [
 						{
 							"keys": "T1…T8",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -1766,7 +1783,8 @@
 					"steps": [
 						{
 							"keys": "play",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -1782,7 +1800,8 @@
 					"steps": [
 						{
 							"keys": "stop → stop",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -1798,7 +1817,8 @@
 					"steps": [
 						{
 							"keys": "[-]/[+]",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -1814,7 +1834,8 @@
 					"steps": [
 						{
 							"keys": "hold com",
-							"note": "read the level meter in the top right margin"
+							"note": "read the level meter in the top right margin",
+							"set": null
 						}
 					],
 					"result": null,
@@ -2046,7 +2067,8 @@
 					"steps": [
 						{
 							"keys": "power",
-							"note": "up is on, down is off"
+							"note": "up is on, down is off",
+							"set": null
 						}
 					],
 					"result": null,
@@ -2062,7 +2084,8 @@
 					"steps": [
 						{
 							"keys": "hold com",
-							"note": "read the level meter at the top right"
+							"note": "read the level meter at the top right",
+							"set": null
 						}
 					],
 					"result": null,
@@ -2489,11 +2512,13 @@
 					"steps": [
 						{
 							"keys": "power",
-							"note": "switch off"
+							"note": "switch off",
+							"set": null
 						},
 						{
 							"keys": "com + power",
-							"note": "hold com while switching back on"
+							"note": "hold com while switching back on",
+							"set": null
 						}
 					],
 					"result": "The TE boot menu lists its three options.",
@@ -2509,7 +2534,8 @@
 					"steps": [
 						{
 							"keys": "power → power",
-							"note": "off, then on again"
+							"note": "off, then on again",
+							"set": null
 						}
 					],
 					"result": null,
@@ -2644,15 +2670,18 @@
 					"steps": [
 						{
 							"keys": "power",
-							"note": "switch off"
+							"note": "switch off",
+							"set": null
 						},
 						{
 							"keys": "com + power",
-							"note": "hold com while switching on — TE boot appears"
+							"note": "hold com while switching on — TE boot appears",
+							"set": null
 						},
 						{
 							"keys": "T1",
-							"note": "connect the USB-C cable; the unit mounts as a disk"
+							"note": "connect the USB-C cable; the unit mounts as a disk",
+							"set": null
 						}
 					],
 					"result": "Copy the file, eject the disk, and the update runs.",
@@ -2769,15 +2798,18 @@
 					"steps": [
 						{
 							"keys": "power",
-							"note": "switch off"
+							"note": "switch off",
+							"set": null
 						},
 						{
 							"keys": "com + power",
-							"note": "hold com while switching on to reach TE boot"
+							"note": "hold com while switching on to reach TE boot",
+							"set": null
 						},
 						{
 							"keys": "T7",
-							"note": "factory reset; follow the on-screen instructions"
+							"note": "factory reset; follow the on-screen instructions",
+							"set": null
 						}
 					],
 					"result": "User settings and content are gone and the factory file structure is back.",
@@ -2880,11 +2912,13 @@
 					"steps": [
 						{
 							"keys": "com + power",
-							"note": "opens TE boot"
+							"note": "opens TE boot",
+							"set": null
 						},
 						{
 							"keys": "T8",
-							"note": "then follow the on-screen instructions"
+							"note": "then follow the on-screen instructions",
+							"set": null
 						}
 					],
 					"result": null,
@@ -2902,15 +2936,18 @@
 					"steps": [
 						{
 							"keys": "com + power",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "T8",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "M2/T2",
-							"note": "reset volume pot calibration"
+							"note": "reset volume pot calibration",
+							"set": null
 						}
 					],
 					"result": "The calibration is reset and TE boot is shown again.",
@@ -3252,11 +3289,13 @@
 					"steps": [
 						{
 							"keys": "instrument/auxiliary",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "Tn",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -3423,7 +3462,8 @@
 					"steps": [
 						{
 							"keys": "key → step n",
-							"note": "further steps get the same note"
+							"note": "further steps get the same note",
+							"set": null
 						}
 					],
 					"result": null,
@@ -3439,7 +3479,8 @@
 					"steps": [
 						{
 							"keys": "keys + step n",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -3455,7 +3496,8 @@
 					"steps": [
 						{
 							"keys": "step n + key",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -3612,7 +3654,8 @@
 					"steps": [
 						{
 							"keys": "record + keys",
-							"note": "each note takes the next step"
+							"note": "each note takes the next step",
+							"set": null
 						}
 					],
 					"result": null,
@@ -3628,7 +3671,8 @@
 					"steps": [
 						{
 							"keys": "record + step n",
-							"note": "TE only says to tap the step; keeping record held is our assumption"
+							"note": "TE only says to tap the step; keeping record held is our assumption",
+							"set": null
 						}
 					],
 					"result": null,
@@ -3808,15 +3852,18 @@
 					"steps": [
 						{
 							"keys": "record + play",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "keys",
-							"note": "recording starts with the first note"
+							"note": "recording starts with the first note",
+							"set": null
 						},
 						{
 							"keys": "stop",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -3834,7 +3881,8 @@
 					"steps": [
 						{
 							"keys": "record + keys",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -3850,7 +3898,8 @@
 					"steps": [
 						{
 							"keys": "record + play → play",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -3993,7 +4042,8 @@
 					"steps": [
 						{
 							"keys": "step n + step m",
-							"note": "press the step where the note should end; press it again to switch the ending"
+							"note": "press the step where the note should end; press it again to switch the ending",
+							"set": null
 						}
 					],
 					"result": null,
@@ -4121,7 +4171,8 @@
 					"steps": [
 						{
 							"keys": "step n + [-]/[+]",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -4238,7 +4289,8 @@
 					"steps": [
 						{
 							"keys": "key + record → + steps",
-							"note": "keep the key held throughout"
+							"note": "keep the key held throughout",
+							"set": null
 						}
 					],
 					"result": null,
@@ -4387,7 +4439,8 @@
 					"steps": [
 						{
 							"keys": "Tn + [-]/[+]",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -4503,7 +4556,8 @@
 					"steps": [
 						{
 							"keys": "hold step n → step m",
-							"note": "the target must be empty"
+							"note": "the target must be empty",
+							"set": null
 						}
 					],
 					"result": null,
@@ -4614,7 +4668,8 @@
 					"steps": [
 						{
 							"keys": "shift + [-]/[+]",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -4821,7 +4876,8 @@
 					"steps": [
 						{
 							"keys": "step n + turn E1…E4",
-							"note": "keep holding the step while turning; any page parameter works"
+							"note": "keep holding the step while turning; any page parameter works",
+							"set": null
 						}
 					],
 					"result": "The step plays back with the new value from now on.",
@@ -4839,7 +4895,8 @@
 					"steps": [
 						{
 							"keys": "record + turn E1…E4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": "The movement is stored per step, like locks.",
@@ -4855,7 +4912,8 @@
 					"steps": [
 						{
 							"keys": "bar + turn E4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -4871,7 +4929,8 @@
 					"steps": [
 						{
 							"keys": "bar + M2",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -4887,7 +4946,8 @@
 					"steps": [
 						{
 							"keys": "hold step n → step m",
-							"note": "let go of the first step, then press the target step, which must be empty"
+							"note": "let go of the first step, then press the target step, which must be empty",
+							"set": null
 						}
 					],
 					"result": null,
@@ -5054,7 +5114,8 @@
 					"steps": [
 						{
 							"keys": "record + hold stop",
-							"note": "until the whole step row is red"
+							"note": "until the whole step row is red",
+							"set": null
 						}
 					],
 					"result": null,
@@ -5070,7 +5131,8 @@
 					"steps": [
 						{
 							"keys": "bar + M1/M2/M4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -5086,7 +5148,8 @@
 					"steps": [
 						{
 							"keys": "shift + record",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -5272,7 +5335,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural → + accidental",
-							"note": "keep shift down throughout — select the steps, choose the component, then its value"
+							"note": "keep shift down throughout — select the steps, choose the component, then its value",
+							"set": null
 						}
 					],
 					"result": "Once `shift` is released, the chosen steps play with the component.",
@@ -5288,7 +5352,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural",
-							"note": "select the same steps, then press the white key of the component to take off"
+							"note": "select the same steps, then press the white key of the component to take off",
+							"set": null
 						}
 					],
 					"result": null,
@@ -5600,7 +5665,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 1 → + accidental 3",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -5723,7 +5789,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 2 → + accidental 2",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -5842,7 +5909,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 3 → + accidental 3",
-							"note": "the screen reads \"divide into 3 trigs\""
+							"note": "the screen reads \"divide into 3 trigs\"",
+							"set": null
 						}
 					],
 					"result": null,
@@ -5956,7 +6024,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 4 → + accidental 8",
-							"note": "8 gives 127"
+							"note": "8 gives 127",
+							"set": null
 						}
 					],
 					"result": null,
@@ -6065,7 +6134,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 5 → + accidental 3",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -6170,7 +6240,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 6 → + accidental 6",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -6276,7 +6347,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 7 → + accidental 1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -6389,7 +6461,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 8 → + accidental 5",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -6506,7 +6579,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 9 → + accidental 1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -6623,7 +6697,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 10 → + accidental 4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -6751,7 +6826,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 11 → + accidental 1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -6860,7 +6936,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 12 → + accidental 4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -6965,11 +7042,13 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 3 → + accidental 2",
-							"note": "multiply, two hits"
+							"note": "multiply, two hits",
+							"set": null
 						},
 						{
 							"keys": "shift + steps → + natural 13 → + accidental 2",
-							"note": "same steps"
+							"note": "same steps",
+							"set": null
 						}
 					],
 					"result": null,
@@ -7076,7 +7155,8 @@
 					"steps": [
 						{
 							"keys": "shift + steps → + natural 14 → + accidental 2",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -7239,7 +7319,8 @@
 					"steps": [
 						{
 							"keys": "bar + turn E1…E4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -7467,7 +7548,8 @@
 					"steps": [
 						{
 							"keys": "bar + accidental",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -7608,7 +7690,8 @@
 					"steps": [
 						{
 							"keys": "bar + [+]/[-]",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -7624,7 +7707,8 @@
 					"steps": [
 						{
 							"keys": "bar + shift + [+]",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -7640,7 +7724,8 @@
 					"steps": [
 						{
 							"keys": "bar + step n",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -7796,11 +7881,13 @@
 					"steps": [
 						{
 							"keys": "player",
-							"note": "opens the player page"
+							"note": "opens the player page",
+							"set": null
 						},
 						{
 							"keys": "player",
-							"note": "switches the player on"
+							"note": "switches the player on",
+							"set": null
 						}
 					],
 					"result": null,
@@ -7816,11 +7903,13 @@
 					"steps": [
 						{
 							"keys": "shift + player",
-							"note": "opens the list with the current type boxed; keep shift held"
+							"note": "opens the list with the current type boxed; keep shift held",
+							"set": null
 						},
 						{
 							"keys": "shift + player",
-							"note": "each further press of player moves to the next type (arpeggio, hold, maestro)"
+							"note": "each further press of player moves to the next type (arpeggio, hold, maestro)",
+							"set": null
 						}
 					],
 					"result": "Letting go of shift opens the chosen player's page.",
@@ -7992,11 +8081,13 @@
 					"steps": [
 						{
 							"keys": "turn E4",
-							"note": "switch hold on"
+							"note": "switch hold on",
+							"set": null
 						},
 						{
 							"keys": "keys",
-							"note": "play the notes, then let go"
+							"note": "play the notes, then let go",
+							"set": null
 						}
 					],
 					"result": null,
@@ -8291,7 +8382,8 @@
 					"steps": [
 						{
 							"keys": "shift + keys",
-							"note": "keep shift down while you play every note of the chord"
+							"note": "keep shift down while you play every note of the chord",
+							"set": null
 						}
 					],
 					"result": "From now on each key plays the stored chord.",
@@ -8491,11 +8583,13 @@
 					"steps": [
 						{
 							"keys": "player → player",
-							"note": "open the player page and switch the player on"
+							"note": "open the player page and switch the player on",
+							"set": null
 						},
 						{
 							"keys": "keys",
-							"note": "play a note or chord and let go"
+							"note": "play a note or chord and let go",
+							"set": null
 						}
 					],
 					"result": "The notes ring on until you play new ones.",
@@ -8511,7 +8605,8 @@
 					"steps": [
 						{
 							"keys": "stop",
-							"note": "pressing `player` to switch hold off works too"
+							"note": "pressing `player` to switch hold off works too",
+							"set": null
 						}
 					],
 					"result": null,
@@ -8681,11 +8776,13 @@
 					"steps": [
 						{
 							"keys": "instrument",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "T1…T8",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -8855,15 +8952,18 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": "the engine list opens"
+							"note": "the engine list opens",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "highlight an engine"
+							"note": "highlight an engine",
+							"set": null
 						},
 						{
 							"keys": "click E1",
-							"note": "pressing `M1` also confirms"
+							"note": "pressing `M1` also confirms",
+							"set": null
 						}
 					],
 					"result": "M1 now shows the parameters of the new engine.",
@@ -9052,7 +9152,8 @@
 					"steps": [
 						{
 							"keys": "click E1…E4",
-							"note": "any encoder"
+							"note": "any encoder",
+							"set": null
 						}
 					],
 					"result": null,
@@ -9306,11 +9407,13 @@
 					"steps": [
 						{
 							"keys": "M2",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "shift + turn E1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -9549,7 +9652,8 @@
 					"steps": [
 						{
 							"keys": "shift + M3",
-							"note": "opens the filter types"
+							"note": "opens the filter types",
+							"set": null
 						}
 					],
 					"result": null,
@@ -9748,11 +9852,13 @@
 					"steps": [
 						{
 							"keys": "M3",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "shift + turn E3",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -10007,7 +10113,8 @@
 					"steps": [
 						{
 							"keys": "shift + M4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -10861,19 +10968,23 @@
 					"steps": [
 						{
 							"keys": "turn E3",
-							"note": "choose the filter page"
+							"note": "choose the filter page",
+							"set": null
 						},
 						{
 							"keys": "turn E4",
-							"note": "choose cutoff"
+							"note": "choose cutoff",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "stay in the synced range and pick a rate"
+							"note": "stay in the synced range and pick a rate",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "set the depth"
+							"note": "set the depth",
+							"set": null
 						}
 					],
 					"result": null,
@@ -11662,27 +11773,33 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": "engine list"
+							"note": "engine list",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "choose midi"
+							"note": "choose midi",
+							"set": null
 						},
 						{
 							"keys": "click E1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "set the synth's MIDI channel"
+							"note": "set the synth's MIDI channel",
+							"set": null
 						},
 						{
 							"keys": "M2",
-							"note": "CC slots (more on `M3`)"
+							"note": "CC slots (more on `M3`)",
+							"set": null
 						},
 						{
 							"keys": "shift + turn E1",
-							"note": "switch a slot on and pick its CC number"
+							"note": "switch a slot on and pick its CC number",
+							"set": null
 						}
 					],
 					"result": "Notes played or sequenced on the track now play the external synth.",
@@ -12031,15 +12148,18 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": "opens the engine list"
+							"note": "opens the engine list",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "scroll to prism"
+							"note": "scroll to prism",
+							"set": null
 						},
 						{
 							"keys": "click E1",
-							"note": "pressing M1 confirms as well"
+							"note": "pressing M1 confirms as well",
+							"set": null
 						}
 					],
 					"result": "The track now plays through prism and M1 shows its four parameters.",
@@ -12553,19 +12673,23 @@
 					"steps": [
 						{
 							"keys": "shift + instrument",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "mod tab"
+							"note": "mod tab",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "the source's target entry, for example pitchbend target"
+							"note": "the source's target entry, for example pitchbend target",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "choose the parameter, then set the matching amount entry the same way"
+							"note": "choose the parameter, then set the matching amount entry the same way",
+							"set": null
 						}
 					],
 					"result": null,
@@ -12740,31 +12864,38 @@
 					"steps": [
 						{
 							"keys": "shift + instrument",
-							"note": "preset settings"
+							"note": "preset settings",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "settings tab"
+							"note": "settings tab",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "tuning"
+							"note": "tuning",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "pick a user slot"
+							"note": "pick a user slot",
+							"set": null
 						},
 						{
 							"keys": "M4",
-							"note": "edit the slot"
+							"note": "edit the slot",
+							"set": null
 						},
 						{
 							"keys": "key",
-							"note": "play the note to retune"
+							"note": "play the note to retune",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "cents; `turn E2` for micro-cents"
+							"note": "cents; `turn E2` for micro-cents",
+							"set": null
 						}
 					],
 					"result": "The note plays at its new pitch wherever this tuning is selected.",
@@ -12944,23 +13075,28 @@
 					"steps": [
 						{
 							"keys": "shift + Tn",
-							"note": "the track to change"
+							"note": "the track to change",
+							"set": null
 						},
 						{
 							"keys": "click E1",
-							"note": "optional; switches between category and engine view"
+							"note": "optional; switches between category and engine view",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "choose a category or engine"
+							"note": "choose a category or engine",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "choose a preset"
+							"note": "choose a preset",
+							"set": null
 						},
 						{
 							"keys": "click E2",
-							"note": "load it"
+							"note": "load it",
+							"set": null
 						}
 					],
 					"result": "The track plays the preset; all four pages and the preset settings change with it.",
@@ -13189,19 +13325,23 @@
 					"steps": [
 						{
 							"keys": "turn E2",
-							"note": "highlight the preset"
+							"note": "highlight the preset",
+							"set": null
 						},
 						{
 							"keys": "M1",
-							"note": "cut"
+							"note": "cut",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "go to the target folder; the guide does not say how nested folders are entered"
+							"note": "go to the target folder; the guide does not say how nested folders are entered",
+							"set": null
 						},
 						{
 							"keys": "M2",
-							"note": "paste"
+							"note": "paste",
+							"set": null
 						}
 					],
 					"result": null,
@@ -13219,7 +13359,8 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -13356,7 +13497,8 @@
 					"steps": [
 						{
 							"keys": "Tn + M4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -13372,11 +13514,13 @@
 					"steps": [
 						{
 							"keys": "Tn + M2",
-							"note": "hold the source track's key"
+							"note": "hold the source track's key",
+							"set": null
 						},
 						{
 							"keys": "Tn + M3",
-							"note": "hold the destination track's key"
+							"note": "hold the destination track's key",
+							"set": null
 						}
 					],
 					"result": null,
@@ -13519,7 +13663,8 @@
 					"steps": [
 						{
 							"keys": "Tn + shift + M4",
-							"note": "hold the track key as for a normal save, add shift, then press M4 — the changelog only says to hold shift, so this order is not yet confirmed on a unit"
+							"note": "hold the track key as for a normal save, add shift, then press M4 — the changelog only says to hold shift, so this order is not yet confirmed on a unit",
+							"set": null
 						}
 					],
 					"result": "The snapshot is updated in place; no new snapshot appears.",
@@ -13761,15 +13906,18 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": "engine list"
+							"note": "engine list",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "sampler, drum or multisampler"
+							"note": "sampler, drum or multisampler",
+							"set": null
 						},
 						{
 							"keys": "click E1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -13937,11 +14085,13 @@
 					"steps": [
 						{
 							"keys": "sample",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "hold M1",
-							"note": "after setting source, gain and threshold"
+							"note": "after setting source, gain and threshold",
+							"set": null
 						}
 					],
 					"result": "The take is saved to the library unless you press `M4`.",
@@ -14459,15 +14609,18 @@
 					"steps": [
 						{
 							"keys": "sample",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "key",
-							"note": "the key lights up"
+							"note": "the key lights up",
+							"set": null
 						},
 						{
 							"keys": "hold M1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -14947,15 +15100,18 @@
 					"steps": [
 						{
 							"keys": "key + M1",
-							"note": "hold the key with the loop"
+							"note": "hold the key with the loop",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "transient"
+							"note": "transient",
+							"set": null
 						},
 						{
 							"keys": "turn E4",
-							"note": "number of slices"
+							"note": "number of slices",
+							"set": null
 						}
 					],
 					"result": null,
@@ -15151,15 +15307,18 @@
 					"steps": [
 						{
 							"keys": "sample",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "key",
-							"note": "start low, work to the right"
+							"note": "start low, work to the right",
+							"set": null
 						},
 						{
 							"keys": "hold M1",
-							"note": "play the matching note, then repeat on the next key"
+							"note": "play the matching note, then repeat on the next key",
+							"set": null
 						}
 					],
 					"result": null,
@@ -15333,19 +15492,23 @@
 					"steps": [
 						{
 							"keys": "shift + sample",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "folder"
+							"note": "folder",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "sample"
+							"note": "sample",
+							"set": null
 						},
 						{
 							"keys": "click E2",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -15676,7 +15839,8 @@
 					"steps": [
 						{
 							"keys": "auxiliary → T1…T8",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -15900,15 +16064,18 @@
 					"steps": [
 						{
 							"keys": "auxiliary → T1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "M2",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1…E4",
-							"note": "the track's encoder; an encoder click toggles the page, tracks 1–4 or 5–8"
+							"note": "the track's encoder; an encoder click toggles the page, tracks 1–4 or 5–8",
+							"set": null
 						}
 					],
 					"result": null,
@@ -16151,11 +16318,13 @@
 					"steps": [
 						{
 							"keys": "record + play",
-							"note": "start a live recording"
+							"note": "start a live recording",
+							"set": null
 						},
 						{
 							"keys": "shift + keys",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -16357,15 +16526,18 @@
 					"steps": [
 						{
 							"keys": "auxiliary → T3",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "the synth's MIDI channel, on M1"
+							"note": "the synth's MIDI channel, on M1",
+							"set": null
 						},
 						{
 							"keys": "keys",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -16573,11 +16745,13 @@
 					"steps": [
 						{
 							"keys": "com",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "until cv shows"
+							"note": "until cv shows",
+							"set": null
 						}
 					],
 					"result": null,
@@ -17552,23 +17726,28 @@
 					"steps": [
 						{
 							"keys": "auxiliary",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "T7/T8",
-							"note": "select FX I or FX II"
+							"note": "select FX I or FX II",
+							"set": null
 						},
 						{
 							"keys": "shift + T7/T8",
-							"note": "opens the list of effects for that slot"
+							"note": "opens the list of effects for that slot",
+							"set": null
 						},
 						{
 							"keys": "turn E4",
-							"note": "scroll to the effect"
+							"note": "scroll to the effect",
+							"set": null
 						},
 						{
 							"keys": "click E4",
-							"note": "pressing `M1` confirms as well"
+							"note": "pressing `M1` confirms as well",
+							"set": null
 						}
 					],
 					"result": "The slot now runs the chosen effect and `M1` shows its parameters.",
@@ -18615,7 +18794,8 @@
 					"steps": [
 						{
 							"keys": "arrange",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -18633,7 +18813,8 @@
 					"steps": [
 						{
 							"keys": "arrange",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -18651,11 +18832,13 @@
 					"steps": [
 						{
 							"keys": "Tn",
-							"note": "select the track"
+							"note": "select the track",
+							"set": null
 						},
 						{
 							"keys": "turn E4",
-							"note": "step to the pattern"
+							"note": "step to the pattern",
+							"set": null
 						}
 					],
 					"result": null,
@@ -18815,11 +18998,13 @@
 					"steps": [
 						{
 							"keys": "Tn",
-							"note": "select the track"
+							"note": "select the track",
+							"set": null
 						},
 						{
 							"keys": "M1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": "The track gains one more pattern, up to 16.",
@@ -18838,15 +19023,18 @@
 					"steps": [
 						{
 							"keys": "M2",
-							"note": "copy"
+							"note": "copy",
+							"set": null
 						},
 						{
 							"keys": "Tn",
-							"note": "optional, pick another track"
+							"note": "optional, pick another track",
+							"set": null
 						},
 						{
 							"keys": "M3",
-							"note": "paste"
+							"note": "paste",
+							"set": null
 						}
 					],
 					"result": null,
@@ -18865,7 +19053,8 @@
 					"steps": [
 						{
 							"keys": "M4",
-							"note": "labelled clear while the track has one pattern, delete once it has more"
+							"note": "labelled clear while the track has one pattern, delete once it has more",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19000,7 +19189,8 @@
 					"steps": [
 						{
 							"keys": "click E3",
-							"note": "turning `E3` also toggles it"
+							"note": "turning `E3` also toggles it",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19019,11 +19209,13 @@
 					"steps": [
 						{
 							"keys": "turn E4",
-							"note": "select the pattern whose sound you want"
+							"note": "select the pattern whose sound you want",
+							"set": null
 						},
 						{
 							"keys": "shift + turn E3",
-							"note": "`shift + click E3` works too"
+							"note": "`shift + click E3` works too",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19193,7 +19385,8 @@
 					"steps": [
 						{
 							"keys": "shift + accidental",
-							"note": "the black key with the scene's digit"
+							"note": "the black key with the scene's digit",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19211,7 +19404,8 @@
 					"steps": [
 						{
 							"keys": "shift + accidental 0 → + accidentals",
-							"note": "then type both digits; whether `shift` must stay down for them is not confirmed on a unit"
+							"note": "then type both digits; whether `shift` must stay down for them is not confirmed on a unit",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19230,15 +19424,18 @@
 					"steps": [
 						{
 							"keys": "shift + M2",
-							"note": "copy"
+							"note": "copy",
+							"set": null
 						},
 						{
 							"keys": "shift + accidental",
-							"note": "go to the target scene"
+							"note": "go to the target scene",
+							"set": null
 						},
 						{
 							"keys": "shift + M3",
-							"note": "paste"
+							"note": "paste",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19383,7 +19580,8 @@
 					"steps": [
 						{
 							"keys": "shift + play → + accidental",
-							"note": "keep shift held; the black key picks scenes 1–9"
+							"note": "keep shift held; the black key picks scenes 1–9",
+							"set": null
 						}
 					],
 					"result": "The chosen scene waits its turn instead of starting immediately.",
@@ -19560,11 +19758,13 @@
 					"steps": [
 						{
 							"keys": "shift + arrange",
-							"note": "opens song mode"
+							"note": "opens song mode",
+							"set": null
 						},
 						{
 							"keys": "shift + accidentals",
-							"note": "add the scenes in playing order"
+							"note": "add the scenes in playing order",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19582,11 +19782,13 @@
 					"steps": [
 						{
 							"keys": "shift + M2/M3",
-							"note": "move the cursor to the insertion point"
+							"note": "move the cursor to the insertion point",
+							"set": null
 						},
 						{
 							"keys": "shift + accidental",
-							"note": "the scene to insert"
+							"note": "the scene to insert",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19604,11 +19806,13 @@
 					"steps": [
 						{
 							"keys": "shift + M2/M3",
-							"note": "move the cursor to it"
+							"note": "move the cursor to it",
+							"set": null
 						},
 						{
 							"keys": "shift + M4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -19765,7 +19969,8 @@
 					"steps": [
 						{
 							"keys": "shift + natural",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -19783,11 +19988,13 @@
 					"steps": [
 						{
 							"keys": "shift + natural + M2",
-							"note": "the white key of the song to copy"
+							"note": "the white key of the song to copy",
+							"set": null
 						},
 						{
 							"keys": "shift + natural + M3",
-							"note": "the white key of the target song"
+							"note": "the white key of the target song",
+							"set": null
 						}
 					],
 					"result": null,
@@ -19806,7 +20013,8 @@
 					"steps": [
 						{
 							"keys": "shift + [-]/[+]",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -19955,7 +20163,8 @@
 					"steps": [
 						{
 							"keys": "mix",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -19973,7 +20182,8 @@
 					"steps": [
 						{
 							"keys": "mix",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -20115,15 +20325,18 @@
 					"steps": [
 						{
 							"keys": "mix → M1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "Tn",
-							"note": "select the track"
+							"note": "select the track",
+							"set": null
 						},
 						{
 							"keys": "turn E4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -20143,7 +20356,8 @@
 					"steps": [
 						{
 							"keys": "click E3",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -20397,7 +20611,8 @@
 					"steps": [
 						{
 							"keys": "shift + Tn",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -20415,7 +20630,8 @@
 					"steps": [
 						{
 							"keys": "hold Tn",
-							"note": "hold more track keys at the same time to solo several"
+							"note": "hold more track keys at the same time to solo several",
+							"set": null
 						}
 					],
 					"result": null,
@@ -20431,7 +20647,8 @@
 					"steps": [
 						{
 							"keys": "instrument/auxiliary + Tn",
-							"note": "the guide lists this under mix mode; whether it works in other modes is not confirmed"
+							"note": "the guide lists this under mix mode; whether it works in other modes is not confirmed",
+							"set": null
 						}
 					],
 					"result": null,
@@ -20587,7 +20804,8 @@
 					"steps": [
 						{
 							"keys": "mix → M2",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -20606,7 +20824,8 @@
 					"steps": [
 						{
 							"keys": "click E4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -20804,7 +21023,8 @@
 					"steps": [
 						{
 							"keys": "mix → M3",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -20993,7 +21213,8 @@
 					"steps": [
 						{
 							"keys": "mix → M4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -21202,11 +21423,13 @@
 					"steps": [
 						{
 							"keys": "project",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "hold M1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": "A new project opens with the default sounds.",
@@ -21222,19 +21445,23 @@
 					"steps": [
 						{
 							"keys": "project → shift + M2",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "character position"
+							"note": "character position",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "character"
+							"note": "character",
+							"set": null
 						},
 						{
 							"keys": "M1",
-							"note": "confirm"
+							"note": "confirm",
+							"set": null
 						}
 					],
 					"result": null,
@@ -21373,7 +21600,8 @@
 					"steps": [
 						{
 							"keys": "project → M2",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -21389,11 +21617,13 @@
 					"steps": [
 						{
 							"keys": "shift + project",
-							"note": "select the project in the projects folder"
+							"note": "select the project in the projects folder",
+							"set": null
 						},
 						{
 							"keys": "M2",
-							"note": "opens its history; pick a version and load it"
+							"note": "opens its history; pick a version and load it",
+							"set": null
 						}
 					],
 					"result": null,
@@ -21552,15 +21782,18 @@
 					"steps": [
 						{
 							"keys": "shift + project",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1…E4",
-							"note": "select the project"
+							"note": "select the project",
+							"set": null
 						},
 						{
 							"keys": "M1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -21576,11 +21809,13 @@
 					"steps": [
 						{
 							"keys": "shift + project",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "hold M4",
-							"note": "with the project selected"
+							"note": "with the project selected",
+							"set": null
 						}
 					],
 					"result": null,
@@ -21722,11 +21957,13 @@
 					"steps": [
 						{
 							"keys": "shift + project",
-							"note": "the templates folder sits next to the factory and user projects"
+							"note": "the templates folder sits next to the factory and user projects",
+							"set": null
 						},
 						{
 							"keys": "M1",
-							"note": "loads the selected template"
+							"note": "loads the selected template",
+							"set": null
 						}
 					],
 					"result": null,
@@ -21969,23 +22206,28 @@
 					"steps": [
 						{
 							"keys": "project → M4",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "choose the page"
+							"note": "choose the page",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "choose the setting"
+							"note": "choose the setting",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "set the value"
+							"note": "set the value",
+							"set": null
 						},
 						{
 							"keys": "M1",
-							"note": "leave the project settings"
+							"note": "leave the project settings",
+							"set": null
 						}
 					],
 					"result": null,
@@ -22111,19 +22353,23 @@
 					"steps": [
 						{
 							"keys": "project → M4",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "general page"
+							"note": "general page",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "the transpose setting"
+							"note": "the transpose setting",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "set the amount"
+							"note": "set the amount",
+							"set": null
 						}
 					],
 					"result": null,
@@ -22246,19 +22492,23 @@
 					"steps": [
 						{
 							"keys": "project → M4",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "midi page"
+							"note": "midi page",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "the track"
+							"note": "the track",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "the channel"
+							"note": "the channel",
+							"set": null
 						}
 					],
 					"result": null,
@@ -22412,7 +22662,8 @@
 					"steps": [
 						{
 							"keys": "tempo → tempo → tempo → tempo",
-							"note": "tap in time with the beat"
+							"note": "tap in time with the beat",
+							"set": null
 						}
 					],
 					"result": null,
@@ -22428,7 +22679,8 @@
 					"steps": [
 						{
 							"keys": "tempo → click E4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -22688,15 +22940,18 @@
 					"steps": [
 						{
 							"keys": "tempo",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "choose the groove type"
+							"note": "choose the groove type",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "clockwise past the centre for swing, anticlockwise for shuffle"
+							"note": "clockwise past the centre for swing, anticlockwise for shuffle",
+							"set": null
 						}
 					],
 					"result": null,
@@ -22823,7 +23078,8 @@
 					"steps": [
 						{
 							"keys": "com → M1…M4",
-							"note": "system settings, controller mode, devices or MTP"
+							"note": "system settings, controller mode, devices or MTP",
+							"set": null
 						}
 					],
 					"result": null,
@@ -22959,19 +23215,23 @@
 					"steps": [
 						{
 							"keys": "com → M1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "pitchbend section"
+							"note": "pitchbend section",
+							"set": null
 						},
 						{
 							"keys": "turn E2/E3",
-							"note": "left and right sensitivity"
+							"note": "left and right sensitivity",
+							"set": null
 						},
 						{
 							"keys": "M4",
-							"note": "starts the calibration; follow the screen"
+							"note": "starts the calibration; follow the screen",
+							"set": null
 						}
 					],
 					"result": null,
@@ -23181,11 +23441,13 @@
 					"steps": [
 						{
 							"keys": "com → M1",
-							"note": "system settings"
+							"note": "system settings",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "choose the midi section"
+							"note": "choose the midi section",
+							"set": null
 						}
 					],
 					"result": null,
@@ -23203,11 +23465,13 @@
 					"steps": [
 						{
 							"keys": "turn E2",
-							"note": "pick the setting"
+							"note": "pick the setting",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "set its value (`turn E4` works too)"
+							"note": "set its value (`turn E4` works too)",
+							"set": null
 						}
 					],
 					"result": null,
@@ -23223,19 +23487,23 @@
 					"steps": [
 						{
 							"keys": "com → M1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "midi section"
+							"note": "midi section",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "clock"
+							"note": "clock",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "both"
+							"note": "both",
+							"set": null
 						}
 					],
 					"result": "`play` and `stop` now send start and stop, and clock ticks run continuously.",
@@ -23251,7 +23519,8 @@
 					"steps": [
 						{
 							"keys": "M1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": "Back on the com page.",
@@ -23444,11 +23713,13 @@
 					"steps": [
 						{
 							"keys": "com → M1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "scroll to the monitor section"
+							"note": "scroll to the monitor section",
+							"set": null
 						}
 					],
 					"result": "Messages from connected devices appear as they arrive.",
@@ -23568,19 +23839,23 @@
 					"steps": [
 						{
 							"keys": "com → M3",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "choose the device"
+							"note": "choose the device",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "choose the setting"
+							"note": "choose the setting",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "set the value (`turn E4` works too)"
+							"note": "set the value (`turn E4` works too)",
+							"set": null
 						}
 					],
 					"result": null,
@@ -23596,15 +23871,18 @@
 					"steps": [
 						{
 							"keys": "com → M3",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "choose the device"
+							"note": "choose the device",
+							"set": null
 						},
 						{
 							"keys": "M2",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -23869,11 +24147,13 @@
 					"steps": [
 						{
 							"keys": "com → M2",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "shift + turn E1",
-							"note": "the channel your software listens on"
+							"note": "the channel your software listens on",
+							"set": null
 						}
 					],
 					"result": null,
@@ -23889,7 +24169,8 @@
 					"steps": [
 						{
 							"keys": "shift + com",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -24072,7 +24353,8 @@
 					"steps": [
 						{
 							"keys": "com → turn E3",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -24220,7 +24502,8 @@
 					"steps": [
 						{
 							"keys": "com → click E1",
-							"note": "turning `E1` works as well; the unit is now discoverable"
+							"note": "turning `E1` works as well; the unit is now discoverable",
+							"set": null
 						}
 					],
 					"result": "Choose the OP-XY in the host's bluetooth MIDI list to finish the connection.",
@@ -24402,7 +24685,8 @@
 					"steps": [
 						{
 							"keys": "com → M4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": "The storage appears on the computer (inside field kit on a Mac).",
@@ -24418,7 +24702,8 @@
 					"steps": [
 						{
 							"keys": "M4",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -24831,7 +25116,8 @@
 					"steps": [
 						{
 							"keys": "project → hold M1",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": "An empty project opens with the default sounds on all eight instrument tracks.",
@@ -24942,15 +25228,18 @@
 					"steps": [
 						{
 							"keys": "instrument → T1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "key F3 → step 1 → step 5 → step 9 → step 13",
-							"note": "select the kick, then place it on the four beats"
+							"note": "select the kick, then place it on the four beats",
+							"set": null
 						},
 						{
 							"keys": "play → stop",
-							"note": "listen, then stop"
+							"note": "listen, then stop",
+							"set": null
 						}
 					],
 					"result": null,
@@ -24966,7 +25255,8 @@
 					"steps": [
 						{
 							"keys": "key G3 + record → + step 5 → + step 13",
-							"note": "keep the snare key held throughout; only its steps are shown"
+							"note": "keep the snare key held throughout; only its steps are shown",
+							"set": null
 						}
 					],
 					"result": null,
@@ -24982,7 +25272,8 @@
 					"steps": [
 						{
 							"keys": "key C#4 + record → + steps",
-							"note": "keep the key held and press every other step; TE only says “the C# key”"
+							"note": "keep the key held and press every other step; TE only says “the C# key”",
+							"set": null
 						}
 					],
 					"result": null,
@@ -24998,11 +25289,13 @@
 					"steps": [
 						{
 							"keys": "shift + step 7 → + natural 3 → + accidental 3",
-							"note": "keep shift down; step 7 blinks, then multiply and its value are chosen"
+							"note": "keep shift down; step 7 blinks, then multiply and its value are chosen",
+							"set": null
 						},
 						{
 							"keys": "play",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": "The seventh step plays three short hi-hat hits.",
@@ -25148,19 +25441,23 @@
 					"steps": [
 						{
 							"keys": "instrument → T3",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "record + play",
-							"note": "armed — the first step flashes red"
+							"note": "armed — the first step flashes red",
+							"set": null
 						},
 						{
 							"keys": "keys",
-							"note": "the first note starts the take"
+							"note": "the first note starts the take",
+							"set": null
 						},
 						{
 							"keys": "stop",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -25176,11 +25473,13 @@
 					"steps": [
 						{
 							"keys": "bar + [+]",
-							"note": "one more bar, up to four"
+							"note": "one more bar, up to four",
+							"set": null
 						},
 						{
 							"keys": "record + hold stop",
-							"note": "clears the track before recording the longer take"
+							"note": "clears the track before recording the longer take",
+							"set": null
 						}
 					],
 					"result": null,
@@ -25198,11 +25497,13 @@
 					"steps": [
 						{
 							"keys": "record + turn E1…E4",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "bar + turn E4",
-							"note": "smooths the recorded steps"
+							"note": "smooths the recorded steps",
+							"set": null
 						}
 					],
 					"result": null,
@@ -25349,19 +25650,23 @@
 					"steps": [
 						{
 							"keys": "instrument → T7",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "bar + accidental 4",
-							"note": "steps now blink four times slower"
+							"note": "steps now blink four times slower",
+							"set": null
 						},
 						{
 							"keys": "keys + step n",
-							"note": "hold the chord, press its first step"
+							"note": "hold the chord, press its first step",
+							"set": null
 						},
 						{
 							"keys": "step n + step m",
-							"note": "hold that step, press where the chord should end"
+							"note": "hold that step, press where the chord should end",
+							"set": null
 						}
 					],
 					"result": "The chord plays from its step until the chosen end, pattern after pattern.",
@@ -25499,15 +25804,18 @@
 					"steps": [
 						{
 							"keys": "auxiliary → T2",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "play",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "hold keys",
-							"note": "one key per effect; hold several to combine them"
+							"note": "one key per effect; hold several to combine them",
+							"set": null
 						}
 					],
 					"result": null,
@@ -25523,11 +25831,13 @@
 					"steps": [
 						{
 							"keys": "record + play",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "hold keys",
-							"note": null
+							"note": null,
+							"set": null
 						}
 					],
 					"result": null,
@@ -25650,27 +25960,33 @@
 					"steps": [
 						{
 							"keys": "com → M1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "keyboard section"
+							"note": "keyboard section",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "the velocity setting"
+							"note": "the velocity setting",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "soft or hard"
+							"note": "soft or hard",
+							"set": null
 						},
 						{
 							"keys": "M1",
-							"note": "back to the com page"
+							"note": "back to the com page",
+							"set": null
 						},
 						{
 							"keys": "instrument",
-							"note": "back to playing"
+							"note": "back to playing",
+							"set": null
 						}
 					],
 					"result": null,
@@ -25795,11 +26111,13 @@
 					"steps": [
 						{
 							"keys": "com → turn E3",
-							"note": "midi; then connect the cable"
+							"note": "midi; then connect the cable",
+							"set": null
 						},
 						{
 							"keys": "auxiliary → T3 → M1 → turn E1",
-							"note": "the synth's MIDI channel"
+							"note": "the synth's MIDI channel",
+							"set": null
 						}
 					],
 					"result": null,
@@ -25815,15 +26133,18 @@
 					"steps": [
 						{
 							"keys": "M2/M3",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "shift + turn E1…E4",
-							"note": "switch the slot on, choose the CC number"
+							"note": "switch the slot on, choose the CC number",
+							"set": null
 						},
 						{
 							"keys": "turn E1…E4",
-							"note": "send values"
+							"note": "send values",
+							"set": null
 						}
 					],
 					"result": null,
@@ -25958,15 +26279,18 @@
 					"steps": [
 						{
 							"keys": "com → turn E3",
-							"note": "cv/gate; then patch the cables"
+							"note": "cv/gate; then patch the cables",
+							"set": null
 						},
 						{
 							"keys": "auxiliary → T4",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "keys",
-							"note": "the synth follows; sequence it like any track"
+							"note": "the synth follows; sequence it like any track",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26098,11 +26422,13 @@
 					"steps": [
 						{
 							"keys": "com → turn E3",
-							"note": "sync24"
+							"note": "sync24",
+							"set": null
 						},
 						{
 							"keys": "play",
-							"note": "after connecting the cable; the drum machine starts with the OP-XY"
+							"note": "after connecting the cable; the drum machine starts with the OP-XY",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26208,11 +26534,13 @@
 					"steps": [
 						{
 							"keys": "com → turn E3",
-							"note": "sync8"
+							"note": "sync8",
+							"set": null
 						},
 						{
 							"keys": "play",
-							"note": "after connecting the cable and setting SY2 on the pocket operator"
+							"note": "after connecting the cable and setting SY2 on the pocket operator",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26320,23 +26648,28 @@
 					"steps": [
 						{
 							"keys": "com → turn E3",
-							"note": "audio; then connect both cables"
+							"note": "audio; then connect both cables",
+							"set": null
 						},
 						{
 							"keys": "auxiliary → T5 → M1 → turn E1",
-							"note": "the audio input"
+							"note": "the audio input",
+							"set": null
 						},
 						{
 							"keys": "click E1",
-							"note": "switches the input on"
+							"note": "switches the input on",
+							"set": null
 						},
 						{
 							"keys": "M2 → turn E1…E4",
-							"note": "send tracks to the aux output"
+							"note": "send tracks to the aux output",
+							"set": null
 						},
 						{
 							"keys": "M1 → turn E2/E3/E4",
-							"note": "balance the return"
+							"note": "balance the return",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26473,19 +26806,23 @@
 					"steps": [
 						{
 							"keys": "shift + instrument",
-							"note": "preset settings"
+							"note": "preset settings",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "mod"
+							"note": "mod",
+							"set": null
 						},
 						{
 							"keys": "turn E2",
-							"note": "choose the mod wheel's target"
+							"note": "choose the mod wheel's target",
+							"set": null
 						},
 						{
 							"keys": "turn E3",
-							"note": "pick the parameter"
+							"note": "pick the parameter",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26501,15 +26838,18 @@
 					"steps": [
 						{
 							"keys": "com → M3",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "the keyboard"
+							"note": "the keyboard",
+							"set": null
 						},
 						{
 							"keys": "turn E2 → turn E3",
-							"note": "pick a switch, set it"
+							"note": "pick a switch, set it",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26657,11 +26997,13 @@
 					"steps": [
 						{
 							"keys": "sample → turn E1",
-							"note": "usb source"
+							"note": "usb source",
+							"set": null
 						},
 						{
 							"keys": "shift + turn E1",
-							"note": "input channel"
+							"note": "input channel",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26677,11 +27019,13 @@
 					"steps": [
 						{
 							"keys": "auxiliary → T5 → M1 → turn E1",
-							"note": "usb audio"
+							"note": "usb audio",
+							"set": null
 						},
 						{
 							"keys": "click E1",
-							"note": "activates the input"
+							"note": "activates the input",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26810,19 +27154,23 @@
 					"steps": [
 						{
 							"keys": "shift + instrument",
-							"note": "preset settings"
+							"note": "preset settings",
+							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "mod"
+							"note": "mod",
+							"set": null
 						},
 						{
 							"keys": "turn E2 → turn E3",
-							"note": "pitchbend target, then the parameter"
+							"note": "pitchbend target, then the parameter",
+							"set": null
 						},
 						{
 							"keys": "turn E2 → turn E3",
-							"note": "pitchbend amount, then how much (below zero inverts)"
+							"note": "pitchbend amount, then how much (below zero inverts)",
+							"set": null
 						}
 					],
 					"result": null,
@@ -26838,11 +27186,13 @@
 					"steps": [
 						{
 							"keys": "M2",
-							"note": "leaves the preset settings for the envelope page"
+							"note": "leaves the preset settings for the envelope page",
+							"set": null
 						},
 						{
 							"keys": "shift + turn E3",
-							"note": "bend range, fully counter-clockwise to off"
+							"note": "bend range, fully counter-clockwise to off",
+							"set": null
 						}
 					],
 					"result": "The strip now moves only the chosen parameter.",
@@ -26979,11 +27329,13 @@
 					"steps": [
 						{
 							"keys": "com → M4",
-							"note": "MTP mode; copy the projects folder on the computer"
+							"note": "MTP mode; copy the projects folder on the computer",
+							"set": null
 						},
 						{
 							"keys": "M4",
-							"note": "eject when the copy has finished"
+							"note": "eject when the copy has finished",
+							"set": null
 						}
 					],
 					"result": null,
@@ -27120,11 +27472,13 @@
 					"steps": [
 						{
 							"keys": "com → M4",
-							"note": "copy the files into samples on the computer"
+							"note": "copy the files into samples on the computer",
+							"set": null
 						},
 						{
 							"keys": "M4",
-							"note": "eject, then unplug"
+							"note": "eject, then unplug",
+							"set": null
 						}
 					],
 					"result": null,
@@ -27140,7 +27494,8 @@
 					"steps": [
 						{
 							"keys": "shift + sample",
-							"note": "opens the sample library"
+							"note": "opens the sample library",
+							"set": null
 						}
 					],
 					"result": null,
@@ -27276,19 +27631,23 @@
 					"steps": [
 						{
 							"keys": "auxiliary → T1",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "bar + accidental 4",
-							"note": "four bars per brain sequence"
+							"note": "four bars per brain sequence",
+							"set": null
 						},
 						{
 							"keys": "record + play",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "keys",
-							"note": "play the progression within the shown scale"
+							"note": "play the progression within the shown scale",
+							"set": null
 						}
 					],
 					"result": null,
@@ -27304,11 +27663,13 @@
 					"steps": [
 						{
 							"keys": "M2",
-							"note": null
+							"note": null,
+							"set": null
 						},
 						{
 							"keys": "turn E1…E4",
-							"note": "remove the track (`click E1` swaps to tracks 5–8)"
+							"note": "remove the track (`click E1` swaps to tracks 5–8)",
+							"set": null
 						}
 					],
 					"result": null,
@@ -27371,6 +27732,1066 @@
 				"encoder.2",
 				"encoder.3",
 				"encoder.4"
+			]
+		},
+		{
+			"id": "howto.sidechain-duck",
+			"title": "Recipe — make a track pump with the kick (duck)",
+			"aliases": [
+				"sidechain",
+				"sidechain pump",
+				"pumping bass",
+				"duck the bass",
+				"pump with the kick",
+				"ducking pad"
+			],
+			"area": "howto",
+			"order": 40,
+			"path": "knowledge/manual/units/howto/sidechain-duck.md",
+			"context": {
+				"modes": [
+					"instrument"
+				],
+				"screens": [
+					"M4"
+				]
+			},
+			"summary": "On the track that should make room, such as a bass or a pad, pick the duck LFO on `M4`, set its source to the drum track and choose how deep and how long each dip is; the metronome as source pumps evenly with no drums at all.",
+			"status": "current",
+			"firmware": {
+				"min": "1.1.0",
+				"changed_in": [],
+				"guide_version": "1.1.15",
+				"verified_on": null
+			},
+			"facts": [
+				{
+					"id": "idea",
+					"text": "Duck lowers the level of the track it sits on whenever its source plays, so a bass or pad ducked by the drums dips on every hit and swells back between them.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#duck",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "pick",
+					"text": "Choosing duck works like choosing an engine — `shift + M4` opens the list of LFO types, `turn E1` highlights duck and `click E1` takes it.",
+					"source": "https://teenage.engineering/guides/op-xy/synth-engines#change-engine",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "drums",
+					"text": "In a new project the drum kit sits on track 1, so source 1 ducks on every hit of that track, hi-hats included; a kick alone on its own track gives the classic pump.",
+					"source": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "metronome",
+					"text": "Turned past the tracks, the source becomes the metronome, and the track then dips on every beat whether or not anything plays.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#duck",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "depth",
+					"text": "Amount on `E2` sets how far the level drops; around 60–80 is a clear pump, lower values a gentle breathing.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#duck",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "time",
+					"text": "Hold on `E3` keeps the level down for a moment and release on `E4` sets how it recovers; keep both short for a tight pump on a fast beat, and lengthen the release for slow swells.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#duck",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"procedures": [
+				{
+					"id": "set-up",
+					"goal": "Make the bass on T3 pump with the drums on T1",
+					"preconditions": [
+						"instrument mode"
+					],
+					"steps": [
+						{
+							"keys": "T3 → M4",
+							"note": "the track that should make room",
+							"set": null
+						},
+						{
+							"keys": "shift + M4",
+							"note": "the LFO types",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "highlight duck",
+							"set": null
+						},
+						{
+							"keys": "click E1",
+							"note": "takes it; press `M4` if the page changed",
+							"set": {
+								"param": "lfo type",
+								"value": "duck"
+							}
+						},
+						{
+							"keys": "turn E1",
+							"note": "source 1, the drum track",
+							"set": {
+								"param": "duck source",
+								"value": 1
+							}
+						},
+						{
+							"keys": "turn E2",
+							"note": "amount around 70",
+							"set": {
+								"param": "lfo amount",
+								"value": 70
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "a short hold",
+							"set": {
+								"param": "duck hold",
+								"value": 10
+							}
+						},
+						{
+							"keys": "turn E4",
+							"note": "release around 40",
+							"set": {
+								"param": "duck release",
+								"value": 40
+							}
+						}
+					],
+					"result": "With the drums and the bass playing, the bass dips on every drum hit.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#duck",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"parameters": [],
+			"related": [
+				"instrument.lfo-duck",
+				"instrument.lfo",
+				"howto.first-drum-beat",
+				"howto.first-bassline"
+			],
+			"body": "Pumping makes room: the bass or pad steps out of the kick's way, so both stay loud without\nclashing, and the loop starts to breathe with the beat. The OP-XY does it with an LFO type rather\nthan a compressor, so it costs no effect slot and works on any instrument track. Duck the parts that\nshare the kick's low end, usually the bass and long pads, and leave the drums and short plucks\nalone.",
+			"sources": [
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#duck",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/synth-engines#change-engine",
+					"kind": "guide"
+				},
+				{
+					"url": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"kind": "research"
+				}
+			],
+			"official_url": "https://teenage.engineering/guides/op-xy/instrument#duck",
+			"controls": [
+				"track.3",
+				"key.m4",
+				"key.shift",
+				"encoder.1",
+				"encoder.2",
+				"encoder.3",
+				"encoder.4"
+			]
+		},
+		{
+			"id": "howto.pluck",
+			"title": "Recipe — turn a sound into a pluck",
+			"aliases": [
+				"pluck",
+				"plucky",
+				"short notes",
+				"staccato sound",
+				"percussive synth",
+				"plucked bass"
+			],
+			"area": "howto",
+			"order": 41,
+			"path": "knowledge/manual/units/howto/pluck.md",
+			"context": {
+				"modes": [
+					"instrument"
+				],
+				"screens": [
+					"M2",
+					"M3"
+				]
+			},
+			"summary": "A pluck starts at once and dies away while the key is still down — on `M2` set attack 0, a short decay and no sustain, then let the filter envelope close the tone as the note fades.",
+			"status": "current",
+			"firmware": {
+				"min": "1.0.9",
+				"changed_in": [],
+				"guide_version": "1.1.15",
+				"verified_on": null
+			},
+			"facts": [
+				{
+					"id": "shape",
+					"text": "With sustain at 0 a note fades out over the decay time even while its key is held, so the decay sets the length of the pluck.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "decay",
+					"text": "Decay on `E2` of `M2` grows longer as it is turned clockwise; around 15–30 gives a pluck, higher values a longer ring.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "release",
+					"text": "Release runs the other way on the OP-XY, clockwise being shorter, so a crisp pluck wants `E4` well clockwise; lower values let notes ring on after the key comes up.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "swap",
+					"text": "Clicking any encoder on `M2` swaps between the amp and the filter envelope, so the same four encoders set both.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "filter",
+					"text": "For a pluck that starts bright and darkens, lower the cutoff on `M3`, raise the envelope amount on `E3`, and give the filter envelope a short decay and no sustain as well.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "resonance",
+					"text": "A little resonance on `E2` of `M3` adds a squelch as the filter closes.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"procedures": [
+				{
+					"id": "amp",
+					"goal": "Make the notes on T3 pluck",
+					"preconditions": [
+						"instrument mode"
+					],
+					"steps": [
+						{
+							"keys": "T3 → M2",
+							"note": "the amp envelope; click an encoder if the filter envelope is in front",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "attack 0",
+							"set": {
+								"param": "amp attack",
+								"value": 0
+							}
+						},
+						{
+							"keys": "turn E2",
+							"note": "decay around 25",
+							"set": {
+								"param": "amp decay",
+								"value": 25
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "sustain 0",
+							"set": {
+								"param": "amp sustain",
+								"value": 0
+							}
+						},
+						{
+							"keys": "turn E4",
+							"note": "release around 80, a short tail",
+							"set": {
+								"param": "amp release",
+								"value": 80
+							}
+						}
+					],
+					"result": null,
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "filter",
+					"goal": "Let the filter close with every pluck",
+					"preconditions": [],
+					"steps": [
+						{
+							"keys": "click E1",
+							"note": "the filter envelope",
+							"set": null
+						},
+						{
+							"keys": "turn E2",
+							"note": "filter decay around 30",
+							"set": {
+								"param": "filter decay",
+								"value": 30
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "filter sustain 0",
+							"set": {
+								"param": "filter sustain",
+								"value": 0
+							}
+						},
+						{
+							"keys": "M3",
+							"note": "press it again if the page shows off",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "cutoff around 30",
+							"set": {
+								"param": "cutoff",
+								"value": 30
+							}
+						},
+						{
+							"keys": "turn E2",
+							"note": "resonance around 30",
+							"set": {
+								"param": "resonance",
+								"value": 30
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "envelope amount around 50",
+							"set": {
+								"param": "env amount",
+								"value": 50
+							}
+						}
+					],
+					"result": null,
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"parameters": [],
+			"related": [
+				"instrument.envelopes",
+				"instrument.filter",
+				"howto.first-bassline",
+				"howto.pad-swell"
+			],
+			"body": "A pluck cuts through a mix because its energy sits at the start of the note. The amp envelope makes\nthe level drop away and the filter envelope makes the tone drop with it, which is what makes it\nsound plucked rather than merely short. With sustain at 0 nothing lingers, so fast sequences and\narpeggios stay clean. Longer decays drift towards bells and keys; a touch of FX II on\n`shift + M3` gives the tail back without blurring the attack.",
+			"sources": [
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"kind": "research"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"kind": "guide"
+				}
+			],
+			"official_url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+			"controls": [
+				"track.3",
+				"key.m2",
+				"encoder.1",
+				"encoder.2",
+				"encoder.3",
+				"encoder.4",
+				"key.m3"
+			]
+		},
+		{
+			"id": "howto.pad-swell",
+			"title": "Recipe — a pad that swells in and fades slowly",
+			"aliases": [
+				"pad",
+				"swell",
+				"slow attack",
+				"ambient pad",
+				"fade in",
+				"long release",
+				"string swell"
+			],
+			"area": "howto",
+			"order": 42,
+			"path": "knowledge/manual/units/howto/pad-swell.md",
+			"context": {
+				"modes": [
+					"instrument"
+				],
+				"screens": [
+					"M2",
+					"M3"
+				]
+			},
+			"summary": "For a pad, play in poly with a slow attack, a high sustain and a long release — on the OP-XY that is `E4` turned counter-clockwise — open the filter slowly with its envelope and send the track to the reverb on FX II.",
+			"status": "current",
+			"firmware": {
+				"min": "1.0.9",
+				"changed_in": [],
+				"guide_version": "1.1.15",
+				"verified_on": null
+			},
+			"facts": [
+				{
+					"id": "poly",
+					"text": "Chords need play mode poly, `shift + turn E1` on `M2`, so that every note of the chord sounds.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "attack",
+					"text": "A slow attack on `E1` of `M2` makes each chord fade in rather than start at once; the higher the value, the slower the swell.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "sustain",
+					"text": "A high sustain keeps the chord at full level for as long as the keys are held.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "release",
+					"text": "For a long fade after the keys come up, turn release on `E4` counter-clockwise; on the OP-XY lower release values ring longer.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "filter-swell",
+					"text": "A slow filter attack with a positive envelope amount on `M3` opens the tone as the chord swells, so the pad brightens as it grows louder.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "reverb",
+					"text": "In a new project FX II holds a reverb, so the FX II send, `shift + turn E4` on `M3`, adds space to the pad.",
+					"source": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "measured"
+				}
+			],
+			"procedures": [
+				{
+					"id": "swell",
+					"goal": "Make the chords on T7 swell in and fade out",
+					"preconditions": [
+						"instrument mode"
+					],
+					"steps": [
+						{
+							"keys": "T7 → M2",
+							"note": "the amp envelope; click an encoder if the filter envelope is in front",
+							"set": null
+						},
+						{
+							"keys": "shift + turn E1",
+							"note": "play mode poly",
+							"set": {
+								"param": "play mode",
+								"value": "poly"
+							}
+						},
+						{
+							"keys": "turn E1",
+							"note": "attack around 60",
+							"set": {
+								"param": "amp attack",
+								"value": 60
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "sustain around 85",
+							"set": {
+								"param": "amp sustain",
+								"value": 85
+							}
+						},
+						{
+							"keys": "turn E4",
+							"note": "release around 20, a long fade",
+							"set": {
+								"param": "amp release",
+								"value": 20
+							}
+						}
+					],
+					"result": null,
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "brighten",
+					"goal": "Let the pad brighten as it swells, in a little reverb",
+					"preconditions": [],
+					"steps": [
+						{
+							"keys": "click E1",
+							"note": "the filter envelope",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "filter attack around 70",
+							"set": {
+								"param": "filter attack",
+								"value": 70
+							}
+						},
+						{
+							"keys": "M3",
+							"note": "press it again if the page shows off",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "cutoff around 35",
+							"set": {
+								"param": "cutoff",
+								"value": 35
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "envelope amount around 40",
+							"set": {
+								"param": "env amount",
+								"value": 40
+							}
+						},
+						{
+							"keys": "shift + turn E4",
+							"note": "FX II send around 50",
+							"set": {
+								"param": "fx ii send",
+								"value": 50
+							}
+						}
+					],
+					"result": null,
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"parameters": [],
+			"related": [
+				"instrument.envelopes",
+				"instrument.play-mode",
+				"instrument.track-sends",
+				"howto.first-chords"
+			],
+			"body": "A pad is a bed rather than a part: it should arrive softly, hold still and leave slowly, so\nnothing about it grabs attention from the beat. The slow amp attack and long release do most of the\nwork; the slow filter opening adds movement inside each chord. Hold chords for a bar or more and let\nthem overlap, and duck the pad with the kick if it muddies the low end.",
+			"sources": [
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"kind": "research"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"kind": "guide"
+				},
+				{
+					"url": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"kind": "research"
+				}
+			],
+			"official_url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+			"controls": [
+				"track.7",
+				"key.m2",
+				"key.shift",
+				"encoder.1",
+				"encoder.3",
+				"encoder.4",
+				"key.m3"
+			]
+		},
+		{
+			"id": "howto.wobble",
+			"title": "Recipe — a filter wobble in time with the beat",
+			"aliases": [
+				"wobble",
+				"wobble bass",
+				"lfo on cutoff",
+				"filter wobble",
+				"rhythmic filter",
+				"auto filter"
+			],
+			"area": "howto",
+			"order": 43,
+			"path": "knowledge/manual/units/howto/wobble.md",
+			"context": {
+				"modes": [
+					"instrument"
+				],
+				"screens": [
+					"M4",
+					"M3"
+				]
+			},
+			"summary": "Pick the value LFO on `M4`, aim it at the cutoff on the filter page and give it a tempo-synced speed; the amount sets how far the filter swings.",
+			"status": "current",
+			"firmware": {
+				"min": "1.0.9",
+				"changed_in": [],
+				"guide_version": "1.1.15",
+				"verified_on": null
+			},
+			"facts": [
+				{
+					"id": "value",
+					"text": "The value LFO turns one encoder of the track's pages up and down by itself, like a hand moving the knob in a loop.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#lfo",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "target",
+					"text": "Destination on `E3` picks the page, filter for a wobble, and parameter on `E4` picks the encoder there; cutoff is the first of the filter page's four.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#lfo",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "synced",
+					"text": "Over the anti-clockwise part of its range the speed follows the tempo, so the wobble stays locked to the beat.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#lfo",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "restart",
+					"text": "On the plain filter destination the wobble restarts with every note, so each note wobbles the same way; its free twin keeps running across notes.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#lfo",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "audible",
+					"text": "A moderate cutoff with some resonance on `M3` makes the sweep easy to hear; with the cutoff fully open there is little left to move.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"procedures": [
+				{
+					"id": "set-up",
+					"goal": "Make the filter on T3 wobble in time",
+					"preconditions": [
+						"instrument mode"
+					],
+					"steps": [
+						{
+							"keys": "T3 → M4",
+							"note": null,
+							"set": null
+						},
+						{
+							"keys": "shift + M4",
+							"note": "the LFO types",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "highlight value",
+							"set": null
+						},
+						{
+							"keys": "click E1",
+							"note": "takes it; press `M4` if the page changed",
+							"set": {
+								"param": "lfo type",
+								"value": "value"
+							}
+						},
+						{
+							"keys": "turn E1",
+							"note": "a synced speed, such as 4",
+							"set": {
+								"param": "lfo speed",
+								"value": 4
+							}
+						},
+						{
+							"keys": "turn E2",
+							"note": "amount around 60",
+							"set": {
+								"param": "lfo amount",
+								"value": 60
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "destination filter",
+							"set": {
+								"param": "lfo destination",
+								"value": "filter"
+							}
+						},
+						{
+							"keys": "turn E4",
+							"note": "parameter 1, the cutoff",
+							"set": {
+								"param": "lfo parameter",
+								"value": 1
+							}
+						}
+					],
+					"result": null,
+					"source": "https://teenage.engineering/guides/op-xy/instrument#lfo",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "audible",
+					"goal": "Give the wobble something to move",
+					"preconditions": [],
+					"steps": [
+						{
+							"keys": "M3",
+							"note": "press it again if the page shows off",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "cutoff around 40",
+							"set": {
+								"param": "cutoff",
+								"value": 40
+							}
+						},
+						{
+							"keys": "turn E2",
+							"note": "resonance around 45",
+							"set": {
+								"param": "resonance",
+								"value": 45
+							}
+						}
+					],
+					"result": null,
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"parameters": [],
+			"related": [
+				"instrument.lfo-value",
+				"instrument.lfo",
+				"instrument.filter",
+				"howto.acid-bass"
+			],
+			"body": "A wobble is a filter sweep that repeats in time, the sound of a hand rocking the cutoff knob back\nand forth. Faster synced speeds make it busier, slower ones turn it into a long rise and fall over\nthe bar. Parameter locks on the LFO speed for single steps give the classic change of pace in the\nmiddle of a phrase.",
+			"sources": [
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#lfo",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"kind": "guide"
+				}
+			],
+			"official_url": "https://teenage.engineering/guides/op-xy/instrument#lfo",
+			"controls": [
+				"track.3",
+				"key.m4",
+				"key.shift",
+				"encoder.1",
+				"encoder.2",
+				"encoder.3",
+				"encoder.4",
+				"key.m3"
+			]
+		},
+		{
+			"id": "howto.acid-bass",
+			"title": "Recipe — a squelchy acid bass",
+			"aliases": [
+				"acid",
+				"acid bass",
+				"acid line",
+				"squelch",
+				"resonant bass",
+				"sliding bass"
+			],
+			"area": "howto",
+			"order": 44,
+			"path": "knowledge/manual/units/howto/acid-bass.md",
+			"context": {
+				"modes": [
+					"instrument"
+				],
+				"screens": [
+					"M3",
+					"M2"
+				]
+			},
+			"summary": "On the bass track pick the ladder filter, set a low cutoff, high resonance and a strong, short filter envelope, then play mode legato with a little portamento so that overlapping notes slide.",
+			"status": "current",
+			"firmware": {
+				"min": "1.0.9",
+				"changed_in": [],
+				"guide_version": "1.1.15",
+				"verified_on": null
+			},
+			"facts": [
+				{
+					"id": "type-return",
+					"text": "Picking a filter type from `shift + M3` takes you back to `M1`, so press `M3` to go on with the filter.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "squelch",
+					"text": "A low cutoff, high resonance and a large envelope amount with a short filter decay make each note open and snap shut, the acid squelch.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "slide",
+					"text": "In legato play mode one note sounds at a time, and portamento makes overlapping notes glide from one pitch to the next.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "accents",
+					"text": "Parameter locks on the cutoff or the envelope amount for single steps give the line its accents.",
+					"source": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"procedures": [
+				{
+					"id": "filter",
+					"goal": "Give the bass on T3 a squelchy filter",
+					"preconditions": [
+						"instrument mode"
+					],
+					"steps": [
+						{
+							"keys": "T3 → shift + M3",
+							"note": "the filter types",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "highlight ladder",
+							"set": null
+						},
+						{
+							"keys": "click E1",
+							"note": "takes it and goes back to `M1`",
+							"set": {
+								"param": "filter type",
+								"value": "ladder"
+							}
+						},
+						{
+							"keys": "M3",
+							"note": "press it again if the page shows off",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "cutoff around 20",
+							"set": {
+								"param": "cutoff",
+								"value": 20
+							}
+						},
+						{
+							"keys": "turn E2",
+							"note": "resonance around 70",
+							"set": {
+								"param": "resonance",
+								"value": 70
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "envelope amount around 70",
+							"set": {
+								"param": "env amount",
+								"value": 70
+							}
+						}
+					],
+					"result": null,
+					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "envelope",
+					"goal": "Snap the filter shut and let the notes slide",
+					"preconditions": [],
+					"steps": [
+						{
+							"keys": "M2",
+							"note": "click an encoder until the filter envelope is in front",
+							"set": null
+						},
+						{
+							"keys": "turn E2",
+							"note": "filter decay around 25",
+							"set": {
+								"param": "filter decay",
+								"value": 25
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "filter sustain 0",
+							"set": {
+								"param": "filter sustain",
+								"value": 0
+							}
+						},
+						{
+							"keys": "shift + turn E1",
+							"note": "play mode legato",
+							"set": {
+								"param": "play mode",
+								"value": "legato"
+							}
+						},
+						{
+							"keys": "shift + turn E2",
+							"note": "portamento around 20",
+							"set": {
+								"param": "portamento",
+								"value": 20
+							}
+						}
+					],
+					"result": null,
+					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"parameters": [],
+			"related": [
+				"instrument.filter",
+				"instrument.play-mode",
+				"sequencer.parameter-locks",
+				"howto.wobble"
+			],
+			"body": "Acid lives in the filter: a bright snap at the start of each note that closes almost at once, with\nresonance singing at the cutoff. Program the line with some notes overlapping so they slide, and a\nfew locked accents where the filter opens further. Riding the cutoff live while the pattern loops is\nhalf the fun.",
+			"sources": [
+				{
+					"url": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"kind": "research"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
+					"kind": "guide"
+				}
+			],
+			"official_url": "https://teenage.engineering/guides/op-xy/instrument#filter",
+			"controls": [
+				"track.3",
+				"key.shift",
+				"key.m3",
+				"encoder.1",
+				"encoder.2",
+				"encoder.3",
+				"key.m2"
 			]
 		}
 	]

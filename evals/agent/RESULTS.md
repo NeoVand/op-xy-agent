@@ -3,6 +3,28 @@
 Re-run with `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5` (needs `ANTHROPIC_API_KEY`
 in `.env`; never printed). Newest first.
 
+## 2026-09-28 — idea to device: whole sounds in one plan, conductor claude-opus-5-5
+
+`plan_steps` now takes several `settings` at once, each planned from where the ones before leave the
+device. The manual gained five recipes whose steps carry those settings (duck, pluck, pad swell,
+wobble, acid bass; `recipes.spec.ts` runs each on a new project). Two idea-to-device cases were added
+to the how-to eval.
+
+| Case          | Request                                                        | Result | Tools it used                |
+| ------------- | -------------------------------------------------------------- | ------ | ---------------------------- |
+| `cutoff`      | how to set track 3's cutoff to 40                              | pass   | plan_steps → show_on_replica |
+| `release`     | notes should stop the moment the keys come up: what, which way | pass   | plan_steps → show_on_replica |
+| `tempo`       | show on the replica how to set tempo 96                        | pass   | plan_steps (show)            |
+| `slow-filter` | set up a slowly opening filter on track 3, then give the steps | pass   | plan_steps (show, settings)  |
+| `duck`        | make the bass pump with the kick, then the steps for my unit   | pass   | plan_steps (show, settings)  |
+| `acid`        | turn track 3 into a squelchy acid bass                         | pass   | plan_steps (show, settings)  |
+| `pluck`       | a plucky bass on track 3 (short decay, no sustain, more reso)  | pass   | plan_steps (show, settings)  |
+
+$1.34 for the seven ($0.84 of it the manual cache on the first). Each set-up now takes one call
+instead of two to four, and the answers explain every change: "with sustain at 0, the decay alone
+sets how long each note lasts". For the acid bass the agent picked the ladder filter and noted that
+the pick returns to `M1`, as on the device.
+
 ## 2026-09-28 — how-to: exact steps and the replica, conductor claude-opus-5-5
 
 `node evals/agent/howto.mjs`: the agent is asked how to reach a value, to show something on the

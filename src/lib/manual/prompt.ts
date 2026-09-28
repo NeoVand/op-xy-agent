@@ -74,7 +74,8 @@ export function renderUnit(unit: ManualUnit): string {
 			lines.push(`- ${p.goal} [#${p.id}]${tags(p)}${ref(p.source)}`);
 			if (p.preconditions.length > 0) lines.push(`  Needs: ${p.preconditions.join('; ')}`);
 			p.steps.forEach((step, i) => {
-				lines.push(`  ${i + 1}. \`${step.keys}\`${step.note ? ` — ${step.note}` : ''}`);
+				const set = step.set ? ` {set ${step.set.param} = ${step.set.value}}` : '';
+				lines.push(`  ${i + 1}. \`${step.keys}\`${step.note ? ` — ${step.note}` : ''}${set}`);
 			});
 			if (p.result) lines.push(`  Result: ${p.result}`);
 		}

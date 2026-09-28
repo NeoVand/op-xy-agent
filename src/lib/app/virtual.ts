@@ -11,7 +11,7 @@ import type {
 	VirtualPattern,
 	VirtualStatus
 } from '$lib/agent/virtual-opxy';
-import { planParam, planPlace } from '$lib/sim/navigator';
+import { planParam, planPlace, planSettings } from '$lib/sim/navigator';
 import { captureScene, playPattern, startSong, trackSequence } from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import type { OpxySim } from '$lib/sim/opxy-sim.svelte';
@@ -272,7 +272,9 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		},
 
 		plan(goal) {
-			return 'place' in goal ? planPlace(sim.state, goal.place) : planParam(sim.state, goal);
+			if ('place' in goal) return planPlace(sim.state, goal.place);
+			if ('settings' in goal) return planSettings(sim.state, goal.settings);
+			return planParam(sim.state, goal);
 		}
 	};
 }

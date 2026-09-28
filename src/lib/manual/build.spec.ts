@@ -133,8 +133,8 @@ describe('a valid unit', () => {
 			'guide'
 		]);
 		expect(unit?.procedures[0].steps).toEqual([
-			{ keys: 'step n + turn E1…E4', note: 'keep holding' },
-			{ keys: 'bar + M2', note: null }
+			{ keys: 'step n + turn E1…E4', note: 'keep holding', set: null },
+			{ keys: 'bar + M2', note: null, set: null }
 		]);
 		expect(unit?.controls).toContain('step.16');
 		expect(unit?.controls).toContain('key.bar');

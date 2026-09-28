@@ -90,6 +90,41 @@ describe('plan_steps with show', () => {
 		expect(sim.state.tempo.bpm).toBe(100);
 	});
 
+	it('sets a whole sound up from several settings, grouped by the parameter they set', async () => {
+		const { sim, run, animated } = setup(true);
+		const result = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 3,
+				settings: [
+					{ param: 'lfo type', value: 'duck' },
+					{ param: 'duck source', value: 1 },
+					{ param: 'lfo amount', value: 60 },
+					{ param: 'warp drive', value: 2 }
+				]
+			})
+		);
+		expect(result).toMatchObject({ shown: true, arrived: true, reached: false });
+		expect(result.settings.map((p: { param: string; reached: boolean }) => p.reached)).toEqual([
+			true,
+			true,
+			true,
+			false
+		]);
+		expect(result.settings[0].steps[0].keys).toBe('T3');
+		expect(result.note).toMatch(/warp drive/);
+		expect(animated.length).toBeGreaterThan(4);
+		expect(sim.state.tracks[2].lfo).toMatchObject({ type: 'duck', on: true, source: 1 });
+		// param with settings is a contradiction
+		const both = await run(planStepsTool, {
+			show: false,
+			param: 'cutoff',
+			value: 3,
+			settings: [{ param: 'cutoff', value: 4 }]
+		});
+		expect(both.isError).toBe(true);
+	});
+
 	it('only returns the plan without a replica', async () => {
 		const { sim, run } = setup(false);
 		const result = json(await run(planStepsTool, { show: true, area: 'mix', page: 2 }));

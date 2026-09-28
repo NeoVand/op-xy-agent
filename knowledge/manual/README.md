@@ -91,6 +91,7 @@ procedures: # how-tos the replica can animate
     steps:
       - keys: step n + turn E1…E4 # canonical key grammar (see below)
         note: keep holding the step while turning
+        # set: { param: amp decay, value: 25 } # recipes only: what the step sets (see below)
     result: The step plays back with the new value from now on.
     source: https://teenage.engineering/guides/op-xy/sequencer#step-sequencing
 parameters: # encoder assignments on a screen
@@ -216,7 +217,17 @@ should be much smaller.
 | screen/engine  | `instrument.engine-prism`          | a `parameters` table (+ CCs where the lane model applies)     |
 | settings       | `com.midi-settings`                | verified device facts, navigation procedures, settings screen |
 | changelog-only | `instrument.save-to-same-snapshot` | changelog facts, unconfirmed gestures marked `derived`        |
-| recipe         | (howto area)                       | one goal, ordered procedures, links to the feature units      |
+| recipe         | `howto.pluck`                      | one goal, ordered procedures, links to the feature units      |
+
+### Recipes the agent can run
+
+A sound-design recipe (`howto.pluck`, `howto.sidechain-duck`) marks each step that sets a value
+with `set: { param, value }`, named the way the agent's `plan_steps` tool takes it (`amp decay`,
+`lfo type` → `duck`, `cutoff`; the navigator's `PARAMS` in `src/lib/sim/navigator.ts`). The agent
+passes a recipe's settings to `plan_steps` in one call and the replica plays them;
+`src/lib/sim/recipes.spec.ts` runs every recipe on a new project, on the track its steps name, and
+fails when a setting cannot be reached. Values are starting points (`confidence: derived`), not
+measurements.
 
 ## Workflow
 

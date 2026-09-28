@@ -7,7 +7,7 @@
  * ones keeps the tool set within the API's grammar limits (`MAX_OPTIONAL_PARAMETERS`).
  */
 import { z } from 'zod';
-import type { NavPlan, Place } from '$lib/sim/navigator';
+import type { NavPlan, NavStep, Place, SettingsPlan } from '$lib/sim/navigator';
 import type { NavGoal } from '../virtual-opxy';
 import { defineTool, errorResult, jsonResult, type AgentEnvironment } from './define';
 
@@ -43,6 +43,20 @@ const goalInput = z.object({
 		.optional()
 		.describe(
 			'The value to set: a number as the screen shows it (0–99 for most, bpm for tempo) or the text the screen shows ("1/16", "danish", "mono")'
+		),
+	settings: z
+		.array(
+			z.object({
+				param: z.string().min(1).max(60).describe('As for param'),
+				value: z.union([z.number(), z.string().min(1).max(30)]).describe('As for value'),
+				track: z.int().min(1).max(8).optional().describe('Default: the track given above')
+			})
+		)
+		.min(1)
+		.max(16)
+		.optional()
+		.describe(
+			'Several parameters in one go, in order, instead of param and value: each is planned from where the ones before leave the device. Use it to set up a sound from an idea (a pluck: amp decay, sustain, release, resonance; a sidechain duck: lfo type duck, duck source, lfo amount). Put a list pick (engine, filter type, lfo type) before the parameters that depend on it.'
 		)
 });
 
@@ -52,6 +66,17 @@ type GoalInput = z.infer<typeof goalInput>;
 function toGoal(input: GoalInput, env: AgentEnvironment): NavGoal | string {
 	const selected = env.virtual?.status().selectedTrack ?? 1;
 	const track = input.track ?? selected;
+	if (input.settings !== undefined) {
+		if (input.param !== undefined) return 'give either param and value or settings, not both';
+		if (track > 8) return 'only instrument tracks (1–8) have these parameters';
+		return {
+			settings: input.settings.map((s) => ({
+				track: s.track ?? track,
+				param: s.param,
+				value: s.value
+			}))
+		};
+	}
 	if (input.param !== undefined) {
 		if (input.value === undefined) return 'value is needed with param';
 		if (track > 8) return 'only instrument tracks (1–8) have these parameters';
@@ -86,28 +111,41 @@ function toGoal(input: GoalInput, env: AgentEnvironment): NavGoal | string {
 	return { place };
 }
 
-/** The plan as the model reads it. */
-function planView(plan: NavPlan) {
+const stepView = (s: NavStep) => ({
+	keys: s.keys,
+	...(s.clicks !== undefined
+		? { clicks: s.clicks, direction: s.clicks > 0 ? 'clockwise' : 'counter-clockwise' }
+		: {}),
+	screen: s.screen
+});
+
+/** The plan as the model reads it; several settings come grouped by the parameter they set. */
+function planView(plan: NavPlan | SettingsPlan) {
 	return {
 		reached: plan.reached,
-		steps: plan.steps.map((s) => ({
-			keys: s.keys,
-			...(s.clicks !== undefined
-				? { clicks: s.clicks, direction: s.clicks > 0 ? 'clockwise' : 'counter-clockwise' }
-				: {}),
-			screen: s.screen
-		})),
+		...('parts' in plan
+			? {
+					settings: plan.parts.map((p) => ({
+						param: p.goal.param,
+						value: p.goal.value,
+						track: p.goal.track,
+						reached: p.reached,
+						...(p.note ? { note: p.note } : {}),
+						steps: p.steps.map(stepView)
+					}))
+				}
+			: { steps: plan.steps.map(stepView) }),
 		screen: plan.screen,
 		...(plan.note ? { note: plan.note } : {})
 	};
 }
 
 const summaryOf = (plan: NavPlan) =>
-	plan.reached
-		? plan.steps.length === 0
+	plan.steps.length === 0
+		? plan.reached
 			? 'already there'
-			: `${plan.steps.length} step${plan.steps.length === 1 ? '' : 's'}: ${plan.steps.map((s) => (s.clicks ? `${s.keys} ×${Math.abs(s.clicks)}` : s.keys)).join(', ')}`
-		: `not reachable: ${plan.note ?? 'unknown'}`;
+			: `not reachable: ${plan.note ?? 'unknown'}`
+		: `${plan.steps.length} step${plan.steps.length === 1 ? '' : 's'}: ${plan.steps.map((s) => (s.clicks ? `${s.keys} ×${Math.abs(s.clicks)}` : s.keys)).join(', ')}${plan.reached ? '' : ` (not all: ${plan.note ?? 'unknown'})`}`;
 
 /** Longest a turn's animation runs, however many detents it has. */
 const TURN_MS = 1800;
@@ -130,7 +168,9 @@ export const planStepsTool = defineTool({
 		const plan = virtual.plan(goal);
 		if (!input.show) return jsonResult(planView(plan), summaryOf(plan));
 		const replica = ctx.env.replica;
-		if (!plan.reached || !replica) {
+		// several settings show the ones that work; a single goal only when it is reachable
+		const showable = 'settings' in goal ? plan.steps.length > 0 : plan.reached;
+		if (!showable || !replica) {
 			return jsonResult(
 				{
 					shown: false,
@@ -154,10 +194,10 @@ export const planStepsTool = defineTool({
 		}
 		// the replica's simulator followed the animation: check that it got there
 		const after = virtual.plan(goal);
-		return jsonResult(
-			{ shown: true, arrived: after.reached && after.steps.length === 0, ...planView(plan) },
-			`shown: ${summaryOf(plan)}`
-		);
+		// several settings: every reachable one reads its value (the rest say why in the plan)
+		const arrived =
+			'settings' in goal ? after.steps.length === 0 : after.reached && after.steps.length === 0;
+		return jsonResult({ shown: true, arrived, ...planView(plan) }, `shown: ${summaryOf(plan)}`);
 	}
 });
 

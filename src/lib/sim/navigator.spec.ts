@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { tryParseKeys } from '$lib/core/opxy';
-import { findParam, planParam, planPlace, playStep, type NavPlan } from './navigator';
+import {
+	findParam,
+	planParam,
+	planPlace,
+	planSettings,
+	playStep,
+	reads,
+	type NavPlan
+} from './navigator';
+import { shown } from './params';
 import { OpxySim } from './opxy-sim.svelte';
 
 const boot = () => new OpxySim({ now: () => 0 });
@@ -146,6 +155,48 @@ describe('the navigator: parameters', () => {
 		const lfo = sim.state.tracks[2].lfo;
 		expect(lfo).toMatchObject({ type: 'duck', on: true, source: 1 });
 		expect(Math.round(lfo.amount)).toBe(60);
+	});
+
+	it('sets several parameters in a row, each from where the last left off', () => {
+		const sim = boot();
+		const pluck = planSettings(sim.state, [
+			{ track: 3, param: 'amp attack', value: 5 },
+			{ track: 3, param: 'amp decay', value: 25 },
+			{ track: 3, param: 'amp sustain', value: 0 },
+			{ track: 3, param: 'resonance', value: 30 }
+		]);
+		expect(pluck.reached).toBe(true);
+		expect(pluck.parts.map((p) => p.reached)).toEqual([true, true, true, true]);
+		// the second goal starts on M2 where the first left the copy: no page keys, only its turn
+		expect(pluck.parts[1].steps.map((s) => s.keys)).toEqual(['turn E2']);
+		grammatical(pluck);
+		for (const step of pluck.steps) playStep(sim, step);
+		const t = sim.state.tracks[2];
+		expect([shown(t.amp.decay), shown(t.amp.sustain), shown(t.filter.resonance)]).toEqual([
+			25, 0, 30
+		]);
+		// done: every goal reads its value, so a second plan has nothing to do
+		expect(reads(sim.state, { track: 3, param: 'amp decay', value: 25 })).toBe(true);
+		const again = planSettings(
+			sim.state,
+			pluck.parts.map((p) => p.goal)
+		);
+		expect(again.steps).toEqual([]);
+		expect(again.parts.every((p) => p.note === 'already set')).toBe(true);
+	});
+
+	it('goes on past a goal it cannot reach and says which', () => {
+		const sim = boot();
+		const plan = planSettings(sim.state, [
+			{ track: 3, param: 'warp drive', value: 1 },
+			{ track: 3, param: 'cutoff', value: 40 }
+		]);
+		expect(plan.reached).toBe(false);
+		expect(plan.parts[0]).toMatchObject({ reached: false, steps: [] });
+		expect(plan.parts[1].reached).toBe(true);
+		expect(plan.note).toMatch(/^warp drive: no parameter/);
+		for (const step of plan.steps) playStep(sim, step);
+		expect(reads(sim.state, { track: 3, param: 'cutoff', value: 40 })).toBe(true);
 	});
 
 	it('says why when it cannot', () => {

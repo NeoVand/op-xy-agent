@@ -69,6 +69,19 @@ export interface ParamGoal {
 	readonly value: number | string;
 }
 
+/** One goal of a {@link SettingsPlan}: its steps and whether they reached it. */
+export interface SettingPart {
+	readonly goal: ParamGoal;
+	readonly steps: readonly NavStep[];
+	readonly reached: boolean;
+	readonly note?: string;
+}
+
+/** Several parameters set in a row, each planned from where the one before left the device. */
+export interface SettingsPlan extends NavPlan {
+	readonly parts: readonly SettingPart[];
+}
+
 /** A settable parameter: where it lives and how it reads. */
 export interface ParamInfo {
 	readonly id: string;
@@ -382,13 +395,18 @@ function targetValue(
 	max: number,
 	step: number
 ): number | null {
-	if (typeof goal === 'number') return Math.min(max, Math.max(min, goal));
-	const want = goal.trim().toLowerCase();
-	for (let v = min; v <= max + 1e-9; v += step) {
-		if (format(v).toLowerCase() === want) return v;
+	if (typeof goal === 'string') {
+		const want = goal.trim().toLowerCase();
+		for (let v = min; v <= max + 1e-9; v += step) {
+			if (format(v).toLowerCase() === want) return v;
+		}
 	}
-	const n = Number(want);
-	return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : null;
+	const n = Number(goal);
+	if (!Number.isFinite(n)) return null;
+	// the number as the screen shows it first (parameter 1 is stored as 0, a synced speed as its
+	// place in the list), else the parameter's own units
+	for (let v = min; v <= max + 1e-9; v += step) if (Number(format(v)) === n) return v;
+	return Math.min(max, Math.max(min, n));
 }
 
 /** Turns encoder `e` one detent at a time until `read` gives `target` (or stops moving). */
@@ -477,4 +495,61 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 	const matches = (v: number) => p.format(v) === p.format(target);
 	const ok = turnTo(rec, where.e, where.shift, () => p.get(t()), target, matches);
 	return rec.plan(ok, ok ? undefined : `${id} stopped at ${p.format(p.get(t()))}`);
+}
+
+/** Whether the parameter `goal` names already reads its value (a filter or LFO also switched on). */
+export function reads(state: SimState, goal: ParamGoal): boolean {
+	const track = goal.track ?? state.track + 1;
+	const id = findParam(goal.param, state, track);
+	if (!id) return false;
+	const tempo = TEMPO_PARAMS[id];
+	if (tempo) {
+		const target = targetValue(goal.value, tempo.format, tempo.min, tempo.max, tempo.step);
+		return target !== null && Math.abs(tempo.get(state) - target) < 0.05;
+	}
+	const t = state.tracks[track - 1];
+	if (!t) return false;
+	const picker = PICKERS[id];
+	if (picker) return picker.get(t) === String(goal.value).trim().toLowerCase();
+	const p = lockParam(id);
+	if (!p || !placeOfParam(id, track)) return false;
+	if (id.startsWith('filter.') && !t.filter.on) return false;
+	if (id.startsWith('lfo.') && !t.lfo.on) return false;
+	const target = targetValue(goal.value, p.format, p.min, p.max, p.step);
+	return target !== null && p.format(p.get(t)) === p.format(target);
+}
+
+/**
+ * Steps that set several parameters in order (a sound set up from an idea: a pluck, a duck), each
+ * planned from where the steps before it leave a copy of the simulator. A goal that cannot be
+ * reached adds no steps; the others still run.
+ */
+export function planSettings(state: SimState, goals: readonly ParamGoal[]): SettingsPlan {
+	const sim = copy(state);
+	const parts: SettingPart[] = [];
+	for (const goal of goals) {
+		// one that already reads its value needs no steps, not even a trip to its page
+		if (reads(sim.state, goal)) {
+			parts.push({ goal, steps: [], reached: true, note: 'already set' });
+			continue;
+		}
+		const plan = planParam(sim.state, goal);
+		if (plan.reached) for (const step of plan.steps) playStep(sim, step);
+		parts.push({
+			goal,
+			steps: plan.reached ? plan.steps : [],
+			reached: plan.reached,
+			...(plan.note ? { note: plan.note } : {})
+		});
+	}
+	const failed = parts.filter((p) => !p.reached);
+	return {
+		steps: parts.flatMap((p) => p.steps),
+		reached: failed.length === 0,
+		screen: screenOf(sim),
+		parts,
+		...(failed.length
+			? { note: failed.map((p) => `${p.goal.param}: ${p.note ?? 'not reached'}`).join('; ') }
+			: {})
+	};
 }

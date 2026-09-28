@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 158 units, 1053 facts, 187 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1080 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -5127,3 +5127,201 @@ Procedures:
 Related: [auxiliary.brain], [howto.get-started], [howto.first-chords]
 
 Sources: s1 guide:how-to#write-a-song-fast-with-brain · s2 guide:auxiliary#brain
+
+### Recipe — make a track pump with the kick (duck) [howto.sidechain-duck]
+current · OS ≥ 1.1.0 · guide v1.1.15
+Also called: sidechain, sidechain pump, pumping bass, duck the bass, pump with the kick, ducking pad
+Where: modes instrument; screens M4
+
+On the track that should make room, such as a bass or a pad, pick the duck LFO on `M4`, set its source to the drum track and choose how deep and how long each dip is; the metronome as source pumps evenly with no drums at all.
+
+Pumping makes room: the bass or pad steps out of the kick's way, so both stay loud without
+clashing, and the loop starts to breathe with the beat. The OP-XY does it with an LFO type rather
+than a compressor, so it costs no effect slot and works on any instrument track. Duck the parts that
+share the kick's low end, usually the bass and long pads, and leave the drums and short plucks
+alone.
+
+Facts:
+- Duck lowers the level of the track it sits on whenever its source plays, so a bass or pad ducked by the drums dips on every hit and swells back between them. [#idea] [s1]
+- Choosing duck works like choosing an engine — `shift + M4` opens the list of LFO types, `turn E1` highlights duck and `click E1` takes it. [#pick] (derived) [s2]
+- In a new project the drum kit sits on track 1, so source 1 ducks on every hit of that track, hi-hats included; a kick alone on its own track gives the classic pump. [#drums] (derived) [s3]
+- Turned past the tracks, the source becomes the metronome, and the track then dips on every beat whether or not anything plays. [#metronome] [s1]
+- Amount on `E2` sets how far the level drops; around 60–80 is a clear pump, lower values a gentle breathing. [#depth] (derived) [s1]
+- Hold on `E3` keeps the level down for a moment and release on `E4` sets how it recovers; keep both short for a tight pump on a fast beat, and lengthen the release for slow swells. [#time] (derived) [s1]
+
+Procedures:
+- Make the bass on T3 pump with the drums on T1 [#set-up] (derived) [s1]
+  Needs: instrument mode
+  1. `T3 → M4` — the track that should make room
+  2. `shift + M4` — the LFO types
+  3. `turn E1` — highlight duck
+  4. `click E1` — takes it; press `M4` if the page changed {set lfo type = duck}
+  5. `turn E1` — source 1, the drum track {set duck source = 1}
+  6. `turn E2` — amount around 70 {set lfo amount = 70}
+  7. `turn E3` — a short hold {set duck hold = 10}
+  8. `turn E4` — release around 40 {set duck release = 40}
+  Result: With the drums and the bass playing, the bass dips on every drum hit.
+
+Related: [instrument.lfo-duck], [instrument.lfo], [howto.first-drum-beat], [howto.first-bassline]
+
+Sources: s1 guide:instrument#duck · s2 guide:synth-engines#change-engine · s3 research:30-presets-samples#11-a-new-projects-sounds
+
+### Recipe — turn a sound into a pluck [howto.pluck]
+current · OS ≥ 1.0.9 · guide v1.1.15
+Also called: pluck, plucky, short notes, staccato sound, percussive synth, plucked bass
+Where: modes instrument; screens M2, M3
+
+A pluck starts at once and dies away while the key is still down — on `M2` set attack 0, a short decay and no sustain, then let the filter envelope close the tone as the note fades.
+
+A pluck cuts through a mix because its energy sits at the start of the note. The amp envelope makes
+the level drop away and the filter envelope makes the tone drop with it, which is what makes it
+sound plucked rather than merely short. With sustain at 0 nothing lingers, so fast sequences and
+arpeggios stay clean. Longer decays drift towards bells and keys; a touch of FX II on
+`shift + M3` gives the tail back without blurring the attack.
+
+Facts:
+- With sustain at 0 a note fades out over the decay time even while its key is held, so the decay sets the length of the pluck. [#shape] (derived) [s1]
+- Decay on `E2` of `M2` grows longer as it is turned clockwise; around 15–30 gives a pluck, higher values a longer ring. [#decay] (derived) [s2]
+- Release runs the other way on the OP-XY, clockwise being shorter, so a crisp pluck wants `E4` well clockwise; lower values let notes ring on after the key comes up. [#release] (derived) [s2]
+- Clicking any encoder on `M2` swaps between the amp and the filter envelope, so the same four encoders set both. [#swap] [s1]
+- For a pluck that starts bright and darkens, lower the cutoff on `M3`, raise the envelope amount on `E3`, and give the filter envelope a short decay and no sustain as well. [#filter] (derived) [s3]
+- A little resonance on `E2` of `M3` adds a squelch as the filter closes. [#resonance] (derived) [s3]
+
+Procedures:
+- Make the notes on T3 pluck [#amp] (derived) [s1]
+  Needs: instrument mode
+  1. `T3 → M2` — the amp envelope; click an encoder if the filter envelope is in front
+  2. `turn E1` — attack 0 {set amp attack = 0}
+  3. `turn E2` — decay around 25 {set amp decay = 25}
+  4. `turn E3` — sustain 0 {set amp sustain = 0}
+  5. `turn E4` — release around 80, a short tail {set amp release = 80}
+- Let the filter close with every pluck [#filter] (derived) [s3]
+  1. `click E1` — the filter envelope
+  2. `turn E2` — filter decay around 30 {set filter decay = 30}
+  3. `turn E3` — filter sustain 0 {set filter sustain = 0}
+  4. `M3` — press it again if the page shows off
+  5. `turn E1` — cutoff around 30 {set cutoff = 30}
+  6. `turn E2` — resonance around 30 {set resonance = 30}
+  7. `turn E3` — envelope amount around 50 {set env amount = 50}
+
+Related: [instrument.envelopes], [instrument.filter], [howto.first-bassline], [howto.pad-swell]
+
+Sources: s1 guide:instrument#envelopes · s2 research:59-screen-profiling#22-envelope-editor-instrument-m2 · s3 guide:instrument#filter
+
+### Recipe — a pad that swells in and fades slowly [howto.pad-swell]
+current · OS ≥ 1.0.9 · guide v1.1.15
+Also called: pad, swell, slow attack, ambient pad, fade in, long release, string swell
+Where: modes instrument; screens M2, M3
+
+For a pad, play in poly with a slow attack, a high sustain and a long release — on the OP-XY that is `E4` turned counter-clockwise — open the filter slowly with its envelope and send the track to the reverb on FX II.
+
+A pad is a bed rather than a part: it should arrive softly, hold still and leave slowly, so
+nothing about it grabs attention from the beat. The slow amp attack and long release do most of the
+work; the slow filter opening adds movement inside each chord. Hold chords for a bar or more and let
+them overlap, and duck the pad with the kick if it muddies the low end.
+
+Facts:
+- Chords need play mode poly, `shift + turn E1` on `M2`, so that every note of the chord sounds. [#poly] (derived) [s1]
+- A slow attack on `E1` of `M2` makes each chord fade in rather than start at once; the higher the value, the slower the swell. [#attack] (derived) [s1]
+- A high sustain keeps the chord at full level for as long as the keys are held. [#sustain] (derived) [s1]
+- For a long fade after the keys come up, turn release on `E4` counter-clockwise; on the OP-XY lower release values ring longer. [#release] (derived) [s2]
+- A slow filter attack with a positive envelope amount on `M3` opens the tone as the chord swells, so the pad brightens as it grows louder. [#filter-swell] (derived) [s3]
+- In a new project FX II holds a reverb, so the FX II send, `shift + turn E4` on `M3`, adds space to the pad. [#reverb] (measured) [s4]
+
+Procedures:
+- Make the chords on T7 swell in and fade out [#swell] (derived) [s1]
+  Needs: instrument mode
+  1. `T7 → M2` — the amp envelope; click an encoder if the filter envelope is in front
+  2. `shift + turn E1` — play mode poly {set play mode = poly}
+  3. `turn E1` — attack around 60 {set amp attack = 60}
+  4. `turn E3` — sustain around 85 {set amp sustain = 85}
+  5. `turn E4` — release around 20, a long fade {set amp release = 20}
+- Let the pad brighten as it swells, in a little reverb [#brighten] (derived) [s3]
+  1. `click E1` — the filter envelope
+  2. `turn E1` — filter attack around 70 {set filter attack = 70}
+  3. `M3` — press it again if the page shows off
+  4. `turn E1` — cutoff around 35 {set cutoff = 35}
+  5. `turn E3` — envelope amount around 40 {set env amount = 40}
+  6. `shift + turn E4` — FX II send around 50 {set fx ii send = 50}
+
+Related: [instrument.envelopes], [instrument.play-mode], [instrument.track-sends], [howto.first-chords]
+
+Sources: s1 guide:instrument#envelopes · s2 research:59-screen-profiling#22-envelope-editor-instrument-m2 · s3 guide:instrument#filter · s4 research:30-presets-samples#11-a-new-projects-sounds
+
+### Recipe — a filter wobble in time with the beat [howto.wobble]
+current · OS ≥ 1.0.9 · guide v1.1.15
+Also called: wobble, wobble bass, lfo on cutoff, filter wobble, rhythmic filter, auto filter
+Where: modes instrument; screens M4, M3
+
+Pick the value LFO on `M4`, aim it at the cutoff on the filter page and give it a tempo-synced speed; the amount sets how far the filter swings.
+
+A wobble is a filter sweep that repeats in time, the sound of a hand rocking the cutoff knob back
+and forth. Faster synced speeds make it busier, slower ones turn it into a long rise and fall over
+the bar. Parameter locks on the LFO speed for single steps give the classic change of pace in the
+middle of a phrase.
+
+Facts:
+- The value LFO turns one encoder of the track's pages up and down by itself, like a hand moving the knob in a loop. [#value] (derived) [s1]
+- Destination on `E3` picks the page, filter for a wobble, and parameter on `E4` picks the encoder there; cutoff is the first of the filter page's four. [#target] [s1]
+- Over the anti-clockwise part of its range the speed follows the tempo, so the wobble stays locked to the beat. [#synced] [s1]
+- On the plain filter destination the wobble restarts with every note, so each note wobbles the same way; its free twin keeps running across notes. [#restart] [s1]
+- A moderate cutoff with some resonance on `M3` makes the sweep easy to hear; with the cutoff fully open there is little left to move. [#audible] (derived) [s2]
+
+Procedures:
+- Make the filter on T3 wobble in time [#set-up] (derived) [s1]
+  Needs: instrument mode
+  1. `T3 → M4`
+  2. `shift + M4` — the LFO types
+  3. `turn E1` — highlight value
+  4. `click E1` — takes it; press `M4` if the page changed {set lfo type = value}
+  5. `turn E1` — a synced speed, such as 4 {set lfo speed = 4}
+  6. `turn E2` — amount around 60 {set lfo amount = 60}
+  7. `turn E3` — destination filter {set lfo destination = filter}
+  8. `turn E4` — parameter 1, the cutoff {set lfo parameter = 1}
+- Give the wobble something to move [#audible] (derived) [s2]
+  1. `M3` — press it again if the page shows off
+  2. `turn E1` — cutoff around 40 {set cutoff = 40}
+  3. `turn E2` — resonance around 45 {set resonance = 45}
+
+Related: [instrument.lfo-value], [instrument.lfo], [instrument.filter], [howto.acid-bass]
+
+Sources: s1 guide:instrument#lfo · s2 guide:instrument#filter
+
+### Recipe — a squelchy acid bass [howto.acid-bass]
+current · OS ≥ 1.0.9 · guide v1.1.15
+Also called: acid, acid bass, acid line, squelch, resonant bass, sliding bass
+Where: modes instrument; screens M3, M2
+
+On the bass track pick the ladder filter, set a low cutoff, high resonance and a strong, short filter envelope, then play mode legato with a little portamento so that overlapping notes slide.
+
+Acid lives in the filter: a bright snap at the start of each note that closes almost at once, with
+resonance singing at the cutoff. Program the line with some notes overlapping so they slide, and a
+few locked accents where the filter opens further. Riding the cutoff live while the pattern loops is
+half the fun.
+
+Facts:
+- Picking a filter type from `shift + M3` takes you back to `M1`, so press `M3` to go on with the filter. [#type-return] (verified 1.1.33) [s1]
+- A low cutoff, high resonance and a large envelope amount with a short filter decay make each note open and snap shut, the acid squelch. [#squelch] (derived) [s2]
+- In legato play mode one note sounds at a time, and portamento makes overlapping notes glide from one pitch to the next. [#slide] (derived) [s3]
+- Parameter locks on the cutoff or the envelope amount for single steps give the line its accents. [#accents] (derived) [s4]
+
+Procedures:
+- Give the bass on T3 a squelchy filter [#filter] (derived) [s2]
+  Needs: instrument mode
+  1. `T3 → shift + M3` — the filter types
+  2. `turn E1` — highlight ladder
+  3. `click E1` — takes it and goes back to `M1` {set filter type = ladder}
+  4. `M3` — press it again if the page shows off
+  5. `turn E1` — cutoff around 20 {set cutoff = 20}
+  6. `turn E2` — resonance around 70 {set resonance = 70}
+  7. `turn E3` — envelope amount around 70 {set env amount = 70}
+- Snap the filter shut and let the notes slide [#envelope] (derived) [s3]
+  1. `M2` — click an encoder until the filter envelope is in front
+  2. `turn E2` — filter decay around 25 {set filter decay = 25}
+  3. `turn E3` — filter sustain 0 {set filter sustain = 0}
+  4. `shift + turn E1` — play mode legato {set play mode = legato}
+  5. `shift + turn E2` — portamento around 20 {set portamento = 20}
+
+Related: [instrument.filter], [instrument.play-mode], [sequencer.parameter-locks], [howto.wobble]
+
+Sources: s1 research:59-screen-profiling#23-filter-instrument-m3 · s2 guide:instrument#filter · s3 guide:instrument#envelopes · s4 guide:sequencer#step-sequencing

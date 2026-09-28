@@ -9,10 +9,11 @@
  * scenes 1–99, steps 1–64 (bar 2 starts at step 17).
  */
 
-import type { NavPlan, ParamGoal, Place } from '$lib/sim/navigator';
+import type { NavPlan, ParamGoal, Place, SettingsPlan } from '$lib/sim/navigator';
 
-/** Where to take the virtual OP-XY: a page, or a parameter set to a value. */
-export type NavGoal = { readonly place: Place } | ParamGoal;
+/** Where to take the virtual OP-XY: a page, a parameter set to a value, or several in a row. */
+export type NavGoal =
+	{ readonly place: Place } | ParamGoal | { readonly settings: readonly ParamGoal[] };
 
 /** A note on a pattern. */
 export interface VirtualNote {
@@ -126,5 +127,5 @@ export interface VirtualOpxy {
 	 * The exact steps from where the virtual OP-XY stands to `goal`, played on a copy of it (the
 	 * virtual OP-XY itself does not move) and reporting whether they got there.
 	 */
-	plan(goal: NavGoal): NavPlan;
+	plan(goal: NavGoal): NavPlan | SettingsPlan;
 }

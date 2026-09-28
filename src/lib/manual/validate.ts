@@ -348,7 +348,7 @@ export function checkUnit(unit: ParsedUnit, ctx: CheckContext, issues: ManualIss
 			if (step.note) checkInlineKeys(step.note, `${where}.steps[${j}].note`, report);
 			if ('error' in checked) report(`${where}.steps[${j}].keys`, checked.error);
 			else checked.controls.forEach((c) => controls.add(c));
-			return { keys: step.keys, note: step.note ?? null };
+			return { keys: step.keys, note: step.note ?? null, set: step.set ?? null };
 		});
 		const confidence = checkProvenance(procedure, where);
 		return {

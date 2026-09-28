@@ -241,10 +241,20 @@ export const FactSchema = z.strictObject({
 	...provenance
 });
 
+/**
+ * What a recipe step sets, as the agent's `plan_steps` names it (`amp decay` to 25, `lfo type` to
+ * duck), so the agent can run the recipe on the replica and a test can check that it works.
+ */
+export const StepSetSchema = z.strictObject({
+	param: z.string().trim().min(1).max(60),
+	value: z.union([z.number(), z.string().trim().min(1).max(30)])
+});
+
 /** One step of a procedure: a key combo in the grammar of `core/opxy/keys.ts`. */
 export const StepSchema = z.strictObject({
 	keys: z.string().min(1, 'a step needs a key combo'),
-	note: Text.optional()
+	note: Text.optional(),
+	set: StepSetSchema.optional()
 });
 
 /** A how-to: a goal reached by pressing keys in order. */
@@ -334,7 +344,9 @@ export const ManualFactSchema = z.strictObject({
 /** A procedure step in manual.json: keys in canonical spelling (parse them with `parseKeys`). */
 export const ManualStepSchema = z.strictObject({
 	keys: z.string(),
-	note: z.string().nullable()
+	note: z.string().nullable(),
+	/** What the step sets, for the agent's plan_steps (recipes). */
+	set: StepSetSchema.nullable()
 });
 
 /** A procedure in manual.json. */

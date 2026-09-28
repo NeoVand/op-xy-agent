@@ -17,7 +17,7 @@ import { createVirtualOpxy } from '$lib/app/virtual';
 import { ReplicaState } from '$lib/replica';
 import { buildFrame } from '$lib/sim/frames';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
-import { shown, type SimState } from '$lib/sim/params';
+import { PLAY_MODES, shown, type SimState } from '$lib/sim/params';
 import { describeFrame } from '$lib/sim/screen/render';
 import { anthropicKey } from './key';
 
@@ -88,6 +88,37 @@ const CASES: readonly HowtoCase[] = [
 			}
 			if (Math.abs(t.filter.envAmount - 50) > 3) fails.push(`env amount ${t.filter.envAmount}`);
 			for (const w of mentions(o, 'M2', 'M3')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
+		id: 'duck',
+		prompt:
+			'Make the bass on track 3 pump with the kick on track 1, like sidechain compression. Set it up on the virtual OP-XY, then tell me how to do it on my own unit.',
+		check(o) {
+			const fails: string[] = [];
+			const lfo = o.state.tracks[2].lfo;
+			if (lfo.type !== 'duck' || !lfo.on) fails.push(`lfo is ${lfo.type}${lfo.on ? '' : ' (off)'}`);
+			if (lfo.source !== 1) fails.push(`duck source ${lfo.source}`);
+			if (lfo.amount < 30) fails.push(`amount only ${lfo.amount}`);
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			for (const w of mentions(o, 'M4', 'shift + M4')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
+		id: 'acid',
+		prompt:
+			'Turn track 3 into a squelchy acid bass on the virtual OP-XY: the classic resonant filter snap, and notes that slide.',
+		check(o) {
+			const fails: string[] = [];
+			const t = o.state.tracks[2];
+			if (!t.filter.on) fails.push('the filter is off');
+			if (shown(t.filter.resonance) < 45) fails.push(`resonance ${shown(t.filter.resonance)}`);
+			if (t.filter.envAmount < 30) fails.push(`env amount ${t.filter.envAmount}`);
+			if (PLAY_MODES[t.playMode.mode] === 'poly') fails.push('still poly: nothing slides');
+			if (t.playMode.portamento <= 0) fails.push('no portamento');
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
 			return fails;
 		}
 	},
