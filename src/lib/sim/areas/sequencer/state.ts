@@ -4,6 +4,7 @@
  * the copy buffer, one undo level and the players' sounding notes. The patterns themselves live in
  * each track's `sequence` (`../../sequencer.ts`). Plain, serialisable data.
  */
+import { NEW_PROJECT_OCTAVES } from '../../defaults';
 import type { Bank, Overlay, SimState } from '../../params';
 import type { SeqStep, Sequence } from '../../sequencer';
 
@@ -114,7 +115,11 @@ export function initialSequencer(): SequencerState {
 		holdUndo: false,
 		clipboard: null,
 		lastLock: null,
-		octaves: {},
+		// a new project's keyboard octaves: T3 and T6 an octave down, T4 up (the device's own);
+		// keyed as `model.ts` octaveKey does
+		octaves: Object.fromEntries(
+			Object.entries(NEW_PROJECT_OCTAVES).map(([track, octave]) => [`instrument.${track}`, octave])
+		),
 		single: null,
 		armed: false,
 		recLatch: false,

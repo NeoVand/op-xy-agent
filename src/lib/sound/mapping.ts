@@ -8,9 +8,9 @@
  */
 import type { EngineId } from '$lib/core/opxy';
 import type { Region as SampleRegion } from '$lib/sim/areas/sample/state';
-import { LFO_SYNC_STEPS, type Envelope99, type Lfo } from '$lib/sim/params';
+import { ELEMENT_SOURCES, LFO_SYNC_STEPS, type Envelope99, type Lfo } from '$lib/sim/params';
 import type { FilterType } from '$lib/sim/screen/frame';
-import { DESTINATIONS } from '$lib/sim/screen/pages/lfo';
+import { DESTINATIONS, SENSOR_DESTINATIONS } from '$lib/sim/screen/pages/lfo';
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
@@ -85,10 +85,17 @@ export const filterDesign = (type: FilterType): FilterDesign =>
 export const resonanceQ = (v: number, type: FilterType): number =>
 	-3 + (filterDesign(type).maxQ + 3) * Math.pow(unit(v), 1.4);
 
-/** Filter-envelope depth (−99…99) in cents: up to seven octaves either way, finer near zero. */
+/** The cutoff dial's whole sweep, 20 Hz to 20 kHz, in cents. */
+const CUTOFF_SWEEP_CENTS = 1200 * Math.log2(20000 / 20);
+
+/**
+ * Filter-envelope depth (−99…99) in cents: that share of the cutoff dial's own sweep, so an amount
+ * of 33 opens the filter a third of the way at the envelope's peak (our assumption, as the cutoff
+ * law is: neither is measured yet; the device's presets lean on it, bass/shoulder resting at
+ * cutoff 0 and opening on its envelope).
+ */
 export function envAmountCents(v: number): number {
-	const x = clamp(v, -99, 99) / 99;
-	return Math.sign(x) * x * x * 8400;
+	return (clamp(v, -99, 99) / 99) * CUTOFF_SWEEP_CENTS;
 }
 
 /** Key tracking (0–99): the cutoff follows the note away from C4, up to an octave per octave. */
@@ -108,18 +115,54 @@ export const playMode = (index: number): PlayMode =>
 export const glideSeconds = (v: number): number =>
 	v <= 0 ? 0 : 0.005 * Math.pow(500, (clamp(v, 1, 99) - 1) / 98);
 
-/** Preset volume: silent at 0, unity at the default 44, +6 dB at 99. */
-export function presetGain(v: number): number {
+/** A q15 lane on the 0–99 scale. */
+const q99 = (raw: number) => (raw / 32767) * 99;
+
+/**
+ * The preset volume each engine's level was measured at. The calibration session played every
+ * engine at its track's preset volume, so an engine sounds as measured there: prism on
+ * bass/shoulder, epiano on pluck/beach bum, dissolve on lead/gaussian, hardsync on
+ * pluck/dielectric, axis on strings/draemy. Simple, organ and wavetable replaced T1's, T2's and
+ * T8's presets and, we assume, kept their volumes; the drums and the multisampler sit at a new
+ * project's T1 and T8.
+ */
+const PRESET_VOLUME_MEASURED: Partial<Record<EngineId, number>> = {
+	prism: q99(24901),
+	epiano: q99(25670),
+	dissolve: q99(16794),
+	hardsync: q99(28180),
+	axis: q99(10000),
+	simple: q99(18348),
+	organ: q99(24900),
+	wavetable: q99(23591),
+	drum: q99(18348),
+	multisampler: q99(23591)
+};
+
+/** The preset volume law (unmeasured): silent at 0, quadratic to 44, then +6 dB by 99. */
+function presetLaw(v: number): number {
 	const x = clamp(v, 0, 99);
 	if (x <= 44) return (x / 44) ** 2;
 	return Math.pow(10, (6 * (x - 44)) / 55 / 20);
 }
 
-/** Mixer level: silent at 0, unity at the default 80, +4 dB at 99. */
+/**
+ * Preset volume as a gain for `engine`: unity at the volume its level was measured at (so a new
+ * project's sounds play as measured), moving on the law from there; without an engine, unity at 44.
+ */
+export function presetGain(v: number, engine?: EngineId): number {
+	const measured = engine ? PRESET_VOLUME_MEASURED[engine] : undefined;
+	return presetLaw(v) / (measured === undefined ? 1 : presetLaw(measured));
+}
+
+/** The mixer level of a new project's tracks (the device stores 0x6000 of 0x7FFF): unity gain. */
+export const LEVEL_UNITY = q99(0x6000);
+
+/** Mixer level: silent at 0, unity at a new project's level (75 shown), +4 dB at 99. */
 export function levelGain(v: number): number {
 	const x = clamp(v, 0, 99);
-	if (x <= 80) return (x / 80) ** 2;
-	return Math.pow(10, (4 * (x - 80)) / 19 / 20);
+	if (x <= LEVEL_UNITY) return (x / LEVEL_UNITY) ** 2;
+	return Math.pow(10, (4 * (x - LEVEL_UNITY)) / (99 - LEVEL_UNITY) / 20);
 }
 
 /** Pan −100…100 as −1…1. */
@@ -255,6 +298,15 @@ export type LfoRoute =
 			readonly depth: number;
 			readonly hold: number;
 			readonly release: number;
+	  }
+	| {
+			/** Element on the amp envelope: each voice moves its target by its own envelope. */
+			readonly kind: 'element';
+			readonly target: 'engine' | 'cutoff' | 'resonance';
+			/** M1 parameter 0–3 when `target` is engine. */
+			readonly param: number;
+			/** −1…1 at the envelope's peak. */
+			readonly depth: number;
 	  };
 
 const NO_LFO: LfoRoute = { kind: 'none' };
@@ -262,9 +314,11 @@ const NO_LFO: LfoRoute = { kind: 'none' };
 /**
  * Where the LFO goes. Value and random reach the filter's cutoff and resonance and the engine's M1
  * parameters (the envelope and LFO pages are not modulated here); tremolo wobbles pitch and level;
- * duck dips the level on the source track's notes; element follows sensors the replica lacks.
+ * duck dips the level on the source track's notes; element follows each voice's amp envelope (the
+ * replica has no gyroscope or microphone). A switched-off LFO goes nowhere.
  */
 export function lfoRoute(lfo: Lfo, bpm: number): LfoRoute {
+	if (!lfo.on) return NO_LFO;
 	switch (lfo.type) {
 		case 'value':
 		case 'random': {
@@ -291,6 +345,20 @@ export function lfoRoute(lfo: Lfo, bpm: number): LfoRoute {
 			const volume = clamp(lfo.volume, -99, 99) / 99;
 			if (vibrato === 0 && volume === 0) return NO_LFO;
 			return { kind: 'tremolo', hz: lfoHz(lfo.speed, bpm), vibrato, volume };
+		}
+		case 'element': {
+			// the amp envelope is the one source the replica has (sum: the others add nothing)
+			const depth = clamp(lfo.amount, -99, 99) / 99;
+			const sensor = ELEMENT_SOURCES[clamp(Math.round(lfo.sensor), 0, ELEMENT_SOURCES.length - 1)];
+			if (depth === 0 || (sensor.name !== 'amp envelope' && sensor.name !== 'sum')) return NO_LFO;
+			const destination =
+				SENSOR_DESTINATIONS[clamp(Math.round(lfo.destination), 0, SENSOR_DESTINATIONS.length - 1)];
+			const param = clamp(Math.round(lfo.parameter), 0, 3);
+			if (destination.module === 'syn') return { kind: 'element', target: 'engine', param, depth };
+			if (destination.module === 'filter' && param <= 1) {
+				return { kind: 'element', target: param === 0 ? 'cutoff' : 'resonance', param, depth };
+			}
+			return NO_LFO;
 		}
 		case 'duck': {
 			const depth = Math.abs(clamp(lfo.amount, -99, 99)) / 99;

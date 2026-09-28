@@ -470,7 +470,10 @@ Established:
 - svf is lowpass only, gentle, with good resonance (about 12 dB/octave).
 - ladder is aggressive and whistles into self-oscillation (about 24 dB/octave).
 - z lowpass has praised resonance; z hipass is the only highpass.
-- Envelope amount is ±99.
+- Envelope amount is ±99 on screen; the new-project presets store it unsigned (`30-presets-samples.md`
+  §11: read signed, two of them would be silent).
+- Each preset stores its filter on or off (project byte `+0x25`); four of five factory epiano
+  presets and five of a new project's eight tracks have it off.
 
 Our models:
 
@@ -478,7 +481,10 @@ Our models:
 - ladder: a four-pole TPT ladder with saturating feedback k = 4.1·r.
 - z: a sharper two-pole, Q 0.5–25.
 - Cutoff: 20 Hz–20 kHz exponential.
-- Envelope depth: our 7-octave curve (unmeasured).
+- Envelope depth: linear, a full amount sweeping as far as the cutoff dial does (1200·log2 1000 ≈
+  11,960 cents). Unmeasured; the old square law left a new project's bass (cutoff 00) nearly silent.
+- Off: the engine passes untouched (the core skips the filter; Web Audio voices get an open
+  lowpass).
 
 **Envelopes.**
 
@@ -487,7 +493,8 @@ Our models:
 - Ours: the same law for decay and release, a 1 ms floor at 0, a linear attack, and exponential falls
   over four time constants per "time".
 - Open: whether decay and release really follow the attack law, the attack's curvature, and whether
-  sustain is linear or in dB.
+  sustain is linear or in dB. It is audible now: under the attack law a new project's bass
+  (release 80) rings about 44 s after its last note and the beach bum pluck (69) about 16 s.
 
 **LFOs.**
 
@@ -497,14 +504,19 @@ Our models:
   - Regular destinations reset on each key; free ones don't.
   - Value shapes: sine, square, ramp, saw. Tremolo shapes: sine, saw, exp, square, blip. Random is
     sample-and-hold.
+- Each preset stores its LFO on or off (project byte `+0x20`); switched off, it does nothing.
+- Ours: element follows each voice's own amp envelope (the only source we have; "sum" counts it
+  alone) onto an M1 parameter (a whole range at full amount), the cutoff (3600 cents) or the
+  resonance (12 dB). Stored speeds read linearly over the dial's 12 synced and 99 free positions.
 - Open: element's "env" source seems to follow the filter envelope on the device, not the amp
-  envelope the guide names.
+  envelope the guide names. The rates and depths are unmeasured.
 
 **Play modes and voices.**
 
 - Established:
   - Portamento is linear or exponential, per preset.
-  - Bend range is stepped, with 0 off.
+  - Bend range is stepped, with 0 off. We read the stored lane as midi.guide's nine steps: off,
+    1–7 semitones, an octave.
   - 24 voices; at most 8 per track; per-track reservations.
   - The voice icon appears at 17 voices and blinks red on a steal.
   - A CPU limiter cuts notes under load.
@@ -567,6 +579,9 @@ every voice per sample instead.
 - Engines aim at RMS ≈ 0.28 at their default M1. `CORE_GAIN` centres them on the first Web Audio
   engines: at a new track's settings they sit between −2.9 dB (epiano) and +3.8 dB (simple). The
   device session will set each engine's own level.
+- Loudness anchor: the calibration captures played each engine at its new-project preset's volume
+  with the track level at 0x6000 (shown 75). Both play at unity gain (`presetGain`, `levelGain` in
+  `mapping.ts`); the preset-volume law away from those points is not measured.
 - Parameters glide over about 4 ms inside the engines (`engines/ramp.ts`), so an LFO or a turned
   encoder never clicks. hardsync has a soft ceiling above ±1 (`engines/guard.ts`) for rare aligned
   peaks; dissolve's clip bounds its own carriers.

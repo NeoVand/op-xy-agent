@@ -10,6 +10,7 @@ import type { VoiceSlot } from './allocator';
 import { Envelope } from './envelope';
 import type { Adsr, FilterDesign } from './mapping';
 import type { SourceGraph } from './synths';
+import type { ElementModulation } from './synth/protocol';
 
 /** The track's filter as a voice plays it. */
 export interface VoiceFilter {
@@ -62,6 +63,8 @@ export interface VoiceModulation {
 	readonly engine: { readonly param: number; readonly signal: AudioNode } | null;
 	/** Cents, for vibrato. */
 	readonly vibrato: AudioNode | null;
+	/** The element LFO, which synth-core voices run on their own amp envelope. */
+	readonly element: ElementModulation | null;
 }
 
 /** Fast fade for stolen and choked voices. */

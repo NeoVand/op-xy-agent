@@ -17,6 +17,7 @@ import {
 	LFO_SYNC_STEPS,
 	PLAY_MODES,
 	clamp,
+	detent,
 	engineParams,
 	formatTune,
 	isSampler,
@@ -465,8 +466,9 @@ export function turnedValue(
 	const from = locks[p.id] ?? p.get(t);
 	if (p.id.endsWith('.reverse')) return delta < 0 ? 1 : 0;
 	const by = fine ? p.fine : p.step;
-	const raw = from + delta * by;
-	const rounded = by < 1 ? Math.round(raw * 100) / 100 : Math.round(raw);
+	// whole steps move the number shown, as the core's turn does ({@link detent})
+	const rounded =
+		by < 1 ? Math.round((from + delta * by) * 100) / 100 : detent(from, delta * by, p.min, p.max);
 	// a sample's start never passes its end, nor the end its start (as the core keeps them)
 	const edge = /^key(\d+)\.(start|end)$/.exec(p.id);
 	if (edge) {

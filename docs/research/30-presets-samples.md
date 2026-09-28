@@ -1140,7 +1140,8 @@ first.
     slicer save? (Owner slices on device, saves the preset, and we read `patch.json` over MTP.)
 12. **User-made synth presets** ✍︎: arbitrary P1–P4 accepted? Meaning of `params[4..7]`?
 13. **`bendrange` scale:** read the on-screen value for the factory presets that use 8191, 13653 and
-    32767 (read-only: just browse).
+    32767 (read-only: just browse). The replica reads nine equal steps (off, 1–7 semitones, an
+    octave), which puts 8191 on 2, 13653 on 3 and 32767 on the octave (§11).
 14. **Envelope calibration via USB audio** (send notes; record the OP-XY audio input). This redoes
     sf2-to-opxy's attack/decay fit and fixes the release fit. Harmless, but announce it (it plays
     sound).
@@ -1206,3 +1207,56 @@ first.
   rule reproduces 323/323 device files.
 - **Device WAV layout.** Walk the RIFF chunks of
   `XYF:src/sampler-project-state/2026-06-15/presets/*/unnamed1-c4-0.wav`.
+
+## 11. A new project's sounds
+
+A blank project on the owner's unit (OS 1.1.33, pulled over MTP, read with xy-format's
+`patch_sound_state` lane offsets) holds the eight presets below; xy-format's OS 1.1.4 blank project
+holds the same. The lanes are in `knowledge/presets/new-project.json`, turned into the replica's
+0–99 model by `src/lib/sim/defaults.ts`. Values here are as the screen shows them
+(floor(raw × 100 / 32768)).
+
+| Track | Preset             | Engine       | Octave | Play mode            | Filter                            | LFO                           | Sends aux · tape · FX I · FX II |
+| ----- | ------------------ | ------------ | -----: | -------------------- | --------------------------------- | ----------------------------- | ------------------------------- |
+| T1    | `drum/boop`        | drum         |      0 | poly                 | ladder, off                       | random, off                   | 00 · 99 · 00 · 00               |
+| T2    | `drum/in phase`    | drum         |      0 | poly                 | ladder, off                       | value, off                    | 00 · 99 · 00 · 00               |
+| T3    | `bass/shoulder`    | prism        |     −1 | mono (raw glide 128) | svf, **on**: cutoff 00, env 33    | tremolo, off                  | 00 · 99 · 00 · 00               |
+| T4    | `pluck/beach bum`  | epiano       |     +1 | poly                 | z hipass, off                     | tremolo, **on**               | 00 · 99 · 00 · 23               |
+| T5    | `lead/gaussian`    | dissolve     |      0 | legato               | svf, off                          | element, **on**: amp env → P3 | 39 · 99 · 11 · 39               |
+| T6    | `pluck/dielectric` | hardsync     |     −1 | poly                 | ladder, **on**: cutoff 01, env 48 | tremolo, **on**               | 00 · 99 · 00 · 15               |
+| T7    | `strings/draemy`   | axis         |      0 | poly, glide 36       | ladder, off                       | element, **on**: amp env → P1 | 00 · 99 · 68 · 53               |
+| T8    | `pad/bandpasser`   | multisampler |      0 | poly                 | z lowpass, **on**                 | tremolo, **on**               | 00 · 99 · 00 · 00               |
+
+Every track sits at mixer level 0x6000 (shown 75), centre pan. FX I is a delay (65 · 50 · 50 · 99)
+and FX II a reverb (69 · 00 · 29 · 99). An engine picked with no preset starts from its own M1
+(xy-format's OS 1.1.4 picker captures): axis, dissolve, hardsync and prism 50 · 00 · 00 · 00, epiano
+19 · 00 · 00 · 25, organ 40 · 53 · 82 · 09, simple 99 · 00 · 18 · 00, wavetable 00 · 00 · 00 · 00;
+the envelopes, filter, LFO and sends stay as they were.
+
+**Reading the lanes.** Verified: the unsigned lanes and their display, the filter and LFO on/off
+bytes, the types and the octaves. Inferred:
+
+- The filter envelope amount is unsigned (0 = none). Read as signed around 16384, T3's 11120 and T6's
+  15810 would be negative, and with their cutoffs at 00 and 01 both presets would be silent.
+- LFO amounts, tremolo volume and the LFO envelopes are signed around 16384: T3's switched-off
+  tremolo stores exactly 16384 as its amount, and neutral lanes sit at 15889–16000.
+- LFO speed is linear over the dial's 12 synced and 99 free positions. The stored speeds then land
+  in the free range at about 0.5–5 Hz, where vibrato and tremolo live.
+- Choices (element's source, destination and parameter; value and random's destination and
+  parameter) split the lane into equal steps; so does the bend range, read as midi.guide's nine
+  (off, 1–7 semitones, an octave).
+
+**What the replica does with them.** A new project (and a reset save, `SAVE_VERSION` 2) loads the
+eight sounds, octaves and preset settings; loading one of these presets brings its stored sound
+back. The sound honours the on/off bytes: an off filter passes the engine through, an off LFO does
+nothing, and element runs in each voice on its own amp envelope. The engines were calibrated at these
+presets' volumes with the level at 0x6000 (`57-synth-engines.md`), so both play at unity gain; the
+preset-volume law away from them is not measured. An encoder turn moves the number shown: a stored
+value between two numbers first lands on the one it shows.
+
+**Not ours to ship, or not measured yet.** The two drum kits and bandpasser's samples are TE's: the
+replica plays its synthesized kit and a stand-in tone instead. The filter models, the envelope
+amount's reach, LFO rates and depths, and the delay and reverb are modelled, not measured (a
+filter/LFO session is in `docs/QUESTIONS.md`). Open for the owner: how a filter or LFO is switched
+off on the device and what the page shows then, and whether shoulder's glide of raw 128 reads `00`
+or `off`.

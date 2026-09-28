@@ -31,6 +31,16 @@
   session, `90-device-probe.md`): every engine rebuilt from its measurements (note 57 §3), most
   within about 1 dB per harmonic on the measured settings. Left: the engines' screen animations
   (with the owner's camera), filters and LFOs (sent off during the session).
+- **A new project's real sounds** (2026-09-27): the replica's eight tracks now load the presets the
+  owner's blank project stores (`knowledge/presets/new-project.json`, `30-presets-samples.md` §11):
+  engine values, envelopes, filters and LFOs with their on/off, sends, play modes, octaves, preset
+  settings; engines picked without a preset start from the device's values. Older saves reset their
+  sounds and keep their patterns. The sound honours the on/off switches and runs element per voice.
+  Left: measuring the filters and LFOs (`QUESTIONS.md` 5); TE's drum kits and pad samples stay
+  stand-ins.
+- **Sequencer against the device: next.** Behaviour the guide settles (players on sequenced notes,
+  the auxiliary tracks' sound, locks on empty steps, scales for ramps and random, octaves, grooves,
+  nudge), then the sequencer's screens from the owner's photos.
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).

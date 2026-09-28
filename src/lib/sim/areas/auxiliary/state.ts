@@ -5,6 +5,8 @@
  * where it is silent they follow the community's project-file notes (docs/research/10-xy-format.md
  * §3.11, 20-midi-control.md §3.5), and where both are silent they are ours and say so.
  */
+import { newProjectFile } from '$lib/core/opxy';
+import { fromQ15, stepOf } from '../../defaults';
 
 /** Key names as the brain shows them ("c#": lowercase, sharps). */
 export const KEYS = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'] as const;
@@ -194,6 +196,22 @@ export function defaultFx(type: FxType): FxSlot {
 	return { type, params: type === 'delay' ? [3, 50, 50, 50] : [50, 50, 50, 50] };
 }
 
+/**
+ * A new project's effects as the device stores them (`knowledge/presets/new-project.json`): FX I a
+ * delay (size 6 of 8, its dry signal full), FX II a reverb.
+ */
+function newProjectFx(): [FxSlot, FxSlot] {
+	const { fx1, fx2 } = newProjectFile.effects;
+	const [size, ...rest] = fx1.params;
+	return [
+		{
+			type: 'delay',
+			params: [stepOf(size, DELAY_SIZES.length), ...rest.map(fromQ15)] as FxSlot['params']
+		},
+		{ type: 'reverb', params: fx2.params.map(fromQ15) as FxSlot['params'] }
+	];
+}
+
 /** The auxiliary area's state in a new project (FX I runs the delay, FX II the reverb). */
 export function initialAuxiliary(): AuxiliaryState {
 	return {
@@ -207,7 +225,7 @@ export function initialAuxiliary(): AuxiliaryState {
 		// the community's project-file notes: drive 0, input level 75, mix 99, input off
 		audio: { input: 0, on: false, drive: 0, level: 75, mix: 99 },
 		tape: { pitch: 1, speed: 100, length: 1, mix: 0, clip: null },
-		fx: [defaultFx('delay'), defaultFx('reverb')],
+		fx: newProjectFx(),
 		pages: Array.from({ length: 8 }, () => ({
 			highpass: 0,
 			lowpass: 99,

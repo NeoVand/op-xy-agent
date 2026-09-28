@@ -83,7 +83,10 @@ async function flashes(d: Driver, id: string): Promise<boolean> {
 	return seen.size > 1;
 }
 
-/** Selects a synth track (track 3 is prism in a new project). */
+/**
+ * Selects a synth track: track 3, which a new project makes prism with its keyboard an octave down
+ * (C4's key plays 48, as on the device).
+ */
 const synth = (d: Driver) => d.click('track.3');
 
 /** Adds component `n` (natural n) with digit `digit` to steps, as the guide describes. */
@@ -103,13 +106,13 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await play(d, 'a3');
 			await d.click(step(1));
 			expect(d.steps()).toBe('w...............');
-			expect(notes(d, 1)).toEqual([noteOf('a3')]);
+			expect(notes(d, 1)).toEqual([noteOf('a3') - 12]); // track 3 plays an octave down
 			// further steps get the same note until another is played
 			await d.click(step(5));
 			await play(d, 'c4');
 			await d.click(step(9));
 			expect(d.steps()).toBe('w...w...w.......');
-			expect([notes(d, 5), notes(d, 9)]).toEqual([[noteOf('a3')], [noteOf('c4')]]);
+			expect([notes(d, 5), notes(d, 9)]).toEqual([[noteOf('a3') - 12], [noteOf('c4') - 12]]);
 		});
 
 		it('places sounds on a drum track: each key is a sound, the last one played goes down', async () => {
@@ -156,14 +159,14 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.up(step(2));
 			await d.wait(GAP_MS);
 			expect(d.led(step(2))).toBe('white');
-			expect(notes(d, 2)).toEqual([60, 64, 67]);
+			expect(notes(d, 2)).toEqual([48, 52, 55]);
 		});
 
 		it('records a chord held on the keyboard onto the step pressed', async () => {
 			const d = await start();
 			await synth(d);
 			await chord(d, ['c4', 'e4', 'g4'], () => d.click(step(3)));
-			expect(notes(d, 3)).toEqual([60, 64, 67]);
+			expect(notes(d, 3)).toEqual([48, 52, 55]);
 			expect(d.steps()).toBe('..w.............');
 		});
 
@@ -171,7 +174,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await synth(d);
 			await d.holding(step(4), () => play(d, 'c4', 'e4', 'g4'));
-			expect(notes(d, 4)).toEqual([60, 64, 67]);
+			expect(notes(d, 4)).toEqual([48, 52, 55]);
 			expect(d.led(step(4))).toBe('white');
 		});
 
@@ -182,13 +185,13 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.click(step(1));
 			await d.holding(step(1), async () => {
 				await play(d, 'e4');
-				expect(notes(d, 1)).toEqual([60, 64]);
+				expect(notes(d, 1)).toEqual([48, 52]);
 				expect(d.lit()).toEqual(['c4', 'e4']);
 				await play(d, 'c4');
-				expect(notes(d, 1)).toEqual([64]);
+				expect(notes(d, 1)).toEqual([52]);
 			});
 			// letting go after the edit leaves the step as edited
-			expect(notes(d, 1)).toEqual([64]);
+			expect(notes(d, 1)).toEqual([52]);
 			expect(d.led(step(1))).toBe('white');
 		});
 
@@ -225,7 +228,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			expect(offset()).toBeCloseTo(2 * NUDGE, 9);
 			await d.holding(step(5), () => d.click('key.minus'));
 			expect(offset()).toBeCloseTo(NUDGE, 9);
-			expect(notes(d, 5)).toEqual([60]);
+			expect(notes(d, 5)).toEqual([48]);
 		});
 
 		it('shows only one sound’s steps with its key held and record tapped, and sequences it', async () => {
@@ -279,7 +282,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.holding(step(2), () => d.turn(1, 6));
 			expect(lockIds(d, 2)).toHaveLength(1);
 			expect(d.state.tracks[2].m1[0]).toBe(own);
-			expect(notes(d, 2)).toEqual([60]); // the hold with a turn neither cleared nor copied
+			expect(notes(d, 2)).toEqual([48]); // the hold with a turn neither cleared nor copied
 		});
 
 		it('locks a parameter on an empty step too (OS 1.1.33)', async () => {
@@ -301,7 +304,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.wait(450);
 			expect(d.steps()).toMatch(/^r+[.w]*$/);
 			expect(d.steps()).not.toBe('rrrrrrrrrrrrrrrr');
-			expect(notes(d, 1)).toEqual([60]);
+			expect(notes(d, 1)).toEqual([48]);
 			await d.wait(750);
 			await d.up('key.stop');
 			await d.up('key.record');
@@ -346,9 +349,9 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await addComponent(d, [1], 3, 2);
 			await d.holding(step(1), () => d.turn(1, 5));
 			await d.click(step(1), HOLD_MS); // holding copies…
-			expect(notes(d, 1)).toEqual([60]); // …and keeps the step
+			expect(notes(d, 1)).toEqual([48]); // …and keeps the step
 			await d.click(step(7)); // an empty step receives the copy
-			expect(notes(d, 7)).toEqual([60]);
+			expect(notes(d, 7)).toEqual([48]);
 			expect(components(d, 7)).toEqual(components(d, 1));
 			expect(at(d, 7).locks).toEqual(at(d, 1).locks);
 			expect(d.steps()).toBe('w.....w.........');
@@ -368,14 +371,14 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await play(d, 'c4');
 			await d.click(step(1));
 			await d.withShift(() => d.click('key.plus'));
-			expect(notes(d, 1)).toEqual([72]);
+			expect(notes(d, 1)).toEqual([60]);
 			await d.withShift(() => d.click('key.minus'));
-			expect(notes(d, 1)).toEqual([60]);
+			expect(notes(d, 1)).toEqual([48]);
 			await d.click('key.plus'); // the keyboard up an octave: recorded notes stay
-			expect(notes(d, 1)).toEqual([60]);
+			expect(notes(d, 1)).toEqual([48]);
 			await play(d, 'c4');
 			await d.click(step(2));
-			expect(notes(d, 2)).toEqual([72]);
+			expect(notes(d, 2)).toEqual([60]);
 		});
 
 		it('moves a drum sequence a semitone with shift + [-] / [+]', async () => {
@@ -404,7 +407,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			expect(d.state.transport.playing).toBe(true);
 			await d.wait(4 * STEP_MS - CLICK_MS - GAP_MS);
 			await d.click(key('e4')); // on step 5
-			expect([notes(d, 1), notes(d, 5)]).toEqual([[60], [64]]);
+			expect([notes(d, 1), notes(d, 5)]).toEqual([[48], [52]]); // track 3 plays an octave down
 			expect(d.led(step(1))).toBe('red');
 			await d.click('key.stop');
 			expect(d.steps()).toBe('w...w...........');
@@ -422,7 +425,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.click(key('e4')); // not recorded
 			await d.click('key.stop');
 			expect(d.steps()).toBe('..w.............');
-			expect(notes(d, 3)).toEqual([60]);
+			expect(notes(d, 3)).toEqual([48]);
 		});
 
 		it('latches recording with record + play during playback', async () => {
@@ -432,7 +435,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.holding('key.record', () => d.click('key.play'));
 			await d.wait(STEP_MS);
 			await d.click(key('g4'));
-			expect(pattern(d).steps.some((s) => s.notes.some((n) => n.note === 67))).toBe(true);
+			expect(pattern(d).steps.some((s) => s.notes.some((n) => n.note === 55))).toBe(true);
 			expect(d.state.transport.playing).toBe(true);
 			await d.click('key.stop');
 		});
@@ -446,7 +449,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.wait(16 * STEP_MS);
 			expect(d.state.transport.position).toBeGreaterThanOrEqual(0);
 			await d.click(key('d4'));
-			expect(pattern(d).steps.some((s) => s.notes.some((n) => n.note === 62))).toBe(true);
+			expect(pattern(d).steps.some((s) => s.notes.some((n) => n.note === 50))).toBe(true);
 			await d.click('key.stop');
 		});
 
@@ -480,11 +483,12 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 				expect(d.lit()).toEqual(['g4']);
 			});
 			expect(d.steps()).toBe('www.w...........');
+			// track 3 plays an octave down
 			expect([notes(d, 1), notes(d, 2), notes(d, 3), notes(d, 5)]).toEqual([
-				[60],
-				[62],
-				[64],
-				[67]
+				[48],
+				[50],
+				[52],
+				[55]
 			]);
 		});
 
@@ -492,7 +496,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await synth(d);
 			await d.holding('key.record', () => chord(d, ['c4', 'e4'], () => d.wait(GAP_MS)));
-			expect(notes(d, 1)).toEqual([60, 64]);
+			expect(notes(d, 1)).toEqual([48, 52]);
 		});
 
 		it('removes a recorded step with a tap', async () => {
@@ -601,7 +605,7 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			expect([notes(d, 1), notes(d, 2), lockIds(d, 2).length]).toEqual([[], [], 1]);
 			await d.clicks(step(1));
 			await d.holding('key.bar', () => d.click('key.m2'));
-			expect([notes(d, 1), lockIds(d, 2).length]).toEqual([[60], 0]);
+			expect([notes(d, 1), lockIds(d, 2).length]).toEqual([[48], 0]); // an octave down on track 3
 			await d.holding(step(3), () => d.turn(1, 4));
 			await d.holding('key.bar', () => d.click('key.m4'));
 			expect(pattern(d).steps.every((s) => !s.notes.length && !Object.keys(s.locks).length)).toBe(
@@ -749,9 +753,10 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 			await d.click('key.bar');
 			await d.clicks(step(1), step(8));
 			expect(d.steps()).toBe('w......w........');
+			// E4's key plays 52 on track 3, an octave down
 			expect([16, 23].map((i) => pattern(d).steps[i].notes.map((n) => n.note))).toEqual([
-				[64],
-				[64]
+				[52],
+				[52]
 			]);
 			await d.click(step(8)); // and takes them off there too
 			expect(pattern(d).steps[23].notes).toEqual([]);

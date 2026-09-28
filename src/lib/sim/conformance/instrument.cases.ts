@@ -115,6 +115,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 
 		it('moves a synth track’s keyboard an octave with [+] / [-]; the key pressed still lights', async () => {
 			const d = await start();
+			// a new project's bass (T3) starts an octave down: [+] brings c4 back to middle C
 			await d.click('track.3');
 			await d.click('key.plus');
 			await d.down(key('c4'));
@@ -122,11 +123,11 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(d.lit()).toEqual(['c4']);
 			await d.up(key('c4'));
 			await d.click('step.1');
-			expect(notesOn(d, 1)).toEqual([72]);
+			expect(notesOn(d, 1)).toEqual([60]);
 			await d.clicks('key.minus', 'key.minus');
 			await play(d, 'c4');
 			await d.click('step.2');
-			expect(notesOn(d, 2)).toEqual([48]);
+			expect(notesOn(d, 2)).toEqual([36]);
 		});
 
 		it('stops the keyboard three octaves up or down (ours; device check)', async () => {
@@ -146,16 +147,17 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		// along; manual instrument/save-copy-scramble). Device check as well.
 		it('keeps each track’s keyboard octave: an octave up on T3 leaves T4 where it was', async () => {
 			const d = await start();
+			// a new project starts T3 an octave down and T4 an octave up, as their presets say
 			await d.click('track.3');
 			await d.click('key.plus');
 			await d.click('track.4');
 			await play(d, 'c4');
 			await d.click('step.1');
-			expect(notesOn(d, 1)).toEqual([60]);
+			expect(notesOn(d, 1)).toEqual([72]);
 			await d.click('track.3');
 			await play(d, 'c4');
 			await d.click('step.1');
-			expect(notesOn(d, 1)).toEqual([72]);
+			expect(notesOn(d, 1)).toEqual([60]);
 		});
 
 		it('leaves a drum track’s 24 sounds where they are with [+] (ours; device check)', async () => {
@@ -267,9 +269,9 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('key.m3');
 			expect(d.screen()).toMatch(/^svf filter/);
 			await d.click('key.m4');
-			expect(d.screen()).toMatch(/^value lfo/);
+			expect(d.screen()).toMatch(/^tremolo lfo/);
 			await d.click('key.m1');
-			expect(d.screen()).toMatch(/^prism: shape 80/);
+			expect(d.screen()).toMatch(/^prism: shape 15/);
 		});
 
 		it('gives auxiliary and mix mode four modules too; arrange has none', async () => {
@@ -308,14 +310,15 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 
 		it('keeps the module when the track changes: M3 on T3, then T4 shows T4’s filter', async () => {
 			const d = await start();
+			// a new project's bass starts closed (svf, cutoff 0); the pluck on T4 has a z hipass
 			await d.click('track.3');
 			await d.click('key.m3');
-			await d.turn(1, -49);
-			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 0');
+			await d.turn(1, 50);
+			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 10');
 			await d.click('track.4');
-			expect(d.screen()).toBe('svf filter: cutoff 100, resonance 0');
+			expect(d.screen()).toBe('z hipass filter: cutoff 80, resonance 53');
 			await d.click('track.3');
-			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 0');
+			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 10');
 		});
 
 		it('shows a page’s extra parameters while shift is held, and the page again when it comes up', async () => {
@@ -323,7 +326,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await d.click('key.m2');
 			await d.withShift(async () => {
-				expect(d.screen()).toMatch(/^play mode poly/);
+				expect(d.screen()).toMatch(/^play mode mono/);
 			});
 			expect(d.screen()).toMatch(/^amp envelope/);
 			await d.click('key.m3');
@@ -345,9 +348,10 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('key.m3');
 			await d.withShift(() => d.turn(3, 40));
 			await d.turn(3, -20);
-			expect(on(d, 'filter').envAmount).toBeCloseTo(-20 / 99, 9);
+			// the bass's envelope amount, 34, less 20; its tape send is full, as on every new track
+			expect(on(d, 'filter').envAmount).toBeCloseTo(14 / 99, 9);
 			await d.withShift(async () => {
-				expect(on(d, 'sends').values).toEqual(['00', '00', '40', '00']);
+				expect(on(d, 'sends').values).toEqual(['00', '99', '40', '00']);
 			});
 		});
 	});
@@ -410,12 +414,12 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('gives the pages to the active track: a turn on T3 stays on T3', async () => {
 			const d = await start();
 			await d.click('track.3');
-			await d.turn(1, -10);
-			expect(header(d)[0]).toBe('shape 70');
+			await d.turn(1, 10);
+			expect(header(d)[0]).toBe('shape 25');
 			await d.click('track.4');
-			expect(header(d)[0]).toBe('tone 80');
+			expect(header(d)[0]).toBe('tone 00');
 			await d.click('track.3');
-			expect(header(d)[0]).toBe('shape 70');
+			expect(header(d)[0]).toBe('shape 25');
 		});
 
 		it('mutes an instrument track with instrument + its key, leaving the active track lit (ours outside mix; device check)', async () => {
@@ -662,14 +666,15 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				await d.click(`track.${n}`);
 				engines.push(d.frame.page === 'drum' ? `${on(d, 'drum').sampler?.engine}` : header(d)[0]);
 			}
+			// each with its new-project preset: shoulder, beach bum, gaussian, dielectric, draemy
 			expect(engines).toEqual([
 				'drum',
 				'drum',
-				'shape 80',
-				'tone 80',
-				'swarm 49',
-				'freq 80',
-				'tone 80',
+				'shape 15',
+				'tone 00',
+				'swarm 00',
+				'freq 13',
+				'tone 34',
 				'multisampler'
 			]);
 			expect(d.state.tracks.map((t) => t.engine)).toEqual([
@@ -695,7 +700,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(1, 2);
 			expect(d.screen()).toBe('simple');
 			await d.push(1);
-			expect(d.screen()).toBe('simple: shape 80, pw 80, noise 00, stereo 00');
+			// an engine picked without a preset starts from the device's own values
+			expect(d.screen()).toBe('simple: shape 99, pw 00, noise 18, stereo 00');
 			expect(d.state.tracks[2].engine).toBe('simple');
 		});
 
@@ -732,7 +738,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toBe('prism');
 			await d.turn(1, 1);
 			await openList(d, 1);
-			expect(d.screen()).toMatch(/^prism: shape 80/);
+			expect(d.screen()).toMatch(/^prism: shape 15/);
 		});
 
 		it('scrolls a list with any encoder; only E1’s click loads (ours: the guide names E1)', async () => {
@@ -746,7 +752,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.push(4);
 			expect(d.screen()).toBe('organ');
 			await d.push(1);
-			expect(header(d)[0]).toBe('type 80');
+			expect(header(d)[0]).toBe('type 40');
 		});
 
 		it('closes the list when another track is picked (ours)', async () => {
@@ -763,14 +769,14 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m3');
-			await d.turn(1, -49);
+			await d.turn(1, 50);
 			await d.click('key.m1');
 			await d.turn(1, 5);
-			expect(header(d)[0]).toBe('shape 85');
+			expect(header(d)[0]).toBe('shape 20');
 			await loadEngine(d, 'wavetable');
-			expect(header(d)).toEqual(['table 80', 'position 80', 'warp 80', 'drift 80']);
+			expect(header(d)).toEqual(['table 00', 'position 00', 'warp 00', 'drift 00']);
 			await d.click('key.m3');
-			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 0');
+			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 10');
 		});
 
 		it('edits the drum key last played on a drum track’s M1: tune, start, end, play mode', async () => {
@@ -872,12 +878,13 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m2');
-			expect(d.screen()).toBe('amp envelope: attack 0, decay 100, sustain 77, release 0');
+			// a new project's bass: a sharp attack, a decay to a low sustain, a long release
+			expect(d.screen()).toBe('amp envelope: attack 0, decay 32, sustain 39, release 80');
 			await d.turn(1, 20);
-			await d.turn(2, -49);
+			await d.turn(2, 20);
 			await d.turn(3, -26);
-			await d.turn(4, 30);
-			expect(d.screen()).toBe('amp envelope: attack 20, decay 51, sustain 51, release 30');
+			await d.turn(4, 10);
+			expect(d.screen()).toBe('amp envelope: attack 20, decay 52, sustain 12, release 90');
 		});
 
 		it('swaps to the filter envelope with a click of any encoder, and back; turns edit the one shown', async () => {
@@ -891,11 +898,11 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			}
 			expect(shown).toEqual(['filter', 'amp', 'filter', 'amp']);
 			await d.push(3);
-			expect(d.screen()).toBe('filter envelope: attack 100, decay 100, sustain 41, release 89');
-			await d.turn(1, -49);
-			expect(d.screen()).toBe('filter envelope: attack 51, decay 100, sustain 41, release 89');
+			expect(d.screen()).toBe('filter envelope: attack 0, decay 64, sustain 68, release 29');
+			await d.turn(1, 49);
+			expect(d.screen()).toBe('filter envelope: attack 49, decay 64, sustain 68, release 29');
 			await d.push(1);
-			expect(d.screen()).toBe('amp envelope: attack 0, decay 100, sustain 77, release 0');
+			expect(d.screen()).toBe('amp envelope: attack 0, decay 32, sustain 39, release 80');
 		});
 
 		it('has both envelopes on a drum track too', async () => {
@@ -912,19 +919,21 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m2');
-			expect(on(d, 'envelope').filterDepth).toBe(0);
+			// the bass preset opens its filter with the envelope, a third of the way (34)
+			expect(on(d, 'envelope').filterDepth).toBeCloseTo(11120 / 32767, 9);
 			await d.click('key.m3');
 			await d.turn(3, -50);
 			await d.click('key.m2');
-			expect(on(d, 'envelope').filterDepth).toBeCloseTo(50 / 99, 9);
+			expect(on(d, 'envelope').filterDepth).toBeCloseTo(16 / 99, 9);
 		});
 
-		it('shows play mode while shift is held on M2: poly, portamento off, bend 1 semitone, volume 44', async () => {
+		it('shows play mode while shift is held on M2: a new project’s bass is mono, bend 2 semitones, volume 75', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m2');
+			// (its preset glides the least bit: portamento shows 00, not off)
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('play mode poly, portamento off, bend 1 semitone, volume 44');
+				expect(d.screen()).toBe('play mode mono, portamento 00, bend 2 semitones, volume 75');
 			});
 		});
 
@@ -934,6 +943,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('key.m2');
 			const seen: string[] = [];
 			await d.withShift(async () => {
+				await d.turn(1, -1); // from the bass preset's mono
 				for (let i = 0; i < 4; i++) {
 					seen.push(on(d, 'playmode').values[0]);
 					await d.turn(1, 1);
@@ -952,14 +962,15 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				await d.turn(2, 10);
 				await d.turn(3, 1);
 				await d.turn(4, 10);
-				expect(on(d, 'playmode').values).toEqual(['poly', '10', '2 semitones', '54']);
+				expect(on(d, 'playmode').values).toEqual(['mono', '10', '3 semitones', '85']);
 				await d.turn(3, -5);
 				await d.turn(2, -20);
-				expect(on(d, 'playmode').values).toEqual(['poly', 'off', 'off', '54']);
+				expect(on(d, 'playmode').values).toEqual(['mono', 'off', 'off', '85']);
 			});
+			// the mixer keeps a new project's level (the device stores 0x6000 of 0x7FFF)
 			await d.click('key.mix');
 			await d.click('track.3');
-			expect(on(d, 'mix').strips[2].level).toBeCloseTo(80 / 99, 9);
+			expect(on(d, 'mix').strips[2].level).toBeCloseTo(0x6000 / 0x7fff, 9);
 		});
 	});
 
@@ -968,10 +979,11 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m3');
-			await d.turn(1, -49);
-			await d.turn(2, 40);
-			await d.turn(3, -30);
-			await d.turn(4, 60);
+			// from the bass preset's cutoff 0, resonance 09, envelope amount 34 and key tracking 17
+			await d.turn(1, 50);
+			await d.turn(2, 31);
+			await d.turn(3, -64);
+			await d.turn(4, 43);
 			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 40');
 			expect(on(d, 'filter')).toMatchObject({
 				cutoff: 50 / 99,
@@ -1008,7 +1020,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(seen).toEqual(['svf', 'ladder', 'z lowpass', 'z hipass']);
 			await scrollTo(d, FILTER_TYPES, 'ladder');
 			await d.push(1);
-			expect(d.screen()).toBe('ladder filter: cutoff 100, resonance 0');
+			// a new type keeps the cutoff and resonance (ours; device check)
+			expect(d.screen()).toBe('ladder filter: cutoff 0, resonance 10');
 		});
 
 		it('confirms the highlighted filter type with M3 as well (ours, like M1 in the engine list; device check)', async () => {
@@ -1018,7 +1031,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await openList(d, 3);
 			await scrollTo(d, FILTER_TYPES, 'z lowpass');
 			await d.click('key.m3');
-			expect(d.screen()).toBe('z lowpass filter: cutoff 100, resonance 0');
+			expect(d.screen()).toBe('z lowpass filter: cutoff 0, resonance 10');
 		});
 
 		it('leaves the filter types unchanged with another module key (ours)', async () => {
@@ -1037,28 +1050,29 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m3');
+			// a new project sends every instrument track to tape in full
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('sends: aux 00, tape 00, fx I 00, fx II 00');
+				expect(d.screen()).toBe('sends: aux 00, tape 99, fx I 00, fx II 00');
 				await d.turn(1, 50);
-				await d.turn(2, 31);
+				await d.turn(2, -68);
 				await d.turn(3, 77);
 				await d.turn(4, 25);
 				expect(d.screen()).toBe('sends: aux 50, tape 31, fx I 77, fx II 25');
 			});
-			expect(d.screen()).toBe('svf filter: cutoff 100, resonance 0');
+			expect(d.screen()).toBe('svf filter: cutoff 0, resonance 10');
 			await d.click('track.4');
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('sends: aux 00, tape 00, fx I 00, fx II 00');
+				expect(d.screen()).toBe('sends: aux 00, tape 99, fx I 00, fx II 23');
 			});
 		});
 	});
 
 	describe('14.4 lfo', () => {
-		it('shows the LFO on M4; a new track’s is value, aimed at the engine', async () => {
+		it('shows the LFO on M4; a new project’s bass has a still tremolo', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m4');
-			expect(d.screen()).toBe('value lfo: amount 0, destination syn');
+			expect(d.screen()).toBe('tremolo lfo: amount 0, destination syn');
 		});
 
 		it('lists the LFO types with shift + M4: duck, element, random, tremolo and value', async () => {
@@ -1066,7 +1080,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await d.click('key.m4');
 			await openList(d, 4);
-			expect(d.screen()).toBe('value');
+			expect(d.screen()).toBe('tremolo');
 			expect(on(d, 'list').columns[0].items).toEqual(['3', 'lfo']);
 			await d.turn(1, -10);
 			const seen: string[] = [];
@@ -1095,7 +1109,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await lfo(d, 'duck');
 			await d.click('track.4');
-			expect(on(d, 'lfo').type).toBe('value');
+			expect(on(d, 'lfo').type).toBe('tremolo');
 			await d.click('track.3');
 			expect(on(d, 'lfo').type).toBe('duck');
 		});
@@ -1110,19 +1124,21 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				expect(base().source).toBe('M');
 			});
 			expect(on(d, 'lfo').source).toBe('G'); // the track's own source stays
+			// the bass preset's tremolo left the envelope at −2 (random and tremolo share it: ours)
 			await lfo(d, 'random');
 			await d.holding('step.1', () => d.withShift(() => d.turn(2, 50)));
 			await d.holding('step.1', async () => {
-				expect(base()).toMatchObject({ amount: 0, envelope: 50 / 99 });
+				expect(base()).toMatchObject({ amount: 0, envelope: 48 / 99 });
 			});
 			// random's and tremolo's envelope are one value (ours), so tremolo's goes on a new step
 			await lfo(d, 'tremolo');
+			const own = on(d, 'lfo').envelope;
 			await d.click('step.2');
 			await d.holding('step.2', async () => {
 				await d.turn(4, 40);
-				expect(base().envelope).toBeCloseTo(40 / 99, 9);
+				expect(base().envelope).toBeCloseTo(38 / 99, 9);
 			});
-			expect(on(d, 'lfo').envelope).toBe(0);
+			expect(on(d, 'lfo').envelope).toBe(own);
 			await lfo(d, 'duck');
 			await d.holding('step.1', async () => {
 				await d.turn(1, 16);
@@ -1145,10 +1161,13 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('syncs E1’s speed to the tempo anticlockwise, and runs free past the dial clockwise', async () => {
 			const d = await start();
 			await lfo(d, 'value');
-			expect(on(d, 'lfo').speed).toMatchObject({ synced: true, label: '4' });
-			await d.turn(1, -10);
+			// the bass preset's LFO runs free; far enough anticlockwise it keeps to the tempo
+			expect(on(d, 'lfo').speed.synced).toBe(false);
+			await d.turn(1, -200);
 			expect(on(d, 'lfo').speed).toMatchObject({ synced: true, label: '1' });
-			await d.turn(1, LFO_SYNC_STEPS.length - 1);
+			await d.turn(1, 3);
+			expect(on(d, 'lfo').speed).toMatchObject({ synced: true, label: '4' });
+			await d.turn(1, LFO_SYNC_STEPS.length - 4);
 			expect(on(d, 'lfo').speed).toMatchObject({
 				synced: true,
 				label: LFO_SYNC_STEPS[LFO_SYNC_STEPS.length - 1]
@@ -1164,7 +1183,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await lfo(d, 'value');
 			await d.turn(2, 50);
-			expect(d.screen()).toMatch(/amount 50\.5/);
+			expect(d.screen()).toMatch(/amount 51/);
 			await d.turn(2, -200);
 			expect(on(d, 'lfo').amount).toBe(-100);
 		});
@@ -1210,6 +1229,10 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.4');
 			await d.click('key.m4');
+			// the pluck preset's is a tremolo: make it a value LFO
+			await openList(d, 4);
+			await scrollTo(d, LFO_TYPES, 'value');
+			await d.push(1);
 			expect(on(d, 'lfo').fourth).toBe('tone');
 		});
 	});
@@ -1218,7 +1241,9 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('sets speed (synced in triplets, or free), amount, destination and parameter on E1–E4', async () => {
 			const d = await start();
 			await lfo(d, 'random');
-			await d.turn(1, -1);
+			// from the free speed the bass preset left: the slowest triplet step, then two faster
+			await d.turn(1, -200);
+			await d.turn(1, 2);
 			await d.turn(2, -63);
 			await d.turn(3, 2);
 			await d.turn(4, 1);
@@ -1235,7 +1260,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await lfo(d, 'random');
 			await d.turn(2, 30);
-			await d.withShift(() => d.turn(2, 60));
+			// from the −2 the bass preset's tremolo left (random and tremolo share it: ours)
+			await d.withShift(() => d.turn(2, 62));
 			expect(on(d, 'lfo').amount).toBeCloseTo((30 * 100) / 99, 9);
 			expect(on(d, 'lfo').envelope).toBeCloseTo(60 / 99, 9);
 			await d.withShift(() => d.turn(2, -140));
@@ -1248,9 +1274,11 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('sets speed with E1, vibrato (pitch) with E2 and volume with E3', async () => {
 			const d = await start();
 			await lfo(d, 'tremolo');
-			await d.turn(1, 1);
+			// the bass preset's runs free with its volume at −3
+			await d.turn(1, -200);
+			await d.turn(1, 4);
 			await d.turn(2, 9);
-			await d.turn(3, -54);
+			await d.turn(3, -51);
 			expect(on(d, 'lfo')).toMatchObject({
 				type: 'tremolo',
 				speed: { synced: true, label: '5' },
@@ -1262,7 +1290,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('fades the tremolo in or out with E4 (its envelope)', async () => {
 			const d = await start();
 			await lfo(d, 'tremolo');
-			await d.turn(4, 40);
+			await d.turn(4, 42); // from the bass preset's −2
 			expect(on(d, 'lfo').envelope).toBeCloseTo(40 / 99, 9);
 			await d.turn(4, -60);
 			expect(on(d, 'lfo').envelope).toBeCloseTo(-20 / 99, 9);
@@ -1368,7 +1396,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toBe('hardsync');
 			await scrollTo(d, ENGINE_LIST, 'organ');
 			await d.click('key.m1');
-			expect(d.screen()).toBe('organ: type 80, bass 80, tremolo amount 80, tremolo speed 80');
+			// with no preset, the device's own starting values
+			expect(d.screen()).toBe('organ: type 40, bass 53, tremolo amount 82, tremolo speed 09');
 			expect(d.state.tracks[5].engine).toBe('organ');
 		});
 
@@ -1414,7 +1443,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(1, -30);
 			await loadEngine(d, 'organ');
 			await loadEngine(d, 'prism');
-			expect(header(d)[0]).toBe('shape 80');
+			// prism picked with no preset: the device's shape 50, not the bass preset's 15
+			expect(header(d)[0]).toBe('shape 50');
 		});
 	});
 
@@ -1472,17 +1502,18 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await loadEngine(d, 'midi');
 			await d.click('key.m4');
-			expect(d.screen()).toBe('value lfo: amount 0, destination syn');
+			expect(d.screen()).toBe('tremolo lfo: amount 0, destination syn');
 		});
 
 		it('keeps the synth’s settings through a switch to midi and back (OS 1.0.50)', async () => {
 			const d = await start();
 			await d.click('track.3');
-			await d.turn(1, -30);
+			await d.turn(1, 30);
 			await d.turn(4, 10);
 			await loadEngine(d, 'midi');
 			await loadEngine(d, 'prism');
-			expect(header(d)).toEqual(['shape 50', 'ratio 80', 'detune 80', 'stereo 90']);
+			// the bass preset's shape 15, ratio 00, detune 05, stereo 22, as turned
+			expect(header(d)).toEqual(['shape 45', 'ratio 00', 'detune 05', 'stereo 32']);
 		});
 
 		// manual instrument/engine-midi: program changes lock per step (fixed in OS 1.1.15)

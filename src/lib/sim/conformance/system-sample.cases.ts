@@ -914,7 +914,8 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.turn(3, 30);
 			await d.click('track.4');
 			await d.withShift(() => d.click('key.instrument'));
-			expect(picks(d)).toEqual(['settings', 'high pass', '0']);
+			// track 4's own: a new project's beach bum high-passes a little (the device's 5)
+			expect(picks(d)).toEqual(['settings', 'high pass', '5']);
 			await d.click('track.3');
 			await d.withShift(() => d.click('key.instrument'));
 			expect(picks(d)).toEqual(['settings', 'high pass', '30']);
@@ -947,7 +948,8 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 		it('opens with shift + a track key in instrument mode, on the preset that track plays, the track key lit', async () => {
 			const d = await start();
 			await d.withShift(() => d.click('track.3'));
-			expect(d.screen()).toBe('presets for track 3, category view: bass, bass 1');
+			// a new project's track 3 plays the device's bass/shoulder
+			expect(d.screen()).toBe('presets for track 3, category view: bass, shoulder');
 			expect(d.led('track.3')).toBe('white');
 			expect(rows(d, 1).slice(0, 4)).toEqual(['bass', 'bells', 'drum', 'fx']);
 		});
@@ -956,11 +958,11 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.withShift(() => d.click('track.3'));
 			await d.push(1);
-			expect(d.screen()).toBe('presets for track 3, engine view: prism, bass 1');
+			expect(d.screen()).toBe('presets for track 3, engine view: prism, shoulder');
 			expect(rows(d, 1)).toContain('external');
 			expect(rows(d, 1)).not.toContain('midi');
 			await d.push(1);
-			expect(d.screen()).toBe('presets for track 3, category view: bass, bass 1');
+			expect(d.screen()).toBe('presets for track 3, category view: bass, shoulder');
 			// the external engine's preset makes the track a MIDI track
 			await d.push(1);
 			await d.turn(1, -4);
@@ -975,7 +977,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.clicks('track.3', key('c4'), step(1));
 			await d.withShift(() => d.click('track.3'));
 			await d.turn(1, 5);
-			expect(picks(d)).toEqual([null, 'lead', 'lead 1']);
+			expect(picks(d)).toEqual([null, 'lead', 'gaussian']); // a new project's, first in lead
 			await d.turn(2, 1);
 			await d.turn(3, 1);
 			await d.turn(4, -1);
@@ -1006,7 +1008,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.withShift(() => d.click('track.3'));
 			await d.withShift(() => d.click('track.1'));
-			expect(d.screen()).toBe('presets for track 1, category view: drum, drum 1');
+			expect(d.screen()).toBe('presets for track 1, category view: drum, boop'); // a new project's
 			expect(d.led('track.1')).toBe('white');
 		});
 
@@ -1070,7 +1072,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(picks(d)).toEqual([null, 'snapshot', null]);
 			await d.turn(1, -20);
 			await d.click('key.m4');
-			expect(picks(d)).toEqual([null, 'bass', 'bass 1']);
+			expect(picks(d)).toEqual([null, 'bass', 'shoulder']); // a new project's bass preset
 		});
 
 		it('keeps its soft keys while a note sounds: a held key and M4 still delete the preset (ours)', async () => {
@@ -1182,7 +1184,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 		it('writes back into the snapshot the sound came from with shift added before M4 (OS 1.1.17; ours: track key first)', async () => {
 			const d = await start();
 			await d.holding('track.3', () => d.click('key.m4'));
-			await d.turn(1, 5); // shape 85
+			await d.turn(1, 5); // shape 20 (a new project's shoulder has 15)
 			await d.holding('track.3', () => d.withShift(() => d.click('key.m4')));
 			expect(presetsIn(d, 'snapshot')).toEqual([`${TODAY} (1)`]);
 			// loaded onto track 4, it has the change
@@ -1191,7 +1193,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(picks(d)).toEqual([null, 'snapshot', `${TODAY} (1)`]);
 			await d.push(2);
 			await d.click('track.4');
-			expect(d.screen()).toMatch(/^prism: shape 85, /);
+			expect(d.screen()).toMatch(/^prism: shape 20, /);
 		});
 	});
 
@@ -1930,8 +1932,8 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.click('key.m2');
 			expect(d.frame.page).toBe('envelope');
 			await d.withShift(async () => {
-				await d.turn(3, -1);
-				expect(d.screen()).toBe('play mode poly, portamento off, bend off, volume 44');
+				await d.turn(3, -2); // a new project's shoulder bends 2 semitones: 1, then off
+				expect(d.screen()).toBe('play mode mono, portamento 00, bend off, volume 75');
 			});
 			await d.holding('track.3', () => d.click('key.m4'));
 			// the saved sound brings its preset settings and bend range along to another track
@@ -1945,7 +1947,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(picks(d)).toEqual(['mod', 'pitchbend target', 'cutoff']);
 			await d.click('key.m2');
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('play mode poly, portamento off, bend off, volume 44');
+				expect(d.screen()).toBe('play mode mono, portamento 00, bend off, volume 75');
 			});
 		});
 

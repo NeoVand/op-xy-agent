@@ -81,7 +81,7 @@ describe('bar menu (manual: sequencer/bar-menu)', () => {
 	it('adds, removes and duplicates bars, sets the length and the track scale', () => {
 		const { sim } = rig();
 		sim.press('track.3');
-		place(sim, 'c4', [1, 5]);
+		place(sim, 'c4', [1, 5]); // 48: a new project has T3's keyboard an octave down
 		down(sim, 'key.bar');
 		sim.press('key.plus');
 		expect(pattern(sim)).toMatchObject({ bars: 2, length: 32 });
@@ -90,7 +90,7 @@ describe('bar menu (manual: sequencer/bar-menu)', () => {
 		// bar + shift + [+]: the bar doubles, notes included
 		sim.combo('key.shift', 'key.plus');
 		expect(pattern(sim).bars).toBe(2);
-		expect(notesOn(sim, 16)).toEqual([60]);
+		expect(notesOn(sim, 16)).toEqual([48]);
 		// bar + step 12: the last bar plays 12 steps
 		sim.press('step.12');
 		expect(pattern(sim).length).toBe(28);
@@ -140,7 +140,7 @@ describe('bar menu (manual: sequencer/bar-menu)', () => {
 		sim.press('key.bar'); // a tap
 		expect(sim.track.sequence.page).toBe(1);
 		place(sim, 'c4', [1]);
-		expect(notesOn(sim, 16)).toEqual([60]);
+		expect(notesOn(sim, 16)).toEqual([48]);
 		expect(notesOn(sim, 0)).toEqual([]);
 		sim.press('key.bar');
 		expect(sim.track.sequence.page).toBe(0);
@@ -296,26 +296,27 @@ describe('step components (manual: sequencer/step-components)', () => {
 describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 	it('stores the turned value on a held step, shows the step, and leaves the track alone', () => {
 		const { sim } = rig();
-		sim.press('track.3'); // prism, M1
+		sim.press('track.3'); // prism, M1 (a new project's shape shows 15)
+		const own = sim.track.m1[0];
 		down(sim, 'step.5');
 		const held = page(sim, 'lock');
 		expect(held).toMatchObject({ step: 5, locks: 0, last: null });
-		sim.turn(1, -30);
+		sim.turn(1, 30);
 		const lock = page(sim, 'lock');
 		expect(lock.base).toMatchObject({ page: 'synth' });
-		expect(lock.base.page === 'synth' && lock.base.header[0].value).toBe('50');
-		expect(lock).toMatchObject({ locks: 1, last: { label: 'shape', value: '50' } });
-		expect(sim.track.m1[0]).toBe(80);
+		expect(lock.base.page === 'synth' && lock.base.header[0].value).toBe('45');
+		expect(lock).toMatchObject({ locks: 1, last: { label: 'shape', value: '45' } });
+		expect(sim.track.m1[0]).toBe(own);
 		up(sim, 'step.5');
 		// a lock on an empty step (OS 1.1.33): no note is placed
-		expect(pattern(sim).steps[4]).toEqual({ notes: [], components: [], locks: { 'm1.1': 50 } });
-		expect(page(sim, 'synth').header[0].value).toBe('80');
+		expect(pattern(sim).steps[4]).toEqual({ notes: [], components: [], locks: { 'm1.1': 45 } });
+		expect(page(sim, 'synth').header[0].value).toBe('15');
 		// holding it again shows its value, and turning starts from it
 		down(sim, 'step.5');
 		sim.turn(1, 5);
-		expect(pattern(sim).steps[4].locks['m1.1']).toBe(55);
+		expect(pattern(sim).steps[4].locks['m1.1']).toBe(50);
 		expect(describeFrame(sim.frame)).toBe(
-			'step 5 held, 1 lock, shape 55: prism: shape 55, ratio 80, detune 80, stereo 80'
+			'step 5 held, 1 lock, shape 50: prism: shape 50, ratio 00, detune 05, stereo 22'
 		);
 		up(sim, 'step.5');
 	});
@@ -328,12 +329,12 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		sim.press('key.m3');
 		down(sim, 'step.1');
 		down(sim, 'step.2');
-		sim.turn(1, -20);
+		sim.turn(1, 20); // up: a new project's T3 has its cutoff (and filter attack) at 00
 		up(sim, 'step.2');
 		up(sim, 'step.1');
-		expect(locks(0)).toEqual({ 'filter.cutoff': 79 });
-		expect(locks(1)).toEqual({ 'filter.cutoff': 79 });
-		expect(notesOn(sim, 0)).toEqual([60]); // not cleared: the hold was a lock
+		expect(locks(0)).toEqual({ 'filter.cutoff': 20 });
+		expect(locks(1)).toEqual({ 'filter.cutoff': 20 });
+		expect(notesOn(sim, 0)).toEqual([48]); // not cleared: the hold was a lock
 		down(sim, 'step.1');
 		down(sim, 'key.shift');
 		sim.turn(3, 40); // FX I send
@@ -341,22 +342,22 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		sim.press('key.m2'); // M keys still change pages while a step is held
 		sim.turn(1, 10);
 		sim.click(2); // swaps to the filter envelope
-		sim.turn(1, -9);
+		sim.turn(1, 9);
 		sim.press('key.m4');
 		sim.turn(2, -50);
 		up(sim, 'step.1');
 		expect(locks(0)).toEqual({
-			'filter.cutoff': 79,
+			'filter.cutoff': 20,
 			'sends.fx1': 40,
 			'amp.attack': 10,
-			'filterEnv.attack': 90,
+			'filterEnv.attack': 9,
 			'lfo.amount': -50
 		});
 		expect(sim.track.envelope).toBe('filter');
 		expect(sim.track.sends[2]).toBe(0);
 		// one undo takes back the whole held gesture
 		sim.combo('key.shift', 'key.record');
-		expect(locks(0)).toEqual({ 'filter.cutoff': 79 });
+		expect(locks(0)).toEqual({ 'filter.cutoff': 20 });
 	});
 
 	it('locks sampler keys (fine tune included) and the midi program, not the midi channel', () => {
@@ -389,17 +390,17 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		const s = sim.state;
 		sim.press('track.3');
 		expect(lockTarget(s, 3)?.id).toBe('m1.4');
-		sim.press('key.m4');
+		sim.press('key.m4'); // a new project's T3 has a tremolo
 		expect([0, 1, 2, 3].map((e) => lockTarget(s, e)?.id)).toEqual([
 			'lfo.speed',
 			'lfo.amount',
-			'lfo.destination',
-			'lfo.parameter'
+			'lfo.volume',
+			'lfo.envelope'
 		]);
 		sim.state.tracks[2].lfo.type = 'duck';
 		expect(lockTarget(s, 0)?.id).toBe('lfo.source');
-		sim.state.tracks[2].lfo.type = 'tremolo';
-		expect(lockTarget(s, 3)?.id).toBe('lfo.envelope');
+		sim.state.tracks[2].lfo.type = 'value';
+		expect([2, 3].map((e) => lockTarget(s, e)?.id)).toEqual(['lfo.destination', 'lfo.parameter']);
 		sim.press('track.1');
 		sim.press('key.m1');
 		sim.state.shift = true;
@@ -416,10 +417,11 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		const start = lockParam('key0.start');
 		t.drumKeys[0].end = 40;
 		expect(start && turnedValue(start, t, {}, 90, false)).toBe(40);
+		const cutoff = t.filter.cutoff;
 		const copy = lockedTrack(t, { 'key0.start': 12, 'filter.cutoff': 3, 'lfo.speed': 20 });
 		expect(copy.drumKeys[0].start).toBe(12);
 		expect(copy.filter.cutoff).toBe(3);
-		expect(t.filter.cutoff).toBe(99);
+		expect(t.filter.cutoff).toBe(cutoff);
 		expect(lockParam('lfo.speed')?.format(20)).toBe('08');
 		expect(lockParam('nope')).toBeNull();
 		expect(lockedTrack(t, {})).toBe(t);
@@ -430,14 +432,14 @@ describe('step gestures (manual: extend-notes, copy-step, nudge, rotate, transpo
 	it('stretches a held step to a later one: full step, then overlap', () => {
 		const { sim } = rig();
 		sim.press('track.3');
-		place(sim, 'c4', [1]);
+		place(sim, 'c4', [1]); // 48: a new project has T3's keyboard an octave down
 		down(sim, 'step.1');
 		sim.press('step.4');
 		expect(pattern(sim).steps[0].notes[0].length).toBe(4);
 		sim.press('step.4');
 		expect(pattern(sim).steps[0].notes[0].length).toBe(4 + OVERLAP);
 		up(sim, 'step.1');
-		expect(notesOn(sim, 0)).toEqual([60]);
+		expect(notesOn(sim, 0)).toEqual([48]);
 		expect(notesOn(sim, 3)).toEqual([]);
 	});
 
@@ -451,14 +453,14 @@ describe('step gestures (manual: extend-notes, copy-step, nudge, rotate, transpo
 		down(sim, 'step.1');
 		clock.t += 600;
 		up(sim, 'step.1');
-		expect(notesOn(sim, 0)).toEqual([64]); // copied, not cleared
+		expect(notesOn(sim, 0)).toEqual([52]); // copied, not cleared
 		sim.press('step.9');
 		expect(pattern(sim).steps[8]).toEqual(pattern(sim).steps[0]);
 		sim.press('step.10');
-		expect(notesOn(sim, 9)).toEqual([64]);
+		expect(notesOn(sim, 9)).toEqual([52]);
 		// playing a key forgets the copy
 		place(sim, 'g4', [11]);
-		expect(pattern(sim).steps[10]).toMatchObject({ notes: [{ note: 67 }], locks: {} });
+		expect(pattern(sim).steps[10]).toMatchObject({ notes: [{ note: 55 }], locks: {} });
 		// a short tap still clears
 		sim.press('step.11');
 		expect(notesOn(sim, 10)).toEqual([]);
@@ -472,7 +474,7 @@ describe('step gestures (manual: extend-notes, copy-step, nudge, rotate, transpo
 		sim.press('key.plus');
 		up(sim, 'step.2');
 		expect(pattern(sim).steps[1].notes[0].offset).toBe(0);
-		expect(notesOn(sim, 1)).toEqual([60]); // the hold was a nudge, not a tap
+		expect(notesOn(sim, 1)).toEqual([48]); // the hold was a nudge, not a tap
 		down(sim, 'key.bar');
 		sim.turn(1, -50);
 		up(sim, 'key.bar');
@@ -487,21 +489,22 @@ describe('step gestures (manual: extend-notes, copy-step, nudge, rotate, transpo
 	it('rotates with a track key held, transposes with shift, moves octaves plain', () => {
 		const { sim } = rig();
 		sim.press('track.3');
+		expect(trackOctave(sim.state)).toBe(-1); // a new project's T3 plays an octave down
 		place(sim, 'c4', [1]);
 		down(sim, 'track.3');
 		sim.press('key.plus');
 		up(sim, 'track.3');
-		expect(notesOn(sim, 1)).toEqual([60]);
-		sim.combo('key.shift', 'key.plus');
-		expect(notesOn(sim, 1)).toEqual([72]);
-		sim.combo('key.shift', 'key.minus');
-		sim.combo('key.shift', 'key.minus');
 		expect(notesOn(sim, 1)).toEqual([48]);
-		// the keyboard an octave up: C4's key now plays C5
+		sim.combo('key.shift', 'key.plus');
+		expect(notesOn(sim, 1)).toEqual([60]);
+		sim.combo('key.shift', 'key.minus');
+		sim.combo('key.shift', 'key.minus');
+		expect(notesOn(sim, 1)).toEqual([36]);
+		// the keyboard an octave up, to 0: C4's key now plays C4
 		sim.press('key.plus');
-		expect(trackOctave(sim.state)).toBe(1);
+		expect(trackOctave(sim.state)).toBe(0);
 		place(sim, 'c4', [5]);
-		expect(notesOn(sim, 4)).toEqual([72]);
+		expect(notesOn(sim, 4)).toEqual([60]);
 		down(sim, 'step.5');
 		expect(litKeys(sim)).toEqual(['c4']);
 		up(sim, 'step.5');
@@ -544,16 +547,16 @@ describe('live recording (manual: sequencer/live-recording)', () => {
 		up(sim, 'key.record');
 		expect(sim.state.transport).toMatchObject({ playing: false, recording: true });
 		expect(stepLeds(sim)).toBe('r...............');
-		down(sim, 'keyboard.c4');
+		down(sim, 'keyboard.c4'); // 48: a new project has T3's keyboard an octave down
 		expect(sim.state.transport.playing).toBe(true);
 		sim.advance(SIXTEENTH * 2);
 		up(sim, 'keyboard.c4');
 		expect(pattern(sim).steps[0].notes).toEqual([
-			{ note: 60, velocity: 100, length: 2, offset: 0 }
+			{ note: 48, velocity: 100, length: 2, offset: 0 }
 		]);
 		sim.advance(SIXTEENTH * 2.3);
 		sim.press('keyboard.e4');
-		expect(pattern(sim).steps[4].notes[0]).toMatchObject({ note: 64, offset: 0.3 });
+		expect(pattern(sim).steps[4].notes[0]).toMatchObject({ note: 52, offset: 0.3 });
 		sim.advance(SIXTEENTH * 0.5);
 		expect(stepLeds(sim)).toBe('r...w...........');
 		sim.press('key.stop');
@@ -573,14 +576,14 @@ describe('live recording (manual: sequencer/live-recording)', () => {
 		up(sim, 'key.record');
 		sim.advance(SIXTEENTH);
 		sim.press('keyboard.e4'); // not recording any more
-		expect(notesOn(sim, 1)).toEqual([62]);
+		expect(notesOn(sim, 1)).toEqual([50]);
 		expect(notesOn(sim, 2)).toEqual([]);
 		down(sim, 'key.record');
 		sim.press('key.play'); // latch
 		up(sim, 'key.record');
 		expect(sim.state.transport.position).toBeCloseTo(2);
 		sim.press('keyboard.f4');
-		expect(notesOn(sim, 2)).toEqual([65]);
+		expect(notesOn(sim, 2)).toEqual([53]);
 		sim.press('key.record'); // a tap unlatches
 		sim.advance(SIXTEENTH);
 		sim.press('keyboard.g4');
@@ -600,7 +603,7 @@ describe('live recording (manual: sequencer/live-recording)', () => {
 		expect(notesOn(sim, 0)).toEqual([]);
 		sim.advance(SIXTEENTH * COUNT_IN);
 		sim.press('keyboard.c4');
-		expect(notesOn(sim, 0)).toEqual([60]);
+		expect(notesOn(sim, 0)).toEqual([48]);
 	});
 
 	it('stores encoder moves on the playing step (automation), turning the track too', () => {
@@ -610,10 +613,10 @@ describe('live recording (manual: sequencer/live-recording)', () => {
 		sim.press('key.play');
 		sim.advance(SIXTEENTH * 2.2);
 		down(sim, 'key.record');
-		sim.turn(1, -10);
+		sim.turn(1, 10); // up: a new project's T3 has its cutoff at 00
 		up(sim, 'key.record');
-		expect(pattern(sim).steps[2].locks).toEqual({ 'filter.cutoff': 89 });
-		expect(sim.track.filter.cutoff).toBe(89);
+		expect(pattern(sim).steps[2].locks).toEqual({ 'filter.cutoff': 10 });
+		expect(sim.track.filter.cutoff).toBe(10);
 	});
 });
 
@@ -627,21 +630,21 @@ describe('step recording (manual: sequencer/step-recording)', () => {
 		expect(stepLeds(sim)).toBe('wr..............');
 		down(sim, 'keyboard.e4');
 		down(sim, 'keyboard.g4');
-		expect(notesOn(sim, 1)).toEqual([64, 67]);
+		expect(notesOn(sim, 1)).toEqual([52, 55]); // a new project has T3 an octave down
 		expect(litKeys(sim).sort()).toEqual(['e4', 'g4']);
 		up(sim, 'keyboard.e4');
 		up(sim, 'keyboard.g4');
 		expect(stepLeds(sim)).toBe('wwr.............');
 		sim.press('key.plus'); // a rest
 		sim.press('keyboard.d4');
-		expect(notesOn(sim, 3)).toEqual([62]);
+		expect(notesOn(sim, 3)).toEqual([50]);
 		sim.press('key.minus');
 		sim.press('key.minus');
 		sim.press('key.minus');
 		// back on step 2: its notes light, ready to replace
 		expect(litKeys(sim).sort()).toEqual(['e4', 'g4']);
 		sim.press('keyboard.a4');
-		expect(notesOn(sim, 1)).toEqual([69]);
+		expect(notesOn(sim, 1)).toEqual([57]);
 		sim.press('step.1'); // removes step 1
 		expect(notesOn(sim, 0)).toEqual([]);
 		up(sim, 'key.record');
@@ -661,7 +664,7 @@ describe('step recording (manual: sequencer/step-recording)', () => {
 		expect(stepLeds(sim)).toBe('r...............');
 		sim.press('keyboard.c4');
 		up(sim, 'key.record');
-		expect(notesOn(sim, 16)).toEqual([60]);
+		expect(notesOn(sim, 16)).toEqual([48]);
 		expect(sim.track.sequence.page).toBe(1);
 	});
 });
@@ -670,20 +673,20 @@ describe('clearing and undo (manual: sequencer/clear-and-undo)', () => {
 	it('clears the pattern with record + stop held long enough, and undoes it', () => {
 		const { sim, clock } = rig();
 		sim.press('track.3');
-		place(sim, 'c4', [1, 2, 3]);
+		place(sim, 'c4', [1, 2, 3]); // 48: a new project has T3's keyboard an octave down
 		down(sim, 'key.record');
 		down(sim, 'key.stop');
 		expect(stepLeds(sim)).toBe('rww.............');
 		clock.t += 500;
 		up(sim, 'key.stop');
-		expect(notesOn(sim, 0)).toEqual([60]); // not long enough
+		expect(notesOn(sim, 0)).toEqual([48]); // not long enough
 		down(sim, 'key.stop');
 		clock.t += 1200;
 		up(sim, 'key.stop');
 		up(sim, 'key.record');
 		expect([0, 1, 2].map((i) => notesOn(sim, i))).toEqual([[], [], []]);
 		sim.combo('key.shift', 'key.record');
-		expect([0, 1, 2].map((i) => notesOn(sim, i))).toEqual([[60], [60], [60]]);
+		expect([0, 1, 2].map((i) => notesOn(sim, i))).toEqual([[48], [48], [48]]);
 	});
 
 	it('fills the row red while playing and clears when it is full', () => {
@@ -815,9 +818,10 @@ describe('players (manual: players/*)', () => {
 		down(sim, 'key.shift');
 		for (const key of ['d4', 'f4', 'a4']) sim.press(`keyboard.${key}`);
 		up(sim, 'key.shift');
-		expect(pattern(sim).player.maestro.chord).toEqual([62, 65, 69]);
+		// a new project has T4's keyboard an octave up: the keys marked D4 F4 A4 play D5 F5 A5
+		expect(pattern(sim).player.maestro.chord).toEqual([74, 77, 81]);
 		const frame = page(sim, 'player');
-		expect(frame).toMatchObject({ root: 'd4', marks: [2, 5, 9] });
+		expect(frame).toMatchObject({ root: 'd5', marks: [2, 5, 9] });
 		expect(frame.cards.map((c) => c.label)).toEqual(['roll', 'pattern', '', 'hold']);
 		down(sim, 'keyboard.c4');
 		expect(litKeys(sim).sort()).toEqual(['c4', 'ds4', 'g4']);
@@ -827,7 +831,7 @@ describe('players (manual: players/*)', () => {
 		down(sim, 'key.shift');
 		sim.press('keyboard.e4');
 		up(sim, 'key.shift');
-		expect(pattern(sim).player.maestro.chord).toEqual([64]);
+		expect(pattern(sim).player.maestro.chord).toEqual([76]);
 		sim.turn(1, 40);
 		sim.turn(2, 3);
 		sim.turn(4, 1);

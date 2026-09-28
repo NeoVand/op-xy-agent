@@ -4,6 +4,7 @@
  * preset library, the preset settings of each track and the user tunings. Plain, serialisable data;
  * saved projects keep their content as JSON strings so history stays cheap to hold.
  */
+import { NEW_PROJECT_TRACKS, presetSettingsOf } from '../../defaults';
 import {
 	DEFAULT_TRACK_PRESETS,
 	FACTORY_PROJECTS,
@@ -249,6 +250,11 @@ export function defaultPresetSettings(): PresetSettings {
 	};
 }
 
+/** A new project's preset settings, track by track (what the device stores with its presets). */
+export function newProjectPresetSettings(): PresetSettings[] {
+	return NEW_PROJECT_TRACKS.map((stored) => presetSettingsOf(stored, defaultPresetSettings()));
+}
+
 /** Settings of a unit fresh from the box (the MIDI ones as found on the owner's OS 1.1.33). */
 export function defaultSystemSettings(): SystemSettings {
 	return {
@@ -311,7 +317,7 @@ export function initialSystem(): SystemState {
 			clipboard: null
 		},
 		trackPresets: [...DEFAULT_TRACK_PRESETS],
-		presetSettings: Array.from({ length: 8 }, defaultPresetSettings),
+		presetSettings: newProjectPresetSettings(),
 		presetCursor: { section: 0, row: 0 },
 		tunings: Array.from({ length: 11 }, () => ({
 			cents: Array.from({ length: 12 }, () => 0),

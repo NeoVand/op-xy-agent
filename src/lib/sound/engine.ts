@@ -321,7 +321,8 @@ export class SoundEngine {
 				? groupGain(track.engine === 'drum' ? mixer.master.percussion : mixer.master.melodic)
 				: 1;
 			const heard = solo.length === 0 || solo.includes(k) ? 1 : 0;
-			const rewire = channel.apply(track, bpm, time, group * heard);
+			const onCore = !!this.#synth && !this.#synth.failed && this.#coreEngines.has(track.engine);
+			const rewire = channel.apply(track, bpm, time, group * heard, !onCore);
 			const voices = this.#voices.filter((v) => v.track === k);
 			if (rewire) {
 				const mod = channel.modulation();
@@ -601,6 +602,7 @@ export class SoundEngine {
 				peak: velocityGain(request.velocity) * CORE_GAIN * this.#lockedVolume(track, settings),
 				filter: {
 					type: settings.filter.type,
+					on: settings.filter.on,
 					hz: filter.hz,
 					resonance: settings.filter.resonance,
 					envelope: filter.envelope,
@@ -609,7 +611,8 @@ export class SoundEngine {
 				bend: this.#channels[track].bend,
 				curve: request.bend ?? null,
 				pan: request.pan ?? 0,
-				lfoParam: null
+				lfoParam: null,
+				element: this.#channels[track].modulation().element
 			},
 			{ note: request.note, key: request.key ?? null, source: request.key ? 'live' : 'sequence' }
 		);
@@ -780,9 +783,21 @@ export class SoundEngine {
 		if (!voice.disposed) this.#voices.push(voice);
 	}
 
-	/** The track's filter for a note (key tracking moves the cutoff with the note). */
+	/**
+	 * The track's filter for a note (key tracking moves the cutoff with the note). A switched-off
+	 * filter passes everything: a gentle lowpass above the audible band, no envelope.
+	 */
 	#filter(settings: TrackState, note: number): VoiceFilter {
 		const f = settings.filter;
+		if (!f.on) {
+			return {
+				design: { kind: 'lowpass', stages: 1, maxQ: 0 },
+				hz: 20000,
+				q: -3,
+				envelope: envelopeSeconds(settings.filterEnv),
+				depth: 0
+			};
+		}
 		return {
 			design: filterDesign(f.type),
 			hz: cutoffHz(f.cutoff) * Math.pow(2, keyTrackCents(f.keyTracking, note) / 1200),

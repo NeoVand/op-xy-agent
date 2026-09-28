@@ -10,8 +10,8 @@
 import { defaultState, type SimState } from '../../params';
 import { DEFAULT_TRACK_PRESETS } from './catalogue';
 import {
-	defaultPresetSettings,
 	defaultProjectSettings,
+	newProjectPresetSettings,
 	type ProjectEntry,
 	type ProjectFolder,
 	type ProjectSettings,
@@ -88,7 +88,7 @@ export function freshProject(s: SimState, name: string): void {
 	const sys = s.areas.system;
 	sys.projectSettings = defaultProjectSettings();
 	sys.trackPresets = [...DEFAULT_TRACK_PRESETS];
-	sys.presetSettings = Array.from({ length: 8 }, defaultPresetSettings);
+	sys.presetSettings = newProjectPresetSettings();
 	settle(s, name);
 }
 

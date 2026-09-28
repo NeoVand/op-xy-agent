@@ -258,7 +258,12 @@ export class WorkletVoice {
 	/** The track's LFO: its signals are wired per track; this voice learns which M1 it moves. */
 	attach(mod: VoiceModulation): void {
 		this.#host.modulate(this.track, mod);
-		this.#host.send({ t: 'lfo', id: this.id, param: mod.engine?.param ?? null });
+		this.#host.send({
+			t: 'lfo',
+			id: this.id,
+			param: mod.engine?.param ?? null,
+			element: mod.element
+		});
 	}
 
 	#times(): void {

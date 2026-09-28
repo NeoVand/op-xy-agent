@@ -178,10 +178,11 @@ describe('AppSound: the replica sounds while simulated', () => {
 		release('keyboard.c4');
 		// a new project opens on T1, a drum track
 		expect(engines[0].calls).toEqual(['on 0 60 drum keyboard.c4', 'off 0 keyboard.c4']);
+		// and T3's keyboard an octave down, as its bass preset says
 		press('track.3');
 		press('keyboard.a3');
 		release('keyboard.a3');
-		expect(engines[0].calls.slice(2)).toEqual(['on 2 57 prism keyboard.a3', 'off 2 keyboard.a3']);
+		expect(engines[0].calls.slice(2)).toEqual(['on 2 45 prism keyboard.a3', 'off 2 keyboard.a3']);
 	});
 
 	it('still plays a key pressed while the engine was loading', async () => {
@@ -252,7 +253,8 @@ describe('AppSound: the replica sounds while simulated', () => {
 		press('keyboard.a3');
 		await settle();
 		release('keyboard.a3');
-		expect(engines[0].calls).toEqual(['on 2 69 prism keyboard.a3', 'off 2 keyboard.a3']);
+		// up from the octave below that a new project gives T3
+		expect(engines[0].calls).toEqual(['on 2 57 prism keyboard.a3', 'off 2 keyboard.a3']);
 		press('key.auxiliary');
 		release('key.auxiliary');
 		press('keyboard.c4');
@@ -272,18 +274,19 @@ describe('AppSound: the replica sounds while simulated', () => {
 		press('keyboard.e4');
 		release('keyboard.c4');
 		release('keyboard.e4');
-		expect(engines[0].calls).toEqual(['on 2 60 prism player:60', 'on 2 64 prism player:64']);
+		// (T3's keyboard sits an octave down in a new project)
+		expect(engines[0].calls).toEqual(['on 2 48 prism player:48', 'on 2 52 prism player:52']);
 		// a new note with nothing held starts a new set
 		press('keyboard.g4');
 		release('keyboard.g4');
 		expect(engines[0].calls.slice(2)).toEqual([
-			'off 2 player:60',
-			'off 2 player:64',
-			'on 2 67 prism player:67'
+			'off 2 player:48',
+			'off 2 player:52',
+			'on 2 55 prism player:55'
 		]);
 		// stop lets go of what it kept
 		press('key.stop');
-		expect(engines[0].calls.at(-1)).toBe('off 2 player:67');
+		expect(engines[0].calls.at(-1)).toBe('off 2 player:55');
 	});
 
 	it("plays maestro's chord from any key, strummed by its roll", async () => {
@@ -297,19 +300,20 @@ describe('AppSound: the replica sounds while simulated', () => {
 		player.maestro.roll = 99;
 		press('keyboard.d4');
 		await settle();
+		// D4's key plays D3 on T3, an octave down in a new project
 		expect(engines[0].calls).toEqual([
-			'on 2 62 prism player:62',
-			'on 2 66 prism player:66',
-			'on 2 69 prism player:69'
+			'on 2 50 prism player:50',
+			'on 2 54 prism player:54',
+			'on 2 57 prism player:57'
 		]);
 		// roll 99: a quarter of a sixteenth apart (120 bpm)
 		expect(engines[0].starts[1] - engines[0].starts[0]).toBeCloseTo(0.03125);
 		expect(engines[0].starts[2] - engines[0].starts[0]).toBeCloseTo(0.0625);
 		release('keyboard.d4');
 		expect(engines[0].calls.slice(3).sort()).toEqual([
-			'off 2 player:62',
-			'off 2 player:66',
-			'off 2 player:69'
+			'off 2 player:50',
+			'off 2 player:54',
+			'off 2 player:57'
 		]);
 	});
 
@@ -321,9 +325,9 @@ describe('AppSound: the replica sounds while simulated', () => {
 		// stopped, it sounds the notes it would run over (as its LEDs show)
 		press('keyboard.c4');
 		await settle();
-		expect(engines[0].calls).toEqual(['on 2 60 prism player:60']);
+		expect(engines[0].calls).toEqual(['on 2 48 prism player:48']);
 		press('key.play');
-		expect(engines[0].calls.at(-1)).toBe('off 2 player:60');
+		expect(engines[0].calls.at(-1)).toBe('off 2 player:48');
 		const ticks = schedulers[0].ticks;
 		press('keyboard.e4');
 		release('keyboard.e4');

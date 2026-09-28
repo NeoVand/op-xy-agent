@@ -33,11 +33,12 @@ function voice(v: Partial<VoiceStart> = {}): VoiceStart {
 		glide: 0,
 		amp: settings(),
 		peak: 0.5,
-		filter: { type: 'svf', hz: 20000, resonance: 0, envelope: settings(), depth: 0 },
+		filter: { type: 'svf', on: true, hz: 20000, resonance: 0, envelope: settings(), depth: 0 },
 		bend: 0,
 		curve: null,
 		pan: 0,
 		lfoParam: null,
+		element: null,
 		...v
 	};
 }
@@ -166,7 +167,7 @@ describe('the synth core', () => {
 		core.post({
 			t: 'start',
 			voice: voice({
-				filter: { type: 'ladder', hz: 300, resonance: 20, envelope: env, depth: 4800 }
+				filter: { type: 'ladder', on: true, hz: 300, resonance: 20, envelope: env, depth: 4800 }
 			})
 		});
 		const out = run(core, 1)[0];
@@ -174,6 +175,48 @@ describe('the synth core', () => {
 		const early = levelAt(out.subarray(480, 480 + 2048), SR, 2200);
 		const late = levelAt(out.subarray(SR / 2, SR / 2 + 2048), SR, 2200);
 		expect(early).toBeGreaterThan(late * 10);
+	});
+
+	it('passes the engine through untouched when the filter is off', () => {
+		const tone = (on: boolean) => {
+			const core = new SynthCore(SR);
+			const filter = { type: 'ladder', on, hz: 300, resonance: 0, envelope: settings(), depth: 0 };
+			core.post({ t: 'start', voice: voice({ filter: filter as VoiceStart['filter'] }) });
+			return levelAt(run(core, 0.3)[0].subarray(4800, 4800 + 4096), SR, 2200);
+		};
+		expect(tone(false)).toBeGreaterThan(tone(true) * 30);
+	});
+
+	it('runs the element LFO on the voice’s own amp envelope', () => {
+		// the amp envelope falls from 1 to 0.25: the cutoff it lifts falls with it
+		const brightness = (element: VoiceStart['element']) => {
+			const core = new SynthCore(SR);
+			const filter = {
+				type: 'ladder',
+				on: true,
+				hz: 300,
+				resonance: 0,
+				envelope: settings(),
+				depth: 0
+			};
+			core.post({
+				t: 'start',
+				voice: voice({
+					amp: settings(0.002, 0.2, 0.25),
+					filter: filter as VoiceStart['filter'],
+					element
+				})
+			});
+			const out = run(core, 1)[0];
+			const at = (from: number) => {
+				const x = out.subarray(from, from + 4096);
+				return levelAt(x, SR, 2200) / levelAt(x, SR, 220);
+			};
+			return at(480) / at(SR / 2);
+		};
+		const lifted = brightness({ target: 'cutoff', param: 0, depth: 1 });
+		expect(lifted).toBeGreaterThan(5);
+		expect(brightness(null)).toBeCloseTo(1, 0);
 	});
 
 	it('takes the track’s LFO from its input: vibrato in cents', () => {

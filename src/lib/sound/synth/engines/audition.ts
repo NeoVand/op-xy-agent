@@ -269,11 +269,13 @@ export function throughCore(engine: EngineId, m1: readonly number[], seconds = 0
 			glide: 0,
 			amp: flat,
 			peak: 1,
-			filter: { type: 'svf', hz: 20000, resonance: 0, envelope: flat, depth: 0 },
+			// switched off, as it was on the device for every capture
+			filter: { type: 'svf', on: false, hz: 20000, resonance: 0, envelope: flat, depth: 0 },
 			bend: 0,
 			curve: null,
 			pan: 0,
-			lfoParam: null
+			lfoParam: null,
+			element: null
 		}
 	});
 	const total = Math.round(seconds * SR);

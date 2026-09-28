@@ -122,12 +122,12 @@ export function describeFrame(frame: ScreenFrame): string {
 		case 'lfo':
 			if (frame.type === 'duck') {
 				const kind = frame.sourceAudio === false ? 'notes' : 'audio';
-				return `duck lfo: source ${frame.source} (${kind}), amount ${frame.amount}`;
+				return `duck lfo: source ${frame.source} (${kind}), amount ${Math.round(frame.amount)}`;
 			}
 			return (
 				`${frame.type} lfo: ` +
 				(frame.type === 'element' ? `source ${frame.source}, ` : '') +
-				`amount ${frame.amount}, destination ${frame.destination.label}`
+				`amount ${Math.round(frame.amount)}, destination ${frame.destination.label}`
 			);
 		case 'mix':
 			return `mix, ${frame.bank} track ${frame.selected + 1}`;

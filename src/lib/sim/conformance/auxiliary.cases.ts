@@ -92,7 +92,10 @@ async function loadEffect(
 	await d.push(4);
 }
 
-/** Selects instrument track 3 (prism in a new project: a melodic track). */
+/**
+ * Selects instrument track 3 (prism in a new project: a melodic track, whose keyboard starts an
+ * octave down as its bass preset has it).
+ */
 const synth = async (d: Driver) => {
 	await d.click('key.instrument');
 	await d.click('track.3');
@@ -586,7 +589,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 				await d.wait(GAP_MS);
 			});
 			await d.click(step(1)); // e4 was an effect: the last note played is still c4
-			expect(placed(patternOf(d.state, 3, true))).toEqual(['0: 60']);
+			expect(placed(patternOf(d.state, 3, true))).toEqual(['0: 48']); // T3 starts an octave down
 		});
 
 		it('fires them from drum tracks too, but not from a midi engine track (OS 1.0.32)', async () => {
@@ -604,7 +607,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await play(d, 'c4');
 			await d.withShift(() => play(d, 'e4'));
 			await d.click(step(1));
-			expect(placed(patternOf(d.state, 3, true))).toEqual(['0: 64']);
+			expect(placed(patternOf(d.state, 3, true))).toEqual(['0: 52']); // e4, T3 an octave down
 		});
 
 		it('writes shift + key effects played while recording to the punch-in track, where they play back', async () => {
@@ -876,7 +879,8 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 		it('routes instrument tracks out of the aux output on M2, each at its own amount (how-to)', async () => {
 			const d = await start();
 			await aux(d, 5, 2);
-			expect(d.screen()).toBe('aux out routing: tracks 1–4 on the encoders, nothing routed');
+			// a new project sends its lead on T5 out of the aux output already
+			expect(d.screen()).toBe('aux out routing: tracks 1–4 on the encoders, routed 5');
 			await d.turn(3, 40);
 			expect(page(d, 'aux-route').tracks[2]).toEqual({
 				routed: true,
@@ -885,12 +889,12 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			});
 			await d.push(1);
 			await d.turn(2, 20);
-			expect(d.screen()).toBe('aux out routing: tracks 5–8 on the encoders, routed 3 6');
+			expect(d.screen()).toBe('aux out routing: tracks 5–8 on the encoders, routed 3 5 6');
 			// the track's own send page (M3 with shift) shows the same amount, and sets it too
 			await synth(d);
 			await d.click('key.m3');
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('sends: aux 40, tape 00, fx I 00, fx II 00');
+				expect(d.screen()).toBe('sends: aux 40, tape 99, fx I 00, fx II 00');
 				await d.turn(1, -10);
 			});
 			await aux(d, 5, 2);
@@ -989,9 +993,12 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await play(d, 'f3'); // a kick on drum track 1, steps 1 and 3
 			await d.clicks(step(1), step(3));
 			await aux(d, 6, 2);
-			expect(d.screen()).toBe('tape routing: tracks 1–4 on the encoders, nothing routed');
-			await d.turn(1, 50);
-			expect(d.screen()).toBe('tape routing: tracks 1–4 on the encoders, routed 1');
+			// a new project sends every track to the tape at 99
+			expect(d.screen()).toBe('tape routing: tracks 1–4 on the encoders, routed 1 2 3 4 5 6 7 8');
+			await d.turn(1, -99); // T1 out …
+			expect(d.screen()).toBe('tape routing: tracks 1–4 on the encoders, routed 2 3 4 5 6 7 8');
+			await d.turn(1, 50); // … and back in at 50
+			expect(d.screen()).toBe('tape routing: tracks 1–4 on the encoders, routed 1 2 3 4 5 6 7 8');
 			expect(page(d, 'aux-route').tracks[0].value).toBe('50');
 			await d.click('key.m1');
 			expect(page(d, 'aux-tape').hits).toEqual([0, 0.5]); // a one-beat loop
@@ -1038,19 +1045,21 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 	describe('15.7 fx i and fx ii', () => {
 		it('starts with the delay on FX I and the reverb on FX II', async () => {
 			const d = await start();
+			// as a new project on the device sets them
 			await aux(d, 7);
-			expect(d.screen()).toBe('FX I delay: size 4, amount 50, fine 50, dry 50');
+			expect(d.screen()).toBe('FX I delay: size 6, amount 50, fine 50, dry 99');
 			await d.click('track.8');
-			expect(d.screen()).toBe('FX II reverb: size 50, modulation 50, rate 50, feedback 50');
+			expect(d.screen()).toBe('FX II reverb: size 69, modulation 00, rate 29, feedback 99');
 		});
 
 		it('routes instrument tracks in on M2: the same sends as their send pages and mix M1', async () => {
 			const d = await start();
 			await aux(d, 8, 2);
-			expect(d.screen()).toBe('FX II routing: tracks 1–4 on the encoders, nothing routed');
+			// a new project sends T4–T7 to FX II already
+			expect(d.screen()).toBe('FX II routing: tracks 1–4 on the encoders, routed 4 5 6 7');
 			await d.push(1);
-			await d.turn(1, 33); // track 5 sends 33 to FX II
-			expect(d.screen()).toBe('FX II routing: tracks 5–8 on the encoders, routed 5');
+			await d.turn(4, 33); // track 8 sends 33 to FX II
+			expect(d.screen()).toBe('FX II routing: tracks 5–8 on the encoders, routed 4 5 6 7 8');
 			// mix M1 sets the selected track's FX II send with E2
 			await synth(d);
 			await d.click('key.mix');
@@ -1060,22 +1069,22 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 				'00',
 				'00',
 				'20',
-				'00',
-				'33',
-				'00',
-				'00',
-				'00'
+				'23',
+				'39',
+				'15',
+				'53',
+				'33'
 			]);
-			// and track 5's own send page shows it
+			// and track 8's own send page shows it
 			await d.click('key.instrument');
-			await d.click('track.5');
+			await d.click('track.8');
 			await d.click('key.m3');
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('sends: aux 00, tape 00, fx I 00, fx II 33');
+				expect(d.screen()).toBe('sends: aux 00, tape 99, fx I 00, fx II 33');
 			});
-			// FX I's routing is the tracks' FX I sends
+			// FX I's routing is the tracks' FX I sends (T5 and T7 in a new project)
 			await aux(d, 7, 2);
-			expect(d.screen()).toBe('FX I routing: tracks 1–4 on the encoders, nothing routed');
+			expect(d.screen()).toBe('FX I routing: tracks 1–4 on the encoders, routed 5 7');
 		});
 
 		it('sends FX I on into FX II with shift + E4 on its M3; FX II sends nowhere (ours)', async () => {
@@ -1238,8 +1247,9 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 		});
 
 		it('21.2 delay: size, amount, fine and dry', async () => {
+			// the delay a new project loads (choosing it again keeps it)
 			expect(await turnAll('delay')).toEqual([
-				'FX I delay: size 4, amount 50, fine 50, dry 50',
+				'FX I delay: size 6, amount 50, fine 50, dry 99',
 				'FX I delay: size insane, amount 30, fine 80, dry 99'
 			]);
 		});
@@ -1367,7 +1377,8 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.turn(4, -40);
 			expect(d.screen()).toBe('external audio: audio input on, drive 30, level 80, mix 59');
 			await d.click('key.m2');
-			expect(d.screen()).toBe('aux out routing: tracks 1–4 on the encoders, routed 3');
+			// with T5, whose lead a new project sends out of the aux output
+			expect(d.screen()).toBe('aux out routing: tracks 1–4 on the encoders, routed 3 5');
 		});
 
 		it('22.12 writes a song fast with the brain: detected key, a chord change a bar, a lead left out', async () => {

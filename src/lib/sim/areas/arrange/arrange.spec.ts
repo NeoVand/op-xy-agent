@@ -209,11 +209,12 @@ describe('arrange mode: patterns (manual: arrange/patterns, arrange/overview)', 
 	it('keeps edits to a pattern’s sound with that pattern', () => {
 		const sim = arrange();
 		sim.press('track.3');
-		sim.press(key('new'));
 		const t3 = sim.state.tracks[2];
+		const own = t3.m1[0]; // pattern 1's: a new project's bass
+		sim.press(key('new'));
 		t3.m1[0] = 12;
 		sim.turn(4, -1);
-		expect(t3.m1[0]).toBe(80);
+		expect(t3.m1[0]).toBe(own);
 		sim.turn(4, 1);
 		expect(t3.m1[0]).toBe(12);
 	});

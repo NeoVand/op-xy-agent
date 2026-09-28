@@ -3,8 +3,11 @@
 // reports them ended; the Web Audio voices keep the engines the core does not play.
 import { describe, expect, it } from 'vitest';
 import type { EngineId } from '$lib/core/opxy';
-import { defaultTrack, type TrackState } from '$lib/sim/params';
+import { defaultState, defaultTrack, type TrackState } from '$lib/sim/params';
 import { SoundEngine } from '../engine';
+import { presetGain } from '../mapping';
+import { rms as levelOf } from './analysis';
+import { throughCore } from './engines/audition';
 import { SynthHost } from './host';
 import { CORE_ENGINES } from './protocol';
 import workletUrl from './worklet?worker&url';
@@ -120,25 +123,31 @@ describe('the synth core in its worklet', () => {
 		expect(factor).toBeGreaterThan(1.5);
 	});
 
-	it('sounds about as loud as the first engines at a new track’s settings', async () => {
-		const levels: string[] = [];
-		for (const id of CORE_ENGINES) {
-			const note = (engine: SoundEngine) =>
-				engine.noteOn({
-					track: 2,
-					settings: defaultTrack(id),
-					note: 57,
-					velocity: 100,
-					time: 0.05,
-					duration: 1
-				});
-			const core = await render(1.2, note, new Set([id]));
-			const first = await render(1.2, note, new Set());
-			const ratio = rms(core.buffer, 0.3, 1) / rms(first.buffer, 0.3, 1);
-			levels.push(`${id} ${(20 * Math.log10(ratio)).toFixed(1)} dB`);
-			expect(ratio).toBeGreaterThan(0.5);
-			expect(ratio).toBeLessThan(2);
+	it('scales every engine alike on its way out, so each keeps its measured level', async () => {
+		// each engine's own output is fitted to the device's (its spec, in dBFS); what follows it
+		// (velocity, level, the strip, the worklet) must scale them all alike, and the preset volume
+		// is unity at the volume each engine was measured at
+		const engines = [...CORE_ENGINES];
+		const gains = new Map<EngineId, number>();
+		for (const id of engines) {
+			const settings = defaultTrack(id);
+			const state = defaultState();
+			state.tracks[2] = settings;
+			const played = await render(
+				1.2,
+				(engine) => {
+					engine.sync(state, 0);
+					engine.noteOn({ track: 2, settings, note: 57, velocity: 100, time: 0.05, duration: 1 });
+				},
+				new Set([id])
+			);
+			const alone = levelOf(throughCore(id, settings.m1, 1.2).subarray(0.25 * SR, 0.95 * SR));
+			gains.set(id, rms(played.buffer, 0.3, 1) / alone / presetGain(settings.playMode.volume, id));
 		}
-		console.log(`new against first engines: ${levels.join(', ')}`);
+		const db = (id: EngineId) => 20 * Math.log10(gains.get(id)! / gains.get('prism')!);
+		console.log(
+			`chain gain against prism: ${engines.map((id) => `${id} ${db(id).toFixed(2)} dB`).join(', ')}`
+		);
+		for (const id of engines) expect(Math.abs(db(id)), id).toBeLessThan(1);
 	});
 });

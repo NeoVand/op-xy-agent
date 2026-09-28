@@ -105,22 +105,23 @@ export class Channel {
 
 	/**
 	 * Applies a track's mixer strip, sends, preset volume, LFO and engine tremolo at `time`; `gain`
-	 * is what the mixer adds on top (its group level, 0 while another track is soloed). Returns true
-	 * when voices must re-wire to the LFO.
+	 * is what the mixer adds on top (its group level, 0 while another track is soloed). The engine
+	 * tremolo is for the Web Audio voices only: on the synth core, organ and axis make their own
+	 * (`tremolo` false). Returns true when voices must re-wire to the LFO.
 	 */
-	apply(track: TrackState, bpm: number, time: number, gain = 1): boolean {
+	apply(track: TrackState, bpm: number, time: number, gain = 1, tremolo = true): boolean {
 		const level = levelGain(track.mix.level) * gain;
 		this.#set('level', level, this.#level.gain, time);
 		this.#set('pan', panValue(track.mix.pan), this.#pan.pan, time);
-		this.#set('preset', presetGain(track.playMode.volume), this.#preset.gain, time);
+		this.#set('preset', presetGain(track.playMode.volume, track.engine), this.#preset.gain, time);
 		this.#set('fx1', sendGain(track.sends[2]), this.#sends[0].gain, time);
 		this.#set('fx2', sendGain(track.sends[3]), this.#sends[1].gain, time);
-		const controls = engineControls(track.engine, track.m1);
-		const tremolo =
+		const controls = tremolo ? engineControls(track.engine, track.m1) : null;
+		const wobble =
 			controls && (controls.engine === 'organ' || controls.engine === 'axis')
 				? { amount: controls.tremolo, speed: controls.speed }
 				: { amount: 0, speed: 0 };
-		this.#applyEngineTremolo(tremolo.amount, tremolo.speed, time);
+		this.#applyEngineTremolo(wobble.amount, wobble.speed, time);
 		return this.#applyLfo(lfoRoute(track.lfo, bpm), time);
 	}
 
@@ -132,7 +133,11 @@ export class Channel {
 			cutoff: lfo && route.kind === 'cutoff' ? lfo.cutoff : null,
 			resonance: lfo && route.kind === 'resonance' ? lfo.resonance : null,
 			engine: lfo && route.kind === 'engine' ? { param: route.param, signal: lfo.unit } : null,
-			vibrato: lfo && route.kind === 'tremolo' && route.vibrato !== 0 ? lfo.vibrato : null
+			vibrato: lfo && route.kind === 'tremolo' && route.vibrato !== 0 ? lfo.vibrato : null,
+			element:
+				route.kind === 'element'
+					? { target: route.target, param: route.param, depth: route.depth }
+					: null
 		};
 	}
 
@@ -218,7 +223,8 @@ export class Channel {
 	#applyLfo(route: LfoRoute, time: number): boolean {
 		const before = this.#route;
 		this.#route = route;
-		if (route.kind === 'none' || route.kind === 'duck') {
+		// element runs in each voice on its own envelope: no oscillator on the strip
+		if (route.kind === 'none' || route.kind === 'duck' || route.kind === 'element') {
 			const had = this.#lfo !== null;
 			if (this.#lfo) {
 				const { osc, volume } = this.#lfo;
@@ -229,8 +235,17 @@ export class Channel {
 			}
 			this.#lfoVolume = 0;
 			this.#tremoloBase(time);
-			if (had) this.version++;
-			return had;
+			// the voices run an element themselves, so any change to it reaches them
+			const same =
+				before.kind === route.kind &&
+				(route.kind !== 'element' ||
+					(before.kind === 'element' &&
+						before.target === route.target &&
+						before.param === route.param &&
+						before.depth === route.depth));
+			const rewire = had || !same;
+			if (rewire) this.version++;
+			return rewire;
 		}
 		const wave = route.kind === 'tremolo' ? 'sine' : route.wave;
 		// the random wave holds sixteen steps per cycle, so it runs sixteen times slower

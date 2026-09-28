@@ -6,7 +6,15 @@
  * settings com/devices (and the how-to that lists clock, notes, other, timestamp and velocity).
  * Where the manual names a setting but not its values, the values are ours.
  */
-import { AUX_NAMES, GROOVES, clamp, engineParams, type SimState } from '../../params';
+import {
+	AUX_NAMES,
+	GROOVES,
+	clamp,
+	detent,
+	engineParams,
+	shown,
+	type SimState
+} from '../../params';
 import {
 	COUNTRIES,
 	MIDI_DIRECTIONS,
@@ -63,7 +71,7 @@ function number(
 	return {
 		label,
 		value: (s) => format(get(s)),
-		turn: (s, delta) => set(s, clamp(get(s) + delta, min, max))
+		turn: (s, delta) => set(s, detent(get(s), delta, min, max))
 	};
 }
 
@@ -407,14 +415,16 @@ export const PRESET_SECTIONS: readonly Section[] = [
 				0,
 				99,
 				(s) => presetOf(s).highPass,
-				(s, v) => (presetOf(s).highPass = v)
+				(s, v) => (presetOf(s).highPass = v),
+				(v) => String(shown(v))
 			),
 			number(
 				'velocity sens',
 				0,
 				99,
 				(s) => presetOf(s).velocity,
-				(s, v) => (presetOf(s).velocity = v)
+				(s, v) => (presetOf(s).velocity = v),
+				(v) => String(shown(v))
 			),
 			choice(
 				'portamento type',
@@ -448,7 +458,8 @@ export const PRESET_SECTIONS: readonly Section[] = [
 				0,
 				99,
 				(s) => presetOf(s).width,
-				(s, v) => (presetOf(s).width = v)
+				(s, v) => (presetOf(s).width = v),
+				(v) => String(shown(v))
 			)
 		]
 	},

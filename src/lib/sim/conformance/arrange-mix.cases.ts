@@ -393,7 +393,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			await d.turn(3, 1); // linked to pattern 1's epiano
 			await d.turn(4, 1);
 			await d.clicks('key.instrument', track(4));
-			await d.turn(1, -30); // epiano's first parameter, 80 → 50
+			await d.turn(1, 50); // epiano's first parameter, 00 → 50
 			await d.click('key.arrange');
 			await d.turn(4, -1);
 			await d.clicks('key.instrument', track(4));
@@ -454,7 +454,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 		it('pastes onto another track with the whole instrument: engine and settings come along', async () => {
 			const d = await start();
 			await d.click(track(3)); // prism
-			await d.turn(1, -20); // its first parameter, 80 → 60
+			await d.turn(1, 45); // its first parameter, 15 → 60
 			await d.click(step(1));
 			await d.clicks('key.arrange', COPY, track(5), PASTE); // onto T5, dissolve
 			expect(d.screen()).toContain('T5 pattern 1 of 1');
@@ -613,24 +613,24 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 		it('remembers each scene’s mix: levels and mutes (pans too: ours)', async () => {
 			const d = await start();
 			await d.clicks('key.mix', track(2));
-			await d.turn(4, -30); // T2 at 50
+			await d.turn(4, -30); // T2 at 45, from a new project's 75
 			await d.turn(3, 10); // panned right
 			await d.click('key.arrange');
 			await scene(d, 2);
 			await d.click('key.mix');
-			expect(page(d, 'mix').strips[1]).toMatchObject({ level: 50 / 99, pan: 0.2, muted: false });
-			await d.turn(4, 20); // T2 at 70 in scene 2 …
+			expect(page(d, 'mix').strips[1]).toMatchObject({ level: 45 / 99, pan: 0.2, muted: false });
+			await d.turn(4, 20); // T2 at 65 in scene 2 …
 			await d.push(3); // … centred …
 			await d.withShift(() => d.click(track(5))); // … and T5 muted there
 			await d.click('key.arrange');
 			await scene(d, 1);
 			await d.click('key.mix');
-			expect(page(d, 'mix').strips[1]).toMatchObject({ level: 50 / 99, pan: 0.2 });
+			expect(page(d, 'mix').strips[1]).toMatchObject({ level: 45 / 99, pan: 0.2 });
 			expect(page(d, 'mix').strips[4].muted).toBe(false);
 			await d.click('key.arrange');
 			await scene(d, 2);
 			await d.click('key.mix');
-			expect(page(d, 'mix').strips[1]).toMatchObject({ level: 70 / 99, pan: 0 });
+			expect(page(d, 'mix').strips[1]).toMatchObject({ level: 65 / 99, pan: 0 });
 			expect(page(d, 'mix').strips[4].muted).toBe(true);
 		});
 
@@ -1404,7 +1404,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			const after = page(d, 'mix').strips.map((s) => s.level);
 			expect(after[2]).toBeLessThan(before[2]);
 			expect(after.filter((_, i) => i !== 2)).toEqual(before.filter((_, i) => i !== 2));
-			await d.turn(4, 200); // ours: 0–99, a new project's tracks at 80
+			await d.turn(4, 200); // ours: 0–99, a new project's tracks at 75
 			expect(page(d, 'mix').strips[2].level).toBe(1);
 		});
 
@@ -1435,18 +1435,19 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			await d.turn(2, 10);
 			await d.clicks('key.instrument', 'key.m3');
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('sends: aux 00, tape 00, fx I 20, fx II 10');
+				// a new project sends every track to the tape at 99
+				expect(d.screen()).toBe('sends: aux 00, tape 99, fx I 20, fx II 10');
 			});
 		});
 
 		it('levels and pans the auxiliary tracks too', async () => {
 			const d = await start();
 			await d.clicks('key.mix', 'key.mix', track(6)); // tape
-			await d.turn(4, -30);
+			await d.turn(4, -30); // from a new project's 75
 			await d.turn(3, -5);
-			expect(page(d, 'mix').strips[5]).toMatchObject({ level: 50 / 99, pan: -0.1 });
-			await d.click('key.mix'); // the instrument tracks keep theirs
-			expect(page(d, 'mix').strips[5]).toMatchObject({ level: 80 / 99, pan: 0 });
+			expect(page(d, 'mix').strips[5]).toMatchObject({ level: 45 / 99, pan: -0.1 });
+			await d.click('key.mix'); // the instrument tracks keep theirs: a new project's 75
+			expect(page(d, 'mix').strips[5]).toMatchObject({ level: expect.closeTo(0.75, 4), pan: 0 });
 		});
 
 		// external audio and tape send to FX I and II, FX I on to FX II: the track's own M3 shift page
@@ -1469,7 +1470,8 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			await d.turn(4, 5);
 			await d.turn(3, 5);
 			const strips = page(d, 'mix').strips;
-			expect(strips.map((s) => Math.round(s.level * 99))).toEqual([80, 70, 80, 85, 80, 80, 80, 80]);
+			// T2 and T4 from a new project's 75 (74.25 of 99, so 74 here) to 65 and 80
+			expect(strips.map((s) => Math.round(s.level * 99))).toEqual([74, 65, 74, 80, 74, 74, 74, 74]);
 			expect(strips.map((s) => s.pan)).toEqual([0, 0, 0, 0.1, 0, 0, 0, 0]);
 		});
 	});

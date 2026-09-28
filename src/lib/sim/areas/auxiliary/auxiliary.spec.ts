@@ -312,7 +312,7 @@ describe('punch-in shortcut (shift + key on instrument tracks)', () => {
 		sim.combo('key.shift', 'keyboard.d4');
 		expect(sim.state.tracks[2].sequence.lastNote).toBe(60);
 		sim.press('keyboard.d4');
-		expect(sim.state.tracks[2].sequence.lastNote).toBe(62);
+		expect(sim.state.tracks[2].sequence.lastNote).toBe(50); // a new project's T3 is an octave down
 	});
 
 	it('writes the effect to the punch-in track while recording', () => {
@@ -371,7 +371,7 @@ describe('punch-in shortcut (shift + key on instrument tracks)', () => {
 		sim.press('track.3');
 		sim.state.tracks[2].engine = 'midi';
 		sim.combo('key.shift', 'keyboard.d4');
-		expect(sim.state.tracks[2].sequence.lastNote).toBe(62);
+		expect(sim.state.tracks[2].sequence.lastNote).toBe(50); // d4, an octave down on T3
 		sim.press('key.auxiliary');
 		sim.press('track.4');
 		sim.combo('key.shift', 'keyboard.c5');
@@ -563,9 +563,10 @@ describe('tape (T6)', () => {
 		expect(page(sim, 'aux-tape')).toMatchObject({ keys: [11], clip: '12' });
 		sim.input({ type: 'release', id: 'keyboard.e4' });
 		expect(page(sim, 'aux-tape')).toMatchObject({ keys: [], clip: '12' });
-		// route track 3 into the tape on M2, with notes on steps 1 and 3
+		// track 3 into the tape on M2 at 50 (a new project sends every track at 99), with notes on
+		// steps 1 and 3
 		sim.press('key.m2');
-		sim.turn(3, 50);
+		sim.turn(3, -49);
 		expect(page(sim, 'aux-route').tracks[2].value).toBe('50');
 		const pattern = currentPattern(sim.state.tracks[2].sequence);
 		toggleStep(pattern, 0, [60]);
@@ -593,7 +594,8 @@ describe('FX I and FX II (T7, T8)', () => {
 		const fx1 = page(aux(7), 'aux-fx');
 		expect(fx1).toMatchObject({ slot: 'FX I', type: 'delay' });
 		expect(fx1.params.map((p) => p.label)).toEqual(['size', 'amount', 'fine', 'dry']);
-		expect(fx1.params[0].value).toBe(DELAY_SIZES[3]);
+		// a new project's: size 6 of 8, as the device stores it
+		expect(fx1.params[0].value).toBe(DELAY_SIZES[5]);
 		const fx2 = page(aux(8), 'aux-fx');
 		expect(fx2).toMatchObject({ slot: 'FX II', type: 'reverb' });
 		expect(fx2.params.map((p) => p.label)).toEqual(['size', 'modulation', 'rate', 'feedback']);
@@ -658,8 +660,8 @@ describe('FX I and FX II (T7, T8)', () => {
 	it('route instrument tracks in through their FX sends, and FX I into FX II', () => {
 		const sim = aux(8, 2);
 		sim.click(1);
-		sim.turn(1, 33);
-		expect(sim.state.tracks[4].sends[3]).toBe(33);
+		sim.turn(4, 33); // T8, whose FX II send a new project leaves at 00
+		expect(sim.state.tracks[7].sends[3]).toBe(33);
 		sim.press('track.7');
 		sim.press('key.m3');
 		shiftDown(sim);

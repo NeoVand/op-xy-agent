@@ -61,7 +61,8 @@ describe('OpxySim: navigation', () => {
 		const prism = page(sim, 'synth');
 		expect(prism.engine).toBe('prism');
 		expect(prism.header.map((c) => c.label)).toEqual(['shape', 'ratio', 'detune', 'stereo']);
-		expect(prism.header.map((c) => c.value)).toEqual(['80', '80', '80', '80']);
+		// a new project's bass preset (shoulder)
+		expect(prism.header.map((c) => c.value)).toEqual(['15', '00', '05', '22']);
 		expect(sim.leds['track.3']).toBe('white');
 		expect(sim.leds['track.1']).toBe('off');
 		sim.press('track.5');
@@ -74,20 +75,21 @@ describe('OpxySim: navigation', () => {
 		sim.press('key.m2');
 		expect(page(sim, 'envelope').selected).toBe('amp');
 		sim.input({ type: 'press', id: 'key.shift' });
-		expect(page(sim, 'playmode').values).toEqual(['poly', 'off', '1 semitone', '44']);
+		expect(page(sim, 'playmode').values).toEqual(['mono', '00', '2 semitones', '75']);
 		sim.input({ type: 'release', id: 'key.shift' });
 		expect(sim.frame.page).toBe('envelope');
 	});
 
 	it('shows the filter on M3, the sends with shift, the LFO on M4', () => {
 		const sim = new OpxySim();
+		// a new project's first drum track (boop): a ladder, full to tape, a random LFO
 		sim.press('key.m3');
-		expect(page(sim, 'filter').type).toBe('svf');
+		expect(page(sim, 'filter').type).toBe('ladder');
 		sim.input({ type: 'press', id: 'key.shift' });
-		expect(page(sim, 'sends').values).toEqual(['00', '00', '00', '00']);
+		expect(page(sim, 'sends').values).toEqual(['00', '99', '00', '00']);
 		sim.input({ type: 'release', id: 'key.shift' });
 		sim.press('key.m4');
-		expect(page(sim, 'lfo').type).toBe('value');
+		expect(page(sim, 'lfo').type).toBe('random');
 	});
 
 	it('opens the tempo page from anywhere and returns with an M key', () => {
@@ -159,12 +161,13 @@ describe('OpxySim: navigation', () => {
 
 	it('changes the LFO type with shift + M4 and the filter type with shift + M3', () => {
 		const sim = new OpxySim();
+		// from T1's random LFO and ladder filter
 		sim.combo('key.shift', 'key.m4');
-		sim.turn(1, -1);
+		sim.turn(1, 1);
 		sim.click(1);
 		expect(page(sim, 'lfo').type).toBe('tremolo');
 		sim.combo('key.shift', 'key.m3');
-		sim.turn(1, 3);
+		sim.turn(1, 2);
 		sim.click(1);
 		expect(page(sim, 'filter').type).toBe('z hipass');
 	});
@@ -209,7 +212,7 @@ describe('OpxySim: encoders', () => {
 	it('E1 on a synth page changes the first parameter within 0–99', () => {
 		const sim = new OpxySim();
 		sim.press('track.3');
-		sim.turn(1, -30);
+		sim.turn(1, 35);
 		expect(page(sim, 'synth').header[0].value).toBe('50');
 		sim.turn(1, -100);
 		expect(page(sim, 'synth').header[0].value).toBe('00');
@@ -249,7 +252,8 @@ describe('OpxySim: encoders', () => {
 		sim.turn(1, 25);
 		const mix = page(sim, 'mix');
 		expect(mix.selected).toBe(3);
-		expect(mix.strips[3]).toMatchObject({ level: 40 / 99, pan: 0.2 });
+		// from a new project's level, 75
+		expect(mix.strips[3]).toMatchObject({ level: 35 / 99, pan: 0.2 });
 		expect(sim.state.tracks[3].sends[2]).toBe(25);
 		sim.click(3);
 		expect(page(sim, 'mix').strips[3].pan).toBe(0);
@@ -275,14 +279,16 @@ describe('OpxySim: engines and links', () => {
 	it('sets a synth aside behind the midi engine only until another engine comes', () => {
 		const sim = new OpxySim();
 		sim.press('track.3');
-		sim.turn(1, -30);
+		const [, ...rest] = sim.track.m1;
+		sim.turn(1, 30);
 		load(sim, 'midi');
-		expect(sim.track.parked).toEqual({ engine: 'prism', m1: [50, 80, 80, 80] });
+		expect(sim.track.parked).toEqual({ engine: 'prism', m1: [45, ...rest] });
 		load(sim, 'organ');
-		expect(page(sim, 'synth').header.map((c) => c.value)).toEqual(['80', '80', '80', '80']);
+		// engines picked with no preset start from the device's own values
+		expect(page(sim, 'synth').header.map((c) => c.value)).toEqual(['40', '53', '82', '09']);
 		expect(sim.track.parked).toBeNull();
 		load(sim, 'prism');
-		expect(page(sim, 'synth').header[0].value).toBe('80');
+		expect(page(sim, 'synth').header[0].value).toBe('50');
 	});
 
 	it('gives a linked track one primary, never linking two tracks both ways', () => {

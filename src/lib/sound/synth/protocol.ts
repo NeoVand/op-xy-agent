@@ -28,6 +28,8 @@ export const MOD_CHANNELS = 4;
 /** The track's filter as a voice starts with it. */
 export interface CoreFilter {
 	readonly type: FilterType;
+	/** Switched off, the voice passes its engine's output unfiltered. */
+	readonly on: boolean;
 	/** Resting cutoff, key tracking included (Hz). */
 	readonly hz: number;
 	/** 0–99. */
@@ -65,7 +67,24 @@ export interface VoiceStart {
 	readonly pan: number;
 	/** Which M1 parameter (0–3) the track's LFO moves, or null. */
 	readonly lfoParam: number | null;
+	/** The track's element LFO, or null. */
+	readonly element: ElementModulation | null;
 }
+
+/**
+ * The element LFO on the amp envelope, which each voice runs on its own envelope: what it moves,
+ * and how far at the envelope's peak (−1…1 of a whole M1 range, of {@link ELEMENT_CUTOFF_CENTS}
+ * of cutoff, or of {@link ELEMENT_RESONANCE_DB} of resonance).
+ */
+export interface ElementModulation {
+	readonly target: 'engine' | 'cutoff' | 'resonance';
+	readonly param: number;
+	readonly depth: number;
+}
+
+/** How far a full element depth moves the cutoff (cents) and resonance (dB), as a full LFO does. */
+export const ELEMENT_CUTOFF_CENTS = 3600;
+export const ELEMENT_RESONANCE_DB = 12;
 
 /** What the main thread tells the core. */
 export type CoreMessage =
@@ -90,7 +109,12 @@ export type CoreMessage =
 			readonly resonance: number;
 	  }
 	| { readonly t: 'm1'; readonly id: number; readonly time: number; readonly m1: readonly number[] }
-	| { readonly t: 'lfo'; readonly id: number; readonly param: number | null }
+	| {
+			readonly t: 'lfo';
+			readonly id: number;
+			readonly param: number | null;
+			readonly element: ElementModulation | null;
+	  }
 	| { readonly t: 'silence' };
 
 /** What the core tells the main thread: a voice has fallen silent and let go of its slot. */

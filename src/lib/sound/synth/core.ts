@@ -6,10 +6,11 @@
  * back when a voice has died away.
  *
  * A voice is its engine's sources (the part TE calls the engine, M1) through the track's filter
- * (M3) and amp envelope (M2), with the filter envelope, glide, pitch bend, a bend component's curve
- * and the track's LFO. The LFO itself stays in the main thread's channel strip; its signals arrive
- * as audio inputs, one set per track: cutoff (cents), resonance (dB), engine (−1…1 at depth) and
- * vibrato (cents). Pitch, filter and engine parameters move at a control rate of
+ * (M3, skipped when switched off) and amp envelope (M2), with the filter envelope, glide, pitch
+ * bend, a bend component's curve and the track's LFO. The LFO itself stays in the main thread's
+ * channel strip; its signals arrive as audio inputs, one set per track: cutoff (cents), resonance
+ * (dB), engine (−1…1 at depth) and vibrato (cents). Element is the exception: it follows each
+ * voice's own amp envelope, so the voice runs it. Pitch, filter and engine parameters move at a control rate of
  * {@link CONTROL} samples; oscillators, filters and envelopes run every sample.
  */
 import type { FilterType } from '$lib/sim/screen/frame';
@@ -18,10 +19,13 @@ import { createEngine, type EngineVoice } from './engines';
 import { Ladder, Svf, prewarp } from './filters';
 import {
 	CONTROL,
+	ELEMENT_CUTOFF_CENTS,
+	ELEMENT_RESONANCE_DB,
 	MOD_CHANNELS,
 	STEAL_SECONDS,
 	type CoreMessage,
 	type CoreReply,
+	type ElementModulation,
 	type VoiceStart
 } from './protocol';
 
@@ -99,11 +103,14 @@ class CoreVoice {
 	readonly #amp: Adsr;
 	readonly #fenv: Adsr;
 	readonly #filters: [VoiceFilter, VoiceFilter];
+	/** A switched-off filter lets the engine through untouched. */
+	readonly #filterOn: boolean;
 	#restHz: number;
 	#resonance: number;
 	readonly #depth: number;
 	readonly #m1: number[];
 	#lfoParam: number | null;
+	#element: ElementModulation | null;
 	readonly #peak: number;
 	readonly #panL: number;
 	readonly #panR: number;
@@ -136,11 +143,13 @@ class CoreVoice {
 		this.#amp = new Adsr(sampleRate, v.amp);
 		this.#fenv = new Adsr(sampleRate, v.filter.envelope);
 		this.#filters = [makeFilter(v.filter.type), makeFilter(v.filter.type)];
+		this.#filterOn = v.filter.on;
 		this.#restHz = v.filter.hz;
 		this.#resonance = v.filter.resonance;
 		this.#depth = v.filter.depth;
 		this.#m1 = [...v.m1];
 		this.#lfoParam = v.lfoParam;
+		this.#element = v.element;
 		this.#peak = v.peak;
 		// constant-power pan for a note with a place of its own; centre leaves both sides at 1
 		const pan = Math.max(-1, Math.min(1, v.pan));
@@ -158,13 +167,19 @@ class CoreVoice {
 		this.#curveEnd = this.#gate;
 		this.#amp.gateOn();
 		this.#fenv.gateOn();
-		this.#engine.start(v.from, v.velocity, this.#paramsNow(0), v.start);
+		this.#engine.start(v.from, v.velocity, this.#paramsNow(0, 0), v.start);
 	}
 
-	/** M1 as 0–1, with the LFO's engine signal `lfo` (−1…1 at depth) on its parameter. */
-	#paramsNow(lfo: number): Float32Array {
+	/**
+	 * M1 as 0–1, with the LFO's engine signal `lfo` and the element's `swell` (each −1…1 at depth)
+	 * on their parameters.
+	 */
+	#paramsNow(lfo: number, swell: number): Float32Array {
+		const element = this.#element?.target === 'engine' ? this.#element.param : -1;
 		for (let i = 0; i < 4; i++) {
-			const moved = this.#lfoParam === i ? this.#m1[i] + lfo * 99 : this.#m1[i];
+			let moved = this.#m1[i];
+			if (this.#lfoParam === i) moved += lfo * 99;
+			if (element === i) moved += swell * 99;
 			this.#params[i] = Math.min(99, Math.max(0, moved)) / 99;
 		}
 		return this.#params;
@@ -205,8 +220,9 @@ class CoreVoice {
 		for (let i = 0; i < 4; i++) this.#m1[i] = values[i] ?? this.#m1[i];
 	}
 
-	lfo(param: number | null): void {
+	lfo(param: number | null, element: ElementModulation | null): void {
 		this.#lfoParam = param;
+		this.#element = element;
 	}
 
 	/** The control update at `frame`: pitch, engine parameters, filter coefficients. */
@@ -216,6 +232,9 @@ class CoreVoice {
 		const resonanceDb = lfo ? input[1][i] : 0;
 		const engine = lfo ? input[2][i] : 0;
 		const vibrato = lfo ? input[3][i] : 0;
+		// the element follows this voice's own amp envelope
+		const element = this.#element;
+		const swell = element ? this.#amp.value * element.depth : 0;
 		this.#hz += (this.#target - this.#hz) * this.#glideCoef;
 		this.#bend += (this.#bendTarget - this.#bend) * this.#bendCoef;
 		let cents = this.#bend + vibrato;
@@ -227,14 +246,18 @@ class CoreVoice {
 			const next = curve[Math.min(curve.length - 1, k + 1)];
 			cents += curve[k] + (next - curve[k]) * (pos - k);
 		}
-		this.#engine.control(this.#hz * Math.pow(2, cents / 1200), this.#paramsNow(engine));
+		this.#engine.control(this.#hz * Math.pow(2, cents / 1200), this.#paramsNow(engine, swell));
+		if (!this.#filterOn) return;
 		// the filter envelope over the coming block moves the cutoff in ratio, as the Web Audio one
 		let env = 0;
 		for (let k = 0; k < CONTROL; k++) env = this.#fenv.next();
-		const cutoff = this.#restHz * Math.pow(2, (env * this.#depth + cutoffCents) / 1200);
+		const swellCents = element?.target === 'cutoff' ? swell * ELEMENT_CUTOFF_CENTS : 0;
+		const swellDb = element?.target === 'resonance' ? swell * ELEMENT_RESONANCE_DB : 0;
+		const cutoff =
+			this.#restHz * Math.pow(2, (env * this.#depth + cutoffCents + swellCents) / 1200);
 		const g = prewarp(Math.min(cutoff, 20000), this.#sr);
-		this.#filters[0].set(g, this.#resonance, resonanceDb);
-		this.#filters[1].set(g, this.#resonance, resonanceDb);
+		this.#filters[0].set(g, this.#resonance, resonanceDb + swellDb);
+		this.#filters[1].set(g, this.#resonance, resonanceDb + swellDb);
 	}
 
 	/**
@@ -264,8 +287,10 @@ class CoreVoice {
 				this.#at = 0;
 			}
 			const level = this.#amp.next() * this.#peak;
-			outL[i] += fl.process(this.#l[this.#at]) * level * this.#panL;
-			outR[i] += fr.process(this.#r[this.#at]) * level * this.#panR;
+			const l = this.#l[this.#at];
+			const r = this.#r[this.#at];
+			outL[i] += (this.#filterOn ? fl.process(l) : l) * level * this.#panL;
+			outR[i] += (this.#filterOn ? fr.process(r) : r) * level * this.#panR;
 			this.#at++;
 			if (!this.#amp.active) {
 				this.done = true;
@@ -417,7 +442,7 @@ export class SynthCore {
 				voice.m1(m.m1);
 				break;
 			case 'lfo':
-				voice.lfo(m.param);
+				voice.lfo(m.param, m.element);
 				break;
 		}
 	}

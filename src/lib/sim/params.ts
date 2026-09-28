@@ -1,10 +1,11 @@
 /**
  * The simulator's model of one OP-XY project (decision D10): plain, serialisable data with the
- * ranges, defaults and value formats of every parameter the simulated pages show. Defaults come
- * from the manual where it gives them (a new project runs at 120 BPM with drums on T1–T2, prism,
- * epiano, dissolve, hardsync, axis and multisampler on T3–T8) and otherwise match TE's guide art;
- * ranges are the device's 0–99 encoder scale unless the manual says otherwise. Everything here is
- * pure so the frame builder and tests can use it without Svelte.
+ * ranges, defaults and value formats of every parameter the simulated pages show. A new project's
+ * sounds are the device's own (`defaults.ts`: the eight presets a blank OS 1.1.33 project stores,
+ * drums on T1–T2, then prism, epiano, dissolve, hardsync, axis and multisampler); the rest comes
+ * from the manual where it gives defaults and otherwise matches TE's guide art. Ranges are the
+ * device's 0–99 encoder scale unless the manual says otherwise. Everything here is pure so the
+ * frame builder and tests can use it without Svelte.
  */
 import {
 	ENGINES,
@@ -14,6 +15,7 @@ import {
 	type EngineId
 } from '$lib/core/opxy';
 import { initialAreaStates, type AreaStates } from './areas/state';
+import { engineInitM1, NEW_PROJECT_TRACKS, soundOf } from './defaults';
 import { emptySequence, type Sequence } from './sequencer';
 import type { FilterType, LfoType, MultiOutMode } from './screen/frame';
 
@@ -135,6 +137,8 @@ export const DUCK_METRONOME = 17;
 /** The LFO. `speed` runs over the synced steps then the free range (manual: speed dial). */
 export interface Lfo {
 	type: LfoType;
+	/** Switched on: presets store it (picking a type switches it on; how the device switches it off is unknown). */
+	on: boolean;
 	/** 0…LFO_SYNC_STEPS.length − 1 synced, then free positions 0–99 above that. */
 	speed: number;
 	/** −99…99. */
@@ -176,6 +180,8 @@ export interface TrackState {
 	playMode: { mode: number; portamento: number; bend: number; volume: number };
 	filter: {
 		type: FilterType;
+		/** Switched on: presets store it (picking a type switches it on; an off filter passes all). */
+		on: boolean;
 		cutoff: number;
 		resonance: number;
 		/** −99…99. */
@@ -263,8 +269,26 @@ export interface SimState {
 /** Clamps to [min, max]. */
 export const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
-/** Two-digit display of a 0–99 value ("00", "07", "80"). */
-export const two = (v: number) => String(Math.round(clamp(v, 0, 99))).padStart(2, '0');
+/**
+ * Two-digit display of a 0–99 value ("00", "07", "80") the way the device shows its lanes: the
+ * floor of the value on a 0–100 scale (a lane stored as raw / 32767 × 99 shows
+ * floor(raw × 100 / 32768)), so a preset's 9.9 shows "09" and whole encoder steps show themselves.
+ */
+export const two = (v: number) => String(shown(v)).padStart(2, '0');
+
+/** The number a 0–99 value shows as (see {@link two}). */
+export const shown = (v: number): number =>
+	Math.min(99, Math.floor(clamp(v, 0, 99) * (100 / 99) * (32767 / 32768) + 1e-6));
+
+/**
+ * A value turned `delta` detents within `min`…`max`: the number on screen moves by `delta`, as the
+ * device's does. A value between two shown numbers (a stored preset's) first lands on the one it
+ * shows; whole values just move.
+ */
+export function detent(v: number, delta: number, min: number, max: number): number {
+	const from = min === 0 && max === 99 ? shown(v) : Math.round(v);
+	return clamp(from + delta, min, max);
+}
 
 /** Display name of a keyboard key index (0 = F3): "F3", "F#3". */
 export function keyName(index: number): string {
@@ -303,12 +327,13 @@ export function defaultDrumKey(): DrumKey {
 	};
 }
 
-/** Encoder defaults of a synth engine's M1 page (TE's art shows 80 on most engines). */
+/** An engine's M1 when picked with no preset: the device's own (`defaults.ts`), else TE's art's 80. */
 function defaultM1(engine: EngineId): [number, number, number, number] {
-	if (engine === 'dissolve') return [49, 52, 90, 0];
-	if (engine === 'simple') return [80, 80, 0, 0];
-	return [80, 80, 80, 80];
+	return engineInitM1(engine) ?? [80, 80, 80, 80];
 }
+
+/** The mixer level a new project gives every track (the device stores 0x6000 of 0x7FFF). */
+export const DEFAULT_LEVEL = (0x6000 / 0x7fff) * 99;
 
 /** A fresh instrument track running `engine`. */
 export function defaultTrack(engine: EngineId): TrackState {
@@ -319,11 +344,12 @@ export function defaultTrack(engine: EngineId): TrackState {
 		amp: { attack: 0, decay: 99, sustain: 76, release: 0 },
 		filterEnv: { attack: 99, decay: 99, sustain: 41, release: 88 },
 		envelope: 'amp',
-		playMode: { mode: 0, portamento: 0, bend: 1, volume: 44 },
-		filter: { type: 'svf', cutoff: 99, resonance: 0, envAmount: 0, keyTracking: 0 },
+		playMode: { mode: 0, portamento: 0, bend: 2, volume: 44 },
+		filter: { type: 'svf', on: true, cutoff: 99, resonance: 0, envAmount: 0, keyTracking: 0 },
 		sends: [0, 0, 0, 0],
 		lfo: {
 			type: 'value',
+			on: true,
 			speed: 3,
 			amount: 0,
 			destination: 0,
@@ -337,7 +363,7 @@ export function defaultTrack(engine: EngineId): TrackState {
 			shape: 0,
 			sensor: 0
 		},
-		mix: { level: 80, pan: 0, muted: false },
+		mix: { level: DEFAULT_LEVEL, pan: 0, muted: false },
 		drumKey: 0,
 		drumKeys: Array.from({ length: KEYBOARD_NOTE_NAMES.length }, defaultDrumKey),
 		midi: { channel: 1, bank: null, program: 1 },
@@ -353,7 +379,23 @@ export function defaultEngines(): EngineId[] {
 	return INSTRUMENT_TRACKS.map((t) => t.defaultEngine ?? 'prism');
 }
 
-/** A new project as the manual describes it. */
+/**
+ * The sound of a preset the device stores (`folder/name`, one of a new project's eight), or null
+ * for any other preset.
+ */
+export function storedPresetSound(key: string): TrackState | null {
+	const stored = NEW_PROJECT_TRACKS.find((t) => t.preset === key);
+	return stored ? soundOf(stored, defaultTrack(stored.engine), LFO_SYNC_STEPS.length) : null;
+}
+
+/** A new project's eight instrument tracks: the device's stored presets. */
+export function newProjectTracks(): TrackState[] {
+	return NEW_PROJECT_TRACKS.map((stored) =>
+		soundOf(stored, defaultTrack(stored.engine), LFO_SYNC_STEPS.length)
+	);
+}
+
+/** A new project as the device makes it. */
 export function defaultState(): SimState {
 	return {
 		mode: 'instrument',
@@ -365,9 +407,9 @@ export function defaultState(): SimState {
 		auxTrack: 0,
 		banks: { arrange: 'instrument', mix: 'instrument' },
 		active: 'instrument',
-		tracks: defaultEngines().map(defaultTrack),
+		tracks: newProjectTracks(),
 		aux: Array.from({ length: 8 }, () => ({
-			mix: { level: 80, pan: 0, muted: false },
+			mix: { level: DEFAULT_LEVEL, pan: 0, muted: false },
 			sequence: emptySequence()
 		})),
 		tempo: { bpm: 120, groove: 0, swing: 0, metronome: { level: 99, on: false } },

@@ -17,10 +17,13 @@ import { createContext } from 'svelte';
 import type { ReplicaState } from '$lib/replica';
 import { restore, snapshot } from '$lib/sim/areas/system/projects';
 import type { SystemState } from '$lib/sim/areas/system/state';
-import { defaultState, type SimState } from '$lib/sim/params';
+import { DEFAULT_LEVEL, defaultState, type SimState } from '$lib/sim/params';
 
-/** Bumped only when a saved shape can no longer be merged onto the defaults. */
-export const SAVE_VERSION = 1;
+/**
+ * Bumped when a save can no longer simply be merged onto the defaults; older versions that can be
+ * brought up to date are ({@link upgradeV1}).
+ */
+export const SAVE_VERSION = 2;
 
 /** What is stored. */
 export interface SavedSim {
@@ -82,6 +85,55 @@ export function mergeDefaults<T>(saved: unknown, defaults: T): T {
 	return (typeof saved === typeof defaults ? saved : defaults) as T;
 }
 
+// ───────────────────────────────────────────────────────────────────────── upgrading
+
+/** The old default mixer level (unity before a new project's own level was known). */
+const V1_LEVEL = 80;
+
+/**
+ * A version 1 save predates the device's own new-project sounds: its patterns, songs, settings and
+ * the owner's own presets come back, but the instrument tracks take a new project's sounds and
+ * presets, levels still at the old default take the new one, and the factory presets their device
+ * names. Works on the parsed JSON, in place.
+ */
+export function upgradeV1(project: unknown, library: unknown): void {
+	const fresh = defaultState();
+	const level = (mix: unknown) =>
+		isObject(mix) && mix.level === V1_LEVEL ? { ...mix, level: DEFAULT_LEVEL } : mix;
+	if (isObject(project)) {
+		if (Array.isArray(project.tracks)) {
+			project.tracks = project.tracks.map((track: unknown, k) => {
+				const sound = fresh.tracks[k];
+				if (!isObject(track) || !sound) return track;
+				return {
+					...track,
+					engine: sound.engine,
+					m1: sound.m1,
+					amp: sound.amp,
+					filterEnv: sound.filterEnv,
+					playMode: sound.playMode,
+					filter: sound.filter,
+					sends: sound.sends,
+					lfo: sound.lfo,
+					parked: null,
+					mix: level(track.mix)
+				};
+			});
+		}
+		if (Array.isArray(project.aux)) {
+			project.aux = project.aux.map((aux: unknown) =>
+				isObject(aux) ? { ...aux, mix: level(aux.mix) } : aux
+			);
+		}
+		project.trackPresets = fresh.areas.system.trackPresets;
+		project.presetSettings = fresh.areas.system.presetSettings;
+	}
+	if (isObject(library) && isObject(library.presets) && Array.isArray(library.presets.library)) {
+		const own = library.presets.library.filter((p: unknown) => isObject(p) && p.user === true);
+		library.presets.library = [...fresh.areas.system.presets.library, ...own];
+	}
+}
+
 // ───────────────────────────────────────────────────────────────────── capture / apply
 
 /** The state's work, ready to store. */
@@ -132,7 +184,7 @@ export function settleSession(state: SimState): void {
  * changing nothing, when the save is from an incompatible version or does not parse.
  */
 export function applySaved(state: SimState, saved: SavedSim): boolean {
-	if (saved.version !== SAVE_VERSION) return false;
+	if (saved.version !== SAVE_VERSION && saved.version !== 1) return false;
 	let project: unknown;
 	let library: unknown;
 	try {
@@ -141,6 +193,7 @@ export function applySaved(state: SimState, saved: SavedSim): boolean {
 	} catch {
 		return false;
 	}
+	if (saved.version === 1) upgradeV1(project, library);
 	const fresh = defaultState();
 	const freshProject = JSON.parse(snapshot(fresh)) as Record<string, unknown>;
 	restore(state, JSON.stringify(mergeDefaults(project, freshProject)), saved.name);

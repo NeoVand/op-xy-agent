@@ -9,6 +9,7 @@ import {
 	envelopeSeconds,
 	glideSeconds,
 	keyTrackCents,
+	LEVEL_UNITY,
 	levelGain,
 	lfoHz,
 	lfoRoute,
@@ -51,18 +52,23 @@ describe('mapping: envelopes, filter and voice settings', () => {
 		expect(cutoffHz(99)).toBeCloseTo(20000);
 		expect(resonanceQ(0, 'svf')).toBe(-3);
 		expect(resonanceQ(99, 'z lowpass')).toBeGreaterThan(resonanceQ(99, 'svf'));
+		// a full amount sweeps as far as the cutoff dial does, in a straight line
 		expect(envAmountCents(0)).toBe(0);
-		expect(envAmountCents(99)).toBe(8400);
-		expect(envAmountCents(-99)).toBe(-8400);
-		// finer near zero: half the knob is a quarter of the range
-		expect(envAmountCents(49.5)).toBeCloseTo(2100);
+		expect(envAmountCents(99)).toBeCloseTo(1200 * Math.log2(1000));
+		expect(envAmountCents(-99)).toBeCloseTo(-1200 * Math.log2(1000));
+		expect(envAmountCents(49.5)).toBeCloseTo(600 * Math.log2(1000));
 		expect(keyTrackCents(99, 72)).toBe(1200);
 		expect(keyTrackCents(0, 72)).toBe(0);
 	});
 
-	it('puts unity gain on the defaults: level 80, preset volume 44', () => {
-		expect(levelGain(80)).toBe(1);
+	it('puts unity gain on the defaults: a new project’s level, each engine’s default volume', () => {
+		expect(LEVEL_UNITY).toBeCloseTo((0x6000 / 0x7fff) * 99);
+		expect(levelGain(LEVEL_UNITY)).toBe(1);
 		expect(presetGain(44)).toBe(1);
+		// the engines were measured at their default presets' volumes: those play at unity
+		expect(presetGain((24901 / 32767) * 99, 'prism')).toBeCloseTo(1);
+		expect(presetGain((10000 / 32767) * 99, 'axis')).toBeCloseTo(1);
+		expect(presetGain(99, 'axis')).toBeGreaterThan(presetGain(99, 'prism'));
 		expect(levelGain(0)).toBe(0);
 		expect(presetGain(0)).toBe(0);
 		expect(levelGain(99)).toBeCloseTo(Math.pow(10, 4 / 20));
@@ -139,7 +145,26 @@ describe('mapping: the LFO', () => {
 			source: 0,
 			depth: 1
 		});
-		expect(lfoRoute(lfo({ type: 'element', amount: 99 }), 120).kind).toBe('none');
+	});
+
+	it('runs element on the amp envelope only, per voice, and nothing when switched off', () => {
+		const element = (patch: Partial<Lfo>) => lfoRoute(lfo({ type: 'element', ...patch }), 120);
+		// the gyroscope and microphone are not ours to read
+		expect(element({ amount: 99, sensor: 0 }).kind).toBe('none');
+		expect(element({ amount: 99, sensor: 2, destination: 0, parameter: 1 })).toMatchObject({
+			kind: 'element',
+			target: 'engine',
+			param: 1,
+			depth: 1
+		});
+		expect(element({ amount: -99, sensor: 3, destination: 2, parameter: 0 })).toMatchObject({
+			kind: 'element',
+			target: 'cutoff',
+			depth: -1
+		});
+		// the env and lfo pages: not modulated
+		expect(element({ amount: 99, sensor: 2, destination: 1 }).kind).toBe('none');
+		expect(lfoRoute(lfo({ type: 'tremolo', amount: 99, on: false }), 120).kind).toBe('none');
 	});
 });
 

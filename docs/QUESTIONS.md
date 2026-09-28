@@ -19,10 +19,19 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    - How long must a lit step be held before it copies instead of coming off? (Ours: 0.5 s.)
    - Step component multiply, black key 9: 9 hits, or 3 as TE's table prints?
    - While playing: does the playhead dim a step that has notes, and light an empty one?
+   - The new project's sounds (`research/30-presets-samples.md` §11): how do you switch a filter or
+     an LFO off (you did it by hand for the engine session), and what does its page show then?
+   - On a new project's T3, hold shift on M2: does portamento read `00` or `off`, and what does the
+     bend range read (we expect 2 semitones)? On T8 (we expect an octave)?
+   - Are presets inside a category listed alphabetically, or in some other order?
 5. **Filter and LFO session** (changes device state the same way as the engine session: CCs and
    notes on a new throwaway project; nothing saved, loaded or deleted). The engines were measured
    with filters and LFOs off; the four filters (slopes, resonance, envelope depth) and the LFO shapes
-   need their own sweeps. Approve when ready, and say whether loading three test samples (impulse,
+   need their own sweeps. The replica now plays a new project's real presets, several of which lean
+   on these (T3's closed svf opened by its envelope, T6's ladder, the tremolos and element LFOs on
+   T4–T8), so this is now the biggest gap between the replica's sounds and the device's. The same
+   session should time the envelopes' decay and release: we apply the attack's law to them, which
+   gives T3's bass a 44 s release. Approve when ready, and say whether loading three test samples (impulse,
    noise, sine) as presets is fine for the filter measurements.
 6. **Wavetable tables: our approach, and the eighth table's name.** Our wavetable frames are
    formulas fitted to the device's harmonics, not its data. For crush, geometric and basic the

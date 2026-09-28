@@ -13,7 +13,7 @@
  * from anywhere, so the area claims it.
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
-import { LFO_SYNC_STEPS, clamp, two, type PageNumber, type SimState } from '../../params';
+import { LFO_SYNC_STEPS, clamp, detent, two, type PageNumber, type SimState } from '../../params';
 import type { ListFrame, LfoFrame, ScreenFrame } from '../../screen/frame';
 import type { SoftLabel } from '../../screen/draw';
 import type { SimInput } from '../../input';
@@ -316,7 +316,7 @@ function turnRoute(s: SimState, track: number, e: number, delta: number): void {
 		return;
 	}
 	const sends = s.tracks[target].sends;
-	sends[send] = clamp(sends[send] + delta, 0, 99);
+	sends[send] = detent(sends[send], delta, 0, 99);
 }
 
 // ───────────────────────────────────────────────────────────── external midi and cv
@@ -428,7 +428,7 @@ function fxFrame(s: SimState, slot: 0 | 1): AuxFxFrame {
 /** The main pages' encoders (manual: auxiliary/external-audio, tape; fx/*). */
 function turnMain(s: SimState, kind: Kind, e: number, delta: number): void {
 	const aux = s.areas.auxiliary;
-	const step = (v: number, min: number, max: number) => clamp(v + delta, min, max);
+	const step = (v: number, min: number, max: number) => detent(v, delta, min, max);
 	if (kind === 'audio') {
 		const a = aux.audio;
 		if (e === 0) a.input = step(a.input, 0, AUDIO_INPUTS.length - 1);
@@ -528,9 +528,9 @@ function turnLfo(s: SimState, e: number, delta: number): void {
 function turnFilter(s: SimState, kind: Kind, e: number, delta: number): void {
 	const p = s.areas.auxiliary.pages[s.auxTrack];
 	if (kind === 'sends') {
-		if (SENDS[s.auxTrack].includes(e)) p.sends[e] = clamp(p.sends[e] + delta, 0, 99);
-	} else if (e === 0) p.highpass = clamp(p.highpass + delta, 0, 99);
-	else if (e === 3) p.lowpass = clamp(p.lowpass + delta, 0, 99);
+		if (SENDS[s.auxTrack].includes(e)) p.sends[e] = detent(p.sends[e], delta, 0, 99);
+	} else if (e === 0) p.highpass = detent(p.highpass, delta, 0, 99);
+	else if (e === 3) p.lowpass = detent(p.lowpass, delta, 0, 99);
 }
 
 // ─────────────────────────────────────────────────────────────── parameter locks

@@ -10,6 +10,7 @@ import { ownerOf } from './areas/registry';
 import { soloed, trackMeter } from './areas/mixer/meters';
 import { samplerPage } from './areas/sample/m1';
 import { sequencerLeds } from './areas/sequencer/leds';
+import { bendLabel } from './defaults';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
 import {
 	DUCK_METRONOME,
@@ -180,7 +181,7 @@ function instrumentFrame(s: SimState): ScreenFrame {
 					values: [
 						PLAY_MODES[clamp(p.mode, 0, 2)],
 						p.portamento === 0 ? 'off' : two(p.portamento),
-						p.bend === 0 ? 'off' : `${p.bend} semitone${p.bend === 1 ? '' : 's'}`,
+						bendLabel(p.bend),
 						two(p.volume)
 					]
 				};

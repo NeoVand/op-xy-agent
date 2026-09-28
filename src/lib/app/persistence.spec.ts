@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ReplicaState } from '$lib/replica';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { DEFAULT_LEVEL } from '$lib/sim/params';
 import { currentPattern } from '$lib/sim/sequencer';
 import { FakeTime } from '../../../test/fakes/fake-time';
 import {
@@ -22,7 +23,7 @@ function withWork(): OpxySim {
 	sim.press('step.1');
 	sim.press('step.9');
 	sim.press('track.3');
-	sim.press('keyboard.c4');
+	sim.press('keyboard.c4'); // track 3 starts an octave down: 48
 	sim.press('step.5');
 	sim.press('key.tempo');
 	sim.turn(1, 8);
@@ -38,7 +39,7 @@ describe('saving the virtual OP-XY’s work', () => {
 		expect(applySaved(sim.state, saved)).toBe(true);
 		expect(notes(sim, 0, 0)).toEqual([53]);
 		expect(notes(sim, 0, 8)).toEqual([53]);
-		expect(notes(sim, 2, 4)).toEqual([60]);
+		expect(notes(sim, 2, 4)).toEqual([48]); // c4 on the bass track, an octave down
 		expect(sim.state.tempo.bpm).toBe(128);
 		expect(sim.state.areas.mixer.eq.low).toBe(70);
 		expect(sim.leds['step.1']).toBe('white');
@@ -79,6 +80,31 @@ describe('saving the virtual OP-XY’s work', () => {
 		expect(sim.state.tracks[0].mix).toEqual(new OpxySim().state.tracks[0].mix);
 		expect(sim.state.tempo.metronome).toBeDefined();
 		expect(notes(sim, 0, 0)).toEqual([53]);
+	});
+
+	it('brings a version 1 save up to date: the work stays, the sounds become a new project’s', () => {
+		const work = withWork();
+		work.state.tracks[2].m1 = [1, 2, 3, 4];
+		work.state.tracks[2].mix.level = 80; // the old default
+		work.state.tracks[3].mix.level = 60; // turned by hand
+		work.state.areas.system.presets.library.push({
+			name: 'mine',
+			folder: 'bass',
+			engine: 'prism',
+			user: true
+		});
+		const sim = new OpxySim({ now: () => 0 });
+		expect(applySaved(sim.state, { ...captureSim(work.state), version: 1 })).toBe(true);
+		const fresh = new OpxySim().state;
+		expect(sim.state.tracks[2].m1).toEqual(fresh.tracks[2].m1);
+		expect(sim.state.tracks[2].filter).toEqual(fresh.tracks[2].filter);
+		expect(sim.state.tracks[2].mix.level).toBe(DEFAULT_LEVEL);
+		expect(sim.state.tracks[3].mix.level).toBe(60);
+		expect(sim.state.areas.system.trackPresets).toEqual(fresh.areas.system.trackPresets);
+		expect(notes(sim, 2, 4)).toEqual(notes(work, 2, 4));
+		expect(sim.state.tempo.bpm).toBe(128);
+		const own = sim.state.areas.system.presets.library.filter((p) => p.user);
+		expect(own.map((p) => p.name)).toEqual(['mine']);
 	});
 
 	it('leaves the state alone for a save it cannot read', () => {
@@ -122,7 +148,7 @@ describe('SimPersistence: when it saves', () => {
 	it('puts the stored work back before anything else, then saves a moment after input', async () => {
 		const { time, store, sim, replica, persistence } = await setup(captureSim(withWork().state));
 		await persistence.start();
-		expect(notes(sim, 2, 4)).toEqual([60]);
+		expect(notes(sim, 2, 4)).toEqual([48]); // c4 on the bass track, an octave down
 		sim.press('track.1');
 		tap(replica, 'step.3');
 		await time.advance(1000);

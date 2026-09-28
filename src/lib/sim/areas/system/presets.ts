@@ -6,7 +6,14 @@
  * default sound, since TE's preset values are not known.
  */
 import { ENGINE_IDS, type EngineId } from '$lib/core/opxy';
-import { clamp, defaultTrack, type SimState, type TrackState } from '../../params';
+import { NEW_PROJECT_TRACKS, presetSettingsOf } from '../../defaults';
+import {
+	clamp,
+	defaultTrack,
+	storedPresetSound,
+	type SimState,
+	type TrackState
+} from '../../params';
 import type { SamplerTrack } from '../sample/state';
 import { octaveKey } from '../sequencer/model';
 import { PRESET_CATEGORIES, SNAPSHOT_FOLDER, type PresetEntry } from './catalogue';
@@ -202,9 +209,11 @@ function applySound(s: SimState, track: number, json: string): SavedSound {
 export function loadPreset(s: SimState, track: number, preset: PresetEntry): void {
 	const t = s.tracks[track];
 	const sys = s.areas.system;
+	const stored = storedPresetSound(presetKey(preset));
 	if (preset.sound) applySound(s, track, preset.sound);
 	else {
-		const fresh = defaultTrack(preset.engine);
+		// one of a new project's presets comes back as the device stores it; placeholders fresh
+		const fresh = stored ?? defaultTrack(preset.engine);
 		const sound: Sound = {
 			engine: fresh.engine,
 			m1: fresh.m1,
@@ -219,7 +228,10 @@ export function loadPreset(s: SimState, track: number, preset: PresetEntry): voi
 			midi: fresh.midi
 		};
 		Object.assign(t, sound);
-		sys.presetSettings[track] = defaultPresetSettings();
+		const settings = NEW_PROJECT_TRACKS.find((n) => n.preset === presetKey(preset));
+		sys.presetSettings[track] = settings
+			? presetSettingsOf(settings, defaultPresetSettings())
+			: defaultPresetSettings();
 	}
 	sys.trackPresets[track] = presetKey(preset);
 }

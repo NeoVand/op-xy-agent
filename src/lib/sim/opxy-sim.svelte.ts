@@ -18,6 +18,7 @@ import { AREAS, ownerOf } from './areas/registry';
 import { auxSends } from './areas/auxiliary/sim';
 import { turnSamplerPage } from './areas/sample/m1';
 import type { AreaContext } from './areas/types';
+import { nextBendRange } from './defaults';
 import { buildFrame, buildLeds } from './frames';
 import type { SimInput } from './input';
 import {
@@ -33,6 +34,7 @@ import {
 	clamp,
 	defaultState,
 	defaultTrack,
+	detent,
 	isSampler,
 	type Bank,
 	type Overlay,
@@ -552,7 +554,7 @@ export class OpxySim {
 	#turnInstrument(e: number, delta: number, fine: boolean): void {
 		const s = this.state;
 		const t = this.track;
-		const step = (v: number, min: number, max: number, by = 1) => clamp(v + delta * by, min, max);
+		const step = (v: number, min: number, max: number) => detent(v, delta, min, max);
 		switch (s.pages.instrument) {
 			case 1: {
 				// sampler engines: the sample area's M1 encoders (areas/sample/m1.ts)
@@ -577,7 +579,7 @@ export class OpxySim {
 					const p = t.playMode;
 					if (e === 0) p.mode = clamp(p.mode + delta, 0, 2);
 					else if (e === 1) p.portamento = step(p.portamento, 0, 99);
-					else if (e === 2) p.bend = step(p.bend, 0, 24);
+					else if (e === 2) p.bend = nextBendRange(p.bend, delta);
 					else p.volume = step(p.volume, 0, 99);
 					return;
 				}
@@ -649,13 +651,13 @@ export class OpxySim {
 			const send = e + 2;
 			if (instrument) {
 				const sends = s.tracks[s.track].sends;
-				sends[send] = clamp(sends[send] + delta, 0, 99);
+				sends[send] = detent(sends[send], delta, 0, 99);
 			} else if (auxSends(s.auxTrack).includes(send)) {
 				const sends = s.areas.auxiliary.pages[s.auxTrack].sends;
-				sends[send] = clamp(sends[send] + delta, 0, 99);
+				sends[send] = detent(sends[send], delta, 0, 99);
 			}
-		} else if (e === 2) t.mix.pan = clamp(t.mix.pan + delta * (fine ? 1 : 2), -100, 100);
-		else t.mix.level = clamp(t.mix.level + delta, 0, 99);
+		} else if (e === 2) t.mix.pan = detent(t.mix.pan, delta * (fine ? 1 : 2), -100, 100);
+		else t.mix.level = detent(t.mix.level, delta, 0, 99);
 	}
 
 	#click(e: number): void {
@@ -714,8 +716,13 @@ export class OpxySim {
 				t.m1 = parked?.engine === engine ? [...parked.m1] : defaultTrack(engine).m1;
 				t.engine = engine;
 			}
-		} else if (picker.kind === 'filter') t.filter.type = FILTER_TYPES[picker.index];
-		else t.lfo.type = LFO_TYPES[picker.index];
+		} else if (picker.kind === 'filter') {
+			t.filter.type = FILTER_TYPES[picker.index];
+			t.filter.on = true;
+		} else {
+			t.lfo.type = LFO_TYPES[picker.index];
+			t.lfo.on = true;
+		}
 		s.picker = null;
 	}
 }

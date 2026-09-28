@@ -2,11 +2,13 @@
  * The content a new virtual OP-XY ships with, as far as the system area needs it: the preset
  * library the browser lists, the factory projects, the connected MIDI devices and the options of
  * the settings pages. Our manual names the factory preset categories (instrument/preset-browser)
- * and the snapshot naming (instrument/save-copy-scramble) but no factory preset or project names,
- * so those are placeholders of ours ("bass 1", "demo 1"). Imports only `$lib/core` so the state
- * module can use it without an import cycle through `params.ts`.
+ * and the snapshot naming (instrument/save-copy-scramble); the eight presets of a new project have
+ * their device names (`defaults.ts`), the rest are placeholders of ours ("bass 2", "demo 1").
+ * Imports only `$lib/core` and `defaults.ts` (which imports only `$lib/core`) so the state module
+ * can use it without an import cycle through `params.ts`.
  */
 import { ENGINE_IDS, type EngineId } from '$lib/core/opxy';
+import { NEW_PROJECT_PRESETS, NEW_PROJECT_TRACKS } from '../../defaults';
 
 /** Factory preset categories (manual: instrument/preset-browser). */
 export const PRESET_CATEGORIES = [
@@ -57,11 +59,23 @@ const FACTORY_TABLE: readonly (readonly [string, readonly EngineId[]])[] = [
 	['wind', ['multisampler', 'axis']]
 ];
 
-/** The factory presets of a new unit (placeholders; every engine has at least one). */
+/**
+ * The factory presets of a new unit: a new project's eight under their device names, the first of
+ * their folder and engine; placeholders for the rest (every engine has at least one).
+ */
 export function factoryPresets(): PresetEntry[] {
 	const presets: PresetEntry[] = FACTORY_TABLE.flatMap(([folder, engines]) =>
 		engines.map((engine, i) => ({ name: `${folder} ${i + 1}`, folder, engine, user: false }))
 	);
+	const named = new Set<PresetEntry>();
+	for (const { preset, engine } of NEW_PROJECT_TRACKS) {
+		const [folder, name] = preset.split('/');
+		const slot = presets.find((p) => p.folder === folder && p.engine === engine && !named.has(p));
+		if (slot) {
+			slot.name = name;
+			named.add(slot);
+		}
+	}
 	// the midi engine has no category: engine view lists its preset on its own
 	for (const engine of ENGINE_IDS) {
 		if (!presets.some((p) => p.engine === engine)) {
@@ -71,17 +85,8 @@ export function factoryPresets(): PresetEntry[] {
 	return presets;
 }
 
-/** The preset each track of a new project starts with (`folder/name`). */
-export const DEFAULT_TRACK_PRESETS: readonly string[] = [
-	'drum/drum 1',
-	'drum/drum 2',
-	'bass/bass 1',
-	'pluck/pluck 1',
-	'lead/lead 1',
-	'pluck/pluck 2',
-	'strings/strings 1',
-	'pad/pad 1'
-];
+/** The preset each track of a new project starts with (`folder/name`, the device's). */
+export const DEFAULT_TRACK_PRESETS: readonly string[] = NEW_PROJECT_PRESETS;
 
 /** Placeholder factory projects (TE's art names its example project "demo 1"). */
 export const FACTORY_PROJECTS: readonly string[] = [

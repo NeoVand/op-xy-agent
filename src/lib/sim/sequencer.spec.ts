@@ -353,25 +353,25 @@ describe('step entry on the simulator (manual: sequencer/step-entry)', () => {
 
 	it('stores the last note played, a held chord, and keys pressed with a step held', () => {
 		const sim = new OpxySim();
-		sim.press('track.3'); // prism
+		sim.press('track.3'); // prism, its keyboard an octave down in a new project
 		sim.press('keyboard.a3');
 		sim.press('step.1');
-		expect(notes(sim, 0)).toEqual([57]);
+		expect(notes(sim, 0)).toEqual([45]);
 		// a held chord goes on the step together
 		sim.input({ type: 'press', id: 'keyboard.c4' });
 		sim.input({ type: 'press', id: 'keyboard.e4' });
 		sim.press('step.2');
 		sim.input({ type: 'release', id: 'keyboard.c4' });
 		sim.input({ type: 'release', id: 'keyboard.e4' });
-		expect(notes(sim, 1)).toEqual([60, 64]);
+		expect(notes(sim, 1)).toEqual([48, 52]);
 		// with a step held, a key adds its note (and takes it off again)
 		sim.input({ type: 'press', id: 'step.2' });
 		expect(sim.leds['keyboard.c4']).toBe('white');
 		sim.press('keyboard.g4');
-		expect(notes(sim, 1)).toEqual([60, 64, 67]);
+		expect(notes(sim, 1)).toEqual([48, 52, 55]);
 		sim.press('keyboard.c4');
 		sim.input({ type: 'release', id: 'step.2' });
-		expect(notes(sim, 1)).toEqual([64, 67]);
+		expect(notes(sim, 1)).toEqual([52, 55]);
 		// the step key again clears the step
 		sim.press('step.1');
 		expect(notes(sim, 0)).toEqual([]);

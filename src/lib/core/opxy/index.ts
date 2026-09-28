@@ -29,6 +29,8 @@ export { SIDE_EFFECTS, type SideEffect } from './ccMap.schema';
 export { REMOTE_KEY_RISKS, type RemoteKeyGroup, type RemoteKeyRisk } from './remoteKeys.schema';
 export type { ChangelogItem } from './changelog.schema';
 export { KNOWLEDGE_FILES } from './data';
+export { NEW_PROJECT_FILE, newProjectFile } from './newProject';
+export type { NewProjectFile, NewProjectTrack } from './newProject.schema';
 export * from './controls';
 export * from './tracks';
 export * from './ccmap';

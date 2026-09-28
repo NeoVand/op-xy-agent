@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { OpxySim } from '../../opxy-sim.svelte';
+import { DEFAULT_LEVEL } from '../../params';
 import type { ScreenFrame } from '../../screen/frame';
 import { RecordingContext } from '../../screen/recording';
 import { describeFrame, renderFrame } from '../../screen/render';
@@ -493,7 +494,8 @@ describe('system area: presets (manual: instrument/preset-browser, preset-manage
 		const f = page(s, 'system-list');
 		expect(f.layout).toBe('presets');
 		expect(s.state.track).toBe(2);
-		expect(picks(f)).toEqual([null, 'bass', 'bass 1']);
+		// a new project's track 3 plays the device's bass/shoulder
+		expect(picks(f)).toEqual([null, 'bass', 'shoulder']);
 		expect(f.columns[0].items).toEqual(['3', 'category']);
 	});
 
@@ -503,7 +505,7 @@ describe('system area: presets (manual: instrument/preset-browser, preset-manage
 		s.click(1);
 		let f = page(s, 'system-list');
 		expect(f.columns[0].items[1]).toBe('synth');
-		expect(picks(f)).toEqual([null, 'prism', 'bass 1']);
+		expect(picks(f)).toEqual([null, 'prism', 'shoulder']);
 		s.turn(1, -3); // hardsync (listed alphabetically by name, the midi engine as external)
 		s.turn(2, 1);
 		f = page(s, 'system-list');
@@ -511,8 +513,8 @@ describe('system area: presets (manual: instrument/preset-browser, preset-manage
 		s.click(3);
 		expect(s.state.tracks[2].engine).toBe('hardsync');
 		expect(s.state.areas.system.trackPresets[2]).toBe('lead/lead 2');
-		// steps and mixer stay with the track
-		expect(s.state.tracks[2].mix.level).toBe(80);
+		// steps and mixer stay with the track (a new project's level)
+		expect(s.state.tracks[2].mix.level).toBe(DEFAULT_LEVEL);
 	});
 
 	it('leaves the browser with a track key, which selects that track', () => {
@@ -588,7 +590,8 @@ describe('system area: preset settings (manual: instrument/preset-settings, user
 			'transpose',
 			'width'
 		]);
-		expect(f.columns[2].items).toEqual(['0', '59', 'lin', 'equal', 'C', '0 semi', '0']);
+		// a new project's track 3 (bass/shoulder) as the device stores it
+		expect(f.columns[2].items).toEqual(['0', '20', 'exp', 'equal', 'C', '0 semi', '0']);
 		s.turn(1, 1);
 		s.turn(3, 1);
 		f = page(s, 'system-list');
@@ -671,7 +674,7 @@ describe('system area: track sounds (manual: save-copy-scramble, save-to-same-sn
 		withTrack(s, 3, 'key.m3');
 		expect(s.state.tracks[2]).toMatchObject({ engine: 'dissolve', m1: [1, 2, 3, 4] });
 		expect(s.state.areas.system.presetSettings[2].width).toBe(40);
-		expect(s.state.areas.system.trackPresets[2]).toBe('lead/lead 1');
+		expect(s.state.areas.system.trackPresets[2]).toBe('lead/gaussian'); // track 5's in a new project
 		// the keyboard octave comes along (OS 1.0.38)
 		expect(s.state.areas.sequencer.octaves['instrument.2']).toBe(-2);
 	});

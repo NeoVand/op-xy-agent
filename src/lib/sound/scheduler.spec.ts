@@ -101,12 +101,13 @@ describe('timeline maths', () => {
 			'key3.tune': 2,
 			'playMode.volume': 20
 		});
-		expect(locked.m1).toEqual([80, 10, 80, 80]);
+		const [shape, , detune, stereo] = track.m1;
+		expect(locked.m1).toEqual([shape, 10, detune, stereo]);
 		expect(locked.filter.cutoff).toBe(30);
 		expect(locked.amp.attack).toBe(50);
 		expect(locked.drumKeys[3].tune).toBe(2);
 		expect(locked.playMode.volume).toBe(20);
-		expect(track.m1).toEqual([80, 80, 80, 80]);
+		expect(track.m1).toEqual(defaultTrack('prism').m1);
 		expect(track.filter.cutoff).toBe(99);
 		expect(lockedSettings(track, {})).toBe(track);
 	});
@@ -193,9 +194,9 @@ describe('the lookahead scheduler', () => {
 		expect(notes[0].glide).toBeCloseTo(0.0625);
 		expect(notes[1].glide).toBeUndefined();
 		const curve = notes[1].bend!;
-		// the default bend range is one semitone: the fade runs from 0 down to −100 cents
+		// track 4's default bend range is three semitones: the fade runs from 0 down to −300 cents
 		expect(curve[0]).toBeCloseTo(0);
-		expect(curve[curve.length - 1]).toBeCloseTo(-100);
+		expect(curve[curve.length - 1]).toBeCloseTo(-300);
 	});
 
 	it('hands a locked step its settings: the lock reaches the note, the track stays as it was', () => {
@@ -205,12 +206,13 @@ describe('the lookahead scheduler', () => {
 		toggleStep(p, 1, [60]);
 		setLock(p, 1, 'filter.cutoff', 20);
 		setLock(p, 1, 'm1.1', 5);
+		const cutoff = state.tracks[2].filter.cutoff;
 		play();
 		run(0.3);
-		expect(settings[0].filter.cutoff).toBe(99);
+		expect(settings[0].filter.cutoff).toBe(cutoff);
 		expect(settings[1].filter.cutoff).toBe(20);
 		expect(settings[1].m1[0]).toBe(5);
-		expect(state.tracks[2].filter.cutoff).toBe(99);
+		expect(state.tracks[2].filter.cutoff).toBe(cutoff);
 	});
 
 	it('walks the pattern as the LEDs do, pulse, pulse hold and jump included', () => {
@@ -378,7 +380,8 @@ describe("the active track's arpeggio", () => {
 		play();
 		run(1);
 		const notes = arpNotes().slice(0, 8);
-		expect(notes.map((n) => n.note)).toEqual([60, 64, 67, 60, 64, 67, 60, 64]);
+		// a new project's track 3 (the bass) plays an octave down
+		expect(notes.map((n) => n.note)).toEqual([48, 52, 55, 48, 52, 55, 48, 52]);
 		expect(sixteenths(2).slice(0, 8)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
 		// half a sixteenth at 120 bpm
 		for (const n of notes) expect(n.duration).toBeCloseTo(0.0625);
