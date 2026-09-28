@@ -18,23 +18,24 @@ device. The manual gained five recipes whose steps carry those settings (duck, p
 wobble, acid bass; `recipes.spec.ts` runs each on a new project). Two idea-to-device cases were added
 to the how-to eval.
 
-| Case          | Request                                                        | Result | Tools it used                 |
-| ------------- | -------------------------------------------------------------- | ------ | ----------------------------- |
-| `cutoff`      | how to set track 3's cutoff to 40                              | pass   | plan_steps → show_on_replica  |
-| `release`     | notes should stop the moment the keys come up: what, which way | pass   | plan_steps → show_on_replica  |
-| `tempo`       | show on the replica how to set tempo 96                        | pass   | plan_steps (show)             |
-| `slow-filter` | set up a slowly opening filter on track 3, then give the steps | pass   | plan_steps (show, settings)   |
-| `duck`        | make the bass pump with the kick, then the steps for my unit   | pass   | plan_steps (show, settings)   |
-| `acid`        | turn track 3 into a squelchy acid bass                         | pass   | plan_steps (show, settings)   |
-| `pluck`       | a plucky bass on track 3 (short decay, no sustain, more reso)  | pass   | plan_steps (show, settings)   |
-| `reverb`      | FX II's size to 85 and more of track 7 into it                 | pass   | plan_steps ×2 (show)          |
-| `mix`         | track 2 down to 40 in the mix, panned a little left            | pass   | plan_steps ×3 (show)          |
-| `screen-off`  | "a box on my screen says off": what, and how to clear it       | pass   | read_screen → show_on_replica |
-| `screen-page` | what is this page doing to my sound (a duck on the metronome)  | pass   | read_screen                   |
-| `screen-lost` | "tilted panels on a grid": what, and back to track 3's filter  | pass   | read_screen → plan_steps      |
-| `guide`       | "walk me through finding the cutoff, I will press the keys"    | pass   | plan_steps (guide)            |
+| Case          | Request                                                        | Result   | Tools it used                             |
+| ------------- | -------------------------------------------------------------- | -------- | ----------------------------------------- |
+| `cutoff`      | how to set track 3's cutoff to 40                              | pass     | plan_steps → show_on_replica              |
+| `release`     | notes should stop the moment the keys come up: what, which way | pass     | plan_steps → show_on_replica              |
+| `tempo`       | show on the replica how to set tempo 96                        | pass     | plan_steps (show)                         |
+| `slow-filter` | set up a slowly opening filter on track 3, then give the steps | pass     | plan_steps (show, settings)               |
+| `duck`        | make the bass pump with the kick, then the steps for my unit   | pass     | plan_steps (show, settings)               |
+| `acid`        | turn track 3 into a squelchy acid bass                         | pass     | plan_steps (show, settings)               |
+| `pluck`       | a plucky bass on track 3 (short decay, no sustain, more reso)  | pass     | plan_steps (show, settings)               |
+| `reverb`      | FX II's size to 85 and more of track 7 into it                 | pass     | plan_steps ×2 (show)                      |
+| `mix`         | track 2 down to 40 in the mix, panned a little left            | pass     | plan_steps ×3 (show)                      |
+| `screen-off`  | "a box on my screen says off": what, and how to clear it       | pass     | read_screen → show_on_replica             |
+| `screen-page` | what is this page doing to my sound (a duck on the metronome)  | pass     | read_screen                               |
+| `screen-lost` | "tilted panels on a grid": what, and back to track 3's filter  | pass     | read_screen → plan_steps                  |
+| `guide`       | "walk me through finding the cutoff, I will press the keys"    | pass     | plan_steps (guide)                        |
+| `house-loop`  | kick on the beats, offbeat hats, a pumping bassline, then play | pass 2/3 | write_pattern ×2 → plan_steps → transport |
 
-The guide case came with the walkthroughs. The agent handed the steps to the replica and told the
+The house loop needs patterns and sound design together. It failed once, in 3 runs, on the check: the agent ducked the bass on the metronome, reasoning that the hats share track 1. That is a fair call for a kick on every beat, so the check now takes the metronome when the answer says so, and the duck recipe carries that case. The guide case came with the walkthroughs. The agent handed the steps to the replica and told the
 user to follow the lit keys, and it did not play them itself ($0.81, most of it the cache). The
 screen cases start the replica somewhere else (a switched-off filter, a duck LFO, the master EQ) and
 pass 3/3 for $0.30. One answer called the EQ's panels upright at full boost. The manual said so; the

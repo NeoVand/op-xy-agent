@@ -29,6 +29,10 @@ facts:
   - id: metronome
     text: Turned past the tracks, the source becomes the metronome, and the track then dips on every beat whether or not anything plays.
     source: https://teenage.engineering/guides/op-xy/instrument#duck
+  - id: shared-track
+    text: When the hi-hats share the kick's track, a kick on every beat is better served by the metronome as source, which pumps on the beats only; the drum track itself would duck on every hat too.
+    source: https://teenage.engineering/guides/op-xy/instrument#duck
+    confidence: derived
   - id: depth
     text: Amount on `E2` sets how far the level drops; around 60–80 is a clear pump, lower values a gentle breathing.
     source: https://teenage.engineering/guides/op-xy/instrument#duck

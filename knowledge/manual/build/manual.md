@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1086 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1087 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -5152,6 +5152,7 @@ Facts:
 - Choosing duck works like choosing an engine — `shift + M4` opens the list of LFO types, `turn E1` highlights duck and `click E1` takes it. [#pick] (derived) [s2]
 - In a new project the drum kit sits on track 1, so source 1 ducks on every hit of that track, hi-hats included; a kick alone on its own track gives the classic pump. [#drums] (derived) [s3]
 - Turned past the tracks, the source becomes the metronome, and the track then dips on every beat whether or not anything plays. [#metronome] [s1]
+- When the hi-hats share the kick's track, a kick on every beat is better served by the metronome as source, which pumps on the beats only; the drum track itself would duck on every hat too. [#shared-track] (derived) [s1]
 - Amount on `E2` sets how far the level drops; around 60–80 is a clear pump, lower values a gentle breathing. [#depth] (derived) [s1]
 - Hold on `E3` keeps the level down for a moment and release on `E4` sets how it recovers; keep both short for a tight pump on a fast beat, and lengthen the release for slow swells. [#time] (derived) [s1]
 

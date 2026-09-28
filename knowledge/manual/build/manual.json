@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "a9b8989a",
+	"bundle_hash": "0407aa93",
 	"stats": {
 		"units": 163,
-		"facts": 1086,
+		"facts": 1087,
 		"procedures": 196,
 		"parameters": 207,
 		"verified_items": 187,
-		"words": 40302,
+		"words": 40338,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -27844,6 +27844,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "shared-track",
+					"text": "When the hi-hats share the kick's track, a kick on every beat is better served by the metronome as source, which pumps on the beats only; the drum track itself would duck on every hat too.",
+					"source": "https://teenage.engineering/guides/op-xy/instrument#duck",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				},
 				{
 					"id": "depth",

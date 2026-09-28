@@ -14,11 +14,12 @@ import { loadManualSource } from '$lib/agent/manual-source';
 import { createMemoryThreadStore } from '$lib/agent/threads';
 import type { ScreenReader } from '$lib/agent/tools';
 import { createVirtualOpxy } from '$lib/app/virtual';
+import type { VirtualOpxy } from '$lib/agent/virtual-opxy';
 import { ReplicaState } from '$lib/replica';
 import { buildFrame } from '$lib/sim/frames';
 import { planSettings, playStep } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
-import { PLAY_MODES, shown, type SimState } from '$lib/sim/params';
+import { DUCK_METRONOME, PLAY_MODES, shown, type SimState } from '$lib/sim/params';
 import { describeFrame } from '$lib/sim/screen/render';
 import { anthropicKey } from './key';
 
@@ -29,6 +30,8 @@ interface Outcome {
 	readonly tools: readonly { readonly name: string; readonly input: unknown }[];
 	/** Walkthroughs started on the replica: their goals. */
 	readonly guided: readonly string[];
+	/** The virtual OP-XY, to read patterns and the arrangement back. */
+	readonly virtual: VirtualOpxy;
 }
 
 interface HowtoCase {
@@ -219,6 +222,36 @@ const CASES: readonly HowtoCase[] = [
 		}
 	},
 	{
+		id: 'house-loop',
+		prompt:
+			'Build a little house loop on the virtual OP-XY: on track 1 a kick on every beat and hi-hats on the offbeats, on track 3 a one-bar bassline that pumps with the kick like sidechain compression. Then play it.',
+		check(o) {
+			const fails: string[] = [];
+			const drums = o.virtual.readPattern(1).notes;
+			for (const step of [1, 5, 9, 13]) {
+				if (!drums.some((n) => n.step === step && n.note === 53))
+					fails.push(`no kick on step ${step}`);
+			}
+			for (const step of [3, 7, 11, 15]) {
+				if (!drums.some((n) => n.step === step && n.note !== 53))
+					fails.push(`no hat on step ${step}`);
+			}
+			if (o.virtual.readPattern(3).notes.length < 4) fails.push('the bassline has under 4 notes');
+			const lfo = o.state.tracks[2].lfo;
+			// the kick's track, or the metronome: with the hats on track 1 too, the metronome pumps on
+			// the beats only, which is the four-on-the-floor kick (it should say why)
+			const metronome = lfo.source === DUCK_METRONOME;
+			if (lfo.type !== 'duck' || !lfo.on || (lfo.source !== 1 && !metronome)) {
+				fails.push(`track 3's lfo: ${lfo.type}${lfo.on ? '' : ' (off)'}, source ${lfo.source}`);
+			}
+			if (metronome && !/metronome/i.test(o.answer))
+				fails.push('ducks on the metronome unexplained');
+			if (lfo.amount < 30) fails.push(`duck amount only ${lfo.amount}`);
+			if (!o.state.transport.playing) fails.push('not playing');
+			return fails;
+		}
+	},
+	{
 		id: 'pluck',
 		prompt:
 			'I want a plucky bass on track 3: a short decay, no sustain and a bit more resonance. Set it up for me on the virtual OP-XY and tell me what you changed.',
@@ -301,7 +334,7 @@ async function runCase(c: HowtoCase, model: string, apiKey: string): Promise<Cas
 		for (const e of conductor.entries)
 			console.log('entry', e.kind, JSON.stringify(e).slice(0, 300));
 	}
-	const outcome: Outcome = { state: sim.state, answer, tools, guided };
+	const outcome: Outcome = { state: sim.state, answer, tools, guided, virtual };
 	return {
 		id: c.id,
 		fails: error ? [`error: ${error}`] : c.check(outcome),
