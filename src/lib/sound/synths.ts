@@ -612,6 +612,8 @@ export interface BufferPlay {
 	readonly pan: number;
 	/** Seconds the sound fades in over from its start (drum key fade, research 60 §5). */
 	readonly fade: number;
+	/** Seconds of the loop's end crossfaded into what precedes its start (synth sampler). */
+	readonly crossfade?: number;
 	/** Follows portamento (samplers) or keeps its tune (drums). */
 	readonly glides: boolean;
 	/** Level of the recording (drum key gain). */
@@ -628,7 +630,10 @@ export function bufferSource(
 ): SourceGraph {
 	const g = new Graph(context, resources, hz, start);
 	const source = context.createBufferSource();
-	source.buffer = play.buffer;
+	source.buffer =
+		play.loop && play.crossfade
+			? resources.crossfaded(play.buffer, play.loop.start, play.loop.end, play.crossfade)
+			: play.buffer;
 	source.playbackRate.value = play.rate;
 	const length = play.region.end - play.region.start;
 	if (play.loop) {

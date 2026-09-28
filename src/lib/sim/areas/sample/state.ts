@@ -69,7 +69,7 @@ export interface Region {
 	loopEnd: number;
 	end: number;
 	loop: LoopType;
-	/** Loop crossfade 0–99 %: the share of the loop it covers (the device draws it so). */
+	/** Loop crossfade 0–75 %: the share of the loop it covers (the device draws it so and stops at 75). */
 	crossfade: number;
 	/** Semitones, −48…48 in hundredths (shown like the drum sampler's tune; `m1.ts` TUNE_RANGE). */
 	tune: number;

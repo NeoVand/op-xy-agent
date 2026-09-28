@@ -5,6 +5,7 @@
  * into AudioBuffers, and the reverb's impulse.
  */
 import { DRUM_SOUNDS, renderClick, renderDrum, renderImpulse } from './kit';
+import { crossfadeLoop } from './dsp';
 import { random } from './random';
 import type { SampleSource } from './samples';
 import type { Spectrum } from './waves';
@@ -33,6 +34,9 @@ function reversed(context: BaseAudioContext, buffer: AudioBuffer): AudioBuffer {
 	return toBuffer(context, channels, buffer.sampleRate);
 }
 
+/** How many crossfaded copies of one buffer are kept (loop points or crossfade turned). */
+const CROSSFADE_CACHE = 4;
+
 const isAudioBuffer = (source: SampleSource): source is AudioBuffer =>
 	typeof (source as AudioBuffer).getChannelData === 'function';
 
@@ -44,6 +48,7 @@ export class Resources {
 	readonly #reversedDrums: (AudioBuffer | undefined)[] = [];
 	readonly #samples = new WeakMap<SampleSource, AudioBuffer>();
 	readonly #reversedSamples = new WeakMap<SampleSource, AudioBuffer>();
+	readonly #crossfaded = new WeakMap<AudioBuffer, Map<string, AudioBuffer>>();
 	#noise: AudioBuffer | null = null;
 	#clicks: [AudioBuffer, AudioBuffer] | null = null;
 	#impulse: AudioBuffer | null = null;
@@ -133,6 +138,33 @@ export class Resources {
 	}
 
 	/** A sample file's audio as an AudioBuffer (converted once), backwards when `reverse`. */
+	/**
+	 * `buffer` with its loop (seconds) crossfaded over the loop's last `seconds` ({@link
+	 * crossfadeLoop}), cached per buffer and settings.
+	 */
+	crossfaded(
+		buffer: AudioBuffer,
+		loopStart: number,
+		loopEnd: number,
+		seconds: number
+	): AudioBuffer {
+		const key = `${loopStart.toFixed(5)}:${loopEnd.toFixed(5)}:${seconds.toFixed(5)}`;
+		let copies = this.#crossfaded.get(buffer);
+		if (!copies) this.#crossfaded.set(buffer, (copies = new Map()));
+		const cached = copies.get(key);
+		if (cached) return cached;
+		const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) =>
+			buffer.getChannelData(i)
+		);
+		const faded = crossfadeLoop(channels, buffer.sampleRate, loopStart, loopEnd, seconds);
+		const copy = faded.every((c, i) => c === channels[i])
+			? buffer
+			: toBuffer(this.context, faded, buffer.sampleRate);
+		copies.set(key, copy);
+		if (copies.size > CROSSFADE_CACHE) copies.delete(copies.keys().next().value as string);
+		return copy;
+	}
+
 	sample(source: SampleSource, reverse = false): AudioBuffer {
 		let buffer = this.#samples.get(source);
 		if (!buffer) {

@@ -231,3 +231,31 @@ export function normalize(samples: Float32Array, target: number, sampleRate: num
 /** A soft clipper for drive: tanh, normalised so full scale stays full scale. */
 export const saturate = (x: number, drive: number): number =>
 	Math.tanh(x * drive) / Math.tanh(drive);
+
+/**
+ * A loop's crossfade baked into copies of `channels`: over its last `seconds` (buffer time) the
+ * loop's end fades out into the stretch just before its start, equal-power, so the jump from the
+ * end back to the start lands on material that continues seamlessly (the synth sampler's loop
+ * crossfade, drawn as a wedge sloping into the loop end). The crossfade never reaches back past the
+ * buffer's start or the loop's own length; with nothing to fade, the channels come back as they are.
+ */
+export function crossfadeLoop(
+	channels: readonly Float32Array[],
+	sampleRate: number,
+	loopStart: number,
+	loopEnd: number,
+	seconds: number
+): Float32Array[] {
+	const s = Math.round(loopStart * sampleRate);
+	const e = Math.round(loopEnd * sampleRate);
+	const n = Math.min(Math.round(seconds * sampleRate), s, e - s);
+	if (n < 2) return channels.map((c) => c);
+	return channels.map((input) => {
+		const out = input.slice();
+		for (let i = 0; i < n; i++) {
+			const t = ((i + 0.5) / n) * (Math.PI / 2);
+			out[e - n + i] = input[e - n + i] * Math.cos(t) + input[s - n + i] * Math.sin(t);
+		}
+		return out;
+	});
+}

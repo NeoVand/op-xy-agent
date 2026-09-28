@@ -709,6 +709,7 @@ export class SoundEngine {
 						rate,
 						region: play,
 						loop: play.loop,
+						crossfade: play.crossfade,
 						pan: 0,
 						fade: 0,
 						glides: true,

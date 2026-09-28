@@ -304,6 +304,15 @@ describe("mapping: the synth sampler's region", () => {
 		expect(regionSeconds(region({ loop: 'release' }), 2).loop).not.toBeNull();
 	});
 
+	it('crossfades that share of the loop, up to 75 % (research 60 §5), and nothing without a loop', () => {
+		const region = (patch: Partial<Region>): Region => ({ ...defaultRegion(), ...patch });
+		// the default loop is 0.4–1.6 s of a 2 s sample: 1.2 s long
+		expect(regionSeconds(region({ crossfade: 0 }), 2).crossfade).toBe(0);
+		expect(regionSeconds(region({ crossfade: 50 }), 2).crossfade).toBeCloseTo((50 / 99) * 1.2);
+		expect(regionSeconds(region({ crossfade: 99 }), 2).crossfade).toBeCloseTo((75 / 99) * 1.2);
+		expect(regionSeconds(region({ crossfade: 50, loop: 'off' }), 2).crossfade).toBe(0);
+	});
+
 	it('mirrors the points when reversed, so the same stretch plays backwards', () => {
 		const play = regionSeconds({ ...defaultRegion(), start: 0.1, end: 0.5, reverse: true }, 1);
 		expect(play.start).toBeCloseTo(0.5);

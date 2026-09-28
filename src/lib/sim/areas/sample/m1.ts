@@ -213,7 +213,8 @@ export function turnRegion(
 			r.tune =
 				Math.round(clamp(r.tune + delta * (fine ? 0.01 : 0.1), -TUNE_RANGE, TUNE_RANGE) * 100) /
 				100;
-		else if (e === 2) r.crossfade = clamp(r.crossfade + delta, 0, 99);
+		// the crossfade tops out at 75 % (the owner's unit, research 60 §5)
+		else if (e === 2) r.crossfade = clamp(r.crossfade + delta, 0, 75);
 		else r.gain = clamp(r.gain + delta, -30, 20);
 		return;
 	}

@@ -306,7 +306,12 @@ export const fadeSeconds = (fade: number): number => 0.95 * unit(fade) ** 2;
 export interface RegionPlay extends Region {
 	/** The stretch that repeats, or null. */
 	readonly loop: Region | null;
+	/** Seconds of the loop's end crossfaded into what precedes its start (0: none). */
+	readonly crossfade: number;
 }
+
+/** The loop crossfade's top: 75 % of the loop (research 60 §5). */
+export const CROSSFADE_MAX = 75;
 
 /**
  * A synth sampler's or multisampler zone's region (manual: synth-sampler; points 0–1 of the
@@ -323,10 +328,14 @@ export function regionSeconds(region: SampleRegion, duration: number): RegionPla
 	const [la, lb] = [at(region.loopStart), at(region.loopEnd)].map((v) => clamp(v, from, to));
 	const loop = { start: Math.min(la, lb), end: Math.max(la, lb) };
 	const looping = region.loop !== 'off' && region.loopStart < region.end;
+	const repeats = looping && loop.end - loop.start >= 0.005;
+	// the crossfade covers that share of the loop, as its wedge is drawn
+	const share = clamp(region.crossfade ?? 0, 0, CROSSFADE_MAX) / 99;
 	return {
 		start: from,
 		end: to,
-		loop: looping && loop.end - loop.start >= 0.005 ? loop : null
+		loop: repeats ? loop : null,
+		crossfade: repeats ? share * (loop.end - loop.start) : 0
 	};
 }
 
