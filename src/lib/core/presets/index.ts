@@ -22,3 +22,5 @@ export type { PcmAudio } from './wav';
 export { zip, crc32 } from './zip';
 export { parseAiff } from './aiff';
 export { parsePcm } from './pcm';
+export { findOnsets, equalSlices, sliceAudio, snapToZero } from './slice';
+export type { OnsetOptions } from './slice';

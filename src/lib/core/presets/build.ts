@@ -51,6 +51,8 @@ export interface PresetOptions extends PrepareOptions {
 	readonly name: string;
 	/** Samplers: how the samples loop. Default forever, as the device loops a fresh sample. */
 	readonly loop?: LoopMode;
+	/** Drum kits: the keys choke each other (the kit's mute group), as the device's slicer sets them. */
+	readonly choke?: boolean;
 }
 
 /** A built preset: its folder, its patch and the files inside, and what was noticed on the way. */
@@ -194,7 +196,8 @@ export function buildPreset(samples: readonly SampleInput[], options: PresetOpti
 				const audio = prepare(s.audio, options);
 				const file = unique(safeStem(s.name, stemMax));
 				files.push({ path: `${folder}/${file}`, bytes: encodeWav({ ...audio, root: 60 }) });
-				return drumRegion(keys[i] as number, file, audio.channels[0].length);
+				const mode = options.choke ? 'group' : 'oneshot';
+				return drumRegion(keys[i] as number, file, audio.channels[0].length, mode);
 			})
 			.sort((a, b) => a.hikey - b.hikey);
 	} else {

@@ -336,7 +336,10 @@ generated sources; install via FILE PUT if the spike confirms it, otherwise expo
       and the preset downloads zipped for field kit / MTP. Not yet loaded on a unit (`QUESTIONS.md`
       11).
 - [ ] Try the presets on the owner's device; an agent tool that builds one from a request.
-- [ ] Slicer (transients, zero crossings) and generated sources.
+- [x] **Slicer** (2026-09-28): a loop cut at its hits (spectral flux, refined where the level jumps,
+      each start just before the hit and on a zero crossing when one is near) or into 8/16/24 equal
+      parts; the slices go on f3 upwards and choke each other, as the device's slicer sets them.
+- [ ] Generated sources.
 - [x] **Install over USB** (MTP through WebUSB, 2026-09-28): `core/mtp` (session, policy, installer)
       and `device/mtp` (WebUSB pipe); the preset maker says what it will add and where, and writes
       only after the click. Never deletes, moves or replaces. Tested on an emulated unit only.

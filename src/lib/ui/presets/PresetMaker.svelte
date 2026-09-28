@@ -1,8 +1,8 @@
 <!--
 @component
 Turns recordings into an OP-XY sample preset (docs/research/30-presets-samples.md): pick a drum
-kit, a multisample or a synth sampler, drop audio files, check where each lands (a drum key, or a
-root note and its zone), and download the `.preset` folder zipped, ready for Field Kit or the
+kit, a sliced loop, a multisample or a synth sampler, drop audio files, check where each lands (a
+drum key, a slice, or a root note and its zone), and download the `.preset` folder zipped, ready for Field Kit or the
 device's `presets/` folder over MTP, or install it on a connected OP-XY after the owner confirms
 (`PresetInstall`). Everything runs in the browser; nothing is uploaded anywhere.
 -->
@@ -16,8 +16,12 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 		buildPreset,
 		detectNote,
 		drumKeys,
+		equalSlices,
+		findOnsets,
 		noteFromName,
 		noteName,
+		safeStem,
+		sliceAudio,
 		zipPreset,
 		type BuiltPreset,
 		type LoopMode,
@@ -26,6 +30,7 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 	} from '$lib/core/presets';
 	import { decodeAudioFile } from './decode';
 	import PresetInstall from './PresetInstall.svelte';
+	import SliceView from './SliceView.svelte';
 
 	interface Item {
 		readonly id: number;
@@ -39,8 +44,12 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 		key: number | null;
 	}
 
-	const KINDS: readonly { id: PresetKind; label: string; hint: string }[] = [
+	/** What the page makes: a preset kind, or a loop sliced into a drum kit. */
+	type Mode = PresetKind | 'slices';
+
+	const KINDS: readonly { id: Mode; label: string; hint: string }[] = [
 		{ id: 'drum', label: 'drum kit', hint: 'up to 24 hits on the keys f3–e5' },
+		{ id: 'slices', label: 'sliced loop', hint: 'one loop cut into up to 24 slices, f3 upwards' },
 		{ id: 'multisampler', label: 'multisample', hint: 'up to 24 notes of one instrument' },
 		{ id: 'sampler', label: 'synth sampler', hint: 'one sound across the keyboard' }
 	];
@@ -49,10 +58,19 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 		{ id: 'release', label: 'loop until release' },
 		{ id: 'off', label: 'no loop' }
 	];
+	/** Where a loop is cut: at its hits, or into equal parts. */
+	const CUTS = [
+		{ id: 'hits', label: 'at the hits' },
+		{ id: '8', label: '8 equal slices' },
+		{ id: '16', label: '16 equal slices' },
+		{ id: '24', label: '24 equal slices' }
+	] as const;
 	/** Root notes a zone can take, A0 to C8 (the piano's range). */
 	const NOTES = Array.from({ length: 88 }, (_, i) => 21 + i);
 
-	let kind = $state<PresetKind>('drum');
+	let mode = $state<Mode>('drum');
+	let cut = $state<(typeof CUTS)[number]['id']>('hits');
+	let sensitivity = $state(50);
 	let name = $state('');
 	let trim = $state(true);
 	let normalize = $state(false);
@@ -62,15 +80,29 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 	let dragging = $state(false);
 	let problems = $state<string[]>([]);
 	let warnings = $state<string[]>([]);
-	let playing = $state<number | null>(null);
+	/** What sounds: `item-<id>` or `slice-<index>`. */
+	let playing = $state<string | null>(null);
 	let nextId = 0;
 
-	const limit = $derived(kind === 'sampler' ? 1 : kind === 'drum' ? DRUM_KEYS : MAX_ZONES);
+	const kind = $derived<PresetKind>(mode === 'slices' ? 'drum' : mode);
+	const limit = $derived(
+		mode === 'sampler' || mode === 'slices' ? 1 : mode === 'drum' ? DRUM_KEYS : MAX_ZONES
+	);
 	const keys = $derived(
-		kind === 'drum'
+		mode === 'drum'
 			? drumKeys(items.map((item) => ({ name: item.name, key: item.key ?? undefined })))
 			: []
 	);
+	/** A sliced loop: its first file, where it is cut, and the slices. */
+	const looped = $derived(mode === 'slices' ? (items[0] ?? null) : null);
+	const starts = $derived(
+		looped
+			? cut === 'hits'
+				? findOnsets(looped.audio, { sensitivity: sensitivity / 100 })
+				: equalSlices(looped.audio, Number(cut))
+			: []
+	);
+	const slices = $derived(looped ? sliceAudio(looped.audio, starts) : []);
 	/** Samplers: the root each sample plays at, the user's over the found one. */
 	const roots = $derived(kind === 'drum' ? [] : items.map((item) => item.root ?? item.found));
 	const presetName = $derived(name.trim() || (items[0]?.name.replace(/\.[^.]+$/, '') ?? ''));
@@ -96,7 +128,7 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 
 	function remove(id: number) {
 		items = items.filter((item) => item.id !== id);
-		if (playing === id) stop();
+		if (playing === `item-${id}`) stop();
 	}
 
 	let context: AudioContext | null = null;
@@ -108,11 +140,10 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 		playing = null;
 	}
 
-	function audition(item: Item) {
-		if (playing === item.id) return stop();
+	function audition(id: string, audio: PcmAudio) {
+		if (playing === id) return stop();
 		stop();
 		context ??= new AudioContext();
-		const { audio } = item;
 		const buffer = context.createBuffer(
 			audio.channels.length,
 			audio.channels[0].length,
@@ -123,10 +154,10 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 		source.buffer = buffer;
 		source.connect(context.destination);
 		source.onended = () => {
-			if (playing === item.id) playing = null;
+			if (playing === id) playing = null;
 		};
 		source.start();
-		playing = item.id;
+		playing = id;
 	}
 
 	/** The preset from the samples and options as they stand; what was noticed goes to `warnings`. */
@@ -137,15 +168,27 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 		// let the page show that it is working before the samples are processed
 		await new Promise((resolve) => setTimeout(resolve, 20));
 		try {
-			const built = buildPreset(
-				items.map((item) => ({
-					name: item.name,
-					audio: item.audio,
-					root: item.root ?? undefined,
-					key: item.key ?? undefined
-				})),
-				{ kind, name: presetName, trim, normalize, loop }
-			);
+			const samples = looped
+				? slices.map((audio, i) => ({
+						name: `${safeStem(looped.name, 8)}-${String(i + 1).padStart(2, '0')}`,
+						audio,
+						key: DRUM_FIRST_KEY + i
+					}))
+				: items.map((item) => ({
+						name: item.name,
+						audio: item.audio,
+						root: item.root ?? undefined,
+						key: item.key ?? undefined
+					}));
+			// slices choke each other, as the device's slicer sets them
+			const built = buildPreset(samples, {
+				kind,
+				name: presetName,
+				trim,
+				normalize,
+				loop,
+				choke: mode === 'slices'
+			});
 			warnings = [...built.warnings];
 			return built.patch.regions.length > 0 ? built : null;
 		} finally {
@@ -192,11 +235,11 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 	<section class="maker__main" aria-label="the preset">
 		<div class="kinds" role="group" aria-label="preset type">
 			{#each KINDS as option (option.id)}
-				<Button size="sm" pressed={kind === option.id} onclick={() => (kind = option.id)}
+				<Button size="sm" pressed={mode === option.id} onclick={() => (mode = option.id)}
 					>{option.label}</Button
 				>
 			{/each}
-			<Legend size="xs" tone="muted">{KINDS.find((k) => k.id === kind)?.hint}</Legend>
+			<Legend size="xs" tone="muted">{KINDS.find((k) => k.id === mode)?.hint}</Legend>
 		</div>
 
 		<label class="field">
@@ -232,13 +275,16 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 						<IconButton
 							size="sm"
 							variant="ghost"
-							icon={playing === item.id ? 'stop' : 'play'}
-							label={playing === item.id ? `stop ${item.name}` : `play ${item.name}`}
-							onclick={() => audition(item)}
+							icon={playing === `item-${item.id}` ? 'stop' : 'play'}
+							label={playing === `item-${item.id}` ? `stop ${item.name}` : `play ${item.name}`}
+							onclick={() => audition(`item-${item.id}`, item.audio)}
 						/>
 						<span class="row__name" title={item.name}>{item.name}</span>
 						<span class="row__meta">{seconds(item.audio)} s</span>
-						{#if kind === 'drum'}
+						{#if mode === 'slices'}
+							<span class="row__meta">{i === 0 ? 'the loop' : 'only the first file is sliced'}</span
+							>
+						{:else if mode === 'drum'}
 							{#if keys[i] !== null && keys[i] !== undefined}
 								<select
 									class="row__select"
@@ -280,6 +326,35 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 					</li>
 				{/each}
 			</ol>
+			{#if looped}
+				<div class="cut">
+					<label class="field">
+						<Legend as="span" size="xs" tone="muted">cut</Legend>
+						<select class="row__select" bind:value={cut}>
+							{#each CUTS as option (option.id)}
+								<option value={option.id}>{option.label}</option>
+							{/each}
+						</select>
+					</label>
+					{#if cut === 'hits'}
+						<label class="field cut__range">
+							<Legend as="span" size="xs" tone="muted">sensitivity {sensitivity}</Legend>
+							<input type="range" min="0" max="100" bind:value={sensitivity} />
+						</label>
+					{/if}
+					<Legend size="xs" tone="subtle">
+						{slices.length} slices on {noteName(DRUM_FIRST_KEY)}–{noteName(
+							DRUM_FIRST_KEY + Math.max(0, slices.length - 1)
+						)}, each choking the last
+					</Legend>
+				</div>
+				<SliceView
+					audio={looped.audio}
+					{starts}
+					playing={playing?.startsWith('slice-') ? Number(playing.slice(6)) : null}
+					onpick={(i) => audition(`slice-${i}`, slices[i])}
+				/>
+			{/if}
 			{#if kind === 'multisampler' && roots.some((r, i) => r !== null && roots.indexOf(r) !== i)}
 				<Legend size="xs" tone="accent"
 					>two samples share a root note: only the first is kept</Legend
@@ -443,5 +518,17 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 
 	.help code {
 		font-family: var(--xy-font-mono);
+	}
+
+	.cut {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: 0.75rem;
+	}
+
+	.cut__range input {
+		width: 10rem;
+		accent-color: var(--xy-fg);
 	}
 </style>
