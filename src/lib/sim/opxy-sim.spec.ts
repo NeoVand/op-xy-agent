@@ -62,7 +62,7 @@ describe('OpxySim: navigation', () => {
 		expect(prism.engine).toBe('prism');
 		expect(prism.header.map((c) => c.label)).toEqual(['shape', 'ratio', 'detune', 'stereo']);
 		// a new project's bass preset (shoulder)
-		expect(prism.header.map((c) => c.value)).toEqual(['15', '00', '05', '22']);
+		expect(prism.header.map((c) => c.value)).toEqual(['15', '2:1', '05', '22']);
 		expect(sim.leds['track.3']).toBe('white');
 		expect(sim.leds['track.1']).toBe('off');
 		sim.press('track.5');

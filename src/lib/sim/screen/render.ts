@@ -106,7 +106,7 @@ export function describeFrame(frame: ScreenFrame): string {
 		case 'tempo':
 			return `tempo ${frame.bpm} bpm, groove ${frame.groove}, metronome ${frame.metronome.on ? 'on' : 'off'}`;
 		case 'synth':
-			return `${frame.engine}: ${frame.header.map((c) => `${c.label} ${c.value}`).join(', ')}`;
+			return `${frame.engine}: ${frame.header.map((c) => `${c.label} ${c.value}`.trim()).join(', ')}`;
 		case 'drum':
 			return describeSampler(frame);
 		case 'midi':

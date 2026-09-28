@@ -316,7 +316,7 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		sim.turn(1, 5);
 		expect(pattern(sim).steps[4].locks['m1.1']).toBe(50);
 		expect(describeFrame(sim.frame)).toBe(
-			'step 5 held, 1 lock, shape 50: prism: shape 50, ratio 00, detune 05, stereo 22'
+			'step 5 held, 1 lock, shape 50: prism: shape 50, ratio 2:1, detune 05, stereo 22'
 		);
 		up(sim, 'step.5');
 	});

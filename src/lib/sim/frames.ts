@@ -24,6 +24,7 @@ import {
 	PLAY_MODES,
 	AUX_NAMES,
 	clamp,
+	engineCell,
 	engineParams,
 	formatBpm,
 	isSampler,
@@ -159,14 +160,10 @@ function instrumentFrame(s: SimState): ScreenFrame {
 					program: String(t.midi.program)
 				};
 			}
-			const names = engineParams(t.engine);
 			return {
 				page: 'synth',
 				engine: t.engine,
-				header: names.map((label, i) => ({
-					label: label ?? '',
-					value: label === null ? '' : two(t.m1[i])
-				})),
+				header: [0, 1, 2, 3].map((i) => engineCell(t.engine, i, t.m1[i])),
 				params: t.m1.map((v) => v / 99)
 			};
 		}

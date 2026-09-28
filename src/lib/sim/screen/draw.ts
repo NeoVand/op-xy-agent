@@ -158,15 +158,20 @@ export interface HeaderCell {
 /**
  * The engine header: eight 60 × 20 cells running the grey ramp, a 10 px label then a 20 px value
  * per encoder; text flips to black on the light half. The last cell meets the screen's corner.
+ * `plain` draws no cells, white text straight on the page (simple and axis on the device, whose
+ * pictures run up under it: research 59 §2.5).
  */
-export function header(ctx: ScreenCtx, cells: readonly HeaderCell[]): void {
-	for (let i = 0; i < 8; i++) fillBox(ctx, i * 60, 0, 60, 20, RAMP[i]);
+export function header(
+	ctx: ScreenCtx,
+	cells: readonly HeaderCell[],
+	style: 'ramp' | 'plain' = 'ramp'
+): void {
+	if (style === 'ramp') for (let i = 0; i < 8; i++) fillBox(ctx, i * 60, 0, 60, 20, RAMP[i]);
 	cells.slice(0, 4).forEach((cell, e) => {
 		const labelX = e * 120;
-		const labelColor = e < 2 ? COLORS.white : COLORS.black;
-		const valueColor = e < 2 ? COLORS.white : COLORS.black;
-		text(ctx, cell.label, labelX + 5, 10, 10, labelColor);
-		text(ctx, cell.value, labelX + 65, 17.75, 20, valueColor);
+		const color = style === 'plain' || e < 2 ? COLORS.white : COLORS.black;
+		text(ctx, cell.label, labelX + 5, 10, 10, color);
+		text(ctx, cell.value, labelX + 65, 17.75, 20, color);
 	});
 }
 

@@ -17,6 +17,7 @@ import {
 import { initialAreaStates, type AreaStates } from './areas/state';
 import { engineInitM1, NEW_PROJECT_TRACKS, soundOf } from './defaults';
 import { emptySequence, type Sequence } from './sequencer';
+import type { HeaderCell } from './screen/draw';
 import type { FilterType, LfoType, MultiOutMode } from './screen/frame';
 
 /** The four main modes. */
@@ -439,6 +440,56 @@ export function defaultState(): SimState {
 export const ENGINE_LIST: readonly EngineId[] = ENGINES.map((e) => e.id);
 
 /** An engine's M1 parameter names (from the CC map). */
+/**
+ * Prism's ratio as its top bar writes it: ten equal zones of the lane (research 57 §3, 59 §2.5;
+ * the sound engine's `RATIOS`).
+ */
+export const PRISM_RATIOS = [
+	'2:1',
+	'1:1',
+	'2:3',
+	'1:2',
+	'1:3',
+	'1:4',
+	'1:6',
+	'1:8',
+	'1:12',
+	'1:16'
+];
+
+/**
+ * Wavetable's tables, as its top bar names them in place of E1's label (research 59 §2.5; the sound
+ * engine's `TABLES`; "primes" is our name for the one never seen on screen).
+ */
+export const WAVETABLES = [
+	'basic',
+	'buzz',
+	'crush',
+	'drawbars',
+	'fibonacci',
+	'fractal',
+	'geometric',
+	'primes',
+	'zap'
+];
+
+/** Which of `count` equal zones a 0–99 lane is in. */
+const zone = (v: number, count: number) =>
+	Math.min(count - 1, Math.floor((clamp(v, 0, 99) / 99) * count));
+
+/**
+ * An engine parameter's top-bar cell as the device writes it: a two-digit value, except prism's
+ * ratio (a fraction) and wavetable's table (its name in the label, no value).
+ */
+export function engineCell(engine: EngineId, index: number, value: number): HeaderCell {
+	const label = engineParams(engine)[index] ?? '';
+	if (!label) return { label: '', value: '' };
+	if (engine === 'prism' && index === 1) return { label, value: PRISM_RATIOS[zone(value, 10)] };
+	if (engine === 'wavetable' && index === 0)
+		return { label: WAVETABLES[zone(value, 9)], value: '' };
+	return { label, value: two(value) };
+}
+
 export function engineParams(engine: EngineId): readonly (string | null)[] {
 	return ENGINES.find((e) => e.id === engine)?.params ?? [null, null, null, null];
 }

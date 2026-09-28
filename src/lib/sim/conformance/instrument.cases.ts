@@ -19,7 +19,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EngineId } from '$lib/core/opxy';
 import { currentPattern } from '../sequencer';
-import { ENGINE_LIST, FILTER_TYPES, LFO_SYNC_STEPS, LFO_TYPES } from '../params';
+import { ENGINE_LIST, FILTER_TYPES, LFO_SYNC_STEPS, LFO_TYPES, engineCell, shown } from '../params';
 import type { ScreenFrame } from '../screen/frame';
 import { CLICK_MS, GAP_MS, type Driver } from '../testing/driver';
 
@@ -50,7 +50,7 @@ const notesOn = (d: Driver, n: number) =>
 	currentPattern(d.state.tracks[d.state.track].sequence).steps[n - 1].notes.map((x) => x.note);
 
 /** A synth engine's header as the screen reads it: "label value" for E1…E4. */
-const header = (d: Driver) => on(d, 'synth').header.map((c) => `${c.label} ${c.value}`);
+const header = (d: Driver) => on(d, 'synth').header.map((c) => `${c.label} ${c.value}`.trim());
 
 /** Opens the list shift + M1 / M3 / M4 opens: engines, filter types, LFO types. */
 const openList = (d: Driver, m: 1 | 3 | 4) => d.withShift(() => d.click(`key.m${m}`));
@@ -788,7 +788,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(1, 5);
 			expect(header(d)[0]).toBe('shape 20');
 			await loadEngine(d, 'wavetable');
-			expect(header(d)).toEqual(['table 00', 'position 00', 'warp 00', 'drift 00']);
+			// the device writes wavetable's table by name, with no number (research 59 §2.5)
+			expect(header(d)).toEqual(['basic', 'position 00', 'warp 00', 'drift 00']);
 			await d.click('key.m3');
 			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
 		});
@@ -1430,23 +1431,30 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		const section = (engine: EngineId) => `20.${[...ORDER, 'wavetable'].indexOf(engine) + 1}`;
 
 		for (const [engine, track, names] of engines) {
-			it(`${section(engine)} ${engine}: ${names.join(', ')} on E1–E4, 0–99 each (ours: two digits)`, async () => {
+			it(`${section(engine)} ${engine}: ${names.join(', ')} on E1–E4, 0–99 each (two digits; prism's ratio a fraction, wavetable's table a name, as on the device)`, async () => {
 				const d = await start();
 				await d.click(`track.${track ?? 3}`);
 				if (track === null) await loadEngine(d, engine);
 				const synth = on(d, 'synth');
 				expect(synth.engine).toBe(engine);
-				expect(synth.header.map((c) => c.label)).toEqual(names);
-				const values = synth.header.map((c) => Number(c.value));
+				// wavetable's first cell names the table where the others name the parameter
+				const labels = synth.header.map((c, i) =>
+					engine === 'wavetable' && i === 0 ? 'table' : c.label
+				);
+				expect(labels).toEqual(names);
+				// the numbers the page shows (a preset's 9.9 shows 09, and turns from there)
+				const values = synth.params.map((p) => shown(p * 99));
 				await d.turn(1, 5);
 				await d.turn(2, -10);
 				await d.turn(3, 200);
 				await d.turn(4, -200);
 				const want = [Math.min(99, values[0] + 5), Math.max(0, values[1] - 10), 99, 0];
-				expect(header(d)).toEqual(names.map((n, i) => `${n} ${String(want[i]).padStart(2, '0')}`));
-				expect(d.screen()).toBe(
-					`${engine}: ${names.map((n, i) => `${n} ${String(want[i]).padStart(2, '0')}`).join(', ')}`
-				);
+				const cells = want.map((v, i) => {
+					const c = engineCell(engine, i, v);
+					return `${c.label} ${c.value}`.trim();
+				});
+				expect(header(d)).toEqual(cells);
+				expect(d.screen()).toBe(`${engine}: ${cells.join(', ')}`);
 				expect(on(d, 'synth').params).toEqual(want.map((v) => v / 99));
 			});
 		}
@@ -1526,8 +1534,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(4, 10);
 			await loadEngine(d, 'midi');
 			await loadEngine(d, 'prism');
-			// the bass preset's shape 15, ratio 00, detune 05, stereo 22, as turned
-			expect(header(d)).toEqual(['shape 45', 'ratio 00', 'detune 05', 'stereo 32']);
+			// the bass preset's shape 15, ratio 2:1, detune 05, stereo 22, as turned
+			expect(header(d)).toEqual(['shape 45', 'ratio 2:1', 'detune 05', 'stereo 32']);
 		});
 
 		// manual instrument/engine-midi: program changes lock per step (fixed in OS 1.1.15)

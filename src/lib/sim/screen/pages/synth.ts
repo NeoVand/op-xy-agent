@@ -56,5 +56,8 @@ export function drawSynth(ctx: ScreenCtx, frame: SynthFrame, seed = 0): void {
 	}
 	if (frame.engine === 'dissolve') drawDissolve(ctx, frame.params, seed);
 	else if (art in ICONS) drawIcon(ctx, art, -1, 20.5);
-	header(ctx, frame.header);
+	header(ctx, frame.header, PLAIN_HEADERS.has(frame.engine) ? 'plain' : 'ramp');
 }
+
+/** Engines whose top bar the device draws without the grey cells (research 59 §2.5). */
+const PLAIN_HEADERS: ReadonlySet<string> = new Set(['simple', 'axis']);

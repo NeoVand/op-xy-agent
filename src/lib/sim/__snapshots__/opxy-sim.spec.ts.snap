@@ -85,7 +85,7 @@ exports[`frames and formats > builds stable frames for a new project (snapshot) 
       },
       {
         "label": "ratio",
-        "value": "00",
+        "value": "2:1",
       },
       {
         "label": "detune",
