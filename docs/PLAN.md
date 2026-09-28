@@ -168,7 +168,8 @@ owner flagged, then what users see most.
 7. [ ] **Filter** (types, off, envelope hatch, key-tracking arrow, a type pick returning to M1, shift
        sends) and **LFO** (five types, off).
 8. [ ] **Arrange and song mode** (footer labels, pattern column, scene box, 32-slot song grid).
-9. [ ] **Tempo** (metronome weight by BPM, groove slider, speaker waves, pendulum).
+9. [x] **Tempo** (metronome weight by BPM, groove slider, speaker waves, pendulum). Left: what
+       turns the jack black and how E4's click treats the level.
 10. [ ] **Engine pages:** top-bar styles, each engine's picture and its motion; sampler pages and their
         shift layers; the preset browser.
 11. [ ] **Aux tracks:** brain M1/M2 (slide), external MIDI (CC slots, LFO), external CV (meter),

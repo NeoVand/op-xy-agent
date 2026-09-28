@@ -400,6 +400,41 @@ below gave: M1 popup 1.0 / 0.3 px, EQ 0.26 / 0.17, saturator 0.33 / 0.25, master
 - **Speaker:** the icon at the top right loses its waves as E4 lowers the metronome volume.
 - **Motion:** the pendulum swings with motion trails while playing. Repeated `tempo` presses tap the
   tempo.
+- **Measured** (design px; overlays within about half a pixel; `screen/pages/tempo.ts`):
+  - **Colours**, by brightness against the page: the page is TE's light grey; the BPM is grey 1
+    (0.36 of the page); the slider's thumb is the card grey (1.2); the ruler grey 2 (0.58); the jack
+    and its dot grey 4 (0.85); the rod, weight, waves and lit dot white (1.39). The groove letters
+    and unlit dots take the page's grey, and the body and speaker are black.
+  - **BPM:** 50 px on baseline 125.5, centred at x 107.25, tracking −0.037 em, with the device's
+    proportional 1 (as on the step popups). Fitted at 40, 80, 118, 120, 160, 200 and 220 BPM:
+    0.47 px rms. The device puts each glyph on a whole pixel.
+  - **Body:** top edge y 15.9, top corners x 229.67 and 250.38, knee at y 157.9, foot x 195.56–284.72,
+    bottom 164.65.
+  - **Groove letters:** 20 px bold, centred at x ≈ 238.8, baseline 110. All eleven abbreviations
+    appear, in E2's order.
+  - **Beat dots:** x = 210.2 + 20i, y 155, radius 3. None is lit when stopped. Playing, the beat's
+    dot is white for the whole beat and changes when the pendulum reaches an end.
+  - **Pendulum:** pivot (240.5, 136); the rod is 3 px wide, from 0.8 px behind the pivot to 121.2 px
+    out. It rests at the left end, −43.1°, and swings as angle = −43.1° · cos(π · beats), which fits
+    the 10 fps recording.
+  - **Weight:** 16.75 × 22 px with corners of about 1 px and a black dot of radius 4.7. Its centre
+    sits 104.92 − 0.5243 · (BPM − 40) px up the rod (104.9 at 40, 10.5 at 220, linear to 0.05 px).
+  - **Slider:** a 2 px ruler (y 188.95–191.0) with ticks at x 190 + 10i rising to 184.9 (the middle
+    one to 179.9). The thumb is 15.6 × 40.1 px from y 169.8, with no marker line on its face (TE's
+    icon has one), centred at x = 195.92 + 0.6913 · CC81.
+  - **Speaker:** box x 380.1–389.6, y 56.55–70.1, a 1.7 px gap, and a horn x 391.3–403.3 with a flat
+    end (TE's art has an end bar).
+  - **Waves:** rings every 3.19 px from radius 5.52 around (408.85, 63.45), 1.6 px wide, cut to a 90°
+    cone from (405.75, 64). The outer rings go first as E4 lowers the level (8 → 6 → 5 → 3 → 2 → 0).
+    The owner's project showed 7.
+  - **Jack:** TE's shape moved about (+1.1, +8.8) px with a thicker right stem, grey in every frame;
+    dot at (432.05, 155.47), radius 3.65.
+  - **Not drawn:** the trails. In the swinging frames the middle copy is brightest, not the newest,
+    and digit changes ghost the same way, which points to the panel's slow response plus the camera's
+    exposure rather than trails the firmware draws.
+  - **Open:** what turns the jack black; how fast the weight slides when the tempo changes; whether
+    clicking E4 zeroes and restores the level (frames 3888–3890 flip 8 → 0 → 8 rings) rather than
+    switching a separate on flag, as the simulator does now.
 
 ### 2.12 Octave popup
 

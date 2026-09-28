@@ -179,7 +179,7 @@ describe('renderFrame (recorded draw calls)', () => {
 		);
 	});
 
-	it('draws the tempo page on its grey panel with the BPM', () => {
+	it('draws the tempo page on its light grey with the BPM, as the device does', () => {
 		const ctx = record({
 			page: 'tempo',
 			bpm: '120',
@@ -187,9 +187,10 @@ describe('renderFrame (recorded draw calls)', () => {
 			swing: 0,
 			metronome: { level: 1, on: true },
 			beat: 0,
-			pendulum: 1
+			pendulum: -1,
+			weight: 80 / 180
 		});
-		expect(ctx.fillsOf(COLORS.tempo).some((f) => f.x1 - f.x0 >= 470)).toBe(true);
+		expect(ctx.fillsOf(COLORS.light).some((f) => f.x1 - f.x0 >= 470)).toBe(true);
 		// three digits of 50 px text left of the metronome
 		const bpm = ctx.fills.filter((f) => f.y1 > 110 && f.y1 < 130 && f.x1 < 180 && f.y1 - f.y0 > 30);
 		expect(bpm).toHaveLength(3);
@@ -353,8 +354,9 @@ describe('renderFrame (recorded draw calls)', () => {
 				groove: 'SH',
 				swing: 0,
 				metronome: { level: 1, on: false },
-				beat: 0,
-				pendulum: 1
+				beat: null,
+				pendulum: -1,
+				weight: 80 / 180
 			})
 		).toBe('tempo 120 bpm, groove SH, metronome off');
 		expect(describeFrame({ page: 'midi', channel: '1', bank: null, program: '1' })).toContain(

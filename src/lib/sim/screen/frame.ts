@@ -48,12 +48,17 @@ export interface TempoFrame {
 	readonly groove: string;
 	/** Swing (+) / shuffle (−) amount, −1…1: the slider's thumb. */
 	readonly swing: number;
-	/** Metronome level 0–1 (how many sound waves) and whether it clicks (the jack's dot). */
+	/**
+	 * Metronome level 0–1 and whether it is on (click E4): the speaker's sound waves show the level
+	 * while it is on, none while it is off.
+	 */
 	readonly metronome: { readonly level: number; readonly on: boolean };
-	/** Beat within the bar (0–3), lit on the metronome's dots. */
-	readonly beat: number;
-	/** Pendulum position −1 (left) … 1 (right). */
+	/** Beat within the bar (0–3) while playing, its dot lit on the metronome; null when stopped. */
+	readonly beat: number | null;
+	/** Pendulum position −1 (left) … 1 (right); it rests at −1. */
 	readonly pendulum: number;
+	/** Where the weight sits on the rod: 0 at the top (40 BPM) … 1 at the bottom (220 BPM). */
+	readonly weight: number;
 }
 
 /** A synth engine's M1 page: header plus the engine's illustration. */

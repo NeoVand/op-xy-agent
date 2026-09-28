@@ -578,19 +578,19 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(trackRow(d)).toBe('...w....');
 		});
 
-		it('counts the beats on the metronome while playing, and rests at the top once stopped (ours)', async () => {
+		it('counts the beats on the metronome while playing, and rests at the left end with no beat lit once stopped (device, 1.1.33)', async () => {
 			const d = await start();
 			await d.click('key.tempo');
-			expect(on(d, 'tempo')).toMatchObject({ beat: 0, pendulum: 1 });
+			expect(on(d, 'tempo')).toMatchObject({ beat: null, pendulum: -1 });
 			await d.click('key.play');
-			const beats: number[] = [];
+			const beats: (number | null)[] = [];
 			for (let i = 0; i < 5; i++) {
 				beats.push(on(d, 'tempo').beat);
 				await d.wait(4 * STEP_MS);
 			}
 			expect(beats).toEqual([0, 1, 2, 3, 0]);
 			await d.click('key.stop');
-			expect(on(d, 'tempo')).toMatchObject({ beat: 0, pendulum: 1 });
+			expect(on(d, 'tempo')).toMatchObject({ beat: null, pendulum: -1 });
 		});
 	});
 

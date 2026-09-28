@@ -23,6 +23,7 @@ import {
 	LFO_TYPES,
 	PLAY_MODES,
 	AUX_NAMES,
+	TEMPO_RANGE,
 	clamp,
 	engineCell,
 	engineParams,
@@ -226,15 +227,20 @@ export function buildFrame(s: SimState): ScreenFrame {
 	if (area) return area.frame(s);
 	switch (s.overlay) {
 		case 'tempo': {
+			// the pendulum swings from end to end in a beat, at an end on each beat, starting from
+			// the left one where it rests; the beat's dot lights only while playing (device, 1.1.33)
 			const beats = s.transport.position / STEPS_PER_BEAT;
+			const playing = s.transport.playing;
+			const { min, max } = TEMPO_RANGE;
 			return {
 				page: 'tempo',
 				bpm: formatBpm(s.tempo.bpm),
 				groove: GROOVE_ABBREVIATIONS[GROOVES[clamp(s.tempo.groove, 0, GROOVES.length - 1)]],
 				swing: s.tempo.swing / 99,
 				metronome: { level: s.tempo.metronome.level / 99, on: s.tempo.metronome.on },
-				beat: Math.floor(beats) % 4,
-				pendulum: s.transport.playing ? Math.cos(Math.PI * beats) : 1
+				beat: playing ? Math.floor(beats) % 4 : null,
+				pendulum: playing ? -Math.cos(Math.PI * beats) : -1,
+				weight: clamp((s.tempo.bpm - min) / (max - min), 0, 1)
 			};
 		}
 		case 'project':

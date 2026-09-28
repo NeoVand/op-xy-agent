@@ -74,6 +74,7 @@ const CORE_SCENARIOS: readonly Scenario[] = [
 		png: 'tempo-005-tap-tempo-to-tap-the-tempo-11-1-edit-te.png',
 		title: 'tempo',
 		page: 'tempo',
+		note: 'Drawn after the device as a camera saw it (docs/research/59-screen-profiling.md §2.11): a light grey page, a dark grey BPM, a white pendulum resting at the left end of its swing and a grey jack. TE’s art has a mid grey page and the pendulum leaning right.',
 		setup: (sim) => {
 			sim.state.tempo.bpm = 125;
 			sim.state.tempo.metronome = { level: 99, on: true };

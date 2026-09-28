@@ -63,7 +63,43 @@ PLAYERS = {
                          region=(0, 0, 22, 26), polarity="light"),
 }
 
-GROUPS = {"players": PLAYERS}
+# The tempo page (docs/research/59-screen-profiling.md §2.11): the speaker is smaller than TE's
+# guide art draws it, with a gap between its box and horn and no bar at the horn's end. Traced on
+# the still frames at 120 BPM, black on the page's light grey.
+TEMPO_STILL = ["steps-693-tempo-start", "steps-699-tempo-bpm-cc80-060", "steps-704-tempo-groove-cc81-064",
+               "steps-708-tempo-restore-cc81-064", "steps-709-tempo-restore-cc80-060"] + frames(
+    3891, 3901, 3912, 3913, 3914, 3915)
+TEMPO = {
+    "tempo.device.speaker": dict(frames=TEMPO_STILL, box=(376, 44, 30, 38), region=(0, 0, 30, 38), polarity="dark"),
+    "tempo.device.jack": dict(frames=TEMPO_STILL, box=(372, 144, 52, 22), region=(0, 0, 52, 22), polarity="dark"),
+}
+
+# Arrange's song mode (docs/research/59-screen-profiling.md §2.9): the loop sign at the header's
+# left is a rounded loop with an arrowhead pointing left along its top, not the boxed arrow of TE's
+# art. Ink on the white header, traced on the settled song-mode frames. Named arrange.device.* so
+# TE's own arrange.* pictograms stay what they are.
+SONG_STILL = frames(845, 846, 848, 853, 859, 862, 864, 870)
+ARRANGE = {
+    "arrange.device.loop": dict(frames=SONG_STILL, box=(8, 2, 32, 20), region=(0, 0, 32, 20), polarity="dark"),
+}
+
+# The auxiliary tracks (docs/research/59-screen-profiling.md §2.13), both ink on white cards:
+# - the brain's manual card: an open hand where auto shows TE's head (the CC sweeps steps-713…739,
+#   in manual, well aligned);
+# - the LFO's amp destination: a speaker with a small wave (steps-941…949, the external audio
+#   track's M4 with amp in the middle row). Those frames sit 1.15 px right of true (the camera
+#   moved at 00:28; research 59 §1.3), so the box is where the card appears in them.
+AUX_MANUAL = [f"steps-{n}-brain-m1-{s}" for n, s in [
+    (713, "manual-cc12-000"), (714, "cc13-000"), (719, "cc13-080"), (722, "cc13-127"),
+    (725, "cc14-032"), (728, "cc14-080"), (731, "cc14-127"), (733, "cc15-032"), (736, "cc15-127")]]
+AUX_AMP = [f"steps-{n}-auxlfo-m4-speed-again-cc40-{v:03d}" for n, v in [
+    (941, 0), (942, 16), (943, 32), (944, 48), (945, 64), (946, 80), (947, 96), (948, 112), (949, 127)]]
+AUXILIARY = {
+    "auxiliary.hand": dict(frames=AUX_MANUAL, box=(0, 80, 65, 65), region=(1, 2, 64, 64.5), polarity="dark"),
+    "auxiliary.amp": dict(frames=AUX_AMP, box=(241.15, 80, 60, 60), region=(8, 4, 52, 36), polarity="dark"),
+}
+
+GROUPS = {"players": PLAYERS, "tempo": TEMPO, "arrange": ARRANGE, "auxiliary": AUXILIARY}
 
 
 def grey(name: str, channel: str = "grey") -> np.ndarray:
@@ -120,7 +156,11 @@ def main() -> None:
                "(OS 1.1.33) screen (docs/research/59-screen-profiling.md). Do not edit by hand. Units: "
                "design pixels (480 × 220), origin at each icon's box (the card it sits on); pages "
                "recolour the fill.")
+    # --group NAME traces one group only (the others' files stay as they are)
+    only = sys.argv[sys.argv.index("--group") + 1] if "--group" in sys.argv else None
     for group, specs in GROUPS.items():
+        if only and group != only:
+            continue
         icons = {name: trace(spec, name, show) for name, spec in specs.items()}
         path = OUT / f"{group}.json"
         path.write_text(json.dumps({"$comment": comment, "format": 1, "icons": icons}, indent="\t") + "\n")

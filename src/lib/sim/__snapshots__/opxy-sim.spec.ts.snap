@@ -107,7 +107,7 @@ exports[`frames and formats > builds stable frames for a new project (snapshot) 
     ],
   },
   "tempo": {
-    "beat": 0,
+    "beat": null,
     "bpm": "120",
     "groove": "SH",
     "metronome": {
@@ -115,8 +115,9 @@ exports[`frames and formats > builds stable frames for a new project (snapshot) 
       "on": false,
     },
     "page": "tempo",
-    "pendulum": 1,
+    "pendulum": -1,
     "swing": 0,
+    "weight": 0.4444444444444444,
   },
 }
 `;
