@@ -3,7 +3,7 @@
 // voices, glides, the filter envelope, and the track's LFO arriving as audio inputs. Rendered in
 // Node, 128 samples at a time as an AudioWorklet would.
 import { describe, expect, it } from 'vitest';
-import { envelopeTime } from '../mapping';
+import { attackSeconds, envelopeSeconds, halfLifeSeconds } from '../mapping';
 import { Adsr } from './adsr';
 import { levelAt, rms } from './analysis';
 import { MOD_CHANNELS, SynthCore, TRACK_OUTPUTS, type CoreReply, type VoiceStart } from './core';
@@ -85,19 +85,43 @@ function pitch(x: Float32Array): number {
 }
 
 describe('envelope', () => {
-	it('follows the measured time law: milliseconds at 0, about 2 s at 50, minutes at 99', () => {
-		expect(envelopeTime(0, 0.001)).toBeCloseTo(0.001, 4);
-		expect(envelopeTime(49.5, 0.001)).toBeGreaterThan(1.8);
-		expect(envelopeTime(49.5, 0.001)).toBeLessThan(2.2);
-		expect(envelopeTime(99, 0.001)).toBeGreaterThan(300);
+	it('follows the measured laws: the attack 1.4 s at CC 64 and six minutes at the top, decay half-lives from 4.5 ms to 5 s', () => {
+		expect(attackSeconds(0)).toBeLessThan(0.001);
+		expect(attackSeconds((64 * 99) / 127)).toBeCloseTo(1.42, 1);
+		expect(attackSeconds(99)).toBeGreaterThan(300);
+		expect(halfLifeSeconds(0)).toBeCloseTo(0.0045, 4);
+		expect(halfLifeSeconds((64 * 99) / 127)).toBeCloseTo(0.281, 3);
+		expect(halfLifeSeconds(99)).toBeCloseTo(4.993, 2);
 	});
 
-	it('attacks linearly, decays to the sustain, and releases to silence', () => {
+	it('rises and falls as the owner’s unit: an attack at CC 64 at 10/50/90 % by 0.10/0.59/1.24 s, a decay at CC 64 halving every 0.28 s and cutting out at −41 dB', () => {
+		const cc = (v: number) => (v * 99) / 127;
+		const env = new Adsr(
+			SR,
+			envelopeSeconds({ attack: cc(64), decay: cc(64), sustain: 0, release: 99 })
+		);
+		env.gateOn();
+		const levels: number[] = [];
+		for (let i = 0; i < 5 * SR; i++) levels.push(env.next());
+		const firstAt = (test: (v: number) => boolean, from = 0) =>
+			(levels.findIndex((v, i) => i >= from && test(v)) - from) / SR;
+		// research 60 §3: the device's 101, 589 and 1244 ms (a few percent of fit)
+		expect(firstAt((v) => v >= 0.1)).toBeCloseTo(0.101, 1);
+		expect(firstAt((v) => v >= 0.5)).toBeCloseTo(0.589, 1);
+		expect(firstAt((v) => v >= 0.9)).toBeCloseTo(1.244, 1);
+		const peak = levels.indexOf(1);
+		expect(firstAt((v) => v <= 0.5, peak)).toBeCloseTo(0.281, 2);
+		// the cut: silence about 6.8 half-lives after the peak, where the device's 1.9 s ends it
+		expect(firstAt((v) => v === 0, peak)).toBeCloseTo(1.9, 0);
+	});
+
+	it('attacks on an RC charge toward twice the peak, decays to the sustain, and releases to silence', () => {
 		const env = new Adsr(SR, { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.1 });
 		env.gateOn();
 		const levels: number[] = [];
 		for (let i = 0; i < SR; i++) levels.push(env.next());
-		expect(levels[Math.round(0.005 * SR)]).toBeCloseTo(0.5, 2);
+		// half way through the attack the charge stands at 2·(1 − 2^−0.5) of the peak
+		expect(levels[Math.round(0.005 * SR)]).toBeCloseTo(2 * (1 - Math.SQRT1_2), 2);
 		expect(levels[Math.round(0.01 * SR)]).toBeCloseTo(1, 2);
 		// four time constants per decay time: 98% of the way to the sustain
 		expect(levels[Math.round(0.11 * SR)]).toBeCloseTo(0.5 + 0.5 * Math.exp(-4), 2);
@@ -214,7 +238,8 @@ describe('the synth core', () => {
 			};
 			return at(480) / at(SR / 2);
 		};
-		const lifted = brightness({ target: 'cutoff', param: 0, depth: 1 });
+		// a quarter of the depth: a full one sweeps the whole range (research 60 §4), past the top
+		const lifted = brightness({ target: 'cutoff', param: 0, depth: 0.25 });
 		expect(lifted).toBeGreaterThan(5);
 		expect(brightness(null)).toBeCloseTo(1, 0);
 	});

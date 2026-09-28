@@ -3,6 +3,9 @@ import { Envelope, TAIL_TAUS, TAUS_PER_TIME, type ParamLike } from './envelope';
 
 type Call = [string, ...number[]];
 
+/** The attack's RC charge (toward twice the peak) at `t` of an attack `attack` long, 0–1 of the peak. */
+const charge = (t: number, attack: number) => 2 * (1 - Math.exp((-t * Math.LN2) / attack));
+
 /** Records automation calls, like an AudioParam would receive them. */
 function recorder(withHold = true): ParamLike & { calls: Call[] } {
 	const calls: Call[] = [];
@@ -25,9 +28,11 @@ describe('envelopes', () => {
 		const env = new Envelope(1, shape, { base: 0, peak: 0.8, curve: 'linear' });
 		const param = recorder();
 		env.schedule(param, 2);
+		// the attack charges toward twice the peak (research 60 §3) and is pinned at the peak
 		expect(param.calls).toEqual([
 			['set', 0, 1],
-			['linear', 0.8, 1.1],
+			['target', 1.6, 1, 0.1 / Math.LN2],
+			['set', 0.8, 1.1],
 			['target', 0.4, 1.1, 0.4 / TAUS_PER_TIME],
 			['target', 0, 2, 0.2 / TAUS_PER_TIME]
 		]);
@@ -38,7 +43,7 @@ describe('envelopes', () => {
 		const env = new Envelope(0, shape, { base: 0, peak: 1, curve: 'linear' });
 		env.schedule(recorder(), 3);
 		expect(env.valueAt(-1)).toBe(0);
-		expect(env.valueAt(0.05)).toBeCloseTo(0.5);
+		expect(env.valueAt(0.05)).toBeCloseTo(charge(0.05, 0.1));
 		expect(env.valueAt(0.1)).toBeCloseTo(1);
 		// four time constants into the decay: 98% of the way to sustain
 		expect(env.valueAt(0.5)).toBeCloseTo(0.5 + 0.5 * Math.exp(-4), 5);
@@ -52,7 +57,8 @@ describe('envelopes', () => {
 		env.schedule(param, 0.05);
 		expect(param.calls).toEqual([
 			['set', 0, 0],
-			['linear', 0.5, 0.05],
+			['target', 2, 0, 0.1 / Math.LN2],
+			['set', charge(0.05, 0.1), 0.05],
 			['target', 0, 0.05, 0.05]
 		]);
 	});
@@ -79,7 +85,7 @@ describe('envelopes', () => {
 		expect(env.gate).toBe(0.05);
 		// already let go: a second release changes nothing
 		env.release(param, 1);
-		expect(param.calls).toHaveLength(5);
+		expect(param.calls).toHaveLength(6);
 	});
 
 	it('falls back to the computed level without cancelAndHoldAtTime', () => {
@@ -89,7 +95,7 @@ describe('envelopes', () => {
 		env.release(param, 0.05, 0.004);
 		expect(param.calls.slice(-3)).toEqual([
 			['cancel', 0.05],
-			['set', 0.5, 0.05],
+			['set', charge(0.05, 0.1), 0.05],
 			['target', 0, 0.05, 0.001]
 		]);
 	});

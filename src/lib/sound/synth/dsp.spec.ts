@@ -239,7 +239,7 @@ describe('filters', () => {
 		expect(through((x) => lp.process(x), 1000)).toBeCloseTo(db(10), 0);
 	});
 
-	it('ladder: 24 dB an octave above the cutoff, and it rings on by itself at full resonance', () => {
+	it('ladder: 24 dB an octave above the cutoff; at full resonance it rings long but dies out, as the owner’s unit (research 60 §2)', () => {
 		const ladder = new Ladder(prewarp(1000, SR), 0);
 		ladder.compensation = 0;
 		expect(through((x) => ladder.process(x), 100, 0.25)).toBeCloseTo(0, 0);
@@ -248,9 +248,11 @@ describe('filters', () => {
 		// a full-scale sine passes nearly clean
 		ladder.reset();
 		expect(through((x) => ladder.process(x), 100)).toBeGreaterThan(-1);
+		// feedback 3.65 at the top, short of self-oscillation (4): an impulse rings, then fades
 		const ringing = new Ladder(prewarp(1000, SR), 1);
 		const y = render(SR, (i) => ringing.process(i === 0 ? 1 : 0));
-		expect(rms(y, SR / 2)).toBeGreaterThan(0.05);
+		expect(rms(y.slice(0, 480))).toBeGreaterThan(rms(y.slice(4800, 5280)) * 10);
+		expect(rms(y, SR / 2)).toBeLessThan(1e-6);
 		expect(Math.max(...y.map(Math.abs))).toBeLessThanOrEqual(2.5);
 	});
 

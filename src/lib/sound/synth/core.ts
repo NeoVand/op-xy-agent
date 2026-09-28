@@ -17,6 +17,7 @@ import type { FilterType } from '$lib/sim/screen/frame';
 import { Adsr } from './adsr';
 import { createEngine, type EngineVoice } from './engines';
 import { Ladder, Svf, prewarp } from './filters';
+import { svfDamping, svfLevelDb, svfShift, zLevelDb, zQ } from './laws';
 import {
 	CONTROL,
 	ELEMENT_CUTOFF_CENTS,
@@ -33,42 +34,65 @@ export * from './protocol';
 
 // ───────────────────────────────────────────────────────────────── filters
 
-/** The shape resonance takes per filter type: TPT state-variable, ladder, and the z pair. */
-interface VoiceFilter {
+/**
+ * The four filter types as the owner's unit measured them (docs/research/60-sound-session.md §2):
+ * TPT state-variable sections and a ladder. `g` comes from {@link prewarp}; `resonance` is 0–99;
+ * `lfoDb` is the LFO's or element's push on the resonance.
+ */
+export interface VoiceFilter {
 	set(g: number, resonance: number, lfoDb: number): void;
 	process(x: number): number;
 }
 
-/** svf: a gentle state-variable lowpass that never quite self-oscillates (Q up to ~17). */
+/** A prewarped gain moved by `octaves` (the svf's resonance lowers its frequency). */
+function shiftGain(g: number, octaves: number): number {
+	return Math.tan(Math.min(Math.atan(g) * Math.pow(2, octaves), Math.PI * 0.49));
+}
+
+/**
+ * svf: two equal state-variable sections in series, a 24 dB lowpass with a soft knee at resonance
+ * 0 (damping 1.39) that sharpens to a peak (0.14); the resonance also lowers its frequency by up to
+ * 0.62 octave and its level by up to 9 dB.
+ */
 class SvfLowpass implements VoiceFilter {
-	readonly #f = new Svf();
-	constructor(readonly highpass = false) {}
+	readonly #a = new Svf();
+	readonly #b = new Svf();
+	#level = 1;
 	set(g: number, resonance: number, lfoDb: number): void {
-		const r = resonance / 99;
-		const k = 2 * (1 - 0.97 * Math.pow(r, 0.8));
-		this.#f.set(g, Math.max(0.01, k / Math.pow(10, lfoDb / 20)));
+		const k = Math.max(0.05, svfDamping(resonance) / Math.pow(10, lfoDb / 20));
+		const shifted = shiftGain(g, svfShift(resonance));
+		this.#a.set(shifted, k);
+		this.#b.set(shifted, k);
+		this.#level = Math.pow(10, svfLevelDb(resonance) / 20);
 	}
 	process(x: number): number {
-		const low = this.#f.process(x);
-		return this.highpass ? this.#f.high : low;
+		return this.#b.process(this.#a.process(x)) * this.#level;
 	}
 }
 
-/** z lowpass / z hipass: a sharper two-pole, Q 0.5 … 25 on an exponential curve. */
+/**
+ * z lowpass / z hipass: one digital two-pole each, very soft at resonance 0 (Q 0.2), the lowpass
+ * peaking to Q 40 at the top, nearly self-oscillating, the hipass only to Q 4; both lose 7 dB.
+ */
 class ZFilter implements VoiceFilter {
 	readonly #f = new Svf();
+	#level = 1;
 	constructor(readonly highpass: boolean) {}
 	set(g: number, resonance: number, lfoDb: number): void {
-		const q = 0.5 * Math.pow(50, resonance / 99) * Math.pow(10, lfoDb / 20);
-		this.#f.set(g, 1 / Math.max(0.5, q));
+		const q = zQ(resonance, this.highpass) * Math.pow(10, lfoDb / 20);
+		this.#f.set(g, 1 / Math.max(0.05, q));
+		this.#level = Math.pow(10, zLevelDb(resonance) / 20);
 	}
 	process(x: number): number {
 		const low = this.#f.process(x);
-		return this.highpass ? this.#f.high : low;
+		return (this.highpass ? this.#f.high : low) * this.#level;
 	}
 }
 
-/** ladder: four poles, whistling into self-oscillation at the top of its resonance. */
+/**
+ * ladder: four one-poles in a loop, the feedback rising to self-oscillation at the top of the
+ * resonance, the bass sinking to (1 + 0.32 k)/(1 + k) of itself.
+ */
 class LadderLowpass implements VoiceFilter {
 	readonly #f = new Ladder();
 	set(g: number, resonance: number, lfoDb: number): void {
@@ -79,7 +103,8 @@ class LadderLowpass implements VoiceFilter {
 	}
 }
 
-function makeFilter(type: FilterType): VoiceFilter {
+/** A voice's filter of `type` (exported for the tests that hold it to the device's curves). */
+export function makeFilter(type: FilterType): VoiceFilter {
 	switch (type) {
 		case 'ladder':
 			return new LadderLowpass();

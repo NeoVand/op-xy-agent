@@ -38,39 +38,60 @@ describe('mapping: envelopes, filter and voice settings', () => {
 		expect(sweep(51, 1, 100) / sweep(50, 1, 100)).toBeCloseTo(
 			sweep(11, 1, 100) / sweep(10, 1, 100)
 		);
-		// release is a handle position: 99 (the handle on the end) is the shortest
+		// the owner's unit (research 60 §3): the attack 1.4 s at CC 64 and six minutes at the top;
+		// decay and release share one half-life law, 4.5 ms to 5 s, and a "time" is four time
+		// constants; release is a handle position, so 99 (the handle on the end) is the shortest
+		const time = (halfLife: number) => (4 * halfLife) / Math.LN2;
 		const sharp = envelopeSeconds({ attack: 0, decay: 0, sustain: 0, release: 99 });
-		expect(sharp).toEqual({ attack: 0.0015, decay: 0.02, sustain: 0, release: 0.015 });
-		// the device's measured law: about 2 s at half, minutes at the top
-		const half = envelopeSeconds({ attack: 49.5, decay: 49.5, sustain: 49.5, release: 49.5 });
-		expect(half.attack).toBeGreaterThan(1.8);
-		expect(half.attack).toBeLessThan(2.2);
-		expect(half.release).toBeCloseTo(half.attack - 0.0015 + 0.015, 6);
+		expect(sharp.attack).toBe(0.0005);
+		expect(sharp.decay).toBeCloseTo(time(0.0045), 6);
+		expect(sharp.release).toBeCloseTo(time(0.0045), 6);
+		const mid = (64 * 99) / 127;
+		const half = envelopeSeconds({ attack: mid, decay: mid, sustain: 49.5, release: 99 - mid });
+		expect(half.attack).toBeCloseTo(1.42, 1);
+		expect(half.decay).toBeCloseTo(time(0.281), 3);
+		expect(half.release).toBeCloseTo(half.decay, 6);
 		const slow = envelopeSeconds({ attack: 99, decay: 99, sustain: 99, release: 0 });
 		expect(slow.attack).toBeGreaterThan(300);
-		expect(slow.release).toBeGreaterThan(300);
+		expect(slow.decay).toBeCloseTo(time(4.993), 2);
+		expect(slow.release).toBeCloseTo(slow.decay, 6);
 		expect(slow.sustain).toBe(1);
-		// a new project's bass (T3, release lane 26129 of 32767) stops in about a tenth of a second
+		// a new project's bass (T3, release lane 26129 of 32767) fades in well under a second
 		const bass = envelopeSeconds({
 			attack: 0,
 			decay: 30,
 			sustain: 40,
 			release: (26129 / 32767) * 99
 		});
-		expect(bass.release).toBeLessThan(0.15);
+		expect(bass.release).toBeLessThan(0.7);
 	});
 
-	it('maps the filter: cutoff 20 Hz–20 kHz, flat to peaky resonance, envelope and key tracking in cents', () => {
-		expect(cutoffHz(0)).toBe(20);
-		expect(cutoffHz(99)).toBeCloseTo(20000);
+	it('maps the filter as the owner’s unit measured it: each type’s cutoff law, resonance, envelope and key tracking', () => {
+		const cc = (v: number) => (v * 99) / 127;
+		// the measured frequencies at CC 64 (research 60 §2)
+		expect(cutoffHz(cc(64), 'ladder')).toBeCloseTo(1936, 3);
+		expect(cutoffHz(cc(64), 'svf')).toBeCloseTo(3178.8, 3);
+		expect(cutoffHz(cc(64), 'z lowpass')).toBeCloseTo(1092, -1);
+		expect(cutoffHz(cc(64), 'z hipass')).toBeCloseTo(547, -1);
+		// the z pair rise a steady 0.083 octave a step, the hipass an octave below the lowpass
+		const zStep = Math.log2(cutoffHz(cc(96), 'z lowpass') / cutoffHz(cc(64), 'z lowpass')) / 32;
+		expect(zStep).toBeCloseTo(0.0828, 4);
+		expect(cutoffHz(0, 'ladder')).toBeLessThan(30);
+		expect(cutoffHz(99, 'ladder')).toBeGreaterThan(20000);
 		expect(resonanceQ(0, 'svf')).toBe(-3);
-		expect(resonanceQ(99, 'z lowpass')).toBeGreaterThan(resonanceQ(99, 'svf'));
-		// a full amount sweeps as far as the cutoff dial does, in a straight line
-		expect(envAmountCents(0)).toBe(0);
-		expect(envAmountCents(99)).toBeCloseTo(1200 * Math.log2(1000));
-		expect(envAmountCents(-99)).toBeCloseTo(-1200 * Math.log2(1000));
-		expect(envAmountCents(49.5)).toBeCloseTo(600 * Math.log2(1000));
-		expect(keyTrackCents(99, 72)).toBe(1200);
+		// the z lowpass peaks far higher than the z hipass (Q 40 against 4)
+		expect(resonanceQ(99, 'z lowpass')).toBeCloseTo(20 * Math.log10(40), 3);
+		expect(resonanceQ(99, 'z hipass')).toBeCloseTo(20 * Math.log10(4.1), 3);
+		expect(resonanceQ(0, 'z lowpass')).toBeCloseTo(20 * Math.log10(0.2), 3);
+		// the envelope adds 0.85 of its steps to the cutoff's, so the depth depends on the cutoff
+		expect(envAmountCents(0, 'svf', 0)).toBe(0);
+		expect(envAmountCents(-40, 'svf', 0)).toBe(0);
+		const full = envAmountCents(99, 'z lowpass', 0);
+		expect(full / 1200).toBeCloseTo(0.85 * 127 * 0.0828, 2);
+		expect(envAmountCents(49.5, 'ladder', 0)).toBeGreaterThan(envAmountCents(49.5, 'ladder', 60));
+		// key tracking pivots on C2: an octave per octave at the top
+		expect(keyTrackCents(99, 48)).toBe(1200);
+		expect(keyTrackCents(99, 36)).toBe(0);
 		expect(keyTrackCents(0, 72)).toBe(0);
 	});
 
@@ -119,8 +140,10 @@ describe('mapping: the LFO', () => {
 		expect(lfoHz(0, 120)).toBeCloseTo(8);
 		// the random LFO counts triplet sixteenths
 		expect(lfoHz(3, 120, true)).toBeCloseTo(3);
-		expect(lfoHz(12, 120)).toBeCloseTo(0.05);
-		expect(lfoHz(12 + 99, 120)).toBeCloseTo(25);
+		// free (research 60 §4): standing still at its first position, a square law to 21.5 Hz
+		expect(lfoHz(12, 120)).toBe(0);
+		expect(lfoHz(12 + 99, 120)).toBeCloseTo(21.5);
+		expect(lfoHz(12 + 49.5, 120)).toBeCloseTo(21.5 / 4);
 	});
 
 	it('routes value and random to the engine or the filter, and knows which restart per note', () => {
@@ -147,17 +170,26 @@ describe('mapping: the LFO', () => {
 	});
 
 	it('makes tremolo a vibrato and a volume wobble, and duck a dip on another track', () => {
+		// measured (research 60 §4): vibrato ±1500 cents at full, as the cube of the amount; the
+		// level dips to 1 − 0.82·|volume|
 		expect(lfoRoute(lfo({ type: 'tremolo', amount: 99, volume: -99 }), 120)).toMatchObject({
 			kind: 'tremolo',
-			vibrato: 50,
-			volume: -1
+			vibrato: 1500,
+			volume: -0.82
 		});
+		const gentle = lfoRoute(lfo({ type: 'tremolo', amount: 49.5, volume: 0 }), 120);
+		expect(gentle.kind === 'tremolo' && gentle.vibrato).toBeCloseTo(1500 / 8);
 		expect(lfoRoute(lfo({ type: 'tremolo', amount: 0, volume: 0 }), 120).kind).toBe('none');
 		expect(lfoRoute(lfo({ type: 'duck', amount: -99, source: 1 }), 120)).toMatchObject({
 			kind: 'duck',
 			source: 0,
 			depth: 1
 		});
+		// hold 52 ms to 0.4 s, and a release that is faster the higher it goes (641 ms to 7 ms)
+		const duck = (hold: number, release: number) =>
+			lfoRoute(lfo({ type: 'duck', amount: 99, source: 1, hold, release }), 120);
+		expect(duck(0, 0)).toMatchObject({ hold: 0.052, release: 0.641 });
+		expect(duck(99, 99)).toMatchObject({ hold: 0.394, release: 0.007 });
 		// the metronome ducks on every beat; an auxiliary track's notes make no sound here
 		expect(lfoRoute(lfo({ type: 'duck', amount: 60, source: DUCK_METRONOME }), 120)).toMatchObject({
 			kind: 'duck',

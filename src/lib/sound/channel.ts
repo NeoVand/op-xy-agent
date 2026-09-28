@@ -156,11 +156,15 @@ export class Channel {
 	}
 
 	/** This track's level dips at `time` because its duck source played. */
+	/**
+	 * Dips the level for a duck: down in about 6 ms, held `hold` seconds, back to 90 % over
+	 * `release` seconds (research 60 §4).
+	 */
 	duck(time: number, depth: number, hold: number, release: number): void {
 		const g = this.#duck.gain;
 		g.cancelScheduledValues(time);
-		g.setTargetAtTime(1 - depth, time, 0.004);
-		g.setTargetAtTime(1, time + 0.012 + hold, release / 4);
+		g.setTargetAtTime(1 - depth, time, 0.002);
+		g.setTargetAtTime(1, time + 0.006 + hold, Math.max(release, 0.001) / Math.LN10);
 	}
 
 	/** Sets a parameter when its value changed since last time. */

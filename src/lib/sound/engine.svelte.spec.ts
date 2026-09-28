@@ -93,9 +93,9 @@ function beat(): SimState {
 	toggleStep(keys, 8, [62, 65, 69], 80);
 	keys.steps[0].notes.forEach((n) => (n.length = 6));
 	// short releases end every tail inside the render (release is the handle's position: high is
-	// short)
-	s.tracks[2].amp.release = 80;
-	s.tracks[3].amp.release = 80;
+	// short; 97 halves in about 12 ms on the measured law, research 60 §3)
+	s.tracks[2].amp.release = 97;
+	s.tracks[3].amp.release = 97;
 	s.tempo.metronome.on = true;
 	s.transport.playing = true;
 	return s;
@@ -240,7 +240,7 @@ describe('the sound engine, rendered offline', () => {
 				const s = defaultState();
 				s.tracks[3].sends[3] = send;
 				// a short release (high: the handle near the end), so what rings on is the reverb
-				s.tracks[3].amp.release = 80;
+				s.tracks[3].amp.release = 97;
 				engine.sync(s);
 				engine.noteOn({
 					track: 3,

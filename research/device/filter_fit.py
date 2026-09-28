@@ -47,6 +47,8 @@ def model_db(kind: str, params, f: np.ndarray, fs: float, highpass: bool) -> np.
         h = 1 / (1 + s)
     elif kind == "2p":
         h = 1 / (1 + s / max(res, 0.05) + s * s)
+    elif kind == "2x2p":  # two identical two-pole sections in series
+        h = (1 / (1 + s / max(res, 0.05) + s * s)) ** 2
     else:  # ladder: four one-poles in a loop with gain k (0 ... 4 = self-oscillation)
         g = 1 / (1 + s)
         h = g**4 / (1 + max(res, 0.0) * g**4) * (1 + max(res, 0.0))
@@ -59,10 +61,11 @@ def fit(kind: str, f: np.ndarray, r: np.ndarray, fs: float, highpass: bool):
         return None
     best = None
     for fc0 in (60, 250, 1000, 4000, 12000):
-        res0 = 0.707 if kind == "2p" else 0.5
+        two = kind in ("2p", "2x2p")
+        res0 = 0.707 if two else 0.5
         x0 = [fc0, res0, 0.0]
-        lo = [15, 0.05 if kind == "2p" else 0.0, -12]
-        hi = [21000, 40 if kind == "2p" else 4.5, 12]
+        lo = [15, 0.05 if two else 0.0, -12]
+        hi = [21000, 40 if two else 4.5, 12]
         if kind == "1p":
             lo[1], hi[1], x0[1] = 0.0, 1e-6, 0.0
         try:
@@ -100,7 +103,7 @@ def main() -> None:
             continue
         highpass = c["track"] == 7
         r = band_db(*spectrum(c)) - ref_db
-        fits = {k: fit(k, BANDS, r, fs, highpass) for k in ("1p", "2p", "4p")}
+        fits = {k: fit(k, BANDS, r, fs, highpass) for k in ("1p", "2p", "2x2p", "4p")}
         fits = {k: v for k, v in fits.items() if v}
         if not fits:
             rows.append({"take": name, "track": c["track"], "cutoff_cc": cc[32], "res_cc": cc[33], "fit": None})

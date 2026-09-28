@@ -1,10 +1,11 @@
 /**
  * From the simulator's encoder values to sound: seconds, hertz, cents and gains for the envelopes,
  * filter, LFO, voice settings, mixer and drum keys, and what each synth engine's four M1 parameters
- * do. TE publishes no curves, so these are ours: exponential for times and frequencies (every detent
- * is the same ratio), powers for levels and amounts (fine control near zero), and tuned so that a
- * new project (M1 mostly at 80, level 80, preset volume 44) sounds musical rather than extreme.
- * Pure, so the engine, the scheduler and the tests share them.
+ * do. The envelopes, filters, LFO rates and depths, duck and drum fade follow what the owner's unit
+ * measured (docs/research/60-sound-session.md); the rest is ours: exponential for times and
+ * frequencies (every detent is the same ratio), powers for levels and amounts (fine control near
+ * zero), and tuned so that a new project sounds musical rather than extreme. Pure, so the engine,
+ * the scheduler and the tests share them.
  */
 import type { EngineId } from '$lib/core/opxy';
 import type { Region as SampleRegion } from '$lib/sim/areas/sample/state';
@@ -17,6 +18,10 @@ import {
 } from '$lib/sim/params';
 import type { FilterType } from '$lib/sim/screen/frame';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from '$lib/sim/screen/pages/lfo';
+import { TAUS_PER_TIME } from './envelope';
+import { logTable, toCc, zQ } from './synth/laws';
+
+export { ATTACK_TARGET, DECAY_CUT, toCc, zLevelDb, zQ } from './synth/laws';
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
@@ -40,36 +45,87 @@ export interface Adsr {
 	readonly release: number;
 }
 
-/**
- * An envelope time in seconds for an encoder value 0–99, on the OP-XY's measured law: exponential,
- * about 2 s at half and six minutes at 99 (op-forums t/31132, two fits agreeing on the attack; we
- * assume decay and release follow it; docs/research/57-synth-engines.md §4). The fit's 11 ms at 0
- * gives way to `floor`, so the sharpest setting is as quick as it can be without a click.
- */
-export function envelopeTime(value: number, floor: number): number {
-	return 0.0111 * (Math.exp(10.386 * unit(value)) - 1) + floor;
-}
+/** The quickest attack: the device's 0 is instant; half a millisecond keeps it from clicking. */
+const ATTACK_FLOOR = 0.0005;
 
 /**
- * Envelope times on the measured law: from 1.5 ms (attack), 20 ms (decay) or 15 ms (release) up.
- * The release lane is the release handle's position on the M2 graph (camera, 1.1.33; note 59
- * §2.2): at 99 the handle sits on the end, at 0 it starts 107 px before it. So a higher value is a
- * shorter release, and the time runs on the attack's law from the other end. A new project's bass
- * (release 79) stops in about 0.1 s, as the device does.
+ * The attack's length in seconds for its value 0–99, measured on the owner's unit (research 60 §3):
+ * 5.16 ms · (e^(0.0878 · CC) − 1), so 77 ms at CC 32, 1.4 s at 64 and six minutes at 127. Its
+ * shape is an RC charge toward twice the peak that stops at the peak (`ATTACK_TARGET`).
+ */
+export function attackSeconds(v: number): number {
+	return Math.max(ATTACK_FLOOR, 0.00516 * (Math.exp(0.0878 * toCc(v)) - 1));
+}
+
+/** Decay and release half-lives measured at these CCs (research 60 §3), in milliseconds. */
+const HALF_LIFE_CC = [0, 16, 32, 48, 64, 72, 80, 88, 96, 104, 112, 120, 127] as const;
+const HALF_LIFE_MS = [4.5, 64, 128, 197, 281, 339, 421, 547, 758, 1129, 1802, 3046, 4993] as const;
+
+/**
+ * The half-life in seconds of a decay at `v` (0–99), or of a release at 99 − `v`: decay and release
+ * fall exponentially on one law, nearly linear up to the middle and steepening past it, 4.5 ms to
+ * 5 s (research 60 §3).
+ */
+export function halfLifeSeconds(v: number): number {
+	return logTable(HALF_LIFE_CC, HALF_LIFE_MS, toCc(v)) / 1000;
+}
+
+/** A decay or release "time" (four time constants, as the envelopes take them) from a half-life. */
+const timeOfHalfLife = (half: number): number => (TAUS_PER_TIME * half) / Math.LN2;
+
+/**
+ * An envelope in seconds on the measured laws. The release lane is the release handle's position
+ * on the M2 graph (camera, 1.1.33; note 59 §2.2): at 99 the handle sits on the end, at 0 it starts
+ * 107 px before it, so a higher value is a shorter release, on the decay's law from the other end.
+ * A new project's bass (release 79) fades in about 0.7 s.
  */
 export function envelopeSeconds(env: Envelope99): Adsr {
 	return {
-		attack: envelopeTime(env.attack, 0.0015),
-		decay: envelopeTime(env.decay, 0.02),
+		attack: attackSeconds(env.attack),
+		decay: timeOfHalfLife(halfLifeSeconds(env.decay)),
 		sustain: unit(env.sustain),
-		release: envelopeTime(99 - env.release, 0.015)
+		release: timeOfHalfLife(halfLifeSeconds(99 - env.release))
 	};
 }
 
 // ─────────────────────────────────────────────────────────── filter (M3)
 
-/** Cutoff: 20 Hz … 20 kHz, about one octave every ten detents. */
-export const cutoffHz = (v: number): number => sweep(v, 20, 20000);
+/**
+ * Each type's cutoff against the lane's CC, measured on the owner's unit (research 60 §2): the
+ * ladder's one-pole corner and the svf sections' natural frequency every 8 steps (log-interpolated,
+ * carried on at the end slopes), the z pair's natural frequency on a straight line in log frequency
+ * (0.083 octave a step, the z hipass an octave below the z lowpass).
+ */
+const CUTOFF_TABLE_CC = [0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112] as const;
+const CUTOFF_TABLES: Partial<Record<FilterType, readonly number[]>> = {
+	ladder: [
+		23.2, 51.1, 83.3, 160.4, 304.3, 502.5, 815, 1262.7, 1936, 2926.6, 4558.5, 6691, 9864.3, 14251,
+		20183.5
+	],
+	svf: [26, 62.2, 131.7, 259, 467.1, 777.3, 1261.6, 2013.6, 3178.8, 5356.5, 8537.6, 13889]
+};
+const CUTOFF_LINES: Partial<Record<FilterType, readonly [number, number]>> = {
+	'z lowpass': [4.792, 0.0828],
+	'z hipass': [3.891, 0.0813]
+};
+
+/** The cutoff in hertz at a lane position (CC, beyond 0–127 when modulation pushes it there). */
+export function cutoffAtCc(cc: number, type: FilterType): number {
+	const line = CUTOFF_LINES[type];
+	if (line) return Math.pow(2, line[0] + line[1] * cc);
+	const hz = CUTOFF_TABLES[type] ?? (CUTOFF_TABLES.svf as readonly number[]);
+	const xs = CUTOFF_TABLE_CC.slice(0, hz.length);
+	const last = xs.length - 1;
+	// past either end, on the end segment's slope (octaves per step)
+	const lo = Math.log2(hz[1] / hz[0]) / (xs[1] - xs[0]);
+	const hi = Math.log2(hz[last] / hz[last - 1]) / (xs[last] - xs[last - 1]);
+	if (cc <= xs[0]) return hz[0] * Math.pow(2, lo * (cc - xs[0]));
+	if (cc >= xs[last]) return hz[last] * Math.pow(2, hi * (cc - xs[last]));
+	return logTable(xs, hz, cc);
+}
+
+/** The cutoff (0–99) of a filter type in hertz. */
+export const cutoffHz = (v: number, type: FilterType = 'svf'): number => cutoffAtCc(toCc(v), type);
 
 /** How a filter type is built from biquads: response, stages (12 dB/oct each), peak Q in dB. */
 export interface FilterDesign {
@@ -79,39 +135,49 @@ export interface FilterDesign {
 }
 
 /**
- * The four types factory presets use, as biquad designs: svf a 12 dB lowpass, ladder two stages
- * (24 dB, the resonance on the second), z lowpass a sharper-peaked 12 dB lowpass, z hipass a highpass.
+ * The four types as biquad designs, for the Web Audio voices (the synth core models them closer,
+ * `synth/core.ts`): ladder and svf are 24 dB lowpasses (two stages, the resonance on the second),
+ * the z pair single two-poles, the z lowpass peaking far higher than the z hipass (research 60 §2).
  */
 export const FILTER_DESIGNS: Readonly<Record<FilterType, FilterDesign>> = {
-	svf: { kind: 'lowpass', stages: 1, maxQ: 18 },
+	svf: { kind: 'lowpass', stages: 2, maxQ: 17 },
 	ladder: { kind: 'lowpass', stages: 2, maxQ: 20 },
-	'z lowpass': { kind: 'lowpass', stages: 1, maxQ: 22 },
-	'z hipass': { kind: 'highpass', stages: 1, maxQ: 18 }
+	'z lowpass': { kind: 'lowpass', stages: 1, maxQ: 32 },
+	'z hipass': { kind: 'highpass', stages: 1, maxQ: 12 }
 };
 
 /** The design of a filter type (unknown types fall back to svf). */
 export const filterDesign = (type: FilterType): FilterDesign =>
 	FILTER_DESIGNS[type] ?? FILTER_DESIGNS.svf;
 
-/** Resonance as a biquad Q in dB: flat (−3 dB, Butterworth) at 0, the type's peak at 99. */
-export const resonanceQ = (v: number, type: FilterType): number =>
-	-3 + (filterDesign(type).maxQ + 3) * Math.pow(unit(v), 1.4);
-
-/** The cutoff dial's whole sweep, 20 Hz to 20 kHz, in cents. */
-const CUTOFF_SWEEP_CENTS = 1200 * Math.log2(20000 / 20);
-
 /**
- * Filter-envelope depth (−99…99) in cents: that share of the cutoff dial's own sweep, so an amount
- * of 33 opens the filter a third of the way at the envelope's peak (our assumption, as the cutoff
- * law is: neither is measured yet; the device's presets lean on it, bass/shoulder resting at
- * cutoff 0 and opening on its envelope).
+ * Resonance as a biquad Q in dB for the Web Audio voices: the z pair's measured Q; for the 24 dB
+ * types a Butterworth-flat −3 dB at 0 rising to the type's peak at 99.
  */
-export function envAmountCents(v: number): number {
-	return (clamp(v, -99, 99) / 99) * CUTOFF_SWEEP_CENTS;
+export function resonanceQ(v: number, type: FilterType): number {
+	if (type === 'z lowpass' || type === 'z hipass') {
+		return 20 * Math.log10(zQ(v, type === 'z hipass'));
+	}
+	return -3 + (filterDesign(type).maxQ + 3) * Math.pow(unit(v), 1.4);
 }
 
-/** Key tracking (0–99): the cutoff follows the note away from C4, up to an octave per octave. */
-export const keyTrackCents = (v: number, note: number): number => (note - 60) * 100 * unit(v);
+/**
+ * How far the filter envelope opens the cutoff at its peak, in cents: the device adds about 0.85 of
+ * the amount's steps to the cutoff's own steps (research 60 §2), so the depth depends on where the
+ * cutoff rests and on the type's law. The amount runs from none to full (no negative side).
+ */
+export function envAmountCents(amount: number, type: FilterType = 'svf', cutoff = 0): number {
+	const from = toCc(cutoff);
+	const to = from + 0.85 * toCc(Math.max(0, amount));
+	return 1200 * Math.log2(cutoffAtCc(to, type) / cutoffAtCc(from, type));
+}
+
+/** The note key tracking pivots on: C2 (research 60 §2). */
+export const KEY_TRACK_PIVOT = 36;
+
+/** Key tracking (0–99): the cutoff follows the note away from C2, up to an octave per octave. */
+export const keyTrackCents = (v: number, note: number): number =>
+	(note - KEY_TRACK_PIVOT) * 100 * unit(v);
 
 // ─────────────────────────────────────────────────────────── voice (M2 + shift)
 
@@ -229,8 +295,12 @@ export function sampleRegion(start: number, end: number, duration: number): Regi
 	return { start: Math.min(from, Math.max(0, duration - 0.005)), end: to };
 }
 
-/** Sample fade (0–99): how much of the region's end fades out, in seconds. */
-export const fadeSeconds = (fade: number, length: number): number => unit(fade) * length;
+/**
+ * A drum key's sample fade (0–99) in seconds: a linear fade-in from the start marker lasting a
+ * fixed time, not a share of the sample, 0.25 s at 50 and 0.95 s at 99 (research 60 §5; the screen
+ * draws it as a ramp rising from the start marker).
+ */
+export const fadeSeconds = (fade: number): number => 0.95 * unit(fade) ** 2;
 
 /** Where a synth sampler's region plays in its buffer, in seconds. */
 export interface RegionPlay extends Region {
@@ -264,7 +334,9 @@ export function regionSeconds(region: SampleRegion, duration: number): RegionPla
 
 /**
  * LFO speed in hertz. The synced range counts sixteenths per cycle (triplet sixteenths for the
- * random LFO) at the tempo; past it the free range runs 0.05–25 Hz.
+ * random LFO) at the tempo, which matches the device where the counts are powers of two (a quarter
+ * note per cycle at CC 32, research 60 §4); past it the free range stands still at its first
+ * position and rises as a square law to 21.5 Hz, as measured.
  */
 export function lfoHz(speed: number, bpm: number, triplets = false): number {
 	const synced = LFO_SYNC_STEPS.length;
@@ -273,8 +345,11 @@ export function lfoHz(speed: number, bpm: number, triplets = false): number {
 		const sixteenth = (15 / bpm) * (triplets ? 2 / 3 : 1);
 		return 1 / (count * sixteenth);
 	}
-	return sweep(speed - synced, 0.05, 25);
+	return FREE_LFO_TOP_HZ * unit(speed - synced) ** 2;
 }
+
+/** The free LFO's fastest rate (research 60 §4). */
+export const FREE_LFO_TOP_HZ = 21.5;
 
 /** Waveforms the engine's LFO plays. */
 export type LfoWave = 'sine' | 'random';
@@ -356,8 +431,10 @@ export function lfoRoute(lfo: Lfo, bpm: number): LfoRoute {
 			return NO_LFO;
 		}
 		case 'tremolo': {
-			const vibrato = (clamp(lfo.amount, -99, 99) / 99) * 50;
-			const volume = clamp(lfo.volume, -99, 99) / 99;
+			// measured (research 60 §4): vibrato ±1500 cents at full, growing as the cube of the
+			// amount; the level dips to 1 − 0.82·|volume|
+			const vibrato = TREMOLO_VIBRATO_CENTS * (clamp(lfo.amount, -99, 99) / 99) ** 3;
+			const volume = TREMOLO_VOLUME_DEPTH * (clamp(lfo.volume, -99, 99) / 99);
 			if (vibrato === 0 && volume === 0) return NO_LFO;
 			return { kind: 'tremolo', hz: lfoHz(lfo.speed, bpm), vibrato, volume };
 		}
@@ -388,8 +465,8 @@ export function lfoRoute(lfo: Lfo, bpm: number): LfoRoute {
 							? DUCK_ON_NOTHING
 							: Math.max(1, source) - 1,
 				depth,
-				hold: sweep(lfo.hold, 0.01, 1),
-				release: sweep(lfo.release, 0.02, 2)
+				hold: duckHoldSeconds(lfo.hold),
+				release: duckReleaseSeconds(lfo.release)
 			};
 		}
 		default:
@@ -402,8 +479,30 @@ export const DUCK_ON_BEAT = -1;
 /** A duck's source when it is an auxiliary track, whose notes make no sound in the browser. */
 export const DUCK_ON_NOTHING = -2;
 
-/** How far a full-depth LFO moves the cutoff (cents) and the resonance (dB). */
-export const LFO_CUTOFF_CENTS = 3600;
+/** Tremolo's vibrato at full amount (cents) and how far its volume card dips the level. */
+export const TREMOLO_VIBRATO_CENTS = 1500;
+export const TREMOLO_VOLUME_DEPTH = 0.82;
+
+/** The duck's hold and release measured at CC 0, 32, 64, 96 and 127 (research 60 §4). */
+const DUCK_CC = [0, 32, 64, 96, 127] as const;
+const DUCK_HOLD_MS = [52, 59, 98, 297, 394] as const;
+/** Time to recover to 90 % after the hold: higher is faster, as on the amp release. */
+const DUCK_RELEASE_MS = [641, 364, 163, 43, 7] as const;
+
+/** How long the duck holds the level down (seconds) at hold 0–99. */
+export const duckHoldSeconds = (v: number): number =>
+	logTable(DUCK_CC, DUCK_HOLD_MS, toCc(v)) / 1000;
+
+/** How long the duck takes to recover to 90 % (seconds) at release 0–99. */
+export const duckReleaseSeconds = (v: number): number =>
+	logTable(DUCK_CC, DUCK_RELEASE_MS, toCc(v)) / 1000;
+
+/**
+ * How far a full-depth LFO moves the cutoff (cents) and the resonance (dB). Half the amount already
+ * sweeps the whole range from the middle of the cutoff (research 60 §4): about ±127 cutoff steps
+ * at full, some 10.7 octaves.
+ */
+export const LFO_CUTOFF_CENTS = 12800;
 export const LFO_RESONANCE_DB = 12;
 
 // ─────────────────────────────────────────────────────────── metronome

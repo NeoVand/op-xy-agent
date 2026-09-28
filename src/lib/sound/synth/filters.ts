@@ -7,6 +7,8 @@
  * the output's rate. Coefficients come from {@link prewarp}.
  */
 
+import { LADDER_COMPENSATION, ladderFeedback } from './laws';
+
 /** tan(π · hz / sampleRate), the prewarped gain every TPT filter here takes, capped below Nyquist. */
 export function prewarp(hz: number, sampleRate: number): number {
 	const f = Math.min(Math.max(hz, 5), sampleRate * 0.49);
@@ -74,24 +76,25 @@ const LADDER_HEADROOM = 2;
 /**
  * A four-pole (24 dB/octave) lowpass ladder: four one-pole stages in a loop, solved without a unit
  * delay, the feedback saturating so that it self-oscillates smoothly near `resonance` 1 instead of
- * blowing up. `compensation` restores some of the bass that resonance takes away (0–1).
+ * blowing up. `compensation` restores some of the bass that resonance takes away (0–1; the owner's
+ * unit keeps about a third of it, docs/research/60-sound-session.md §2).
  */
 export class Ladder {
 	readonly #s = new Float64Array(4);
 	#G = 0.3;
 	#beta = 0.7;
 	#k = 0;
-	compensation = 0.5;
+	compensation = LADDER_COMPENSATION;
 
 	constructor(g = 0.5, resonance = 0) {
 		this.set(g, resonance);
 	}
 
-	/** `g` from {@link prewarp}; `resonance` 0–1 (feedback up to a little past self-oscillation). */
+	/** `g` from {@link prewarp}; `resonance` 0–1 (feedback 4·r^0.9, self-oscillating at the top). */
 	set(g: number, resonance: number): void {
 		this.#G = g / (1 + g);
 		this.#beta = 1 / (1 + g);
-		this.#k = 4.1 * Math.min(Math.max(resonance, 0), 1);
+		this.#k = ladderFeedback(resonance);
 	}
 
 	process(x: number): number {

@@ -3,9 +3,12 @@
  * sequenced note's length is known when it is scheduled, so its whole envelope goes on at once and
  * nothing has to be cancelled. Held notes (live keys), steals and the transport stopping release
  * from wherever the curve is: through `cancelAndHoldAtTime` where the browser has it, else by
- * setting the level the maths says the curve has reached.
+ * setting the level the maths says the curve has reached. The attack in level (amplitude) is an RC
+ * charge toward twice the peak that stops at the peak, as the owner's unit measured it
+ * (docs/research/60-sound-session.md §3); in ratio (frequency) it ramps evenly.
  */
 import type { Adsr } from './mapping';
+import { ATTACK_TARGET } from './synth/laws';
 
 /** The part of AudioParam an envelope uses (a recording fake in tests). */
 export interface ParamLike {
@@ -82,8 +85,8 @@ export class Envelope {
 		const t = time - this.start;
 		const { attack } = this.shape;
 		if (t < attack) {
-			const x = t / attack;
-			return curve === 'linear' ? base + (peak - base) * x : base * Math.pow(peak / base, x);
+			if (curve === 'exponential') return base * Math.pow(peak / base, t / attack);
+			return base + (peak - base) * ATTACK_TARGET * (1 - Math.exp((-t * Math.LN2) / attack));
 		}
 		const sustain = this.sustainLevel;
 		return sustain + (peak - sustain) * Math.exp(-(t - attack) / this.#decayTau);
@@ -93,24 +96,34 @@ export class Envelope {
 		return this.shape.decay / TAUS_PER_TIME;
 	}
 
-	#ramp(param: ParamLike, value: number, time: number): void {
-		if (this.range.curve === 'linear') param.linearRampToValueAtTime(value, time);
-		else param.exponentialRampToValueAtTime(value, time);
+	/** The attack from the start up to `until` (the peak, or a gate that cuts it short). */
+	#attack(param: ParamLike, until: number): void {
+		const { base, peak, curve } = this.range;
+		if (curve === 'exponential') {
+			param.exponentialRampToValueAtTime(this.#held(until), until);
+			return;
+		}
+		const attack = this.shape.attack;
+		if (attack > 0) {
+			param.setTargetAtTime(base + (peak - base) * ATTACK_TARGET, this.start, attack / Math.LN2);
+		}
+		// the charge has reached the peak (or the gate's level) by then: pin it there
+		param.setValueAtTime(until >= this.start + attack ? peak : this.#held(until), until);
 	}
 
 	/** Puts the curve on `param`: attack, decay and sustain, and the release when the gate is known. */
 	schedule(param: ParamLike, gate = Infinity): void {
 		this.gate = Math.max(gate, this.start);
-		const { base, peak } = this.range;
+		const { base } = this.range;
 		const top = this.start + this.shape.attack;
 		param.setValueAtTime(base, this.start);
 		if (this.gate < top) {
-			// let go during the attack: ramp only as far as it gets, then release
-			this.#ramp(param, this.#held(this.gate), this.gate);
+			// let go during the attack: only as far as it gets, then release
+			this.#attack(param, this.gate);
 			param.setTargetAtTime(base, this.gate, this.#releaseTau);
 			return;
 		}
-		this.#ramp(param, peak, top);
+		this.#attack(param, top);
 		param.setTargetAtTime(this.sustainLevel, top, this.#decayTau);
 		if (Number.isFinite(this.gate)) param.setTargetAtTime(base, this.gate, this.#releaseTau);
 	}

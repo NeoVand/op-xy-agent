@@ -610,7 +610,7 @@ export interface BufferPlay {
 	readonly loop: Region | null;
 	/** −1…1 (drum key pan). */
 	readonly pan: number;
-	/** Seconds of the region's end that fade out (drum key fade). */
+	/** Seconds the sound fades in over from its start (drum key fade, research 60 §5). */
 	readonly fade: number;
 	/** Follows portamento (samplers) or keeps its tune (drums). */
 	readonly glides: boolean;
@@ -640,10 +640,10 @@ export function bufferSource(
 	if (play.glides) g.pitched.push({ param: source.playbackRate, ratio: play.rate / hz });
 	const level = g.gain(play.gain);
 	source.connect(level);
-	if (!play.loop && play.fade > 0) {
-		const end = start + length / play.rate;
-		level.gain.setValueAtTime(play.gain, Math.max(start, end - play.fade / play.rate));
-		level.gain.linearRampToValueAtTime(0, end);
+	if (play.fade > 0) {
+		// a linear fade-in of a fixed time from the start marker, as the device plays it
+		level.gain.setValueAtTime(0, start);
+		level.gain.linearRampToValueAtTime(play.gain, start + play.fade);
 	}
 	let out: AudioNode = level;
 	if (play.pan !== 0) out = level.connect(g.panner(play.pan));

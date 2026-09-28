@@ -765,7 +765,7 @@ export class SoundEngine {
 				region,
 				loop: looping ? region : null,
 				pan: Math.max(-1, Math.min(1, panValue(key.pan) + (request.pan ?? 0))),
-				fade: fadeSeconds(key.fade, region.end - region.start),
+				fade: fadeSeconds(key.fade),
 				glides: false,
 				gain: dbGain(key.gain)
 			},
@@ -830,10 +830,10 @@ export class SoundEngine {
 		}
 		return {
 			design: filterDesign(f.type),
-			hz: cutoffHz(f.cutoff) * Math.pow(2, keyTrackCents(f.keyTracking, note) / 1200),
+			hz: cutoffHz(f.cutoff, f.type) * Math.pow(2, keyTrackCents(f.keyTracking, note) / 1200),
 			q: resonanceQ(f.resonance, f.type),
 			envelope: envelopeSeconds(settings.filterEnv),
-			depth: envAmountCents(f.envAmount)
+			depth: envAmountCents(f.envAmount, f.type, f.cutoff)
 		};
 	}
 

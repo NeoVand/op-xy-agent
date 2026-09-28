@@ -82,8 +82,11 @@ export interface ElementModulation {
 	readonly depth: number;
 }
 
-/** How far a full element depth moves the cutoff (cents) and resonance (dB), as a full LFO does. */
-export const ELEMENT_CUTOFF_CENTS = 3600;
+/**
+ * How far a full element depth moves the cutoff (cents) and resonance (dB), as a full LFO does (about
+ * ±127 cutoff steps: positive amounts opened the z hipass fully on the owner's unit, research 60 §4).
+ */
+export const ELEMENT_CUTOFF_CENTS = 12800;
 export const ELEMENT_RESONANCE_DB = 12;
 
 /** What the main thread tells the core. */
