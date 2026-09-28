@@ -310,22 +310,51 @@ are design px (capture rows × 220/222).
 
 ### 2.10 Mixer
 
+Rebuilt in `src/lib/sim/areas/mixer/` (`draw.ts`, `eq.ts`). Edge-distance checks against the frames
+below gave: M1 popup 1.0 / 0.3 px, EQ 0.26 / 0.17, saturator 0.33 / 0.25, master 0.57 / 0.49
+(device→sim / sim→device).
+
 - **M1:**
   - eight columns, each with a number, a pan dot along the bottom and a level line; CC 7 and 10 move
     them;
-  - turning E1 or E2 swaps the selected track's column for two boxed labels "I" and "II" with a dark
-    send bar rising in each half, snapping back after ~1 s;
   - CC38 changes the send but shows nothing.
-- **M2 EQ:** an isometric scene of panels on a grid floor, plus a slider track with an "N" end.
-  - Low, mid and high (CC90 on channels 1–3) tilt their panel groups: flat at 0, upright at 127, 64
-    as found.
-  - E4 slides the knob along the track and morphs the scene: low flattens, mid stands up, high
-    flattens.
-  - CC90 on channel 4 moved nothing visible.
-- **M3 saturator:** four vertical tick ladders (gain, clip, tone, mix), with caps in the encoders'
-  styles.
-- **M4 master:** percussion and melodic levels as big numbers, a tall bar in the middle (E3 shortens
-  it), and a VU meter (−20 to +3) over "master".
+  - **Send popup** (b1-069…096): E1 or E2 swaps the selected track's column for two halves.
+    - Each half has a 16 px box with a 1 px edge at y 6–22, holding "I" or "II" (10 px, baseline
+      about 17).
+    - A bar rises from the foot, top = 215 − 185·send/99: a 5 px stub at 0, up to y 30 at full.
+    - On T3, FX I is near black and FX II the second grey; edges and numerals are black.
+    - There is no fade: it snaps back about a second after the last turn.
+  - The core page under it still differs:
+    - The level bar thickens with the level, even stopped: top 215 − 186.6·L, bottom 219.1 − 170.2·L
+      (L 0–1), so 4 px at 0 and 20.5 px at full.
+    - T3's number and pan dot are black on the device.
+    - The pan dot's centre is at y 210.4 and x = strip left + 25.9 + 21.45·pan.
+- **M2 EQ:** an isometric scene of panels on a grid floor, and a slider track with an "N" end.
+  - The floor grid slopes ±2/3, with cells of 29.9 × 19.9 px.
+  - Panels: low is two 4 × 4-cell panels, mid four 2 × 2, high eight 1 × 1. Every row spans eight
+    cells in depth, and each panel is hinged at its near edge.
+  - Tilt is 60° × CC/127 for every row, so CC 127 leans a panel to 60°, not upright. Heights are
+    drawn about 1.25× taller than a true projection. The black "shadow" is the panel's flat
+    footprint.
+  - E4 bends the displayed bands linearly toward low cut, mid boost and high cut.
+  - The knob shows the three displayed bands' mean distance from flat, which is why band CCs move it
+    too. It rests at the groove's near end and sinks 2.5 px once it moves.
+  - CC90 on channel 4 moves nothing; E4 does. Our blend default (50, from the `.xy` file) sits
+    oddly with the knob resting at "N": to check.
+- **M3 saturator:** four ladders (gain, clip, tone, mix) of 43 ticks, 20 × 2 px, every 5 panel rows,
+  with 20 px white labels.
+  - The caps are 50 × 20 and travel the full height (centre = 210 − 200·value).
+  - E1's cap is hollow with a light grey edge; E2's is mid grey, E3's light grey, E4's white. The
+    filled caps have a dark 1 px grip line.
+- **M4 master:** the percussion and melodic levels in 50 px figures centred at x ≈ 119.5 and 359, and
+  a 1 px divider at y 109.5.
+  - Two white strips at x 229–251 split at 240; the compressor's dark bar rises from the divider in
+    the right strip.
+  - The VU meter pivots at (359.7, 152), with a scale radius of 94.5 and 13 ticks at the measured
+    angles. It has a band from 0 to +3 and a grey dot beyond +3.
+  - The needle is 3 px wide, spans radius 73–111 and rests on −20. The scale is not a standard VU:
+    it has three ticks between −5 and 0 and three between 0 and +3.
+  - How the needle and the strips move with sound is still to capture.
 
 ### 2.11 Tempo
 

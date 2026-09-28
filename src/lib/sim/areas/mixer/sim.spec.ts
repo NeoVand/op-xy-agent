@@ -6,7 +6,7 @@ import { describeFrame, type ScreenFrame } from '../../screen';
 import { RecordingContext } from '../../screen/recording';
 import { ownerOf } from '../registry';
 import { SCENARIOS } from '../../scenarios';
-import { midiCcPage, mixPage, mixer, signed } from './sim';
+import { eqMorph, midiCcPage, mixPage, mixer, signed } from './sim';
 import { initialMixer } from './state';
 import { scenarios } from './scenarios';
 
@@ -84,6 +84,81 @@ describe('the mixer area: which screens it owns', () => {
 	});
 });
 
+describe('mix M1: the FX send popup (camera frames b1-069…096)', () => {
+	/** Mix M1 with track `n` selected. */
+	function strips(n = 3): OpxySim {
+		const sim = new OpxySim({ now: () => 0 });
+		sim.press('key.mix');
+		sim.press(`track.${n}`);
+		return sim;
+	}
+
+	it('shows the selected track’s FX sends for a second after E1 or E2 turns, over the strips', () => {
+		const sim = strips(3);
+		sim.turn(1, 20);
+		let popup = page(sim, 'mix-sends');
+		expect(popup.sends).toEqual([20 / 99, 0]);
+		expect(popup.base).toMatchObject({ page: 'mix', bank: 'instrument', selected: 2 });
+		expect(sim.state.tracks[2].sends).toEqual([0, 99, 20, 0]); // the send page's values
+		sim.turn(2, 10);
+		popup = page(sim, 'mix-sends');
+		expect(popup.sends).toEqual([20 / 99, 10 / 99]);
+		expect(describeFrame(popup)).toBe('mix, instrument track 3, fx I 20, fx II 10');
+		sim.advance(999);
+		expect(sim.frame.page).toBe('mix-sends');
+		sim.advance(1);
+		expect(sim.frame.page).toBe('mix');
+	});
+
+	it('stays up while the turning goes on, and E3, E4, a push or a key put the strips back', () => {
+		const sim = strips(3);
+		sim.turn(1, 1);
+		sim.advance(900);
+		sim.turn(2, 1);
+		sim.advance(900);
+		expect(sim.frame.page).toBe('mix-sends');
+		sim.turn(3, 5); // pan: the core's strips take it at once
+		expect(page(sim, 'mix').strips[2].pan).toBe(0.1);
+		sim.turn(1, 1);
+		sim.turn(4, -9); // level, from a new project's 75
+		expect(page(sim, 'mix').strips[2].level).toBeCloseTo(66 / 99, 9);
+		sim.turn(1, 1);
+		sim.click(4); // the white encoder's push still mutes
+		expect(page(sim, 'mix').strips[2].muted).toBe(true);
+		sim.turn(2, 1);
+		sim.press('track.5');
+		expect(page(sim, 'mix').selected).toBe(4);
+		expect(sim.state.tracks[2].sends.slice(2)).toEqual([3, 2]);
+	});
+
+	it('comes up on mix M1 only', () => {
+		const sim = strips(3);
+		sim.press('key.m2');
+		sim.turn(1, 4);
+		expect(sim.frame.page).toBe('mix-eq');
+		expect(sim.state.areas.mixer.eq.low).toBe(4);
+		sim.press('key.m1');
+		expect(sim.frame.page).toBe('mix');
+		sim.press('key.instrument');
+		sim.turn(1, 4);
+		expect(sim.state.areas.mixer.sendPopup).toBe(0);
+		expect(sim.frame.page).toBe('synth');
+	});
+
+	it('shows an auxiliary track’s sends from its own send page, where it has them', () => {
+		const sim = strips(1);
+		sim.press('key.mix'); // the auxiliary tracks
+		sim.press('track.5'); // external audio sends to both FX
+		sim.turn(1, 20);
+		expect(page(sim, 'mix-sends').sends).toEqual([20 / 99, 0]);
+		expect(sim.state.areas.auxiliary.pages[4].sends[2]).toBe(20);
+		sim.press('track.1'); // the brain sends nowhere: the bars stay down
+		sim.turn(2, 30);
+		expect(page(sim, 'mix-sends')).toMatchObject({ sends: [0, 0], base: { selected: 0 } });
+		expect(sim.state.areas.auxiliary.pages[0].sends).toEqual([0, 0, 0, 0]);
+	});
+});
+
 describe('mix M2: master EQ (manual: mix/eq)', () => {
 	it('starts flat with blend at half, as a new project file stores it', () => {
 		const eq = page(mix(2), 'mix-eq');
@@ -123,6 +198,25 @@ describe('mix M2: master EQ (manual: mix/eq)', () => {
 		expect(sim.state.areas.mixer.eq).toMatchObject({ low: 20, mid: 0, high: 5, blend: 80 });
 		sim.click(4);
 		expect(sim.state.areas.mixer.eq).toEqual(initialMixer().eq);
+	});
+
+	it('leans the panels with the bands and moves the knob with E4 from half up (the device’s rest)', () => {
+		const sim = mix(2);
+		let eq = page(sim, 'mix-eq');
+		expect(eq.tilts).toEqual([0.5, 0.5, 0.5]);
+		expect(eq.knob).toBe(0);
+		sim.turn(1, 50); // a full low boost stands the low panels up and creeps the knob a third out
+		eq = page(sim, 'mix-eq');
+		expect(eq.tilts).toEqual([1, 0.5, 0.5]);
+		expect(eq.knob).toBeCloseTo(1 / 3, 9);
+		sim.click(1);
+		sim.turn(4, 49); // blend 99: E4 at its stop, lows and highs flat, mids steepest
+		eq = page(sim, 'mix-eq');
+		expect(eq.tilts).toEqual([0, 1, 0]);
+		expect(eq.knob).toBe(1);
+		sim.turn(4, -99); // below half the knob stays at rest
+		expect(page(sim, 'mix-eq').knob).toBe(0);
+		expect([eqMorph(0), eqMorph(50), eqMorph(74.5), eqMorph(99)]).toEqual([0, 0, 0.5, 1]);
 	});
 
 	it('leaves the master chain alone when the mixer shows auxiliary tracks', () => {

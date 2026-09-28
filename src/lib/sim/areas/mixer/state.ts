@@ -1,8 +1,9 @@
 /**
  * The mixer area's part of the simulator state (see `../types.ts`): the master chain that mix mode's
- * pages M2–M4 edit (manual: mix/eq, mix/saturator, mix/master) and the eight CC slots of every
- * instrument track's midi engine, which its M2 and M3 pages edit (manual: instrument/engine-midi).
- * Plain, serialisable data on the encoders' scales.
+ * pages M2–M4 edit (manual: mix/eq, mix/saturator, mix/master), the eight CC slots of every
+ * instrument track's midi engine, which its M2 and M3 pages edit (manual: instrument/engine-midi),
+ * and how much longer mix M1 shows the FX sends that E1 and E2 turn. Plain, serialisable data on
+ * the encoders' scales.
  *
  * Defaults are a new project's, read from the device's own project files: the twelve master words of
  * the `.xy` header (docs/research/10-xy-format.md §3.2) hold the EQ bands at their centre (flat), a
@@ -10,6 +11,13 @@
  * both group levels and the master level at half, and the compressor at 10 %. The external midi
  * track's probes (same document, §3.5) start with every CC slot off.
  */
+
+/**
+ * How long mix M1 keeps showing the selected track's FX sends after E1 or E2 last turned: the
+ * device snaps back about a second after the last turn (docs/research/59-screen-profiling.md
+ * §2.10; camera frames b1-069…096).
+ */
+export const SEND_POPUP_MS = 1000;
 
 /** Largest cut or boost of an EQ band. */
 export const EQ_BAND_RANGE = 50;
@@ -69,6 +77,8 @@ export interface MixerState {
 	master: MasterState;
 	/** Per instrument track (0–7): the midi engine's CC slots, 1–4 on M2 and 5–8 on M3. */
 	midiCc: CcSlot[][];
+	/** Milliseconds mix M1 keeps showing the selected track's FX sends (0: not showing). */
+	sendPopup: number;
 }
 
 /** The EQ of a new project (and what clicking E4 on mix M2 goes back to). */
@@ -87,6 +97,7 @@ export function initialMixer(): MixerState {
 		eq: defaultEq(),
 		saturator: { gain: 20, clip: 20, tone: 0, mix: 0 },
 		master: { percussion: 50, melodic: 50, compressor: 10, level: 50 },
-		midiCc: Array.from({ length: 8 }, defaultCcSlots)
+		midiCc: Array.from({ length: 8 }, defaultCcSlots),
+		sendPopup: 0
 	};
 }

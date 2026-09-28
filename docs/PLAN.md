@@ -154,7 +154,9 @@ owner flagged, then what users see most.
 3. [ ] **Bar card** (mini piano roll, bar row, clear labels) and the **step popups** (number box,
        copied, orange while locking, locked values in the top bar).
 4. [ ] **Octave popup** (piano plus ±N, "+0", fades).
-5. [ ] **Mixer:** the FX I/II send overlay, the EQ scene, the saturator ladders, the master page.
+5. [x] **Mixer:** the FX I/II send overlay, the EQ scene, the saturator ladders, the master page.
+       Left: the core M1 strips under the popup (level bar thickness, dark numbers on light
+       strips, pan dot position); the VU needle's motion with sound.
 6. [x] **Replica polish:** encoder turn arrows that show the real direction (or nothing), and a darker
        body that matches the unit rather than the milky one.
 7. [ ] **Filter** (types, off, envelope hatch, key-tracking arrow, a type pick returning to M1, shift

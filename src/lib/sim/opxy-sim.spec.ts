@@ -250,6 +250,9 @@ describe('OpxySim: encoders', () => {
 		sim.turn(4, -40);
 		sim.turn(3, 10);
 		sim.turn(1, 25);
+		// E1 and E2 show the FX send popup for a second, as the device does
+		expect(sim.frame.page).toBe('mix-sends');
+		sim.advance(1000);
 		const mix = page(sim, 'mix');
 		expect(mix.selected).toBe(3);
 		// from a new project's level, 75

@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { ICONS } from '../../screen/icons';
 import { COLORS, ENCODER_DOTS, RAMP } from '../../screen/palette';
 import { RecordingContext } from '../../screen/recording';
 import { renderFrame } from '../../screen/render';
 import type { ScreenFrame } from '../../screen/frame';
-import { EQ_HANDLE_X, compressorCurve, eqLift, saturatorWave } from './draw';
-import type { MidiCcFrame, MixEqFrame, MixMasterFrame, MixSaturatorFrame } from './frames';
+import { compressorHeight, needleAngle } from './draw';
+import { KNOB_TRAVEL, floorPoint } from './eq';
+import type {
+	MidiCcFrame,
+	MixEqFrame,
+	MixMasterFrame,
+	MixSaturatorFrame,
+	MixSendsFrame
+} from './frames';
 
 /** Draws a frame into a recording context. */
 function record(frame: ScreenFrame): RecordingContext {
@@ -14,12 +20,14 @@ function record(frame: ScreenFrame): RecordingContext {
 	return ctx;
 }
 
-const header = (labels: string[]) => labels.map((label) => ({ label, value: '00' }));
-const eq = (bands: [number, number, number], blend: number): MixEqFrame => ({
+const header = (labels: string[], value = '00') => labels.map((label) => ({ label, value }));
+const eq = (tilts: [number, number, number], knob: number): MixEqFrame => ({
 	page: 'mix-eq',
 	header: header(['low', 'mid', 'high', 'blend']),
-	bands,
-	blend
+	bands: [0, 0, 0],
+	blend: 0.5,
+	tilts,
+	knob
 });
 const saturator = (gain: number, clip: number, tone: number, mix: number): MixSaturatorFrame => ({
 	page: 'mix-saturator',
@@ -30,130 +38,220 @@ const saturator = (gain: number, clip: number, tone: number, mix: number): MixSa
 	mix
 });
 
-/** The header's eight 60 × 20 cells. */
-const headerCells = (ctx: RecordingContext) =>
-	ctx.fills.filter((f) => f.y0 === 0 && f.y1 === 20 && f.x1 - f.x0 === 60);
-
 /** Strokes drawn in a colour and width (hatching, outlines). */
 const strokes = (ctx: RecordingContext, color: string, width: number) =>
 	ctx.ops.filter((o) => o.op === 'stroke' && o.style === color && o.args[0] === width);
 
-describe('mix M2: the EQ picture', () => {
-	it('lifts nothing when flat and follows each band where it acts', () => {
-		for (const x of [30.5, 100, 240, 330.5, 450.5]) expect(eqLift([0, 0, 0], x)).toBe(0);
-		// a full low boost lifts the left edge by the full 50 px and leaves the top end alone
-		expect(eqLift([1, 0, 0], 30.5)).toBeGreaterThan(49);
-		expect(eqLift([1, 0, 0], 450.5)).toBeCloseTo(0, 3);
-		expect(eqLift([0, -1, 0], EQ_HANDLE_X[1])).toBeCloseTo(-50, 5);
-		expect(eqLift([0, 0, 1], 450.5)).toBeGreaterThan(49);
-		expect(eqLift([0, 0, 1], 30.5)).toBeCloseTo(0, 3);
+describe('mix M1: the FX send popup', () => {
+	const popup = (selected: number, sends: [number, number], muted = false): MixSendsFrame => ({
+		page: 'mix-sends',
+		base: {
+			page: 'mix',
+			bank: 'instrument',
+			selected,
+			strips: Array.from({ length: 8 }, (_, i) => ({
+				level: 0.75,
+				pan: 0.5,
+				muted: muted && i === selected,
+				meter: 0
+			}))
+		},
+		sends
 	});
-
-	it('draws the header, the filter’s four bands and a handle per band in its encoder’s tone', () => {
-		const ctx = record(eq([0.4, -0.3, 0.2], 1));
-		expect(headerCells(ctx).map((c) => c.color)).toEqual(RAMP.slice());
-		for (const band of [COLORS.panel, COLORS.dark, COLORS.grey1, COLORS.grey4]) {
-			expect(
-				ctx.fillsOf(band).some((f) => f.y1 === 162.5),
-				band
-			).toBe(true);
-		}
-		const handles = [0, 1, 2].map((e) =>
-			ctx.fillsOf(ENCODER_DOTS[e]).find((f) => f.x1 - f.x0 === 10 && f.y1 - f.y0 === 10)
+	/** What was painted in strip `i` after it was cleared to its grey (the popup's own marks). */
+	const overStrip = (ctx: RecordingContext, i: number) => {
+		const cleared = ctx.fills.findLastIndex(
+			(f) => f.x0 === i * 60 && f.x1 === i * 60 + 60 && f.y0 === 0 && f.y1 === 220
 		);
-		handles.forEach((h, i) => {
-			expect(h, `handle ${i}`).toBeDefined();
-			expect(((h?.x0 ?? 0) + (h?.x1 ?? 0)) / 2).toBeCloseTo(EQ_HANDLE_X[i], 1);
-		});
-		// the low handle rides up with the boost, the mid one down with the cut
-		expect(handles[0]?.y0 ?? 0).toBeLessThan(95 - 5 - 10);
-		expect(handles[1]?.y0 ?? 0).toBeGreaterThan(95 - 5 + 10);
-	});
-
-	it('hatches what blend holds back, and nothing at full blend or when flat', () => {
-		const hatch = (frame: MixEqFrame) => strokes(record(frame), COLORS.light, 0.56).length;
-		expect(hatch(eq([0.4, -0.3, 0.2], 0.5))).toBe(1);
-		expect(hatch(eq([0.4, -0.3, 0.2], 1))).toBe(0);
-		expect(hatch(eq([0, 0, 0], 0.5))).toBe(0);
-	});
-});
-
-describe('mix M3: the saturator picture', () => {
-	it('shows the clean sine with nothing mixed in, the saturated one with everything', () => {
-		const clean = saturatorWave(saturator(0.8, 0.5, 0, 0));
-		clean.out.forEach((v, i) => {
-			expect(v).toBeCloseTo(Math.sin((4 * Math.PI * i) / (clean.out.length - 1)), 9);
-		});
-		const full = saturatorWave(saturator(0.8, 0.5, 0, 1));
-		full.out.forEach((v, i) => expect(v).toBeCloseTo(full.wet[i], 12));
-	});
-
-	it('squares the wave off with gain and cuts it at the ceiling that clip lowers', () => {
-		const soft = saturatorWave(saturator(0, 0, 0, 1));
-		const hard = saturatorWave(saturator(1, 0.5, 0, 1));
-		expect(soft.ceiling).toBe(1);
-		expect(hard.ceiling).toBeCloseTo(0.65, 5);
-		expect(Math.max(...hard.wet)).toBeCloseTo(hard.ceiling, 5);
-		// a quarter period in (x = 105), the driven wave already sits at its ceiling
-		expect(hard.wet[105 - 80]).toBeCloseTo(hard.ceiling, 2);
-		expect(soft.wet[105 - 80]).toBeLessThan(0.8);
-	});
-
-	it('darkens by rounding the corners and brightens by overshooting them, wrapping at the ends', () => {
-		const neutral = saturatorWave(saturator(1, 0.5, 0, 1));
-		const dark = saturatorWave(saturator(1, 0.5, -1, 1));
-		const bright = saturatorWave(saturator(1, 0.5, 1, 1));
-		expect(Math.max(...dark.wet)).toBeLessThan(Math.max(...neutral.wet));
-		expect(Math.max(...bright.wet)).toBeGreaterThan(neutral.ceiling + 0.05);
-		for (const w of [dark.wet, bright.wet]) expect(w[0]).toBeCloseTo(w[w.length - 1], 6);
-	});
-
-	it('draws the ceiling rules, the saturated wave in grey and the heard one in white', () => {
-		const ctx = record(saturator(0.6, 0.45, -0.2, 0.7));
-		expect(headerCells(ctx)).toHaveLength(8);
-		expect(strokes(ctx, COLORS.grey2, 1.12)).toHaveLength(1);
-		expect(strokes(ctx, COLORS.white, 1.67)).toHaveLength(1);
-		expect(strokes(ctx, COLORS.grey1, 1)).toHaveLength(2);
-	});
-});
-
-describe('mix M4: the master picture', () => {
-	const master: MixMasterFrame = {
-		page: 'mix-master',
-		header: header(['percussion', 'melodic', 'compressor', 'master']),
-		values: [1, 0.5, 0.4, 0],
-		meters: [1, 0, 0],
-		groups: ['1 2', '3 4 5 6 7 8']
+		return ctx.fills.slice(cleared + 1).filter((f) => f.x0 >= i * 60 && f.x1 <= i * 60 + 60);
 	};
 
-	it('compresses above a threshold that more compression lowers, at a steeper ratio', () => {
-		const none = compressorCurve(0);
-		expect(none.threshold).toBe(1);
-		expect(none.output(0.5)).toBe(0.5);
-		const full = compressorCurve(1);
-		expect(full).toMatchObject({ threshold: expect.closeTo(0.3, 5), ratio: 8 });
-		expect(full.output(0.1)).toBe(0.1);
-		expect(full.output(1)).toBeCloseTo(0.3 + 0.7 / 8, 5);
-		// the soft knee meets both lines
-		expect(full.output(0.3 - 0.06)).toBeCloseTo(0.24, 9);
-		expect(full.output(0.3 + 0.06)).toBeCloseTo(0.3 + 0.06 / 8, 9);
+	it('swaps the strip’s number, level bar and pan dot for two boxed numerals over two send bars', () => {
+		const ctx = record(popup(2, [0.5, 0]));
+		const marks = overStrip(ctx, 2);
+		// FX I halfway up the left half, FX II its 5 px stub on the right, as ink over the grey
+		expect(marks).toContainEqual({
+			color: '#121214',
+			alpha: 1,
+			x0: 120,
+			y0: 122.5,
+			x1: 150,
+			y1: 220
+		});
+		expect(marks).toContainEqual({
+			color: '#2f2f34',
+			alpha: 1,
+			x0: 150,
+			y0: 215,
+			x1: 180,
+			y1: 220
+		});
+		// "I" and "II": three black strokes of 10 px text between y 10 and 17, in their boxes
+		const glyphs = marks.filter((f) => f.color === COLORS.black);
+		expect(glyphs).toHaveLength(3);
+		for (const g of glyphs) expect([g.y0, g.y1].map(Math.round)).toEqual([10, 17]);
+		expect(glyphs.filter((g) => g.x1 <= 150)).toHaveLength(1);
+		expect(strokes(ctx, COLORS.black, 1)).toHaveLength(2);
+		// nothing of the level bar or the dot is left
+		expect(marks.filter((f) => f.x1 - f.x0 === 60 || f.y1 - f.y0 === 10)).toEqual([]);
+		// the other strips are the core's: T4's black level bar is still there
+		expect(ctx.fillsOf(COLORS.black).some((f) => f.x0 === 180 && f.x1 === 240)).toBe(true);
 	});
 
-	it('draws mix M1’s strips with wide bars for the groups and the master, and the output mark', () => {
-		const ctx = record(master);
-		const strips = ctx.fills.filter((f) => f.y0 === 0 && f.y1 === 220 && f.x1 - f.x0 === 60);
-		expect(strips.map((s) => s.color)).toEqual(RAMP.slice());
-		// percussion at the top of its travel, 13.36 px thick with full output
-		const perc = ctx.fillsOf(COLORS.white).find((f) => f.x0 === 0 && f.x1 === 120);
-		expect(perc).toMatchObject({ y0: 25 - 6.68, y1: 25 + 6.68 });
-		// melodic halfway, master at the bottom, both thin and black
-		const black = ctx.fillsOf(COLORS.black).filter((f) => f.x1 - f.x0 === 120);
-		expect(black.map((f) => f.x0)).toEqual([120, 360]);
-		expect(black[0].y0).toBeCloseTo(115 - 0.28, 5);
-		// the knee's handle and the output mark's black box
-		expect(ctx.fillsOf(COLORS.ink).some((f) => f.x1 - f.x0 === 5)).toBe(true);
-		expect(ICONS['mixer.output']).toBeDefined();
-		expect(ctx.fillsOf('#000000').some((f) => f.x0 === 365 && f.y0 === 182.5)).toBe(true);
+	it('runs a full send up to y 30 and keeps a muted strip hatched', () => {
+		const ctx = record(popup(5, [1, 1], true));
+		const bars = overStrip(ctx, 5).filter((f) => f.y1 === 220);
+		expect(bars.map((b) => [b.x0, b.y0])).toEqual([
+			[300, 30],
+			[330, 30]
+		]);
+		expect(strokes(ctx, COLORS.ink, 0.5)).toHaveLength(2); // the core's hatching, then ours
+	});
+
+	it('draws in white ink on the two darkest strips', () => {
+		const ctx = record(popup(0, [0.2, 0.2]));
+		expect(strokes(ctx, COLORS.white, 1)).toHaveLength(2);
+		const [fx1, fx2] = overStrip(ctx, 0).filter((f) => f.y1 === 220);
+		expect([fx1.color, fx2.color]).toEqual(['#b9b8b8', '#565656']);
+	});
+});
+
+describe('mix M2: the EQ scene', () => {
+	const size = (f: { x0: number; x1: number; y0: number; y1: number }) => [
+		f.x1 - f.x0,
+		f.y1 - f.y0
+	];
+
+	it('paints the floor, its lines, the slot, the shadows, the panels back to front and the knob', () => {
+		const ctx = record(eq([0.5, 0.5, 0.5], 0));
+		// after the screen's black, the floor fills it light grey
+		expect(ctx.fills[1]).toMatchObject({ color: RAMP[6], x0: 0, y0: 0, x1: 480, y1: 220 });
+		// two low panels, the tray and four mid panels, eight high panels and the knob
+		expect(ctx.fillsOf(RAMP[2])).toHaveLength(2);
+		expect(ctx.fillsOf(RAMP[4])).toHaveLength(5);
+		expect(ctx.fillsOf(COLORS.white)).toHaveLength(9);
+		// the screen's clear, the groove and fourteen footprints left black
+		expect(ctx.fillsOf(COLORS.black)).toHaveLength(16);
+		// one path for the floor's lines, fourteen panel edges, the knob's outline and rim
+		expect(strokes(ctx, COLORS.ink, 0.75)).toHaveLength(17);
+		expect(strokes(ctx, COLORS.ink, 1)).toHaveLength(1); // the "N"
+		// every panel comes after every shadow
+		const fills = ctx.ops.filter((o) => o.op === 'fill');
+		const lastShadow = fills.map((o) => o.style).lastIndexOf(COLORS.black);
+		const firstPanel = fills.findIndex((o) => o.style === RAMP[2]);
+		expect(lastShadow).toBeLessThan(firstPanel);
+	});
+
+	it('lays a flat row exactly over its black footprint and leans a steep one up off it', () => {
+		const ctx = record(eq([0, 1, 0.5], 0));
+		const low = ctx.fillsOf(RAMP[2]);
+		const black = ctx.fillsOf(COLORS.black).slice(2);
+		for (const panel of low) expect(black).toContainEqual({ ...panel, color: COLORS.black });
+		// a mid panel at 60° stands 34 px above its hinge
+		const mid = ctx.fillsOf(RAMP[4]).slice(1);
+		const [, hingeY] = floorPoint(4, 16);
+		expect(mid[mid.length - 1].y0).toBeCloseTo(
+			hingeY - 10 * 2 * 0.5 - 2 * Math.sin(Math.PI / 3) * 19.8,
+			1
+		);
+	});
+
+	it('stands the knob at the "N" end at rest and slides it down the groove to its stop', () => {
+		const knob = (travel: number) => {
+			const f = record(eq([0.5, 0.5, 0.5], travel))
+				.fillsOf(COLORS.white)
+				.at(-1);
+			expect(size(f ?? { x0: 0, x1: 0, y0: 0, y1: 0 })[0]).toBeCloseTo(8, 1);
+			return ((f?.x0 ?? 0) + (f?.x1 ?? 0)) / 2;
+		};
+		expect(knob(0)).toBeCloseTo(floorPoint(7.5, KNOB_TRAVEL.rest)[0], 1);
+		expect(knob(1)).toBeCloseTo(floorPoint(7.5, KNOB_TRAVEL.end)[0], 1);
+	});
+});
+
+describe('mix M3: the saturator ladders', () => {
+	/** The cap fills (50 px wide) in encoder order. */
+	const caps = (ctx: RecordingContext) => ctx.fills.filter((f) => f.x1 - f.x0 === 50);
+
+	it('draws four ladders of 43 ticks, the labels in white and a cap per encoder', () => {
+		const ctx = record(saturator(20 / 99, 20 / 99, 0, 0));
+		const ticks = ctx.fillsOf(RAMP[3]);
+		expect(ticks).toHaveLength(4 * 43);
+		expect(ticks.filter((t) => t.x0 === 50 && t.x1 === 70)).toHaveLength(43);
+		expect(ticks[0].y0).toBeCloseTo(110 - 21 * 4.976 - 1, 1);
+		// white label glyphs at each column's top left
+		const labels = ctx.fillsOf(COLORS.white).filter((f) => f.y1 < 21);
+		expect(new Set(labels.map((f) => Math.floor((f.x0 + 1) / 120)))).toEqual(new Set([0, 1, 2, 3]));
+		// E1 black inside a light grey edge, E2 mid grey, E3 light grey, E4 white
+		const [e1, e2, e3, e4] = caps(ctx);
+		expect([e1.color, e2.color, e3.color, e4.color]).toEqual([
+			COLORS.black,
+			ENCODER_DOTS[1],
+			ENCODER_DOTS[2],
+			COLORS.white
+		]);
+		expect(strokes(ctx, ENCODER_DOTS[2], 2)).toHaveLength(2); // E1's edge and grip
+		expect(strokes(ctx, COLORS.black, 1)).toHaveLength(3); // the other caps' grips
+		// gain and clip at 20 sit 40 px up from the bottom, tone at neutral in the middle, mix at 0 on the floor
+		expect((e1.y0 + e1.y1) / 2).toBeCloseTo(210 - (200 * 20) / 99, 1);
+		expect((e2.y0 + e2.y1) / 2).toBeCloseTo(210 - (200 * 20) / 99, 1);
+		expect((e3.y0 + e3.y1) / 2).toBeCloseTo(110, 1);
+		expect([e4.y0, e4.y1]).toEqual([200, 220]);
+	});
+
+	it('runs the caps over the whole height, tone from darkest at the foot to brightest at the top', () => {
+		const top = caps(record(saturator(1, 0, 1, 1)));
+		expect(top.map((c) => c.y0)).toEqual([0, 200, 0, 0]);
+		expect(caps(record(saturator(0, 0, -1, 0)))[2].y1).toBe(220);
+	});
+});
+
+describe('mix M4: the master page', () => {
+	const master = (compressor: number, output: number): MixMasterFrame => ({
+		page: 'mix-master',
+		header: [
+			{ label: 'percussion', value: '64' },
+			{ label: 'melodic', value: '66' },
+			{ label: 'compressor', value: '32' },
+			{ label: 'master', value: '50' }
+		],
+		values: [64 / 99, 66 / 99, compressor, 50 / 99],
+		meters: [0, 0, output],
+		groups: ['1 2', '3 4 5 6 7 8']
+	});
+
+	it('draws the two strips, the compressor’s bar rising from the divider and the VU meter', () => {
+		const ctx = record(master(32 / 99, 0));
+		const strips = ctx.fillsOf(COLORS.white).filter((f) => f.y0 === 0 && f.y1 === 220);
+		expect(strips.map((f) => [f.x0, f.x1])).toEqual([
+			[229, 239.75],
+			[240.25, 251]
+		]);
+		const bar = ctx.fillsOf(COLORS.dark).find((f) => f.x0 === 242.75);
+		expect(bar?.y1).toBe(109.5);
+		expect(109.5 - (bar?.y0 ?? 0)).toBeCloseTo(compressorHeight(32 / 99), 1);
+		expect(strokes(ctx, COLORS.grey1, 1)).toHaveLength(1); // the divider
+		expect(strokes(ctx, COLORS.white, 1.5)).toHaveLength(1); // scale line and ticks
+		expect(strokes(ctx, COLORS.white, 3)).toHaveLength(1); // the needle
+		expect(ctx.fillsOf(RAMP[4])).toHaveLength(1); // the dot past +3
+		// the needle rests on −20: its tip is the last point before its 3 px stroke
+		const stroke = ctx.ops.findIndex((o) => o.op === 'stroke' && o.args[0] === 3);
+		const tip = ctx.ops.slice(0, stroke).findLast((o) => o.op === 'lineTo');
+		expect(tip?.args[0]).toBeCloseTo(359.67 + 111 * Math.sin((-35.5 * Math.PI) / 180), 1);
+	});
+
+	it('swings the needle from −20 at rest through 0 to +3 at full output', () => {
+		expect(needleAngle(0)).toBe(-35.5);
+		expect(needleAngle(10 ** (-3 / 20))).toBeCloseTo(15.56, 6); // 0 dB, where the band starts
+		expect(needleAngle(10 ** (-8 / 20))).toBeCloseTo(-5.16, 6); // −5 dB
+		expect(needleAngle(1)).toBe(36.7);
+		expect(needleAngle(0.01)).toBe(-35.5);
+	});
+
+	it('grows the compressor’s bar from a pixel at 10 to 40 px at the top', () => {
+		expect(compressorHeight(0)).toBe(0);
+		expect(compressorHeight(10 / 99)).toBeCloseTo(1.28, 2);
+		expect(compressorHeight(1)).toBe(40);
 	});
 });
 

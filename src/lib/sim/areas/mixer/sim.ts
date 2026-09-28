@@ -2,20 +2,21 @@
  * The mixer area (decision D10; research 55 §6): mix mode's master pages — M2 EQ, M3 saturator, M4
  * group levels, compressor and master level (manual: mix/overview, mix/eq, mix/saturator,
  * mix/master) — and the midi engine's CC pages, M2 and M3 of an instrument track that runs the midi
- * engine (manual: instrument/engine-midi). Mixer M1 stays in the core. Behaviour follows the manual;
- * where it is silent the choice is marked "ours". The pages are drawn in `draw.ts`.
+ * engine (manual: instrument/engine-midi). Mixer M1 stays in the core, except for the second after
+ * E1 or E2 turns there: the area then shows the selected track's FX sends over the core's strips as
+ * the device does (docs/research/59-screen-profiling.md §2.10). Behaviour follows the manual; where
+ * it is silent the choice is marked "ours". The pages are drawn in `draw.ts`.
  */
-import { clamp, two, type SimState } from '../../params';
+import { buildFrame } from '../../frames';
+import type { SimInput } from '../../input';
+import { clamp, detent, two, type SimState } from '../../params';
+import type { ScreenFrame } from '../../screen/frame';
+import { auxSends } from '../auxiliary/sim';
 import type { AreaContext, SimArea } from '../types';
-import type {
-	MidiCcFrame,
-	MixEqFrame,
-	MixMasterFrame,
-	MixSaturatorFrame,
-	MixerFrame
-} from './frames';
+import { eqTilts, knobTravel } from './eq';
+import type { MidiCcFrame, MixEqFrame, MixMasterFrame, MixSaturatorFrame } from './frames';
 import { soloed, trackMeter } from './meters';
-import { CC_MAX, EQ_BAND_RANGE, TONE_RANGE, defaultEq } from './state';
+import { CC_MAX, EQ_BAND_RANGE, SEND_POPUP_MS, TONE_RANGE, defaultEq } from './state';
 
 /** The EQ's bands in encoder order (E1–E3; E4 is blend). */
 const EQ_BANDS = ['low', 'mid', 'high'] as const;
@@ -47,10 +48,63 @@ export function mixPage(s: SimState): 2 | 3 | 4 | null {
 	return page === 1 ? null : page;
 }
 
+/** Whether the screen is on mix M1 (the core's strips), nothing open over it. */
+export function mixStrips(s: SimState): boolean {
+	return (
+		s.mode === 'mix' &&
+		s.pages.mix === 1 &&
+		s.overlay === null &&
+		s.sub === null &&
+		s.picker === null
+	);
+}
+
+/** Whether mix M1 shows the selected track's FX sends now (for a second after E1 or E2 turned). */
+export function sendsShowing(s: SimState): boolean {
+	return s.areas.mixer.sendPopup > 0 && mixStrips(s);
+}
+
+const encoderIndex = (id: string) => {
+	const m = /^encoder\.([1-4])$/.exec(id);
+	return m ? Number(m[1]) - 1 : -1;
+};
+
 // ─────────────────────────────────────────────────────────────────────────── frames
+
+/**
+ * Mix M1 with the sends up: the strips as the core builds them (from the state with the popup gone,
+ * so the core answers), and FX I and FX II of the track the column belongs to. An auxiliary track
+ * shows the sends its own M3 shift layer keeps (0 where it has none).
+ */
+function sendsFrame(s: SimState): ScreenFrame {
+	const mixer = { ...s.areas.mixer, sendPopup: 0 };
+	const base = buildFrame({ ...s, areas: { ...s.areas, mixer } });
+	if (base.page !== 'mix') return base;
+	const [, , fx1, fx2] =
+		s.banks.mix === 'instrument'
+			? s.tracks[s.track].sends
+			: s.areas.auxiliary.pages[s.auxTrack].sends;
+	return { page: 'mix-sends', base, sends: [fx1 / 99, fx2 / 99] };
+}
+
+/**
+ * How far E4 has bent the EQ picture (0–1). The device's knob rests at its "N" end in a new project
+ * (the 1.1.4 probes: E4 at its minimum leaves a new project's file untouched; the 1.1.33 captures:
+ * the knob at "N", every band flat), while our blend starts at half, a new project file's fourth
+ * EQ word, which those probes show E4 does not write. So the knob counts from half (ours).
+ */
+export function eqMorph(blend: number): number {
+	return Math.max(0, Math.min(1, (blend - 50) / 49));
+}
 
 function eqFrame(s: SimState): MixEqFrame {
 	const { low, mid, high, blend } = s.areas.mixer.eq;
+	const bands: [number, number, number] = [
+		low / EQ_BAND_RANGE,
+		mid / EQ_BAND_RANGE,
+		high / EQ_BAND_RANGE
+	];
+	const morph = eqMorph(blend);
 	return {
 		page: 'mix-eq',
 		header: [
@@ -59,8 +113,10 @@ function eqFrame(s: SimState): MixEqFrame {
 			{ label: 'high', value: signed(high) },
 			{ label: 'blend', value: two(blend) }
 		],
-		bands: [low / EQ_BAND_RANGE, mid / EQ_BAND_RANGE, high / EQ_BAND_RANGE],
-		blend: blend / 99
+		bands,
+		blend: blend / 99,
+		tilts: eqTilts(bands, morph),
+		knob: knobTravel(bands, morph)
 	};
 }
 
@@ -137,7 +193,8 @@ function midiCcFrame(s: SimState, page: 2 | 3): MidiCcFrame {
 	};
 }
 
-function frame(s: SimState): MixerFrame {
+function frame(s: SimState): ScreenFrame {
+	if (sendsShowing(s)) return sendsFrame(s);
 	const cc = midiCcPage(s);
 	if (cc !== null) return midiCcFrame(s, cc);
 	switch (mixPage(s)) {
@@ -151,6 +208,37 @@ function frame(s: SimState): MixerFrame {
 }
 
 // ─────────────────────────────────────────────────────────────────────────── encoders
+
+/**
+ * Mix M1 with the sends up: E1 and E2 send the selected track to FX I and FX II as on the core's
+ * strips (the same values as the track's M3 shift layer); an auxiliary track sends only where its
+ * own layer has the send (external audio, tape, FX I into FX II).
+ */
+function turnSend(s: SimState, e: number, delta: number): void {
+	const send = e + 2;
+	if (s.banks.mix === 'instrument') {
+		const sends = s.tracks[s.track].sends;
+		sends[send] = detent(sends[send], delta, 0, 99);
+	} else if (auxSends(s.auxTrack).includes(send)) {
+		const sends = s.areas.auxiliary.pages[s.auxTrack].sends;
+		sends[send] = detent(sends[send], delta, 0, 99);
+	}
+}
+
+/**
+ * The FX send popup (camera frames b1-069…096): a turn of E1 or E2 on mix M1 brings it up or keeps
+ * it up; E3 or E4 (pan, level), an encoder push or any key press puts the strips back at once (ours:
+ * the captures only show it snapping back once the turning stops).
+ */
+function sendPopup(s: SimState, input: SimInput): void {
+	const m = s.areas.mixer;
+	if (input.type === 'turn') {
+		const e = encoderIndex(input.id);
+		if (e === 0 || e === 1) {
+			if (Math.trunc(input.delta) !== 0 && mixStrips(s)) m.sendPopup = SEND_POPUP_MS;
+		} else if (e >= 0) m.sendPopup = 0;
+	} else if (input.type === 'press' || input.type === 'click') m.sendPopup = 0;
+}
 
 /** Mix M2: E1–E3 cut or boost their band, E4 sets blend (manual: mix/eq). */
 function turnEq(s: SimState, e: number, delta: number): void {
@@ -195,8 +283,12 @@ function turnCc(s: SimState, page: 2 | 3, e: number, delta: number): void {
 
 export const mixer: SimArea = {
 	id: 'mixer',
-	owns: (s) => midiCcPage(s) !== null || mixPage(s) !== null,
+	owns: (s) => midiCcPage(s) !== null || mixPage(s) !== null || sendsShowing(s),
 	frame,
+	claim(ctx: AreaContext, input: SimInput): boolean {
+		sendPopup(ctx.state, input);
+		return false;
+	},
 	press(ctx: AreaContext, id: string): boolean {
 		const s = ctx.state;
 		if (midiCcPage(s) === null) return false;
@@ -209,6 +301,11 @@ export const mixer: SimArea = {
 	},
 	turn(ctx: AreaContext, e: number, delta: number): void {
 		const s = ctx.state;
+		if (sendsShowing(s)) {
+			// only E1 and E2 get here: any other turn took the popup down first (`sendPopup`)
+			turnSend(s, e, delta);
+			return;
+		}
 		const cc = midiCcPage(s);
 		if (cc !== null) {
 			turnCc(s, cc, e, delta);
@@ -227,5 +324,9 @@ export const mixer: SimArea = {
 		const eq = s.areas.mixer.eq;
 		if (e === 3) Object.assign(eq, defaultEq());
 		else if (e >= 0 && e < 3) eq[EQ_BANDS[e]] = 0;
+	},
+	advance(s: SimState, ms: number): void {
+		const m = s.areas.mixer;
+		if (m.sendPopup > 0) m.sendPopup = Math.max(0, m.sendPopup - ms);
 	}
 };

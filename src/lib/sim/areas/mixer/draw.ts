@@ -2,308 +2,454 @@
  * Drawing the mixer area's frames on the 480 × 220 screen (see `../../screen/areas.ts`), with a
  * short spoken description of each for screen readers.
  *
- * TE's guide has no picture of any of these pages, so every layout here is ours, put together from
- * the primitives of TE's other pages (research 55 §5) so that they read as the same device:
- * - mix M2–M4 carry the engine pages' header (eight ramp cells; each encoder's label and value in its
- *   tone) over a picture: the EQ as a response on the filter page's frequency axis and bands (guide
- *   art instrument-032), the saturator as a sine wave through it, and the master as mix M1's strips
- *   (mix-003) with wide bars for the groups and the master and a compressor curve;
- * - the midi engine's CC pages keep the midi M1 page's row of 65 px boxes, 10 px labels and 40 px
- *   numbers (synth-engines-034) and are titled set I and set II, TE's names for the same pages on the
- *   external midi track (auxiliary-031).
+ * TE's guide shows none of these pages; the mix pages follow the owner's device as a camera saw it
+ * (docs/research/59-screen-profiling.md §2.10), measured on the realigned captures and redrawn in
+ * TE's palette (the camera tints colours, so only their order is taken from it):
+ * - M1 with the FX send popup over the core's strips (frames b1-069…096);
+ * - M2, the EQ's scene of hinged panels (frames steps-018…038, b1-136…170; geometry in `eq.ts`);
+ * - M3, the saturator's four tick ladders and caps (frames b1-171…204);
+ * - M4, the group and master levels with the compressor's bar and a VU meter (frames b1-205…253).
+ * The midi engine's CC pages are ours: they keep the midi M1 page's row of 65 px boxes, 10 px
+ * labels and 40 px numbers (synth-engines-034) and are titled set I and set II, TE's names for the
+ * same pages on the external midi track (auxiliary-031).
  */
 import type { AreaDrawers } from '../../screen/areas';
 import type { ScreenCtx } from '../../screen/context';
-import { disc, fillBox, header, line, strokeBox, text, type HeaderCell } from '../../screen/draw';
+import { disc, fillBox, hatch, line, strokeBox, text, type HeaderCell } from '../../screen/draw';
 import { drawIcon } from '../../screen/icons';
-import { freqToX } from '../../screen/pages/filter';
+import { drawMix } from '../../screen/pages/mix';
 import { COLORS, ENCODER_DOTS, RAMP } from '../../screen/palette';
+import { describeFrame } from '../../screen/render';
+import {
+	EQ_PANELS,
+	GROOVE,
+	KNOB_TRAVEL,
+	N_GLYPH,
+	TRAY,
+	floorAt,
+	floorPoint,
+	panelOutline,
+	panelShadow,
+	type EqPanel,
+	type Point
+} from './eq';
 import type {
 	MidiCcFrame,
 	MixEqFrame,
 	MixMasterFrame,
 	MixSaturatorFrame,
+	MixSendsFrame,
 	MixerFrame
 } from './frames';
 
 const unit = (v: number) => Math.max(0, Math.min(1, v));
 const bipolar = (v: number) => Math.max(-1, Math.min(1, v));
 
-// ─────────────────────────────────────────────────────────────────────────── mix M2: EQ
-
-/** The filter page's axis and floor: the EQ is drawn over the same frequencies. */
-const AXIS_LEFT = 30.5;
-const AXIS_RIGHT = 450.5;
-const FLOOR = 162.5;
-/** The filter's bands, dark to light across the spectrum, split at 1K, 2K and 5K. */
-const BANDS = [
-	{ x0: 30.5, x1: 160.5, color: COLORS.panel },
-	{ x0: 160.5, x1: 245.5, color: COLORS.dark },
-	{ x0: 245.5, x1: 330.5, color: COLORS.grey1 },
-	{ x0: 330.5, x1: 450.5, color: COLORS.grey4 }
-] as const;
-/** The flat response's level, and how far a full boost or cut lifts or drops it. */
-const FLAT = 95;
-const EQ_DEPTH = 50;
-/**
- * Where the bands act (ours: TE does not say): a low shelf turning at 200 Hz, a mid bell at 1.8 kHz,
- * a high shelf turning at 9 kHz; widths in pixels of the axis.
- */
-const LOW_X = freqToX(200);
-const MID_X = freqToX(1800);
-const HIGH_X = freqToX(9000);
-const SHELF_WIDTH = 14;
-const BELL_WIDTH = 45;
-/** Where each band's handle sits on the set response: well inside each shelf, on the bell's top. */
-export const EQ_HANDLE_X = [60, MID_X, 420] as const;
-
-/** The EQ's lift in pixels (up is +) at `x` for band settings −1…1 (low, mid, high). */
-export function eqLift(bands: readonly number[], x: number): number {
-	const [low = 0, mid = 0, high = 0] = bands;
-	const lowShelf = 1 / (1 + Math.exp((x - LOW_X) / SHELF_WIDTH));
-	const highShelf = 1 / (1 + Math.exp((HIGH_X - x) / SHELF_WIDTH));
-	const bell = Math.exp(-(((x - MID_X) / BELL_WIDTH) ** 2));
-	return EQ_DEPTH * (low * lowShelf + mid * bell + high * highShelf);
+/** `t` (0–1) of colour `a` over colour `b`, both `#rrggbb`. */
+function blend(a: string, b: string, t: number): string {
+	const channel = (hex: string, i: number) => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16);
+	const mixed = [0, 1, 2].map((i) =>
+		Math.round(channel(a, i) * t + channel(b, i) * (1 - t))
+			.toString(16)
+			.padStart(2, '0')
+	);
+	return `#${mixed.join('')}`;
 }
 
-/** Adds the area under the response, lifted by `amount` of the bands, down to the floor. */
-function traceEq(ctx: ScreenCtx, bands: readonly number[], amount: number): void {
-	ctx.moveTo(AXIS_LEFT, FLOOR);
-	for (let x = AXIS_LEFT; x <= AXIS_RIGHT + 0.01; x += 2) {
-		ctx.lineTo(x, FLAT - amount * eqLift(bands, x));
-	}
-	ctx.lineTo(AXIS_RIGHT, FLOOR);
+// ─────────────────────────────────────────────────────────────── mix M1: the FX send popup
+
+/** Top of a send bar at 0 and at full send; the bar runs down to the screen's foot. */
+const SEND_ZERO = 215;
+const SEND_FULL = 30;
+/** How much of the strip's ink each bar takes: FX I dark, FX II half as dark. */
+const SEND_INK = [0.75, 0.35] as const;
+/** The core's mix page: a muted strip's hatching starts at the top of the level travel. */
+const HATCH_TOP = 25;
+
+/**
+ * Mix M1 while E1 or E2 turns, measured on camera frames b1-069…096 (T3 selected): the selected
+ * strip drops its number, level bar and pan dot; each half of it (30 px) carries a 16 px box with a
+ * 1 px edge, "I" over FX I on the left and "II" over FX II on the right, and a bar rising from the
+ * foot, from a 5 px stub at 0 to y 30 at full send. On T3 edges and numerals are black, the FX I
+ * bar near black and the FX II bar the second ramp grey; as ink over the strip's grey (75 % and
+ * 35 %) that carries to the other strips, white ink on the two darkest like the core's bars (ours).
+ */
+function drawSendPopup(ctx: ScreenCtx, frame: MixSendsFrame): void {
+	const { base } = frame;
+	drawMix(ctx, base);
+	const i = base.selected;
+	const strip = base.strips[i];
+	if (!strip || i < 0 || i > 7) return;
+	const x = i * 60;
+	const ink = i < 2 ? COLORS.white : COLORS.black;
+	fillBox(ctx, x, 0, 60, 220, RAMP[i]);
+	if (strip.muted) hatch(ctx, x, HATCH_TOP, 60, 220 - HATCH_TOP, COLORS.ink, 7.5, 0.5);
+	frame.sends.slice(0, 2).forEach((send, k) => {
+		const left = x + 30 * k;
+		const top = SEND_ZERO - (SEND_ZERO - SEND_FULL) * unit(send);
+		fillBox(ctx, left, top, 30, 220 - top, blend(ink, RAMP[i], SEND_INK[k]));
+		strokeBox(ctx, left + 7, 6, 16, 16, ink);
+		// the device spaces the two strokes of "II" 3.9 px apart, wider than the font's pair
+		text(ctx, k === 0 ? 'I' : 'II', left + 15, 17, 10, ink, 'center', k === 0 ? 0 : 0.12);
+	});
+}
+
+// ─────────────────────────────────────────────────────────────────────────── mix M2: EQ
+
+/**
+ * The scene's tones in TE's ramp, ranked as the camera sees them (the camera tints and stretches
+ * colours, so only their order and steps are taken): the floor light grey, the tray and the mid
+ * panels a step down, the low panels dark, the high panels white; shadows and the groove black.
+ */
+const EQ_TONES = {
+	floor: RAMP[6],
+	tray: RAMP[4],
+	panels: [RAMP[2], RAMP[4], RAMP[7]],
+	ink: COLORS.ink
+} as const;
+/** The floor's lines and the panels' edges (the captures show about ¾ px of black). */
+const EQ_LINE = 0.75;
+
+/** Adds a closed polygon to the current path. */
+function tracePolygon(ctx: ScreenCtx, points: readonly Point[]): void {
+	points.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
 	ctx.closePath();
 }
 
-/** A band's handle: a 10 px dot in its encoder's tone, ringed white so the dark one shows. */
-function bandHandle(ctx: ScreenCtx, x: number, y: number, encoder: 0 | 1 | 2): void {
-	disc(ctx, x, y, 6, COLORS.white);
-	disc(ctx, x, y, 5, ENCODER_DOTS[encoder]);
+/** Fills a polygon, and strokes its edge when `edge` is given. */
+function polygon(ctx: ScreenCtx, points: readonly Point[], fill: string, edge?: string): void {
+	ctx.beginPath();
+	tracePolygon(ctx, points);
+	ctx.fillStyle = fill;
+	ctx.fill();
+	if (!edge) return;
+	ctx.strokeStyle = edge;
+	ctx.lineWidth = EQ_LINE;
+	ctx.lineJoin = 'miter';
+	ctx.stroke();
 }
 
-/** The filter page's axis labels. */
-function axisLabels(ctx: ScreenCtx): void {
-	text(ctx, '50', AXIS_LEFT, 172.5, 10, COLORS.light);
-	text(ctx, '1K', 160.5, 172.5, 10, COLORS.light, 'center');
-	text(ctx, '2K', 245.5, 172.5, 10, COLORS.light, 'center');
-	text(ctx, '5K', 330.5, 172.5, 10, COLORS.light, 'center');
-	text(ctx, '20kHz', AXIS_RIGHT, 172.5, 10, COLORS.light, 'right');
+/** Adds an elliptical arc (angles clockwise from +x, `from` < `to`) as cubic curves. */
+function ellipseArc(
+	ctx: ScreenCtx,
+	cx: number,
+	cy: number,
+	rx: number,
+	ry: number,
+	from: number,
+	to: number
+): void {
+	const segments = Math.max(1, Math.ceil((to - from) / (Math.PI / 2)));
+	const step = (to - from) / segments;
+	const k = (4 / 3) * Math.tan(step / 4);
+	for (let i = 0; i < segments; i++) {
+		const a0 = from + i * step;
+		const a1 = a0 + step;
+		const [c0, s0, c1, s1] = [Math.cos(a0), Math.sin(a0), Math.cos(a1), Math.sin(a1)];
+		ctx.bezierCurveTo(
+			cx + rx * (c0 - k * s0),
+			cy + ry * (s0 + k * c0),
+			cx + rx * (c1 + k * s1),
+			cy + ry * (s1 - k * c1),
+			cx + rx * c1,
+			cy + ry * s1
+		);
+	}
+}
+
+/** The floor's lines, every cell edge across the whole screen. */
+function floorLines(ctx: ScreenCtx): void {
+	const corners = [floorAt(0, 0), floorAt(480, 0), floorAt(0, 220), floorAt(480, 220)];
+	const [u0, u1] = [
+		Math.floor(Math.min(...corners.map((c) => c[0]))),
+		Math.ceil(Math.max(...corners.map((c) => c[0])))
+	];
+	const [v0, v1] = [
+		Math.floor(Math.min(...corners.map((c) => c[1]))),
+		Math.ceil(Math.max(...corners.map((c) => c[1])))
+	];
+	ctx.beginPath();
+	for (let u = u0; u <= u1; u++) {
+		ctx.moveTo(...floorPoint(u, v0));
+		ctx.lineTo(...floorPoint(u, v1));
+	}
+	for (let v = v0; v <= v1; v++) {
+		ctx.moveTo(...floorPoint(u0, v));
+		ctx.lineTo(...floorPoint(u1, v));
+	}
+	ctx.strokeStyle = EQ_TONES.ink;
+	ctx.lineWidth = EQ_LINE;
+	ctx.lineCap = 'butt';
+	ctx.stroke();
+}
+
+/** The groove: a black band along the tray with round ends, drawn in the floor. */
+function groove(ctx: ScreenCtx): void {
+	const { u, halfWidth: r, v0, v1 } = GROOVE;
+	const half = (from: number) => Array.from({ length: 13 }, (_, i) => from + (Math.PI * i) / 12);
+	polygon(
+		ctx,
+		[
+			// the far end's half circle, right to left through its tip, then the near end's
+			...half(0).map((a) => floorPoint(u + r * Math.cos(a), v0 + r - r * Math.sin(a))),
+			...half(0).map((a) => floorPoint(u - r * Math.cos(a), v1 - r + r * Math.sin(a)))
+		],
+		COLORS.black
+	);
+}
+
+/** The "N" lying in the floor past the tray: two uprights along the slot and the diagonal. */
+function nGlyph(ctx: ScreenCtx): void {
+	const [ua, ub] = N_GLYPH.u;
+	const [va, vb] = N_GLYPH.v;
+	ctx.beginPath();
+	for (const [a, b] of [
+		[floorPoint(ua, va), floorPoint(ua, vb)],
+		[floorPoint(ub, va), floorPoint(ub, vb)],
+		[floorPoint(ua, va), floorPoint(ub, vb)]
+	]) {
+		ctx.moveTo(...a);
+		ctx.lineTo(...b);
+	}
+	ctx.strokeStyle = EQ_TONES.ink;
+	ctx.lineWidth = 1;
+	ctx.lineCap = 'butt';
+	ctx.stroke();
 }
 
 /**
- * Mix M2: what the master hears is filled in the filter's bands (blend × the band settings); the
- * part blend still holds back is hatched up to the set response, where a handle per band sits; a
- * dark rule marks flat under a cut.
+ * The knob: a small white cylinder, 8 px across with a 4.6 px top, at `travel` (0–1) along the
+ * groove. At rest it stands in the groove's rounded near end at the tray's height; once it moves
+ * it sits 2.5 px lower, down in the groove (frames steps-018…022, b1-157…170).
+ */
+function eqKnob(ctx: ScreenCtx, travel: number): void {
+	const v = KNOB_TRAVEL.rest + (KNOB_TRAVEL.end - KNOB_TRAVEL.rest) * unit(travel);
+	const [x, y] = floorPoint(GROOVE.u, v);
+	const sunk = unit((KNOB_TRAVEL.rest - v) / 0.2);
+	const [rx, ry, top, base] = [4, 2.3, y - 3.7, y + 0.2 + 2.5 * sunk];
+	ctx.beginPath();
+	ctx.moveTo(x + rx, top);
+	ctx.lineTo(x + rx, base);
+	ellipseArc(ctx, x, base, rx, ry, 0, Math.PI);
+	ctx.lineTo(x - rx, top);
+	ellipseArc(ctx, x, top, rx, ry, Math.PI, 2 * Math.PI);
+	ctx.closePath();
+	ctx.fillStyle = COLORS.white;
+	ctx.fill();
+	ctx.strokeStyle = EQ_TONES.ink;
+	ctx.lineWidth = EQ_LINE;
+	ctx.stroke();
+	// the top face's near rim
+	ctx.beginPath();
+	ctx.moveTo(x + rx, top);
+	ellipseArc(ctx, x, top, rx, ry, 0, Math.PI);
+	ctx.stroke();
+}
+
+/**
+ * Mix M2 as the device draws it (see `eq.ts`): the floor and its lines, the slot's tray, groove and
+ * "N", the panels' shadows, then the panels back to front, each row leaning with its band, and the
+ * knob. The device shows no numbers on this page.
  */
 function drawEq(ctx: ScreenCtx, frame: MixEqFrame): void {
-	const bands = frame.bands.map(bipolar);
-	const blend = unit(frame.blend);
-	ctx.save();
-	ctx.beginPath();
-	ctx.rect(AXIS_LEFT, 20, AXIS_RIGHT - AXIS_LEFT, FLOOR - 20);
-	ctx.clip();
-	line(ctx, AXIS_LEFT, FLAT, AXIS_RIGHT, FLAT, COLORS.grey1, 1);
-
-	ctx.save();
-	ctx.beginPath();
-	traceEq(ctx, bands, blend);
-	ctx.clip();
-	for (const band of BANDS) fillBox(ctx, band.x0, 20, band.x1 - band.x0, FLOOR - 20, band.color);
-	for (const band of BANDS.slice(1)) line(ctx, band.x0, 20, band.x0, FLOOR, COLORS.black, 1.59);
-	ctx.restore();
-
-	// hatched between what is heard and the set response, like the filter's envelope sweep; drawn
-	// over the fill so a cut's share shows too
-	if (blend < 0.995 && bands.some((b) => Math.abs(b) > 0.001)) {
-		ctx.save();
-		ctx.beginPath();
-		traceEq(ctx, bands, blend);
-		traceEq(ctx, bands, 1);
-		ctx.clip('evenodd');
-		ctx.strokeStyle = COLORS.light;
-		ctx.lineWidth = 0.56;
-		ctx.beginPath();
-		for (let d = AXIS_LEFT - 145; d < AXIS_RIGHT + 5; d += 5) {
-			ctx.moveTo(d, FLOOR);
-			ctx.lineTo(d + 145, FLOOR - 145);
-		}
-		ctx.stroke();
-		ctx.restore();
+	fillBox(ctx, 0, 0, 480, 220, EQ_TONES.floor);
+	const { u0, u1, v0, v1 } = TRAY;
+	polygon(
+		ctx,
+		[floorPoint(u0, v0), floorPoint(u1, v0), floorPoint(u1, v1), floorPoint(u0, v1)],
+		EQ_TONES.tray
+	);
+	floorLines(ctx);
+	groove(ctx);
+	nGlyph(ctx);
+	const tilt = (panel: EqPanel) => frame.tilts[panel.band] ?? 0.5;
+	for (const panel of EQ_PANELS) polygon(ctx, panelShadow(panel), COLORS.black);
+	for (const panel of EQ_PANELS) {
+		polygon(ctx, panelOutline(panel, tilt(panel)), EQ_TONES.panels[panel.band], EQ_TONES.ink);
 	}
-	ctx.strokeStyle = COLORS.black;
-	ctx.lineWidth = 1.59;
-	ctx.beginPath();
-	traceEq(ctx, bands, blend);
-	ctx.stroke();
-	ctx.restore();
-
-	EQ_HANDLE_X.forEach((x, i) => bandHandle(ctx, x, FLAT - eqLift(bands, x), i as 0 | 1 | 2));
-	axisLabels(ctx);
-	header(ctx, frame.header);
+	eqKnob(ctx, frame.knob);
 }
 
 // ─────────────────────────────────────────────────────────────────────────── mix M3: saturator
 
-/** Two periods of a sine across the filter's width, centred under the header. */
-const WAVE_LEFT = 30;
-const WAVE_RIGHT = 450;
-const WAVE_MID = 120;
-const WAVE_AMP = 70;
-
+/** The four ladders' centres, one per encoder. */
+const LADDER_X = [60, 180, 300, 420] as const;
+/** Each ladder's 43 ticks, 20 px wide and 2 px thick, every 5 panel rows around y 110. */
+const TICKS = { count: 43, pitch: 4.976, width: 20, thickness: 2 } as const;
+/** A cap is 50 × 20; it travels the whole height, centred at y 210 at 0 and at 10 at the top. */
+const CAP = { width: 50, height: 20, radius: 2, low: 210, high: 10 } as const;
 /**
- * Zero-phase smoothing over about `width` samples (a one-pole filter run both ways) of a signal
- * whose last sample repeats its first (whole periods): it wraps around, so the ends match.
+ * The caps in the encoders' styles on black: E1 hollow (a 2 px light grey edge and grip), E2 mid
+ * grey, E3 light grey, E4 white, each filled one with a dark 1 px grip across its middle.
  */
-function smooth(values: readonly number[], width: number): number[] {
-	const a = 1 / (1 + Math.max(0, width));
-	const period = values.length - 1;
-	const at = (i: number) => values[((i % period) + period) % period];
-	const ext = Array.from({ length: values.length + 2 * period }, (_, i) => at(i - period));
-	for (let i = 1; i < ext.length; i++) ext[i] = ext[i - 1] + a * (ext[i] - ext[i - 1]);
-	for (let i = ext.length - 2; i >= 0; i--) ext[i] = ext[i + 1] + a * (ext[i] - ext[i + 1]);
-	return ext.slice(period, period + values.length);
+const CAP_FILL = [COLORS.black, ENCODER_DOTS[1], ENCODER_DOTS[2], COLORS.white] as const;
+
+/** A ladder's cap at `value` (0–1) in encoder `e`'s style. */
+function ladderCap(ctx: ScreenCtx, x: number, value: number, e: number): void {
+	const top = CAP.low - CAP.height / 2 - (CAP.low - CAP.high) * unit(value);
+	const left = x - CAP.width / 2;
+	const middle = top + CAP.height / 2;
+	fillBox(ctx, left, top, CAP.width, CAP.height, CAP_FILL[e], CAP.radius);
+	if (e === 0) {
+		// the hollow cap's 2 px edge runs on the box's outline, its grip across the middle
+		const edge = ENCODER_DOTS[2];
+		strokeBox(ctx, left, top, CAP.width, CAP.height, edge, 2, CAP.radius);
+		line(ctx, left, middle, left + CAP.width, middle, edge, 2);
+	} else line(ctx, left, middle, left + CAP.width, middle, COLORS.black, 1);
 }
 
 /**
- * The saturator's picture, one sample (−1…1) per pixel column (ours): the sine is driven through a
- * soft curve (gain squares it off), cut flat at the ceiling (clip), then darkened (smoothed) or
- * brightened (edges sharpened) by tone; what is heard mixes the dry sine with that by `mix`.
- */
-export function saturatorWave(frame: Pick<MixSaturatorFrame, 'gain' | 'clip' | 'tone' | 'mix'>): {
-	wet: number[];
-	out: number[];
-	ceiling: number;
-} {
-	const n = WAVE_RIGHT - WAVE_LEFT + 1;
-	const drive = 0.3 + 4.7 * unit(frame.gain);
-	const ceiling = 1 - 0.7 * unit(frame.clip);
-	const dry = Array.from({ length: n }, (_, i) => Math.sin((4 * Math.PI * i) / (n - 1)));
-	const shaped = dry.map((v) =>
-		Math.max(-ceiling, Math.min(ceiling, Math.tanh(drive * v) / Math.tanh(drive)))
-	);
-	const tone = bipolar(frame.tone);
-	let wet = shaped;
-	if (tone < 0) wet = smooth(shaped, -tone * 12);
-	else if (tone > 0) {
-		// less low end: the flat tops droop and the edges overshoot, as through a high-pass
-		const soft = smooth(shaped, 6);
-		wet = shaped.map((v, i) => v + 0.8 * tone * (v - soft[i]));
-	}
-	const mix = unit(frame.mix);
-	return { wet, out: dry.map((v, i) => v + mix * (wet[i] - v)), ceiling };
-}
-
-/** A curve through one sample per pixel column. */
-function wave(ctx: ScreenCtx, samples: readonly number[], color: string, width: number): void {
-	ctx.strokeStyle = color;
-	ctx.lineWidth = width;
-	ctx.lineJoin = 'round';
-	ctx.beginPath();
-	samples.forEach((v, i) => {
-		const y = WAVE_MID - Math.max(-1.3, Math.min(1.3, v)) * WAVE_AMP;
-		if (i === 0) ctx.moveTo(WAVE_LEFT + i, y);
-		else ctx.lineTo(WAVE_LEFT + i, y);
-	});
-	ctx.stroke();
-}
-
-/**
- * Mix M3: the clip ceiling as two rules, the fully saturated signal in grey and what the master hears
- * in white; with mix at 0 the white line is the clean sine, and it meets the grey one as mix rises.
+ * Mix M3 as the device draws it (camera frames b1-171…204): on black, a ladder of ticks per
+ * encoder with its label at the column's top left in white, and a cap in the encoder's style riding
+ * up the ladder with the value (tone centred at neutral).
  */
 function drawSaturator(ctx: ScreenCtx, frame: MixSaturatorFrame): void {
-	const { wet, out, ceiling } = saturatorWave(frame);
-	line(ctx, WAVE_LEFT, WAVE_MID, WAVE_RIGHT, WAVE_MID, COLORS.dark, 1);
-	for (const c of [ceiling, -ceiling]) {
-		const y = WAVE_MID - c * WAVE_AMP;
-		line(ctx, WAVE_LEFT, y, WAVE_RIGHT, y, COLORS.grey1, 1);
-	}
-	wave(ctx, wet, COLORS.grey2, 1.12);
-	wave(ctx, out, COLORS.white, 1.67);
-	header(ctx, frame.header);
+	const values = [frame.gain, frame.clip, (bipolar(frame.tone) + 1) / 2, frame.mix];
+	LADDER_X.forEach((x, e) => {
+		for (let k = 0; k < TICKS.count; k++) {
+			const y = 110 + (k - (TICKS.count - 1) / 2) * TICKS.pitch;
+			fillBox(
+				ctx,
+				x - TICKS.width / 2,
+				y - TICKS.thickness / 2,
+				TICKS.width,
+				TICKS.thickness,
+				RAMP[3]
+			);
+		}
+		text(ctx, frame.header[e]?.label ?? '', e * 120 - 1, 15.75, 20, COLORS.white);
+		ladderCap(ctx, x, values[e], e);
+	});
 }
 
 // ─────────────────────────────────────────────────────────────────────────── mix M4: master
 
-/** Top and bottom of a level's travel (mix M1's). */
-const LEVEL_TOP = 25;
-const LEVEL_BOTTOM = 205;
-
-/** Mix M1's level bar: its height is the level, its thickness the momentary output. */
-function levelBar(
-	ctx: ScreenCtx,
-	x: number,
-	width: number,
-	level: number,
-	meter: number,
-	color: string
-): void {
-	const y = LEVEL_BOTTOM - (LEVEL_BOTTOM - LEVEL_TOP) * unit(level);
-	const thickness = 0.56 + 12.8 * unit(meter);
-	fillBox(ctx, x, y - thickness / 2, width, thickness, color);
-}
-
 /**
- * The compressor as a transfer curve (ours): the output follows the input up to the threshold and
- * rises 1/ratio as steeply above it, with a soft knee. More compression lowers the threshold (to 30 %
- * of the range) and raises the ratio (to 8:1).
+ * The master page's layout (camera frames b1-205…253): the two groups' levels on the left above
+ * and below a divider, two white strips down the middle (they stayed full whatever was turned; how
+ * they move with sound was not captured), and the master level under a VU meter.
  */
-export function compressorCurve(amount: number): {
-	threshold: number;
-	ratio: number;
-	output: (input: number) => number;
-} {
-	const a = unit(amount);
-	const threshold = 1 - 0.7 * a;
-	const ratio = 1 + 7 * a;
-	const knee = 0.12;
-	const output = (v: number) => {
-		if (v <= threshold - knee / 2) return v;
-		if (v >= threshold + knee / 2) return threshold + (v - threshold) / ratio;
-		const d = v - threshold + knee / 2;
-		return v + ((1 / ratio - 1) * d * d) / (2 * knee);
-	};
-	return { threshold, ratio, output };
-}
+const MASTER = {
+	divider: 109.5,
+	strips: [
+		[229, 239.75],
+		[240.25, 251]
+	],
+	/** The compressor's dark bar: in the right strip, rising from the divider. */
+	compressor: { x: 242.75, width: 4.25, height: 40 }
+} as const;
 
-/** Draws the compressor curve in a `size` square with its top-left at (x, y), a handle at the knee. */
-function drawCompressor(ctx: ScreenCtx, x: number, y: number, size: number, amount: number): void {
-	const { threshold, output } = compressorCurve(amount);
-	const px = (v: number) => x + v * size;
-	const py = (v: number) => y + size - v * size;
-	line(ctx, px(0), py(0), px(1), py(1), COLORS.grey1, 1);
-	ctx.strokeStyle = COLORS.black;
-	ctx.lineWidth = 1.59;
-	ctx.lineJoin = 'round';
-	ctx.beginPath();
-	for (let i = 0; i <= 60; i++) {
-		const v = i / 60;
-		if (i === 0) ctx.moveTo(px(v), py(output(v)));
-		else ctx.lineTo(px(v), py(output(v)));
-	}
-	ctx.stroke();
-	if (threshold < 1)
-		fillBox(ctx, px(threshold) - 2.5, py(output(threshold)) - 2.5, 5, 5, COLORS.ink, 1);
+/**
+ * The VU meter: its pivot sits below the scale; angles are from straight up, clockwise. The scale
+ * reads −20, −10, −5, 0 and +3 at its labelled ticks, a band marks 0…+3, and a grey dot waits past
+ * the end.
+ */
+const VU = {
+	x: 359.67,
+	y: 151.97,
+	radius: 94.5,
+	ticks: [
+		-35.5, -25.73, -15.41, -10.23, -5.16, 0.16, 5.21, 10.44, 15.56, 20.71, 25.82, 30.97, 36.7
+	],
+	/** dB → angle at the labelled ticks, for the needle. */
+	scale: [
+		[-20, -35.5],
+		[-10, -25.73],
+		[-5, -5.16],
+		[0, 15.56],
+		[3, 36.7]
+	],
+	band: [15.2, 37.2],
+	labels: [
+		{ text: '–20', x: 284.9, y: 59.05 },
+		{ text: '–10', x: 304.4, y: 46.15 },
+		{ text: '–5', x: 349.2, y: 36.75 },
+		{ text: '0', x: 389.8, y: 41.65 },
+		{ text: '+3', x: 429.1, y: 60.95 }
+	],
+	dot: { x: 431.6, y: 71.7, r: 2 },
+	needle: { from: 73, to: 111, width: 3 }
+} as const;
+
+/** A point `r` from the VU's pivot at `degrees` from straight up. */
+function vuPoint(r: number, degrees: number): Point {
+	const a = (degrees * Math.PI) / 180;
+	return [VU.x + r * Math.sin(a), VU.y - r * Math.cos(a)];
 }
 
 /**
- * Mix M4 on mix M1's eight strips: the percussion and melodic groups and the master as bars two
- * strips wide (white on the darkest pair, black after, as on M1), the compressor as its curve; at
- * the foot, the tracks each group gathers and, under the master, the external audio page's output
- * mark (auxiliary-064).
+ * The needle's angle for the master's momentary output (0–1): silence rests on −20, full output
+ * reaches +3 (ours: the device's meter was only seen at rest); in dB between the labelled ticks.
+ */
+export function needleAngle(output: number): number {
+	const db = output > 0 ? 20 * Math.log10(unit(output)) + 3 : -Infinity;
+	const scale = VU.scale;
+	if (db <= scale[0][0]) return scale[0][1];
+	for (let i = 1; i < scale.length; i++) {
+		const [d1, a1] = scale[i];
+		const [d0, a0] = scale[i - 1];
+		if (db <= d1) return a0 + ((db - d0) / (d1 - d0)) * (a1 - a0);
+	}
+	return scale[scale.length - 1][1];
+}
+
+/** The VU meter, needle at the master's output. */
+function vuMeter(ctx: ScreenCtx, output: number): void {
+	const rad = (d: number) => ((d - 90) * Math.PI) / 180;
+	// the band from 0 to +3, from the scale line out
+	ctx.beginPath();
+	ctx.arc(VU.x, VU.y, VU.radius + 7.4, rad(VU.band[0]), rad(VU.band[1]));
+	ctx.arc(VU.x, VU.y, VU.radius - 0.75, rad(VU.band[1]), rad(VU.band[0]), true);
+	ctx.closePath();
+	ctx.fillStyle = COLORS.white;
+	ctx.fill();
+	// the scale line and the ticks
+	ctx.beginPath();
+	ctx.arc(VU.x, VU.y, VU.radius, rad(VU.ticks[0] - 0.4), rad(VU.band[1]));
+	for (const t of VU.ticks) {
+		ctx.moveTo(...vuPoint(VU.radius - 0.75, t));
+		ctx.lineTo(...vuPoint(VU.radius + 13.5, t));
+	}
+	ctx.strokeStyle = COLORS.white;
+	ctx.lineWidth = 1.5;
+	ctx.lineCap = 'butt';
+	ctx.stroke();
+	for (const label of VU.labels)
+		text(ctx, label.text, label.x, label.y, 10, COLORS.white, 'center');
+	disc(ctx, VU.dot.x, VU.dot.y, VU.dot.r, RAMP[4]);
+	const angle = needleAngle(output);
+	ctx.beginPath();
+	ctx.moveTo(...vuPoint(VU.needle.from, angle));
+	ctx.lineTo(...vuPoint(VU.needle.to, angle));
+	ctx.lineWidth = VU.needle.width;
+	ctx.stroke();
+}
+
+/** The compressor's dark bar for `amount` (0–1): a pixel at the default 10, 40 px at the top. */
+export function compressorHeight(amount: number): number {
+	return MASTER.compressor.height * unit(amount) ** 1.5;
+}
+
+/**
+ * Mix M4 as the device draws it (camera frames b1-205…253): "percussion" and "melodic" with their
+ * levels in 50 px figures, a divider between them; two white strips down the middle, the right one
+ * darkened up from the divider as the compressor rises; the VU meter over "master" and its level.
+ * The page has no picture of the groups' own meters (they stay in the frame for its readers).
  */
 function drawMaster(ctx: ScreenCtx, frame: MixMasterFrame): void {
-	for (let i = 0; i < 8; i++) fillBox(ctx, i * 60, 0, 60, 220, RAMP[i]);
-	const [percussion, melodic, compressor, level] = frame.values;
-	levelBar(ctx, 0, 120, percussion, frame.meters[0], COLORS.white);
-	levelBar(ctx, 120, 120, melodic, frame.meters[1], COLORS.black);
-	drawCompressor(ctx, 255, 75, 90, compressor);
-	levelBar(ctx, 360, 120, level, frame.meters[2], COLORS.black);
-	text(ctx, frame.groups[0], 5, 212.5, 10, COLORS.white);
-	text(ctx, frame.groups[1], 125, 212.5, 10, COLORS.white);
-	drawIcon(ctx, 'mixer.output', 365, 182.5);
-	header(ctx, frame.header);
+	const [percussion, melodic, , master] = frame.header;
+	text(ctx, percussion?.label ?? '', 5, 20.75, 20, COLORS.white);
+	text(ctx, percussion?.value ?? '', 119.5, 87.8, 50, COLORS.white, 'center');
+	text(ctx, melodic?.label ?? '', 5, 130.1, 20, COLORS.white);
+	text(ctx, melodic?.value ?? '', 119.5, 187.4, 50, COLORS.white, 'center');
+	for (const [x0, x1] of MASTER.strips) fillBox(ctx, x0, 0, x1 - x0, 220, COLORS.white);
+	const { x, width } = MASTER.compressor;
+	const h = compressorHeight(frame.values[2]);
+	fillBox(ctx, x, MASTER.divider - h, width, h, COLORS.dark);
+	line(ctx, 0, MASTER.divider, 253.5, MASTER.divider, COLORS.grey1, 1);
+	vuMeter(ctx, frame.meters[2]);
+	text(ctx, master?.label ?? '', 359.5, 132.5, 20, COLORS.white, 'center');
+	text(ctx, master?.value ?? '', 359, 187.4, 50, COLORS.white, 'center');
 }
 
 // ─────────────────────────────────────────────────────────── midi engine M2 / M3: CC slots
@@ -345,7 +491,15 @@ function drawMidiCc(ctx: ScreenCtx, frame: MidiCcFrame): void {
 const cells = (header: readonly HeaderCell[]) =>
 	header.map((c) => `${c.label} ${c.value}`).join(', ');
 
+/** A send as a number on the 0–99 scale the track's send page shows. */
+const sendValue = (v: number) => String(Math.round(unit(v) * 99)).padStart(2, '0');
+
 export const drawers: AreaDrawers<MixerFrame> = {
+	'mix-sends': {
+		draw: drawSendPopup,
+		describe: (f) =>
+			`${describeFrame(f.base)}, fx I ${sendValue(f.sends[0])}, fx II ${sendValue(f.sends[1])}`
+	},
 	'mix-eq': { draw: drawEq, describe: (f) => `master eq: ${cells(f.header)}` },
 	'mix-saturator': { draw: drawSaturator, describe: (f) => `master saturator: ${cells(f.header)}` },
 	'mix-master': { draw: drawMaster, describe: (f) => `master: ${cells(f.header)}` },

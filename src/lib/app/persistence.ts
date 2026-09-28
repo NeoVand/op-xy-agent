@@ -187,7 +187,8 @@ export function captureSim(state: SimState, now = Date.now()): SavedSim {
 /**
  * Clears what only means something mid-gesture, so reloaded work starts idle like a booted device:
  * the sequencer's gestures, clipboards and undo; queued, armed or half-typed scenes and a playing
- * song; an open effect list; the recorder, an open slicer and the library cursor.
+ * song; an open effect list; the mixer's send popup; the recorder, an open slicer and the library
+ * cursor.
  */
 export function settleSession(state: SimState): void {
 	const fresh = defaultState().areas;
@@ -204,6 +205,8 @@ export function settleSession(state: SimState): void {
 		clipboard: fresh.arrange.clipboard
 	});
 	areas.auxiliary.picker = null;
+	// a send popup that was up when the work was saved
+	areas.mixer.sendPopup = 0;
 	Object.assign(areas.sample, {
 		record: fresh.sample.record,
 		slicer: null,
