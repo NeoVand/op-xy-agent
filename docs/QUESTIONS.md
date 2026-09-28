@@ -33,7 +33,15 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    session should time the envelopes' decay and release: we apply the attack's law to them, which
    gives T3's bass a 44 s release. Approve when ready, and say whether loading three test samples (impulse,
    noise, sine) as presets is fine for the filter measurements.
-6. **Wavetable tables: our approach, and the eighth table's name.** Our wavetable frames are
+6. **Photos of the sequencer's screens** (read-only; a phone photo each). None of our sources shows
+   them, so ours are invented: holding **bar** on a pattern with notes; holding a **step** with
+   notes, and one with a parameter lock; **shift + a step**, then a white key; the **arpeggio** or
+   **maestro** page; the screen while **recording**.
+7. **Punch-in FX and the tape** (read-only). The replica's punch-in FX (aux T2) and tape (aux T6)
+   patterns light up but make no sound: TE never published which of the 24 keys plays which effect.
+   A short phone video pressing each punch-in key in turn over a beat, or notes on what each does,
+   would let us build them; the same for the tape's clips.
+8. **Wavetable tables: our approach, and the eighth table's name.** Our wavetable frames are
    formulas fitted to the device's harmonics, not its data. For crush, geometric and basic the
    fitted rules reproduce the device's frames closely; drawbars uses a measured registration (nine
    bar levels per tenth of position). Fine to ship as is (D2 by analogy), or should ours diverge?

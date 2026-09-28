@@ -232,6 +232,8 @@ export function loadPreset(s: SimState, track: number, preset: PresetEntry): voi
 		sys.presetSettings[track] = settings
 			? presetSettingsOf(settings, defaultPresetSettings())
 			: defaultPresetSettings();
+		// a stored preset brings its keyboard octave (the bass an octave down, and so on)
+		if (settings) s.areas.sequencer.octaves[octaveKey('instrument', track)] = settings.octave;
 	}
 	sys.trackPresets[track] = presetKey(preset);
 }

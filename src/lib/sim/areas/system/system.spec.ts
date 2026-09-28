@@ -5,6 +5,7 @@ import type { ScreenFrame } from '../../screen/frame';
 import { RecordingContext } from '../../screen/recording';
 import { describeFrame, renderFrame } from '../../screen/render';
 import type { SystemListFrame } from './frames';
+import { loadPreset } from './presets';
 import { HOLD_MS } from './state';
 
 /** A simulator with a clock the test moves. */
@@ -515,6 +516,15 @@ describe('system area: presets (manual: instrument/preset-browser, preset-manage
 		expect(s.state.areas.system.trackPresets[2]).toBe('lead/lead 2');
 		// steps and mixer stay with the track (a new project's level)
 		expect(s.state.tracks[2].mix.level).toBe(DEFAULT_LEVEL);
+	});
+
+	it('brings a stored preset’s keyboard octave along when it loads', () => {
+		const { sim: s } = sim();
+		const pluck = s.state.areas.system.presets.library.find((p) => p.name === 'beach bum')!;
+		loadPreset(s.state, 2, pluck);
+		// beach bum plays an octave up on the device; the bass it replaced an octave down
+		expect(s.state.areas.sequencer.octaves['instrument.2']).toBe(1);
+		expect(s.state.tracks[2].engine).toBe('epiano');
 	});
 
 	it('leaves the browser with a track key, which selects that track', () => {
