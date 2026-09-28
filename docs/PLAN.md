@@ -174,8 +174,9 @@ owner flagged, then what users see most.
        strips, pan dot position); the VU needle's motion with sound.
 6. [x] **Replica polish:** encoder turn arrows that show the real direction (or nothing), and a darker
        body that matches the unit rather than the milky one.
-7. [ ] **Filter** (types, off, envelope hatch, key-tracking arrow, a type pick returning to M1, shift
-       sends) and **LFO** (five types, off).
+7. [x] **Filter** (types, off, envelope hatch, key-tracking arrow, a type pick returning to M1, shift
+       sends) and **LFO** (five types, off). Left: the synced speeds past the four seen, the LFO
+       envelope's sign, and decoding a stored destination as six choices.
 8. [x] **Arrange and song mode** (footer labels, pattern column, scene box, 32-slot song grid).
        Left: the cross-fades and slides (b1-741, b1-852).
 9. [x] **Tempo** (metronome weight by BPM, groove slider, speaker waves, pendulum). Left: what

@@ -10,9 +10,9 @@ import { PathDataError, compilePath, tracePath } from './paths';
 import { RecordingContext } from './recording';
 import { describeFrame, renderFrame } from './render';
 import { frameToSvg } from './svg';
-import type { ScreenFrame } from './frame';
+import type { FilterView, ScreenFrame } from './frame';
 import { COLORS, RAMP } from './palette';
-import { cutoffX, freqToX } from './pages/filter';
+import { cutoffX, freqToX, kneeX, resonanceBox } from './pages/filter';
 import { ENVELOPE_GRAPH, envelopePoints } from './pages/envelope';
 
 const ROOT = path.resolve(import.meta.dirname, '../../../..');
@@ -208,30 +208,64 @@ describe('renderFrame (recorded draw calls)', () => {
 		expect(xs[4]).toBeCloseTo(440, 5);
 	});
 
-	it('draws the filter bands, the Q box on the cutoff and the envelope handle', () => {
-		const ctx = record({ page: 'filter', ...filter });
-		for (const band of ['#16161e', '#2f2f37', '#484850', '#96969b']) {
+	it('draws the filter as the device does: four bands, the resonance box at the knee, the key arrow (note 59 §2.3)', () => {
+		const ctx = record({ page: 'filter', ...filter, envAmount: 0 });
+		// the bands' greys, dark to white, clipped to the response
+		for (const band of [COLORS.panel, RAMP[3], RAMP[4], RAMP[7]]) {
 			expect(ctx.fillsOf(band).length, band).toBeGreaterThan(0);
 		}
-		const q = ctx.fillsOf(COLORS.black).find((f) => f.y0 === 87.5 && f.y1 === 112.5);
-		expect(q).toMatchObject({ x0: 310.5, x1: 350.5 });
-		const handle = ctx.fillsOf(COLORS.grey2).find((f) => f.x1 - f.x0 === 10);
-		expect(handle?.x0).toBeCloseTo(371.3, 0);
+		// the knee slides 2.95 px a CC step from 64.3 and the box holds the resonance (0.4 → 40)
+		expect(kneeX(0)).toBe(64.3);
+		expect(kneeX(1)).toBeCloseTo(439.3, 9);
+		const x = kneeX(filter.cutoff);
+		const y = 148.45 - 64.8 * filter.resonance;
+		const box = ctx.fillsOf(COLORS.black).find((f) => Math.abs(f.x1 - f.x0 - 39) < 0.01);
+		expect(box?.x0).toBeCloseTo(x - 19.5, 1);
+		expect(box?.y0).toBeCloseTo(y - 12.1, 1);
+		expect(resonanceBox({ ...filter, cutoff: 1 }).x).toBe(414.5);
+		// no hatching without an envelope amount
+		expect(ctx.ops.some((o) => o.op === 'stroke' && o.style === RAMP[5])).toBe(false);
+		// TE's axis for the pages that still use it (the auxiliary filter)
 		expect(freqToX(5000)).toBe(330.5);
 		expect(cutoffX(1)).toBe(450.5);
 	});
 
-	it('draws four send cards over the dimmed filter', () => {
-		const ctx = record({ page: 'sends', filter, values: ['50', '31', '77', '25'] });
-		const cards = ctx.fillsOf(COLORS.white).filter((f) => f.x0 === 155 && f.x1 === 355);
-		expect(cards.map((c) => c.y0)).toEqual([30, 70, 110, 150]);
-		// the graph under the cards is dimmed to half
-		const band = ctx.fillsOf('#96969b').filter((f) => f.x1 - f.x0 > 100);
-		expect(band.length).toBeGreaterThan(0);
-		expect(band.every((f) => f.alpha === 0.5)).toBe(true);
+	it('slides the key-tracking arrow from x 63.1 to 395.4 (note 59 §2.3)', () => {
+		const arrowX = (keyTracking: number) => {
+			const ctx = record({ page: 'filter', ...filter, keyTracking });
+			const white = ctx.fillsOf(COLORS.white).filter((f) => f.y0 > 190 && f.y1 < 215);
+			return Math.min(...white.map((f) => f.x0));
+		};
+		expect(arrowX(0)).toBeCloseTo(63.1 + 1.5 * 0.94, 1);
+		expect(arrowX(1)).toBeCloseTo(395.4 + 1.5 * 0.94, 1);
 	});
 
-	it('draws LFO cards with outlines and the knob cap in the parameter colour', () => {
+	it('hatches up to a ghost of the response at the cutoff plus the envelope amount', () => {
+		const hatched = (view: Partial<FilterView>) => {
+			const ctx = record({ page: 'filter', ...filter, ...view });
+			return ctx.ops.some((o) => o.op === 'stroke' && o.style === RAMP[5]);
+		};
+		expect(hatched({ envAmount: 0.3 })).toBe(true);
+		// the ghost is clamped to the range: a cutoff at full leaves nothing to hatch
+		expect(hatched({ envAmount: 0.3, cutoff: 1 })).toBe(false);
+		expect(hatched({ envAmount: 0.3, type: 'z hipass' })).toBe(true);
+	});
+
+	it('draws four white send cards over the filter at 40 %', () => {
+		const ctx = record({ page: 'sends', filter, values: ['50', '31', '77', '00'] });
+		const cards = ctx.fillsOf(COLORS.white).filter((f) => f.x0 === 139.5 && f.x1 === 340);
+		expect(cards.map((c) => c.y0)).toEqual([31.5, 71.3, 111.1, 150.9]);
+		const bands = ctx.fillsOf(RAMP[4]).filter((f) => f.x1 - f.x0 > 50);
+		expect(bands.length).toBeGreaterThan(0);
+		expect(bands.every((f) => f.alpha === 0.4)).toBe(true);
+		// a send at zero reads "no send", as the device writes it: six letters on the last card
+		const words = ctx
+			.fillsOf(COLORS.ink)
+			.filter((f) => f.x0 > 200 && f.x1 < 320 && f.y0 > 151 && f.y1 < 188);
+		expect(words).toHaveLength(6);
+	});
+
+	it('draws LFO cards with ink seams and the knob cap in the parameter’s shade', () => {
 		const ctx = record({
 			page: 'lfo',
 			type: 'value',
@@ -239,19 +273,24 @@ describe('renderFrame (recorded draw calls)', () => {
 			amount: -9,
 			volume: 0,
 			destination: { label: 'syn', free: true },
-			fourth: 'hold',
+			fourth: 'detune',
 			parameter: 2
 		});
-		const outlines = ctx.ops.filter((o) => o.op === 'stroke' && o.args[0] === 2.23);
-		expect(outlines.length).toBeGreaterThanOrEqual(6);
-		expect(ctx.fillsOf('#96969b').length).toBeGreaterThan(0);
+		const seams = ctx.ops.filter(
+			(o) => o.op === 'stroke' && o.args[0] === 1 && o.style === COLORS.ink
+		);
+		expect(seams.length).toBeGreaterThanOrEqual(4);
+		// the cap: the icon's last shape, recoloured
+		expect(ctx.fillsOf(COLORS.light).some((f) => f.x0 > 340 && f.x1 < 380 && f.y1 < 105)).toBe(
+			true
+		);
 	});
 
-	it('draws an envelope’s ramp in random’s env card and tremolo’s mode card', () => {
-		/** The ink lines (1.67 px) stroked inside a card: each as its points. */
-		function ramps(frame: ScreenFrame, x: number, y: number): number[][][] {
+	it('tilts the envelope’s line: rising, flat along the top, falling (device, CC 0 / 64 / 127)', () => {
+		/** The 1.67 px ink lines inside a card, as their end points. */
+		function lines(frame: ScreenFrame, x: number, y: number): number[][][] {
 			const ctx = record(frame);
-			const paths: number[][][] = [];
+			const out: number[][][] = [];
 			let path: number[][] = [];
 			for (const o of ctx.ops) {
 				if (o.op === 'beginPath') path = [];
@@ -260,10 +299,10 @@ describe('renderFrame (recorded draw calls)', () => {
 					const inside = path.every(
 						([px, py]) => px >= x && px <= x + 60 && py >= y && py <= y + 60
 					);
-					if (path.length && inside) paths.push(path);
+					if (path.length && inside) out.push(path);
 				}
 			}
-			return paths;
+			return out;
 		}
 		const lfo = (type: 'random' | 'tremolo', envelope: number): ScreenFrame => ({
 			page: 'lfo',
@@ -272,40 +311,37 @@ describe('renderFrame (recorded draw calls)', () => {
 			amount: 0,
 			volume: 0,
 			destination: { label: 'syn', free: false },
-			fourth: 'shape',
+			fourth: 'env',
 			parameter: 0,
 			envelope
 		});
-		// a full fade-in is TE's line across the card; none rises at once; a fade-out falls at the end
-		expect(ramps(lfo('random', 1), 240, 110)).toEqual([
+		expect(lines(lfo('random', -1), 240, 110)).toEqual([
 			[
-				[250, 160],
-				[290, 120]
+				[250.8, 157.2],
+				[289, 122.5]
 			]
 		]);
-		expect(ramps(lfo('random', 0), 240, 110)).toEqual([
+		expect(lines(lfo('random', 0), 240, 110)).toEqual([
 			[
-				[250, 160],
-				[250, 120],
-				[290, 120]
+				[250.8, 122.5],
+				[289, 122.5]
 			]
 		]);
-		expect(ramps(lfo('random', -0.5), 240, 110)).toEqual([
+		expect(lines(lfo('random', 1), 240, 110)).toEqual([
 			[
-				[250, 120],
-				[270, 120],
-				[290, 160]
+				[250.8, 122.5],
+				[289, 157.2]
 			]
 		]);
-		expect(ramps(lfo('tremolo', 1), 330, 50)).toEqual([
+		expect(lines(lfo('tremolo', -1), 330, 50)).toEqual([
 			[
-				[340, 100],
-				[380, 60]
+				[342.8, 95.1],
+				[376.3, 64.8]
 			]
 		]);
 	});
 
-	it('draws the duck’s source: the track’s number, or the metronome in its place', () => {
+	it('draws the duck’s source: "tr" and the track’s number, or the metronome in its place', () => {
 		const duck = (source: string): ScreenFrame => ({
 			page: 'lfo',
 			type: 'duck',
@@ -316,14 +352,43 @@ describe('renderFrame (recorded draw calls)', () => {
 			fourth: '',
 			parameter: 0,
 			source,
-			sourceAudio: true
+			sourceAudio: false
 		});
-		const inCard = (ctx: RecordingContext) =>
-			ctx.fillsOf(COLORS.ink).filter((f) => f.x0 >= 120 && f.x1 <= 180 && f.y0 >= 55);
-		const track = inCard(record(duck('12')));
-		const metronome = inCard(record(duck('metronome')));
-		expect(track.length).toBeGreaterThan(2); // "tr" and two digits
-		expect(metronome).toEqual([expect.objectContaining({ x0: 127.5, x1: 172.5, y1: 135.5 })]);
+		const inCard = (ctx: RecordingContext, color: string) =>
+			ctx.fillsOf(color).filter((f) => f.x0 >= 120 && f.x1 <= 180 && f.y0 >= 80 && f.y1 <= 130);
+		const track = record(duck('12'));
+		expect(inCard(track, COLORS.ink)).toHaveLength(2); // two digits
+		expect(inCard(track, COLORS.grey4)).toHaveLength(2); // "tr"
+		const metronome = record(duck('metronome'));
+		expect(inCard(metronome, COLORS.ink)).toEqual([
+			expect.objectContaining({ x0: expect.closeTo(135.9, 0), y1: expect.closeTo(124.2, 0) })
+		]);
+	});
+
+	it('draws the pickers’ lists as the device does: rows from baseline 25.3, the current one boxed', () => {
+		const ctx = record({
+			page: 'list',
+			soft: [],
+			columns: [
+				{ items: ['3', 'filter'], selected: null, style: 'outline', x: 4.5, width: 100 },
+				{
+					items: ['ladder', 'svf', 'z hipass', 'z lowpass'],
+					selected: 1,
+					style: 'outline',
+					x: 109.2,
+					width: 124.75
+				}
+			]
+		});
+		// one 1.5 px white outline, its top 16.85 px above the second row's baseline (45.3)
+		const boxAt = ctx.ops.findIndex((o) => o.op === 'stroke' && o.args[0] === 1.5);
+		expect(ctx.ops[boxAt].style).toBe(COLORS.white);
+		const start = ctx.ops.slice(0, boxAt).findLast((o) => o.op === 'moveTo');
+		expect(start?.args).toEqual([105.3 + 2.5, 28.45]);
+		// the words in the heavier weight: every glyph is filled and stroked in white
+		expect(
+			ctx.ops.filter((o) => o.op === 'stroke' && o.style === COLORS.white).length
+		).toBeGreaterThan(20);
 	});
 
 	it('draws eight mixer strips, hatching a muted one', () => {

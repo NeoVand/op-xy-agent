@@ -60,7 +60,7 @@ export function renderFrame(ctx: ScreenCtx, frame: ScreenFrame, options: RenderO
 			drawSends(ctx, frame);
 			break;
 		case 'lfo':
-			dimmedIfOff(ctx, frame.off, () => drawLfo(ctx, frame));
+			dimmedIfOff(ctx, frame.off, () => drawLfo(ctx, frame, options.tick ?? 0));
 			break;
 		case 'mix':
 			drawMix(ctx, frame);

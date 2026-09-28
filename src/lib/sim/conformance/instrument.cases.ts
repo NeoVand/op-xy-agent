@@ -1213,11 +1213,12 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await lfo(d, 'value');
 			const seen: string[] = [];
-			for (let i = 0; i < 8; i++) {
+			for (let i = 0; i < 7; i++) {
 				const dest = on(d, 'lfo').destination;
 				seen.push(dest.free ? `${dest.label} free` : dest.label);
 				await d.turn(3, 1);
 			}
+			// the device's column over CC42 (camera, 1.1.33): no LFO page, and it stops at the end
 			expect(seen).toEqual([
 				'syn',
 				'syn free',
@@ -1225,8 +1226,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				'env free',
 				'filter',
 				'filter free',
-				'lfo',
-				'lfo free'
+				'filter free'
 			]);
 		});
 
@@ -1353,7 +1353,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				seen.push(dest.free ? `${dest.label} free` : dest.label);
 				await d.turn(3, 1);
 			}
-			expect(seen).toEqual(['syn', 'env', 'filter', 'lfo', 'lfo']);
+			// the device's cards over CC42: syn, env, filter and amp (camera, 1.1.33)
+			expect(seen).toEqual(['syn', 'env', 'filter', 'amp', 'amp']);
 			expect(on(d, 'lfo').amount).toBeCloseTo((27 * 100) / 99, 9);
 			await d.turn(4, 1);
 			expect(on(d, 'lfo').parameter).toBe(1);

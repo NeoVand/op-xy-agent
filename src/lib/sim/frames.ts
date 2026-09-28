@@ -63,7 +63,10 @@ function filterView(t: TrackState): FilterView {
 	};
 }
 
-/** Names of a destination page's four parameters (for the LFO's parameter card). */
+/**
+ * Names of a destination page's four parameters, as the LFO's parameter card writes them (device,
+ * 1.1.33: the engine's own names, cutoff · res · env · key, volume · pitch · pan and a dash).
+ */
 function destinationParams(t: TrackState, module: string): readonly string[] {
 	switch (module) {
 		case 'syn':
@@ -72,8 +75,10 @@ function destinationParams(t: TrackState, module: string): readonly string[] {
 			return ['attack', 'decay', 'sustain', 'release'];
 		case 'filter':
 			return ['cutoff', 'res', 'env', 'key'];
+		case 'amp':
+			return ['volume', 'pitch', 'pan', '-'];
 		default:
-			return ['speed', 'amount', 'dest', 'param'];
+			return ['', '', '', ''];
 	}
 }
 
@@ -97,7 +102,8 @@ function lfoFrame(t: TrackState): LfoFrame {
 		amount: (l.amount * 100) / 99,
 		volume: (l.volume * 100) / 99,
 		destination: { label: d.module, free: d.free },
-		fourth: l.type === 'tremolo' ? 'mode' : (params[l.parameter] ?? ''),
+		// tremolo's fourth card is its envelope, labelled env on the device
+		fourth: l.type === 'tremolo' ? 'env' : (params[l.parameter] ?? ''),
 		parameter: l.parameter,
 		source:
 			l.type !== 'duck'
@@ -106,9 +112,8 @@ function lfoFrame(t: TrackState): LfoFrame {
 					? 'metronome'
 					: String(l.source),
 		sourceAudio: l.sourceAudio,
-		// element's rule marks where its source sits among the four (ours)
-		...(l.type === 'element' ? { sourceAt: (sensor + 0.5) / ELEMENT_SOURCES.length } : {}),
-		...(l.type === 'random' || l.type === 'tremolo' ? { envelope: l.envelope / 99 } : {})
+		...(l.type === 'random' || l.type === 'tremolo' ? { envelope: l.envelope / 99 } : {}),
+		...(l.type === 'duck' ? { hold: l.hold / 99, release: l.release / 99 } : {})
 	};
 }
 
@@ -118,7 +123,11 @@ function window<T>(items: readonly T[], index: number, rows: number) {
 	return { items: items.slice(first, first + rows), selected: index - first };
 }
 
-/** The picker shift + M1 / M3 / M4 opens: the track, the kind, and the list (TE's browser). */
+/**
+ * The picker shift + M1 / M3 / M4 opens: the track and the kind ("3", "filter") at the left, the
+ * list with the current item boxed, laid out as the device's filter and LFO type lists (camera,
+ * 1.1.33; the engine picker is ours after them).
+ */
 function pickerFrame(s: SimState): ListFrame {
 	const picker = s.picker ?? { kind: 'engine', index: 0 };
 	const lists = {
@@ -135,10 +144,10 @@ function pickerFrame(s: SimState): ListFrame {
 				items: [String(s.track + 1), list.title],
 				selected: null,
 				style: 'outline',
-				x: 5,
+				x: 4.5,
 				width: 100
 			},
-			{ items: shown.items, selected: shown.selected, style: 'white', x: 120, width: 170 }
+			{ items: shown.items, selected: shown.selected, style: 'outline', x: 109.2, width: 124.75 }
 		],
 		soft: []
 	};

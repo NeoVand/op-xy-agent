@@ -160,6 +160,25 @@ E3 light grey, E4 white).
   - tape (reels icon);
   - FX I;
   - FX II.
+- **Measured** (design px; the curve within 0.19–0.4 px rms; `screen/pages/filter.ts`):
+  - **Graph:** the fill spans x 30.3–450.1, flat top at y 60.2, the resting strip from 160.75 and
+    the floor at about 171.3. Band dividers are 1 px black at x 159.4, 248.6 and 328.3; the bands'
+    closest palette greys are #16161e, #616169, #7a7a82 and #f7f5f5 (by brightness).
+  - **Curve:** ladder, svf and z lowpass draw the same curve, two cubics around a knee at x = 64.3
+    - 2.953 · CC32 (64.3 to 439.3); resonance changes only the box. z hipass is the mirror image with
+      its knee 35.1 px left of the box (one cutoff captured).
+  - **Value box:** black, 39 × 24.2, centred on the knee but never right of 414.5, at y = 148.45 −
+    0.5103 · CC33. It shows the **resonance**, 00–99 (CC 112 reads 88), which settles §4's question.
+  - **Envelope hatch:** 1 px lines at 45°, 10 px apart and fixed to the screen. The ghost sits at the
+    knee + 2.953 · CC34, clamped from about CC 71 up. CC34 = 0 draws no hatch: the device's range
+    runs from none to full, with no negative side.
+  - **Key-tracking arrow:** TE's arrow at 94 %, its box at x = 63.1 + 332.3 · CC35 / 127.
+  - **Labels:** 11 px in the heavier weight, white; the axis labels share baseline 185.
+  - **Sends:** cards 200.5 × 36.6 at x 139.5, y 31.5 + 39.8i, over the graph dimmed to 40 %; TE's
+    icons at x 144; values 20 px at x 204.7, and zero written "no send" at 18 px.
+  - **Type list:** "3 / filter" at x 4.5, the items at x 109.2 on baselines 25.3 + 20i, 20 px in the
+    heavier weight; the current item has a 1.5 px outline, x 105.3–230.1, from 16.85 above the
+    baseline to 4.05 below it. The preset browser's engine column (b1-1500) matches.
 
 ### 2.4 LFO (instrument M4, five types)
 
@@ -184,6 +203,29 @@ E3 light grey, E4 white).
   - the parameter card: in, attack, cutoff, pitch, pan, ….
 - **duck:** the source shows "tr 1" (a track number; the last position is a metronome icon), then
   amount, a live "signal" box, and hold and release cards.
+- **Measured** (`screen/pages/lfo.ts`, pictograms in `knowledge/opxy/device-icons/modules.json`):
+  - **Common:** cards with radius 5 and 1 px ink seams; labels 11 px, grey, with baselines 45.4 above
+    a card or 180.4 below; encoder marks E1 a dark dot, E2 a light dot, E3 none, E4 a ring.
+  - **Speed card:** synced, a count with a note: 8 with a 32nd, 6 with a 16th, 4 with a quarter, 2
+    with a whole note, at CC 0, 16, 32 and 48. Free, from CC 64, a dial: radius 24.2, twelve
+    notches, a 5.2 px hand turning from 0° to 180°, 45° per 16 CC.
+  - **Amount ladder:** 21 ticks from y 60 to 160; the pointer's centre at y = 110 − 0.5 · amount.
+  - **Envelope line** (tremolo, random): rising at CC 0, flat at 64, falling at 127. Tremolo's fourth
+    card is labelled env.
+  - **Destinations:** there is no LFO-page destination. value lists syn, syn free, env, env free,
+    filter, filter free (6, no wrapping, the chosen card at y 80 with one above it); element lists
+    syn, env, filter and amp, with every card above it shown and "dest" over the first; random
+    shows a single card over its env card.
+  - **Parameter card:** TE's knob without its curve, labelled with the parameter's name (the
+    engine's own, cutoff · res · env · key, volume · pitch · pan · -); the cap takes one shade per
+    encoder: near-black, #484850, #afafb4, white.
+  - **Duck:** the source card reads "tr" and the number, a metronome for the last source; the signal
+    box is outlined white with a 2 px rest line at y 97.9; the hold pulse falls at x = 18 + 20.5 ·
+    hold, and the release runs flat to x = 18.3 + 26.7 · release, then straight down to (46.3,
+    46.6).
+  - **Ours:** the hatch grey; a negative envelope amount hatching toward the other side; synced counts
+    other than 8/6/4/2; random's rule stepping; duck's audio icon; tremolo's shape card for every
+    shape.
 
 ### 2.5 Engine pages (instrument M1)
 
@@ -552,8 +594,8 @@ Not tested on purpose: ext audio CC12 (input select: could open the mic and feed
 - **Drum track:** M2–M4 pages.
 - **Mixer:** mute and solo on M1.
 - **Instrument:** the M2 shift layer swept by CC 28–31.
-- **Readings:** the external CV needle with notes; the filter page's value box (which parameter it
-  shows).
+- **Readings:** the external CV needle with notes (the filter page's value box shows the
+  resonance, §2.3).
 - **Open from the page rebuilds (2026-09-28):**
   - bar card: the roll's pitch scale, with C3 and C4 entered on two steps (one pixel per semitone is
     ours);

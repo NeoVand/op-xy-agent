@@ -1,251 +1,343 @@
 /**
- * M3 (filter) and its shift layer, sends (guide art instrument-032, where the graph shows dimmed
- * under the cards). The response is filled in four bands that lighten with frequency, split at the
- * 1K / 2K / 5K marks; resonance lifts a bump at the cutoff (the Q box sits on it), the envelope
- * amount hatches the range the cutoff sweeps (with a handle), key tracking shows beside "key".
+ * M3 (filter) and its shift layer, the sends, as the device draws them: measured on the owner's
+ * OS 1.1.33 unit by camera (docs/research/59-screen-profiling.md §2.3). TE's guide art
+ * (instrument-032) drew a resonant peak, a Q box and a "key" label; the device draws none of them.
+ *
+ * - The response is one drawing for every lowpass type (ladder, svf, z lowpass): a flat top, a
+ *   smooth fall and a strip resting on the floor, filled in four bands that lighten across the
+ *   spectrum. The cutoff slides it without changing its shape; z hipass mirrors it.
+ * - A black box holding the resonance (00–99) sits at the cutoff, higher the more resonance:
+ *   resonance moves nothing else.
+ * - A positive envelope amount hatches the area up to a ghost of the response at the cutoff plus
+ *   the amount.
+ * - Key tracking slides an arrow along the bottom.
+ * - Shift: four white send cards (aux out, tape, FX I, FX II) over the page at 40 %.
  */
 import type { ScreenCtx } from '../context';
-import { card, disc, encoderDot, fillBox, line, text } from '../draw';
+import { encoderDot, fillBox, line, text } from '../draw';
 import type { FilterView, SendsFrame } from '../frame';
-import { drawIcon } from '../icons';
-import { COLORS } from '../palette';
+import { drawIcon, icon } from '../icons';
+import { COLORS, RAMP } from '../palette';
+import { compiled, tracePath } from '../paths';
 
-const LEFT = 30.5;
-const RIGHT = 450.5;
-const FLAT = 47.5;
-/** The band area's floor, and the response's resting level just above it (TE leaves a strip). */
-const FLOOR = 162.5;
-const REST = 157.5;
-/** Resonance lifts the peak by up to this many pixels (TE's art: 10.8 px). */
-const BUMP = 27;
-/** Frequency → x anchors of TE's axis (not a uniform log scale). */
-const AXIS: readonly (readonly [number, number])[] = [
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+/** The graph: the fill spans x 30…450 from its flat top to the floor, resting on a strip above it. */
+const FILTER_GRAPH = {
+	left: 30,
+	right: 450,
+	top: 60.2,
+	rest: 160.75,
+	floor: 171.25
+} as const;
+
+/** The dividers between the bands: 1 px black lines under the 1k, 2k and 5k marks. */
+const DIVIDERS = [159.5, 248.5, 328.5] as const;
+
+/**
+ * The bands' greys, dark to white across the spectrum, picked by the bands' brightness on the
+ * captures (54, 162, 192 and a saturated 255) against the mixer strips' palette greys read by the
+ * same camera: TE's near-black panel tone, then ramp steps 3, 4 and 7 (their hue on the captures is
+ * the camera's cast).
+ */
+const BAND_FILLS = [COLORS.panel, RAMP[3], RAMP[4], RAMP[7]] as const;
+
+/**
+ * The lowpass drawing around its knee, the point that stands for the cutoff (the value box's
+ * centre, 19 % of the way down the fall): x in px from the knee, y as a level from the flat top
+ * (0) to the resting strip (1). Two cubics fitted to the nine cutoffs of one sweep (rms 0.19 px);
+ * flat before the first, resting after the last. The same drawing for ladder, svf and z lowpass.
+ */
+const FALL = {
+	start: -48,
+	segments: [
+		[-29.7, 0, -8.9, 0, 12.8, 0.375],
+		[16.8, 0.444, 33.5, 1, 77, 1]
+	]
+} as const;
+
+/** The knee travels linearly with the cutoff: 64.3 at 0, 439.3 at full (2.95 px a CC step). */
+const KNEE = { min: 64.3, span: 375 } as const;
+
+/**
+ * z hipass draws the fall mirrored, its knee this much left of the value box (fitted on four
+ * frames at one cutoff, rms 0.3 px; ours: the same at every cutoff).
+ */
+const HIPASS_SHIFT = 35.1;
+
+/**
+ * The resonance box: 39 × 24.2, black with its value in white. Its centre is at the knee (never
+ * right of 414.5) and falls from 148.45 at no resonance to 83.65 at full.
+ */
+const BOX = { w: 39, h: 24.2, radius: 3, maxX: 414.5, y0: 148.45, rise: 64.8 } as const;
+
+/**
+ * The envelope's hatching: 1 px lines rising 45° to the right, 10 px apart and fixed on the screen
+ * (x + y ≡ 9.8 mod 10), in the ramp's light grey (ours: the captures show a pale line).
+ */
+const HATCH = { pitch: 10, phase: 9.8, width: 1, color: RAMP[5] } as const;
+
+/** The key tracking arrow: TE's arrow at 94 %, its box sliding from x 63.1 to 395.4. */
+const KEY_ARROW = { x: 63.1, travel: 332.3, y: 192.1, scale: 0.94 } as const;
+
+/**
+ * The small labels on this page: 11 px in the heavier weight (the device's; TE's art set them
+ * 10 px light), spaced as the heavier weight is.
+ */
+const LABEL = { size: 11, tracking: 0 } as const;
+
+/** Axis labels: left-aligned where the device draws them, "20kHz" ending at the graph's edge. */
+const AXIS = [
+	{ text: '50', x: 27.8 },
+	{ text: '1k', x: 153.7 },
+	{ text: '2k', x: 244.3 },
+	{ text: '5k', x: 323.8 }
+] as const;
+const AXIS_BASELINE = 185;
+
+/**
+ * x of a frequency on TE's axis in the guide art (log-linear between its marks at 50 Hz, 1k, 2k,
+ * 5k and 20 kHz). The instrument page draws the device's graph ({@link kneeX}); the auxiliary
+ * filter page still draws TE's.
+ */
+const TE_AXIS: readonly (readonly [number, number])[] = [
 	[50, 30.5],
 	[1000, 160.5],
 	[2000, 245.5],
 	[5000, 330.5],
 	[20000, 450.5]
 ];
-/** Band edges and fills, dark → light across the spectrum. */
-const BANDS = [
-	{ x0: 30.5, x1: 160.5, color: '#16161e' },
-	{ x0: 160.5, x1: 245.5, color: '#2f2f37' },
-	{ x0: 245.5, x1: 330.5, color: '#484850' },
-	{ x0: 330.5, x1: 450.5, color: '#96969b' }
-] as const;
 
-/**
- * TE's response past the cutoff, as two cubic segments relative to the peak: x in pixels from the
- * cutoff, y as a fraction of the fall from the peak to the resting level. `RESTING` is the filter's
- * own curve; `SWEPT` is how far the envelope carries it in TE's art (the hatched area between).
- */
-type Fall = readonly (readonly [number, number, number, number, number, number])[];
-const RESTING: Fall = [
-	[10.3, 0, 12.3, 0.173, 20, 0.283],
-	[57.4, 0.82, 57.2, 1, 63.1, 1]
-];
-const SWEPT: Fall = [
-	[15, 0, 32.8, 0.191, 43, 0.315],
-	[81.8, 0.787, 82.3, 1, 91.3, 1]
-];
-/** How much wider SWEPT is than RESTING, and the envelope amount that reaches it. */
-const SWEPT_STRETCH = 91.3 / 63.1;
-const SWEPT_AMOUNT = 0.35;
-
-/** x of a frequency on TE's axis (log-linear between the anchors). */
+/** x of a frequency on TE's axis (guide art instrument-032). */
 export function freqToX(hz: number): number {
-	const f = Math.max(AXIS[0][0], Math.min(AXIS[AXIS.length - 1][0], hz));
-	for (let i = 1; i < AXIS.length; i++) {
-		const [f1, x1] = AXIS[i];
-		const [f0, x0] = AXIS[i - 1];
+	const f = Math.max(TE_AXIS[0][0], Math.min(TE_AXIS[TE_AXIS.length - 1][0], hz));
+	for (let i = 1; i < TE_AXIS.length; i++) {
+		const [f1, x1] = TE_AXIS[i];
+		const [f0, x0] = TE_AXIS[i - 1];
 		if (f <= f1) return x0 + ((x1 - x0) * Math.log(f / f0)) / Math.log(f1 / f0);
 	}
-	return RIGHT;
+	return TE_AXIS[TE_AXIS.length - 1][1];
 }
 
-/** The cutoff's x for a 0–1 cutoff (50 Hz … 20 kHz, exponential). */
+/** A 0–1 cutoff's x on TE's axis (50 Hz … 20 kHz, exponential; guide art instrument-032). */
 export function cutoffX(cutoff: number): number {
-	return freqToX(50 * 400 ** Math.max(0, Math.min(1, cutoff)));
+	return freqToX(50 * 400 ** clamp01(cutoff));
 }
 
-/**
- * The fall stretched by `stretch`: widening follows TE's swept curve (interpolated, and beyond it
- * extrapolated); narrowing scales the resting curve.
- */
-function fallFor(stretch: number): Fall {
-	if (stretch <= 1)
-		return RESTING.map(
-			(seg) => seg.map((v, i) => (i % 2 === 0 ? v * stretch : v)) as unknown as Fall[number]
-		);
-	const t = (stretch - 1) / (SWEPT_STRETCH - 1);
-	return RESTING.map(
-		(seg, s) => seg.map((v, i) => v + (SWEPT[s][i] - v) * t) as unknown as Fall[number]
-	);
+/** The device's knee for a 0–1 cutoff: where the value box sits and the fall bends. */
+export function kneeX(cutoff: number): number {
+	return KNEE.min + KNEE.span * clamp01(cutoff);
 }
 
-/** A response outline: a start point and absolute cubic segments [c1x, c1y, c2x, c2y, x, y]. */
-interface Outline {
-	readonly start: readonly [number, number];
-	readonly segs: readonly (readonly number[])[];
-}
-
-/**
- * The response outline for a cutoff at `xc`: flat, TE's 40 px rise into the resonant peak at the
- * cutoff, the fall (stretched), then the resting level. A high-pass is the mirror image.
- */
-function outline(xc: number, view: FilterView, stretch: number): Outline {
-	const peak = FLAT - Math.max(0, Math.min(1, view.resonance)) * BUMP;
-	const drop = REST - peak;
-	const dir = view.type === 'z hipass' ? -1 : 1;
-	const X = (dx: number) => xc + dir * dx;
-	const flat = (dx: number, y: number) => [X(dx), y, X(dx), y, X(dx), y];
+/** The resonance box's centre for a view. */
+export function resonanceBox(view: FilterView): { x: number; y: number } {
 	return {
-		start: [X(-1000), FLAT],
-		segs: [
-			flat(-40, FLAT),
-			[X(-6.8), FLAT, X(-14), peak, xc, peak],
-			...fallFor(stretch).map((g) => [
-				X(g[0]),
-				peak + g[1] * drop,
-				X(g[2]),
-				peak + g[3] * drop,
-				X(g[4]),
-				peak + g[5] * drop
-			]),
-			flat(1000, REST)
-		]
+		x: Math.min(kneeX(view.cutoff), BOX.maxX),
+		y: BOX.y0 - BOX.rise * clamp01(view.resonance)
 	};
 }
 
-/** Adds the area under an outline (down to the floor) to the current path. */
-function traceArea(ctx: ScreenCtx, shape: Outline): void {
-	ctx.moveTo(shape.start[0], FLOOR);
-	ctx.lineTo(shape.start[0], shape.start[1]);
-	for (const g of shape.segs) ctx.bezierCurveTo(g[0], g[1], g[2], g[3], g[4], g[5]);
-	const last = shape.segs[shape.segs.length - 1];
-	ctx.lineTo(last[4], FLOOR);
+/** Adds the area under the response for a knee at `knee` (down to the floor) to the path. */
+function traceResponse(ctx: ScreenCtx, knee: number, hipass: boolean): void {
+	const { top, rest, floor } = FILTER_GRAPH;
+	const dir = hipass ? -1 : 1;
+	const origin = hipass ? knee - HIPASS_SHIFT : knee;
+	const x = (dx: number) => origin + dir * dx;
+	const y = (level: number) => top + level * (rest - top);
+	const far = 1000;
+	ctx.moveTo(x(-far), floor);
+	ctx.lineTo(x(-far), top);
+	ctx.lineTo(x(FALL.start), top);
+	for (const s of FALL.segments) {
+		ctx.bezierCurveTo(x(s[0]), y(s[1]), x(s[2]), y(s[3]), x(s[4]), y(s[5]));
+	}
+	ctx.lineTo(x(far), rest);
+	ctx.lineTo(x(far), floor);
 	ctx.closePath();
 }
 
-/** x where an outline first reaches height `y` (sampled; only the fall reaches below the flat). */
-function crossing(shape: Outline, y: number): number | null {
-	let [x0, y0] = shape.start;
-	for (const g of shape.segs) {
-		const [sx, sy] = [x0, y0];
-		for (let i = 1; i <= 48; i++) {
-			const t = i / 48;
-			const u = 1 - t;
-			const x = u * u * u * sx + 3 * u * u * t * g[0] + 3 * u * t * t * g[2] + t * t * t * g[4];
-			const yy = u * u * u * sy + 3 * u * u * t * g[1] + 3 * u * t * t * g[3] + t * t * t * g[5];
-			if (y0 < y && yy >= y) return x0 + ((x - x0) * (y - y0)) / (yy - y0);
-			x0 = x;
-			y0 = yy;
-		}
+/** Hatches the area between the response at `knee` and its ghost at `ghost`. */
+function hatchBetween(ctx: ScreenCtx, knee: number, ghost: number, hipass: boolean): void {
+	const { left, right, top, floor } = FILTER_GRAPH;
+	ctx.save();
+	ctx.beginPath();
+	traceResponse(ctx, knee, hipass);
+	traceResponse(ctx, ghost, hipass);
+	ctx.clip('evenodd');
+	ctx.strokeStyle = HATCH.color;
+	ctx.lineWidth = HATCH.width;
+	ctx.lineCap = 'butt';
+	ctx.beginPath();
+	const first = Math.floor((left + top - HATCH.phase) / HATCH.pitch) * HATCH.pitch + HATCH.phase;
+	for (let c = first; c <= right + floor + HATCH.pitch; c += HATCH.pitch) {
+		// the line x + y = c across the graph
+		ctx.moveTo(c - floor - 1, floor + 1);
+		ctx.lineTo(c - top + 1, top - 1);
 	}
-	return null;
+	ctx.stroke();
+	ctx.restore();
 }
 
-/** How far the envelope stretches the fall for an amount −1…1 (TE's art: 0.35 → its swept curve). */
-function stretchFor(amount: number): number {
-	const a = Math.max(-1, Math.min(1, amount));
-	const k = (SWEPT_STRETCH - 1) / SWEPT_AMOUNT;
-	return a >= 0 ? 1 + k * a : 1 / (1 - k * a);
+/** A label in the page's small, heavier style. */
+function label(
+	ctx: ScreenCtx,
+	value: string,
+	x: number,
+	y: number,
+	align: 'left' | 'right' = 'left'
+) {
+	text(ctx, value, x, y, LABEL.size, COLORS.white, align, LABEL.tracking, true);
 }
 
 /** Draws the filter graph (M3). */
 export function drawFilter(ctx: ScreenCtx, view: FilterView): void {
-	const xc = cutoffX(view.cutoff);
-	text(ctx, view.type, 35, 42.5, 10, COLORS.white);
-	const resting = outline(xc, view, 1);
+	const { left, right, top, floor } = FILTER_GRAPH;
+	const hipass = view.type === 'z hipass';
+	const knee = kneeX(view.cutoff);
+	label(ctx, view.type, 29.4, 55.6);
+
 	ctx.save();
 	ctx.beginPath();
-	ctx.rect(LEFT, 0, RIGHT - LEFT, FLOOR);
+	ctx.rect(left, 0, right - left, floor);
 	ctx.clip();
-
-	// envelope sweep first: hatching between the resting and the swept response
+	// the response, filled in its bands, the dividers over them
+	ctx.save();
+	ctx.beginPath();
+	traceResponse(ctx, knee, hipass);
+	ctx.clip();
+	const edges = [left, ...DIVIDERS, right];
+	BAND_FILLS.forEach((color, i) =>
+		fillBox(ctx, edges[i], top - 1, edges[i + 1] - edges[i], floor, color)
+	);
+	for (const x of DIVIDERS) line(ctx, x, top - 1, x, floor, COLORS.black, 1);
+	ctx.restore();
+	// the envelope's reach: a ghost of the response at the cutoff plus the amount (a high-pass's
+	// goes the other way), the area between them hatched, clamped to the range as on the device. A
+	// negative amount hatches toward the other side (ours: the device's CC34 runs from none to full)
 	const amount = Math.max(-1, Math.min(1, view.envAmount));
-	const swept = Math.abs(amount) > 0.01 ? outline(xc, view, stretchFor(amount)) : null;
-	if (swept) {
-		ctx.save();
-		ctx.beginPath();
-		traceArea(ctx, resting);
-		traceArea(ctx, swept);
-		ctx.clip('evenodd');
-		ctx.strokeStyle = COLORS.grey4;
-		ctx.lineWidth = 0.56;
-		ctx.beginPath();
-		for (let d = LEFT - 140; d < RIGHT + 5; d += 5) {
-			ctx.moveTo(d, FLOOR);
-			ctx.lineTo(d + 142.5, FLOOR - 142.5);
-		}
-		ctx.stroke();
-		ctx.restore();
-	}
-
-	// the response, banded, each band edged in black like TE's
-	ctx.save();
-	ctx.beginPath();
-	traceArea(ctx, resting);
-	ctx.clip();
-	for (const band of BANDS) fillBox(ctx, band.x0, 20, band.x1 - band.x0, FLOOR - 20, band.color);
-	for (const band of BANDS.slice(1)) line(ctx, band.x0, 20, band.x0, FLOOR, COLORS.black, 1.59);
-	line(ctx, xc, 20, xc, FLOOR, COLORS.black, 1.59);
-	ctx.restore();
-	ctx.strokeStyle = COLORS.black;
-	ctx.lineWidth = 1.59;
-	ctx.beginPath();
-	traceArea(ctx, resting);
-	ctx.stroke();
+	const ghost = kneeX(view.cutoff + (hipass ? -amount : amount));
+	if (Math.abs(ghost - knee) > 0.01) hatchBetween(ctx, knee, ghost, hipass);
 	ctx.restore();
 
-	// the envelope's handle, 45 % of the way across the hatching at mid-fall (as in TE's art)
-	if (swept) {
-		const peak = FLAT - Math.max(0, Math.min(1, view.resonance)) * BUMP;
-		const y = (peak + REST) / 2 + 1.8;
-		const a = crossing(resting, y);
-		const b = crossing(swept, y);
-		if (a !== null && b !== null) disc(ctx, a + 0.455 * (b - a), y, 5, COLORS.grey2);
-	}
-	// resonance: the Q box on the cutoff
-	fillBox(ctx, xc - 20, 87.5, 40, 25, COLORS.black, 2.5);
-	text(ctx, 'Q', xc, 107.3, 20, COLORS.white, 'center');
+	// resonance: its value in the box at the cutoff
+	const box = resonanceBox(view);
+	fillBox(ctx, box.x - BOX.w / 2, box.y - BOX.h / 2, BOX.w, BOX.h, COLORS.black, BOX.radius);
+	const resonance = String(Math.round(clamp01(view.resonance) * 99)).padStart(2, '0');
+	text(ctx, resonance, box.x, box.y + 7.6, 20, COLORS.white, 'center', 0, true);
 
-	// axis
-	text(ctx, '50', LEFT, 172.5, 10, COLORS.light);
-	text(ctx, '1K', 160.5, 172.5, 10, COLORS.light, 'center');
-	text(ctx, '2K', 245.5, 172.5, 10, COLORS.light, 'center');
-	text(ctx, '5K', 330.5, 172.5, 10, COLORS.light, 'center');
-	text(ctx, '20kHz', RIGHT, 172.5, 10, COLORS.light, 'right');
+	for (const mark of AXIS) label(ctx, mark.text, mark.x, AXIS_BASELINE);
+	label(ctx, '20kHz', 452.6, AXIS_BASELINE, 'right');
 
 	// key tracking
-	text(ctx, 'key', 30.5, 200, 20, COLORS.light);
-	drawIcon(ctx, 'filter.arrow', 69, 184, {
-		alpha: 0.25 + 0.75 * Math.max(0, Math.min(1, view.keyTracking))
-	});
+	drawIcon(
+		ctx,
+		'filter.arrow',
+		KEY_ARROW.x + KEY_ARROW.travel * clamp01(view.keyTracking),
+		KEY_ARROW.y,
+		{
+			scale: KEY_ARROW.scale,
+			tint: COLORS.white
+		}
+	);
 }
 
-/** Send card icons in encoder order: aux out, tape, FX I, FX II (the guide text's order). */
+/**
+ * The send cards (shift + M3): 200.5 × 36.6, 39.8 apart from y 31.5, each with its icon at the
+ * left, its value (20 px; "no send" at zero, as the device writes it) and its encoder's dot at the
+ * right end.
+ */
+const SEND = {
+	x: 139.5,
+	w: 200.5,
+	top: 31.5,
+	pitch: 39.8,
+	h: 36.6,
+	radius: 5,
+	icon: 144,
+	value: 204.7,
+	baseline: 25.5,
+	dot: { x: 324.7, y: 6 }
+} as const;
+
+/**
+ * Where TE's send icons sit on the device's cards (their boxes' tops below the card's): the tape
+ * and the FX boxes as TE drew them (without a stray mark TE's FX I art carries), the aux plug with
+ * its two dots 2.5 px closer under it.
+ */
 const SEND_ICONS = [
-	{ name: 'sends.aux', x: 159, y: 32 },
-	{ name: 'sends.tape', x: 159, y: 78 },
-	{ name: 'sends.fx1', x: 159, y: 155 },
-	{ name: 'sends.fx2', x: 159, y: 115 }
+	{
+		name: 'sends.aux',
+		parts: [
+			{ shapes: [0], dy: 4.9 },
+			{ shapes: [1, 2], dy: 2.36 }
+		]
+	},
+	{ name: 'sends.tape', parts: [{ shapes: [0, 1, 2], dy: 9.76 }] },
+	{ name: 'sends.fx1', parts: [{ shapes: [1, 2, 3, 4], dy: 6.85 }] },
+	{ name: 'sends.fx2', parts: [{ shapes: [0, 1, 2, 3, 4], dy: 6.9 }] }
 ] as const;
 
-/** Shift + M3: four send cards over the dimmed filter graph. */
+/** Options for {@link iconShapes}. */
+export interface ShapeOptions {
+	/** Uniform scale (1 = the size the icon was drawn at). */
+	readonly scale?: number;
+	/** Replaces each drawn shape's fill (a stroke keeps its own colour). */
+	readonly fill?: string;
+	/** Replaces each drawn shape's stroke colour. */
+	readonly stroke?: string;
+	/** Replaces each drawn shape's stroke width (before scaling). */
+	readonly width?: number;
+}
+
+/**
+ * Draws some of an icon's shapes (by index, in their own colours unless replaced) with the icon's
+ * box corner at (x, y): for pictograms the device draws only part of, or in other colours (the send
+ * cards here, the LFO page's knob and duck icons).
+ */
+export function iconShapes(
+	ctx: ScreenCtx,
+	name: string,
+	shapes: readonly number[],
+	x: number,
+	y: number,
+	options: ShapeOptions = {}
+): void {
+	const { scale = 1 } = options;
+	const data = icon(name);
+	for (const index of shapes) {
+		const shape = data.shapes[index];
+		if (!shape) continue;
+		ctx.beginPath();
+		tracePath(ctx, compiled(shape.d), x, y, scale);
+		if (shape.fill) {
+			ctx.fillStyle = options.fill ?? shape.fill;
+			ctx.fill(shape.evenodd ? 'evenodd' : 'nonzero');
+		}
+		if (shape.stroke) {
+			ctx.strokeStyle = options.stroke ?? shape.stroke;
+			ctx.lineWidth = (options.width ?? shape.width ?? 1) * scale;
+			ctx.lineCap = (shape.cap as CanvasLineCap | undefined) ?? 'butt';
+			ctx.lineJoin = (shape.join as CanvasLineJoin | undefined) ?? 'miter';
+			ctx.stroke();
+		}
+	}
+}
+
+/** Shift + M3: four send cards over the filter graph at 40 %. */
 export function drawSends(ctx: ScreenCtx, frame: SendsFrame): void {
 	ctx.save();
-	ctx.globalAlpha = 0.5;
+	ctx.globalAlpha = 0.4;
 	drawFilter(ctx, frame.filter);
 	ctx.restore();
 	frame.values.forEach((value, i) => {
-		const top = 30 + 40 * i;
-		card(ctx, 155, top, 200, 35);
-		const icon = SEND_ICONS[i];
-		// each icon is placed in its card: shift from the card it was drawn in
-		const drawnTop = [30, 70, 150, 110][i];
-		drawIcon(ctx, icon.name, icon.x, icon.y - drawnTop + top);
-		text(ctx, value, 220, top + 25, 20, COLORS.black);
-		encoderDot(ctx, i as 0 | 1 | 2 | 3, 340, top + 5, COLORS.black);
+		const top = SEND.top + SEND.pitch * i;
+		fillBox(ctx, SEND.x, top, SEND.w, SEND.h, COLORS.white, SEND.radius);
+		const send = SEND_ICONS[i];
+		for (const part of send.parts)
+			iconShapes(ctx, send.name, part.shapes, SEND.icon, top + part.dy);
+		// a send at zero reads "no send", set smaller (18 px) than the figures
+		if (value === '00') text(ctx, 'no send', SEND.value, top + SEND.baseline, 18, COLORS.ink);
+		else text(ctx, value, SEND.value, top + SEND.baseline, 20, COLORS.ink);
+		encoderDot(ctx, i as 0 | 1 | 2 | 3, SEND.dot.x, top + SEND.dot.y, COLORS.ink);
 	});
 }

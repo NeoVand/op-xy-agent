@@ -129,7 +129,7 @@ export interface FilterFrame extends FilterView {
 export interface SendsFrame {
 	readonly page: 'sends';
 	readonly filter: FilterView;
-	/** Aux out, tape, FX I, FX II as shown ("50"). */
+	/** Aux out, tape, FX I, FX II ("50"; the page writes "no send" for "00", as the device does). */
 	readonly values: readonly [string, string, string, string];
 }
 
@@ -150,7 +150,10 @@ export interface LfoFrame {
 	readonly volume: number;
 	/** Destination module (syn, filter, env, …) and whether it is the free-running variant. */
 	readonly destination: { readonly label: string; readonly free: boolean };
-	/** Label of the fourth card (TE's art: hold, res, mode). */
+	/**
+	 * Label of the fourth card: the destination parameter's name (value, random, element: "cutoff",
+	 * "attack", the engine's own), "env" on tremolo (device, 1.1.33).
+	 */
 	readonly fourth: string;
 	/** Which encoder of the destination page is modulated (0–3): the knob's cap colour. */
 	readonly parameter: number;
@@ -158,10 +161,14 @@ export interface LfoFrame {
 	readonly source?: string;
 	/** Duck: whether the trigger is the track's audio (else its notes). */
 	readonly sourceAudio?: boolean;
-	/** Element: where its source sits in the list of four, 0–1 (the gap in the card's rule). */
-	readonly sourceAt?: number;
-	/** Random and tremolo: the envelope, −1 (fades the modulation out) … 1 (fades it in); 0 none. */
+	/**
+	 * Random and tremolo: the envelope, −1…1 (the model's sign; the device draws low values as a
+	 * rising line, the middle flat along the top, high values falling).
+	 */
 	readonly envelope?: number;
+	/** Duck: hold and release, 0–1 (the pulse's length, the release's knee). */
+	readonly hold?: number;
+	readonly release?: number;
 }
 
 /** One mixer strip. */

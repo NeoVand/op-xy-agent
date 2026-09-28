@@ -321,19 +321,19 @@ describe('OpxySim: engines and links', () => {
 		expect(sim.state.tracks[0].links).toEqual([]);
 	});
 
-	it('puts element’s rule and the envelope of random and tremolo only on their frames', () => {
+	it('puts the envelope of random and tremolo and duck’s hold and release only on their frames', () => {
 		const sim = new OpxySim();
 		sim.press('track.3');
 		sim.press('key.m4');
-		const fields = () => ['sourceAt', 'envelope'].filter((f) => f in page(sim, 'lfo'));
+		const fields = () => ['envelope', 'hold', 'release'].filter((f) => f in page(sim, 'lfo'));
 		const seen: Record<string, string[]> = {};
 		for (const type of LFO_TYPES) {
 			sim.state.tracks[2].lfo.type = type;
 			seen[type] = fields();
 		}
 		expect(seen).toEqual({
-			duck: [],
-			element: ['sourceAt'],
+			duck: ['hold', 'release'],
+			element: [],
 			random: ['envelope'],
 			tremolo: ['envelope'],
 			value: []
