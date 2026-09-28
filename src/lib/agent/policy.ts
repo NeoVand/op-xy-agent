@@ -2,7 +2,9 @@
  * The approval gate. Mutate tools wait here for the user's decision, one request per assistant
  * turn (all the changes the model asked for at once): approve, reject with a note, or approve and
  * stop asking for those tools until the page reloads ("allow for this session"). Decisions come
- * only from the app's UI, never from model output, tool results or files.
+ * only from the user: the app's UI, or a spoken yes or no that the voice checks against the user's
+ * own words (`voice/bridge.ts`; never "allow for this session"). Never from model output, tool
+ * results or files.
  */
 import { asksForApproval, type AnyTool } from './tools/define';
 import type { ApprovalDecision, ApprovalRequest, ProposedAction } from './types';

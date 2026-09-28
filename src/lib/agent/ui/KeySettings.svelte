@@ -1,7 +1,8 @@
 <!--
 @component
 Agent settings: paste or remove your own API keys (the provider is detected from the key), pick the
-conductor's model, and read plainly where the key is kept, where it is sent and what it costs.
+conductor's model and the voice's, and read plainly where the keys are kept, where they are sent
+and what they cost.
 -->
 <script lang="ts">
 	import Button from '$lib/ui/Button.svelte';
@@ -12,7 +13,7 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 		type KeyProvider,
 		type KeyStore
 	} from '../keys.svelte';
-	import type { ModelOption } from '../models';
+	import type { ModelOption, RealtimeModelProfile } from '../models';
 
 	interface Props {
 		keys: KeyStore;
@@ -26,6 +27,10 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 		keyStatus?: 'unchecked' | 'checking' | 'valid' | 'invalid';
 		/** Which manual the agent answers from. */
 		manualLabel?: string | null;
+		/** Voice (M8): the realtime models, the chosen one, and how to choose. */
+		voiceModels?: readonly RealtimeModelProfile[];
+		voiceModel?: string;
+		onvoicemodel?: (id: string) => void;
 	}
 
 	let {
@@ -36,7 +41,10 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 		onclose,
 		onchange,
 		keyStatus = 'unchecked',
-		manualLabel = null
+		manualLabel = null,
+		voiceModels = [],
+		voiceModel,
+		onvoicemodel
 	}: Props = $props();
 
 	let draft = $state('');
@@ -44,6 +52,7 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 	const uid = $props.id();
 	const detected = $derived(draft.trim() ? detectProvider(draft) : null);
 	const selected = $derived(models.find((m) => m.id === model) ?? null);
+	const voiceRole = $derived(voiceModels.find((m) => m.id === voiceModel)?.role ?? null);
 	const statusText = $derived(
 		{
 			unchecked: 'saved',
@@ -98,7 +107,7 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 				<Led state="dim" size="sm" />
 				<span class="settings__key-text">
 					<span class="settings__mono">{keys.hint('openai')}</span>
-					<span class="settings__muted">openai, kept for voice (coming soon)</span>
+					<span class="settings__muted">openai, for voice</span>
 				</span>
 				<Button size="sm" variant="ghost" onclick={() => remove('openai')}>remove</Button>
 			</div>
@@ -123,7 +132,7 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 			{#if detected === 'anthropic'}
 				anthropic key detected
 			{:else if detected === 'openai'}
-				openai key detected: it is kept for realtime voice, which is coming later
+				openai key detected: it is used for voice
 			{:else if draft.trim()}
 				not a key we recognise
 			{/if}
@@ -133,9 +142,9 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 		{/if}
 		<ul class="settings__facts">
 			<li>
-				Your key stays in this browser: it is saved in this device's local storage (the
-				<span class="settings__mono">{KEY_STORAGE_ENTRY}</span> entry) and sent only to api.anthropic.com,
-				directly from this page. There is no server in between.
+				Your keys stay in this browser: they are saved in this device's local storage (the
+				<span class="settings__mono">{KEY_STORAGE_ENTRY}</span> entry) and sent only to their provider,
+				api.anthropic.com or api.openai.com, directly from this page. There is no server in between.
 			</li>
 			<li>
 				Anyone who can use this browser profile can read it, so remove it on a shared computer. A
@@ -172,6 +181,44 @@ conductor's model, and read plainly where the key is kept, where it is sent and 
 			Changing the model starts a fresh prompt cache, so the next question costs a little more.
 		</p>
 	</div>
+
+	{#if voiceModels.length > 0 && onvoicemodel}
+		<div class="settings__group">
+			<label class="settings__label" for="{uid}-voice">voice</label>
+			<select
+				id="{uid}-voice"
+				class="settings__select"
+				value={voiceModel}
+				onchange={(event) => onvoicemodel(event.currentTarget.value)}
+			>
+				{#each voiceModels as option (option.id)}
+					<option value={option.id}>{option.label}</option>
+				{/each}
+			</select>
+			<p class="settings__hint">
+				{#if voiceRole}{voiceRole}.{/if}
+				{keys.has('openai')
+					? 'Hold the mic key beside send to talk.'
+					: 'Add an OpenAI key above to talk to the agent.'}
+				A new choice applies the next time voice starts.
+			</p>
+			<ul class="settings__facts">
+				<li>
+					Voice runs on OpenAI's realtime API with your own key, used once per call to get a
+					short-lived session key from api.openai.com. The call then goes straight from this page to
+					OpenAI. The microphone is on only while voice is.
+				</li>
+				<li>
+					The voice hands every question to Claude and says Claude's answer back in short. A change
+					still needs your approval: say yes or no, or tap the card.
+				</li>
+				<li>
+					On gpt-realtime 2.1 a call costs roughly $0.02 a minute listening and $0.08 speaking; mini
+					about a third of that. Claude's work is billed to Anthropic as usual.
+				</li>
+			</ul>
+		</div>
+	{/if}
 
 	{#if manualLabel}
 		<div class="settings__group">

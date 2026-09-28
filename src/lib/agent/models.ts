@@ -6,6 +6,7 @@
  * claude-api reference. The Models API (`GET /v1/models`) tells us which models a key can use; this
  * matrix tells us how to call them. A model the matrix does not know gets a conservative profile
  * (no thinking parameter, no effort, no mid-conversation system messages) and an unknown price.
+ * At the end: the OpenAI realtime models of the voice front end (M8) and what a voice session costs.
  */
 
 /** USD per million tokens. */
@@ -343,4 +344,93 @@ export function modelOptions(available: readonly string[] | null): ModelOption[]
 		return index < 0 ? MODEL_MATRIX.length : index;
 	};
 	return options.sort((a, b) => rank(a) - rank(b) || a.id.localeCompare(b.id));
+}
+
+// ─── voice (M8): OpenAI realtime models for the voice front end ─────────────────────────────────
+
+/** USD per million tokens of a realtime model (docs/research/70-agent-harness.md §5). */
+export interface RealtimePricing {
+	readonly textIn: number;
+	readonly textCachedIn: number;
+	readonly textOut: number;
+	readonly audioIn: number;
+	readonly audioCachedIn: number;
+	readonly audioOut: number;
+}
+
+/** What the voice front end knows about one OpenAI realtime model. */
+export interface RealtimeModelProfile {
+	readonly id: string;
+	/** Short lowercase label for the UI. */
+	readonly label: string;
+	readonly pricing: RealtimePricing;
+	/** Accepts `reasoning.effort` (the voice asks for `low`: a front desk should answer fast). */
+	readonly reasoning: boolean;
+	readonly role: string;
+}
+
+/** The voice front end's default (tested end to end in the browser, research note 70 §8). */
+export const DEFAULT_VOICE_MODEL = 'gpt-realtime-2.1';
+
+/** Realtime models the voice can use, best first (the picker's order). */
+export const REALTIME_MODELS: readonly RealtimeModelProfile[] = [
+	{
+		id: 'gpt-realtime-2.1',
+		label: 'gpt-realtime 2.1',
+		pricing: {
+			textIn: 4,
+			textCachedIn: 0.4,
+			textOut: 24,
+			audioIn: 32,
+			audioCachedIn: 0.4,
+			audioOut: 64
+		},
+		reasoning: true,
+		role: 'voice (default)'
+	},
+	{
+		id: 'gpt-realtime-2.1-mini',
+		label: 'gpt-realtime 2.1 mini',
+		pricing: {
+			textIn: 0.6,
+			textCachedIn: 0.06,
+			textOut: 2.4,
+			audioIn: 10,
+			audioCachedIn: 0.3,
+			audioOut: 20
+		},
+		reasoning: true,
+		role: 'cheaper voice, about a third of the price'
+	}
+];
+
+/** The profile of a realtime model; the default's for an id this list does not know. */
+export function realtimeProfile(id: string): RealtimeModelProfile {
+	return REALTIME_MODELS.find((m) => m.id === id) ?? REALTIME_MODELS[0];
+}
+
+/** Token counts of a voice session (what the realtime `response.done` events added up to). */
+export interface RealtimeTokenCounts {
+	readonly textIn: number;
+	readonly audioIn: number;
+	readonly cachedTextIn: number;
+	readonly cachedAudioIn: number;
+	readonly textOut: number;
+	readonly audioOut: number;
+}
+
+/**
+ * USD for a voice session's tokens. OpenAI bills input transcription apart (per minute), which is
+ * not counted here, so this is a lower bound.
+ */
+export function realtimeCost(modelId: string, tokens: RealtimeTokenCounts): number {
+	const p = realtimeProfile(modelId).pricing;
+	const micro =
+		Math.max(0, tokens.textIn - tokens.cachedTextIn) * p.textIn +
+		tokens.cachedTextIn * p.textCachedIn +
+		Math.max(0, tokens.audioIn - tokens.cachedAudioIn) * p.audioIn +
+		tokens.cachedAudioIn * p.audioCachedIn +
+		tokens.textOut * p.textOut +
+		tokens.audioOut * p.audioOut;
+	return micro / 1_000_000;
 }

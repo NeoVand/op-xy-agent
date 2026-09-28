@@ -10,7 +10,10 @@ export {
 	Conductor,
 	type ConductorOptions,
 	type ConductorStatus,
-	type PreferenceStore
+	type DecideOptions,
+	type PreferenceStore,
+	type SendOptions,
+	type VoiceLineInput
 } from './conductor.svelte';
 export {
 	createAnthropicClient,

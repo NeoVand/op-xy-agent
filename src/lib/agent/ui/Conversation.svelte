@@ -2,7 +2,8 @@
 @component
 The conversation: your messages (with the files you sent), the agent's answers (streamed, with a caret while they are being
 written and keycaps you can click to see a combo on the replica), its tool calls (a subagent's work
-shows live under its chip), approval records and notices.
+shows live under its chip), approval records and notices. With voice on, what the mic heard and
+what the voice said are lines of their own, and a request the voice handed to Claude is marked.
 
 It is its own scroll area. It follows the newest line while you are at the bottom and stops when you
 scroll up to read; a "latest" key brings you back. While the agent works, a status line at its foot
@@ -61,6 +62,12 @@ says what it is doing and for how long.
 		return entries.filter((e) => 'parent' in e && e.parent === id);
 	}
 
+	/** "approved", "approved for this session", "rejected by voice"… */
+	function outcomeWords(entry: Extract<ChatEntry, { kind: 'approval' }>): string {
+		const words = entry.outcome === 'allowed' ? 'approved for this session' : entry.outcome;
+		return entry.via === 'voice' ? `${words} by voice` : words;
+	}
+
 	function toEnd(): void {
 		if (scroller) scroller.scrollTop = scroller.scrollHeight;
 	}
@@ -110,7 +117,24 @@ says what it is doing and for how long.
 	<ol class="conv__list">
 		{#each top as entry, i (entry.id)}
 			<li class={['conv__item', `conv__item--${entry.kind}`]}>
-				{#if entry.kind === 'user'}
+				{#if entry.kind === 'voice'}
+					<p
+						class={['conv__voice', `conv__voice--${entry.role}`]}
+						{@attach entry.role === 'user' ? reveal : null}
+					>
+						<Icon name={entry.role === 'user' ? 'mic' : 'sine'} class="conv__voice-glyph" />
+						<span class="sr-only">{entry.role === 'user' ? 'you said:' : 'the voice said:'}</span>
+						<span class="conv__voice-text">
+							{entry.text || '…'}{#if entry.interrupted}<span class="conv__cut">cut off</span>{/if}
+						</span>
+						{#if entry.live}<Led state="white" blink="breathe" size="sm" />{/if}
+					</p>
+				{:else if entry.kind === 'user' && entry.via === 'voice'}
+					<p class="conv__asked" {@attach reveal}>
+						<span class="conv__asked-label">asked claude</span>
+						<span class="conv__asked-text">{entry.text}</span>
+					</p>
+				{:else if entry.kind === 'user'}
 					<div class="conv__user" {@attach reveal}>
 						{#if entry.attachments && entry.attachments.length > 0}
 							<ul class="conv__files" aria-label="files sent">
@@ -146,7 +170,7 @@ says what it is doing and for how long.
 							size="sm"
 						/>
 						<span>
-							{entry.outcome === 'allowed' ? 'approved for this session' : entry.outcome}:
+							{outcomeWords(entry)}:
 							{entry.labels.join(', ')}{entry.note ? ` (“${entry.note}”)` : ''}
 						</span>
 					</p>
@@ -232,6 +256,80 @@ says what it is doing and for how long.
 
 	.conv__files:has(+ .conv__text) {
 		margin-bottom: 0.5rem;
+	}
+
+	/* Voice lines: what the mic heard reads like your messages, with a mic glyph; what the voice
+	 * said is a quieter line with a wave. */
+	.conv__voice {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		margin: 0;
+		font-size: var(--xy-text-sm);
+		line-height: var(--xy-leading-sm);
+	}
+
+	.conv__voice--user {
+		padding: 0.5rem 0.75rem;
+		border-radius: var(--xy-radius-tile);
+		background-color: var(--xy-surface-sunken);
+		color: var(--xy-fg);
+	}
+
+	.conv__voice--assistant {
+		padding: 0 0.5rem;
+		color: var(--xy-fg-muted);
+	}
+
+	.conv__voice :global(.conv__voice-glyph) {
+		flex: none;
+		align-self: center;
+		color: var(--xy-fg-subtle);
+	}
+
+	.conv__voice :global(.led) {
+		flex: none;
+		align-self: center;
+		margin-left: auto;
+	}
+
+	.conv__voice-text {
+		min-width: 0;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	.conv__cut {
+		margin-left: 0.375rem;
+		color: var(--xy-fg-subtle);
+		font-size: var(--xy-text-2xs);
+		line-height: var(--xy-leading-2xs);
+		font-weight: 450;
+		letter-spacing: var(--xy-tracking-label);
+	}
+
+	/* A request the voice handed to Claude: what Claude was asked, exactly. */
+	.conv__asked {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0 0.5rem;
+		color: var(--xy-fg-muted);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+	}
+
+	.conv__asked-label {
+		flex: none;
+		color: var(--xy-fg-subtle);
+		font-weight: 450;
+		letter-spacing: var(--xy-tracking-label);
+	}
+
+	.conv__asked-text {
+		min-width: 0;
+		overflow-wrap: anywhere;
 	}
 
 	.conv__approval {

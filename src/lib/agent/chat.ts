@@ -19,6 +19,19 @@ export type ChatEntry =
 			text: string;
 			/** Files sent with the message (what the chat shows of them). */
 			attachments?: AttachmentView[];
+			/** Handed over by the voice front end (M8): the request as the voice passed it on. */
+			via?: 'voice';
+	  }
+	/** A spoken line (M8): what the mic heard, or what the voice said. Shown, never sent to Claude. */
+	| {
+			readonly kind: 'voice';
+			readonly id: string;
+			readonly role: 'user' | 'assistant';
+			text: string;
+			/** Still being transcribed or spoken. */
+			live: boolean;
+			/** The user talked over it. */
+			interrupted: boolean;
 	  }
 	| {
 			readonly kind: 'text';
@@ -60,6 +73,8 @@ export type ChatEntry =
 			readonly outcome: 'approved' | 'allowed' | 'rejected' | 'cancelled';
 			readonly labels: readonly string[];
 			readonly note: string | null;
+			/** Answered by voice (a spoken yes or no) rather than on screen. */
+			readonly via?: 'voice';
 	  };
 
 /** Running totals for the cost meter. */
@@ -251,12 +266,20 @@ export function applyEvent(
 	}
 }
 
-/** Marks tool chips that never finished (the page was closed mid-run) as stopped. */
-export function settleEntries(entries: ChatEntry[]): void {
+/**
+ * Marks tool chips that never finished (the page was closed mid-run) as stopped. With `voice`
+ * (a stored thread being opened), spoken lines saved mid-sentence are finished as well.
+ */
+export function settleEntries(
+	entries: ChatEntry[],
+	options: { readonly voice?: boolean } = {}
+): void {
 	for (const entry of entries) {
 		if (entry.kind === 'tool' && (entry.status === 'pending' || entry.status === 'running')) {
 			entry.status = 'stopped';
 			if (!entry.summary) entry.summary = 'stopped';
+		} else if (options.voice && entry.kind === 'voice' && entry.live) {
+			entry.live = false;
 		}
 	}
 }
