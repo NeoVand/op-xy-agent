@@ -290,6 +290,70 @@ T3's envelopes in the scratch project are the only state changed.
      (found by phase correlation against the device body). Captures of that stretch are re-rectified
      per frame, and the calibration is now fitted on the lit tempo page (`screencap.py calib --lit`).
 
+## 2026-09-28 — Sound session: filters, envelopes, LFOs (owner present, new project, OS 1.1.33)
+
+Approved by the owner in chat ("let's do sound sessions now"; "I'll be happy to press the buttons or
+configure instruments"). Setup by the owner, by hand: a **new project**; the **simple** engine on
+T3–T7 (from the preset browser); filters T3 off, T4 ladder, T5 svf, T6 z lowpass, T7 z hipass;
+LFOs off on T3–T7. For the LFO part the owner then picks T3 tremolo, T4 value, T5 random, T6 duck,
+T7 element.
+
+What we send (`research/device/sound_capture.py … --send`, allow-listed in the script): on the
+test tracks' own channels (3–7), CC 12–15 (simple: saw or full noise), 20–27 (both envelopes),
+28–29 (poly, no portamento), 32–35 (filter), 36–39 (sends at zero), 40–43 (LFO, LFO part only),
+notes at velocity 100 and CC123; on channel 1, CC102 (track select), CC80 = 60 (120 BPM, LFO part)
+and, for the duck takes only, CC7 = 0 (T1's level) and T1's note 53, which trigger the duck. No
+SysEx, program change, transport or project load. The script records the OP-XY's USB audio
+(44.1 kHz stereo, PortAudio) into git-ignored `research/device/captures/sound/<time>-<plan>/`
+with a cue sheet stamped in recording frames.
+
+Runs (appended as they happen):
+
+1. 11:41 `check` (10 takes, 255 messages): a saw and noise on each of T3–T7. Peaks under 0.4 of
+   full scale; T3's noise unfiltered (centroid 11 kHz), the four types plainly different; every
+   note stops within about 0.1 s of its note-off stamp (the recorder's block timing) and the
+   output is digital silence between takes, so no sends and no release tail.
+2. 11:42–11:52 `filters` (223 takes, 238 notes, 5399 messages): T3's noise and saw references and
+   amp envelope laws; per type (T4–T7) a cutoff sweep on noise, resonance at three cutoffs and the
+   saw through a resonant filter; key tracking on the ladder and svf; the svf's filter envelope
+   (amount and decay). Completed; results below.
+3. 12:07–12:14 `lfo-check`, one take per track (32 messages each) after the owner picked T3
+   tremolo, T4 value, T5 random, T6 duck, T7 element; the owner photographed each M4 page: value
+   and random read amount centred at CC41 = 64 (the ladder is bipolar), destination filter (CC42 =
+   96 of six on value; random's single card), parameter cutoff (CC43 = 16); random also shows an
+   env card (a rising ramp) no encoder reaches; element: source envelope (CC40 = 80), destination
+   filter (CC42 = 80 of syn · env · filter · amp), cutoff; duck: source "tr 1" (CC40 = 4) with the
+   MIDI icon dark and the audio icon faded, so notes trigger it.
+4. 12:16–12:22 `lfo` (83 takes, 85 notes, 2443 messages; CC80 = 60 first): tremolo rate, level
+   and pitch depth and env on T3; the value LFO's speed, amount and retrigger on T4's cutoff; the
+   random LFO's speed on T5's cutoff; the duck's hold and release on T6 with T1 struck four times
+   per take (T1's level CC7 = 0, then 100 for the last take); element's amount on T7. Completed.
+5. 12:22 `envtop` (10 takes): the decay (88–127, sustain 0) and release (40–0) the first run did
+   not reach, on T3's saw with its tremolo depths at zero (CC41 = CC42 = 64).
+6. 12:39–12:44 `fade` (notes only, T1 selected by CC102 so channel 1 reaches it; 8 messages a
+   run): T1's highest drum key (E5, 76, a cymbal) three times at sample fade 0, 99 and 50, then the
+   lowest (F3, 53, a 0.18 s kick) at 0 and 99, the owner turning shift + E3 between runs. The fade
+   is a linear fade-in from the start marker lasting a fixed time: about 0.95 s at 99, 0.25 s at 50
+   (the kick at 99 never reaches full level).
+7. 12:46–12:51 `crossfade` (notes on channel 8 only): T8 loaded by the owner with the synth
+   sampler's first preset ("80s lover", tune −12.00), two notes of 5 s (A3) and 10 s (A5) at
+   crossfade 0 and at the maximum, which reads **75 %** (the owner's photo: a dark wedge sloping
+   down into the loop end over three quarters of the loop). The preset changes over time by itself,
+   so the recordings do not isolate the crossfade; not used for the sound.
+8. 12:53 `punchin` (notes on channels 2 and 3 only): a two-minute loop while the owner held each
+   punch-in key on aux T2 in turn. Not usable: the owner could not time the presses and the loop
+   hid some effects.
+9. 12:57 `punchin-mix` (notes on channels 2–5, CCs 12–15/20–39/41–42 on 3–5 for the loop's
+   tone, notes 53–76 on channel 10): the owner saw each key's animation (channel 10 fires the punch-
+   in track), but the loop was too busy and the 2 s holds too short to hear every effect.
+10. 13:06 `punchin-keys` (49 messages, all notes on channel 10): over a project the owner loaded
+    and played ("agent"), 8 s of it alone, then each punch-in key 53–76 held 6 s, 2 s apart, the
+    owner tilting the unit for the effects that follow the accelerometer. First look: keys 1, 3,
+    22, 24 cut the highs (11–36 dB); 8, 10, 15 add them; 12 thins the lows; 13, 14, 21 chop the
+    level (13 also narrows the stereo image to mono).
+
+Nothing else was sent. The throwaway project was not saved.
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers
