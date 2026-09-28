@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "740deaf7",
+	"bundle_hash": "ddbe3e3b",
 	"stats": {
 		"units": 163,
-		"facts": 1091,
+		"facts": 1098,
 		"procedures": 196,
 		"parameters": 207,
-		"verified_items": 191,
-		"words": 40547,
+		"verified_items": 200,
+		"words": 40969,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -601,7 +601,7 @@
 				},
 				{
 					"id": "instrument-pages",
-					"text": "On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M1`, `shift + M3` and `shift + M4` choose the engine, filter type and LFO type.",
+					"text": "On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine.",
 					"source": "https://teenage.engineering/guides/op-xy/instrument",
 					"firmware_min": null,
 					"verified_on": null,
@@ -8737,11 +8737,11 @@
 				},
 				{
 					"id": "choose-engine",
-					"text": "`shift + M1` opens the engine list for the selected track.",
-					"source": "https://teenage.engineering/guides/op-xy/instrument#project",
+					"text": "On OS 1.1.33, `shift + M1` brings up the preset browser for the selected track, where loading one of an engine's presets changes the engine.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "browse",
@@ -8820,7 +8820,7 @@
 				"basics.modules",
 				"auxiliary.overview"
 			],
-			"body": "Pick a track, then work through its pages: the engine creates the tone, the envelopes shape each\nnote, the filter colours it and the LFO adds movement; every value can be parameter-locked per step.\nA track's complete sound travels as one preset, so `shift + Tn` changes everything at once while\n`shift + M1` swaps only the engine. Brain, send effects, external gear and tape live in auxiliary\nmode.",
+			"body": "Pick a track, then work through its pages: the engine creates the tone, the envelopes shape each\nnote, the filter colours it and the LFO adds movement; every value can be parameter-locked per step.\nA track's complete sound travels as one preset, so a load from the browser (`shift + Tn`, or\n`shift + M1` for the selected track) changes everything at once, the engine included. Brain, send\neffects, external gear and tape live in auxiliary mode.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#project",
@@ -8829,6 +8829,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#preset-settings",
@@ -8862,14 +8866,15 @@
 		},
 		{
 			"id": "instrument.engine",
-			"title": "Engine page and engine list (M1)",
+			"title": "Engine page and changing engine (M1)",
 			"aliases": [
 				"engine page",
 				"engine list",
 				"change engine",
 				"choose engine",
 				"sound source",
-				"synth engines"
+				"synth engines",
+				"load an engine"
 			],
 			"area": "instrument",
 			"order": 10,
@@ -8880,10 +8885,10 @@
 				],
 				"screens": [
 					"M1",
-					"engine list"
+					"preset browser"
 				]
 			},
-			"summary": "`M1` is the engine page: its encoders edit the loaded engine's own parameters. `shift + M1` opens the engine list — eight synths, three samplers and the midi engine — to swap the track's sound source.",
+			"summary": "`M1` is the engine page: its encoders edit the loaded engine's own parameters. On OS 1.1.33 `shift + M1` brings up the preset browser by engine, and loading one of an engine's presets changes the engine — along with the whole sound. Twelve engines: eight synths, three samplers and midi.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -8926,7 +8931,7 @@
 				},
 				{
 					"id": "list",
-					"text": "The engine list holds all twelve — the eight synths, the three samplers and midi.",
+					"text": "Twelve engines in all — the eight synths, the three samplers and midi.",
 					"source": "docs/research/20-midi-control.md#21-the-16-tracks-and-their-default-channels",
 					"firmware_min": null,
 					"verified_on": null,
@@ -8950,7 +8955,31 @@
 				},
 				{
 					"id": "browser",
-					"text": "On OS 1.1.33, `shift + M1` brings up a browser headed with the track number and the word preset, with the engine list in the middle and the highlighted engine's presets on the right.",
+					"text": "On OS 1.1.33 there is no separate engine list; `shift + M1` brings up the preset browser on the track's current preset — the track number over the word preset at the left, the engines in the middle with the track's engine boxed, and that engine's presets on the right.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "browser-engines",
+					"text": "The owner's unit listed eleven engines there, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "load-changes-engine",
+					"text": "Turning `E1` to an engine highlights its first preset; loading a preset changes the engine with the whole sound (all four pages) and returns to the track's `M1` page.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "e1-click",
+					"text": "In the browser a click of `E1` swaps between by engine and by category (a popup says which) instead of confirming, as it did in the older engine list the guide describes.",
 					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -8968,25 +8997,35 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": "the engine list opens",
-							"set": null
-						},
-						{
-							"keys": "turn E1",
-							"note": "highlight an engine",
+							"note": "the preset browser opens on the track's preset",
 							"set": null
 						},
 						{
 							"keys": "click E1",
-							"note": "pressing `M1` also confirms",
+							"note": "only if it lists categories; a click swaps to by engine",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "highlight an engine; its first preset is highlighted",
+							"set": null
+						},
+						{
+							"keys": "turn E2",
+							"note": "optional; another of its presets",
+							"set": null
+						},
+						{
+							"keys": "click E2",
+							"note": "loads it",
 							"set": null
 						}
 					],
-					"result": "M1 now shows the parameters of the new engine.",
-					"source": "https://teenage.engineering/guides/op-xy/synth-engines#change-engine",
+					"result": "The track runs the new engine with that preset's sound, and M1 shows the engine's parameters.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"parameters": [],
@@ -9005,7 +9044,7 @@
 				"sampler.overview",
 				"com.midi-track-ccs"
 			],
-			"body": "Synth engines build tones from oscillators, samplers play recorded audio, and the midi engine stays\nsilent and drives outside gear. Only `M1` belongs to the engine, so after a swap the other pages work\nas before (the midi engine excepted). To replace the whole sound with a finished patch, load a preset\nwith `shift + Tn` instead.",
+			"body": "Synth engines build tones from oscillators, samplers play recorded audio, and the midi engine stays\nsilent and drives outside gear. Only `M1` belongs to the engine, but on OS 1.1.33 an engine arrives\nwith one of its presets, so a swap resets the envelopes, filter and LFO too: choose the engine first,\nthen shape the other pages. `shift + Tn` opens the same browser for any track.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#engine",
@@ -9038,17 +9077,14 @@
 				{
 					"url": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"kind": "research"
-				},
-				{
-					"url": "https://teenage.engineering/guides/op-xy/synth-engines#change-engine",
-					"kind": "guide"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#engine",
 			"controls": [
 				"key.shift",
 				"key.m1",
-				"encoder.1"
+				"encoder.1",
+				"encoder.2"
 			]
 		},
 		{
@@ -11244,7 +11280,7 @@
 				"instrument.engine",
 				"instrument.lfo-tremolo"
 			],
-			"body": "In an FM engine one oscillator modulates another, and the ratio between them sets the timbre. Keep\naxis's ratio in the detune half for chorused, ensemble-like strings; move into the fifths half for\nstacked, interval-rich tones. Tone controls brightness, and the built-in tremolo adds movement\nwithout using the LFO. Load it with `shift + M1`.",
+			"body": "In an FM engine one oscillator modulates another, and the ratio between them sets the timbre. Keep\naxis's ratio in the detune half for chorused, ensemble-like strings; move into the fifths half for\nstacked, interval-rich tones. Tone controls brightness, and the built-in tremolo adds movement\nwithout using the LFO. Load it from the preset browser, `shift + M1`.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#axis",
@@ -11379,7 +11415,7 @@
 			"related": [
 				"instrument.engine"
 			],
-			"body": "Dissolve starts from oscillators and lets noise eat into them. Little swarm keeps a clear pitch with\na breath of air; a lot turns the tone into textured noise that still follows the keys. AM roughens,\nFM adds harmonics, detune widens. Pair it with slow envelopes for pads or a short amp envelope for\nnoisy plucks. Load it with `shift + M1`.",
+			"body": "Dissolve starts from oscillators and lets noise eat into them. Little swarm keeps a clear pitch with\na breath of air; a lot turns the tone into textured noise that still follows the keys. AM roughens,\nFM adds harmonics, detune widens. Pair it with slow envelopes for pads or a short amp envelope for\nnoisy plucks. Load it from the preset browser, `shift + M1`.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#dissolve",
@@ -11533,7 +11569,7 @@
 			"related": [
 				"instrument.engine"
 			],
-			"body": "Epiano recreates the struck-tine electric piano. Tine sets how much bell-like attack each note has,\ntone the overall brightness, texture adds dirt and punch adds movement. With the tine up and a medium\ndecay it sounds like classic keys; the guide also pitches it for leads and basses, so try it outside\npiano parts. The guide (1.1.15) lists punch before tine; on 1.1.33, after the 1.1.25 fix to the\nepiano's labels, tine sits on `E3` and punch on `E4`. Load it with `shift + M1`.",
+			"body": "Epiano recreates the struck-tine electric piano. Tine sets how much bell-like attack each note has,\ntone the overall brightness, texture adds dirt and punch adds movement. With the tine up and a medium\ndecay it sounds like classic keys; the guide also pitches it for leads and basses, so try it outside\npiano parts. The guide (1.1.15) lists punch before tine; on 1.1.33, after the 1.1.25 fix to the\nepiano's labels, tine sits on `E3` and punch on `E4`. Load it from the preset browser, `shift + M1`.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#epiano",
@@ -11672,7 +11708,7 @@
 			"related": [
 				"instrument.engine"
 			],
-			"body": "Hard sync restarts one oscillator from another, so sweeping freq produces the tearing, vocal sweep\nsync sounds are known for — try a different freq lock on each step. Sub reinforces the bottom for\nbasses or thickens pads, noise brightens, and lowcut thins the sound so it sits above a bass line.\nLoad it with `shift + M1`.",
+			"body": "Hard sync restarts one oscillator from another, so sweeping freq produces the tearing, vocal sweep\nsync sounds are known for — try a different freq lock on each step. Sub reinforces the bottom for\nbasses or thickens pads, noise brightens, and lowcut thins the sound so it sits above a bass line.\nLoad it from the preset browser, `shift + M1`.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#hardsync",
@@ -11786,6 +11822,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "browser-1133",
+					"text": "On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine on the owner's unit, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "arp-fix",
 					"text": "OS 1.1.32 fixed the arpeggiator disturbing a midi-engine parameter.",
 					"source": "https://teenage.engineering/downloads/op-xy#1.1.32",
@@ -11805,17 +11849,17 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": "engine list",
+							"note": "the preset browser on OS 1.1.33 (the guide's engine list before)",
 							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "choose midi",
+							"note": "choose midi, where it is listed",
 							"set": null
 						},
 						{
-							"keys": "click E1",
-							"note": null,
+							"keys": "click E2",
+							"note": "loads it (the old engine list took a click of `E1`)",
 							"set": null
 						},
 						{
@@ -11925,6 +11969,10 @@
 					"kind": "changelog"
 				},
 				{
+					"url": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"kind": "research"
+				},
+				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.32",
 					"kind": "changelog"
 				}
@@ -11934,8 +11982,8 @@
 				"key.shift",
 				"key.m1",
 				"encoder.1",
-				"key.m2",
 				"encoder.2",
+				"key.m2",
 				"encoder.3"
 			]
 		},
@@ -12057,7 +12105,7 @@
 				"instrument.engine",
 				"instrument.lfo-tremolo"
 			],
-			"body": "Organ is a quick route to a whole family of sounds: type swaps the organ model, bass adds weight, and\nthe built-in tremolo gives the familiar pulsing movement — slow for gentle swells, fast for a\nshimmer. Because the tremolo lives on `M1`, the `M4` LFO stays free for something else. Load it with\n`shift + M1`.",
+			"body": "Organ is a quick route to a whole family of sounds: type swaps the organ model, bass adds weight, and\nthe built-in tremolo gives the familiar pulsing movement — slow for gentle swells, fast for a\nshimmer. Because the tremolo lives on `M1`, the `M4` LFO stays free for something else. Load it from the preset browser,\n`shift + M1`.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#organ",
@@ -12180,17 +12228,17 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": "opens the engine list",
+							"note": "opens the preset browser by engine (OS 1.1.33)",
 							"set": null
 						},
 						{
 							"keys": "turn E1",
-							"note": "scroll to prism",
+							"note": "scroll to prism; its first preset is highlighted",
 							"set": null
 						},
 						{
-							"keys": "click E1",
-							"note": "pressing M1 confirms as well",
+							"keys": "click E2",
+							"note": "loads it, the whole sound with it",
 							"set": null
 						}
 					],
@@ -12434,7 +12482,7 @@
 				"instrument.engine",
 				"instrument.filter"
 			],
-			"body": "Simple is the plain starting point: pick a waveform, narrow the pulse width for a hollow, nasal tone,\nadd noise for breath or buzz, and widen the stereo image. With the filter and envelopes doing most of\nthe shaping, it is the easiest engine to learn sound design on. Load it with `shift + M1`.",
+			"body": "Simple is the plain starting point: pick a waveform, narrow the pulse width for a hollow, nasal tone,\nadd noise for breath or buzz, and widen the stereo image. With the filter and envelopes doing most of\nthe shaping, it is the easiest engine to learn sound design on. Load it from the preset browser, `shift + M1`.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#simple",
@@ -12586,7 +12634,7 @@
 				"instrument.engine",
 				"instrument.lfo-value"
 			],
-			"body": "Wavetable suits evolving sounds: choose a table, then move the position to travel through its\nwaveforms. Position is the parameter to animate — lock it per step or aim the LFO at it — while warp\nreshapes whatever waveform is current. Drift pulls the warping away from the played pitch for\nmetallic, unstable results. Load it with `shift + M1`.",
+			"body": "Wavetable suits evolving sounds: choose a table, then move the position to travel through its\nwaveforms. Position is the parameter to animate — lock it per step or aim the LFO at it — while warp\nreshapes whatever waveform is current. Drift pulls the warping away from the played pitch for\nmetallic, unstable results. Load it from the preset browser, `shift + M1`.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#wavetable",
@@ -13013,7 +13061,7 @@
 					"preset browser"
 				]
 			},
-			"summary": "`shift + Tn` in instrument mode opens that track's preset browser. Browse by category or by engine and load a preset with an encoder click; factory presets exist for every engine.",
+			"summary": "`shift + Tn` in instrument mode opens that track's preset browser (on OS 1.1.33 `shift + M1` opens it for the selected track). Browse by engine or by category — a click of `E1` swaps them — and load a preset with a click of `E2`.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -13034,7 +13082,7 @@
 				},
 				{
 					"id": "factory",
-					"text": "The unit ships with presets for every engine and every sound category.",
+					"text": "The unit ships with factory presets across the engines and the sound categories.",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#view-and-create-preset",
 					"firmware_min": null,
 					"verified_on": null,
@@ -13050,7 +13098,15 @@
 				},
 				{
 					"id": "categories",
-					"text": "Factory categories include bass, drum, keys, lead, organ, pad, pluck and strings, plus fx, wind and bells; top-level folders under presets on the unit's storage show up as categories.",
+					"text": "On OS 1.1.33 the category view lists bass, drum, keys, lead, organ, pad, pluck and strings, after any preset pack of the owner's (the owner's Nostalgic Synths came first).",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "folders",
+					"text": "Top-level folders under presets on the unit's storage show up as categories.",
 					"source": "docs/research/30-presets-samples.md#41-what-mtp-shows",
 					"firmware_min": null,
 					"verified_on": null,
@@ -13074,7 +13130,15 @@
 				},
 				{
 					"id": "views",
-					"text": "The first encoder (`E1`) offers a choice between browsing by engine and by category; on the owner's unit the category view began with Nostalgic Synths, bass, drum and keys.",
+					"text": "A click of `E1` swaps between by engine and by category, and a popup names the view for a moment; the highlighted preset stays highlighted in the other view.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "sorting",
+					"text": "Presets sort by name, factory and user ones together; moving to another engine or category starts its list from the top with the first preset highlighted, and a list scrolls only as far as the highlight needs.",
 					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -13082,7 +13146,15 @@
 				},
 				{
 					"id": "footer",
-					"text": "The footer reads cut, paste, rename and delete over `M1`…`M4`.",
+					"text": "With one of your own presets highlighted the footer reads cut, paste, rename and delete over `M1`…`M4`; a factory preset shows none.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "loads-to-m1",
+					"text": "Loading leaves the browser for the track's `M1` page, showing the new sound's engine values.",
 					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -13090,7 +13162,7 @@
 				},
 				{
 					"id": "shift-m1",
-					"text": "On OS 1.1.33, `shift + M1` also brings up this browser, with the engine list in the middle.",
+					"text": "On OS 1.1.33, `shift + M1` brings up this browser for the selected track, opening on its current preset in engine view; it is how that firmware changes engine.",
 					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -13112,7 +13184,7 @@
 						},
 						{
 							"keys": "click E1",
-							"note": "optional; switches between category and engine view",
+							"note": "optional; swaps between engine and category view",
 							"set": null
 						},
 						{
@@ -13221,16 +13293,16 @@
 					"kind": "research"
 				},
 				{
+					"url": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"kind": "research"
+				},
+				{
 					"url": "docs/research/30-presets-samples.md#41-what-mtp-shows",
 					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.15",
 					"kind": "changelog"
-				},
-				{
-					"url": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
-					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#view-and-create-preset",
@@ -13865,7 +13937,7 @@
 			"facts": [
 				{
 					"id": "synth-sampler",
-					"text": "The synth sampler (sampler in the engine list) plays one sample across the keyboard, with loop points for sustained sounds.",
+					"text": "The synth sampler (sampler among the browser's engines) plays one sample across the keyboard, with loop points for sustained sounds.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
 					"firmware_min": null,
 					"verified_on": null,
@@ -13873,7 +13945,7 @@
 				},
 				{
 					"id": "drum-sampler",
-					"text": "The drum sampler (drum in the engine list) gives each of the 24 keys its own one-shot sample.",
+					"text": "The drum sampler (drum among the browser's engines) gives each of the 24 keys its own one-shot sample.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
 					"firmware_min": null,
 					"verified_on": null,
@@ -13938,7 +14010,7 @@
 					"steps": [
 						{
 							"keys": "shift + M1",
-							"note": "engine list",
+							"note": "the preset browser by engine (OS 1.1.33)",
 							"set": null
 						},
 						{
@@ -13947,8 +14019,8 @@
 							"set": null
 						},
 						{
-							"keys": "click E1",
-							"note": null,
+							"keys": "click E2",
+							"note": "loads its highlighted preset",
 							"set": null
 						}
 					],
@@ -14010,7 +14082,8 @@
 			"controls": [
 				"key.shift",
 				"key.m1",
-				"encoder.1"
+				"encoder.1",
+				"encoder.2"
 			]
 		},
 		{

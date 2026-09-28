@@ -11,10 +11,11 @@
   missed is now captured: the sequencer and player screens, the envelope editor, the aux tracks and the
   engines. We also know which pages MIDI can drive. Phase F turns that into the replica, our manual and
   the agent. It runs until the next capture session.
-  - **Rebuilt from the captures so far** (overlays within about half a pixel): the envelope editor,
-    the players, the mixer, the bar card and step popups, the octave popup, the tempo page, arrange
-    and song mode. Still in progress: the filter and LFO pages, the auxiliary tracks, the engine
-    pages.
+  - **Rebuilt from the captures** (overlays within about half a pixel): the envelope editor, the
+    players, the mixer, the bar card and step popups, the octave popup, the tempo page, arrange and
+    song mode, the filter and LFO pages, the auxiliary tracks, all eleven engine pages with their
+    motion, and the preset browser (shift + M1 on 1.1.33, where an engine loads as one of its
+    presets). What the captures leave open is in `QUESTIONS.md` and note 59 §4.
   - **The agent** plans exact steps on a copy of the simulator for any page or value, auxiliary and
     mixer values included. It can read them out, play them on the replica, or walk the user through
     them one lit key at a time. It sets whole sounds up from an idea (five tested recipes) and sets a
@@ -181,9 +182,11 @@ owner flagged, then what users see most.
        Left: the cross-fades and slides (b1-741, b1-852).
 9. [x] **Tempo** (metronome weight by BPM, groove slider, speaker waves, pendulum). Left: what
        turns the jack black and how E4's click treats the level.
-10. [ ] **Engine pages:** top-bar styles, each engine's picture and its motion (done: all eight synth
+10. [x] **Engine pages:** top-bar styles, each engine's picture and its motion (all eight synth
         engines drawn from the captures, moving while notes sound; the three sampler engines' pages
-        and shift layers); the preset browser (in progress).
+        and shift layers); the preset browser (engine and category views, the view popup, the user
+        footer, the device's factory library; saves move to version 6). Left: how 1.1.33 reaches the
+        midi engine (listed last here, ours) and the sampler's fade and crossfade sounds.
 11. [x] **Aux tracks:** brain M1/M2 (slide), external MIDI (CC slots, LFO), external CV (meter),
         external audio (signal flow), tape, FX I/II (four columns per type); punch-in (the idle
         heartbeat; one still frame per key). Left: the punch-in animations in motion.

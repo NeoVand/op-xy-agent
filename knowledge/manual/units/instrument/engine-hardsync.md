@@ -58,4 +58,4 @@ related: [instrument.engine]
 Hard sync restarts one oscillator from another, so sweeping freq produces the tearing, vocal sweep
 sync sounds are known for — try a different freq lock on each step. Sub reinforces the bottom for
 basses or thickens pads, noise brightens, and lowcut thins the sound so it sits above a bass line.
-Load it with `shift + M1`.
+Load it from the preset browser, `shift + M1`.

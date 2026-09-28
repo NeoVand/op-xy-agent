@@ -53,11 +53,11 @@ procedures:
     preconditions: [instrument mode, the track is selected]
     steps:
       - keys: shift + M1
-        note: opens the engine list
+        note: opens the preset browser by engine (OS 1.1.33)
       - keys: turn E1
-        note: scroll to prism
-      - keys: click E1
-        note: pressing M1 confirms as well
+        note: scroll to prism; its first preset is highlighted
+      - keys: click E2
+        note: loads it, the whole sound with it
     result: The track now plays through prism and M1 shows its four parameters.
     source: https://teenage.engineering/guides/op-xy/synth-engines#change-engine
 parameters:

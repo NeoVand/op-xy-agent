@@ -25,7 +25,7 @@ facts:
     text: Pages with more than four parameters show the rest while `shift` is held.
     source: https://teenage.engineering/guides/op-xy/main-modes#5.2%20modules
   - id: instrument-pages
-    text: On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M1`, `shift + M3` and `shift + M4` choose the engine, filter type and LFO type.
+    text: On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine.
     source: https://teenage.engineering/guides/op-xy/instrument
   - id: aux-pages
     text: Auxiliary tracks use the pages their own way; on the brain track, M1 sets key and scale and M2 routes tracks into it.

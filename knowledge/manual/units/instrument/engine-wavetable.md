@@ -66,4 +66,4 @@ related: [instrument.engine, instrument.lfo-value]
 Wavetable suits evolving sounds: choose a table, then move the position to travel through its
 waveforms. Position is the parameter to animate — lock it per step or aim the LFO at it — while warp
 reshapes whatever waveform is current. Drift pulls the warping away from the played pitch for
-metallic, unstable results. Load it with `shift + M1`.
+metallic, unstable results. Load it from the preset browser, `shift + M1`.

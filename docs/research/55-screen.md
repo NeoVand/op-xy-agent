@@ -243,10 +243,11 @@ project, COM and tap times. `buildFrame(state)` and `buildLeds(state)` are pure.
 - `project` and `com` toggle their pages, where M1–M4 open the soft-key sub-pages [project/project-view,
   com/overview]. `sample`, `player` and `bar` toggle their (text) pages.
 - M1–M4 choose the page and close tempo, sample, players and bar. On instrument tracks,
-  `shift + M1 / M3 / M4` opens the engine, filter or LFO type list: turn to choose; click E1, or press
-  the key that opened the list (M1 in the guide, M3 and M4 ours), to load; any other M key leaves
-  [basics/modules, instrument/engine]. A synth swapped for the midi engine comes back as it was when
-  its engine is chosen again (OS 1.0.50).
+  `shift + M3 / M4` opens the filter or LFO type list: turn to choose; click E1, or press the key
+  that opened the list (ours), to load; any other M key leaves [basics/modules]. `shift + M1` opened
+  our engine list the same way (the guide's) until the owner's unit showed that OS 1.1.33 brings up
+  the preset browser there instead (research 59 §2.6), which the replica now draws; an engine loads
+  as one of its presets.
 - Holding `shift` shows a page's second layer: drum sampler settings on M1, play mode on M2, sends on
   M3 [instrument/play-mode, instrument/track-sends].
 - T1–T8 select the track in the current set, lit white (instrument) or red (auxiliary)

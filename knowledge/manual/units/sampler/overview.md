@@ -15,10 +15,10 @@ firmware:
   verified_on: null
 facts:
   - id: synth-sampler
-    text: The synth sampler (sampler in the engine list) plays one sample across the keyboard, with loop points for sustained sounds.
+    text: The synth sampler (sampler among the browser's engines) plays one sample across the keyboard, with loop points for sustained sounds.
     source: https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler
   - id: drum-sampler
-    text: The drum sampler (drum in the engine list) gives each of the 24 keys its own one-shot sample.
+    text: The drum sampler (drum among the browser's engines) gives each of the 24 keys its own one-shot sample.
     source: https://teenage.engineering/guides/op-xy/sample#drum-sampler
   - id: multisampler
     text: The multisampler lays up to 24 samples of one instrument over zones of the keyboard.
@@ -47,10 +47,11 @@ procedures:
     preconditions: [instrument mode]
     steps:
       - keys: shift + M1
-        note: engine list
+        note: the preset browser by engine (OS 1.1.33)
       - keys: turn E1
         note: sampler, drum or multisampler
-      - keys: click E1
+      - keys: click E2
+        note: loads its highlighted preset
     source: https://teenage.engineering/guides/op-xy/synth-engines#change-engine
 related:
   [

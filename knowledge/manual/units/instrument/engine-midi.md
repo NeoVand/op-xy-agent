@@ -40,6 +40,11 @@ facts:
     text: Program changes can be parameter-locked per step; OS 1.1.15 fixed such locks not working.
     source: https://teenage.engineering/downloads/op-xy#1.1.15
     firmware_min: '1.1.15'
+  - id: browser-1133
+    text: On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine on the owner's unit, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
   - id: arp-fix
     text: OS 1.1.32 fixed the arpeggiator disturbing a midi-engine parameter.
     source: https://teenage.engineering/downloads/op-xy#1.1.32
@@ -51,10 +56,11 @@ procedures:
       [instrument mode, the synth is connected over USB or to the multi-out jack in MIDI mode]
     steps:
       - keys: shift + M1
-        note: engine list
+        note: the preset browser on OS 1.1.33 (the guide's engine list before)
       - keys: turn E1
-        note: choose midi
-      - keys: click E1
+        note: choose midi, where it is listed
+      - keys: click E2
+        note: loads it (the old engine list took a click of `E1`)
       - keys: turn E1
         note: set the synth's MIDI channel
       - keys: M2

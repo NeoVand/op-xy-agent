@@ -72,4 +72,4 @@ Epiano recreates the struck-tine electric piano. Tine sets how much bell-like at
 tone the overall brightness, texture adds dirt and punch adds movement. With the tine up and a medium
 decay it sounds like classic keys; the guide also pitches it for leads and basses, so try it outside
 piano parts. The guide (1.1.15) lists punch before tine; on 1.1.33, after the 1.1.25 fix to the
-epiano's labels, tine sits on `E3` and punch on `E4`. Load it with `shift + M1`.
+epiano's labels, tine sits on `E3` and punch on `E4`. Load it from the preset browser, `shift + M1`.

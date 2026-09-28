@@ -1,13 +1,22 @@
 ---
 id: instrument.engine
-title: Engine page and engine list (M1)
-aliases: [engine page, engine list, change engine, choose engine, sound source, synth engines]
+title: Engine page and changing engine (M1)
+aliases:
+  [
+    engine page,
+    engine list,
+    change engine,
+    choose engine,
+    sound source,
+    synth engines,
+    load an engine
+  ]
 area: instrument
 order: 10
 context:
   modes: [instrument]
-  screens: [M1, engine list]
-summary: "`M1` is the engine page: its encoders edit the loaded engine's own parameters. `shift + M1` opens the engine list — eight synths, three samplers and the midi engine — to swap the track's sound source."
+  screens: [M1, preset browser]
+summary: "`M1` is the engine page: its encoders edit the loaded engine's own parameters. On OS 1.1.33 `shift + M1` brings up the preset browser by engine, and loading one of an engine's presets changes the engine — along with the whole sound. Twelve engines: eight synths, three samplers and midi."
 status: current
 firmware:
   min: '1.0.9'
@@ -28,7 +37,7 @@ facts:
     text: The midi engine makes no sound of its own; it turns the track into a MIDI sequencer for external gear and uses `M2` and `M3` for CC controls.
     source: https://teenage.engineering/guides/op-xy/synth-engines#external
   - id: list
-    text: The engine list holds all twelve — the eight synths, the three samplers and midi.
+    text: Twelve engines in all — the eight synths, the three samplers and midi.
     source: docs/research/20-midi-control.md#21-the-16-tracks-and-their-default-channels
     confidence: derived
   - id: midi-ccs
@@ -42,7 +51,22 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: browser
-    text: On OS 1.1.33, `shift + M1` brings up a browser headed with the track number and the word preset, with the engine list in the middle and the highlighted engine's presets on the right.
+    text: On OS 1.1.33 there is no separate engine list; `shift + M1` brings up the preset browser on the track's current preset — the track number over the word preset at the left, the engines in the middle with the track's engine boxed, and that engine's presets on the right.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: browser-engines
+    text: The owner's unit listed eleven engines there, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: load-changes-engine
+    text: Turning `E1` to an engine highlights its first preset; loading a preset changes the engine with the whole sound (all four pages) and returns to the track's `M1` page.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: e1-click
+    text: In the browser a click of `E1` swaps between by engine and by category (a popup says which) instead of confirming, as it did in the older engine list the guide describes.
     source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
     confidence: verified
     verified_on: '1.1.33'
@@ -52,13 +76,19 @@ procedures:
     preconditions: [instrument mode, the track is selected]
     steps:
       - keys: shift + M1
-        note: the engine list opens
-      - keys: turn E1
-        note: highlight an engine
+        note: the preset browser opens on the track's preset
       - keys: click E1
-        note: pressing `M1` also confirms
-    result: M1 now shows the parameters of the new engine.
-    source: https://teenage.engineering/guides/op-xy/synth-engines#change-engine
+        note: only if it lists categories; a click swaps to by engine
+      - keys: turn E1
+        note: highlight an engine; its first preset is highlighted
+      - keys: turn E2
+        note: optional; another of its presets
+      - keys: click E2
+        note: loads it
+    result: The track runs the new engine with that preset's sound, and M1 shows the engine's parameters.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
 related:
   [
     instrument.overview,
@@ -78,6 +108,6 @@ related:
 ---
 
 Synth engines build tones from oscillators, samplers play recorded audio, and the midi engine stays
-silent and drives outside gear. Only `M1` belongs to the engine, so after a swap the other pages work
-as before (the midi engine excepted). To replace the whole sound with a finished patch, load a preset
-with `shift + Tn` instead.
+silent and drives outside gear. Only `M1` belongs to the engine, but on OS 1.1.33 an engine arrives
+with one of its presets, so a swap resets the envelopes, filter and LFO too: choose the engine first,
+then shape the other pages. `shift + Tn` opens the same browser for any track.

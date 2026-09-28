@@ -58,4 +58,4 @@ related: [instrument.engine]
 Dissolve starts from oscillators and lets noise eat into them. Little swarm keeps a clear pitch with
 a breath of air; a lot turns the tone into textured noise that still follows the keys. AM roughens,
 FM adds harmonics, detune widens. Pair it with slow envelopes for pads or a short amp envelope for
-noisy plucks. Load it with `shift + M1`.
+noisy plucks. Load it from the preset browser, `shift + M1`.

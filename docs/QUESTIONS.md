@@ -24,7 +24,8 @@ answer and date (and into `DECISIONS.md` when they shape the project).
      again on its own page; the page dims under an "off" box (camera, 2026-09-28).
    - On a new project's T3, hold shift on M2: does portamento read `00` or `off`, and what does the
      bend range read (we expect 2 semitones)? On T8 (we expect an octave)?
-   - Are presets inside a category listed alphabetically, or in some other order?
+   - ~~Are presets inside a category listed alphabetically, or in some other order?~~ By name,
+     factory and user presets together (camera, 2026-09-28; note 59 §2.6).
 5. **Filter and LFO session** (changes device state the same way as the engine session: CCs and
    notes on a new throwaway project; nothing saved, loaded or deleted). The engines were measured
    with filters and LFOs off; the four filters (slopes, resonance, envelope depth) and the LFO shapes
@@ -57,6 +58,13 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    bar levels per tenth of position). Fine to ship as is (D2 by analogy), or should ours diverge?
    And the eighth table, never seen on screen: we call it "primes" (a sine joined by the prime
    harmonics); what does the device call it?
+10. **The midi engine on OS 1.1.33** (read-only look). shift + M1 brings up the preset browser, and
+    its engine view listed eleven engines with no midi (note 59 §2.6), yet TE's guide still runs
+    instrument tracks on the external (midi) engine. How does 1.1.33 put a track on midi: is it
+    listed once a midi preset exists, is it further down a list we did not scroll, or is it gone?
+    Until we know, the replica lists midi after the eleven (ours). Two smaller things while there:
+    which key loads a preset (E2, E3 or E4 all fit the guide) and where shift + Tn opens the browser
+    (the track's preset, or where it was last left).
 
 ## Answered
 

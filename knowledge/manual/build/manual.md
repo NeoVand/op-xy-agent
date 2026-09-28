@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1091 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1098 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -74,7 +74,7 @@ Facts:
 - Every main mode except arrange splits its controls into four modules, opened with the keys printed 1 to 4 under the screen (`M1`…`M4`). [#what] [s1]
 - On a module page, `E1`…`E4` edit the parameters shown for the selected track. [#encoders] [s1]
 - Pages with more than four parameters show the rest while `shift` is held. [#shift-layer] [s1]
-- On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M1`, `shift + M3` and `shift + M4` choose the engine, filter type and LFO type. [#instrument-pages] [s2]
+- On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine. [#instrument-pages] [s2]
 - Auxiliary tracks use the pages their own way; on the brain track, M1 sets key and scale and M2 routes tracks into it. [#aux-pages] [s3]
 - In mix mode, M1 holds levels, pans and sends per track, M2 the master EQ, M3 the master saturator and M4 the master section. [#mix-pages] [s4]
 - On screen, each parameter carries a small dot or cap in its encoder's shade — dark for `E1`, mid grey for `E2`, light grey for `E3`, white for `E4` — so a glance tells which knob moves what. [#encoder-marks] (verified 1.1.33) [s5]
@@ -1562,19 +1562,19 @@ Instrument mode holds the eight tracks that make sound. Each track runs one engi
 
 Pick a track, then work through its pages: the engine creates the tone, the envelopes shape each
 note, the filter colours it and the LFO adds movement; every value can be parameter-locked per step.
-A track's complete sound travels as one preset, so `shift + Tn` changes everything at once while
-`shift + M1` swaps only the engine. Brain, send effects, external gear and tape live in auxiliary
-mode.
+A track's complete sound travels as one preset, so a load from the browser (`shift + Tn`, or
+`shift + M1` for the selected track) changes everything at once, the engine included. Brain, send
+effects, external gear and tape live in auxiliary mode.
 
 Facts:
 - Instrument mode holds eight instrument tracks, one per track key `T1`…`T8`; the eight auxiliary tracks have a mode of their own. [#eight-tracks] [s1]
 - `M1` shows the engine, `M2` the amp and filter envelopes, `M3` the filter and `M4` the LFO. [#pages] [s2]
-- `shift + M1` opens the engine list for the selected track. [#choose-engine] [s1]
+- On OS 1.1.33, `shift + M1` brings up the preset browser for the selected track, where loading one of an engine's presets changes the engine. [#choose-engine] (verified 1.1.33) [s3]
 - `shift + Tn` opens the preset browser for that track, where a preset, sample pack or engine can be loaded in one go. [#browse] [s1]
-- `shift + instrument` opens the preset settings: tuning, velocity sensitivity, width and modulation routing of the track's sound. [#preset-settings] [s3]
-- With a track key held, the module keys act on that track's whole sound: `Tn + M1` scrambles it, `Tn + M2` copies it, `Tn + M3` pastes onto it and `Tn + M4` saves it as a preset. [#sound-actions] [s4]
-- A fresh project puts drums on tracks 1 and 2, a bass on 3, a pluck on 4, a lead on 5, a soft pluck on 6, strings on 7 and a pad on 8. [#defaults] [s5]
-- Community captures name the engines behind those sounds as the drum sampler on tracks 1 and 2, then prism, epiano, dissolve, hardsync, axis and multisampler on tracks 3 to 8. [#default-engines] (community) [s6]
+- `shift + instrument` opens the preset settings: tuning, velocity sensitivity, width and modulation routing of the track's sound. [#preset-settings] [s4]
+- With a track key held, the module keys act on that track's whole sound: `Tn + M1` scrambles it, `Tn + M2` copies it, `Tn + M3` pastes onto it and `Tn + M4` saves it as a preset. [#sound-actions] [s5]
+- A fresh project puts drums on tracks 1 and 2, a bass on 3, a pluck on 4, a lead on 5, a soft pluck on 6, strings on 7 and a pad on 8. [#defaults] [s6]
+- Community captures name the engines behind those sounds as the drum sampler on tracks 1 and 2, then prism, epiano, dissolve, hardsync, axis and multisampler on tracks 3 to 8. [#default-engines] (community) [s7]
 
 Procedures:
 - Open instrument mode and select a track [#enter] [s1]
@@ -1583,41 +1583,46 @@ Procedures:
 
 Related: [instrument.engine], [instrument.envelopes], [instrument.filter], [instrument.lfo], [instrument.preset-browser], [instrument.preset-settings], [instrument.save-copy-scramble], [basics.modules], [auxiliary.overview]
 
-Sources: s1 guide:instrument#project · s2 guide:instrument · s3 guide:instrument#preset-settings · s4 guide:instrument#view-and-create-preset · s5 guide:get-started#4.%20get%20started · s6 note 20
+Sources: s1 guide:instrument#project · s2 guide:instrument · s3 note 59 · s4 guide:instrument#preset-settings · s5 guide:instrument#view-and-create-preset · s6 guide:get-started#4.%20get%20started · s7 note 20
 
-### Engine page and engine list (M1) [instrument.engine]
+### Engine page and changing engine (M1) [instrument.engine]
 current · OS ≥ 1.0.9 · guide v1.1.15
-Also called: engine page, engine list, change engine, choose engine, sound source, synth engines
-Where: modes instrument; screens M1, engine list
+Also called: engine page, engine list, change engine, choose engine, sound source, synth engines, load an engine
+Where: modes instrument; screens M1, preset browser
 
-`M1` is the engine page: its encoders edit the loaded engine's own parameters. `shift + M1` opens the engine list — eight synths, three samplers and the midi engine — to swap the track's sound source.
+`M1` is the engine page: its encoders edit the loaded engine's own parameters. On OS 1.1.33 `shift + M1` brings up the preset browser by engine, and loading one of an engine's presets changes the engine — along with the whole sound. Twelve engines: eight synths, three samplers and midi.
 
 Synth engines build tones from oscillators, samplers play recorded audio, and the midi engine stays
-silent and drives outside gear. Only `M1` belongs to the engine, so after a swap the other pages work
-as before (the midi engine excepted). To replace the whole sound with a finished patch, load a preset
-with `shift + Tn` instead.
+silent and drives outside gear. Only `M1` belongs to the engine, but on OS 1.1.33 an engine arrives
+with one of its presets, so a swap resets the envelopes, filter and LFO too: choose the engine first,
+then shape the other pages. `shift + Tn` opens the same browser for any track.
 
 Facts:
 - On `M1` the four encoders edit the loaded engine's own parameters, so what each one does depends on the engine. [#m1-controls] [s1]
 - There are eight synth engines — axis, dissolve, epiano, hardsync, organ, prism, simple and wavetable — each with its own character. [#synths] [s2]
 - Three sampler engines play recorded audio — the synth sampler, the drum sampler and the multisampler. [#samplers] [s3]
 - The midi engine makes no sound of its own; it turns the track into a MIDI sequencer for external gear and uses `M2` and `M3` for CC controls. [#midi] [s4]
-- The engine list holds all twelve — the eight synths, the three samplers and midi. [#list] (derived) [s5]
+- Twelve engines in all — the eight synths, the three samplers and midi. [#list] (derived) [s5]
 - Over MIDI, CC12–15 on the track's channel move the four `M1` parameters of every synth engine; the drum sampler, synth sampler and multisampler pages ignore them. [#midi-ccs] (verified 1.1.33) [s6]
 - A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis, none on organ — above a picture drawn from the four values; prism, dissolve and hardsync animate while notes sound, organ's drawbars glide to new values and wavetable's drift keeps its copies turning. [#top-bar] (verified 1.1.33) [s7]
-- On OS 1.1.33, `shift + M1` brings up a browser headed with the track number and the word preset, with the engine list in the middle and the highlighted engine's presets on the right. [#browser] (verified 1.1.33) [s8]
+- On OS 1.1.33 there is no separate engine list; `shift + M1` brings up the preset browser on the track's current preset — the track number over the word preset at the left, the engines in the middle with the track's engine boxed, and that engine's presets on the right. [#browser] (verified 1.1.33) [s8]
+- The owner's unit listed eleven engines there, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last. [#browser-engines] (verified 1.1.33) [s8]
+- Turning `E1` to an engine highlights its first preset; loading a preset changes the engine with the whole sound (all four pages) and returns to the track's `M1` page. [#load-changes-engine] (verified 1.1.33) [s8]
+- In the browser a click of `E1` swaps between by engine and by category (a popup says which) instead of confirming, as it did in the older engine list the guide describes. [#e1-click] (verified 1.1.33) [s8]
 
 Procedures:
-- Change the engine of the selected instrument track [#choose] [s9]
+- Change the engine of the selected instrument track [#choose] (verified 1.1.33) [s8]
   Needs: instrument mode; the track is selected
-  1. `shift + M1` — the engine list opens
-  2. `turn E1` — highlight an engine
-  3. `click E1` — pressing `M1` also confirms
-  Result: M1 now shows the parameters of the new engine.
+  1. `shift + M1` — the preset browser opens on the track's preset
+  2. `click E1` — only if it lists categories; a click swaps to by engine
+  3. `turn E1` — highlight an engine; its first preset is highlighted
+  4. `turn E2` — optional; another of its presets
+  5. `click E2` — loads it
+  Result: The track runs the new engine with that preset's sound, and M1 shows the engine's parameters.
 
 Related: [instrument.overview], [instrument.engine-axis], [instrument.engine-dissolve], [instrument.engine-epiano], [instrument.engine-hardsync], [instrument.engine-midi], [instrument.engine-organ], [instrument.engine-prism], [instrument.engine-simple], [instrument.engine-wavetable], [instrument.preset-browser], [sampler.overview], [com.midi-track-ccs]
 
-Sources: s1 guide:instrument#engine · s2 guide:synth-engines · s3 guide:sample · s4 guide:synth-engines#external · s5 note 20 · s6 note 59 · s7 note 59 · s8 note 59 · s9 guide:synth-engines#change-engine
+Sources: s1 guide:instrument#engine · s2 guide:synth-engines · s3 guide:sample · s4 guide:synth-engines#external · s5 note 20 · s6 note 59 · s7 note 59 · s8 note 59
 
 ### Amp and filter envelopes (M2) [instrument.envelopes]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -1994,7 +1999,7 @@ An FM engine made for lush strings; its M1 page sets tone, the ratio of one osci
 In an FM engine one oscillator modulates another, and the ratio between them sets the timbre. Keep
 axis's ratio in the detune half for chorused, ensemble-like strings; move into the fifths half for
 stacked, interval-rich tones. Tone controls brightness, and the built-in tremolo adds movement
-without using the LFO. Load it with `shift + M1`.
+without using the LFO. Load it from the preset browser, `shift + M1`.
 
 Facts:
 - Axis is a frequency-modulation engine whose home ground is rich, full string sounds. [#character] [s1]
@@ -2024,7 +2029,7 @@ A tonal-noise engine for airy ambient pads and bright, gritty leads; its M1 page
 Dissolve starts from oscillators and lets noise eat into them. Little swarm keeps a clear pitch with
 a breath of air; a lot turns the tone into textured noise that still follows the keys. AM roughens,
 FM adds harmonics, detune widens. Pair it with slow envelopes for pads or a short amp envelope for
-noisy plucks. Load it with `shift + M1`.
+noisy plucks. Load it from the preset browser, `shift + M1`.
 
 Facts:
 - Dissolve mixes noise into pitched oscillators, which suits ambient pads and bright, rough-edged leads. [#character] [s1]
@@ -2054,7 +2059,7 @@ Epiano recreates the struck-tine electric piano. Tine sets how much bell-like at
 tone the overall brightness, texture adds dirt and punch adds movement. With the tine up and a medium
 decay it sounds like classic keys; the guide also pitches it for leads and basses, so try it outside
 piano parts. The guide (1.1.15) lists punch before tine; on 1.1.33, after the 1.1.25 fix to the
-epiano's labels, tine sits on `E3` and punch on `E4`. Load it with `shift + M1`.
+epiano's labels, tine sits on `E3` and punch on `E4`. Load it from the preset browser, `shift + M1`.
 
 Facts:
 - Epiano imitates an electric piano and stretches to plucky keys, strong leads and heavy basses. [#character] [s1]
@@ -2085,7 +2090,7 @@ A hard-sync engine for punchy stabs and firm basses; its M1 page sets freq (a ha
 Hard sync restarts one oscillator from another, so sweeping freq produces the tearing, vocal sweep
 sync sounds are known for — try a different freq lock on each step. Sub reinforces the bottom for
 basses or thickens pads, noise brightens, and lowcut thins the sound so it sits above a bass line.
-Load it with `shift + M1`.
+Load it from the preset browser, `shift + M1`.
 
 Facts:
 - Hardsync is built for short stabs and firm, solid bass lines. [#character] [s1]
@@ -2122,14 +2127,15 @@ Facts:
 - Since OS 1.0.45, presets saved from a midi-engine track keep their CC settings. [#presets-keep-ccs] (since 1.0.45) [s4]
 - Since OS 1.0.50, switching a track to the midi engine and back keeps its synth settings. [#switch-back] (since 1.0.50) [s5]
 - Program changes can be parameter-locked per step; OS 1.1.15 fixed such locks not working. [#program-locks] (since 1.1.15) [s6]
-- OS 1.1.32 fixed the arpeggiator disturbing a midi-engine parameter. [#arp-fix] (since 1.1.32) [s7]
+- On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine on the owner's unit, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser. [#browser-1133] (verified 1.1.33) [s7]
+- OS 1.1.32 fixed the arpeggiator disturbing a midi-engine parameter. [#arp-fix] (since 1.1.32) [s8]
 
 Procedures:
 - Sequence an external synth from an instrument track [#setup] [s1]
   Needs: instrument mode; the synth is connected over USB or to the multi-out jack in MIDI mode
-  1. `shift + M1` — engine list
-  2. `turn E1` — choose midi
-  3. `click E1`
+  1. `shift + M1` — the preset browser on OS 1.1.33 (the guide's engine list before)
+  2. `turn E1` — choose midi, where it is listed
+  3. `click E2` — loads it (the old engine list took a click of `E1`)
   4. `turn E1` — set the synth's MIDI channel
   5. `M2` — CC slots (more on `M3`)
   6. `shift + turn E1` — switch a slot on and pick its CC number
@@ -2145,7 +2151,7 @@ Parameters:
 
 Related: [instrument.engine], [auxiliary.external-midi], [howto.control-synth-midi], [com.midi-settings], [sequencer.parameter-locks]
 
-Sources: s1 guide:synth-engines#external · s2 changelog:1.0.15 · s3 guide:how-to#how-to-control-a-synth-with-midi · s4 changelog:1.0.45 · s5 changelog:1.0.50 · s6 changelog:1.1.15 · s7 changelog:1.1.32
+Sources: s1 guide:synth-engines#external · s2 changelog:1.0.15 · s3 guide:how-to#how-to-control-a-synth-with-midi · s4 changelog:1.0.45 · s5 changelog:1.0.50 · s6 changelog:1.1.15 · s7 note 59 · s8 changelog:1.1.32
 
 ### Organ synth engine [instrument.engine-organ]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -2156,7 +2162,7 @@ An organ engine that spans transistor combos to church organs; its M1 page sets 
 
 Organ is a quick route to a whole family of sounds: type swaps the organ model, bass adds weight, and
 the built-in tremolo gives the familiar pulsing movement — slow for gentle swells, fast for a
-shimmer. Because the tremolo lives on `M1`, the `M4` LFO stays free for something else. Load it with
+shimmer. Because the tremolo lives on `M1`, the `M4` LFO stays free for something else. Load it from the preset browser,
 `shift + M1`.
 
 Facts:
@@ -2205,9 +2211,9 @@ Facts:
 Procedures:
 - Put the prism engine on the selected instrument track [#choose] [s8]
   Needs: instrument mode; the track is selected
-  1. `shift + M1` — opens the engine list
-  2. `turn E1` — scroll to prism
-  3. `click E1` — pressing M1 confirms as well
+  1. `shift + M1` — opens the preset browser by engine (OS 1.1.33)
+  2. `turn E1` — scroll to prism; its first preset is highlighted
+  3. `click E2` — loads it, the whole sound with it
   Result: The track now plays through prism and M1 shows its four parameters.
 
 Parameters:
@@ -2232,7 +2238,7 @@ A basic engine for building leads and plucks quickly; its M1 page sets waveform 
 
 Simple is the plain starting point: pick a waveform, narrow the pulse width for a hollow, nasal tone,
 add noise for breath or buzz, and widen the stereo image. With the filter and envelopes doing most of
-the shaping, it is the easiest engine to learn sound design on. Load it with `shift + M1`.
+the shaping, it is the easiest engine to learn sound design on. Load it from the preset browser, `shift + M1`.
 
 Facts:
 - Simple is meant for fast, basic patches, with leads and plucks as its strengths. [#character] [s1]
@@ -2261,7 +2267,7 @@ An engine that morphs through a table of stored waveforms; its M1 page picks one
 Wavetable suits evolving sounds: choose a table, then move the position to travel through its
 waveforms. Position is the parameter to animate — lock it per step or aim the LFO at it — while warp
 reshapes whatever waveform is current. Drift pulls the warping away from the played pitch for
-metallic, unstable results. Load it with `shift + M1`.
+metallic, unstable results. Load it from the preset browser, `shift + M1`.
 
 Facts:
 - A wavetable is a row of waveforms stored one after another; moving through it morphs the oscillator smoothly from shape to shape. [#what] [s1]
@@ -2362,7 +2368,7 @@ current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
 Also called: presets, preset list, load preset, browse presets, sound browser, patches, categories
 Where: modes instrument; screens preset browser
 
-`shift + Tn` in instrument mode opens that track's preset browser. Browse by category or by engine and load a preset with an encoder click; factory presets exist for every engine.
+`shift + Tn` in instrument mode opens that track's preset browser (on OS 1.1.33 `shift + M1` opens it for the selected track). Browse by engine or by category — a click of `E1` swaps them — and load a preset with a click of `E2`.
 
 The browser changes a track's whole sound in one step. Category view groups sounds by role; engine
 view lists everything built on one engine, handy when you know the character you want. Your own
@@ -2370,20 +2376,23 @@ presets and folders sit beside the factory ones and are managed from the same sc
 
 Facts:
 - In instrument mode, `shift + Tn` opens the preset browser for track n. [#open] [s1]
-- The unit ships with presets for every engine and every sound category. [#factory] [s1]
+- The unit ships with factory presets across the engines and the sound categories. [#factory] [s1]
 - Loading a preset replaces the track's whole sound and copies it into the project, so later changes to the preset file leave existing tracks alone. [#whole-sound] (community-verified) [s2]
-- Factory categories include bass, drum, keys, lead, organ, pad, pluck and strings, plus fx, wind and bells; top-level folders under presets on the unit's storage show up as categories. [#categories] (community-verified) [s3]
-- Since OS 1.1.15, user preset folders can be nested more deeply. [#deeper-folders] (since 1.1.15) [s4]
-- The browser shows the track number over the word preset on the left, the engine list in the middle and that engine's presets on the right, the current preset highlighted. [#screen] (verified 1.1.33) [s5]
-- The first encoder (`E1`) offers a choice between browsing by engine and by category; on the owner's unit the category view began with Nostalgic Synths, bass, drum and keys. [#views] (verified 1.1.33) [s5]
-- The footer reads cut, paste, rename and delete over `M1`…`M4`. [#footer] (verified 1.1.33) [s5]
-- On OS 1.1.33, `shift + M1` also brings up this browser, with the engine list in the middle. [#shift-m1] (verified 1.1.33) [s5]
+- On OS 1.1.33 the category view lists bass, drum, keys, lead, organ, pad, pluck and strings, after any preset pack of the owner's (the owner's Nostalgic Synths came first). [#categories] (verified 1.1.33) [s3]
+- Top-level folders under presets on the unit's storage show up as categories. [#folders] (community-verified) [s4]
+- Since OS 1.1.15, user preset folders can be nested more deeply. [#deeper-folders] (since 1.1.15) [s5]
+- The browser shows the track number over the word preset on the left, the engine list in the middle and that engine's presets on the right, the current preset highlighted. [#screen] (verified 1.1.33) [s3]
+- A click of `E1` swaps between by engine and by category, and a popup names the view for a moment; the highlighted preset stays highlighted in the other view. [#views] (verified 1.1.33) [s3]
+- Presets sort by name, factory and user ones together; moving to another engine or category starts its list from the top with the first preset highlighted, and a list scrolls only as far as the highlight needs. [#sorting] (verified 1.1.33) [s3]
+- With one of your own presets highlighted the footer reads cut, paste, rename and delete over `M1`…`M4`; a factory preset shows none. [#footer] (verified 1.1.33) [s3]
+- Loading leaves the browser for the track's `M1` page, showing the new sound's engine values. [#loads-to-m1] (verified 1.1.33) [s3]
+- On OS 1.1.33, `shift + M1` brings up this browser for the selected track, opening on its current preset in engine view; it is how that firmware changes engine. [#shift-m1] (verified 1.1.33) [s3]
 
 Procedures:
 - Load a preset on a track [#load] [s1]
   Needs: instrument mode
   1. `shift + Tn` — the track to change
-  2. `click E1` — optional; switches between category and engine view
+  2. `click E1` — optional; swaps between engine and category view
   3. `turn E1` — choose a category or engine
   4. `turn E2` — choose a preset
   5. `click E2` — load it
@@ -2400,7 +2409,7 @@ Parameters:
 
 Related: [instrument.preset-management], [instrument.save-copy-scramble], [instrument.save-to-same-snapshot], [com.mtp]
 
-Sources: s1 guide:instrument#view-and-create-preset · s2 note 30 · s3 note 30 · s4 changelog:1.1.15 · s5 note 59
+Sources: s1 guide:instrument#view-and-create-preset · s2 note 30 · s3 note 59 · s4 note 30 · s5 changelog:1.1.15
 
 ### Organise presets (cut, paste, rename, delete, folders) [instrument.preset-management]
 current · OS ≥ 1.0.9 · changed in 1.1.15, 1.1.25 · guide v1.1.15
@@ -2541,8 +2550,8 @@ Use the synth sampler to make one sound playable, the drum sampler for kits and 
 lives there too), and the multisampler when an instrument should sound natural across its range.
 
 Facts:
-- The synth sampler (sampler in the engine list) plays one sample across the keyboard, with loop points for sustained sounds. [#synth-sampler] [s1]
-- The drum sampler (drum in the engine list) gives each of the 24 keys its own one-shot sample. [#drum-sampler] [s2]
+- The synth sampler (sampler among the browser's engines) plays one sample across the keyboard, with loop points for sustained sounds. [#synth-sampler] [s1]
+- The drum sampler (drum among the browser's engines) gives each of the 24 keys its own one-shot sample. [#drum-sampler] [s2]
 - The multisampler lays up to 24 samples of one instrument over zones of the keyboard. [#multisampler] [s3]
 - On sampler tracks M1 edits the sample; M2–M4 work as on any instrument track. [#m1] [s4]
 - In the mix, the drum sampler feeds the percussion group and the synth sampler the melodic group. [#groups] [s5]
@@ -2553,9 +2562,9 @@ Facts:
 Procedures:
 - Put a sampler engine on the selected track [#choose] [s9]
   Needs: instrument mode
-  1. `shift + M1` — engine list
+  1. `shift + M1` — the preset browser by engine (OS 1.1.33)
   2. `turn E1` — sampler, drum or multisampler
-  3. `click E1`
+  3. `click E2` — loads its highlighted preset
 
 Related: [sampler.sampling], [sampler.synth-sampler], [sampler.drum-sampler], [sampler.multisampler], [instrument.preset-browser]
 

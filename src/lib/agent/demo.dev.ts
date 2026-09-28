@@ -106,7 +106,7 @@ function plan(n: number): PacedTurn {
 		.toolUse(
 			`toolu_demo_show_${n}`,
 			'show_on_replica',
-			{ keys: 'shift + M1', caption: 'opens the engine list' },
+			{ keys: 'shift + M1', caption: 'brings up the preset browser' },
 			{ size: 3, every: 90 }
 		)
 		.wait(250)
@@ -116,7 +116,7 @@ function plan(n: number): PacedTurn {
 			{
 				subagent_type: 'manual-expert',
 				description:
-					'What does shift + M1 do on the OP-XY (OS 1.1.33)? Explain what the engine list shows, how to pick an engine and what M1 shows afterwards. Cite the manual units you use.'
+					'What does shift + M1 do on the OP-XY (OS 1.1.33)? Explain what the browser shows, how to change the engine from it and what M1 shows afterwards. Cite the manual units you use.'
 			},
 			{ size: 12, every: jitter(110) }
 		)
@@ -129,12 +129,12 @@ function search(): PacedTurn {
 		.wait(600)
 		.start({ input: 40, cacheRead: 128_000 })
 		.wait(900)
-		.thinking('Searching the manual for the engine list.', { size: 3, every: 120 })
+		.thinking('Searching the manual for shift + M1.', { size: 3, every: 120 })
 		.wait(200)
 		.toolUse(
 			`toolu_demo_search_${run}`,
 			'search_manual',
-			{ query: 'shift M1 engine list' },
+			{ query: 'shift M1 preset browser engine' },
 			{ size: 2, every: 100 }
 		)
 		.stop('tool_use');
@@ -159,10 +159,10 @@ function expertAnswer(): PacedTurn {
 		.start({ input: 2400, cacheRead: 128_000 })
 		.wait(400)
 		.text(
-			'`shift + M1` opens the engine list for the selected instrument track [instrument.engine]. ' +
-				'It holds all twelve engines: eight synths, three samplers and the midi engine. ' +
-				'Turn `E1` to highlight one and click `E1` (or press `M1`) to load it. ' +
-				'`M1` then shows the new engine’s parameters; the other pages keep working as before.',
+			'On OS 1.1.33 `shift + M1` brings up the preset browser for the selected instrument track, by engine [instrument.engine]. ' +
+				'The engines sit in the middle with the track’s own boxed, and that engine’s presets on the right. ' +
+				'Turn `E1` to an engine (its first preset is highlighted) and click `E2` to load it [instrument.preset-browser]. ' +
+				'That changes the engine with the whole sound, and `M1` then shows the new engine’s parameters.',
 			{ size: 1, every: jitter(45) }
 		)
 		.stop('end_turn');
@@ -177,12 +177,12 @@ function answer(): PacedTurn {
 		.thinking('Putting the answer together.', { size: 2, every: 120 })
 		.wait(250)
 		.text(
-			'`shift + M1` opens the **engine list** for the selected instrument track [instrument.engine].\n\n' +
-				'1. Hold `shift` and press `M1`: the list shows all twelve engines, eight synths, three samplers and midi.\n' +
-				'2. Turn `E1` to highlight an engine.\n' +
-				'3. Click `E1` (or press `M1` again) to load it.\n\n' +
-				'`M1` on its own is the engine page: its four encoders edit the loaded engine’s own parameters, so what they do changes with the engine. ' +
-				'I showed the combo on the replica. To swap the whole sound for a finished patch instead, load a preset.',
+			'`shift + M1` brings up the **preset browser** for the selected instrument track: on OS 1.1.33 it is where you change engine [instrument.engine].\n\n' +
+				'1. Hold `shift` and press `M1`: the engines are listed in the middle, the track’s own boxed, its presets on the right.\n' +
+				'2. Turn `E1` to an engine; its first preset is highlighted (`E2` picks another).\n' +
+				'3. Click `E2` to load it.\n\n' +
+				'Loading changes the whole sound, the engine included, and lands on `M1`, the engine page: its four encoders edit the loaded engine’s own parameters. ' +
+				'I showed the combo on the replica. A click of `E1` in the browser swaps to the category view [instrument.preset-browser].',
 			{ size: 1, every: jitter(50) }
 		)
 		.stop('end_turn');

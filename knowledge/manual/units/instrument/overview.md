@@ -22,8 +22,10 @@ facts:
     text: '`M1` shows the engine, `M2` the amp and filter envelopes, `M3` the filter and `M4` the LFO.'
     source: https://teenage.engineering/guides/op-xy/instrument
   - id: choose-engine
-    text: '`shift + M1` opens the engine list for the selected track.'
-    source: https://teenage.engineering/guides/op-xy/instrument#project
+    text: On OS 1.1.33, `shift + M1` brings up the preset browser for the selected track, where loading one of an engine's presets changes the engine.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
   - id: browse
     text: '`shift + Tn` opens the preset browser for that track, where a preset, sample pack or engine can be loaded in one go.'
     source: https://teenage.engineering/guides/op-xy/instrument#project
@@ -63,6 +65,6 @@ related:
 
 Pick a track, then work through its pages: the engine creates the tone, the envelopes shape each
 note, the filter colours it and the LFO adds movement; every value can be parameter-locked per step.
-A track's complete sound travels as one preset, so `shift + Tn` changes everything at once while
-`shift + M1` swaps only the engine. Brain, send effects, external gear and tape live in auxiliary
-mode.
+A track's complete sound travels as one preset, so a load from the browser (`shift + Tn`, or
+`shift + M1` for the selected track) changes everything at once, the engine included. Brain, send
+effects, external gear and tape live in auxiliary mode.

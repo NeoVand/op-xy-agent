@@ -57,4 +57,4 @@ related: [instrument.engine, instrument.filter]
 
 Simple is the plain starting point: pick a waveform, narrow the pulse width for a hollow, nasal tone,
 add noise for breath or buzz, and widen the stereo image. With the filter and envelopes doing most of
-the shaping, it is the easiest engine to learn sound design on. Load it with `shift + M1`.
+the shaping, it is the easiest engine to learn sound design on. Load it from the preset browser, `shift + M1`.

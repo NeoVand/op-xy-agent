@@ -57,5 +57,5 @@ related: [instrument.engine, instrument.lfo-tremolo]
 
 Organ is a quick route to a whole family of sounds: type swaps the organ model, bass adds weight, and
 the built-in tremolo gives the familiar pulsing movement — slow for gentle swells, fast for a
-shimmer. Because the tremolo lives on `M1`, the `M4` LFO stays free for something else. Load it with
+shimmer. Because the tremolo lives on `M1`, the `M4` LFO stays free for something else. Load it from the preset browser,
 `shift + M1`.

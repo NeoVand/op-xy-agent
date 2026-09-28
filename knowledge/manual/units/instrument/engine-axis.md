@@ -62,4 +62,4 @@ related: [instrument.engine, instrument.lfo-tremolo]
 In an FM engine one oscillator modulates another, and the ratio between them sets the timbre. Keep
 axis's ratio in the detune half for chorused, ensemble-like strings; move into the fifths half for
 stacked, interval-rich tones. Tone controls brightness, and the built-in tremolo adds movement
-without using the LFO. Load it with `shift + M1`.
+without using the LFO. Load it from the preset browser, `shift + M1`.

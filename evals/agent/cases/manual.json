@@ -430,11 +430,11 @@
 		"question": "how do i switch the synth engine on one of my instrument tracks?",
 		"facts": [
 			"In instrument mode, pick the instrument track whose engine you want to change.",
-			"Shift + M1 opens the synth engine list for that track.",
-			"Turn the dark grey encoder (E1) to scroll through the engines.",
-			"Clicking the encoder or pressing M1 confirms the chosen engine."
+			"Shift + M1 brings up the preset browser for that track, with the engines listed (OS 1.1.33).",
+			"Turn the dark grey encoder (E1) to choose the engine.",
+			"Loading one of that engine's presets (a click of E2) changes the engine, and with it the whole sound."
 		],
-		"keys": ["instrument", "shift + M1", "turn E1"],
+		"keys": ["instrument", "shift + M1", "turn E1", "click E2"],
 		"source": "https://teenage.engineering/guides/op-xy/synth-engines#change-engine"
 	},
 	{
