@@ -292,7 +292,10 @@ export function scaleByte(scale: number): number | null {
 /** The screen's quantisation percent of a quantisation byte (`floor(raw × 100 / 255)`). */
 export const quantizePercent = (raw: number): number => Math.floor((raw * 100) / 255);
 
-/** The byte the device stores for a quantisation percent 0–100 (the smallest that shows it). */
+/**
+ * The smallest byte that shows a quantisation percent 0–100 (upstream's encoder); the device's own
+ * byte can sit higher in the same bucket (bar-q-050 stores 0x81 for 50).
+ */
 export const quantizeByte = (percent: number): number =>
 	percent === 0 ? 0 : Math.ceil((percent * 255) / 100);
 
