@@ -39,3 +39,19 @@ export function turnArrowPath(radius: number, spanDeg = 110, head = 1): string {
 	d += `M${f(x1 + bx)} ${f(y1 + by)}L${x1} ${y1}L${f(x1 + cx)} ${f(y1 + cy)}`;
 	return d;
 }
+
+/**
+ * A light trail round a knob: `count` short arcs at `radius` that run back counter-clockwise from
+ * the top over `spanDeg`, the head first. Stroked brighter toward the head, they read as a light
+ * travelling clockwise; mirror with `scale(-1 1)` for counter-clockwise.
+ */
+export function trailArcs(radius: number, spanDeg = 60, count = 8): string[] {
+	const step = spanDeg / count;
+	return Array.from({ length: count }, (_, i) => {
+		const a1 = -90 - i * step;
+		const a0 = a1 - step;
+		const [x0, y0] = polar(radius, a0);
+		const [x1, y1] = polar(radius, a1);
+		return `M${x0} ${y0}A${radius} ${radius} 0 0 1 ${x1} ${y1}`;
+	});
+}

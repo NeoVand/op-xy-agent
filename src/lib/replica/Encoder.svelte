@@ -2,10 +2,11 @@
 @component
 One of the four endless encoders: a tall knurled knob with a coloured cap (dark, mid, light grey,
 white) in a recessed round dish, sized from TE's drawing. The real knob has no pointer, so the
-replica shows rotation with the knurled edge alone when you turn it: 56 ridges against 24 detents a
+replica shows rotation with the knurled edge when you turn it: 56 ridges against 24 detents a
 turn, so each detent reads as a small step forward (with 40 ridges the 15° step aliased into a step
-backwards). An arrow over the knob appears only when a teaching animation asks for a turn, pointing
-the way to turn.
+backwards). A faint trail of light in the dish, just round the knob, follows each turn with its
+bright head leading the way it turns and fades soon after the knob stops. An arrow over the knob
+appears only when a teaching animation asks for a turn, pointing the way to turn.
 
 Input: vertical drag or the wheel turns it (6 px per detent); a tap clicks it; alt-drag turns
 with the click held (fine adjustment); arrow keys and Page Up/Down turn, Enter/Space clicks. With
@@ -16,7 +17,7 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 <script lang="ts">
 	import type { EncoderPart } from './geometry';
 	import { capturePointer, dragSteps, wheel, wheelSteps } from './input';
-	import { knurlPath, turnArrowPath } from './shapes';
+	import { knurlPath, trailArcs, turnArrowPath } from './shapes';
 	import type { ReplicaState } from './state.svelte';
 
 	interface Props {
@@ -34,6 +35,9 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 	const hint = $derived(replica.turnHint(part.id));
 	const knurl = $derived(knurlPath(art.top + 0.12, 4.95, 56));
 	const arrow = $derived(turnArrowPath(art.dish + 1.3));
+	/** The trail's arcs, head first, just outside the knob's body. */
+	const trail = trailArcs(6);
+	const lastTurn = $derived(replica.lastTurn(part.id));
 
 	/** True between pointer down and up on a tap, for the push animation. */
 	let pushing = $state(false);
@@ -197,6 +201,23 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 		<circle r={art.cap - 0.06} fill="none" stroke="url(#rx-cap-rim)" stroke-width="0.12" />
 	</g>
 
+	<!-- the turn trail: it rides round with the knob; each turn lights it again (two identical
+	     animations taking turns restart it) and it fades once the turning stops -->
+	{#if lastTurn}
+		<g
+			class="enc__trail"
+			data-beat={lastTurn.count % 2}
+			style:transform="rotate({angle}deg)"
+			aria-hidden="true"
+		>
+			<g transform={lastTurn.direction < 0 ? 'scale(-1 1)' : undefined}>
+				{#each trail as d, i (i)}
+					<path {d} stroke-opacity={(0.7 * (trail.length - i)) / trail.length} />
+				{/each}
+			</g>
+		</g>
+	{/if}
+
 	<!-- teaching cue: one arrow the way to turn, while an animation asks for a turn -->
 	{#if hint}
 		<path class="enc__arrow" d={arrow} transform={hint < 0 ? 'scale(-1 1)' : undefined} />
@@ -235,6 +256,48 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 	.enc[data-pushed] .enc__knob {
 		transform: scale(0.965);
 		transition-duration: var(--rx-press, 50ms);
+	}
+
+	.enc__trail {
+		transform-box: view-box;
+		transform-origin: 0 0;
+		fill: none;
+		stroke: var(--rx-ring, #f7f5f5);
+		stroke-width: 0.42;
+		pointer-events: none;
+		opacity: 0;
+		transition: transform 90ms ease-out;
+		animation: enc-trail-a 700ms var(--rx-ease-decay, cubic-bezier(0, 0, 0.2, 1)) forwards;
+	}
+
+	.enc__trail[data-beat='1'] {
+		animation-name: enc-trail-b;
+	}
+
+	@keyframes enc-trail-a {
+		0%,
+		35% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+
+	@keyframes enc-trail-b {
+		0%,
+		35% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.enc__trail {
+			transition: none;
+		}
 	}
 
 	.enc__arrow {
