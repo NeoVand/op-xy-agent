@@ -7426,7 +7426,7 @@
 					"keys": "tempo"
 				}
 			],
-			"screen": "tempo 120 bpm, groove SH, metronome off",
+			"screen": "tempo 120 bpm, groove SH, metronome on",
 			"note": "tempo pressed again on this page taps the tempo",
 			"units": [
 				"tempo.tempo-screen",
@@ -7580,7 +7580,7 @@
 					"layer": "click",
 					"encoder": 4,
 					"label": "metronome on/off",
-					"does": "metronome off → on"
+					"does": "metronome on → off"
 				}
 			]
 		},

@@ -522,13 +522,13 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('shows the tempo, the groove and the metronome of a new project', async () => {
 			const d = await start();
 			await d.click('key.tempo');
-			expect(d.screen()).toBe('tempo 120 bpm, groove SH, metronome off');
+			expect(d.screen()).toBe('tempo 120 bpm, groove SH, metronome on');
 			expect(on(d, 'tempo')).toMatchObject({
 				bpm: '120',
 				groove: 'SH',
 				swing: 0,
-				// the level a new project's file stores, 0xA8 of 0xFF (research 10 §3.2)
-				metronome: { level: 65 / 99, on: false }
+				// what a new project's file stores: 0xA8 of 0xFF, the click on (research 10 §3.2)
+				metronome: { level: 65 / 99, on: true }
 			});
 		});
 
@@ -638,11 +638,11 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('key.tempo');
 			await d.turn(4, -15);
-			expect(on(d, 'tempo').metronome).toEqual({ level: 50 / 99, on: false });
+			expect(on(d, 'tempo').metronome).toEqual({ level: 50 / 99, on: true });
 			await d.push(4);
-			expect(d.screen()).toBe('tempo 120 bpm, groove SH, metronome on');
+			expect(d.screen()).toBe('tempo 120 bpm, groove SH, metronome off');
 			await d.push(4);
-			expect(on(d, 'tempo').metronome.on).toBe(false);
+			expect(on(d, 'tempo').metronome.on).toBe(true);
 		});
 	});
 

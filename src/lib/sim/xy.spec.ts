@@ -100,14 +100,15 @@ function composed(): SimState {
 }
 
 describe('simToXy', () => {
-	it('writes a new project as its template but for the metronome, which starts off here', () => {
+	it('writes a new project as its template; a metronome switched off writes 0', () => {
 		const { bytes, skipped } = simToXy(defaultState(), blank);
 		expect(skipped).toEqual([]);
-		expect(differences(bytes, blank)).toEqual([0x04]);
-		expect(readProject(bytes).settings.clickVolume).toBe(0);
-		const on = defaultState();
-		on.tempo.metronome.on = true;
-		expect(simToXy(on, blank).bytes).toEqual(blank);
+		expect(bytes).toEqual(blank);
+		const off = defaultState();
+		off.tempo.metronome.on = false;
+		const quiet = simToXy(off, blank).bytes;
+		expect(differences(quiet, blank)).toEqual([0x04]);
+		expect(readProject(quiet).settings.clickVolume).toBe(0);
 	});
 
 	it('keeps what a 1.1.33 template holds for an untouched project', () => {
@@ -118,9 +119,7 @@ describe('simToXy', () => {
 		edited[0x3d] = 0xff;
 		edited[0x95 + 32] = 1;
 		const template = encodeXy(newer, edited);
-		const state = defaultState();
-		state.tempo.metronome.on = true;
-		const { bytes, skipped } = simToXy(state, template);
+		const { bytes, skipped } = simToXy(defaultState(), template);
 		expect(skipped).toEqual([]);
 		expect(bytes).toEqual(template);
 	});
@@ -445,11 +444,9 @@ const OWNER_BLANK = fileURLToPath(
 describe.skipIf(!existsSync(OWNER_BLANK))(
 	'simToXy over the owner’s 1.1.33 blank (local only)',
 	() => {
-		it('writes an untouched project with the metronome on as the device saved it', () => {
+		it('writes an untouched project as the device saved it', () => {
 			const template = new Uint8Array(readFileSync(OWNER_BLANK));
-			const state = defaultState();
-			state.tempo.metronome.on = true;
-			const { bytes, skipped } = simToXy(state, template);
+			const { bytes, skipped } = simToXy(defaultState(), template);
 			expect(skipped).toEqual([]);
 			expect(bytes).toEqual(template);
 		});

@@ -8,7 +8,7 @@
  *
  * Where the simulator's value and the template's byte mean the same thing (a lossy scale, a mute
  * written as 1 rather than 2, a song never chosen), the template's byte stays: a project nobody
- * touched writes back as its template, but for the metronome (see {@link simToXy}).
+ * touched writes back as its template.
  */
 import type { EngineId } from '$lib/core/opxy';
 import { captureScene, lengthSettings } from '$lib/sim/areas/arrange/model';
@@ -112,8 +112,8 @@ function keep<T>(raw: number, decode: (raw: number) => T, value: T, encode: (v: 
  * on/off switch, track scales and grooves without a known byte, and locks without a known column.
  * Auxiliary settings (brain, FX types, external MIDI) are the template's.
  *
- * The metronome is one byte in the file: its volume, with 0 for off (OS 1.1.4 captures). The
- * simulator starts it off, so a new project writes 0 where a new device project has 0xA8.
+ * The metronome is one byte in the file: its volume, with 0 for off (OS 1.1.4 captures); a new
+ * project has it on at 0xA8, in the simulator as on the device.
  * @throws XyModelError when the state breaks a limit of the file (see `writeProject`).
  * @throws XyFormatError when the template is not a project we can write over.
  */

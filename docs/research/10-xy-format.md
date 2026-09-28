@@ -1227,7 +1227,7 @@ the sound block, drum regions or presets yet (milestones 2–3 of §7.3). The le
 | Writer vs the Python library (`fixtures/goldens.json`, 26 op lists)         | 26/26 byte-exact; 17 equal device captures (u2, u5, u8, u10, u11, u19, u20–u22, u41, u59, u81, u92, j05, j06, image probes 01 and 02)                                                                                 |
 | Corpus (local only, skipped without the clone)                              | 909/915 re-encode byte-exact (6 legacy outputs are not canonical RLE); 913/915 walk (2 broken legacy); every walkable file reads and writes back unchanged, and carries onto the blank template with its model intact |
 | The owner's 1.1.33 blank project (local only)                               | Header `09 14 07 86`; 289,521 B, Track 1 at 3,449, 16 single patterns, the 56-byte footer; round-trips; takes edits as a template                                                                                     |
-| `simToXy`                                                                   | A new simulator project writes back as either template, but for the metronome byte; a project the agent writes through the virtual OP-XY reads back note for note                                                     |
+| `simToXy`                                                                   | A new simulator project writes back as either template (its metronome is on, as a device's new project); a project the agent writes through the virtual OP-XY reads back note for note                                |
 
 **The 1.1.33 blank project against the 1.1.4 one.** Same size and structure; 56 bytes differ: T1's
 keyboard octave (−1 where 1.1.4 has 0), scene 1's flag (set on 1.1.33), sound word k57 (`+0x393B`,
@@ -1250,9 +1250,10 @@ as the simulator's value it stays, so an untouched project writes back as its te
 in `skipped` what the file does not take yet: players, quantisation's on/off switch, the track
 scales 3–8, locks of the LFO, play mode, bend, sampler keys, the MIDI program and the auxiliary
 pages, and differences from the template in engines, presets, preset settings, mixer levels and
-pans, and per-scene mixes. Two simulator facts to settle: its metronome starts off, which the file
-can only store as volume 0 (a new device project stores 0xA8, "on", in both firmwares); and its
-scenes keep mixes while the file keeps mutes only (volume is per pattern, Q7).
+pans, and per-scene mixes. One simulator fact to settle: its scenes keep mixes while the file keeps
+mutes only (volume is per pattern, Q7). (The other, a metronome that started off where a new
+device project stores 0xA8, "on", in both firmwares, is settled: the simulator's new project now has
+it on.)
 
 **Left for the device session (with the owner, announced first):**
 

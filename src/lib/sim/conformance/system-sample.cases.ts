@@ -508,7 +508,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('key.tempo');
 			await d.turn(2, 3);
-			expect(d.screen()).toBe('tempo 120 bpm, groove BO, metronome off'); // ours: the two letters
+			expect(d.screen()).toBe('tempo 120 bpm, groove BO, metronome on'); // ours: the two letters
 			await d.clicks('key.project', 'key.m4');
 			await d.turn(1, 1);
 			await d.turn(2, 1);
@@ -516,7 +516,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			await d.turn(3, 1);
 			expect(picks(d)[2]).toBe('wobbly');
 			await d.click('key.tempo');
-			expect(d.screen()).toBe('tempo 120 bpm, groove WO, metronome off');
+			expect(d.screen()).toBe('tempo 120 bpm, groove WO, metronome on');
 		});
 
 		it('transposes the whole project on the general page, a semitone a detent (ours: −12…+12; whether drums follow: device check)', async () => {

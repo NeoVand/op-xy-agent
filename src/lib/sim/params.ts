@@ -359,8 +359,9 @@ export const DEFAULT_LEVEL = (0x6000 / 0x7fff) * 99;
 
 /**
  * The metronome level a new project stores: 0xA8 of 0xFF in the `.xy` header (research/10-xy-format
- * §3.2), 65 on our 0–99 scale and seven of the tempo page's waves. Whether a new project's
- * metronome clicks is not known, so it starts switched off.
+ * §3.2), 65 on our 0–99 scale and seven of the tempo page's waves. The byte is the click's volume
+ * with 0 for off (the OS 1.1.4 captures), and both blank projects a device saved, the owner's 1.1.33
+ * one included, store 0xA8: a new project's metronome is on.
  */
 export const DEFAULT_METRONOME_LEVEL = Math.round((0xa8 / 0xff) * 99);
 
@@ -445,7 +446,7 @@ export function defaultState(): SimState {
 			bpm: 120,
 			groove: 0,
 			swing: 0,
-			metronome: { level: DEFAULT_METRONOME_LEVEL, on: false }
+			metronome: { level: DEFAULT_METRONOME_LEVEL, on: true }
 		},
 		transport: { playing: false, recording: false, position: 0 },
 		project: { name: 'project 1' },

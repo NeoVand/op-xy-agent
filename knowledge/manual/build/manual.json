@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "e5c83d71",
+	"bundle_hash": "6307e1e3",
 	"stats": {
 		"units": 163,
-		"facts": 1117,
+		"facts": 1118,
 		"procedures": 196,
 		"parameters": 207,
 		"verified_items": 220,
-		"words": 41620,
+		"words": 41646,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -22947,6 +22947,14 @@
 					"confidence": "verified"
 				},
 				{
+					"id": "new-metronome",
+					"text": "A new project starts with the metronome on, at about two thirds of its volume (the project file stores the click volume, with 0 for off).",
+					"source": "docs/research/10-xy-format.md#32-projectsettings-0x00000x0094",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
 					"id": "screen",
 					"text": "The tempo page has a light background, the BPM as a large number on the left and a metronome in the middle carrying the groove type's two-letter abbreviation.",
 					"source": "docs/research/59-screen-profiling.md#211-tempo",
@@ -23125,6 +23133,10 @@
 				},
 				{
 					"url": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/10-xy-format.md#32-projectsettings-0x00000x0094",
 					"kind": "research"
 				}
 			],

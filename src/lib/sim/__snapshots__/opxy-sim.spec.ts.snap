@@ -112,7 +112,7 @@ exports[`frames and formats > builds stable frames for a new project (snapshot) 
     "groove": "SH",
     "metronome": {
       "level": 0.6565656565656566,
-      "on": false,
+      "on": true,
     },
     "page": "tempo",
     "pendulum": -1,
