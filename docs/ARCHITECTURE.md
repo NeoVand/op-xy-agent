@@ -27,7 +27,8 @@ src/lib/
                access, transport (the single send choke point + policy), monitor, device mirror,
                scheduler + tick worker, session (identity + GREET), expect(), mtp (WebUSB pipe)
   app/         Glue between features, e.g. the replica ⇄ device bridge (replica keys → notes/transport/
-               track select through the transport; device notes/clock → replica LEDs), app-wide contexts
+               track select through the transport; device notes/clock → replica LEDs), app-wide contexts,
+               project transfer (.xy files from disk or the device over MTP, and back)
   agent/       (M3) conductor harness on @anthropic-ai/sdk, tools, subagents, approvals, journal
   replica/     (M2) SVG digital twin: geometry model (mm), components, screen canvas, animations
   sim/         (M2.5) the virtual OP-XY: state, input → state, frames → the screen's pages (drawn

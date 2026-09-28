@@ -346,8 +346,17 @@ to `kmorrill/xy-format`.
 - [ ] Device session on 1.1.33: authored files over both templates, 16 patterns, the cutoff lock's
       union mask, save-as round trips (note 10 §7.7).
 - [ ] Sounds in the writer: sound block words, presets by donor copy with octaves, drum regions.
-- [ ] Transfer path and CC86 load; a UI to export and import projects; `xyToSim` for projects pulled
-      from the device.
+- [x] `.xy` → simulator: `xyToSim` (`sim/xy.ts`) loads settings, patterns (notes, components,
+      locks), scenes, songs, each track's preset from the library and the mixer; a loaded file
+      written again comes back byte for byte (the owner's 1.1.33 project included), and locks in
+      columns the replica cannot show stay in the file.
+- [x] Transfer (2026-09-28): the caption line's "project" card opens a `.xy` from disk, downloads the
+      replica's project, loads the project the OP-XY has open over USB (MTP), and adds the replica's
+      project to `projects/user` written over the device's open project (its sounds stay), after a
+      confirming click; loads can be undone (`app/project-transfer.svelte.ts`). Tried on an emulated
+      unit only (`QUESTIONS.md` 13).
+- [ ] CC86 load; agent tools for load and save (they need the device's USB permission already
+      granted, since only a click may ask for it).
 
 ### M7 — Sounds
 

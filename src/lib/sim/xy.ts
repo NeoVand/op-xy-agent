@@ -10,12 +10,21 @@
  * written as 1 rather than 2, a song never chosen), the template's byte stays: a project nobody
  * touched writes back as its template, but for the metronome (see {@link simToXy}).
  */
+import type { EngineId } from '$lib/core/opxy';
 import { captureScene, lengthSettings } from '$lib/sim/areas/arrange/model';
-import type { PatternSound } from '$lib/sim/areas/arrange/state';
+import { SCENES as SIM_SCENES, type PatternSound } from '$lib/sim/areas/arrange/state';
 import { octaveKey } from '$lib/sim/areas/sequencer/model';
+import { SCENE_LENGTH_MODES, SIGNATURES } from '$lib/sim/areas/system/catalogue';
+import { loadEngineSound, loadPreset, presetKey } from '$lib/sim/areas/system/presets';
 import { fromQ15 } from '$lib/sim/defaults';
-import { storedPresetSound, type SimState } from '$lib/sim/params';
-import { formatScale, type Pattern } from '$lib/sim/sequencer';
+import { defaultState, storedPresetSound, type SimState } from '$lib/sim/params';
+import {
+	MAX_STEPS,
+	STEPS_PER_BAR,
+	emptyPattern,
+	formatScale,
+	type Pattern
+} from '$lib/sim/sequencer';
 import { hex2 } from '$lib/core/xy/bytes';
 import { SCENES, TICKS_PER_STEP, TRACKS } from '$lib/core/xy/layout';
 import {
@@ -77,6 +86,9 @@ const LOCK_COLUMNS: Readonly<Record<string, number>> = {
 	'filterEnv.sustain': 35,
 	'filterEnv.release': 36
 };
+
+/** The lock columns the simulator has an id for; locks in the others stay as the template has them. */
+const KNOWN_COLUMNS: ReadonlySet<number> = new Set(Object.values(LOCK_COLUMNS));
 
 /** A 0–99 lane as the device stores it (the inverse of the simulator's `fromQ15`). */
 const toQ15 = (value: number) => Math.round((value / 99) * 32767);
@@ -280,6 +292,10 @@ function writeLocks(p: Pattern, was: XyPattern, where: string, skipped: string[]
 	for (const [id, count] of unmapped) {
 		skipped.push(`${where}: ${count} lock${count > 1 ? 's' : ''} of ${id} (no known lock column)`);
 	}
+	// the simulator cannot see locks in columns it has no id for: they stay as the template has them
+	for (const lock of was.locks) {
+		if (!KNOWN_COLUMNS.has(lock.column) && lock.step < p.length) locks.push(lock);
+	}
 	return locks;
 }
 
@@ -391,4 +407,216 @@ function writeScenes(state: SimState, base: XyProject, project: XyProject, skipp
 			skipped.push(`scene ${k + 1}: its own mixer levels and pans (a scene keeps only mutes)`);
 		}
 	}
+}
+
+// ─── the other way: a project file into the simulator ───────────────────────────────────────────
+
+/** What {@link xyToSim} made. */
+export interface XyToSimResult {
+	/** The simulator's state with the file's project in it. */
+	state: SimState;
+	/** What the file holds that the simulator does not take, one line each, for the user. */
+	skipped: string[];
+}
+
+/** Lock columns by number: the simulator's lock id for each known one. */
+const LOCK_IDS: Readonly<Record<number, string>> = Object.fromEntries(
+	Object.entries(LOCK_COLUMNS).map(([id, column]) => [column, id])
+);
+
+/**
+ * Loads a project file into the simulator: the reverse of {@link simToXy}. It starts from `base`
+ * (a new project by default) and takes the file's settings, every track's patterns with their
+ * notes, step components and locks, the scenes, the songs, and for each instrument track the
+ * engine and preset its playing pattern names: a preset the library knows loads its sound as the
+ * preset browser would; any other keeps the engine's starting sound, and says so in `skipped`. The
+ * mixer takes each track's level and pan from its playing pattern and its mute from the scene.
+ * @throws XyFormatError when the bytes are not a project we can read.
+ */
+export function xyToSim(file: Uint8Array | XyProject, base?: SimState): XyToSimResult {
+	const project = file instanceof Uint8Array ? readProject(file) : file;
+	const state = structuredClone(base ?? defaultState());
+	const skipped: string[] = [];
+	readSettings(project, state, skipped);
+	const scene = project.scenes[project.settings.activeScene] ?? project.scenes[0];
+	for (let t = 0; t < TRACKS; t++) {
+		const sequence = t < 8 ? state.tracks[t].sequence : state.aux[t - 8].sequence;
+		const patterns = project.tracks[t].patterns;
+		sequence.patterns = patterns.map((p, i) =>
+			readPattern(p, `T${t + 1} pattern ${i + 1}`, skipped)
+		);
+		sequence.current = Math.min(patterns.length - 1, Math.max(0, scene?.patterns[t] ?? 0));
+		sequence.page = 0;
+		if (t < 8) {
+			state.areas.arrange.sounds[t] = patterns.map(() => null);
+			readSound(project, state, t, sequence.current, skipped);
+		}
+		const sound = patterns[sequence.current].sound;
+		const mix = t < 8 ? state.tracks[t].mix : state.aux[t - 8].mix;
+		// as exact as the simulator keeps them, so a project loaded and saved writes the same bytes
+		mix.level = fromQ15(sound.volume >>> 16);
+		mix.pan = (((sound.pan >>> 16) - 16384) / 16383) * 100;
+		mix.muted = scene?.mutes[t] ?? false;
+	}
+	// after the sounds: a loaded preset brings its own octave, the file's says where the keys are
+	readOctaves(project, state);
+	readScenes(project, state);
+	state.areas.arrange.songs = project.songs.map((song) => ({
+		order: song.scenes.length > 0 ? [...song.scenes] : [0],
+		loop: song.loop
+	}));
+	return { state, skipped };
+}
+
+function readSettings(project: XyProject, state: SimState, skipped: string[]): void {
+	const s = project.settings;
+	const { tempo, areas } = state;
+	const settings = areas.system.projectSettings;
+	tempo.bpm = s.tempo;
+	tempo.groove = s.grooveType;
+	tempo.swing = Math.round((s.grooveAmount / 127) * 99);
+	tempo.metronome.on = s.clickVolume > 0;
+	if (s.clickVolume > 0) tempo.metronome.level = Math.round((s.clickVolume / 255) * 99);
+	areas.arrange.scene = Math.min(SIM_SCENES - 1, s.activeScene);
+	areas.arrange.song = s.activeSong;
+	const mode = XY_SCENE_LENGTHS[s.sceneLength];
+	const signature = XY_TIME_SIGNATURES[s.timeSignature - 0x10];
+	// the project page offers longest and time signature; "shortest" has no place there yet
+	const length = SCENE_LENGTH_MODES.findIndex((m) => m === mode);
+	if (length >= 0) settings.sceneLength = length;
+	else if (mode)
+		skipped.push(`scene length "${mode}" (the project page offers longest and time signature)`);
+	const bar = SIGNATURES.findIndex((sig) => sig === signature);
+	if (bar >= 0) settings.signature = bar;
+	settings.transpose = s.transpose;
+	settings.voices = [...s.voices];
+	settings.channels = s.midiChannels.map((channel) => channel ?? 0);
+	if (s.activeScene >= SIM_SCENES) {
+		skipped.push(`the playing scene ${s.activeScene + 1} (the simulator keeps 99 scenes)`);
+	}
+}
+
+/** Each track's keyboard octave, kept only where it is not 0, as the simulator keeps them. */
+function readOctaves(project: XyProject, state: SimState): void {
+	const octaves = state.areas.sequencer.octaves;
+	project.settings.octaves.forEach((octave, t) => {
+		if (fixedKeys(state, t)) return;
+		const key = t < 8 ? octaveKey('instrument', t) : octaveKey('auxiliary', t - 8);
+		if (octave) octaves[key] = octave;
+		else delete octaves[key];
+	});
+	// a preset loaded onto a drum track may have left a 0 behind
+	for (const [key, octave] of Object.entries(octaves)) if (!octave) delete octaves[key];
+}
+
+/** A pattern from the file: its bar settings, notes, components and the locks with a known column. */
+function readPattern(p: XyPattern, where: string, skipped: string[]): Pattern {
+	const pattern = emptyPattern();
+	pattern.length = Math.max(1, Math.min(MAX_STEPS, p.steps));
+	pattern.bars = Math.ceil(pattern.length / STEPS_PER_BAR);
+	const scale = XY_SCALES[p.scale];
+	if (scale === undefined) {
+		skipped.push(`${where}: track scale byte ${hex2(p.scale)} is not decoded yet (1 kept)`);
+	} else pattern.scale = scale;
+	pattern.quantise = quantizePercent(p.quantize);
+	pattern.noteLength = Math.max(0.01, Math.min(1, p.noteLength / TICKS_PER_STEP));
+	const groove = trackGrooveValue(p.groove);
+	if (groove === null)
+		skipped.push(`${where}: groove byte ${p.groove} is off the detents (0 kept)`);
+	else pattern.groove = groove;
+	pattern.smoothing = Math.round((p.smoothing / 255) * 99);
+	let outside = 0;
+	for (const n of p.notes) {
+		const step = Math.round(n.tick / TICKS_PER_STEP);
+		if (step < 0 || step >= MAX_STEPS) {
+			outside++;
+			continue;
+		}
+		const length = n.gate / TICKS_PER_STEP;
+		const offset = n.tick / TICKS_PER_STEP - step;
+		const stepped = offset === 0 && n.gate === Math.round(pattern.noteLength * TICKS_PER_STEP);
+		pattern.steps[step].notes.push({
+			note: n.note,
+			velocity: n.velocity,
+			length,
+			offset,
+			...(stepped ? {} : { ownLength: true })
+		});
+	}
+	if (outside > 0)
+		skipped.push(`${where}: ${outside} note(s) before the first step or past the last`);
+	for (const c of p.components)
+		pattern.steps[c.step]?.components.push({ kind: c.kind, value: c.value });
+	const unmapped = new Map<number, number>();
+	for (const lock of p.locks) {
+		const id = LOCK_IDS[lock.column];
+		if (!id || !pattern.steps[lock.step]) {
+			unmapped.set(lock.column, (unmapped.get(lock.column) ?? 0) + 1);
+			continue;
+		}
+		pattern.steps[lock.step].locks[id] = fromQ15(lock.value);
+	}
+	for (const [column, count] of unmapped) {
+		skipped.push(
+			`${where}: ${count} lock(s) in column ${column}, which the replica does not show (kept in the file)`
+		);
+	}
+	return pattern;
+}
+
+/**
+ * An instrument track's sound from its playing pattern: the preset, loaded as the preset browser
+ * does when the library knows it, else the engine's starting sound.
+ */
+function readSound(
+	project: XyProject,
+	state: SimState,
+	t: number,
+	current: number,
+	skipped: string[]
+) {
+	const patterns = project.tracks[t].patterns;
+	const sound = patterns[current].sound;
+	const engine = XY_ENGINES[sound.engine] as EngineId | undefined;
+	const name = `T${t + 1}`;
+	if (!engine) {
+		skipped.push(`${name}: engine byte ${hex2(sound.engine)} is not one we know (its sound kept)`);
+		return;
+	}
+	const known = state.areas.system.presets.library.find((p) => presetKey(p) === sound.preset);
+	if (known && known.engine === engine) loadPreset(state, t, known);
+	else {
+		loadEngineSound(state, t, engine);
+		if (sound.preset && sound.preset !== '/') {
+			state.areas.system.trackPresets[t] = sound.preset;
+			skipped.push(
+				`${name}: preset ${sound.preset} is not in the library, so ${engine}'s starting sound plays`
+			);
+		}
+	}
+	patterns.forEach((p, i) => {
+		if (i !== current && p.sound.engine !== sound.engine) {
+			skipped.push(
+				`${name} pattern ${i + 1}: its own engine (${XY_ENGINES[p.sound.engine] ?? hex2(p.sound.engine)}), which the simulator fills in when the pattern plays`
+			);
+		}
+	});
+}
+
+/** The scenes the file uses: the pattern each track plays and its mute; the mix is the tracks'. */
+function readScenes(project: XyProject, state: SimState): void {
+	const a = state.areas.arrange;
+	const mixOf = (t: number) => (t < 8 ? state.tracks[t].mix : state.aux[t - 8].mix);
+	a.scenes = Array.from({ length: SIM_SCENES }, (_, k) => {
+		const slot = project.scenes[k];
+		if (!slot?.used && k !== a.scene) return null;
+		return {
+			patterns: Array.from({ length: TRACKS }, (_, t) => slot?.patterns[t] ?? 0),
+			mix: Array.from({ length: TRACKS }, (_, t) => ({
+				level: mixOf(t).level,
+				pan: mixOf(t).pan,
+				muted: slot?.mutes[t] ?? false
+			}))
+		};
+	});
 }

@@ -15,6 +15,7 @@
 	import { Button, Led, Readout, tooltip } from '$lib/ui';
 	import AgentPanel from '$lib/ui/shell/AgentPanel.svelte';
 	import DeviceStage from '$lib/ui/shell/DeviceStage.svelte';
+	import ProjectMenu from '$lib/ui/shell/ProjectMenu.svelte';
 	import { getShellStatus } from '$lib/ui/shell/status.svelte';
 
 	const status = getShellStatus();
@@ -194,11 +195,19 @@
 {/snippet}
 
 {#snippet hints()}
-	{#if guide && guide.status !== 'idle'}
-		<GuideCard {guide} />
-	{:else}
-		{@render caption_line()}
-	{/if}
+	<div class="hints">
+		<div class="hints__main">
+			{#if guide && guide.status !== 'idle'}
+				<GuideCard {guide} />
+			{:else}
+				{@render caption_line()}
+			{/if}
+		</div>
+		<!-- beside the line, not in it: a hint taking the line must not close the project card -->
+		<div class="hints__project">
+			<ProjectMenu />
+		</div>
+	</div>
 {/snippet}
 
 {#snippet caption_line()}
@@ -271,6 +280,26 @@
 	}
 
 	/* The status line under the replica, shown while no hint is up. */
+	.hints {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		min-width: 0;
+	}
+
+	.hints__main {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.hints__project {
+		color: var(--xy-fg-subtle);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+		font-weight: 450;
+		letter-spacing: var(--xy-tracking-label);
+	}
+
 	.line {
 		display: flex;
 		align-items: center;

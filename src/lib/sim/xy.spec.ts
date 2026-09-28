@@ -7,6 +7,7 @@ import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { defaultState, type SimState } from '$lib/sim/params';
 import {
 	STEP_COMPONENTS,
+	type Pattern,
 	addBar,
 	emptyPattern,
 	setComponentValue,
@@ -18,7 +19,7 @@ import { decodeXy, encodeXy } from '$lib/core/xy/container';
 import { XyModelError } from '$lib/core/xy/errors';
 import { XY_STEP_COMPONENTS } from '$lib/core/xy/model';
 import { readProject } from '$lib/core/xy/read';
-import { simToXy } from './xy';
+import { simToXy, xyToSim } from './xy';
 
 const fixture = (name: string) =>
 	new Uint8Array(readFileSync(new URL(`../core/xy/fixtures/${name}`, import.meta.url)));
@@ -317,6 +318,126 @@ describe('simToXy', () => {
 	});
 });
 
+/** What a pattern holds that the file carries, for comparing a round trip. */
+function filed(p: Pattern) {
+	return {
+		length: p.length,
+		scale: p.scale,
+		noteLength: p.noteLength,
+		groove: p.groove,
+		smoothing: p.smoothing,
+		steps: p.steps.map((step) => ({
+			notes: step.notes.map((n) => ({
+				note: n.note,
+				velocity: n.velocity,
+				length: n.length,
+				offset: n.offset
+			})),
+			components: step.components,
+			// the file keeps 0–32767: a lock reads back within a hundredth
+			locks: Object.fromEntries(
+				Object.entries(step.locks).map(([id, value]) => [id, Math.round(value * 100) / 100])
+			)
+		}))
+	};
+}
+
+describe('xyToSim', () => {
+	it('loads a blank project as the device makes a new one: its presets, octaves and mix', () => {
+		const { state, skipped } = xyToSim(blank);
+		const fresh = defaultState();
+		expect(skipped).toEqual([]);
+		expect(state.tracks.map((t) => t.engine)).toEqual(fresh.tracks.map((t) => t.engine));
+		expect(state.areas.system.trackPresets).toEqual(fresh.areas.system.trackPresets);
+		expect(state.areas.sequencer.octaves).toEqual(fresh.areas.sequencer.octaves);
+		expect(state.tracks.map((t) => t.mix)).toEqual(fresh.tracks.map((t) => t.mix));
+		expect(state.tempo.bpm).toBe(fresh.tempo.bpm);
+		// a new device project has the metronome on (0xA8)
+		expect(state.tempo.metronome.on).toBe(true);
+	});
+
+	it('reads back what simToXy wrote: settings, patterns, scenes and songs', () => {
+		const s = composed();
+		const { bytes } = simToXy(s, blank);
+		const { state, skipped } = xyToSim(bytes);
+		expect(state.tempo).toMatchObject({ bpm: 97.5, groove: 3, swing: 50 });
+		expect(state.tempo.metronome).toEqual({ level: 99, on: true });
+		const settings = state.areas.system.projectSettings;
+		expect(settings).toMatchObject({ transpose: 5, sceneLength: 1, signature: 3 });
+		expect(settings.voices[1]).toBe(4);
+		expect(settings.channels[0]).toBe(1);
+		expect(settings.channels[15]).toBe(16);
+		expect(state.areas.sequencer.octaves['instrument.2']).toBe(-2);
+		expect(state.areas.sequencer.octaves['auxiliary.0']).toBe(1);
+		for (const t of [0, 2]) {
+			const wrote = s.tracks[t].sequence.patterns;
+			const read = state.tracks[t].sequence.patterns;
+			expect(read).toHaveLength(wrote.length);
+			// the file keeps no quantise switch and no players
+			read.forEach((p, i) => {
+				const expected = filed(wrote[i]);
+				// the LFO amount has no lock column yet (simToXy lists it as skipped)
+				for (const step of expected.steps) delete step.locks['lfo.amount'];
+				// scale 3 has no byte yet: it comes back as 1
+				if (wrote[i].scale === 3) expected.scale = 1;
+				expect(filed(p)).toEqual(expected);
+			});
+		}
+		expect(filed(state.aux[2].sequence.patterns[0])).toEqual(filed(s.aux[2].sequence.patterns[0]));
+		expect(state.areas.arrange.songs.slice(0, 2)).toEqual([
+			{ order: [0, 1, 0], loop: true },
+			{ order: [1], loop: false }
+		]);
+		expect(state.areas.arrange.scenes[1]?.patterns[2]).toBe(1);
+		expect(state.areas.arrange.scenes[1]?.mix[0].muted).toBe(true);
+		expect(state.areas.arrange.scenes[2]).toBeNull();
+		expect(skipped.some((line) => line.includes('track scale byte'))).toBe(false);
+		// and the loaded project writes the same file again
+		expect(simToXy(state, bytes).bytes).toEqual(bytes);
+	});
+
+	it('reads the locks the file keeps into the steps', () => {
+		const project = readProject(fixture('locks.xy'));
+		const { state } = xyToSim(project);
+		for (const [t, track] of project.tracks.entries()) {
+			const sequence = t < 8 ? state.tracks[t].sequence : state.aux[t - 8].sequence;
+			track.patterns.forEach((p, i) => {
+				const read = sequence.patterns[i].steps.reduce(
+					(n, step) => n + Object.keys(step.locks).length,
+					0
+				);
+				expect(read).toBeLessThanOrEqual(p.locks.length);
+			});
+		}
+		// what the replica cannot show stays in the file: loaded and written again, it is the same
+		expect(simToXy(state, fixture('locks.xy')).bytes).toEqual(fixture('locks.xy'));
+		const locked = state.tracks.flatMap((t) =>
+			t.sequence.patterns.flatMap((p) => p.steps.flatMap((step) => Object.keys(step.locks)))
+		);
+		expect(locked.length).toBeGreaterThan(0);
+	});
+
+	it('names what it cannot take', () => {
+		const project = readProject(blank);
+		const odd = structuredClone(project);
+		odd.tracks[2].patterns[0].scale = 0x07;
+		odd.tracks[2].patterns[0].locks.push({ step: 3, column: 40, value: 1000 });
+		odd.tracks[2].patterns[0].notes.push({
+			tick: 64 * 480,
+			gate: 240,
+			note: 60,
+			velocity: 100,
+			flags: 0
+		});
+		const { skipped } = xyToSim(odd);
+		expect(skipped).toEqual([
+			'T3 pattern 1: track scale byte 0x07 is not decoded yet (1 kept)',
+			'T3 pattern 1: 1 note(s) before the first step or past the last',
+			'T3 pattern 1: 1 lock(s) in column 40, which the replica does not show (kept in the file)'
+		]);
+	});
+});
+
 const OWNER_BLANK = fileURLToPath(
 	new URL('../../../research/device/captures/mtp/projects__workspace.xy', import.meta.url)
 );
@@ -331,6 +452,12 @@ describe.skipIf(!existsSync(OWNER_BLANK))(
 			const { bytes, skipped } = simToXy(state, template);
 			expect(skipped).toEqual([]);
 			expect(bytes).toEqual(template);
+		});
+
+		it('loads the owner’s project and writes it back byte for byte', () => {
+			const file = new Uint8Array(readFileSync(OWNER_BLANK));
+			const { state } = xyToSim(file);
+			expect(simToXy(state, file).bytes).toEqual(file);
 		});
 	}
 );
