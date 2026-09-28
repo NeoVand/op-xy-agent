@@ -30,6 +30,11 @@ function rig(options: { follow?: () => boolean } = {}) {
 	const settings: TrackState[] = [];
 	const clicks: ClickEvent[] = [];
 	const stops: number[] = [];
+	const automations: {
+		track: number;
+		locks: Readonly<Record<string, number>> | null;
+		time: number;
+	}[] = [];
 	const scheduler = new Scheduler({
 		state: () => state,
 		now: () => clock.now,
@@ -39,7 +44,8 @@ function rig(options: { follow?: () => boolean } = {}) {
 				settings.push(s);
 			},
 			click: (e) => clicks.push(e),
-			stop: (t) => stops.push(t)
+			stop: (t) => stops.push(t),
+			automate: (track, locks, time) => automations.push({ track, locks, time })
 		},
 		...options
 	});
@@ -69,6 +75,7 @@ function rig(options: { follow?: () => boolean } = {}) {
 		settings,
 		clicks,
 		stops,
+		automations,
 		scheduler,
 		run,
 		play,
@@ -233,6 +240,81 @@ describe('the lookahead scheduler', () => {
 				.map((n) => n.note);
 		expect(bar(2)).toEqual([62, 62, 58, 58]);
 		expect(bar(0)).toEqual([53, 53, 53, 53]);
+	});
+
+	it('sends a lock on an empty step to the notes sounding then, and lets go at the next step', () => {
+		const { play, run, automations, pattern, scheduler } = rig();
+		const p = pattern(2);
+		toggleStep(p, 0, [48]);
+		p.steps[0].notes[0].length = 8;
+		setLock(p, 4, 'filter.cutoff', 20);
+		setLock(p, 5, 'filter.cutoff', 40);
+		play();
+		run(0.9);
+		const start = scheduler.anchor!.time;
+		expect(
+			automations.map((a) => [a.track, a.locks, +((a.time - start) / 0.125).toFixed(3)])
+		).toEqual([
+			[2, { 'filter.cutoff': 20 }, 4],
+			[2, { 'filter.cutoff': 40 }, 5],
+			[2, null, 6]
+		]);
+	});
+
+	it('moves between locks over the bar menu’s shape instead of jumping', () => {
+		const { play, run, automations, pattern } = rig();
+		const p = pattern(2);
+		setLock(p, 2, 'm1.1', 90);
+		p.smoothing = 99; // over the whole step
+		play();
+		run(0.5);
+		const up = automations.slice(0, 8);
+		const down = automations.slice(8);
+		// from the track's own shape, 15.8, up to 90 in eight moves across step 3, and back across step 4
+		expect(up[0].locks!['m1.1']).toBeGreaterThan(15);
+		expect(up[0].locks!['m1.1']).toBeLessThan(30);
+		expect(up.at(-1)!.locks).toEqual({ 'm1.1': 90 });
+		expect(up.at(-1)!.time - up[0].time).toBeCloseTo((7 / 8) * 0.125);
+		expect(down).toHaveLength(8);
+		expect(down[0].locks!['m1.1']).toBeLessThan(90);
+		expect(down.at(-1)!.locks).toBeNull();
+	});
+
+	it('arpeggiates a sequenced chord while it lasts, at its velocity (players work on sequences)', () => {
+		const { play, run, notes, pattern, sixteenths } = rig();
+		const p = pattern(2);
+		toggleStep(p, 0, [48, 52, 55], 90);
+		for (const n of p.steps[0].notes) n.length = 4;
+		p.player.on = true; // arpeggio, sixteenths, up over an octave
+		play();
+		run(0.9);
+		expect(notes.map((n) => n.note)).toEqual([48, 52, 55, 48]);
+		expect(sixteenths()).toEqual([0, 1, 2, 3]);
+		expect(notes.every((n) => n.velocity === 90)).toBe(true);
+	});
+
+	it('plays maestro’s chord from each sequenced note', () => {
+		const { play, run, notes, pattern } = rig();
+		const p = pattern(2);
+		toggleStep(p, 0, [48]);
+		toggleStep(p, 4, [53]);
+		Object.assign(p.player, { on: true, type: 'maestro' });
+		p.player.maestro.chord = [60, 64, 67];
+		play();
+		run(0.6);
+		expect(notes.map((n) => n.note)).toEqual([48, 52, 55, 53, 57, 60]);
+	});
+
+	it('holds each sequenced note until the pattern’s next notes', () => {
+		const { play, run, notes, pattern } = rig();
+		const p = pattern(2);
+		toggleStep(p, 0, [48]);
+		toggleStep(p, 6, [50]);
+		Object.assign(p.player, { on: true, type: 'hold' });
+		play();
+		run(1.9);
+		// six sixteenths, then ten round to the next bar's first step
+		expect(notes.slice(0, 2).map((n) => +n.duration.toFixed(3))).toEqual([0.75, 1.25]);
 	});
 
 	it('hands a locked step its settings: the lock reaches the note, the track stays as it was', () => {

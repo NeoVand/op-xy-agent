@@ -81,6 +81,29 @@ describe('the synth core in its worklet', () => {
 		expect(rms(buffer, 0.7, 1)).toBeLessThan(1e-3);
 	});
 
+	it('moves a sounding core note to a step’s locks and back to what it started with', async () => {
+		const settings = prism();
+		Object.assign(settings.filter, { on: true, cutoff: 25, resonance: 0, envAmount: 0 });
+		settings.amp = { attack: 0, decay: 0, sustain: 99, release: 5 };
+		const { buffer } = await render(1.2, (engine) => {
+			engine.noteOn({ track: 2, settings, note: 48, velocity: 100, time: 0.05, duration: 1 });
+			engine.automate(2, { 'filter.cutoff': 90 }, 0.5);
+			engine.automate(2, null, 0.75);
+		});
+		const bright = (from: number, to: number) => {
+			const data = buffer.getChannelData(0).subarray(Math.round(from * SR), Math.round(to * SR));
+			let level = 0;
+			let slope = 0;
+			for (let i = 1; i < data.length; i++) {
+				level += data[i] * data[i];
+				slope += (data[i] - data[i - 1]) ** 2;
+			}
+			return Math.sqrt(slope / Math.max(level, 1e-12));
+		};
+		expect(bright(0.55, 0.7)).toBeGreaterThan(2 * bright(0.2, 0.45));
+		expect(bright(0.8, 1)).toBeLessThan(bright(0.55, 0.7) / 2);
+	});
+
 	it('leaves the engines it does not play to the Web Audio voices', async () => {
 		const { buffer } = await render(0.5, (engine) => {
 			engine.noteOn({

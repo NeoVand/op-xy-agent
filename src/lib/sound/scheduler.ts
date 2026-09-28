@@ -8,12 +8,14 @@
  * walks its current pattern slot by slot (`advancePlayhead`, one slot per track-scale sixteenths),
  * with every step component — pulse repeats and holds, multiply, velocity, ramps, random, tonality,
  * jump, the skips — its notes' quantised timing, lengths, glides and bends, and the step's parameter
- * locks, which reach the voice through the track settings the note starts with. Tracks routed into
- * the brain move their ramps, random and tonality in its key and follow its transposition (manual:
- * auxiliary/brain; the brain's pattern holds each chord change until the next). On top come the
- * tempo page's groove (or the track's own groove from the bar menu) and the metronome, which also
- * counts in a recording. The active track's arpeggio player runs here too while the transport plays
- * (manual: players/arpeggio), over the keys held or the notes its hold kept, on the same clock.
+ * locks, which reach the voice through the track settings the note starts with, and the notes
+ * already sounding from the step's start (a lock on an empty step and recorded automation are
+ * heard; the bar menu's shape smooths the move). Tracks routed into the brain move their ramps,
+ * random and tonality in its key and follow its transposition (manual: auxiliary/brain; the
+ * brain's pattern holds each chord change until the next). On top come the tempo page's groove (or
+ * the track's own groove from the bar menu) and the metronome, which also counts in a recording. A pattern's player works on its sequenced notes here (manual: players/*):
+ * the arpeggio runs over them while they last, with the active track's held keys joining in, on
+ * the same clock; maestro plays its chord from each note; hold sustains each until the next.
  *
  * Each track's walk runs on a random source seeded like the LEDs' walk (`playheadAt`), and is laid
  * down again from the start whenever what it depends on changes (the scale, the length, the flow
@@ -33,13 +35,20 @@ import {
 	arpEvent,
 	arpStepLength,
 	bendCurve,
+	maestroEvents,
 	seededRng,
 	startPlayhead,
 	type Playhead,
 	type Rng,
 	type StepPlay
 } from '$lib/sim/sequencer-playback';
-import { currentPattern, type ArpSettings, type Pattern } from '$lib/sim/sequencer';
+import {
+	currentPattern,
+	hasNotes,
+	type ArpSettings,
+	type Pattern,
+	type PlayerSettings
+} from '$lib/sim/sequencer';
 import { grooveJitter, grooveTime, grooveVelocity, maxEarlyShift, type Groove } from './groove';
 import { bendCents, metronomeGain } from './mapping';
 import { seedOf } from './random';
@@ -78,6 +87,12 @@ export interface SchedulerSink {
 	click(event: ClickEvent): void;
 	/** The transport stopped or jumped at `time`: end the sequence's notes, drop what comes later. */
 	stop(time: number): void;
+	/**
+	 * A step's parameter locks for the notes already sounding on `track`, from `time` (a lock on an
+	 * empty step, recorded automation); null when a step without locks follows, taking each note
+	 * back to the settings it started with.
+	 */
+	automate?(track: number, locks: Readonly<Record<string, number>> | null, time: number): void;
 }
 
 /** Options for {@link Scheduler}. */
@@ -112,6 +127,8 @@ const FOLLOW_TOLERANCE = 0.5;
 const REPLAY_LIMIT = 40000;
 /** Points a bend curve is drawn with. */
 const BEND_POINTS = 32;
+/** Points a smoothed move between two steps' locks is drawn with (the bar menu's shape). */
+const SHAPE_POINTS = 8;
 /**
  * How far ahead the arpeggio is scheduled (s): less than the patterns, so keys pressed and let go
  * reach it at once. Only while the page is hidden does it look as far as they do.
@@ -218,12 +235,32 @@ export function arpeggioInput(state: SimState): ArpeggioInput | null {
 	return notes.length > 0 ? { track: state.track, arp: player.arp, notes } : null;
 }
 
-/** A running arpeggio: its track, how many sixteenths a step lasts, the next step to schedule. */
+/** A running arpeggio: how many sixteenths a step lasts, the next step to schedule. */
 interface ArpRun {
-	readonly track: number;
 	readonly length: number;
 	/** Step k starts k × length sixteenths into the transport (as its LEDs count). */
 	step: number;
+}
+
+/** A sequenced note an arpeggio plays over while it lasts (transport sixteenths). */
+interface Held {
+	readonly from: number;
+	readonly to: number;
+	readonly note: number;
+	readonly velocity: number;
+	/** The settings of its step (its locks applied). */
+	readonly settings: TrackState;
+}
+
+/**
+ * Steps from step `index` to the next step of `pattern` with notes (a whole pattern when there is
+ * no other): how long the hold player keeps a step's notes sounding.
+ */
+function stepsToNextNotes(pattern: Pattern, index: number): number {
+	for (let d = 1; d < pattern.length; d++) {
+		if (hasNotes(pattern.steps[(index + d) % pattern.length])) return d;
+	}
+	return pattern.length;
 }
 
 /** One track's walk through its pattern. */
@@ -234,11 +271,29 @@ interface Walk {
 	/** The next slot to schedule (slot j starts at j × scale sixteenths). */
 	slot: number;
 	scale: number;
+	/** The locks the last step played sent to the sounding notes. */
+	locks: Readonly<Record<string, number>>;
+	/** Chords maestro has strummed (its up/down pattern alternates). */
+	hits: number;
+}
+
+/** A move of the sounding notes' parameters, for {@link SchedulerSink.automate}. */
+interface Automation {
+	readonly track: number;
+	readonly locks: Readonly<Record<string, number>> | null;
+	readonly time: number;
 }
 
 type Due =
 	| { readonly kind: 'note'; readonly event: ScheduledNote; readonly settings: TrackState }
-	| { readonly kind: 'click'; readonly event: ClickEvent };
+	| { readonly kind: 'click'; readonly event: ClickEvent }
+	| { readonly kind: 'automate'; readonly event: Automation };
+
+/** Whether two steps' locks hold the same values. */
+function sameLocks(a: Readonly<Record<string, number>>, b: Readonly<Record<string, number>>) {
+	const ids = Object.keys(a);
+	return ids.length === Object.keys(b).length && ids.every((id) => b[id] === a[id]);
+}
 
 /** Sixteenths per step (the track scale), never zero. */
 const scaleOf = (pattern: Pattern) => (pattern.scale > 0 ? pattern.scale : 1);
@@ -254,7 +309,9 @@ export class Scheduler {
 	#walks: Walk[] = [];
 	#nextClick = 0;
 	#lastPosition = 0;
-	#arp: ArpRun | null = null;
+	/** Each track's running arpeggio, and the sequenced notes it plays over. */
+	#arps = new Map<number, ArpRun>();
+	#held: Held[][] = [];
 
 	constructor(options: SchedulerOptions) {
 		this.#state = options.state;
@@ -278,7 +335,8 @@ export class Scheduler {
 		const now = this.#now();
 		const { transport, tempo } = state;
 		if (!transport.playing) {
-			this.#arp = null;
+			this.#arps.clear();
+			this.#held = [];
 			if (this.#anchor) {
 				this.#anchor = null;
 				this.#sink.stop(now);
@@ -304,13 +362,14 @@ export class Scheduler {
 		const arpAhead = lookahead > this.#lookahead ? lookahead : Math.min(lookahead, ARP_LOOKAHEAD);
 		const due = [
 			...this.#notes(state, anchor, until, now),
-			...this.#arpeggio(state, anchor, positionAt(anchor, now + arpAhead), now),
+			...this.#arpeggios(state, anchor, positionAt(anchor, now + arpAhead), now),
 			...this.#clicks(state, anchor, until, now)
 		];
 		due.sort((a, b) => a.event.time - b.event.time);
 		for (const item of due) {
 			if (item.kind === 'note') this.#sink.note(item.event, item.settings);
-			else this.#sink.click(item.event);
+			else if (item.kind === 'click') this.#sink.click(item.event);
+			else this.#sink.automate?.(item.event.track, item.event.locks, item.event.time);
 		}
 	}
 
@@ -330,7 +389,8 @@ export class Scheduler {
 		});
 		this.#nextClick = firstIndex(position, 4, 0.5);
 		this.#lastPosition = position;
-		this.#arp = null;
+		this.#arps.clear();
+		this.#held = [];
 	}
 
 	/** A walk from the start, replayed up to slot `slot` without sounding (as the LEDs replay it). */
@@ -341,7 +401,15 @@ export class Scheduler {
 		for (let i = 0; i < Math.min(target, REPLAY_LIMIT); i++) {
 			head = advancePlayhead(pattern, head, rng).head;
 		}
-		return { key: walkKey(track, pattern), head, rng, slot: target, scale: scaleOf(pattern) };
+		return {
+			key: walkKey(track, pattern),
+			head,
+			rng,
+			slot: target,
+			scale: scaleOf(pattern),
+			locks: {},
+			hits: 0
+		};
 	}
 
 	#notes(state: SimState, anchor: Anchor, until: number, now: number): Due[] {
@@ -369,14 +437,68 @@ export class Scheduler {
 				const next = advancePlayhead(pattern, walk.head, walk.rng, options);
 				walk.head = next.head;
 				if (!audible || !next.play) continue;
+				this.#automate(due, k, track, pattern, walk, next.play.locks, slot * scale, anchor, now);
 				const shift = routed ? brainShift(state, brain.key, slot * scale) : 0;
-				this.#play(due, k, track, next.play, slot * scale, scale, groove, anchor, now, shift);
+				const player = pattern.player.on ? pattern.player : null;
+				const played = { walk, pattern, player, shift };
+				this.#play(due, k, track, next.play, slot * scale, scale, groove, anchor, now, played);
 			}
 		});
 		return due;
 	}
 
-	/** Turns what one slot plays into notes on the audio clock, `shift` semitones transposed. */
+	/**
+	 * A step's locks for the notes already sounding (manual: sequencer/parameter-locks): sent when
+	 * they differ from the last step's, at the step's start on the grid; with the bar menu's shape up,
+	 * the values move there over that share of the step instead of jumping (its curve is ours).
+	 */
+	#automate(
+		due: Due[],
+		k: number,
+		track: TrackState,
+		pattern: Pattern,
+		walk: Walk,
+		locks: Readonly<Record<string, number>>,
+		start: number,
+		anchor: Anchor,
+		now: number
+	): void {
+		const from = walk.locks;
+		walk.locks = locks;
+		if (sameLocks(from, locks)) return;
+		const time = Math.max(timeAt(anchor, start), anchor.time);
+		if (time < now - LATE) return;
+		const target = Object.keys(locks).length > 0 ? locks : null;
+		const span = (pattern.smoothing / 99) * scaleOf(pattern) * sixteenthSeconds(anchor.bpm);
+		if (span <= 0) {
+			due.push({ kind: 'automate', event: { track: k, locks: target, time } });
+			return;
+		}
+		// a parameter without a lock on one side moves from or to the track's own value
+		const ids = [...new Set([...Object.keys(from), ...Object.keys(locks)])];
+		const own = (id: string) => lockParam(id)?.get(track) ?? 0;
+		for (let i = 1; i <= SHAPE_POINTS; i++) {
+			const u = i / SHAPE_POINTS;
+			const moved: Record<string, number> = {};
+			for (const id of ids) {
+				const a = from[id] ?? own(id);
+				moved[id] = a + ((locks[id] ?? own(id)) - a) * u;
+			}
+			const at = time + (span * (i - 1)) / SHAPE_POINTS;
+			due.push({
+				kind: 'automate',
+				event: { track: k, locks: i === SHAPE_POINTS ? target : moved, time: at }
+			});
+		}
+	}
+
+	/**
+	 * Turns what one slot plays into notes on the audio clock, `shift` semitones transposed, through
+	 * the pattern's player when it is on (manual: players/*, "variations on existing sequences"):
+	 * the arpeggio takes the notes as held keys for as long as they last ({@link #arpeggios}),
+	 * maestro plays its chord from each note, strummed, and hold keeps them sounding until the
+	 * pattern's next notes.
+	 */
 	#play(
 		due: Due[],
 		k: number,
@@ -387,17 +509,30 @@ export class Scheduler {
 		groove: Groove,
 		anchor: Anchor,
 		now: number,
-		shift = 0
+		played: { walk: Walk; pattern: Pattern; player: PlayerSettings | null; shift: number }
 	): void {
 		if (play.notes.length === 0) return;
+		const { walk, pattern, player, shift } = played;
 		const settings = lockedSettings(track, play.locks);
+		if (player?.type === 'arpeggio') {
+			const held = (this.#held[k] ??= []);
+			for (const n of play.notes) {
+				if (n.velocity <= 0) continue;
+				const from = start + n.time * scale;
+				const note = clamp(n.note + shift, 0, 127);
+				held.push({ from, to: from + n.length * scale, note, velocity: n.velocity, settings });
+			}
+			return;
+		}
+		const holdTo =
+			player?.type === 'hold' ? start + stepsToNextNotes(pattern, walk.head.step) * scale : null;
 		const stepSeconds = scale * sixteenthSeconds(anchor.bpm);
 		const jitter = grooveJitter(seedOf(k, Math.round(start * 8)), groove);
 		const depth = bendCents(1, settings.playMode.bend);
 		for (const n of play.notes) {
 			if (n.velocity <= 0) continue;
 			const from = start + n.time * scale;
-			const to = from + n.length * scale;
+			const to = holdTo ?? from + n.length * scale;
 			const begin = timeAt(anchor, grooveTime(from, groove) + jitter.shift);
 			const end = timeAt(anchor, grooveTime(to, groove) + jitter.shift);
 			const time = Math.max(begin, anchor.time);
@@ -410,68 +545,102 @@ export class Scheduler {
 							(_, i) => bendCurve(n.bend!.shape, i / (BEND_POINTS - 1), n.bend!.random) * depth
 						)
 					: undefined;
-			due.push({
-				kind: 'note',
-				settings,
-				event: {
-					track: k,
-					note: clamp(n.note + shift, 0, 127),
-					velocity: clamp(Math.round(velocity), 1, 127),
-					time,
-					duration: Math.max(0.01, end - time),
-					glide: n.glide > 0 ? n.glide * stepSeconds : undefined,
-					bend
-				}
-			});
+			const note = clamp(n.note + shift, 0, 127);
+			// maestro's random order has a source of its own, so the walk stays the LEDs' walk
+			const hit = player?.type === 'maestro' ? walk.hits++ : 0;
+			const chord =
+				player?.type === 'maestro'
+					? maestroEvents(
+							player.maestro.chord,
+							note,
+							player.maestro,
+							hit,
+							seededRng(seedOf(k, hit))
+						)
+					: [{ note, time: 0 }];
+			for (const hit of chord) {
+				const at = Math.max(time, timeAt(anchor, grooveTime(from + hit.time * scale, groove)));
+				due.push({
+					kind: 'note',
+					settings,
+					event: {
+						track: k,
+						note: hit.note,
+						velocity: clamp(Math.round(velocity), 1, 127),
+						time: at,
+						duration: Math.max(0.01, end - at),
+						glide: n.glide > 0 ? n.glide * stepSeconds : undefined,
+						bend
+					}
+				});
+			}
 		}
 	}
 
 	/**
-	 * The active track's arpeggio up to `until` (manual: players/arpeggio), with the sequencer's own
-	 * notes (`arpEvent`: order, range, style, note length, glide, stereo). Its steps count from the
-	 * transport's start, as its LEDs do; a run that starts (a key pressed) or changes speed begins
-	 * with the step under the playhead, for what is left of it.
+	 * Every track's arpeggio up to `until` (manual: players/arpeggio), with the sequencer's own notes
+	 * (`arpEvent`: order, range, style, note length, glide, stereo). It runs over the track's
+	 * sequenced notes while they last and, on the active track, the keys held (or its hold's); its
+	 * steps count from the transport's start, as its LEDs do, and a run that starts or changes speed
+	 * begins with the step under the playhead, for what is left of it. Keys play at the keyboard's
+	 * velocity, sequenced notes at the loudest of theirs.
 	 */
-	#arpeggio(state: SimState, anchor: Anchor, until: number, now: number): Due[] {
-		const input = arpeggioInput(state);
-		if (!input) {
-			this.#arp = null;
-			return [];
-		}
-		const { track: k, arp, notes } = input;
-		const length = arpStepLength(arp);
-		const under = Math.floor(Math.max(0, positionAt(anchor, now)) / length + 1e-9);
-		let run = this.#arp;
-		if (!run || run.track !== k || run.length !== length) {
-			run = { track: k, length, step: under };
-			this.#arp = run;
-		}
-		// the timer stalled or the timeline moved on: what went by is not played late
-		run.step = Math.max(run.step, under);
-		const settings = state.tracks[k];
+	#arpeggios(state: SimState, anchor: Anchor, until: number, now: number): Due[] {
+		const live = arpeggioInput(state);
+		const position = Math.max(0, positionAt(anchor, now));
 		const sixteenth = sixteenthSeconds(anchor.bpm);
 		const due: Due[] = [];
-		while (run.step * length < until) {
-			const event = arpEvent(notes, arp, run.step++, WALK_SEED);
-			if (!event) break;
-			const begin = timeAt(anchor, event.time);
-			const end = begin + event.length * sixteenth;
-			const time = Math.max(begin, now, anchor.time);
-			if (end - time < ARP_SHORTEST) continue;
-			due.push({
-				kind: 'note',
-				settings,
-				event: {
-					track: k,
-					note: event.note,
-					velocity: KEY_VELOCITY,
-					time,
-					duration: end - time,
-					glide: event.glide > 0 ? event.glide * length * sixteenth : undefined,
-					pan: event.pan !== 0 ? event.pan : undefined
-				}
-			});
-		}
+		state.tracks.forEach((track, k) => {
+			const player = currentPattern(track.sequence).player;
+			const keys = live?.track === k ? live.notes : [];
+			// notes that have ended are forgotten
+			const held = (this.#held[k] ?? []).filter((h) => h.to > position);
+			this.#held[k] = held;
+			const on = player.on && player.type === 'arpeggio' && track.engine !== 'midi';
+			if ((!on && keys.length === 0) || (keys.length === 0 && held.length === 0)) {
+				this.#arps.delete(k);
+				return;
+			}
+			const arp = live?.track === k ? live.arp : player.arp;
+			const length = arpStepLength(arp);
+			const under = Math.floor(position / length + 1e-9);
+			let run = this.#arps.get(k);
+			if (!run || run.length !== length) {
+				run = { length, step: under };
+				this.#arps.set(k, run);
+			}
+			// the timer stalled or the timeline moved on: what went by is not played late
+			run.step = Math.max(run.step, under);
+			while (run.step * length < until) {
+				const step = run.step++;
+				const at = step * length;
+				const sounding = held
+					.filter((h) => h.from <= at + 1e-9 && at < h.to - 1e-9)
+					.sort((a, b) => a.from - b.from || a.note - b.note);
+				const notes = [...new Set([...sounding.map((h) => h.note), ...keys])];
+				const event = notes.length > 0 ? arpEvent(notes, arp, step, WALK_SEED) : null;
+				if (!event) continue;
+				const begin = timeAt(anchor, event.time);
+				const end = begin + event.length * sixteenth;
+				const time = Math.max(begin, now, anchor.time);
+				if (end - time < ARP_SHORTEST) continue;
+				const velocity =
+					keys.length > 0 ? KEY_VELOCITY : Math.max(...sounding.map((h) => h.velocity));
+				due.push({
+					kind: 'note',
+					settings: sounding.at(-1)?.settings ?? track,
+					event: {
+						track: k,
+						note: event.note,
+						velocity: clamp(Math.round(velocity), 1, 127),
+						time,
+						duration: end - time,
+						glide: event.glide > 0 ? event.glide * length * sixteenth : undefined,
+						pan: event.pan !== 0 ? event.pan : undefined
+					}
+				});
+			}
+		});
 		return due;
 	}
 

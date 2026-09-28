@@ -38,9 +38,13 @@
   sounds and keep their patterns. The sound honours the on/off switches and runs element per voice.
   Left: measuring the filters and LFOs (`QUESTIONS.md` 5); TE's drum kits and pad samples stay
   stand-ins.
-- **Sequencer against the device: next.** Behaviour the guide settles (players on sequenced notes,
-  the auxiliary tracks' sound, locks on empty steps, scales for ramps and random, octaves, grooves,
-  nudge), then the sequencer's screens from the owner's photos.
+- **Sequencer against the guide** (2026-09-27): players work on sequenced notes (arpeggio, maestro,
+  hold); locks on empty steps and recorded automation move the notes already sounding, smoothed by
+  the bar menu's shape; routed tracks move their ramps, random and tonality in the brain's key and
+  follow its transposition; arming then play records at once; eleven grooves; bar E2 re-lengths
+  step-entered notes; a held [-]/[+] keeps nudging. Left: punch-in FX and tape playback (need their
+  own audio), locks on the channel strip (sends, volume, LFO) for sounding notes, and the
+  sequencer's screens, which wait for the owner's photos.
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).

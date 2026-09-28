@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ENGINE_IDS, type EngineId } from '$lib/core/opxy';
 import type { Region as SampleRegion } from '$lib/sim/areas/sample/state';
 import { defaultState, defaultTrack, type SimState, type TrackState } from '$lib/sim/params';
-import { currentPattern, toggleStep } from '$lib/sim/sequencer';
+import { currentPattern, setLock, toggleStep } from '$lib/sim/sequencer';
 import { SoundEngine } from './engine';
 import { SampleRegistry } from './samples';
 import { Scheduler } from './scheduler';
@@ -49,6 +49,18 @@ const tone = (hz: number, seconds: number) =>
 		{ length: Math.round(SR * seconds) },
 		(_, i) => 0.5 * Math.sin((2 * Math.PI * hz * i) / SR)
 	);
+
+/** How bright the left channel is between `from` and `to`: its slope's RMS over its own. */
+function brightness(buffer: AudioBuffer, from: number, to: number): number {
+	const data = buffer.getChannelData(0).subarray(Math.round(SR * from), Math.round(SR * to));
+	let level = 0;
+	let slope = 0;
+	for (let i = 1; i < data.length; i++) {
+		level += data[i] * data[i];
+		slope += (data[i] - data[i - 1]) ** 2;
+	}
+	return Math.sqrt(slope / Math.max(level, 1e-12));
+}
 
 /** Zero crossings of the left channel over 0.1 s from `from` (twice the frequency / 10). */
 function crossings(buffer: AudioBuffer, from: number): number {
@@ -191,6 +203,34 @@ describe('the sound engine, rendered offline', () => {
 		});
 		expect(measure(released.buffer, 0.05, 0.2).rms).toBeGreaterThan(0.01);
 		expect(measure(released.buffer, 0.4).rms).toBeLessThan(1e-4);
+	});
+
+	it('moves a sounding note with a lock on an empty step, and lets go at the next step', async () => {
+		const s = defaultState();
+		const t = s.tracks[2];
+		Object.assign(t.filter, { on: true, cutoff: 25, resonance: 0, envAmount: 0, keyTracking: 0 });
+		t.amp = { attack: 0, decay: 0, sustain: 99, release: 5 };
+		t.m1 = [67, 15, 0, 0]; // a bright saw on these (Web Audio) voices
+		const p = currentPattern(t.sequence);
+		toggleStep(p, 0, [48]);
+		p.steps[0].notes[0].length = 16;
+		setLock(p, 8, 'filter.cutoff', 90); // an empty step, halfway through the note
+		s.transport.playing = true;
+		const { buffer } = await render(1.8, (engine, context) => {
+			engine.sync(s);
+			new Scheduler({
+				state: () => s,
+				now: () => context.currentTime,
+				sink: engine.sink,
+				lookahead: 1.8
+			}).tick();
+		});
+		// a sixteenth is 0.125 s: step 8 opens the filter, step 9 closes it again
+		const before = brightness(buffer, 0.6, 0.95);
+		const locked = brightness(buffer, 1.03, 1.12);
+		const after = brightness(buffer, 1.3, 1.6);
+		expect(locked).toBeGreaterThan(2 * before);
+		expect(after).toBeLessThan(locked / 2);
 	});
 
 	it('sends to the reverb on FX II: a tail rings on after the note', async () => {

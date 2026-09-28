@@ -50,7 +50,7 @@ import {
 } from './mapping';
 import { Resources } from './resources';
 import type { SampleRegistry, SampleSource } from './samples';
-import type { ClickEvent, SchedulerSink } from './scheduler';
+import { lockedSettings, type ClickEvent, type SchedulerSink } from './scheduler';
 import { WorkletVoice, type SynthHost } from './synth/host';
 import { CORE_ENGINES } from './synth/protocol';
 import { ONESHOT_RELEASE, bufferSource, oneshotAmp, synthSource, type SourceGraph } from './synths';
@@ -166,6 +166,8 @@ export class SoundEngine {
 	readonly #base: (TrackState | null)[];
 	/** What was last applied to sounding voices, per track. */
 	readonly #shown: { filter: string; m1: string }[];
+	/** The settings each voice started with (its step's locks applied): what automation returns to. */
+	readonly #started = new WeakMap<AnyVoice, TrackState>();
 	/** The master EQ's low shelf, mid bell and high shelf, and the master level after them. */
 	readonly #eq: BiquadFilterNode[];
 	readonly #master: GainNode;
@@ -244,8 +246,33 @@ export class SoundEngine {
 					pan: event.pan
 				}),
 			click: (event) => this.click(event),
-			stop: (time) => this.stopSequence(time)
+			stop: (time) => this.stopSequence(time),
+			automate: (track, locks, time) => this.automate(track, locks, time)
 		};
+	}
+
+	/**
+	 * A step's parameter locks reach the notes already sounding on `track` at `time` (manual:
+	 * sequencer/parameter-locks, live-recording automation): each note's engine parameters and filter
+	 * move to the settings it started with, those locks applied; null takes them back to those
+	 * settings. The rest of a lock (envelopes, sends, the LFO) reaches only the notes it starts.
+	 */
+	automate(track: number, locks: Readonly<Record<string, number>> | null, time: number): void {
+		const at = Math.max(time, this.context.currentTime);
+		for (const v of this.#voices) {
+			const start = v.track === track ? this.#started.get(v) : undefined;
+			if (!start) continue;
+			const settings = locks ? lockedSettings(start, locks) : start;
+			const f = this.#filter(settings, v.note);
+			if (v instanceof WorkletVoice) {
+				v.update(settings.m1, at);
+				v.setFilter(f.hz, settings.filter.resonance, at);
+			} else {
+				v.setFilter(f.hz, f.q, at);
+				const controls = engineControls(settings.engine, settings.m1);
+				if (controls) v.update(controls, at);
+			}
+		}
 	}
 
 	/**
@@ -568,7 +595,7 @@ export class SoundEngine {
 			key: request.key ?? null,
 			pan: request.pan
 		});
-		this.#adopt(voice);
+		this.#adopt(voice, settings);
 		this.#last[track] = hz;
 		return voice;
 	}
@@ -616,7 +643,7 @@ export class SoundEngine {
 			},
 			{ note: request.note, key: request.key ?? null, source: request.key ? 'live' : 'sequence' }
 		);
-		this.#adopt(voice);
+		this.#adopt(voice, settings);
 		this.#last[track] = hz;
 		return voice;
 	}
@@ -764,7 +791,7 @@ export class SoundEngine {
 			key: held ? (request.key ?? null) : null,
 			group: key.playMode === 'mute group'
 		});
-		this.#adopt(voice);
+		this.#adopt(voice, settings);
 	}
 
 	/** Makes room for a note at `time` on `track`. */
@@ -773,7 +800,8 @@ export class SoundEngine {
 		victim(candidates, time, track, this.#limit)?.kill(time);
 	}
 
-	#adopt(voice: AnyVoice): void {
+	#adopt(voice: AnyVoice, settings: TrackState): void {
+		this.#started.set(voice, settings);
 		voice.attach(this.#channels[voice.track].modulation());
 		voice.onended = (done: AnyVoice) => {
 			this.#voices = this.#voices.filter((v) => v !== done);
