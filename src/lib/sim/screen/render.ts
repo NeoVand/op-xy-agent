@@ -149,8 +149,15 @@ export function describeFrame(frame: ScreenFrame): string {
 				(frame.type === 'element' ? `source ${frame.source}, ` : '') +
 				`amount ${Math.round(frame.amount)}, destination ${frame.destination.label}`
 			);
-		case 'mix':
-			return `mix, ${frame.bank} track ${frame.selected + 1}`;
+		case 'mix': {
+			// the selected strip's values, which the page draws as a level bar and a pan dot and never
+			// as numbers: level on its 0–99 lane, pan −100…100
+			const strip = frame.strips[frame.selected];
+			const values = strip
+				? `: level ${Math.round(strip.level * 99)}, pan ${Math.round(strip.pan * 100)}${strip.muted ? ', muted' : ''}`
+				: '';
+			return `mix, ${frame.bank} track ${frame.selected + 1}${values}`;
+		}
 		case 'project':
 			return `project ${frame.name}`;
 		case 'com':

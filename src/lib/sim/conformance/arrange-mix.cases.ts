@@ -1364,7 +1364,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 		it('opens with the mix key on M1: the eight instrument strips, T1 lit white', async () => {
 			const d = await start();
 			await d.click('key.mix');
-			expect(d.screen()).toBe('mix, instrument track 1');
+			expect(d.screen()).toMatch(/^mix, instrument track 1:/);
 			expect(page(d, 'mix').strips).toHaveLength(8);
 			expect(tracks(d)).toBe('w.......');
 		});
@@ -1372,26 +1372,26 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 		it('picks the track to mix with its key', async () => {
 			const d = await start();
 			await d.clicks('key.mix', track(6));
-			expect(d.screen()).toBe('mix, instrument track 6');
+			expect(d.screen()).toMatch(/^mix, instrument track 6:/);
 			expect(tracks(d)).toBe('.....w..');
 		});
 
 		it('flips to the auxiliary tracks with mix pressed again, lit red, and back', async () => {
 			const d = await start();
 			await d.clicks('key.mix', 'key.mix');
-			expect(d.screen()).toBe('mix, auxiliary track 1');
+			expect(d.screen()).toMatch(/^mix, auxiliary track 1:/);
 			expect(tracks(d)).toBe('r.......');
 			await d.click(track(7));
-			expect(d.screen()).toBe('mix, auxiliary track 7');
+			expect(d.screen()).toMatch(/^mix, auxiliary track 7:/);
 			expect(tracks(d)).toBe('......r.');
 			await d.click('key.mix');
-			expect(d.screen()).toBe('mix, instrument track 1');
+			expect(d.screen()).toMatch(/^mix, instrument track 1:/);
 		});
 
 		it('comes back to the strips from the master pages with M1', async () => {
 			const d = await start();
 			await d.clicks('key.mix', 'key.m4', 'key.m1');
-			expect(d.screen()).toBe('mix, instrument track 1');
+			expect(d.screen()).toMatch(/^mix, instrument track 1:/);
 		});
 	});
 

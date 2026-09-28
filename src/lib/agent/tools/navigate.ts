@@ -36,7 +36,7 @@ const goalInput = z.object({
 		.max(60)
 		.optional()
 		.describe(
-			'To set a parameter: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "tempo", "groove", an engine parameter such as "shape" or "detune"), a list ("engine", "filter type", "lfo type": value is the name, e.g. "wavetable", "ladder", "duck"), the duck LFO\'s "duck source" (the triggering track 1–8), or an id ("filter.cutoff")'
+			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "tempo", "groove", an engine parameter such as "shape" or "detune"), a list ("engine", "filter type", "lfo type": value is the name, e.g. "wavetable", "ladder", "duck"), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome"), or an id ("filter.cutoff"). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II, "speed" on the tape, "root" or "scale" on the brain, "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii"; "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). Without page, the first page that shows it.'
 		),
 	value: z
 		.union([z.number(), z.string().min(1).max(30)])
@@ -79,6 +79,19 @@ function toGoal(input: GoalInput, env: AgentEnvironment): NavGoal | string {
 	}
 	if (input.param !== undefined) {
 		if (input.value === undefined) return 'value is needed with param';
+		const area = input.area ?? (track > 8 ? 'auxiliary' : 'instrument');
+		if (area === 'auxiliary' || area === 'mix') {
+			return {
+				area,
+				// auxiliary pages number their tracks 1–8; mix M1 takes 1–16
+				track:
+					input.track === undefined ? undefined : area === 'mix' ? track : ((track - 1) % 8) + 1,
+				page: input.page as 1 | 2 | 3 | 4 | undefined,
+				label: input.param,
+				value: input.value
+			};
+		}
+		if (area !== 'instrument') return `${area} has no parameters to plan; give only the area`;
 		if (track > 8) return 'only instrument tracks (1–8) have these parameters';
 		return { track, param: input.param, value: input.value };
 	}

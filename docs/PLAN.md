@@ -197,8 +197,9 @@ owner flagged, then what users see most.
       state to any page or parameter value, as key presses and encoder turns. Every plan runs on a
       copy of the simulator before it is returned. It covers instrument pages and their shift layers,
       the envelopes, the lists (engine, filter type, LFO type, switching an off module on), tempo,
-      mix, arrange and the players; `planSettings` sets several parameters in a row. Left: auxiliary
-      and mixer parameters.
+      mix, arrange and the players; `planSettings` sets several parameters in a row. Values on the
+      auxiliary and mixer pages are found by name from the page's description: the navigator turns
+      each encoder on a copy to see which one moves the value, so no table has to list them.
 - [x] **Tools:** one `plan_steps` tool gives the exact steps for a page, a value or several
       settings. With `show` it walks the replica through them, step by step, so the virtual OP-XY
       ends up there. Left: setting values on the device through CCs where it listens.
@@ -208,7 +209,7 @@ owner flagged, then what users see most.
       sampling and slicing, and a song from scenes as runnable recipes (the prose units exist), and
       values taken from the factory presets.
 - [x] **Evals:** `evals/agent/howto.mjs` checks how-to answers and idea-to-device set-ups against the
-      simulator's end state (7 cases). Left: screen Q&A.
+      simulator's end state (9 cases, the reverb and the mix included). Left: screen Q&A.
 
 ### F5 — Next capture session (with the owner)
 

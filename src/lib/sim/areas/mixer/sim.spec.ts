@@ -103,7 +103,9 @@ describe('mix M1: the FX send popup (camera frames b1-069…096)', () => {
 		sim.turn(2, 10);
 		popup = page(sim, 'mix-sends');
 		expect(popup.sends).toEqual([20 / 99, 10 / 99]);
-		expect(describeFrame(popup)).toBe('mix, instrument track 3, fx I 20, fx II 10');
+		expect(describeFrame(popup)).toBe(
+			'mix, instrument track 3: level 74, pan 0, fx I 20, fx II 10'
+		);
 		sim.advance(999);
 		expect(sim.frame.page).toBe('mix-sends');
 		sim.advance(1);

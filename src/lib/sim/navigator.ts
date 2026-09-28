@@ -553,3 +553,184 @@ export function planSettings(state: SimState, goals: readonly ParamGoal[]): Sett
 			: {})
 	};
 }
+
+// ─────────────────────────────────────────────────────────────────── values on the other pages
+
+/**
+ * A value an auxiliary or mixer page shows, named the way the page's description names it
+ * ("size" on FX II, "speed" on the tape, "low" on the master EQ, "level" on mix M1). No table
+ * says which encoder carries it: the navigator turns each one on a copy and watches the page.
+ */
+export interface PageValueGoal {
+	readonly area: 'auxiliary' | 'mix';
+	/** Auxiliary track 1–8; on mix M1 the track whose strip it is, 1–16 (9–16 auxiliary). */
+	readonly track?: number;
+	/** The M-page; default: the first page that shows the value. */
+	readonly page?: PageNumber;
+	readonly label: string;
+	readonly value: number | string;
+}
+
+/**
+ * A page's values as its description lists them: "FX II reverb: size 69, rate 29" → size: "69".
+ * A reading starts at the first number ("size 1/8 dotted", "fx II 30"), else it is the last word
+ * ("pitch X1", "mic off").
+ */
+export function pageValues(text: string): Map<string, string> {
+	const values = new Map<string, string>();
+	const body = text.includes(':') ? text.slice(text.indexOf(':') + 1) : text;
+	for (const part of body.split(',')) {
+		const words = part.trim().split(/\s+/);
+		if (words.length < 2) continue;
+		const number = words.findIndex((w, i) => i > 0 && /^[-+−]?\d/.test(w));
+		const at = number > 0 ? number : words.length - 1;
+		values.set(words.slice(0, at).join(' ').toLowerCase(), words.slice(at).join(' '));
+	}
+	return values;
+}
+
+/**
+ * The label a page uses for `wanted`: the whole phrase, then its shorter runs of words, longest
+ * first ("fx ii send" → "fx ii", "reverb size" → "size").
+ */
+function pageLabel(values: Map<string, string>, wanted: string): string | null {
+	const words = wanted
+		.trim()
+		.toLowerCase()
+		.replace(/\bfx ?(1|one)\b/, 'fx i')
+		.replace(/\bfx ?(2|two)\b/, 'fx ii')
+		.split(/\s+/);
+	for (let length = words.length; length > 0; length--) {
+		for (let start = 0; start + length <= words.length; start++) {
+			const label = words.slice(start, start + length).join(' ');
+			if (values.has(label)) return label;
+		}
+	}
+	return null;
+}
+
+const readValue = (sim: OpxySim, label: string) => pageValues(screenOf(sim)).get(label);
+
+/**
+ * The turn that moves `label` where the simulator stands: the first encoder, then shift. A detent
+ * each way must read differently (or differ from now), so an encoder that only calls up the popup
+ * showing the value (mix M1's sends) does not count.
+ */
+function probe(sim: OpxySim, label: string): string | null {
+	const before = readValue(sim, label);
+	for (const shift of [false, true]) {
+		for (let e = 1; e <= 4; e++) {
+			const keys = `${shift ? 'shift + ' : ''}turn E${e}`;
+			const [up, down] = [1, -1].map((dir) => {
+				const trial = copy(sim.state);
+				play(trial, keys, dir);
+				return readValue(trial, label);
+			});
+			const moved = up !== down || (before !== undefined && up !== undefined && up !== before);
+			if (moved && (up !== undefined || down !== undefined)) return keys;
+		}
+	}
+	return null;
+}
+
+/**
+ * The detents (+ clockwise) that make `label` read `value`, tried on copies: numbers are
+ * approached from whichever side gets closer (the nearest reading when the exact one is skipped),
+ * words are searched clockwise, then counter-clockwise. Null when it never reads it.
+ */
+function detentsTo(
+	sim: OpxySim,
+	keys: string,
+	label: string,
+	value: number | string
+): number | null {
+	const target = Number(value);
+	const want = String(value).trim().toLowerCase();
+	// a reading as a number ("+10", "–08" with the EQ's dash), or NaN for words
+	const num = (v: string | undefined) => (v === undefined ? NaN : Number(v.replace(/^[–−]/, '-')));
+	const hit = (v: string | undefined) =>
+		v !== undefined &&
+		(Number.isFinite(target) && Number.isFinite(num(v))
+			? num(v) === target
+			: v.toLowerCase() === want);
+	if (hit(readValue(sim, label))) return 0;
+	for (const dir of [1, -1]) {
+		const trial = copy(sim.state);
+		// (a popup's value can be missing until the first detent calls the popup up)
+		let last = readValue(trial, label);
+		let still = 0;
+		for (let n = 1; n <= 400; n++) {
+			play(trial, keys, dir);
+			const v = readValue(trial, label);
+			if (hit(v)) return n * dir;
+			const [now, before] = [num(v) - target, num(last) - target];
+			if (Number.isFinite(now) && Number.isFinite(before) && now !== before) {
+				if (Math.sign(now) !== Math.sign(before)) {
+					// stepped over the value: stop at the closer reading
+					return (Math.abs(now) <= Math.abs(before) ? n : n - 1) * dir;
+				}
+				if (Math.abs(now) > Math.abs(before)) break; // moving away: the other way
+			}
+			still = v === last ? still + 1 : 0;
+			if (still >= 12) break; // the end of its range
+			last = v;
+		}
+	}
+	return null;
+}
+
+/** A label only a popup shows (mix M1's sends appear once E1 or E2 turns), found on copies. */
+function revealed(sim: OpxySim, wanted: string): string | null {
+	for (let e = 1; e <= 4; e++) {
+		const trial = copy(sim.state);
+		play(trial, `turn E${e}`, 1);
+		const label = pageLabel(pageValues(screenOf(trial)), wanted);
+		if (label) return label;
+	}
+	return null;
+}
+
+/** Walks to the page (and on mix M1 the track) of a page-value goal. */
+function walkToPage(rec: Recorder, goal: PageValueGoal, page: PageNumber): void {
+	if (goal.area === 'auxiliary') {
+		walk(rec, { area: 'auxiliary', track: goal.track ?? rec.sim.state.auxTrack + 1, page });
+		return;
+	}
+	walk(rec, { area: 'mix', page });
+	if (goal.track === undefined || page !== 1) return;
+	const bank = goal.track > 8 ? 'auxiliary' : 'instrument';
+	// pressed again, mix swaps the track keys between the two sets
+	if (rec.sim.state.banks.mix !== bank) rec.do('mix');
+	const index = (goal.track - 1) % 8;
+	const s = rec.sim.state;
+	if ((bank === 'instrument' ? s.track : s.auxTrack) !== index) rec.do(`T${index + 1}`);
+}
+
+/** Steps that set a value an auxiliary or mixer page shows, run on a copy of the simulator. */
+export function planPageValue(state: SimState, goal: PageValueGoal): NavPlan {
+	const pages: readonly PageNumber[] = goal.page ? [goal.page] : [1, 2, 3, 4];
+	let seen: string[] = [];
+	for (const page of pages) {
+		const rec = new Recorder(copy(state));
+		walkToPage(rec, goal, page);
+		const values = pageValues(screenOf(rec.sim));
+		const label = pageLabel(values, goal.label) ?? revealed(rec.sim, goal.label);
+		if (!label) {
+			seen = [...seen, ...[...values.keys()].map((k) => `${k} (M${page})`)];
+			continue;
+		}
+		const keys = probe(rec.sim, label);
+		if (!keys) return rec.plan(false, `no encoder moves ${label} on M${page}`);
+		const detents = detentsTo(rec.sim, keys, label, goal.value);
+		if (detents === null) {
+			return rec.plan(false, `${label} never reads ${goal.value} (it reads ${values.get(label)})`);
+		}
+		if (detents !== 0) rec.do(keys, detents);
+		return rec.plan(true);
+	}
+	const rec = new Recorder(copy(state));
+	return rec.plan(
+		false,
+		`no page shows "${goal.label}"${seen.length ? `; these do: ${seen.join(', ')}` : ''}`
+	);
+}

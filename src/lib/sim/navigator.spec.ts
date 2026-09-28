@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { tryParseKeys } from '$lib/core/opxy';
 import {
 	findParam,
+	pageValues,
+	planPageValue,
 	planParam,
 	planPlace,
 	planSettings,
@@ -207,5 +209,76 @@ describe('the navigator: parameters', () => {
 		});
 		// T1's drum engine has no synth parameters on M1
 		expect(planParam(sim.state, { track: 1, param: 'm1.1', value: 3 }).reached).toBe(false);
+	});
+});
+
+describe('the navigator: values on the auxiliary and mixer pages', () => {
+	const screenAfter = (plan: NavPlan) => {
+		const sim = boot();
+		for (const step of plan.steps) playStep(sim, step);
+		return plan.screen;
+	};
+
+	it('reads a page’s values off its description, words and all', () => {
+		const values = pageValues('FX I delay: size 1/8 dotted, fine 50, pitch X1, low –08, mic off');
+		expect(Object.fromEntries(values)).toEqual({
+			size: '1/8 dotted',
+			fine: '50',
+			pitch: 'X1',
+			low: '–08',
+			mic: 'off'
+		});
+	});
+
+	it('finds the encoder by turning each one on a copy, then turns it to the value', () => {
+		const sim = boot();
+		const plan = planPageValue(sim.state, {
+			area: 'auxiliary',
+			track: 8,
+			label: 'reverb size',
+			value: 80
+		});
+		expect(plan.reached).toBe(true);
+		expect(keys(plan)).toEqual(['auxiliary', 'T8', 'turn E1 11']);
+		expect(screenAfter(plan)).toMatch(/size 80/);
+		grammatical(plan);
+		expect(sim.state.mode).toBe('instrument'); // planned on a copy
+	});
+
+	it('picks the mixer strip with its track key, and reaches the sends only a popup shows', () => {
+		const sim = boot();
+		const level = planPageValue(sim.state, { area: 'mix', track: 3, label: 'level', value: 60 });
+		expect(level.steps.map((s) => s.keys)).toEqual(['mix', 'T3', 'turn E4']);
+		expect(level.screen).toMatch(/^mix, instrument track 3: level 60/);
+		const pan = planPageValue(sim.state, { area: 'mix', track: 3, label: 'pan', value: -40 });
+		expect(pan.screen).toMatch(/pan -40/);
+		const send = planPageValue(sim.state, {
+			area: 'mix',
+			track: 4,
+			label: 'fx ii send',
+			value: 30
+		});
+		expect(send.reached).toBe(true);
+		expect(send.steps.at(-1)?.keys).toBe('turn E2');
+		expect(send.screen).toMatch(/fx II 30/);
+		// tracks 9–16 are the other set: mix pressed again swaps the track keys over
+		const aux = planPageValue(sim.state, { area: 'mix', track: 15, label: 'level', value: 50 });
+		expect(keys(aux).slice(0, 3)).toEqual(['mix', 'mix', 'T7']);
+		expect(aux.screen).toMatch(/^mix, auxiliary track 7: level 50/);
+	});
+
+	it('finds the page that shows the value, with a cut on the master EQ', () => {
+		const sim = boot();
+		const low = planPageValue(sim.state, { area: 'mix', label: 'low', value: -8 });
+		expect(low.reached).toBe(true);
+		expect(keys(low).slice(0, 2)).toEqual(['mix', 'M2']);
+		expect(low.steps.at(-1)?.clicks).toBeLessThan(0);
+	});
+
+	it('says which values the pages do show when it cannot find one', () => {
+		const sim = boot();
+		const plan = planPageValue(sim.state, { area: 'mix', label: 'warp', value: 3 });
+		expect(plan.reached).toBe(false);
+		expect(plan.note).toMatch(/no page shows "warp"; these do: level \(M1\)/);
 	});
 });

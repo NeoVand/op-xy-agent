@@ -19,8 +19,12 @@ to the how-to eval.
 | `duck`        | make the bass pump with the kick, then the steps for my unit   | pass   | plan_steps (show, settings)  |
 | `acid`        | turn track 3 into a squelchy acid bass                         | pass   | plan_steps (show, settings)  |
 | `pluck`       | a plucky bass on track 3 (short decay, no sustain, more reso)  | pass   | plan_steps (show, settings)  |
+| `reverb`      | FX II's size to 85 and more of track 7 into it                 | pass   | plan_steps ×2 (show)         |
+| `mix`         | track 2 down to 40 in the mix, panned a little left            | pass   | plan_steps ×3 (show)         |
 
-$1.34 for the seven ($0.84 of it the manual cache on the first). Each set-up now takes one call
+The last two came with the navigator's reach into the auxiliary and mixer pages (a run of three,
+duck included, $1.10). The agent walked to `auxiliary` → `T8` and turned `E1` 16 detents for the
+reverb; for the mix it went `mix` → `T2`, `E4` down to 40 and `E3` to −16. $1.34 for the first seven ($0.84 of it the manual cache on the first). Each set-up now takes one call
 instead of two to four, and the answers explain every change: "with sustain at 0, the decay alone
 sets how long each note lasts". For the acid bass the agent picked the ladder filter and noted that
 the pick returns to `M1`, as on the device.

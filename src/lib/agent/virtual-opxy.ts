@@ -9,11 +9,17 @@
  * scenes 1–99, steps 1–64 (bar 2 starts at step 17).
  */
 
-import type { NavPlan, ParamGoal, Place, SettingsPlan } from '$lib/sim/navigator';
+import type { NavPlan, PageValueGoal, ParamGoal, Place, SettingsPlan } from '$lib/sim/navigator';
 
-/** Where to take the virtual OP-XY: a page, a parameter set to a value, or several in a row. */
+/**
+ * Where to take the virtual OP-XY: a page, a parameter set to a value, several in a row, or a value
+ * an auxiliary or mixer page shows.
+ */
 export type NavGoal =
-	{ readonly place: Place } | ParamGoal | { readonly settings: readonly ParamGoal[] };
+	| { readonly place: Place }
+	| ParamGoal
+	| { readonly settings: readonly ParamGoal[] }
+	| PageValueGoal;
 
 /** A note on a pattern. */
 export interface VirtualNote {

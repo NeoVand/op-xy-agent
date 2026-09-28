@@ -123,6 +123,34 @@ const CASES: readonly HowtoCase[] = [
 		}
 	},
 	{
+		id: 'reverb',
+		prompt:
+			'Give everything more space on the virtual OP-XY: make the reverb on FX II bigger, size about 85, and send more of track 7 to it, about 60.',
+		check(o) {
+			const fails: string[] = [];
+			const size = shown(o.state.areas.auxiliary.fx[1].params[0]);
+			if (Math.abs(size - 85) > 3) fails.push(`FX II size ${size}`);
+			const send = shown(o.state.tracks[6].sends[3]);
+			if (Math.abs(send - 60) > 3) fails.push(`track 7 sends ${send} to FX II`);
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			return fails;
+		}
+	},
+	{
+		id: 'mix',
+		prompt:
+			'In the mix, bring track 2 down to about 40 and pan it a little to the left. Set it on the virtual OP-XY and tell me the keys.',
+		check(o) {
+			const fails: string[] = [];
+			const { level, pan } = o.state.tracks[1].mix;
+			if (Math.abs(level - 40) > 4) fails.push(`track 2 level ${Math.round(level)}`);
+			if (pan >= 0) fails.push(`pan ${pan}`);
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			for (const w of mentions(o, 'mix', 'T2')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
 		id: 'pluck',
 		prompt:
 			'I want a plucky bass on track 3: a short decay, no sustain and a bit more resonance. Set it up for me on the virtual OP-XY and tell me what you changed.',

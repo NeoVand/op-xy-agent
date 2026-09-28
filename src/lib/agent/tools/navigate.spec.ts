@@ -125,6 +125,34 @@ describe('plan_steps with show', () => {
 		expect(both.isError).toBe(true);
 	});
 
+	it('sets values on the auxiliary and mixer pages by the names their screens use', async () => {
+		const { sim, run } = setup(true);
+		const reverb = json(
+			await run(planStepsTool, {
+				show: true,
+				area: 'auxiliary',
+				track: 16,
+				param: 'size',
+				value: 80
+			})
+		);
+		expect(reverb).toMatchObject({ shown: true, arrived: true });
+		expect(reverb.steps.map((s: { keys: string }) => s.keys)).toEqual([
+			'auxiliary',
+			'T8',
+			'turn E1'
+		]);
+		const level = json(
+			await run(planStepsTool, { show: true, area: 'mix', track: 3, param: 'level', value: 50 })
+		);
+		expect(level).toMatchObject({ shown: true, arrived: true });
+		expect(Math.round(sim.state.tracks[2].mix.level)).toBe(50);
+		const missing = json(
+			await run(planStepsTool, { show: false, area: 'mix', param: 'flux', value: 1 })
+		);
+		expect(missing.note).toMatch(/no page shows "flux"/);
+	});
+
 	it('only returns the plan without a replica', async () => {
 		const { sim, run } = setup(false);
 		const result = json(await run(planStepsTool, { show: true, area: 'mix', page: 2 }));
