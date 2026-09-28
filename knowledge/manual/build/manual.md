@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 158 units, 941 facts, 187 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 158 units, 946 facts, 187 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -1595,14 +1595,16 @@ Related: [instrument.overview], [instrument.engine-axis], [instrument.engine-dis
 Sources: s1 guide:instrument#engine · s2 guide:synth-engines · s3 guide:sample · s4 guide:synth-engines#external · s5 research:20-midi-control#21-the-16-tracks-and-their-default-channels · s6 research:20-midi-control#34-engine-resolved-names-for-cc1215-p1p4 · s7 guide:synth-engines#change-engine
 
 ### Amp and filter envelopes (M2) [instrument.envelopes]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: envelope, envelopes, adsr, amp envelope, amplitude envelope, filter envelope, attack, release
 Where: modes instrument; screens M2
 
 `M2` holds two ADSR envelopes per track: the amp envelope shapes each note's level over time, the filter envelope moves the filter cutoff. Click any encoder to flip between them.
 
 Envelopes give every note a shape in time: short and snappy amp settings for plucks and drums, slow
-ones for pads. The filter envelope runs the same four stages but moves the cutoff instead, as far as
+ones for pads. Read the graph as time running left to right: a peak far to the right is a slow
+attack, a release handle far to the left is a long release (release turned down), one sitting on
+the end is none (release turned all the way up). The filter envelope runs the same four stages but moves the cutoff instead, as far as
 envelope amount on `M3` allows. The shift layer of `M2` holds the voice settings (play mode,
 portamento, bend range, preset volume).
 
@@ -1610,7 +1612,12 @@ Facts:
 - Every instrument track has two envelopes, one for amplitude and one that drives the filter. [#two] [s1]
 - Clicking any encoder on `M2` flips the page between the amp and the filter envelope, on drum tracks as well as synth tracks. [#switch] [s1]
 - How far the filter envelope moves the cutoff is set by envelope amount, `E3` on the filter page `M3`. [#depth] [s2]
-- Over MIDI, CC20–23 set the amp envelope and CC24–27 the filter envelope, each in attack, decay, sustain, release order. [#midi-ccs] (community-verified) [s3]
+- Over MIDI, CC20–23 set the amp envelope and CC24–27 the filter envelope, each in attack, decay, sustain, release order, whichever envelope the page shows. [#midi-ccs] (verified 1.1.33) [s3]
+- The page draws both envelopes at once. The one the encoders edit is bright, with five square handles (start, peak, decay end, release start, end) and thin lines dropping from the inner three; the other is grey, without handles. Each is named, "amp" or "filter", just left of its release handle. [#screen] (verified 1.1.33) [s3]
+- Each encoder slides one handle. Attack moves the peak right along the top, decay moves the decay end right of the peak, sustain raises the level, and release moves the release start right toward the end. [#handles] (verified 1.1.33) [s3]
+- Release is set by where its handle sits, so turning E4 clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade. [#release-direction] (verified 1.1.33) [s3]
+- There is no plateau after the attack; the decay starts at the peak. The attack rises steeply and bends into the peak, and decay and release fall steeply and level off. [#shape] (verified 1.1.33) [s3]
+- The filter envelope is always drawn at full height; its real reach is set by envelope amount on `M3`. [#full-height] (verified 1.1.33) [s3]
 
 Procedures:
 - Show the other envelope on M2 [#switch] [s1]
@@ -1624,15 +1631,15 @@ Parameters:
 | M2 | `turn E1` | attack | – | – | 20 | time to reach full level s1 |
 | M2 | `turn E2` | decay | – | – | 21 | time to fall to the sustain level s1 |
 | M2 | `turn E3` | sustain | – | – | 22 | level held while the key is down s1 |
-| M2 | `turn E4` | release | – | – | 23 | fade-out after the key is let go s1 |
+| M2 | `turn E4` | release | – | – | 23 | fade-out after the key is let go; clockwise moves the release handle right, a shorter release s1 |
 | M2 | `turn E1` (alternate page) | filter attack | – | – | 24 | s1 |
 | M2 | `turn E2` (alternate page) | filter decay | – | – | 25 | s1 |
 | M2 | `turn E3` (alternate page) | filter sustain | – | – | 26 | s1 |
-| M2 | `turn E4` (alternate page) | filter release | – | – | 27 | s1 |
+| M2 | `turn E4` (alternate page) | filter release | – | – | 27 | clockwise is shorter, as for the amp release s1 |
 
 Related: [instrument.play-mode], [instrument.filter], [instrument.overview]
 
-Sources: s1 guide:instrument#envelopes · s2 guide:instrument#filter · s3 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+Sources: s1 guide:instrument#envelopes · s2 guide:instrument#filter · s3 research:59-screen-profiling#22-envelope-editor-instrument-m2
 
 ### Play mode, portamento, bend range and preset volume (M2 + shift) [instrument.play-mode]
 current · OS ≥ 1.0.9 · guide v1.1.15

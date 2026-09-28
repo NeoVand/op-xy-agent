@@ -47,8 +47,7 @@ function envelopeView(t: TrackState): EnvelopeView {
 	return {
 		amp: adsr(t.amp),
 		filter: adsr(t.filterEnv),
-		selected: t.envelope,
-		filterDepth: Math.abs(t.filter.envAmount) / 99
+		selected: t.envelope
 	};
 }
 

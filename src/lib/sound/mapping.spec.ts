@@ -36,15 +36,26 @@ describe('mapping: envelopes, filter and voice settings', () => {
 		expect(sweep(51, 1, 100) / sweep(50, 1, 100)).toBeCloseTo(
 			sweep(11, 1, 100) / sweep(10, 1, 100)
 		);
-		const sharp = envelopeSeconds({ attack: 0, decay: 0, sustain: 0, release: 0 });
+		// release is a handle position: 99 (the handle on the end) is the shortest
+		const sharp = envelopeSeconds({ attack: 0, decay: 0, sustain: 0, release: 99 });
 		expect(sharp).toEqual({ attack: 0.0015, decay: 0.02, sustain: 0, release: 0.015 });
 		// the device's measured law: about 2 s at half, minutes at the top
 		const half = envelopeSeconds({ attack: 49.5, decay: 49.5, sustain: 49.5, release: 49.5 });
 		expect(half.attack).toBeGreaterThan(1.8);
 		expect(half.attack).toBeLessThan(2.2);
-		const slow = envelopeSeconds({ attack: 99, decay: 99, sustain: 99, release: 99 });
+		expect(half.release).toBeCloseTo(half.attack - 0.0015 + 0.015, 6);
+		const slow = envelopeSeconds({ attack: 99, decay: 99, sustain: 99, release: 0 });
 		expect(slow.attack).toBeGreaterThan(300);
+		expect(slow.release).toBeGreaterThan(300);
 		expect(slow.sustain).toBe(1);
+		// a new project's bass (T3, release lane 26129 of 32767) stops in about a tenth of a second
+		const bass = envelopeSeconds({
+			attack: 0,
+			decay: 30,
+			sustain: 40,
+			release: (26129 / 32767) * 99
+		});
+		expect(bass.release).toBeLessThan(0.15);
 	});
 
 	it('maps the filter: cutoff 20 Hz–20 kHz, flat to peaky resonance, envelope and key tracking in cents', () => {

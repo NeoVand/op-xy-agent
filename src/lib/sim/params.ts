@@ -351,9 +351,10 @@ export function defaultTrack(engine: EngineId): TrackState {
 	return {
 		engine,
 		m1: defaultM1(engine),
-		// TE's M2 art: a sharp amp envelope with a long sustain, a slower filter envelope
-		amp: { attack: 0, decay: 99, sustain: 76, release: 0 },
-		filterEnv: { attack: 99, decay: 99, sustain: 41, release: 88 },
+		// TE's M2 art: a sharp amp envelope with a long sustain, a slower filter envelope. Release is
+		// the device's handle position: 99 puts it on the end (no release), lower is longer
+		amp: { attack: 0, decay: 99, sustain: 76, release: 99 },
+		filterEnv: { attack: 99, decay: 99, sustain: 41, release: 29 },
 		envelope: 'amp',
 		playMode: { mode: 0, portamento: 0, bend: 2, volume: 44 },
 		filter: { type: 'svf', on: true, cutoff: 99, resonance: 0, envAmount: 0, keyTracking: 0 },

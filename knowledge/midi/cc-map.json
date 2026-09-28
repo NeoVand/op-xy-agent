@@ -275,6 +275,10 @@
 		},
 		"DRUMTOOL": {
 			"path": "research/repos/buba447_opxy-drum-tool/index.html"
+		},
+		"DEVICE-CAMERA": {
+			"path": "docs/research/59-screen-profiling.md",
+			"note": "camera captures of the owner's OP-XY screen under CC sweeps, OS 1.1.33, 2026-09-27/28"
 		}
 	},
 	"channels": {
@@ -938,9 +942,11 @@
 					"name": "amp attack",
 					"lane": "M2.dark",
 					"range": [0, 127],
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "Moves the peak handle right along the top (0: at the start, 127: 115 px in); screen-verified 1.1.33 (note 59 §2.2)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 21,
@@ -948,9 +954,11 @@
 					"name": "amp decay",
 					"lane": "M2.mid",
 					"range": [0, 127],
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "Moves the decay end right of the peak (127: 101 px past it); screen-verified 1.1.33",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 22,
@@ -958,9 +966,11 @@
 					"name": "amp sustain",
 					"lane": "M2.light",
 					"range": [0, 127],
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "Raises the sustain level, linear, from the axis (0) to the top (127); screen-verified 1.1.33",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 23,
@@ -968,9 +978,11 @@
 					"name": "amp release",
 					"lane": "M2.white",
 					"range": [0, 127],
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "Release is a handle position: 0 starts it 107 px before the end (the longest), 127 puts it on the end (none), so higher is SHORTER; screen-verified 1.1.33",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 24,
@@ -978,10 +990,11 @@
 					"name": "filter env attack",
 					"lane": "M2alt.dark",
 					"range": [0, 127],
-					"semantics": "M2 alternate page (click an encoder to switch amp/filter envelope)",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCKS", "TE-INST"],
-					"sideEffect": "project"
+					"semantics": "Filter envelope attack, as CC20; sets the filter envelope whichever envelope M2 shows; screen-verified 1.1.33",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCKS", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 25,
@@ -989,10 +1002,11 @@
 					"name": "filter env decay",
 					"lane": "M2alt.mid",
 					"range": [0, 127],
-					"semantics": "M2 alternate page (click an encoder to switch amp/filter envelope)",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCKS", "TE-INST"],
-					"sideEffect": "project"
+					"semantics": "Filter envelope decay, as CC21; screen-verified 1.1.33",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCKS", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 26,
@@ -1000,10 +1014,11 @@
 					"name": "filter env sustain",
 					"lane": "M2alt.light",
 					"range": [0, 127],
-					"semantics": "M2 alternate page (click an encoder to switch amp/filter envelope)",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCKS", "TE-INST"],
-					"sideEffect": "project"
+					"semantics": "Filter envelope sustain, as CC22; screen-verified 1.1.33",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCKS", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 27,
@@ -1011,10 +1026,11 @@
 					"name": "filter env release",
 					"lane": "M2alt.white",
 					"range": [0, 127],
-					"semantics": "M2 alternate page (click an encoder to switch amp/filter envelope)",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCKS", "TE-INST"],
-					"sideEffect": "project"
+					"semantics": "Filter envelope release, as CC23 (higher is shorter); screen-verified 1.1.33",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCKS", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 28,

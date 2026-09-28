@@ -45,6 +45,11 @@ export interface TextOptions {
 	readonly align?: TextAlign;
 	/** Extra space after each glyph in em (TE's styles run from about −0.07 to +0.05). */
 	readonly tracking?: number;
+	/**
+	 * The heavier weight the device uses for some labels (the envelope names): the light outlines
+	 * stroked in their own colour, 0.9 px at 20 px, with a little more tracking.
+	 */
+	readonly bold?: boolean;
 }
 
 /** A glyph placed on a line: `x` is its pen position in pixels from the run's start. */
@@ -167,7 +172,8 @@ export class ScreenFont {
 	 * Returns the advance width drawn.
 	 */
 	draw(ctx: ScreenCtx, text: string, x: number, y: number, options: TextOptions): number {
-		const { size, color, align = 'left', tracking = 0 } = options;
+		const { size, color, align = 'left', bold = false } = options;
+		const tracking = (options.tracking ?? 0) + (bold ? 0.03 : 0);
 		const run = this.layout(text, size, tracking);
 		const x0 = align === 'center' ? x - run.width / 2 : align === 'right' ? x - run.width : x;
 		const k = size / this.#upm;
@@ -179,8 +185,14 @@ export class ScreenFont {
 				ctx.beginPath();
 				tracePath(ctx, compiled(glyph.d), x0 + g.x, y, k);
 				ctx.fill();
+				if (bold) {
+					ctx.lineWidth = (0.9 * size) / 20;
+					ctx.lineJoin = 'round';
+					if (color) ctx.strokeStyle = color;
+					ctx.stroke();
+				}
 			} else {
-				ctx.font = `300 ${size}px ${FALLBACK_FAMILY}`;
+				ctx.font = `${bold ? 500 : 300} ${size}px ${FALLBACK_FAMILY}`;
 				ctx.textAlign = 'left';
 				ctx.textBaseline = 'alphabetic';
 				ctx.fillText(g.name, x0 + g.x, y);

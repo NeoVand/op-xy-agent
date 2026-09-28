@@ -929,16 +929,16 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(on(d, 'envelope').filter.sustain).toBe(0);
 		});
 
-		it('draws the filter envelope’s reach from M3’s envelope amount', async () => {
+		it('draws the filter envelope at full height whatever M3’s envelope amount (device, 1.1.33)', async () => {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m2');
-			// the bass preset opens its filter with the envelope, a third of the way (34)
-			expect(on(d, 'envelope').filterDepth).toBeCloseTo(11120 / 32767, 9);
+			const before = on(d, 'envelope').filter;
 			await d.click('key.m3');
 			await d.turn(3, -50);
 			await d.click('key.m2');
-			expect(on(d, 'envelope').filterDepth).toBeCloseTo(16 / 99, 9);
+			expect(on(d, 'envelope').filter).toEqual(before);
+			expect(on(d, 'envelope')).not.toHaveProperty('filterDepth');
 		});
 
 		it('shows play mode while shift is held on M2: a new project’s bass is mono, bend 2 semitones, volume 75', async () => {

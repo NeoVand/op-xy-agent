@@ -44,13 +44,19 @@ export function envelopeTime(value: number, floor: number): number {
 	return 0.0111 * (Math.exp(10.386 * unit(value)) - 1) + floor;
 }
 
-/** Envelope times on the measured law: from 1.5 ms (attack), 20 ms (decay) or 15 ms (release) up. */
+/**
+ * Envelope times on the measured law: from 1.5 ms (attack), 20 ms (decay) or 15 ms (release) up.
+ * The release lane is the release handle's position on the M2 graph (camera, 1.1.33; note 59
+ * §2.2): at 99 the handle sits on the end, at 0 it starts 107 px before it. So a higher value is a
+ * shorter release, and the time runs on the attack's law from the other end. A new project's bass
+ * (release 79) stops in about 0.1 s, as the device does.
+ */
 export function envelopeSeconds(env: Envelope99): Adsr {
 	return {
 		attack: envelopeTime(env.attack, 0.0015),
 		decay: envelopeTime(env.decay, 0.02),
 		sustain: unit(env.sustain),
-		release: envelopeTime(env.release, 0.015)
+		release: envelopeTime(99 - env.release, 0.015)
 	};
 }
 

@@ -13,6 +13,7 @@ import { frameToSvg } from './svg';
 import type { ScreenFrame } from './frame';
 import { COLORS, RAMP } from './palette';
 import { cutoffX, freqToX } from './pages/filter';
+import { ENVELOPE_GRAPH, envelopePoints } from './pages/envelope';
 
 const ROOT = path.resolve(import.meta.dirname, '../../../..');
 
@@ -112,10 +113,9 @@ describe('path data', () => {
 
 const header = (labels: string[]) => labels.map((label) => ({ label, value: '80' }));
 const envelope = {
-	amp: { attack: 0, decay: 1, sustain: 0.76, release: 0 },
-	filter: { attack: 1, decay: 1, sustain: 0.41, release: 0.88 },
-	selected: 'amp' as const,
-	filterDepth: 0.66
+	amp: { attack: 0, decay: 1, sustain: 0.76, release: 1 },
+	filter: { attack: 1, decay: 1, sustain: 0.41, release: 0.29 },
+	selected: 'amp' as const
 };
 const filter = {
 	type: 'svf' as const,
@@ -131,6 +131,28 @@ function record(frame: ScreenFrame): RecordingContext {
 	renderFrame(ctx, frame);
 	return ctx;
 }
+
+describe('envelope graph (measured on the device, note 59 §2.2)', () => {
+	const env = (attack: number, decay: number, sustain: number, release: number) =>
+		envelopePoints({ attack, decay, sustain, release });
+
+	it('slides each handle linearly: peak up to 115 px, decay end 101 px past it, sustain to the top', () => {
+		expect(env(0, 0, 0, 1).peakX).toBe(ENVELOPE_GRAPH.left);
+		expect(env(1, 0, 0, 1).peakX).toBe(ENVELOPE_GRAPH.left + 115);
+		// the device at CC 64 of 127: the peak 57.8 px in, the decay end 50.9 px past it
+		expect(env(64 / 127, 0, 0, 1).peakX - ENVELOPE_GRAPH.left).toBeCloseTo(57.8, 0);
+		expect(env(0, 64 / 127, 0, 1).decayEnd - ENVELOPE_GRAPH.left).toBeCloseTo(50.9, 0);
+		expect(env(0, 0, 1, 1).levelY).toBe(ENVELOPE_GRAPH.top);
+		expect(env(0, 0, 0, 1).levelY).toBe(ENVELOPE_GRAPH.base);
+	});
+
+	it('places the release handle by its value: 0 starts 107 px before the end, full sits on it', () => {
+		expect(env(0, 0, 0.5, 0).releaseStart).toBe(ENVELOPE_GRAPH.right - 107);
+		expect(env(0, 0, 0.5, 1).releaseStart).toBe(ENVELOPE_GRAPH.right);
+		// a higher release value moves the handle right: a shorter release
+		expect(env(0, 0, 0.5, 0.8).releaseStart).toBeGreaterThan(env(0, 0, 0.5, 0.2).releaseStart);
+	});
+});
 
 describe('renderFrame (recorded draw calls)', () => {
 	it('clears to black and clips to the rounded display', () => {
@@ -173,12 +195,16 @@ describe('renderFrame (recorded draw calls)', () => {
 		expect(bpm).toHaveLength(3);
 	});
 
-	it('draws the selected envelope with five handles', () => {
+	it('draws the selected envelope with five 8 px handles, white, as the device does', () => {
 		const ctx = record({ page: 'envelope', ...envelope });
-		const handles = ctx.fills.filter(
-			(f) => Math.abs(f.x1 - f.x0 - 5) < 0.6 && Math.abs(f.y1 - f.y0 - 5) < 0.6
-		);
+		const handles = ctx
+			.fillsOf(COLORS.white)
+			.filter((f) => Math.abs(f.x1 - f.x0 - 8) < 0.6 && Math.abs(f.y1 - f.y0 - 8) < 0.6);
 		expect(handles).toHaveLength(5);
+		// the start and end handles sit on the axis at 41 and 440
+		const xs = handles.map((f) => (f.x0 + f.x1) / 2).sort((a, b) => a - b);
+		expect(xs[0]).toBeCloseTo(41, 5);
+		expect(xs[4]).toBeCloseTo(440, 5);
 	});
 
 	it('draws the filter bands, the Q box on the cutoff and the envelope handle', () => {

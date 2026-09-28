@@ -21,6 +21,8 @@ Usage (uv run --with opencv-python-headless --with numpy python research/device/
                             stopped
   record PREFIX             every frame (10 a second) as JPEG into captures/screens/PREFIX/, for
                             animations; runs until stopped
+  realign [GLOB]            re-rectify captures that kept a raw frame, each with its own drift
+                            (the device slides, the phone re-frames) -> captures/aligned/
 """
 
 import json
@@ -368,6 +370,89 @@ def watch(prefix: str, hold: float, every: float | None = None) -> None:
             print(f"{name}.png {log[-1]['time']}", flush=True)
 
 
+ALIGNED = HERE / "captures" / "aligned"
+
+
+def body_mask(shape: tuple, corners: np.ndarray) -> np.ndarray:
+    """The device around the screen (a wide band outside it): what drift is measured on. The screen
+    itself changes from frame to frame, so it is masked, generously, in case it moved."""
+    mask = np.zeros(shape, np.uint8)
+    x0, y0 = int(corners[:, 0].min()) - 300, int(corners[:, 1].min()) - 250
+    x1, y1 = int(corners[:, 0].max()) + 300, int(corners[:, 1].max()) + 300
+    mask[max(y0, 0):y1, max(x0, 0):x1] = 1
+    cv2.fillPoly(mask, [corners.astype(np.int32)], 0)
+    return cv2.erode(mask, np.ones((121, 121), np.uint8))
+
+
+def drift(ref: np.ndarray, img: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, float]:
+    """The 2 × 3 warp taking reference-frame points to this frame's (rotation + translation), from
+    phase correlation at quarter scale (catches large moves) refined by ECC at half scale; and the
+    ECC correlation (1 is perfect)."""
+
+    def masked(g: np.ndarray) -> np.ndarray:
+        return np.where(mask > 0, g, g[mask > 0].mean()).astype(np.float32)
+
+    small = lambda g: cv2.resize(g, (g.shape[1] // 4, g.shape[0] // 4), interpolation=cv2.INTER_AREA)
+    a, b = small(masked(ref)), small(masked(img))
+    (dx, dy), _ = cv2.phaseCorrelate(a, b, cv2.createHanningWindow(a.shape[::-1], cv2.CV_32F))
+    half = lambda g: cv2.GaussianBlur(cv2.resize(g, (g.shape[1] // 2, g.shape[0] // 2),
+                                                 interpolation=cv2.INTER_AREA), (0, 0), 1.5)
+    warp = np.array([[1, 0, dx * 2], [0, 1, dy * 2]], np.float32)
+    mask_half = cv2.resize(mask, (mask.shape[1] // 2, mask.shape[0] // 2), interpolation=cv2.INTER_NEAREST)
+    try:
+        cc, warp = cv2.findTransformECC(half(ref.astype(np.float32)), half(img.astype(np.float32)), warp,
+                                        cv2.MOTION_EUCLIDEAN,
+                                        (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 80, 1e-5),
+                                        mask_half, 5)
+    except cv2.error:
+        cc = 0.0
+    warp[:, 2] *= 2
+    return warp, float(cc)
+
+
+def _realign_one(job: tuple) -> dict:
+    raw_path, calib_data, ref_path = job
+    ref = cv2.cvtColor(cv2.imread(str(ref_path)), cv2.COLOR_BGR2GRAY)
+    corners = np.array(calib_data["corners"], np.float32)
+    mask = body_mask(ref.shape, corners)
+    img = cv2.imread(str(raw_path))
+    if img is None:
+        return {"raw": raw_path.name, "error": "unreadable"}
+    warp, cc = drift(ref, cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), mask)
+    moved = np.hstack([corners, np.ones((4, 1), np.float32)]) @ warp.T
+    data = {**calib_data, "corners": moved.tolist()}
+    name = raw_path.name.replace("-raw.jpg", "")
+    cv2.imwrite(str(ALIGNED / f"{name}.png"), rectify(img, data))
+    return {"name": name, "dx": round(float(warp[0, 2]), 2), "dy": round(float(warp[1, 2]), 2),
+            "rot": round(float(np.degrees(np.arctan2(warp[1, 0], warp[0, 0]))), 3), "ecc": round(cc, 3)}
+
+
+def realign(pattern: str) -> None:
+    """Re-rectifies every capture that kept its raw frame (captures/screens/*-raw.jpg matching
+    `pattern`) with its own drift from the calibration frame, into captures/aligned/NAME.png, with
+    each frame's drift in aligned/index.json."""
+    from multiprocessing import Pool
+
+    ALIGNED.mkdir(parents=True, exist_ok=True)
+    data = load_calib()
+    ref = CAM / "calib-raw.jpg"
+    if not ref.exists():
+        raise SystemExit("no calib-raw.jpg: run calib --lit first")
+    raws = sorted(SCREENS.glob(f"{pattern}-raw.jpg"))
+    index_path = ALIGNED / "index.json"
+    index = json.loads(index_path.read_text()) if index_path.exists() else {}
+    with Pool() as pool:
+        for i, row in enumerate(pool.imap_unordered(_realign_one, [(r, data, ref) for r in raws], 8)):
+            if "name" in row:
+                index[row.pop("name")] = row
+            if i % 200 == 0:
+                print(f"{i}/{len(raws)}", flush=True)
+                index_path.write_text(json.dumps(index, indent=0, sort_keys=True))
+    index_path.write_text(json.dumps(index, indent=0, sort_keys=True))
+    weak = {k: v for k, v in index.items() if v["ecc"] < 0.6}
+    print(f"{len(raws)} frames realigned into {ALIGNED}; {len(weak)} with a weak match (ecc < 0.6)")
+
+
 def record(prefix: str) -> None:
     """Every camera frame (ten a second), rectified, as JPEG into captures/screens/PREFIX/, with
     the time of each in PREFIX/frames.json: for animations. Runs until stopped."""
@@ -400,6 +485,8 @@ if __name__ == "__main__":
         calib(args[args.index("--guess") + 1] if "--guess" in args else None)
     elif args[0] == "snap" and len(args) > 1:
         snap(args[1])
+    elif args[0] == "realign":
+        realign(args[1] if len(args) > 1 else "*")
     elif args[0] == "record" and len(args) > 1:
         record(args[1])
     elif args[0] == "watch" and len(args) > 1:

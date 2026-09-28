@@ -37,8 +37,6 @@ export interface EnvelopeView {
 	readonly filter: Adsr;
 	/** Which envelope the encoders edit (click any encoder to swap). */
 	readonly selected: 'amp' | 'filter';
-	/** How far the filter envelope moves the filter (|M3 envelope amount|, 0–1); scales "mod". */
-	readonly filterDepth?: number;
 }
 
 /** The tempo page (press tempo anywhere). */

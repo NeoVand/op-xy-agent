@@ -127,9 +127,10 @@ export function text(
 	size: number,
 	color: string,
 	align: TextAlign = 'left',
-	tracking = 0
+	tracking = 0,
+	bold = false
 ): number {
-	return screenFont.draw(ctx, value, x, y, { size, color, align, tracking });
+	return screenFont.draw(ctx, value, x, y, { size, color, align, tracking, bold });
 }
 
 /**

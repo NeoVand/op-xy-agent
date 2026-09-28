@@ -45,7 +45,6 @@ exports[`frames and formats > builds stable frames for a new project (snapshot) 
       "release": 0.7250282296212653,
       "sustain": 0.02999969481490524,
     },
-    "filterDepth": 0.924253059480575,
     "page": "envelope",
     "selected": "amp",
   },

@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "72720f64",
+	"bundle_hash": "3c09dac8",
 	"stats": {
 		"units": 158,
-		"facts": 941,
+		"facts": 946,
 		"procedures": 187,
 		"parameters": 207,
-		"verified_items": 34,
-		"words": 35164,
+		"verified_items": 40,
+		"words": 35409,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -8741,7 +8741,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -8770,11 +8770,51 @@
 				},
 				{
 					"id": "midi-ccs",
-					"text": "Over MIDI, CC20–23 set the amp envelope and CC24–27 the filter envelope, each in attack, decay, sustain, release order.",
-					"source": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
+					"text": "Over MIDI, CC20–23 set the amp envelope and CC24–27 the filter envelope, each in attack, decay, sustain, release order, whichever envelope the page shows.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community-verified"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "The page draws both envelopes at once. The one the encoders edit is bright, with five square handles (start, peak, decay end, release start, end) and thin lines dropping from the inner three; the other is grey, without handles. Each is named, \"amp\" or \"filter\", just left of its release handle.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "handles",
+					"text": "Each encoder slides one handle. Attack moves the peak right along the top, decay moves the decay end right of the peak, sustain raises the level, and release moves the release start right toward the end.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "release-direction",
+					"text": "Release is set by where its handle sits, so turning E4 clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "shape",
+					"text": "There is no plateau after the attack; the decay starts at the peak. The attack rises steeply and bends into the peak, and decay and release fall steeply and level off.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "full-height",
+					"text": "The filter envelope is always drawn at full height; its real reach is set by envelope amount on `M3`.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -8857,7 +8897,7 @@
 					"default": null,
 					"cc": 23,
 					"cc_confidence": "community-verified",
-					"note": "fade-out after the key is let go",
+					"note": "fade-out after the key is let go; clockwise moves the release handle right, a shorter release",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
 					"firmware_min": null,
 					"verified_on": null,
@@ -8921,7 +8961,7 @@
 					"default": null,
 					"cc": 27,
 					"cc_confidence": "community-verified",
-					"note": null,
+					"note": "clockwise is shorter, as for the amp release",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
 					"firmware_min": null,
 					"verified_on": null,
@@ -8933,7 +8973,7 @@
 				"instrument.filter",
 				"instrument.overview"
 			],
-			"body": "Envelopes give every note a shape in time: short and snappy amp settings for plucks and drums, slow\nones for pads. The filter envelope runs the same four stages but moves the cutoff instead, as far as\nenvelope amount on `M3` allows. The shift layer of `M2` holds the voice settings (play mode,\nportamento, bend range, preset volume).",
+			"body": "Envelopes give every note a shape in time: short and snappy amp settings for plucks and drums, slow\nones for pads. Read the graph as time running left to right: a peak far to the right is a slow\nattack, a release handle far to the left is a long release (release turned down), one sitting on\nthe end is none (release turned all the way up). The filter envelope runs the same four stages but moves the cutoff instead, as far as\nenvelope amount on `M3` allows. The shift layer of `M2` holds the voice settings (play mode,\nportamento, bend range, preset volume).",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
@@ -8944,7 +8984,7 @@
 					"kind": "guide"
 				},
 				{
-					"url": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
+					"url": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
 					"kind": "research"
 				}
 			],
