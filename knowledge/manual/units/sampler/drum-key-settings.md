@@ -47,7 +47,12 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: shift-screen
-    text: With `shift` held the page shows direction, pan as a bar from L to R, fade as a dark ramp drawn over the wave, and gain, which scales the drawn wave.
+    text: With `shift` held the page shows direction, pan as a bar from L to R, fade as a dark ramp that rises from the start marker over the wave, and gain, which scales the drawn wave.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: tune-reading
+    text: Tune is always signed, so no transposition reads +0.00, and it reaches well past an octave (−16.10 was seen on a key).
     source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
     confidence: verified
     verified_on: '1.1.33'

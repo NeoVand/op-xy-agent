@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1090 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1091 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -2693,7 +2693,8 @@ Facts:
 - The screen draws the sample fade over the waveform. [#fade-drawn] (since 1.1.15) [s5]
 - The guide's texts for pan and sample fade describe tune and loop crossfade — copied from the synth sampler by mistake. [#guide-errors] (derived) [s6]
 - The page shows the selected key's waveform with the skipped parts tinted blue and start and end markers; tune reads as a note symbol and a signed value such as −16.10, moving in steps of 0.1, and play mode as one of four icons — an arrow to a bar, a plain arrow, an arrow with G, or a loop. [#screen] (verified 1.1.33) [s7]
-- With `shift` held the page shows direction, pan as a bar from L to R, fade as a dark ramp drawn over the wave, and gain, which scales the drawn wave. [#shift-screen] (verified 1.1.33) [s7]
+- With `shift` held the page shows direction, pan as a bar from L to R, fade as a dark ramp that rises from the start marker over the wave, and gain, which scales the drawn wave. [#shift-screen] (verified 1.1.33) [s7]
+- Tune is always signed, so no transposition reads +0.00, and it reaches well past an octave (−16.10 was seen on a key). [#tune-reading] (verified 1.1.33) [s7]
 - CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s7]
 
 Parameters:
