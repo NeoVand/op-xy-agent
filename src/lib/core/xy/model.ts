@@ -208,7 +208,11 @@ export interface XySettings {
 	sceneLength: number;
 	/** Project transpose, semitones. */
 	transpose: number;
-	/** 0x10 3/4, 0x11 4/4 … 0x15 12/8: `0x10 + ` the index in {@link XY_TIME_SIGNATURES}. */
+	/**
+	 * 0x10 3/4, 0x11 4/4 … 0x15 12/8: `0x10 + ` the index in {@link XY_TIME_SIGNATURES}, as OS 1.1.4
+	 * new projects store it; the owner's OS 1.1.33 project stores the bare index (4/4 as 1). Read it
+	 * with {@link timeSignatureOf}.
+	 */
 	timeSignature: number;
 	/** Keyboard octave of T1–T16 (★ §3.2: a new project has T3 −1, T4 +1, T6 −1, T10 +4). */
 	octaves: number[];
@@ -246,8 +250,17 @@ export const XY_GROOVES = [
 	'prophetic'
 ] as const;
 
-/** Time signatures; the byte is 0x10 + the index. */
+/** Time signatures; the byte is 0x10 + the index, or the bare index ({@link timeSignatureOf}). */
 export const XY_TIME_SIGNATURES = ['3/4', '4/4', '5/4', '6/8', '7/8', '12/8'] as const;
+
+/**
+ * The time signature a byte means, in either form a device writes: `0x10 +` the index or the bare
+ * index; undefined for any other byte.
+ */
+export function timeSignatureOf(raw: number): (typeof XY_TIME_SIGNATURES)[number] | undefined {
+	if ((raw & ~0x1f) !== 0 || (raw & 0x0f) >= XY_TIME_SIGNATURES.length) return undefined;
+	return XY_TIME_SIGNATURES[raw & 0x0f];
+}
 
 /** Scene length modes by their byte. */
 export const XY_SCENE_LENGTHS = ['longest', 'shortest', 'time signature'] as const;

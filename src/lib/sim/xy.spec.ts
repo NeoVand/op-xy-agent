@@ -19,6 +19,7 @@ import { decodeXy, encodeXy } from '$lib/core/xy/container';
 import { XyModelError } from '$lib/core/xy/errors';
 import { XY_STEP_COMPONENTS } from '$lib/core/xy/model';
 import { readProject } from '$lib/core/xy/read';
+import { writeProject } from '$lib/core/xy/write';
 import { simToXy, xyToSim } from './xy';
 
 const fixture = (name: string) =>
@@ -416,6 +417,19 @@ describe('xyToSim', () => {
 		expect(locked.length).toBeGreaterThan(0);
 	});
 
+	it('reads a time signature in both forms, keeps the form it read, and keeps untouched songs empty', () => {
+		const project = readProject(blank);
+		const bare = structuredClone(project);
+		bare.settings.timeSignature = 0x01;
+		bare.songs[13] = { scenes: [], loop: true };
+		const bytes = writeProject(bare, blank);
+		const { state } = xyToSim(bytes);
+		expect(state.areas.system.projectSettings.signature).toBe(1); // 4/4
+		expect(simToXy(state, bytes).bytes).toEqual(bytes);
+		state.areas.system.projectSettings.signature = 3; // 6/8
+		expect(readProject(simToXy(state, bytes).bytes).settings.timeSignature).toBe(0x13);
+	});
+
 	it('names what it cannot take', () => {
 		const project = readProject(blank);
 		const odd = structuredClone(project);
@@ -437,6 +451,14 @@ describe('xyToSim', () => {
 	});
 });
 
+/** The owner's open project on 2026-09-28: 4/4 stored as 1, untouched songs empty (local only). */
+const OWNER_PROJECT = fileURLToPath(
+	new URL(
+		'../../../research/device/captures/mtp/projects__workspace-2026-09-28.xy',
+		import.meta.url
+	)
+);
+
 const OWNER_BLANK = fileURLToPath(
 	new URL('../../../research/device/captures/mtp/projects__workspace.xy', import.meta.url)
 );
@@ -456,5 +478,14 @@ describe.skipIf(!existsSync(OWNER_BLANK))(
 			const { state } = xyToSim(file);
 			expect(simToXy(state, file).bytes).toEqual(file);
 		});
+
+		it.skipIf(!existsSync(OWNER_PROJECT))(
+			'loads the project the owner had open (read over MTP from the browser) and writes it back byte for byte',
+			() => {
+				const file = new Uint8Array(readFileSync(OWNER_PROJECT));
+				const { state } = xyToSim(file);
+				expect(simToXy(state, file).bytes).toEqual(file);
+			}
+		);
 	}
 );

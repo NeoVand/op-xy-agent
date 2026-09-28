@@ -36,6 +36,7 @@ import {
 import {
 	XY_STEP_COMPONENTS,
 	lockBit,
+	timeSignatureOf,
 	type XyLock,
 	type XyNote,
 	type XyPattern,
@@ -152,7 +153,15 @@ function writeSettings(global: Uint8Array, was: XySettings, now: XySettings): vo
 	byte('activeSong', GLOBAL.activeSong, 0, SONGS - 1, 'the active song');
 	byte('sceneLength', GLOBAL.sceneLength, 0, 2, 'the scene length mode');
 	byte('transpose', GLOBAL.transpose, -24, 24, 'the project transpose');
-	byte('timeSignature', GLOBAL.timeSignature, 0x10, 0x15, 'the time signature byte');
+	// both forms a device writes: 0x10 + the index (1.1.4 new projects) or the bare index (1.1.33)
+	if (now.timeSignature !== was.timeSignature) {
+		if (!Number.isInteger(now.timeSignature) || timeSignatureOf(now.timeSignature) === undefined) {
+			throw new XyModelError(
+				`the time signature byte must be 0–5 or 16–21, not ${now.timeSignature}`
+			);
+		}
+		global[GLOBAL.timeSignature] = now.timeSignature;
+	}
 	now.octaves.forEach((octave, t) => {
 		if (octave === was.octaves[t]) return;
 		check(octave, -128, 127, `T${t + 1}'s octave`);

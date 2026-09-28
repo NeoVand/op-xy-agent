@@ -35,6 +35,7 @@ import {
 	blankPattern,
 	quantizeByte,
 	quantizePercent,
+	timeSignatureOf,
 	scaleByte,
 	trackGrooveByte,
 	trackGrooveValue,
@@ -127,10 +128,12 @@ export function simToXy(state: SimState, template: Uint8Array): SimToXyResult {
 		reportSound(state, t, base, skipped);
 	}
 	writeScenes(state, base, project, skipped);
-	project.songs = state.areas.arrange.songs.map((song) => ({
-		scenes: [...song.order],
-		loop: song.loop
-	}));
+	project.songs = state.areas.arrange.songs.map((song, i) => {
+		const was = base.songs[i];
+		// OS 1.1.33 stores a song never edited as empty, where the simulator holds scene 1
+		const untouched = was?.scenes.length === 0 && song.order.length === 1 && song.order[0] === 0;
+		return untouched && was.loop === song.loop ? was : { scenes: [...song.order], loop: song.loop };
+	});
 	return { bytes: writeProject(project, template), project, skipped };
 }
 
@@ -167,7 +170,11 @@ function writeSettings(state: SimState, base: XyProject, project: XyProject): vo
 	s.activeScene = areas.arrange.scene;
 	s.activeSong = areas.arrange.song;
 	s.sceneLength = XY_SCENE_LENGTHS.indexOf(mode);
-	s.timeSignature = 0x10 + XY_TIME_SIGNATURES.indexOf(signature);
+	// a byte in either form that means the same signature stays as it is
+	s.timeSignature =
+		timeSignatureOf(was.timeSignature) === signature
+			? was.timeSignature
+			: 0x10 + XY_TIME_SIGNATURES.indexOf(signature);
 	s.transpose = settings.transpose;
 	s.voices = settings.voices.slice(0, 8);
 	s.midiChannels = settings.channels.slice(0, TRACKS).map((channel) => channel || null);
@@ -480,7 +487,7 @@ function readSettings(project: XyProject, state: SimState, skipped: string[]): v
 	areas.arrange.scene = Math.min(SIM_SCENES - 1, s.activeScene);
 	areas.arrange.song = s.activeSong;
 	const mode = XY_SCENE_LENGTHS[s.sceneLength];
-	const signature = XY_TIME_SIGNATURES[s.timeSignature - 0x10];
+	const signature = timeSignatureOf(s.timeSignature);
 	// the project page offers longest and time signature; "shortest" has no place there yet
 	const length = SCENE_LENGTH_MODES.findIndex((m) => m === mode);
 	if (length >= 0) settings.sceneLength = length;
