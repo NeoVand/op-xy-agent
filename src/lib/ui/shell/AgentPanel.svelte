@@ -40,9 +40,11 @@ waits for you to ask); production builds drop that code.
 	import Conversation from '$lib/agent/ui/Conversation.svelte';
 	import CostMeter from '$lib/agent/ui/CostMeter.svelte';
 	import KeySettings from '$lib/agent/ui/KeySettings.svelte';
+	import ListenLight from '$lib/agent/ui/ListenLight.svelte';
 	import PlanView from '$lib/agent/ui/PlanView.svelte';
 	import RevisionList from '$lib/agent/ui/RevisionList.svelte';
 	import { getDeviceStack } from '$lib/device/context';
+	import type { AudioCapture } from '$lib/device/listen/capture.svelte';
 	import type { DeviceStack } from '$lib/device/stack';
 	import { getReplicaState } from '$lib/replica/context';
 	import type { ReplicaState } from '$lib/replica/state.svelte';
@@ -78,6 +80,8 @@ waits for you to ask); production builds drop that code.
 	const uid = $props.id();
 
 	let conductor = $state.raw<Conductor | null>(null);
+	/** The agent's ears (the OP-XY's USB audio or the replica's sound); made with the agent's chunk. */
+	let capture = $state.raw<AudioCapture | null>(null);
 	let booting = $state(false);
 	let bootError = $state<string | null>(null);
 	let settingsOpen = $state(false);
@@ -216,9 +220,10 @@ waits for you to ask); production builds drop that code.
 		bootError = null;
 		keyStatus = 'unchecked';
 		try {
-			const { createBrowserConductor } = await import('$lib/agent/runtime');
+			const { createBrowserConductor, createBrowserCapture } = await import('$lib/agent/runtime');
 			conductor?.dispose();
 			conductor = null;
+			capture ??= createBrowserCapture(() => sound?.listenTap() ?? null);
 			const next = await createBrowserConductor({
 				apiKey,
 				device,
@@ -226,7 +231,8 @@ waits for you to ask); production builds drop that code.
 				simulator,
 				sound,
 				persistence,
-				guide
+				guide,
+				listen: capture
 			});
 			conductor = next;
 			booting = false;
@@ -421,7 +427,9 @@ waits for you to ask); production builds drop that code.
 			{/if}
 		</div>
 		<div class="agent__actions">
-			{#if stateText}<span class="agent__state" aria-live="polite">{stateText}</span>{/if}
+			{#if capture?.active}
+				<ListenLight activity={capture.active} level={capture.level} />
+			{:else if stateText}<span class="agent__state" aria-live="polite">{stateText}</span>{/if}
 			{#if conductor && conductor.entries.length > 0 && !settingsOpen}
 				<Button size="sm" variant="ghost" onclick={() => void conductor?.newThread()}>new</Button>
 			{/if}

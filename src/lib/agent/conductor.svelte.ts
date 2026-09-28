@@ -46,6 +46,7 @@ import {
 	type ModelQuirks,
 	type Transcript
 } from './loop';
+import type { ListenHost } from './listen-host';
 import type { ManualEntry, ManualSource, ManualSourceKind } from './manual-source';
 import { DEFAULT_CONDUCTOR_MODEL, modelOptions, type ModelOption } from './models';
 import { PolicyGate } from './policy';
@@ -94,6 +95,8 @@ export interface ConductorOptions {
 	readonly virtual?: VirtualOpxy | null;
 	/** The replica walkthrough (plan_steps with guide); absent when headless. */
 	readonly guide?: GuideHost | null;
+	/** Listening to the OP-XY or the replica (listen, listen_tracks); absent when headless. */
+	readonly listen?: ListenHost | null;
 	readonly manual: ManualSource;
 	readonly store: ThreadStore;
 	/** Remembers the last thread and the chosen model; memory-only when absent. */
@@ -257,6 +260,7 @@ export class Conductor {
 			screen: options.screen ?? null,
 			virtual: options.virtual ?? null,
 			guide: options.guide ?? null,
+			listen: options.listen ?? null,
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,

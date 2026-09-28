@@ -131,7 +131,10 @@ describe('ToolRegistry', () => {
 
 describe('the conductor tool set', () => {
 	it('stays within the API’s budget of optional parameters (it refuses more than 24)', () => {
-		const tools = createConductorRegistry().apiTools();
+		// the API compiles only the strict schemas, so only they count
+		const tools = createConductorRegistry()
+			.apiTools()
+			.filter((t) => t.strict);
 		const optional = tools.reduce(
 			(n, t) => n + optionalParameters(t.input_schema as Record<string, unknown>),
 			0
@@ -159,7 +162,9 @@ describe('the conductor tool set', () => {
 			plan_steps: 'ui',
 			write_pattern: 'mutate',
 			read_pattern: 'read',
-			write_arrangement: 'mutate'
+			write_arrangement: 'mutate',
+			listen: 'read',
+			listen_tracks: 'mutate'
 		});
 	});
 
@@ -167,7 +172,7 @@ describe('the conductor tool set', () => {
 		const asks = CONDUCTOR_TOOLS.filter(asksForApproval)
 			.map((t) => t.name)
 			.sort();
-		expect(asks).toEqual(['mute_track', 'set_sound', 'set_tempo']);
+		expect(asks).toEqual(['listen_tracks', 'mute_track', 'set_sound', 'set_tempo']);
 	});
 
 	it('runs everything that sends MIDI on the device queue; only panic skips it', () => {
@@ -175,6 +180,7 @@ describe('the conductor tool set', () => {
 			.map((t) => t.name)
 			.sort();
 		expect(device).toEqual([
+			'listen_tracks',
 			'mute_track',
 			'panic',
 			'play_notes',

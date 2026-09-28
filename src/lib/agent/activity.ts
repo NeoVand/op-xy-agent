@@ -105,6 +105,19 @@ export function inputSummary(name: string, input: unknown): string {
 		}
 		case 'task':
 			return clip(text('description') ?? '');
+		case 'listen': {
+			const seconds = count('seconds');
+			const focus = text('focus');
+			return [seconds === null ? '' : `${seconds} s`, focus && focus !== 'all' ? focus : '']
+				.filter(Boolean)
+				.join(', ');
+		}
+		case 'listen_tracks': {
+			const tracks = field(input, 'tracks');
+			return Array.isArray(tracks) && tracks.length > 0
+				? `tracks ${tracks.filter((t) => typeof t === 'number').join(', ')}`
+				: '';
+		}
 		case 'device_status':
 		case 'panic':
 			return '';

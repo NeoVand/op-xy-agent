@@ -4,6 +4,7 @@
  */
 import { DEVICE_TOOLS } from './device';
 import { KNOWLEDGE_TOOLS } from './knowledge';
+import { LISTEN_TOOLS } from './listen';
 import { NAVIGATE_TOOLS } from './navigate';
 import { VIRTUAL_TOOLS } from './virtual';
 import { ToolRegistry, type AnyTool } from './define';
@@ -11,6 +12,7 @@ import { ToolRegistry, type AnyTool } from './define';
 export * from './define';
 export * from './device';
 export * from './knowledge';
+export * from './listen';
 export * from './navigate';
 export * from './virtual';
 
@@ -18,6 +20,7 @@ export * from './virtual';
 export const CONDUCTOR_TOOLS: readonly AnyTool[] = [
 	...DEVICE_TOOLS,
 	...KNOWLEDGE_TOOLS,
+	...LISTEN_TOOLS,
 	...NAVIGATE_TOOLS,
 	...VIRTUAL_TOOLS
 ];

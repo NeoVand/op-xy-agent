@@ -142,6 +142,8 @@ export class AppSound {
 	#coreEngines: ReadonlySet<EngineId> = NO_ENGINES;
 
 	#context: AudioContext | null = null;
+	/** Everything the engine plays on its way out, where listening taps it (`listenTap`). */
+	#master: GainNode | null = null;
 	#loading: Promise<SoundRuntime | null> | null = null;
 	#engine: Engine | null = null;
 	#scheduler: Scheduler | null = null;
@@ -257,6 +259,18 @@ export class AppSound {
 		this.#send({ kind: 'on', key, track, note, velocity });
 		this.#send({ kind: 'off', key, track, note, delay: Math.max(0.02, seconds) });
 		return true;
+	}
+
+	/**
+	 * What the replica plays, for the agent's listening (`$lib/device/listen`): the audio context
+	 * and the node the whole sound passes through on its way out. Wakes the audio as a gesture
+	 * would; null while this computer makes no sound (off, unavailable, or the connected OP-XY
+	 * plays), and until the engine has loaded.
+	 */
+	listenTap(): { readonly context: AudioContext; readonly output: AudioNode } | null {
+		if (!this.enabled || !this.available) return null;
+		this.#unlock();
+		return this.#context && this.#master ? { context: this.#context, output: this.#master } : null;
 	}
 
 	/** Starts listening. Idempotent; returns `stop`. */
@@ -436,7 +450,10 @@ export class AppSound {
 		const context = this.#context;
 		if (!runtime || !context || this.#engine || !this.#stop) return;
 		const simulator = this.#simulator;
-		const engine = new runtime.SoundEngine({ context, samples: this.samples });
+		const master = context.createGain();
+		master.connect(context.destination);
+		this.#master = master;
+		const engine = new runtime.SoundEngine({ context, samples: this.samples, destination: master });
 		this.#engine = engine;
 		this.#tickMs = runtime.TICK_MS;
 		this.#scheduler = new runtime.Scheduler({
@@ -481,6 +498,8 @@ export class AppSound {
 		this.#clearSuspend();
 		this.#engine?.dispose();
 		this.#engine = null;
+		this.#master?.disconnect();
+		this.#master = null;
 		this.#synth = null;
 		this.#synthReady = false;
 		this.#scheduler = null;

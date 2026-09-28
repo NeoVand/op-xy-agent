@@ -21,6 +21,7 @@ import type {
 import { z } from 'zod';
 import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
+import type { ListenHost } from '../listen-host';
 import type { ManualSource } from '../manual-source';
 import type { AgentName, InverseCall, Todo, ToolKind, ToolPreview } from '../types';
 import type { VirtualOpxy } from '../virtual-opxy';
@@ -53,6 +54,8 @@ export interface AgentEnvironment {
 	readonly virtual?: VirtualOpxy | null;
 	/** Walks the user through steps on the replica, one lit step at a time; absent when headless. */
 	readonly guide?: GuideHost | null;
+	/** Records what the OP-XY or the replica plays and hears it (`listen`); absent when headless. */
+	readonly listen?: ListenHost | null;
 	readonly manual: ManualSource;
 	readonly timers: AgentTimers;
 	/** How long device tools wait to see the device confirm a change (e.g. echoed start); 0 = no wait. */

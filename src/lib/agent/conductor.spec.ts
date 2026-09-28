@@ -100,6 +100,9 @@ function receivedCcs(rig: ReturnType<typeof createFakeRig>): number[][] {
 }
 
 describe('conductor: requests and streaming', () => {
+	/** Tools sent without strict mode, to keep the strict ones under the API's grammar size limit. */
+	const LOOSE_TOOLS = ['listen', 'listen_tracks', 'plan_steps'];
+
 	it('sends a cache-friendly, strict request and streams the answer into the chat', async () => {
 		const { api, conductor, events } = await setup([
 			{
@@ -149,8 +152,7 @@ describe('conductor: requests and streaming', () => {
 		expect(names).toContain('set_tempo');
 		expect(names).not.toContain('load_project');
 		for (const tool of body.tools) {
-			// every tool but plan_steps, whose goal fields would overflow the strict grammar
-			expect(tool.strict).toBe(tool.name !== 'plan_steps');
+			expect(tool.strict).toBe(!LOOSE_TOOLS.includes(tool.name));
 			expect(tool.input_schema.additionalProperties).toBe(false);
 		}
 

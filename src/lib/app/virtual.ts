@@ -146,7 +146,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				selectedTrack: s.active === 'auxiliary' ? s.auxTrack + 9 : s.track + 1,
 				tracks,
 				arrangement: readArrangement(),
-				sound: !sound || !sound.available ? 'unavailable' : sound.enabled ? 'on' : 'off'
+				sound: !sound || !sound.available ? 'unavailable' : sound.enabled ? 'on' : 'off',
+				metronome: s.tempo.metronome.on
 			};
 		},
 
