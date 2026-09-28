@@ -187,8 +187,10 @@ owner flagged, then what users see most.
 11. [x] **Aux tracks:** brain M1/M2 (slide), external MIDI (CC slots, LFO), external CV (meter),
         external audio (signal flow), tape, FX I/II (four columns per type); punch-in (the idle
         heartbeat; one still frame per key). Left: the punch-in animations in motion.
-12. [ ] **Behaviour:** the MIDI reach table (sampler M1 and CV ignore CCs); value formats read off the
-        captures (tape %, drive 0–20, bank/program crossed at 0, brain link, prism ratio steps).
+12. [x] **Behaviour:** the MIDI reach table (sampler M1 and CV ignore CCs) is in the manual and
+        `set_sound` keeps to the verified lanes (the simulator itself takes no CCs); the value
+        formats read off the captures are in (tape %, drive 0–20, bank/program crossed at 0, brain
+        link, prism ratio steps, the delay's note values, the filter's 0–99 envelope amount).
 
 ### F3 — Knowledge
 
