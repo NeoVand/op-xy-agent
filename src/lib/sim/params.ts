@@ -15,6 +15,7 @@ import {
 	type EngineId
 } from '$lib/core/opxy';
 import { initialAreaStates, type AreaStates } from './areas/state';
+import type { MotionState } from './motion';
 import { engineInitM1, NEW_PROJECT_TRACKS, soundOf } from './defaults';
 import { emptySequence, type Sequence } from './sequencer';
 import type { HeaderCell } from './screen/draw';
@@ -279,6 +280,8 @@ export interface SimState {
 	taps: number[];
 	/** Each area's own state (`areas/`). */
 	areas: AreaStates;
+	/** What moves the engine pictures (`motion.ts`); made on the first advance when missing. */
+	motion?: MotionState;
 }
 
 /** Clamps to [min, max]. */

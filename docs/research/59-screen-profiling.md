@@ -229,21 +229,50 @@ E3 light grey, E4 white).
 
 ### 2.5 Engine pages (instrument M1)
 
-| Engine        | Picture                                                                                                                                                            | Knobs as seen                                                                                                                                                                                                                                               |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| prism         | triangle, convex lens, concave lens, wedge; light rays through the lenses on every note                                                                            | shape grows the triangle; ratio thickens the convex lens in 10 steps (2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12, 1:16; the sweep skipped 1:3, which note 57's audio fit found); detune slides the concave lens; stereo opens the wedge into an arrowhead |
-| simple        | isometric glass jar on stacked slabs                                                                                                                               | stereo splits it into two jars                                                                                                                                                                                                                              |
-| organ         | four drawbars with scales 8…1, icons on the caps; they slide (animated)                                                                                            | each knob one drawbar                                                                                                                                                                                                                                       |
-| epiano        | isometric stack of layers with tines; coloured top bar (tone, texture, tine, punch)                                                                                |                                                                                                                                                                                                                                                             |
-| dissolve      | full-screen mosaic of squares, always moving                                                                                                                       | fm and detune whiten it                                                                                                                                                                                                                                     |
-| hardsync      | a hair dryer blowing animated blocks; two sub dots; a low-cut S-curve                                                                                              | lowcut slides the S-curve right                                                                                                                                                                                                                             |
-| axis          | isometric three-armed structure of cubes; plain top bar                                                                                                            | each knob lengthens or reshapes an arm                                                                                                                                                                                                                      |
-| wavetable     | the waveform morphing with trails; the first top-bar cell shows the **table name** (basic, buzz, crush, drawbars, fibonacci, fractal, geometric, primes, zap seen) | drift fans the wave into moving ghost copies                                                                                                                                                                                                                |
-| drum sampler  | the key's waveform; skipped parts tinted blue                                                                                                                      | tune "♩ −16.10" (0.1 steps), start and end markers, play mode icons (→\|, →, →G, ⟲). Shift: direction, pan (L▮▮R bar), fade (draws a dark ramp over the wave), gain (scales the wave)                                                                       |
-| synth sampler | overview strip on top (base layer only), L and R waveforms, start / loop / end markers                                                                             | shift: direction, tune "♩ −12.00", crossfade % (a dark wedge at the loop), gain                                                                                                                                                                             |
-| multisampler  | top strip is a full keyboard; the played sample's zone lights and jumps with the octave                                                                            | each zone brings its own waveform and markers; shift as the sampler                                                                                                                                                                                         |
+| Engine        | Picture                                                                                                                                                            | Knobs as seen                                                                                                                                                                                                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| prism         | triangle, convex lens, concave lens, wedge; light rays through the lenses on every note                                                                            | shape grows the triangle; ratio thickens the convex lens (its value steps through 10 ratios: 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12, 1:16; the sweep skipped 1:3, which note 57's audio fit found); detune slides the concave lens; stereo opens the wedge into an arrowhead |
+| simple        | isometric glass jar on stacked slabs                                                                                                                               | stereo splits it into two jars                                                                                                                                                                                                                                                     |
+| organ         | four drawbars with scales 8…1, icons on the caps; they slide (animated)                                                                                            | each knob one drawbar                                                                                                                                                                                                                                                              |
+| epiano        | isometric stack of layers with tines; coloured top bar (tone, texture, tine, punch)                                                                                |                                                                                                                                                                                                                                                                                    |
+| dissolve      | full-screen mosaic of squares, always moving                                                                                                                       | fm whitens it (detune: nothing settles)                                                                                                                                                                                                                                            |
+| hardsync      | a hair dryer blowing animated blocks; two sub dots; a low-cut S-curve                                                                                              | lowcut slides the S-curve right                                                                                                                                                                                                                                                    |
+| axis          | isometric three-armed structure of cubes; plain top bar                                                                                                            | each knob lengthens or reshapes an arm                                                                                                                                                                                                                                             |
+| wavetable     | the waveform morphing with trails; the first top-bar cell shows the **table name** (basic, buzz, crush, drawbars, fibonacci, fractal, geometric, primes, zap seen) | drift fans the wave into moving ghost copies                                                                                                                                                                                                                                       |
+| drum sampler  | the key's waveform; skipped parts tinted blue                                                                                                                      | tune "♩ −16.10" (0.1 steps), start and end markers, play mode icons (→\|, →, →G, ⟲). Shift: direction, pan (L▮▮R bar), fade (draws a dark ramp over the wave), gain (scales the wave)                                                                                              |
+| synth sampler | overview strip on top (base layer only), L and R waveforms, start / loop / end markers                                                                             | shift: direction, tune "♩ −12.00", crossfade % (a dark wedge at the loop), gain                                                                                                                                                                                                    |
+| multisampler  | top strip is a full keyboard; the played sample's zone lights and jumps with the octave                                                                            | each zone brings its own waveform and markers; shift as the sampler                                                                                                                                                                                                                |
 
 **The three sampler engines ignore CC 12–15**: nothing on their M1 pages moves.
+
+**The synth engines' pictures, measured (2026-09-28, from the CC sweeps steps-061…388 and the 10 fps
+runs; design px, lanes 0–1; the code and the rest of the numbers are in
+`src/lib/sim/screen/pages/engines/`):**
+
+- **prism:** the triangle's side is 59.6 + 30.9·shape^1.5 (height 0.87 of it); the convex lens's
+  right face bulges 14.6·ratio, continuously (only the value box steps through the ten ratios); the
+  concave lens slides 39.9·detune; each arm opens 4.3° + 19.4°·stereo. The rays follow thin-lens
+  paths (0.2 px on the convex lens) and show only while notes sound.
+- **simple:** stereo moves the right jar (21, −10.5) and the left one (−21, 10); the loop and the
+  shallow edge-on coil ride the right jar, the steep coil the left one; shape and pw move the loop
+  (4, −2) and (3, 2.5) and the coils up to 10 px; the gaps between the jars' top coils open as they
+  part; noise moves nothing.
+- **organ:** no top bar; caps 50 × 35 at x 60, 180, 300, 420; type moves its cap a 20 px stop per
+  type (one stop out at the first), the others slide theirs 160 px over the range.
+- **epiano:** tone, texture and tine each slide a notch 84.6 px up a layer's front edge; punch moves
+  nothing.
+- **dissolve:** 10 px squares, 48 × 20 from y 21; a third lit up to am 0.6, half at full; the
+  brightest grey climbs the ramp with fm (white by 0.75); swarm evens the greys; detune changes
+  nothing that settles. The mosaic stirs (about 15 deals a second) only while notes sound.
+- **hardsync:** the blocks are 99.5 − 64.4·freq² wide and scatter over 18 px with noise; the S-curve
+  rises at x 204.6 + 225.2·lowcut; sub fills the lower dot; the blocks blow away only while notes
+  sound (about 890 px/s at the note, slowing as it holds).
+- **axis:** a lattice of (14.5, ∓9.4) per block and 16.5 up; tone and shape carry the x line and the
+  column across the junction, the near blocks first; ratio slides the y line 4.2 blocks; tremolo
+  lifts its blocks 7.3 px, one after another.
+- **wavetable:** the sound engine's own frames at each table's level (271 px per unit of
+  level-scaled frame, within 4 %); warp bends the drawing across (two sine terms, fitted on zap);
+  drift turns the bend round and trails fading copies.
 
 ### 2.6 Preset browser (shift + M1)
 
@@ -605,6 +634,11 @@ Not tested on purpose: ext audio CC12 (input select: could open the mic and feed
     run); a queued scene, a muted track, a linked track; two-digit scenes; song mode with loop off
     and a song running out;
   - the aux tracks' octave popup and "copied".
+  - synth engine pictures, filmed at 10 fps or faster while notes play: prism's rays over a note
+    (rise, hold, fade); hardsync's block speed through a long held note; dissolve's deal rate;
+    wavetable's drift spin rate (turns per second); organ's drawbar slide time. And stills between
+    the 16-CC steps: axis's shape (column) and tremolo sweeps, simple's stereo 0.25–0.5 (when the
+    gaps open).
 - **Agent checks:** a walkthrough (`plan_steps` with guide) followed on the real unit, to confirm
   that the steps' screens match the device page by page.
 - **Sounds over USB audio:** punch-in FX, the tape, filters and LFOs (`QUESTIONS.md` 5 and 7), and

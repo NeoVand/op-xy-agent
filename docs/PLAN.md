@@ -181,8 +181,9 @@ owner flagged, then what users see most.
        Left: the cross-fades and slides (b1-741, b1-852).
 9. [x] **Tempo** (metronome weight by BPM, groove slider, speaker waves, pendulum). Left: what
        turns the jack black and how E4's click treats the level.
-10. [ ] **Engine pages:** top-bar styles, each engine's picture and its motion; sampler pages and their
-        shift layers; the preset browser.
+10. [ ] **Engine pages:** top-bar styles, each engine's picture and its motion (done: all eight synth
+        engines drawn from the captures, moving while notes sound); sampler pages and their shift
+        layers (in progress); the preset browser.
 11. [x] **Aux tracks:** brain M1/M2 (slide), external MIDI (CC slots, LFO), external CV (meter),
         external audio (signal flow), tape, FX I/II (four columns per type); punch-in (the idle
         heartbeat; one still frame per key). Left: the punch-in animations in motion.

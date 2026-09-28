@@ -21,6 +21,7 @@ import type { AreaContext } from './areas/types';
 import { nextBendRange } from './defaults';
 import { buildFrame, buildLeds } from './frames';
 import type { SimInput } from './input';
+import { advanceMotion } from './motion';
 import {
 	DUCK_METRONOME,
 	ELEMENT_SOURCES,
@@ -195,6 +196,7 @@ export class OpxySim {
 		{ transport = true, playhead = ms }: { transport?: boolean; playhead?: number } = {}
 	): void {
 		if (ms > 0) for (const area of AREAS) area.advance?.(this.state, ms);
+		if (ms > 0) advanceMotion(this.state, ms);
 		if (transport && playhead > 0) this.#move(playhead / (60000 / this.state.tempo.bpm / 4));
 	}
 

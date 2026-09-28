@@ -65,6 +65,9 @@ function engine(id: string, png: string, name: EngineId, n = 3, note?: string): 
 
 const ENGINE_LABELS = 'TE drew this page with placeholder labels; we show the engine’s real ones.';
 const PLAIN_HEADER = 'TE’s art for this engine has no grey header ramp; the other engines do.';
+const DEVICE_PICTURE =
+	'The picture follows the device’s screen as a camera saw it (docs/research/59-screen-profiling.md §2.5) where it differs from this art, and moves while notes sound.';
+const NO_TOP_BAR = 'The device draws no top bar on this page: the drawbars reach the top edge.';
 
 /** Every scenario, in the guide's order. */
 /** The core's scenarios. */
@@ -81,9 +84,15 @@ const CORE_SCENARIOS: readonly Scenario[] = [
 			sim.press('key.tempo');
 		}
 	},
-	engine('axis', 'synth-engines-007-tone.png', 'axis', 7, `${ENGINE_LABELS} ${PLAIN_HEADER}`),
-	engine('dissolve', 'synth-engines-016-swarm.png', 'dissolve', 5),
-	engine('epiano', 'synth-engines-025-tone.png', 'epiano', 4, ENGINE_LABELS),
+	engine(
+		'axis',
+		'synth-engines-007-tone.png',
+		'axis',
+		7,
+		`${ENGINE_LABELS} ${PLAIN_HEADER} ${DEVICE_PICTURE}`
+	),
+	engine('dissolve', 'synth-engines-016-swarm.png', 'dissolve', 5, DEVICE_PICTURE),
+	engine('epiano', 'synth-engines-025-tone.png', 'epiano', 4, `${ENGINE_LABELS} ${DEVICE_PICTURE}`),
 	{
 		id: 'midi',
 		png: 'synth-engines-034-external-midi-track.png',
@@ -95,11 +104,11 @@ const CORE_SCENARIOS: readonly Scenario[] = [
 			page(sim, 1);
 		}
 	},
-	engine('hardsync', 'synth-engines-048-freq.png', 'hardsync', 6),
-	engine('organ', 'synth-engines-057-type.png', 'organ', 3, ENGINE_LABELS),
-	engine('prism', 'synth-engines-066-shape.png', 'prism', 3),
-	engine('simple', 'synth-engines-075-shape.png', 'simple', 3, PLAIN_HEADER),
-	engine('wavetable', 'synth-engines-084-table.png', 'wavetable', 3),
+	engine('hardsync', 'synth-engines-048-freq.png', 'hardsync', 6, DEVICE_PICTURE),
+	engine('organ', 'synth-engines-057-type.png', 'organ', 3, `${NO_TOP_BAR} ${DEVICE_PICTURE}`),
+	engine('prism', 'synth-engines-066-shape.png', 'prism', 3, DEVICE_PICTURE),
+	engine('simple', 'synth-engines-075-shape.png', 'simple', 3, `${PLAIN_HEADER} ${DEVICE_PICTURE}`),
+	engine('wavetable', 'synth-engines-084-table.png', 'wavetable', 3, DEVICE_PICTURE),
 	{
 		id: 'sampler',
 		png: 'sample-025-sample-start.png',

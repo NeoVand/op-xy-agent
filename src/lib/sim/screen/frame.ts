@@ -68,6 +68,21 @@ export interface SynthFrame {
 	readonly header: readonly HeaderCell[];
 	/** The four parameters 0–1 (animates the illustration where it depends on them). */
 	readonly params: readonly number[];
+	/**
+	 * Notes sounding on the track now (keys held, the pattern under the playhead, a player's): some
+	 * pictures move only while they sound (prism's rays, dissolve's mosaic, hardsync's blocks).
+	 */
+	readonly notes?: number;
+	/** Milliseconds since the latest of those notes began. */
+	readonly onset?: number;
+	/** Milliseconds since the last note stopped, while none sounds (what is lit fades out). */
+	readonly release?: number;
+	/** A clock (ms) that runs only while notes sound: what the sound pushes along moves with it. */
+	readonly travel?: number;
+	/** The parameters as drawn while they slide to new values (organ's drawbars), 0–1. */
+	readonly shown?: readonly number[];
+	/** The simulator's clock (ms) while the picture moves: the time its motion runs on. */
+	readonly time?: number;
 }
 
 /** The drum sampler's M1 page for the selected key (shift: the second layer's header). */

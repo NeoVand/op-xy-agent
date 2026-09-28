@@ -11,6 +11,7 @@ import { soloed, trackMeter } from './areas/mixer/meters';
 import { samplerPage } from './areas/sample/m1';
 import { sequencerLeds } from './areas/sequencer/leds';
 import { bendLabel } from './defaults';
+import { synthMotion } from './motion';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from './screen/pages/lfo';
 import {
 	DUCK_METRONOME,
@@ -170,11 +171,14 @@ function instrumentFrame(s: SimState): ScreenFrame {
 					program: String(t.midi.program)
 				};
 			}
+			// the picture moves with the notes sounding and the values sliding (`motion.ts`)
+			const params = t.m1.map((v) => v / 99);
 			return {
 				page: 'synth',
 				engine: t.engine,
 				header: [0, 1, 2, 3].map((i) => engineCell(t.engine, i, t.m1[i])),
-				params: t.m1.map((v) => v / 99)
+				params,
+				...synthMotion(s, t.engine, params)
 			};
 		}
 		case 2:
