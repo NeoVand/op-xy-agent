@@ -123,8 +123,13 @@ export function patch(kind: PresetKind, regions: Patch['regions']): Patch {
 	};
 }
 
-/** A drum key's region: the sample on one key, played one-shot, at its own pitch. */
-export function drumRegion(key: number, sample: string, frames: number): DrumRegion {
+/** A drum key's region: the sample on one key at its own pitch, one-shot unless told otherwise. */
+export function drumRegion(
+	key: number,
+	sample: string,
+	frames: number,
+	playmode: DrumPlayMode = 'oneshot'
+): DrumRegion {
 	return {
 		'fade.in': 0,
 		'fade.out': 0,
@@ -134,7 +139,7 @@ export function drumRegion(key: number, sample: string, frames: number): DrumReg
 		lokey: key,
 		pan: 0,
 		'pitch.keycenter': 60,
-		playmode: 'oneshot',
+		playmode,
 		reverse: false,
 		sample,
 		'sample.end': frames,

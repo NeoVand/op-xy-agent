@@ -216,6 +216,7 @@ describe('the sound engine, rendered offline', () => {
 		toggleStep(p, 0, [48]);
 		p.steps[0].notes[0].length = 16;
 		setLock(p, 8, 'filter.cutoff', 90); // an empty step, halfway through the note
+		s.tempo.metronome.on = false; // only the note is measured
 		s.transport.playing = true;
 		const { buffer } = await render(1.8, (engine, context) => {
 			engine.sync(s);

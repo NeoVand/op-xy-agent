@@ -59,6 +59,7 @@ import {
 	type AgentEnvironment,
 	type AgentTimers,
 	type GuideHost,
+	type PresetInboxHost,
 	type ScreenReader,
 	type SubagentResult,
 	type ToolContext,
@@ -95,6 +96,8 @@ export interface ConductorOptions {
 	readonly virtual?: VirtualOpxy | null;
 	/** The replica walkthrough (plan_steps with guide); absent when headless. */
 	readonly guide?: GuideHost | null;
+	/** The preset maker's inbox (make_kit); absent when headless. */
+	readonly presets?: PresetInboxHost | null;
 	/** Listening to the OP-XY or the replica (listen, listen_tracks); absent when headless. */
 	readonly listen?: ListenHost | null;
 	readonly manual: ManualSource;
@@ -260,6 +263,7 @@ export class Conductor {
 			screen: options.screen ?? null,
 			virtual: options.virtual ?? null,
 			guide: options.guide ?? null,
+			presets: options.presets ?? null,
 			listen: options.listen ?? null,
 			manual: options.manual,
 			timers: this.#timers,

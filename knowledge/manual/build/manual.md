@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1117 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1118 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -4164,6 +4164,7 @@ Facts:
 - `turn E4` sets the metronome volume and `click E4` switches the metronome on or off. [#metronome] [s3]
 - Over MIDI, CC80 on any channel sets the tempo; on OS 1.1.33 the result is twice the value in BPM, held within 40–220, so only even tempos can be sent. [#cc80] (verified 1.1.33) [s4]
 - A new empty project on the owner's unit ran at 120 BPM. [#new-project] (verified 1.1.33) [s4]
+- A new project starts with the metronome on, at about two thirds of its volume (the project file stores the click volume, with 0 for off). [#new-metronome] (derived) [s5]
 - The tempo page has a light background, the BPM as a large number on the left and a metronome in the middle carrying the groove type's two-letter abbreviation. [#screen] (verified 1.1.33) [s2]
 - The metronome's weight slides down its arm as the tempo rises, from the top at 40 BPM to the bottom at 220. [#weight] (verified 1.1.33) [s2]
 - The speaker icon at the top right loses its sound waves as `E4` turns the metronome down. [#speaker] (verified 1.1.33) [s2]
@@ -4188,7 +4189,7 @@ Parameters:
 
 Related: [tempo.grooves], [com.midi-settings]
 
-Sources: s1 guide:tempo#project · s2 note 59 · s3 guide:tempo#edit-tempo · s4 note 90
+Sources: s1 guide:tempo#project · s2 note 59 · s3 guide:tempo#edit-tempo · s4 note 90 · s5 note 10
 
 ### Grooves, swing and shuffle [tempo.grooves]
 current · OS ≥ 1.0.9 · guide v1.1.15

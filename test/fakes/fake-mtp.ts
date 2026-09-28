@@ -337,6 +337,9 @@ export class FakeUsbOpxy implements UsbDeviceLike {
 	sent: number[] = [];
 	configuration: UsbDeviceLike['configuration'] = null;
 	hang = false;
+	/** Leave MTP mode as soon as CloseSession arrives, before answering it (the owner's unit does). */
+	leaveOnClose = false;
+	#gone = false;
 	constructor(readonly mtp = new FakeMtpOpxy()) {}
 	async open() {
 		this.opened = true;
@@ -366,14 +369,20 @@ export class FakeUsbOpxy implements UsbDeviceLike {
 	async transferOut(endpoint: number, data: Uint8Array<ArrayBuffer>) {
 		if (endpoint !== BULK_OUT.endpointNumber)
 			throw new Error(`FakeUsbOpxy: OUT to endpoint ${endpoint}`);
+		if (this.#gone) throw new Error('A transfer error has occurred.');
 		this.sent.push(data.length);
 		if (data.length > 0) await this.mtp.send(data);
+		if (this.leaveOnClose && this.mtp.operations.at(-1) === OP.closeSession) this.#gone = true;
 		return { status: 'ok' as const };
 	}
 	async transferIn(endpoint: number) {
 		if (endpoint !== BULK_IN.endpointNumber)
 			throw new Error(`FakeUsbOpxy: IN from endpoint ${endpoint}`);
 		if (this.hang) return new Promise<never>(() => {});
+		if (this.#gone)
+			throw new Error(
+				"Failed to execute 'transferIn' on 'USBDevice': A transfer error has occurred."
+			);
 		const bytes = await this.mtp.receive();
 		return {
 			status: 'ok' as const,

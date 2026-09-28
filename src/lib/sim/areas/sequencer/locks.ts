@@ -330,9 +330,11 @@ const TRACK_PARAMS: Readonly<Record<string, LockParam>> = Object.fromEntries(
 			set: (t, v) => {
 				t.lfo.destination = v;
 			},
+			// the free card sits under its page's card ("free" below "filter"): named with it, so
+			// each of the six reads apart
 			format: (v) => {
 				const d = DESTINATIONS[clamp(Math.round(v), 0, DESTINATIONS.length - 1)];
-				return d.free ? 'free' : d.module;
+				return d.free ? `${d.module} free` : d.module;
 			}
 		}),
 		param('lfo.parameter', {
@@ -444,8 +446,14 @@ export function lockTarget(s: SimState, e: number): LockParam | null {
 			if (lfo.type === 'tremolo') return lockParam(e === 2 ? 'lfo.volume' : 'lfo.envelope');
 			if (e === 2) {
 				const p = lockParam('lfo.destination');
-				const size = lfo.type === 'element' ? SENSOR_DESTINATIONS.length : DESTINATIONS.length;
-				return p && { ...p, max: size - 1 };
+				if (!p || lfo.type !== 'element') return p;
+				// element follows a sensor: its own four pages (syn, env, filter, amp), no free twins
+				const last = SENSOR_DESTINATIONS.length - 1;
+				return {
+					...p,
+					max: last,
+					format: (v) => SENSOR_DESTINATIONS[clamp(Math.round(v), 0, last)].module
+				};
 			}
 			return lockParam('lfo.parameter');
 		}

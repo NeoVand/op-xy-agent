@@ -160,6 +160,8 @@ describe('the conductor tool set', () => {
 			write_todos: 'ui',
 			task: 'read',
 			plan_steps: 'ui',
+			device_map: 'read',
+			make_kit: 'ui',
 			write_pattern: 'mutate',
 			read_pattern: 'read',
 			write_arrangement: 'mutate',

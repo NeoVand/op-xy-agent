@@ -78,11 +78,16 @@ answer and date (and into `DECISIONS.md` when they shape the project).
     `presets/mine/` (with "install on the op-xy…" in Chrome, or by hand with field kit), then check
     each loads, plays in tune on its keys, loops as set, and survives a project save and reload.
     Also worth a look: whether a `.preset` put straight into `presets/` (no folder) shows up at all.
-12. **MTP from the browser** (read-only). Our Python probe read the unit over MTP; the app's
-    WebUSB client has only met an emulated unit. With the OP-XY in MTP mode (com → M4), open `/lab`
-    in Chrome, "connect over mtp", open `projects/` and download `workspace.xy`; then "disconnect"
-    and check the OP-XY is back in MIDI mode. If Chrome cannot claim the interface, note whether
-    field kit was running.
+12. ~~**MTP from the browser**~~ Works on the owner's unit in Chrome (2026-09-28, `90-device-probe.md`):
+    device info, storage, listings, a 49 KB download of the open project (TE's factory project
+    "agent"), and the OP-XY left MTP mode by itself on disconnect. The Claude app's built-in browser
+    cannot do it (no WebUSB device picker).
+13. **Projects to and from the device** (the save writes one new file; nothing is replaced). With
+    the OP-XY in MTP mode: "project" under the replica → "load from the op-xy" should bring the open
+    project into the replica (tempo, patterns, scenes, songs, presets). Then "save to the op-xy…"
+    as `test 1` adds `projects/user/test 1.xy`, written over the open project. On the device: does
+    `test 1` show in the project list and open, and does it play the replica's patterns with the
+    device's sounds? (note 10 §7.7 lists what else to check: 16 patterns, the cutoff lock.)
 
 ## Answered
 

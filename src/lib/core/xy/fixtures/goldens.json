@@ -1,0 +1,999 @@
+[
+	{
+		"name": "note on step 1",
+		"ops": [
+			{
+				"op": "note",
+				"track": 1,
+				"step": 1,
+				"note": 60
+			}
+		],
+		"size": 9510,
+		"sha256": "f783901a72679eda959f38015dfd6d75221f60dfb1fb8e28896174328cfa0a3c",
+		"equals": "src/one-off-changes-from-default/unnamed 2.xy"
+	},
+	{
+		"name": "note on step 9",
+		"ops": [
+			{
+				"op": "note",
+				"track": 1,
+				"step": 9,
+				"note": 60
+			}
+		],
+		"size": 9512,
+		"sha256": "c800da41ad37626dbc43093d2fa44ae634d1b272cdeac823fc9e5071f1413f1c",
+		"equals": "src/one-off-changes-from-default/unnamed 81.xy"
+	},
+	{
+		"name": "note on step 5",
+		"ops": [
+			{
+				"op": "note",
+				"track": 1,
+				"step": 5,
+				"note": 60
+			}
+		],
+		"size": 9512,
+		"sha256": "be32fd9b857c8312b191741881506043a46fe59757e098cc3d0c9028e482614b",
+		"equals": "output/image-probes/01_a_img_c4_step5.xy"
+	},
+	{
+		"name": "note equal to its velocity",
+		"ops": [
+			{
+				"op": "note",
+				"track": 1,
+				"step": 1,
+				"note": 60,
+				"velocity": 60
+			}
+		],
+		"size": 9511,
+		"sha256": "bcb8f8ca2bb1fc268b36b27bd87eef676154848ce954558ebde70edf69361893",
+		"equals": "output/image-probes/02_b_img_notevel_60_60.xy"
+	},
+	{
+		"name": "three notes with gates",
+		"ops": [
+			{
+				"op": "note",
+				"track": 3,
+				"step": 1,
+				"note": 48,
+				"gate": 960
+			},
+			{
+				"op": "note",
+				"track": 3,
+				"step": 5,
+				"note": 50,
+				"gate": 1920
+			},
+			{
+				"op": "note",
+				"track": 3,
+				"step": 11,
+				"note": 53,
+				"gate": 2880
+			}
+		],
+		"size": 9541,
+		"sha256": "5f4de2233738de54713afa6f232f07529b52399f40c358b9b609b0aa47c7b679",
+		"equals": "src/one-off-changes-from-default/unnamed 92.xy"
+	},
+	{
+		"name": "pickup and micro-timed notes on an aux track",
+		"ops": [
+			{
+				"op": "note",
+				"track": 9,
+				"tick": -129,
+				"note": 60,
+				"velocity": 91,
+				"gate": 123
+			},
+			{
+				"op": "note",
+				"track": 9,
+				"tick": 490,
+				"note": 124,
+				"velocity": 1,
+				"gate": 7680
+			}
+		],
+		"size": 9525,
+		"sha256": "adb51aa0a27fcc4f1c9070355ba9bdc486fc22f29681ab2b45d39e4b63756164"
+	},
+	{
+		"name": "four bars",
+		"ops": [
+			{
+				"op": "steps",
+				"track": 1,
+				"steps": 64
+			}
+		],
+		"size": 9497,
+		"sha256": "13463f973a3c36e2a1ffe01414ff3adae81cce9d0da7855d35c999dde9a2f777",
+		"equals": "src/one-off-changes-from-default/unnamed 19.xy"
+	},
+	{
+		"name": "a partial last bar",
+		"ops": [
+			{
+				"op": "steps",
+				"track": 2,
+				"steps": 24
+			}
+		],
+		"size": 9497,
+		"sha256": "5a4a1fcaace117d5ec8b327793f096adb0228ff0daf29975ea1822700d5e7cb7"
+	},
+	{
+		"name": "tempo 121.2",
+		"ops": [
+			{
+				"op": "tempo",
+				"bpm": 121.2
+			}
+		],
+		"size": 9499,
+		"sha256": "f891638ff18bc2d8c6e65656aa0315666f3f9ed540141e5447e469cbe831a0aa",
+		"equals": "src/one-off-changes-from-default/unnamed 5.xy"
+	},
+	{
+		"name": "groove disfunk",
+		"ops": [
+			{
+				"op": "groove",
+				"type": 8
+			}
+		],
+		"size": 9498,
+		"sha256": "3fbbf285c2a9e0532781808edef8860b9d7c5d2969beeff1a20d58543546750d",
+		"equals": "src/one-off-changes-from-default/unnamed 11.xy"
+	},
+	{
+		"name": "metronome off",
+		"ops": [
+			{
+				"op": "click",
+				"volume": 0
+			}
+		],
+		"size": 9495,
+		"sha256": "c4525dceaa4c8e168d1040d5a9a7bf1e696f846c9b9081e781e2816f711d1b65",
+		"equals": "src/one-off-changes-from-default/unnamed 10.xy"
+	},
+	{
+		"name": "midi channels",
+		"ops": [
+			{
+				"op": "midiChannel",
+				"track": 1,
+				"channel": 1
+			},
+			{
+				"op": "midiChannel",
+				"track": 16,
+				"channel": 16
+			}
+		],
+		"size": 9500,
+		"sha256": "164b53bdbdce93c596252329cddd2ded49cbfd2c406f25d1b9a9643822fd5c7f",
+		"equals": "src/one-off-changes-from-default/unnamed 41.xy"
+	},
+	{
+		"name": "track scale 2",
+		"ops": [
+			{
+				"op": "scale",
+				"track": 1,
+				"raw": 5
+			}
+		],
+		"size": 9497,
+		"sha256": "36b349a4b7cc51805f16161f908e0e195febf93a10c5c83d7062cbdd8c949a81",
+		"equals": "src/one-off-changes-from-default/unnamed 20.xy"
+	},
+	{
+		"name": "track scale 16",
+		"ops": [
+			{
+				"op": "scale",
+				"track": 1,
+				"raw": 14
+			}
+		],
+		"size": 9497,
+		"sha256": "a9544928d3a4cfe52cc26b03e06ba98ad32fd4c63b575905bac16909bc487f7d",
+		"equals": "src/one-off-changes-from-default/unnamed 21.xy"
+	},
+	{
+		"name": "track scale 1/2",
+		"ops": [
+			{
+				"op": "scale",
+				"track": 1,
+				"raw": 1
+			}
+		],
+		"size": 9497,
+		"sha256": "596e57a4d5651ae96f9b406233222ed86622cab6cd5aad41b3dffd653f07e05d",
+		"equals": "src/one-off-changes-from-default/unnamed 22.xy"
+	},
+	{
+		"name": "pulse on step 1",
+		"ops": [
+			{
+				"op": "component",
+				"track": 1,
+				"pattern": 1,
+				"step": 1,
+				"kind": "pulse",
+				"value": 1
+			}
+		],
+		"size": 9500,
+		"sha256": "dfd140e968ed03275a486f654076d146f820244c4cf5c196b167e156c8a5a8ea",
+		"equals": "src/one-off-changes-from-default/unnamed 8.xy"
+	},
+	{
+		"name": "pulse on step 9",
+		"ops": [
+			{
+				"op": "component",
+				"track": 1,
+				"pattern": 1,
+				"step": 9,
+				"kind": "pulse",
+				"value": 1
+			}
+		],
+		"size": 9503,
+		"sha256": "18dfab473269514bc72336a181623f714eaf77ea635bfd663866aabf9e7678b4",
+		"equals": "src/one-off-changes-from-default/unnamed 59.xy"
+	},
+	{
+		"name": "three blank patterns on T2",
+		"ops": [
+			{
+				"op": "arrangement",
+				"patterns": {
+					"2": [[], [], []]
+				}
+			}
+		],
+		"size": 13095,
+		"sha256": "3de257aceb1c64f6e067d8ad9978e7068dbc7ea2a981fa48896c97914787cba0",
+		"equals": "src/one-off-changes-from-default/j05_t2_p3_blank.xy"
+	},
+	{
+		"name": "nine blank patterns on T1-T8",
+		"ops": [
+			{
+				"op": "arrangement",
+				"patterns": {
+					"1": [[], [], [], [], [], [], [], [], []],
+					"2": [[], [], [], [], [], [], [], [], []],
+					"3": [[], [], [], [], [], [], [], [], []],
+					"4": [[], [], [], [], [], [], [], [], []],
+					"5": [[], [], [], [], [], [], [], [], []],
+					"6": [[], [], [], [], [], [], [], [], []],
+					"7": [[], [], [], [], [], [], [], [], []],
+					"8": [[], [], [], [], [], [], [], [], []]
+				}
+			}
+		],
+		"size": 62410,
+		"sha256": "f8c40c664b67eaa20abb04e9d1e2851ccc014fd726db74b587cef1e5a50f1066",
+		"equals": "src/one-off-changes-from-default/j06_all16_p9_blank.xy"
+	},
+	{
+		"name": "sixteen patterns and a scene on the last",
+		"ops": [
+			{
+				"op": "arrangement",
+				"patterns": {
+					"1": [
+						[
+							{
+								"step": 1,
+								"note": 41
+							}
+						],
+						[
+							{
+								"step": 2,
+								"note": 42
+							}
+						],
+						[
+							{
+								"step": 3,
+								"note": 43
+							}
+						],
+						[
+							{
+								"step": 4,
+								"note": 44
+							}
+						],
+						[
+							{
+								"step": 5,
+								"note": 45
+							}
+						],
+						[
+							{
+								"step": 6,
+								"note": 46
+							}
+						],
+						[
+							{
+								"step": 7,
+								"note": 47
+							}
+						],
+						[
+							{
+								"step": 8,
+								"note": 48
+							}
+						],
+						[
+							{
+								"step": 9,
+								"note": 49
+							}
+						],
+						[
+							{
+								"step": 10,
+								"note": 50
+							}
+						],
+						[
+							{
+								"step": 11,
+								"note": 51
+							}
+						],
+						[
+							{
+								"step": 12,
+								"note": 52
+							}
+						],
+						[
+							{
+								"step": 13,
+								"note": 53
+							}
+						],
+						[
+							{
+								"step": 14,
+								"note": 54
+							}
+						],
+						[
+							{
+								"step": 15,
+								"note": 55
+							}
+						],
+						[
+							{
+								"step": 16,
+								"note": 56
+							}
+						]
+					]
+				},
+				"scenes": [
+					{
+						"1": 15
+					}
+				],
+				"song": [0]
+			}
+		],
+		"size": 37236,
+		"sha256": "8eb761d66573abdae11c37f1c2ee74cc8e834cccac2c935bd88439701062d0c0"
+	},
+	{
+		"name": "project settings",
+		"ops": [
+			{
+				"op": "transpose",
+				"semitones": -5
+			},
+			{
+				"op": "timeSignature",
+				"raw": 19
+			},
+			{
+				"op": "sceneLength",
+				"mode": 2
+			},
+			{
+				"op": "voices",
+				"track": 2,
+				"voices": 4
+			},
+			{
+				"op": "grooveAmount",
+				"amount": -4
+			},
+			{
+				"op": "click",
+				"volume": 255
+			},
+			{
+				"op": "midiChannel",
+				"track": 9,
+				"channel": 1
+			},
+			{
+				"op": "activeSong",
+				"song": 5
+			}
+		],
+		"size": 9508,
+		"sha256": "36ebfb26b68f14b21725f7d4167a20fa5480635d42b4d6e87ecf96dcedcb6f8e"
+	},
+	{
+		"name": "bar menu",
+		"ops": [
+			{
+				"op": "quantize",
+				"track": 1,
+				"raw": 129
+			},
+			{
+				"op": "trackGroove",
+				"track": 1,
+				"raw": 250
+			},
+			{
+				"op": "noteLength",
+				"track": 1,
+				"ticks": 480
+			},
+			{
+				"op": "smoothing",
+				"track": 1,
+				"raw": 251
+			},
+			{
+				"op": "smoothing",
+				"track": 5,
+				"raw": 8
+			}
+		],
+		"size": 9500,
+		"sha256": "c15697f2da595a1fe4a6b9777974a06774782c4fd7ea61bdc92a8cb09c041e27"
+	},
+	{
+		"name": "param 1 automation (unnamed 35's values)",
+		"ops": [
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 1,
+				"column": 1,
+				"value": 20643
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 2,
+				"column": 1,
+				"value": 24575
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 3,
+				"column": 1,
+				"value": 27524
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 4,
+				"column": 1,
+				"value": 28507
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 5,
+				"column": 1,
+				"value": 28179
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 6,
+				"column": 1,
+				"value": 25886
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 7,
+				"column": 1,
+				"value": 19004
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 8,
+				"column": 1,
+				"value": 17038
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 9,
+				"column": 1,
+				"value": 18021
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 10,
+				"column": 1,
+				"value": 23592
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 11,
+				"column": 1,
+				"value": 28507
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 12,
+				"column": 1,
+				"value": 31456
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 13,
+				"column": 1,
+				"value": 32767
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 14,
+				"column": 1,
+				"value": 32767
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 15,
+				"column": 1,
+				"value": 32767
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 16,
+				"column": 1,
+				"value": 0
+			}
+		],
+		"size": 9622,
+		"sha256": "d2fff08b1a9122ae287c115e9778a20edb6198625dced12c24d05733f3fcf82c"
+	},
+	{
+		"name": "songs",
+		"ops": [
+			{
+				"op": "song",
+				"song": 1,
+				"scenes": [0, 0, 0],
+				"loop": true
+			},
+			{
+				"op": "song",
+				"song": 3,
+				"scenes": [],
+				"loop": false
+			},
+			{
+				"op": "song",
+				"song": 14,
+				"scenes": [
+					0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+					25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
+					47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+					69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+					91, 92, 93, 94, 95
+				],
+				"loop": true
+			}
+		],
+		"size": 9593,
+		"sha256": "1c59ea4d544d24252d3932fb467a63b059adb0db755b43d754360f60e7f85dc1"
+	},
+	{
+		"name": "song.xy",
+		"ops": [
+			{
+				"op": "arrangement",
+				"patterns": {
+					"1": [
+						[
+							{
+								"step": 1,
+								"note": 53,
+								"velocity": 110
+							},
+							{
+								"step": 5,
+								"note": 55
+							},
+							{
+								"step": 9,
+								"note": 53,
+								"velocity": 110
+							},
+							{
+								"step": 13,
+								"note": 55
+							}
+						],
+						[
+							{
+								"step": 1,
+								"note": 53,
+								"velocity": 120
+							},
+							{
+								"step": 3,
+								"note": 61,
+								"velocity": 70
+							},
+							{
+								"step": 5,
+								"note": 55
+							},
+							{
+								"step": 7,
+								"note": 61,
+								"velocity": 70
+							},
+							{
+								"step": 9,
+								"note": 53,
+								"velocity": 120
+							},
+							{
+								"step": 11,
+								"note": 61,
+								"velocity": 70
+							},
+							{
+								"step": 13,
+								"note": 55
+							},
+							{
+								"step": 15,
+								"note": 61,
+								"velocity": 70
+							}
+						]
+					],
+					"3": [
+						[
+							{
+								"step": 1,
+								"note": 36,
+								"gate_ticks": 960
+							},
+							{
+								"step": 9,
+								"note": 43,
+								"velocity": 90,
+								"gate_ticks": 960,
+								"tick_offset": 30
+							}
+						],
+						{
+							"steps": 32,
+							"notes": [
+								{
+									"step": 1,
+									"note": 41,
+									"gate_ticks": 1920
+								},
+								{
+									"step": 17,
+									"note": 43,
+									"gate_ticks": 1920
+								}
+							]
+						}
+					],
+					"7": [
+						[
+							{
+								"step": 1,
+								"note": 60,
+								"velocity": 60,
+								"gate_ticks": 7680
+							},
+							{
+								"step": 1,
+								"note": 64,
+								"velocity": 60,
+								"gate_ticks": 7680
+							},
+							{
+								"step": 1,
+								"note": 67,
+								"velocity": 60,
+								"gate_ticks": 7680
+							}
+						]
+					],
+					"9": [
+						[
+							{
+								"step": 1,
+								"note": 62,
+								"gate_ticks": 7680
+							}
+						]
+					]
+				},
+				"scenes": [
+					{
+						"1": 0,
+						"3": 0,
+						"7": 0
+					},
+					{
+						"1": 1,
+						"3": 1,
+						"7": 0
+					},
+					{
+						"1": 1,
+						"3": 0,
+						"7": 0
+					}
+				],
+				"mutes": [[], [7], [3]],
+				"song": [0, 1, 0, 2]
+			},
+			{
+				"op": "tempo",
+				"bpm": 128.5
+			},
+			{
+				"op": "groove",
+				"type": 8
+			},
+			{
+				"op": "grooveAmount",
+				"amount": 20
+			},
+			{
+				"op": "click",
+				"volume": 224
+			},
+			{
+				"op": "transpose",
+				"semitones": -3
+			},
+			{
+				"op": "sceneLength",
+				"mode": 1
+			},
+			{
+				"op": "midiChannel",
+				"track": 3,
+				"channel": 3
+			},
+			{
+				"op": "midiChannel",
+				"track": 16,
+				"channel": 10
+			},
+			{
+				"op": "voices",
+				"track": 3,
+				"voices": 2
+			},
+			{
+				"op": "song",
+				"song": 2,
+				"scenes": [2, 1],
+				"loop": false
+			},
+			{
+				"op": "activeSong",
+				"song": 2
+			},
+			{
+				"op": "component",
+				"track": 1,
+				"pattern": 2,
+				"step": 3,
+				"kind": "pulse",
+				"value": 2
+			},
+			{
+				"op": "component",
+				"track": 1,
+				"pattern": 2,
+				"step": 7,
+				"kind": "skip step component",
+				"value": 3
+			},
+			{
+				"op": "component",
+				"track": 1,
+				"pattern": 2,
+				"step": 8,
+				"kind": "pulse hold",
+				"value": 5
+			},
+			{
+				"op": "component",
+				"track": 1,
+				"pattern": 2,
+				"step": 8,
+				"kind": "jump",
+				"value": 1
+			},
+			{
+				"op": "component",
+				"track": 3,
+				"pattern": 1,
+				"step": 1,
+				"kind": "ramp up",
+				"value": 8
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 1,
+				"column": 1,
+				"value": 8192
+			},
+			{
+				"op": "lock",
+				"track": 3,
+				"pattern": 1,
+				"step": 9,
+				"column": 1,
+				"value": 24576
+			}
+		],
+		"size": 12105,
+		"sha256": "ea7ee531b2d42c5f9921224fec06c814cbf2baeae18abfe394ec29832781fb7b",
+		"fixture": "song.xy"
+	},
+	{
+		"name": "locks.xy",
+		"ops": [
+			{
+				"op": "arrangement",
+				"patterns": {
+					"2": [
+						[
+							{
+								"step": 1,
+								"note": 53
+							},
+							{
+								"step": 5,
+								"note": 55
+							}
+						]
+					],
+					"4": [
+						[
+							{
+								"step": 1,
+								"note": 60
+							}
+						],
+						[
+							{
+								"step": 1,
+								"note": 64
+							}
+						]
+					]
+				}
+			},
+			{
+				"op": "lock",
+				"track": 2,
+				"pattern": 1,
+				"step": 1,
+				"column": 0,
+				"value": 32767
+			},
+			{
+				"op": "lock",
+				"track": 2,
+				"pattern": 1,
+				"step": 2,
+				"column": 41,
+				"value": 0
+			},
+			{
+				"op": "lock",
+				"track": 2,
+				"pattern": 1,
+				"step": 5,
+				"column": 17,
+				"value": 20000
+			},
+			{
+				"op": "lock",
+				"track": 2,
+				"pattern": 1,
+				"step": 6,
+				"column": 36,
+				"value": 4660
+			},
+			{
+				"op": "lock",
+				"track": 4,
+				"pattern": 2,
+				"step": 16,
+				"column": 3,
+				"value": 16384
+			},
+			{
+				"op": "lock",
+				"track": 4,
+				"pattern": 2,
+				"step": 12,
+				"column": 22,
+				"value": 256
+			}
+		],
+		"size": 10131,
+		"sha256": "3467509262d2a383b03c987dfaa5f4e2a29d288bc92dd309e8c3ce55e940cef9",
+		"fixture": "locks.xy"
+	}
+]

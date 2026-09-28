@@ -6,14 +6,41 @@ trademarks of their owner and are used here only to describe compatibility.
 
 ## Code adapted or ported from other projects
 
-| Source                                                                            | Licence                                         | What we use                                                                   | Where                                                                          |
-| --------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| [MIDI Lab](https://github.com/NeoVand/midilab) (NeoVand)                          | the owner's own code, relicensed here under MIT | MIDI protocol core, SMF codec, notation, melodies, harmony, Web MIDI patterns | `src/lib/core/midi/`, `src/lib/core/music/` (files carry a provenance comment) |
-| [kmorrill/xy-format](https://github.com/kmorrill/xy-format) (Kevin Morrill)       | MIT                                             | `.xy` project format knowledge; TS port planned (M6)                          | `docs/research/10-xy-format.md`; later `src/lib/core/xy/`                      |
-| [kmorrill/op-xy-vibing](https://github.com/kmorrill/op-xy-vibing) (Kevin Morrill) | MIT                                             | live-loop IR and scheduling ideas                                             | `docs/research/20-midi-control.md`                                             |
+| Source                                                                            | Licence                                         | What we use                                                                    | Where                                                                          |
+| --------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| [MIDI Lab](https://github.com/NeoVand/midilab) (NeoVand)                          | the owner's own code, relicensed here under MIT | MIDI protocol core, SMF codec, notation, melodies, harmony, Web MIDI patterns  | `src/lib/core/midi/`, `src/lib/core/music/` (files carry a provenance comment) |
+| [kmorrill/xy-format](https://github.com/kmorrill/xy-format) (Kevin Morrill)       | MIT                                             | `.xy` project format: the TS port (RLE, layout, reader, writer), test fixtures | `docs/research/10-xy-format.md`, `src/lib/core/xy/`, `scripts/xy-fixtures.py`  |
+| [kmorrill/op-xy-vibing](https://github.com/kmorrill/op-xy-vibing) (Kevin Morrill) | MIT                                             | live-loop IR and scheduling ideas                                              | `docs/research/20-midi-control.md`                                             |
 
 Every ported file names its source in a header comment. Projects without a licence (for example
 `jshph/opxy-reactive`, `benjaminr/mcp-koii`) were read for facts only; none of their code is used.
+
+`src/lib/core/xy/` ports kmorrill/xy-format, and `src/lib/core/xy/fixtures/` holds `.xy` files written by or
+taken from it (what each one is: `src/lib/core/xy/fixtures/README.md`). Its licence:
+
+```text
+MIT License
+
+Copyright (c) 2026 Kevin Morrill
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ## Replica artwork
 

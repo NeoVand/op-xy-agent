@@ -23,8 +23,10 @@
   - **The agent** plans exact steps on a copy of the simulator for any page or value, auxiliary and
     mixer values included. It can read them out, play them on the replica, or walk the user through
     them one lit key at a time. It sets whole sounds up from an idea (five tested recipes) and sets a
-    connected device's sound over the verified CCs. Evals: how-to and idea-to-device cases pass;
-    the regression run is 42/42 Q&A and 18/18 device tasks.
+    connected device's sound over the verified CCs. A device map exported from the simulator
+    (`device_map`) tells it what every page holds: encoders per layer, ranges, CCs, MIDI reach.
+    Evals: how-to and idea-to-device cases pass; the regression run is 42/42 Q&A and 18/18 device
+    tasks.
 - **M0 research, M1 foundations: done.** Core MIDI/TE-SysEx/OP-XY data, design system + shell, device
   layer (Web MIDI, single send choke point, GREET session, mirror, monitor), `/lab`; verified by the
   owner on the live site.
@@ -72,6 +74,13 @@
   instrument page or value, tried on a copy of the simulator. `plan_steps` reads them out or plays
   them on the replica, one setting or a whole sound at a time. Five sound-design recipes run as
   written (tested). The how-to eval checks the virtual OP-XY's end state.
+- **M6 native projects: the no-device part is done** (2026-09-28). `src/lib/core/xy/` is the TS port of
+  kmorrill/xy-format: container, lane-aware walk, project model, reader, and a template writer that
+  keeps every byte it does not own. It writes the Python library's exact bytes on 26 golden op lists
+  (17 of them device captures) and reads every lane-free corpus file as the library does. `simToXy`
+  (`sim/xy.ts`) compiles the simulator's project (settings, patterns, notes, components, locks, scenes, songs) over
+  a template and lists what it cannot carry yet (sounds, players…). The owner's 1.1.33 blank project
+  has the 1.1.4 layout. Left: the device session (note 10 §7.7), the transfer path and a UI.
 - **M7 preset maker** (2026-09-28): `/presets` turns your own samples into a drum kit, multisample
   or synth sampler preset in the browser, downloads it, or installs it on a connected OP-XY over
   USB (MTP through WebUSB) once the owner confirms. `/lab` browses the unit's storage over MTP,
@@ -84,9 +93,9 @@
   each instrument track alone and puts every mute back (on a device only when the app knows them
   all). The conductor is told to listen, critique and revise. Left: the device session (note 61 §9).
 - **Next:** T28 with the owner (track MIDI channels → notes out), then M5 composer + live playback and
-  M6 native projects. M6 starts by **reading the current project over WebUSB-MTP**: it is the only way
-  the replica can load what is on the device (steps, tempo, sounds), since the device never reports
-  its knobs or keys over MIDI.
+  the M6 device session. M6 continues by **reading the current project over WebUSB-MTP**: it is the
+  only way the replica can load what is on the device (steps, tempo, sounds), since the device never
+  reports its knobs or keys over MIDI; `readProject` now decodes what such a pull returns.
 - **Device facts (1.1.33):** CC80 = 2 × BPM (40–220), CC9 level mute, CC102/104/105 work, remote keys
   CC106/107 dead; with clock = both it sends FA/FC and continuous F8; notes and pitch bend go out only
   from tracks the project gives a MIDI channel (all off in a fresh project); keys, M-keys and encoders
@@ -103,7 +112,7 @@ each with a clear job:
 | **Live MIDI** (notes, CC, transport, clock) | play, mix, tempo, scenes, project load, engine/filter/envelope params per track   | ports present; CC map mostly community, needs probing                                             | [20](research/20-midi-control.md)                                   |
 | **Remote keys** (CC106/107)                 | press any front-panel key from the computer → the replica drives the real UI      | unknown on 1.1.33 (worked ≤1.0.21 and on 1.1.4) — **spike**                                       | [20 §7](research/20-midi-control.md)                                |
 | **TE SysEx** (GREET, FILE)                  | exact firmware version; a filesystem over MIDI with writable `drum/` and `synth/` | **verified** GREET/ECHO/FILE LIST; FILE PUT untested                                              | [60 §4](research/60-firmware.md), [90](research/90-device-probe.md) |
-| **Native `.xy` projects**                   | the device's own sequencer: notes, p-locks, step components, scenes, songs        | format well understood (device-validated on 1.1.4); nothing checked on 1.1.33; transfer path open | [10](research/10-xy-format.md)                                      |
+| **Native `.xy` projects**                   | the device's own sequencer: notes, p-locks, step components, scenes, songs        | TS codec + compiler done; the 1.1.33 blank = 1.1.4 layout; authored files untested; transfer open | [10](research/10-xy-format.md)                                      |
 | **Presets / samples** (`patch.json` + WAV)  | AI-made drum kits and instruments                                                 | well understood; install path = FILE PUT (spike) or MTP                                           | [30](research/30-presets-samples.md)                                |
 | **USB audio**                               | the agent can listen to what the OP-XY plays                                      | class-compliant UAC1 input; capture + analysis built (M9), not yet tried from the browser         | [61](research/61-listening.md), [90](research/90-device-probe.md)   |
 
@@ -219,14 +228,19 @@ owner flagged, then what users see most.
       CC 12–15.
 - [x] `knowledge/midi/cc-map.json`: lanes seen working marked verified, with their display ranges.
       Filter cutoff, tape length and EQ channel 1 are held back by tests that pin them.
-- [ ] Screen descriptions the agent can use ("what will I see?"): generated from the simulator's pages
-      and checked against the captures.
+- [x] Screen descriptions the agent can use ("what will I see?"): generated from the simulator's pages
+      and checked against the captures. Each page of the device map (F4) carries what its screen
+      says, with the note-59 section it was rebuilt from; a test holds the map to what the captures
+      showed (value lists, ranges, labels, MIDI reach).
 
 ### F4 — The agent: from idea to steps
 
-- [ ] **Device map:** exported from the simulator. For each page it records how to reach it, the
+- [x] **Device map:** exported from the simulator. For each page it records how to reach it, the
       parameters per encoder and layer, ranges and formats, the CC lane, and whether MIDI can set it.
-      It is data, so the agent never has to guess a key combo.
+      It is data, so the agent never has to guess a key combo. `knowledge/opxy/device-map.json`
+      (65 pages, 336 controls, each found by turning it on a copy) from
+      `scripts/build-device-map.mjs`; a test fails while it is stale; the agent reads it with
+      `device_map`.
 - [x] **Navigator** (`src/lib/sim/navigator.ts`): a deterministic path from the replica's current
       state to any page or parameter value, as key presses and encoder turns. Every plan runs on a
       copy of the simulator before it is returned. It covers instrument pages and their shift layers,
@@ -329,6 +343,27 @@ TS port of `xy-format` (~3k lines; golden tests against the upstream corpus + Py
 Field Kit first; WebUSB-MTP if the spike allows), load via CC86. Upstream the corrections we found
 to `kmorrill/xy-format`.
 
+- [x] Codec (`src/lib/core/xy/`): container and RLE, lane-aware walk, project model, `readProject`,
+      `writeProject` over a template (1.1.4 or 1.1.33). Fixtures and goldens from the Python library
+      (`scripts/xy-fixtures.py`); the full upstream corpus runs locally (note 10 §7.7).
+- [x] Simulator → `.xy`: `simToXy(state, template)` with a `skipped` list; the agent's patterns,
+      scenes and songs compile note for note. (SongIR does not exist yet: the simulator's model is the
+      source.)
+- [ ] Device session on 1.1.33: authored files over both templates, 16 patterns, the cutoff lock's
+      union mask, save-as round trips (note 10 §7.7).
+- [ ] Sounds in the writer: sound block words, presets by donor copy with octaves, drum regions.
+- [x] `.xy` → simulator: `xyToSim` (`sim/xy.ts`) loads settings, patterns (notes, components,
+      locks), scenes, songs, each track's preset from the library and the mixer; a loaded file
+      written again comes back byte for byte (the owner's 1.1.33 project included), and locks in
+      columns the replica cannot show stay in the file.
+- [x] Transfer (2026-09-28): the caption line's "project" card opens a `.xy` from disk, downloads the
+      replica's project, loads the project the OP-XY has open over USB (MTP), and adds the replica's
+      project to `projects/user` written over the device's open project (its sounds stay), after a
+      confirming click; loads can be undone (`app/project-transfer.svelte.ts`). Tried on an emulated
+      unit only (`QUESTIONS.md` 13).
+- [ ] CC86 load; agent tools for load and save (they need the device's USB permission already
+      granted, since only a click may ask for it).
+
 ### M7 — Sounds
 
 Preset builder (drum + multisample `patch.json`), slicer (transients, zero crossings), pitch detect,
@@ -342,7 +377,13 @@ generated sources; install via FILE PUT if the spike confirms it, otherwise expo
       and the preset downloads zipped for field kit / MTP. Not yet loaded on a unit (`QUESTIONS.md`
       11).
 - [ ] Try the presets on the owner's device; an agent tool that builds one from a request.
-- [ ] Slicer (transients, zero crossings) and generated sources.
+- [x] **Slicer** (2026-09-28): a loop cut at its hits (spectral flux, refined where the level jumps,
+      each start just before the hit and on a zero crossing when one is near) or into 8/16/24 equal
+      parts; the slices go on f3 upwards and choke each other, as the device's slicer sets them.
+- [x] **Generated sources** (2026-09-28): sixteen drum-machine voices from typed parameters
+      (`core/presets/generate.ts`: kick, snare, clap, hats and cymbals from six squares, toms, congas,
+      cowbell…), whole kits in five styles on TE's key order, a "generate a kit" control in the preset
+      maker, and the agent's `make_kit`, which leaves a kit it describes in the preset maker.
 - [x] **Install over USB** (MTP through WebUSB, 2026-09-28): `core/mtp` (session, policy, installer)
       and `device/mtp` (WebUSB pipe); the preset maker says what it will add and where, and writes
       only after the click. Never deletes, moves or replaces. Tested on an emulated unit only.

@@ -191,7 +191,7 @@ describe('OpxySim: encoders', () => {
 		expect(sim.state.tempo.bpm).toBe(220);
 	});
 
-	it('turns groove type, swing and metronome, and clicks the metronome on', () => {
+	it('turns groove type, swing and metronome, and clicks the metronome off', () => {
 		const sim = new OpxySim();
 		sim.press('key.tempo');
 		sim.turn(2, 1);
@@ -201,7 +201,7 @@ describe('OpxySim: encoders', () => {
 		expect(page(sim, 'tempo')).toMatchObject({
 			groove: 'HS',
 			swing: -1,
-			metronome: { level: 49 / 99, on: true }
+			metronome: { level: 49 / 99, on: false }
 		});
 	});
 

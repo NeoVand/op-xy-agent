@@ -656,6 +656,9 @@ export const playNotesTool = defineTool({
 	kind: 'mutate',
 	approval: 'auto',
 	device: true,
+	// room in the API's grammar size limit for the strict tools (evals/agent/grammar.mjs): a preview
+	// that fails zod is retried at little cost
+	strict: false,
 	description: `Play a short preview on one instrument track of the OP-XY: a note, a chord or a little melody, paced in real time and always ending with note-offs. At most ${MAX_PREVIEW_SECONDS} seconds and 64 steps. On drum tracks (1 and 2 in a fresh project) the drum sounds sit on notes 53–76. Audible only: it records nothing unless the user is recording. With no OP-XY connected the browser plays it with the virtual OP-XY's sound for that track (the app's sound switch must be on).`,
 	input: z.object({
 		track: z.int().min(1).max(8).describe('Instrument track 1–8 (plays on its MIDI channel)'),

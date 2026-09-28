@@ -354,6 +354,27 @@ Runs (appended as they happen):
 
 Nothing else was sent. The throwaway project was not saved.
 
+## 2026-09-28 (evening) — The app's MTP client on the unit (owner present, OS 1.1.33)
+
+The owner ran the app in Chrome (the live site's `/lab`, "storage (mtp)"), the OP-XY in MTP mode
+(`com → M4`, put there by the owner). Read-only: GetDeviceInfo, OpenSession, GetStorageIDs,
+GetStorageInfo, GetObjectHandles/GetObjectInfo for the top level and `projects/`, GetObject of
+`projects/workspace.xy`, CloseSession. Nothing was written.
+
+1. The first try, in the Claude app's built-in browser, failed at once ("No device selected"): that
+   browser offers no WebUSB device picker. In Chrome the picker listed the OP-XY (VID 0x2367,
+   PID 0x0021, as `ioreg` showed) and the panel read `teenage engineering OP-XY 1.1.33`, storage
+   "OP-XY", 7.79 GB free of 8.00 GB; top level `presets/`, `projects/`, `samples/`,
+   `how_to_import.txt` (6.0 KB).
+2. `workspace.xy` downloaded whole (49 KB, header `09 14 07 86`): the open project was TE's factory
+   project **"agent"** (the owner: probably saved by an older firmware). Tempo 123, groove amount 30,
+   metronome off, 9 scenes, song 1 of 16 entries, songs 11–14 empty; T1 organ/fm organ, T2
+   drum/in phase, T3 bass/vogel, T4 bass/alloy, T5 snapshot/sonar, T6 pluck/on tape, T7
+   keys/elect piano, T8 dissolve without a preset. It stores its time signature as the bare index
+   (4/4 = 1) where 1.1.4 new projects store 0x11; the reader now takes both
+   (`core/xy/model.ts` timeSignatureOf) and the project round-trips byte for byte.
+3. "disconnect" closed the session and the OP-XY left MTP mode by itself, as with our Python probe.
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers

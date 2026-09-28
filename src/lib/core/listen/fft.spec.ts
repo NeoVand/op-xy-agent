@@ -1,5 +1,6 @@
-// The FFTs agree with a direct DFT to rounding, the inverse returns the input, the real-input FFT
-// matches the complex one on real frames, and the Hann window overlaps to a constant at 50 %.
+// The shared FFT (core/dsp) as listening uses it agrees with a direct DFT to rounding and inverts,
+// the real-input FFT matches a direct DFT on real frames, and the Hann window overlaps to a
+// constant at 50 %.
 import { describe, expect, it } from 'vitest';
 import { ListenError } from './errors';
 import { fft, hann, nextPowerOfTwo, previousPowerOfTwo, RealFft } from './fft';
@@ -50,7 +51,7 @@ describe('fft', () => {
 	});
 
 	it('refuses lengths that differ or are not powers of two', () => {
-		expect(() => fft(new Float64Array(6), new Float64Array(6))).toThrow(ListenError);
+		expect(() => fft(new Float64Array(6), new Float64Array(6))).toThrow(/power of two/);
 		expect(() => fft(new Float64Array(8), new Float64Array(4))).toThrow(/power of two/);
 	});
 });

@@ -90,18 +90,18 @@ export interface ParamInfo {
 	readonly page: string;
 }
 
-/** Tempo page parameters (E1–E4 on the tempo page). */
-const TEMPO_PARAMS: Record<
-	string,
-	{
-		encoder: number;
-		get(s: SimState): number;
-		format(v: number): string;
-		min: number;
-		max: number;
-		step: number;
-	}
-> = {
+/** A tempo page parameter: its encoder (0–3), how to read it and how it reads. */
+export interface TempoParam {
+	readonly encoder: number;
+	get(s: SimState): number;
+	format(v: number): string;
+	readonly min: number;
+	readonly max: number;
+	readonly step: number;
+}
+
+/** Tempo page parameters (E1–E4 on the tempo page), by id. */
+export const TEMPO_PARAMS: Readonly<Record<string, TempoParam>> = {
 	'tempo.bpm': {
 		encoder: 0,
 		get: (s) => s.tempo.bpm,
@@ -383,11 +383,30 @@ function placeOfParam(id: string, track: number): Place | null {
 	return null;
 }
 
-/** The encoder (0–3) and layer that turn `id` where the simulator stands, or null. */
-function encoderFor(sim: OpxySim, id: string): { e: number; shift: boolean } | null {
+/**
+ * Whether {@link planParam} can set the parameter with this id: a tempo value, a list pick, or a
+ * parameter of an instrument track's pages (not the sampler keys' own settings, which it does not
+ * walk to yet).
+ */
+export function plannable(id: string): boolean {
+	if (id in TEMPO_PARAMS || id === 'engine' || id in PICKERS) return true;
+	return lockParam(id) !== null && placeOfParam(id, 1) !== null;
+}
+
+/**
+ * The encoder (0–3) and layer that turn `id` where the simulator stands, with the parameter as
+ * that page reads it (element's LFO has four destinations, not six), or null.
+ */
+function encoderFor(
+	sim: OpxySim,
+	id: string
+): { e: number; shift: boolean; lock: LockParam } | null {
 	for (const shift of [false, true]) {
 		const view = { ...sim.state, shift };
-		for (let e = 0; e < 4; e++) if (lockTarget(view, e)?.id === id) return { e, shift };
+		for (let e = 0; e < 4; e++) {
+			const lock = lockTarget(view, e);
+			if (lock?.id === id) return { e, shift, lock };
+		}
 	}
 	return null;
 }
@@ -524,13 +543,14 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 			`no encoder sets ${id} on this track now (its engine or LFO type has no such parameter)`
 		);
 	}
-	const target = targetValue(goal.value, p.format, p.min, p.max, p.step);
+	const lock = where.lock;
+	const target = targetValue(goal.value, lock.format, lock.min, lock.max, lock.step);
 	if (target === null) return rec.plan(false, `"${goal.value}" is not a value of ${id}`);
 	const t = () => rec.sim.state.tracks[track - 1];
 	// compare as the screen shows it, so 40 on a 0–99 lane stops where the page reads 40
-	const matches = (v: number) => p.format(v) === p.format(target);
-	const ok = turnTo(rec, where.e, where.shift, () => p.get(t()), target, matches);
-	return rec.plan(ok, ok ? undefined : `${id} stopped at ${p.format(p.get(t()))}`);
+	const matches = (v: number) => lock.format(v) === lock.format(target);
+	const ok = turnTo(rec, where.e, where.shift, () => lock.get(t()), target, matches);
+	return rec.plan(ok, ok ? undefined : `${id} stopped at ${lock.format(lock.get(t()))}`);
 }
 
 /** Whether the parameter `goal` names already reads its value (a filter or LFO also switched on). */
