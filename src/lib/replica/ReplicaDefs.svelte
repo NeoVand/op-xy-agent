@@ -10,16 +10,16 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 <defs>
 	<!-- anodised slab, lit from the back edge -->
 	<linearGradient id="rx-body" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#303237" />
-		<stop offset="0.45" stop-color="#2a2c30" />
-		<stop offset="1" stop-color="#232428" />
+		<stop offset="0" stop-color="#1e1f22" />
+		<stop offset="0.45" stop-color="#1a1b1e" />
+		<stop offset="1" stop-color="#161719" />
 	</linearGradient>
 	<!-- chamfered rim: bright along the back, a faint catch-light along the front -->
 	<linearGradient id="rx-rim" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.24" />
-		<stop offset="0.1" stop-color="#ffffff" stop-opacity="0.07" />
-		<stop offset="0.9" stop-color="#ffffff" stop-opacity="0.03" />
-		<stop offset="1" stop-color="#ffffff" stop-opacity="0.14" />
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.13" />
+		<stop offset="0.1" stop-color="#ffffff" stop-opacity="0.035" />
+		<stop offset="0.9" stop-color="#ffffff" stop-opacity="0.015" />
+		<stop offset="1" stop-color="#ffffff" stop-opacity="0.08" />
 	</linearGradient>
 	<!-- the well the tiles sit in: darkest under the back wall -->
 	<linearGradient id="rx-well-shade" x1="0" y1="0" x2="0" y2="1">
@@ -29,16 +29,16 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 
 	<!-- tiles: a little light on the back edge, a little shade toward the front -->
 	<linearGradient id="rx-tile-shade" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.045" />
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.02" />
 		<stop offset="0.3" stop-color="#ffffff" stop-opacity="0" />
 		<stop offset="0.7" stop-color="#000000" stop-opacity="0" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.13" />
+		<stop offset="1" stop-color="#000000" stop-opacity="0.2" />
 	</linearGradient>
 	<linearGradient id="rx-tile-rim" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.2" />
-		<stop offset="0.06" stop-color="#ffffff" stop-opacity="0.04" />
-		<stop offset="0.94" stop-color="#000000" stop-opacity="0.06" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.4" />
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.1" />
+		<stop offset="0.06" stop-color="#ffffff" stop-opacity="0.02" />
+		<stop offset="0.94" stop-color="#000000" stop-opacity="0.1" />
+		<stop offset="1" stop-color="#000000" stop-opacity="0.5" />
 	</linearGradient>
 
 	<!-- keycaps -->
@@ -64,8 +64,8 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 		<stop offset="1" stop-color="#000000" stop-opacity="0.16" />
 	</radialGradient>
 	<linearGradient id="rx-cap-rim" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.44" />
-		<stop offset="0.2" stop-color="#ffffff" stop-opacity="0.1" />
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.26" />
+		<stop offset="0.2" stop-color="#ffffff" stop-opacity="0.05" />
 		<stop offset="0.42" stop-color="#000000" stop-opacity="0.18" />
 		<stop offset="1" stop-color="#000000" stop-opacity="0.62" />
 	</linearGradient>
@@ -164,7 +164,7 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 		<feColorMatrix
 			in="noise"
 			type="matrix"
-			values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.8 0 0 0 -0.4"
+			values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.4 0 0 0 -0.2"
 			result="light"
 		/>
 		<feColorMatrix

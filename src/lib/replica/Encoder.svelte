@@ -2,8 +2,10 @@
 @component
 One of the four endless encoders: a tall knurled knob with a coloured cap (dark, mid, light grey,
 white) in a recessed round dish, sized from TE's drawing. The real knob has no pointer, so the
-replica shows rotation with the knurled edge and an arrow over the knob pointing the way it turns,
-lit while it turns and fading after — clearer than the device without being different.
+replica shows rotation with the knurled edge alone when you turn it: 56 ridges against 24 detents a
+turn, so each detent reads as a small step forward (with 40 ridges the 15° step aliased into a step
+backwards). An arrow over the knob appears only when a teaching animation asks for a turn, pointing
+the way to turn.
 
 Input: vertical drag or the wheel turns it (6 px per detent); a tap clicks it; alt-drag turns
 with the click held (fine adjustment); arrow keys and Page Up/Down turn, Enter/Space clicks. With
@@ -30,8 +32,7 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 	const pressed = $derived(replica.isPressed(part.id));
 	const highlight = $derived(replica.highlight(part.id));
 	const hint = $derived(replica.turnHint(part.id));
-	const lastTurn = $derived(replica.lastTurn(part.id));
-	const knurl = $derived(knurlPath(art.top + 0.12, 4.95, 40));
+	const knurl = $derived(knurlPath(art.top + 0.12, 4.95, 56));
 	const arrow = $derived(turnArrowPath(art.dish + 1.3));
 
 	/** True between pointer down and up on a tap, for the push animation. */
@@ -196,17 +197,9 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 		<circle r={art.cap - 0.06} fill="none" stroke="url(#rx-cap-rim)" stroke-width="0.12" />
 	</g>
 
-	<!-- motion cue: one arrow the way it turns, while an animation turns it or after each detent -->
+	<!-- teaching cue: one arrow the way to turn, while an animation asks for a turn -->
 	{#if hint}
 		<path class="enc__arrow" d={arrow} transform={hint < 0 ? 'scale(-1 1)' : undefined} />
-	{:else if lastTurn}
-		{#key lastTurn.count}
-			<path
-				class="enc__arrow enc__arrow--flash"
-				d={arrow}
-				transform={lastTurn.direction < 0 ? 'scale(-1 1)' : undefined}
-			/>
-		{/key}
 	{/if}
 
 	<circle class="enc__ring" r={art.dish + 0.45} />
@@ -253,10 +246,6 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 		pointer-events: none;
 	}
 
-	.enc__arrow--flash {
-		animation: enc-flash 900ms ease-out forwards;
-	}
-
 	.enc__ring {
 		fill: none;
 		stroke: var(--rx-ring, #f7f5f5);
@@ -284,17 +273,6 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 		animation: enc-pulse 0.9s ease-in-out infinite;
 	}
 
-	/* full while detents keep coming (each restarts it), then a slow fade */
-	@keyframes enc-flash {
-		0%,
-		45% {
-			opacity: 1;
-		}
-		100% {
-			opacity: 0;
-		}
-	}
-
 	@keyframes enc-pulse {
 		50% {
 			opacity: 0.35;
@@ -307,7 +285,6 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 			transition: none;
 		}
 
-		.enc__arrow--flash,
 		.enc[data-hl='press'] .enc__ring {
 			animation: none;
 		}

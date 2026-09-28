@@ -208,7 +208,7 @@ on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for
 
 	/* barely perceptible at normal zoom: a satin finish, not a texture */
 	.replica__grain {
-		opacity: 0.12;
+		opacity: 0.07;
 		pointer-events: none;
 	}
 
