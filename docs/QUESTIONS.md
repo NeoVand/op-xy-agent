@@ -82,7 +82,11 @@ answer and date (and into `DECISIONS.md` when they shape the project).
     device info, storage, listings, a 49 KB download of the open project (TE's factory project
     "agent"), and the OP-XY left MTP mode by itself on disconnect. The Claude app's built-in browser
     cannot do it (no WebUSB device picker).
-13. **Projects to and from the device** (the save writes one new file; nothing is replaced). With
+13. **Projects to and from the device** — half answered (2026-09-28, `90-device-probe.md`): "load
+    from the op-xy" brought TE's factory project "agent" into the replica, and "save to the op-xy…"
+    wrote it back as `projects/user/test 1.xy`, which opened and played like the original on the
+    unit. Still open: a project the replica changed (authored notes) playing on the unit, 16
+    patterns, the cutoff lock. Original ask (the save writes one new file; nothing is replaced). With
     the OP-XY in MTP mode: "project" under the replica → "load from the op-xy" should bring the open
     project into the replica (tempo, patterns, scenes, songs, presets). Then "save to the op-xy…"
     as `test 1` adds `projects/user/test 1.xy`, written over the open project. On the device: does

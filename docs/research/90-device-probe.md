@@ -374,6 +374,17 @@ GetStorageInfo, GetObjectHandles/GetObjectInfo for the top level and `projects/`
    (4/4 = 1) where 1.1.4 new projects store 0x11; the reader now takes both
    (`core/xy/model.ts` timeSignatureOf) and the project round-trips byte for byte.
 3. "disconnect" closed the session and the OP-XY left MTP mode by itself, as with our Python probe.
+4. The project card on the home page, "load from the op-xy" (read-only: the same reads plus GetObject
+   of `projects/workspace.xy`): the replica loaded "agent". A red "transferIn … transfer error"
+   followed: the OP-XY had left MTP mode before answering CloseSession. Now ignored on close
+   (e6f81d3).
+5. **The first write** (announced to the owner and done by the owner's click): "save to the
+   op-xy…" as `test 1` — GetObjectHandles/GetObjectInfo to find `projects/workspace.xy` and
+   `projects/user`, GetObject of the workspace as the template, then SendObjectInfo + SendObject
+   of `projects/user/test 1.xy` (49 KB, the replica's unchanged "agent", so the same bytes as the
+   workspace). The card read "saved as projects/user/test 1.xy". On the device `test 1` showed in
+   the project list, opened, and played like "agent" (the owner: "identical as far as I can say").
+   Nothing else was written, replaced or deleted.
 
 ## Session 1 runbook (owner present, ≈20–30 min)
 
