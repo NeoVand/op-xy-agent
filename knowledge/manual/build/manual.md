@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1089 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1090 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -2942,6 +2942,7 @@ Facts:
 - OS 1.0.32 stopped `shift + key` from triggering punch-in FX while external MIDI is in use. [#midi-shortcut] (since 1.0.32) [s5]
 - Notes on MIDI channel 10 trigger punch-in FX; which note fires which effect is unpublished. [#midi-notes] (community-verified) [s6]
 - On `T2` each of the 24 keys plays its own animation on the screen — planets, a digit clock, noise, hands, waves, sweeping lines and bars, and more. [#animations] (verified 1.1.33) [s7]
+- With no effect held, the page shows a single dot tracing a heartbeat line across the dot grid, about every three seconds; it starts again from the left edge each time an effect ends. [#idle-heartbeat] (verified 1.1.33) [s7]
 
 Procedures:
 - Record punch-in FX from an instrument track [#record-shortcut] [s2]

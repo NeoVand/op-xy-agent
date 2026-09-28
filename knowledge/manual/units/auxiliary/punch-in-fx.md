@@ -49,6 +49,11 @@ facts:
     source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
     confidence: verified
     verified_on: '1.1.33'
+  - id: idle-heartbeat
+    text: With no effect held, the page shows a single dot tracing a heartbeat line across the dot grid, about every three seconds; it starts again from the left edge each time an effect ends.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: record-shortcut
     goal: Record punch-in FX from an instrument track

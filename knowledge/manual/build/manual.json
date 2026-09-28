@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "26513e6d",
+	"bundle_hash": "bdab053f",
 	"stats": {
 		"units": 163,
-		"facts": 1089,
+		"facts": 1090,
 		"procedures": 196,
 		"parameters": 207,
-		"verified_items": 189,
-		"words": 40425,
+		"verified_items": 190,
+		"words": 40459,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -16334,6 +16334,14 @@
 				{
 					"id": "animations",
 					"text": "On `T2` each of the 24 keys plays its own animation on the screen — planets, a digit clock, noise, hands, waves, sweeping lines and bars, and more.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "idle-heartbeat",
+					"text": "With no effect held, the page shows a single dot tracing a heartbeat line across the dot grid, about every three seconds; it starts again from the left edge each time an effect ends.",
 					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
