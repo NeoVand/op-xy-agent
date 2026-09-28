@@ -73,8 +73,10 @@
   them on the replica, one setting or a whole sound at a time. Five sound-design recipes run as
   written (tested). The how-to eval checks the virtual OP-XY's end state.
 - **M7 preset maker** (2026-09-28): `/presets` turns your own samples into a drum kit, multisample
-  or synth sampler preset in the browser and downloads it for field kit / MTP (M7 below). Left: a
-  try on the owner's unit (`QUESTIONS.md` 11).
+  or synth sampler preset in the browser, downloads it, or installs it on a connected OP-XY over
+  USB (MTP through WebUSB) once the owner confirms. `/lab` browses the unit's storage over MTP,
+  read-only, the first step of M6's project read. Left: both on the owner's unit (`QUESTIONS.md`
+  11, 12).
 - **Next:** T28 with the owner (track MIDI channels → notes out), then M5 composer + live playback and
   M6 native projects. M6 starts by **reading the current project over WebUSB-MTP**: it is the only way
   the replica can load what is on the device (steps, tempo, sounds), since the device never reports
@@ -335,7 +337,10 @@ generated sources; install via FILE PUT if the spike confirms it, otherwise expo
       11).
 - [ ] Try the presets on the owner's device; an agent tool that builds one from a request.
 - [ ] Slicer (transients, zero crossings) and generated sources.
-- [ ] Install over FILE PUT, after the spike (`QUESTIONS.md` 1).
+- [x] **Install over USB** (MTP through WebUSB, 2026-09-28): `core/mtp` (session, policy, installer)
+      and `device/mtp` (WebUSB pipe); the preset maker says what it will add and where, and writes
+      only after the click. Never deletes, moves or replaces. Tested on an emulated unit only.
+- [ ] FILE PUT over SysEx, after the spike (`QUESTIONS.md` 1).
 
 ### M8 — Voice
 

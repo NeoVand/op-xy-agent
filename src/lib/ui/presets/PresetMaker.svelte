@@ -3,8 +3,8 @@
 Turns recordings into an OP-XY sample preset (docs/research/30-presets-samples.md): pick a drum
 kit, a multisample or a synth sampler, drop audio files, check where each lands (a drum key, or a
 root note and its zone), and download the `.preset` folder zipped, ready for Field Kit or the
-device's `presets/` folder over MTP. Everything runs in the browser; nothing is uploaded or sent to
-a device.
+device's `presets/` folder over MTP, or install it on a connected OP-XY after the owner confirms
+(`PresetInstall`). Everything runs in the browser; nothing is uploaded anywhere.
 -->
 <script lang="ts">
 	import { Button, IconButton, Legend, Switch } from '$lib/ui';
@@ -19,11 +19,13 @@ a device.
 		noteFromName,
 		noteName,
 		zipPreset,
+		type BuiltPreset,
 		type LoopMode,
 		type PcmAudio,
 		type PresetKind
 	} from '$lib/core/presets';
 	import { decodeAudioFile } from './decode';
+	import PresetInstall from './PresetInstall.svelte';
 
 	interface Item {
 		readonly id: number;
@@ -127,7 +129,9 @@ a device.
 		playing = item.id;
 	}
 
-	async function download() {
+	/** The preset from the samples and options as they stand; what was noticed goes to `warnings`. */
+	async function build(): Promise<BuiltPreset | null> {
+		if (items.length === 0) return null;
 		busy = true;
 		warnings = [];
 		// let the page show that it is working before the samples are processed
@@ -143,18 +147,24 @@ a device.
 				{ kind, name: presetName, trim, normalize, loop }
 			);
 			warnings = [...built.warnings];
-			const blob = new Blob([zipPreset(built) as Uint8Array<ArrayBuffer>], {
-				type: 'application/zip'
-			});
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = `${built.folder}.zip`;
-			link.click();
-			setTimeout(() => URL.revokeObjectURL(url), 1000);
+			return built.patch.regions.length > 0 ? built : null;
 		} finally {
 			busy = false;
 		}
+	}
+
+	async function download() {
+		const built = await build();
+		if (!built) return;
+		const blob = new Blob([zipPreset(built) as Uint8Array<ArrayBuffer>], {
+			type: 'application/zip'
+		});
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = `${built.folder}.zip`;
+		link.click();
+		setTimeout(() => URL.revokeObjectURL(url), 1000);
 	}
 
 	/** Opens the system's file picker (a detached input, so the page keeps none around). */
@@ -305,8 +315,10 @@ a device.
 			<Legend size="xs" tone="accent">{warning}</Legend>
 		{/each}
 
+		<PresetInstall {build} disabled={items.length === 0 || busy} />
+
 		<div class="help">
-			<Legend as="h3" size="xs">putting it on your op-xy</Legend>
+			<Legend as="h3" size="xs">copying it by hand</Legend>
 			<Legend as="p" size="xs" tone="muted">
 				Unzip the download. Put the OP-XY in MTP mode (<code>com</code>, then <code>M4</code>; a Mac
 				needs TE's field kit app) and copy the <code>.preset</code> folder into a folder of your own

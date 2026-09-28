@@ -22,6 +22,7 @@ Everything sent from here goes through the device transport and its safety polic
 		type SessionPhase
 	} from '$lib/device';
 	import LabFiles from './LabFiles.svelte';
+	import LabMtp from './LabMtp.svelte';
 	import LabMonitor from './LabMonitor.svelte';
 
 	// The app-wide device stack: the root layout creates and starts it, so the lab and the rest of the
@@ -366,6 +367,10 @@ Everything sent from here goes through the device transport and its safety polic
 
 		<Panel title="files" class="lab__files">
 			<LabFiles {session} available={session.ready && caps.teProtocol === 'ok'} />
+		</Panel>
+
+		<Panel title="storage (mtp)" class="lab__files">
+			<LabMtp />
 		</Panel>
 
 		<Panel title="monitor" class="lab__monitor">

@@ -74,10 +74,15 @@ answer and date (and into `DECISIONS.md` when they shape the project).
     (the track's preset, or where it was last left).
 11. **Does the device load our presets?** (writes files over MTP; nothing else changes). The preset
     maker (`/presets`) writes kits and multisamples the way the device writes its own (note 30 §3),
-    but none has been tried on a unit yet. Copy one drum kit and one multisample from it into a
-    folder such as `presets/mine/`, then check each loads, plays in tune on its keys, loops as set,
-    and survives a project save and reload. Also worth a look: whether a `.preset` put straight into
-    `presets/` (no folder) shows up at all.
+    but none has been tried on a unit yet. Install one drum kit and one multisample into
+    `presets/mine/` (with "install on the op-xy…" in Chrome, or by hand with field kit), then check
+    each loads, plays in tune on its keys, loops as set, and survives a project save and reload.
+    Also worth a look: whether a `.preset` put straight into `presets/` (no folder) shows up at all.
+12. **MTP from the browser** (read-only). Our Python probe read the unit over MTP; the app's
+    WebUSB client has only met an emulated unit. With the OP-XY in MTP mode (com → M4), open `/lab`
+    in Chrome, "connect over mtp", open `projects/` and download `workspace.xy`; then "disconnect"
+    and check the OP-XY is back in MIDI mode. If Chrome cannot claim the interface, note whether
+    field kit was running.
 
 ## Answered
 

@@ -18,9 +18,11 @@ src/lib/
     xy/        (M6) .xy codec, ported from kmorrill/xy-format
     presets/   (M7) sample presets: WAV/AIFF in and out, resampling, pitch and loop finding,
                patch.json, the drum/multisample/sampler builder, zip (the page is /presets)
+    mtp/       MTP with the OP-XY in MTP mode: containers, datasets, a session over any byte pipe,
+               the write policy (reads; new files only after approval; never delete/move), installPreset
   device/      Browser adapters (Web MIDI, workers, audio). Everything injected for tests:
                access, transport (the single send choke point + policy), monitor, device mirror,
-               scheduler + tick worker, session (identity + GREET), expect()
+               scheduler + tick worker, session (identity + GREET), expect(), mtp (WebUSB pipe)
   app/         Glue between features, e.g. the replica ⇄ device bridge (replica keys → notes/transport/
                track select through the transport; device notes/clock → replica LEDs), app-wide contexts
   agent/       (M3) conductor harness on @anthropic-ai/sdk, tools, subagents, approvals, journal
@@ -63,7 +65,9 @@ core`. `core` imports nothing outside `core` (and `$knowledge` JSON). Nothing im
 
 - **Safety is enforced in one place.** Every outgoing MIDI byte goes through
   `device/transport` → policy (`core/te/policy.ts` deny-list + rate limits + approvals). No other
-  module may call `MIDIOutput.send`. DFU (TE cmd 0x03), 0x7F and undocumented TE commands can never
+  module may call `MIDIOutput.send`. Over MTP, every operation goes through `core/mtp/policy.ts`: reads,
+  and new files or folders only after the owner approved that write; delete, move, overwrite,
+  format and reset are never sent. DFU (TE cmd 0x03), 0x7F and undocumented TE commands can never
   be sent. State-changing operations are journalled with an inverse.
 - **The LLM never produces bytes.** It emits typed, zod-validated intent; core code compiles it.
 - **Firmware-aware data.** Facts carry `confidence` (verified / official / community / derived /
