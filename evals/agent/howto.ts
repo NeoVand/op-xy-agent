@@ -27,6 +27,8 @@ interface Outcome {
 	readonly state: SimState;
 	readonly answer: string;
 	readonly tools: readonly { readonly name: string; readonly input: unknown }[];
+	/** Walkthroughs started on the replica: their goals. */
+	readonly guided: readonly string[];
 }
 
 interface HowtoCase {
@@ -202,6 +204,21 @@ const CASES: readonly HowtoCase[] = [
 		}
 	},
 	{
+		id: 'guide',
+		prompt:
+			'I want to learn to find the filter cutoff on track 3 myself. Walk me through it on the replica, I will press the keys.',
+		check(o) {
+			const fails: string[] = [];
+			const guided = o.tools.some(
+				(t) => t.name === 'plan_steps' && (t.input as { guide?: boolean }).guide === true
+			);
+			if (!guided) fails.push('did not start a walkthrough');
+			if (showed(o)) fails.push('played the steps itself instead of letting the user');
+			if (o.guided.length === 0) fails.push('the replica never lit a step');
+			return fails;
+		}
+	},
+	{
 		id: 'pluck',
 		prompt:
 			'I want a plucky bass on track 3: a short decay, no sustain and a bit more resonance. Set it up for me on the virtual OP-XY and tell me what you changed.',
@@ -251,12 +268,14 @@ async function runCase(c: HowtoCase, model: string, apiKey: string): Promise<Cas
 			};
 		}
 	};
+	const guided: string[] = [];
 	const conductor = await Conductor.create({
 		client: createAnthropicClient({ apiKey }),
 		device: null,
 		replica,
 		screen,
 		virtual,
+		guide: { start: (goal) => void guided.push(goal) },
 		manual: await loadManualSource({ dev: false }),
 		store: createMemoryThreadStore(),
 		autoApprove: true,
@@ -282,7 +301,7 @@ async function runCase(c: HowtoCase, model: string, apiKey: string): Promise<Cas
 		for (const e of conductor.entries)
 			console.log('entry', e.kind, JSON.stringify(e).slice(0, 300));
 	}
-	const outcome: Outcome = { state: sim.state, answer, tools };
+	const outcome: Outcome = { state: sim.state, answer, tools, guided };
 	return {
 		id: c.id,
 		fails: error ? [`error: ${error}`] : c.check(outcome),
