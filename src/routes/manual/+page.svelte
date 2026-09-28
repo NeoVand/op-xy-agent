@@ -6,7 +6,8 @@ the same text and cites these pages.
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { ManualSearchResult } from '$lib/manual';
-	import { Legend } from '$lib/ui';
+	import { Search01Icon } from '@hugeicons/core-free-icons';
+	import { HugeIcon, Legend } from '$lib/ui';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -56,15 +57,18 @@ the same text and cites these pages.
 
 	<search class="find">
 		<label class="sr-only" for="manual-search">search the manual</label>
-		<input
-			id="manual-search"
-			class="find__field"
-			type="search"
-			placeholder="search: parameter locks, song mode, tape, midi clock…"
-			autocomplete="off"
-			bind:value={query}
-			oninput={() => void search(query)}
-		/>
+		<div class="find__box">
+			<HugeIcon icon={Search01Icon} class="find__icon" />
+			<input
+				id="manual-search"
+				class="find__field"
+				type="search"
+				placeholder="search: parameter locks, song mode, tape, midi clock…"
+				autocomplete="off"
+				bind:value={query}
+				oninput={() => void search(query)}
+			/>
+		</div>
 		{#if query.trim().length >= 2}
 			{#if results.length === 0}
 				<p class="find__none">nothing found for “{query.trim()}”</p>
@@ -140,10 +144,23 @@ the same text and cites these pages.
 		gap: 0.5rem;
 	}
 
+	.find__box {
+		position: relative;
+		max-width: 46rem;
+		color: var(--xy-scr-muted);
+	}
+
+	.find__box :global(.find__icon) {
+		position: absolute;
+		top: 50%;
+		left: 1rem;
+		transform: translateY(-50%);
+		pointer-events: none;
+	}
+
 	.find__field {
 		width: 100%;
-		max-width: 46rem;
-		padding: 0.75rem 1rem;
+		padding: 0.75rem 1rem 0.75rem 2.75rem;
 		border: 0;
 		border-radius: var(--xy-radius-tile);
 		background-color: var(--xy-scr-bg);

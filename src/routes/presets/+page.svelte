@@ -4,7 +4,8 @@ built in the browser and downloaded as a zipped `.preset` folder (src/lib/preset
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Button, Legend } from '$lib/ui';
+	import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
+	import { Button, HugeIcon, Legend } from '$lib/ui';
 	import PresetMaker from '$lib/ui/presets/PresetMaker.svelte';
 </script>
 
@@ -25,7 +26,10 @@ built in the browser and downloaded as a zipped `.preset` folder (src/lib/preset
 				device writes its presets.
 			</Legend>
 		</div>
-		<Button href={resolve('/')} variant="ghost" size="sm">back to the app</Button>
+		<Button href={resolve('/')} variant="ghost" size="sm">
+			{#snippet icon()}<HugeIcon icon={ArrowLeft01Icon} />{/snippet}
+			back to the app
+		</Button>
 	</header>
 
 	<PresetMaker />

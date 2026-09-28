@@ -13,7 +13,13 @@
 	} from '$lib/app';
 	import { browserClock, browserTimers, getDeviceStack, type SessionPhase } from '$lib/device';
 	import { getReplicaState, Replica } from '$lib/replica';
-	import { Button, Led, Readout, tooltip } from '$lib/ui';
+	import {
+		KeyboardIcon,
+		SparklesIcon,
+		VolumeHighIcon,
+		VolumeOffIcon
+	} from '@hugeicons/core-free-icons';
+	import { Button, HugeIcon, Led, Readout, tooltip } from '$lib/ui';
 	import AgentPanel from '$lib/ui/shell/AgentPanel.svelte';
 	import DeviceStage from '$lib/ui/shell/DeviceStage.svelte';
 	import ProjectMenu from '$lib/ui/shell/ProjectMenu.svelte';
@@ -262,6 +268,7 @@
 					{@attach tooltip(keysTip)}
 				>
 					<Led state={computerKeys ? 'white' : 'off'} size="sm" />
+					<HugeIcon icon={KeyboardIcon} />
 					keys
 				</button>
 				<button
@@ -273,6 +280,7 @@
 					{@attach tooltip(soundTip)}
 				>
 					<Led state={sound.enabled && sound.available ? 'white' : 'off'} size="sm" />
+					<HugeIcon icon={sound.enabled && sound.available ? VolumeHighIcon : VolumeOffIcon} />
 					{sound.connected ? 'sound on this computer' : 'sound'}
 				</button>
 				{#if sound.synthReady}
@@ -288,6 +296,7 @@
 						)}
 					>
 						<Led state={sound.newEngines ? 'white' : 'off'} size="sm" />
+						<HugeIcon icon={SparklesIcon} />
 						new engines
 					</button>
 				{/if}

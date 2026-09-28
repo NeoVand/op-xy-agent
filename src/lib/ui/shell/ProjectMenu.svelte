@@ -6,7 +6,8 @@ one, load the project the OP-XY has open over USB, or add the replica's project 
 last one writes to the device, so it says what it will add and waits for a second click.
 -->
 <script lang="ts">
-	import { Button, IconButton, Led, Legend } from '$lib/ui';
+	import { Folder01Icon } from '@hugeicons/core-free-icons';
+	import { Button, HugeIcon, IconButton, Led, Legend } from '$lib/ui';
 	import { getAppSimulator } from '$lib/app';
 	import { PROJECT_NAME, ProjectTransfer } from '$lib/app/project-transfer.svelte';
 	import { browserUsb } from '$lib/device';
@@ -73,6 +74,7 @@ last one writes to the device, so it says what it will add and waits for a secon
 			onclick={() => (open = !open)}
 		>
 			<Led state={open ? 'white' : 'off'} size="sm" />
+			<HugeIcon icon={Folder01Icon} />
 			project
 		</button>
 		{#if open}

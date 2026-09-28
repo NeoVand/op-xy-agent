@@ -8,17 +8,32 @@ never on the published site.
 	import { dev } from '$app/environment';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import {
+		AudioWave01Icon,
+		BookOpen01Icon,
+		ColorsIcon,
+		ComputerIcon,
+		TestTube01Icon
+	} from '@hugeicons/core-free-icons';
+	import type { IconSvgElement } from '@hugeicons/svelte';
+	import HugeIcon from '../HugeIcon.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 
-	const LINKS = [
-		{ id: '/manual', label: 'manual' },
-		{ id: '/presets', label: 'preset maker' }
-	] as const;
-	const DEV_LINKS = [
-		{ id: '/styleguide', label: 'styleguide' },
-		{ id: '/replica', label: 'replica' },
-		{ id: '/lab', label: 'lab' }
-	] as const;
+	interface NavLink {
+		readonly id: '/manual' | '/presets' | '/styleguide' | '/replica' | '/lab';
+		readonly label: string;
+		readonly icon: IconSvgElement;
+	}
+
+	const LINKS: readonly NavLink[] = [
+		{ id: '/manual', label: 'manual', icon: BookOpen01Icon },
+		{ id: '/presets', label: 'preset maker', icon: AudioWave01Icon }
+	];
+	const DEV_LINKS: readonly NavLink[] = [
+		{ id: '/styleguide', label: 'styleguide', icon: ColorsIcon },
+		{ id: '/replica', label: 'replica', icon: ComputerIcon },
+		{ id: '/lab', label: 'lab', icon: TestTube01Icon }
+	];
 	const links = dev ? [...LINKS, ...DEV_LINKS] : LINKS;
 </script>
 
@@ -38,7 +53,7 @@ never on the published site.
 			<a
 				class={['nav__link', current && 'is-current']}
 				href={resolve(link.id)}
-				aria-current={current ? 'page' : undefined}>{link.label}</a
+				aria-current={current ? 'page' : undefined}><HugeIcon icon={link.icon} />{link.label}</a
 			>
 		{/each}
 		<ThemeToggle />
@@ -114,6 +129,9 @@ never on the published site.
 	}
 
 	.nav__link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4375rem;
 		padding: 0.5rem 0.625rem;
 		border-radius: var(--xy-radius-tile);
 		color: var(--xy-fg-subtle);

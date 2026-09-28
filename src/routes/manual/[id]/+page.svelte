@@ -9,7 +9,8 @@ and the units around it. The agent cites these pages.
 	import { comboForDisplay } from '$lib/agent/ui/markdown';
 	import { tryParseKeys } from '$lib/core/opxy';
 	import { getReplicaState, Replica } from '$lib/replica';
-	import { Legend } from '$lib/ui';
+	import { GithubIcon, LinkSquare02Icon } from '@hugeicons/core-free-icons';
+	import { HugeIcon, Legend } from '$lib/ui';
 	import Kbd from '$lib/ui/Kbd.svelte';
 	import type { PageProps } from './$types';
 
@@ -144,6 +145,8 @@ and the units around it. The agent cites these pages.
 			{#if unit.facts.length > 0}
 				<section class="block" aria-labelledby="facts">
 					<h2 class="block__title" id="facts">facts</h2>
+					<!-- sources are external: TE's pages and the repository on GitHub -->
+					<!-- eslint-disable svelte/no-navigation-without-resolve -->
 					<ul class="facts">
 						{#each unit.facts as fact (fact.id)}
 							<li class="fact" id={fact.id}>
@@ -154,15 +157,18 @@ and the units around it. The agent cites these pages.
 											? ` · ${fact.verified_on}`
 											: ''}
 									</span>
-									<!-- external: TE's pages and the repository on GitHub -->
-									<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-									<a href={sourceHref(fact.source)} target="_blank" rel="noopener noreferrer"
-										>{sourceLabel(fact.source)}</a
+									<a
+										class="out"
+										href={sourceHref(fact.source)}
+										target="_blank"
+										rel="noopener noreferrer"
+										>{sourceLabel(fact.source)}<HugeIcon icon={LinkSquare02Icon} size="1em" /></a
 									>
 								</p>
 							</li>
 						{/each}
 					</ul>
+					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 				</section>
 			{/if}
 
@@ -230,8 +236,8 @@ and the units around it. The agent cites these pages.
 							>{sourceLabel(unit.official_url)}</a
 						>.
 					{/if}
-					<a href={sourceHref(unit.path)} target="_blank" rel="noopener noreferrer"
-						>This unit’s source</a
+					<a class="out" href={sourceHref(unit.path)} target="_blank" rel="noopener noreferrer"
+						><HugeIcon icon={GithubIcon} size="1em" />This unit’s source</a
 					>.
 					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 				</Legend>
@@ -446,6 +452,12 @@ and the units around it. The agent cites these pages.
 
 	.fact__from a {
 		color: var(--xy-fg-subtle);
+	}
+
+	.out {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
 	}
 
 	.tag {

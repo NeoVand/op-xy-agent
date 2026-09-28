@@ -23,6 +23,7 @@ above the composer says what voice is doing while it is on.
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { Settings02Icon } from '@hugeicons/core-free-icons';
 	import { getReplicaGuide } from '$lib/app/guide.svelte';
 	import { getPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import { getSimPersistence } from '$lib/app/persistence';
@@ -59,6 +60,7 @@ above the composer says what voice is doing while it is on.
 	import VoiceKey from '$lib/voice/ui/VoiceKey.svelte';
 	import VoiceStrip from '$lib/voice/ui/VoiceStrip.svelte';
 	import Button from '../Button.svelte';
+	import HugeIcon from '../HugeIcon.svelte';
 	import IconButton from '../IconButton.svelte';
 	import Kbd from '../Kbd.svelte';
 	import Led from '../Led.svelte';
@@ -477,6 +479,7 @@ above the composer says what voice is doing while it is on.
 				aria-controls="{uid}-body"
 				onclick={() => (settingsOpen ? closeSettings() : openSettings())}
 			>
+				{#snippet icon()}<HugeIcon icon={Settings02Icon} />{/snippet}
 				settings
 			</Button>
 		</div>
