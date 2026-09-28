@@ -34,6 +34,11 @@ facts:
   - id: speed
     text: Speed controls are tempo-synced over their anti-clockwise range; turned clockwise until a dial icon appears, they run at a free rate.
     source: https://teenage.engineering/guides/op-xy/instrument#lfo
+  - id: speed-screen
+    text: On screen a synced speed reads as a count beside a note value, 8 with a 32nd at the slow end, then 6 with a 16th, 4 with a quarter and 2 with a whole note as it turns; from the middle of its range a clock dial shows the free rate.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
   - id: negative
     text: The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn.
     source: https://teenage.engineering/downloads/op-xy#1.1.3

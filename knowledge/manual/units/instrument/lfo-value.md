@@ -35,7 +35,7 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: free-cards
-    text: In the destination column each page's card, such as syn (the engine), env or filter, is followed by a twin labelled free with the same icon.
+    text: The destination column holds six cards, syn (the engine), env and filter, each followed by a twin labelled free with the same icon; there is no LFO destination.
     source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
     confidence: verified
     verified_on: '1.1.33'

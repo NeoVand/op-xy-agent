@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1087 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1089 facts, 196 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -1722,8 +1722,9 @@ Facts:
 - Picking a type takes you back to the engine page (`M1`); `M3` then shows the new type. [#type-return] (verified 1.1.33) [s2]
 - Presets also store whether the filter is switched on at all. [#on-off] (community-verified) [s3]
 - With the filter off, the page is dimmed under an off box; pressing `M3` again switches the filter on. [#off] (verified 1.1.33) [s2]
-- The page draws the filter's curve over tinted bands, with the type name at the top left, a frequency axis marked 50, 1k, 2k, 5k and 20kHz, and a small value box on the curve. [#screen] (verified 1.1.33) [s2]
-- Cutoff slides the curve's slope along the axis, key tracking moves an arrow along the bottom from left to right, and a positive envelope amount adds a hatched ghost of the curve to its right; z hipass mirrors the drawing. [#drawn] (verified 1.1.33) [s2]
+- The page draws the filter's curve over tinted bands, with the type name at the top left, a frequency axis marked 50, 1k, 2k, 5k and 20kHz, and a small black box on the curve that shows the resonance, 00–99, rising as resonance goes up. [#screen] (verified 1.1.33) [s2]
+- Cutoff slides the curve's slope along the axis, key tracking moves an arrow along the bottom from left to right, and any envelope amount above 0 adds a hatched ghost of the curve to its right; z hipass mirrors the drawing. [#drawn] (verified 1.1.33) [s2]
+- Envelope amount runs from none at 0 to full at 99; there is no negative setting that would sweep the cutoff down. [#env-range] (verified 1.1.33) [s2]
 - Over MIDI, CC32–35 on the track's channel move cutoff, resonance, envelope amount and key tracking, and the page redraws as they arrive. [#midi-ccs] (verified 1.1.33) [s4]
 - No MIDI CC is known for the filter type. [#no-type-cc] (community-verified) [s5]
 
@@ -1800,11 +1801,12 @@ Facts:
 - The destination is one of the track's module pages and the parameter is one of that page's four encoders; `E4` can be turned or clicked to choose it. [#target] [s1]
 - Extra settings sit behind encoder clicks or `shift` plus a turn; on some types a click on `E1` changes the waveform shape. [#sub-functions] [s1]
 - Speed controls are tempo-synced over their anti-clockwise range; turned clockwise until a dial icon appears, they run at a free rate. [#speed] [s1]
-- The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn. [#negative] (since 1.1.3) (derived) [s3]
-- On drum tracks the LFO restarts with every new note. [#drum-reset] (since 1.0.15) [s4]
-- Over MIDI, CC40–43 on the track's channel drive the four `M4` encoders in order, in all five LFO types. [#midi-ccs] (verified 1.1.33) [s5]
-- No MIDI CC is known for the LFO type. [#no-type-cc] (community-verified) [s6]
-- With the LFO off, the page is dimmed under an off box; pressing `M4` again switches the LFO on. [#off] (verified 1.1.33) [s7]
+- On screen a synced speed reads as a count beside a note value, 8 with a 32nd at the slow end, then 6 with a 16th, 4 with a quarter and 2 with a whole note as it turns; from the middle of its range a clock dial shows the free rate. [#speed-screen] (verified 1.1.33) [s3]
+- The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn. [#negative] (since 1.1.3) (derived) [s4]
+- On drum tracks the LFO restarts with every new note. [#drum-reset] (since 1.0.15) [s5]
+- Over MIDI, CC40–43 on the track's channel drive the four `M4` encoders in order, in all five LFO types. [#midi-ccs] (verified 1.1.33) [s6]
+- No MIDI CC is known for the LFO type. [#no-type-cc] (community-verified) [s7]
+- With the LFO off, the page is dimmed under an off box; pressing `M4` again switches the LFO on. [#off] (verified 1.1.33) [s3]
 
 Procedures:
 - Change the LFO type of the selected track [#type] [s1]
@@ -1813,7 +1815,7 @@ Procedures:
 
 Related: [instrument.lfo-duck], [instrument.lfo-element], [instrument.lfo-random], [instrument.lfo-tremolo], [instrument.lfo-value], [sequencer.parameter-locks]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 changelog:1.0.15 · s5 note 59 · s6 note 20 · s7 note 59
+Sources: s1 guide:instrument#lfo · s2 changelog:1.1.0 · s3 note 59 · s4 changelog:1.1.3 · s5 changelog:1.0.15 · s6 note 59 · s7 note 20
 
 ### Duck LFO (sidechain pumping) [instrument.lfo-duck]
 current · OS ≥ 1.1.0 · changed in 1.1.3 · guide v1.1.15 · verified on 1.1.33
@@ -1959,7 +1961,7 @@ Facts:
 - The normal destinations give the triggered behaviour and the free ones the continuous behaviour. [#modes] (derived) [s1]
 - Before OS 1.1.15, the slowest free-running speed stopped the value LFO altogether. [#slow-fix] (since 1.1.15) [s2]
 - The value page shows speed, amount on a tick ladder, a scrolling column of destination cards and a large card naming the target parameter (attack, cutoff, res, key …) over an animated knob. [#screen] (verified 1.1.33) [s3]
-- In the destination column each page's card, such as syn (the engine), env or filter, is followed by a twin labelled free with the same icon. [#free-cards] (verified 1.1.33) [s3]
+- The destination column holds six cards, syn (the engine), env and filter, each followed by a twin labelled free with the same icon; there is no LFO destination. [#free-cards] (verified 1.1.33) [s3]
 
 Procedures:
 - Sweep a track's filter cutoff in time with the tempo [#sweep] [s1]

@@ -42,12 +42,17 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: screen
-    text: The page draws the filter's curve over tinted bands, with the type name at the top left, a frequency axis marked 50, 1k, 2k, 5k and 20kHz, and a small value box on the curve.
+    text: The page draws the filter's curve over tinted bands, with the type name at the top left, a frequency axis marked 50, 1k, 2k, 5k and 20kHz, and a small black box on the curve that shows the resonance, 00–99, rising as resonance goes up.
     source: docs/research/59-screen-profiling.md#23-filter-instrument-m3
     confidence: verified
     verified_on: '1.1.33'
   - id: drawn
-    text: Cutoff slides the curve's slope along the axis, key tracking moves an arrow along the bottom from left to right, and a positive envelope amount adds a hatched ghost of the curve to its right; z hipass mirrors the drawing.
+    text: Cutoff slides the curve's slope along the axis, key tracking moves an arrow along the bottom from left to right, and any envelope amount above 0 adds a hatched ghost of the curve to its right; z hipass mirrors the drawing.
+    source: docs/research/59-screen-profiling.md#23-filter-instrument-m3
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: env-range
+    text: Envelope amount runs from none at 0 to full at 99; there is no negative setting that would sweep the cutoff down.
     source: docs/research/59-screen-profiling.md#23-filter-instrument-m3
     confidence: verified
     verified_on: '1.1.33'

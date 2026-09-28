@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "b3767f8d",
+	"bundle_hash": "26513e6d",
 	"stats": {
 		"units": 163,
-		"facts": 1087,
+		"facts": 1089,
 		"procedures": 196,
 		"parameters": 207,
-		"verified_items": 187,
-		"words": 40338,
+		"verified_items": 189,
+		"words": 40425,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -9626,7 +9626,7 @@
 				},
 				{
 					"id": "screen",
-					"text": "The page draws the filter's curve over tinted bands, with the type name at the top left, a frequency axis marked 50, 1k, 2k, 5k and 20kHz, and a small value box on the curve.",
+					"text": "The page draws the filter's curve over tinted bands, with the type name at the top left, a frequency axis marked 50, 1k, 2k, 5k and 20kHz, and a small black box on the curve that shows the resonance, 00–99, rising as resonance goes up.",
 					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -9634,7 +9634,15 @@
 				},
 				{
 					"id": "drawn",
-					"text": "Cutoff slides the curve's slope along the axis, key tracking moves an arrow along the bottom from left to right, and a positive envelope amount adds a hatched ghost of the curve to its right; z hipass mirrors the drawing.",
+					"text": "Cutoff slides the curve's slope along the axis, key tracking moves an arrow along the bottom from left to right, and any envelope amount above 0 adds a hatched ghost of the curve to its right; z hipass mirrors the drawing.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "env-range",
+					"text": "Envelope amount runs from none at 0 to full at 99; there is no negative setting that would sweep the cutoff down.",
 					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -10078,6 +10086,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "speed-screen",
+					"text": "On screen a synced speed reads as a count beside a note value, 8 with a 32nd at the slow end, then 6 with a 16th, 4 with a quarter and 2 with a whole note as it turns; from the middle of its range a clock dial shows the free rate.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "negative",
 					"text": "The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn.",
 					"source": "https://teenage.engineering/downloads/op-xy#1.1.3",
@@ -10160,6 +10176,10 @@
 					"kind": "changelog"
 				},
 				{
+					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
+				},
+				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.3",
 					"kind": "changelog"
 				},
@@ -10173,10 +10193,6 @@
 				},
 				{
 					"url": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
-					"kind": "research"
-				},
-				{
-					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
 					"kind": "research"
 				}
 			],
@@ -10966,7 +10982,7 @@
 				},
 				{
 					"id": "free-cards",
-					"text": "In the destination column each page's card, such as syn (the engine), env or filter, is followed by a twin labelled free with the same icon.",
+					"text": "The destination column holds six cards, syn (the engine), env and filter, each followed by a twin labelled free with the same icon; there is no LFO destination.",
 					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
