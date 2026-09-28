@@ -29,6 +29,11 @@ facts:
     text: Over MIDI, CC28–31 reach these four settings; play mode reads the value as one of three steps.
     source: docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
     confidence: community-verified
+  - id: card
+    text: Holding `shift` on `M2` brings up a white card of four rows over the dimmed page, each with its encoder's dot — play mode (poly, mono or legato), portamento (off, then numbers), bend range (semitones, up to an octave) and preset volume (a number).
+    source: docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: set-mode
     goal: Switch a track between poly, mono and legato

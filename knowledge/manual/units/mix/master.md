@@ -38,6 +38,11 @@ facts:
     text: No MIDI CC is known for the group levels or the compressor.
     source: docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
     confidence: community
+  - id: screen
+    text: The master page shows the percussion and melodic levels as large numbers, a tall bar in the middle that `E3` shortens, and a VU meter from −20 to +3 above the word master.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: open
     goal: Open the master page

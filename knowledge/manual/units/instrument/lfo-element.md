@@ -13,7 +13,7 @@ firmware:
   min: '1.0.9'
   changed_in: ['1.0.50', '1.1.0']
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: what
     text: Element takes its modulation from the OP-XY itself rather than from an oscillator.
@@ -26,6 +26,11 @@ facts:
     text: OS 1.1.0 fixed a bug that affected element when the amp envelope was its source.
     source: https://teenage.engineering/downloads/op-xy#1.1.0
     firmware_min: '1.1.0'
+  - id: screen
+    text: Element shows its source as an icon — G for the gyroscope, a microphone, ^ for the envelope, or sum — then amount on a tick ladder, destination cards (synth wave, env, filter, amp) and a card naming the parameter, such as attack, cutoff, pitch or pan.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M4
     encoder: E1

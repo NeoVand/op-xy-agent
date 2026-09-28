@@ -29,19 +29,31 @@ facts:
     source: https://teenage.engineering/downloads/op-xy#1.1.32
     firmware_min: '1.1.32'
   - id: ccs
-    text: Community charts put the filter on CC32 (high-pass) and CC35 (low-pass), the sends on CC37–39 and the LFO on CC40–43 of the aux track's channel.
+    text: Community charts put the aux sends on CC37–39 of the track's channel.
     source: docs/research/20-midi-control.md#35-auxiliary-tracks-916
     confidence: community
+  - id: midi
+    text: Over MIDI, CC32 and CC35 move the external audio track's high-pass and low-pass and CC40–43 its LFO; the external MIDI track's LFO answers CC40–43 too.
+    source: docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: filter-drawn
+    text: On external audio the `M3` filter starts switched off; its high-pass is drawn rising from the left and its low-pass falling from the right.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M3
     encoder: E1
     layer: base
     name: high-pass cutoff
+    cc: 32
     source: https://teenage.engineering/guides/op-xy/auxiliary#tape
   - screen: M3
     encoder: E4
     layer: base
     name: low-pass cutoff
+    cc: 35
     source: https://teenage.engineering/guides/op-xy/auxiliary#tape
   - screen: M3
     encoder: E2

@@ -13,11 +13,16 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: character
     text: Organ covers a wide spread of organ sounds, from transistor instruments to church organs, chosen with the type control.
     source: https://teenage.engineering/guides/op-xy/synth-engines#organ
+  - id: picture
+    text: Organ's picture is four drawbars, each with a scale from 8 to 1 and an icon on its cap; each encoder slides one drawbar, and the bars glide into place.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

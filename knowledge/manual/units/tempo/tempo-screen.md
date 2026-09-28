@@ -12,14 +12,16 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: open
     text: '`tempo` opens the tempo screen from any screen.'
     source: https://teenage.engineering/guides/op-xy/tempo#project
   - id: tap
     text: Tapping `tempo` repeatedly in time with the music sets the tempo.
-    source: https://teenage.engineering/guides/op-xy/tempo#project
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: verified
+    verified_on: '1.1.33'
   - id: metronome
     text: '`turn E4` sets the metronome volume and `click E4` switches the metronome on or off.'
     source: https://teenage.engineering/guides/op-xy/tempo#edit-tempo
@@ -30,6 +32,26 @@ facts:
   - id: new-project
     text: A new empty project on the owner's unit ran at 120 BPM.
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+    verified_on: '1.1.33'
+  - id: screen
+    text: The tempo page has a light background, the BPM as a large number on the left and a metronome in the middle carrying the groove type's two-letter abbreviation.
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: weight
+    text: The metronome's weight slides down its arm as the tempo rises, from the top at 40 BPM to the bottom at 220.
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: speaker
+    text: The speaker icon at the top right loses its sound waves as `E4` turns the metronome down.
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: pendulum
+    text: While the sequencer plays, the pendulum swings and leaves motion trails.
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: verified
     verified_on: '1.1.33'
 procedures:
   - id: tap

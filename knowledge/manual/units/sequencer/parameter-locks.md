@@ -17,7 +17,9 @@ firmware:
 facts:
   - id: record
     text: To lock a value, keep a step held and turn an encoder; the step remembers the value you dial in.
-    source: https://teenage.engineering/guides/op-xy/sequencer#step-sequencing
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
   - id: playback
     text: Each time the sequencer reaches a locked step, the parameter takes that step's stored value.
     source: https://teenage.engineering/guides/op-xy/sequencer#step-sequencing
@@ -59,6 +61,16 @@ facts:
     text: A lock can sit on a step that has no note; before OS 1.1.33 a bug prevented adding one there.
     source: https://teenage.engineering/downloads/op-xy#1.1.33
     firmware_min: '1.1.33'
+  - id: lock-box
+    text: While you record a lock, the held step's number box on the screen turns orange.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: show-locks
+    text: Holding a locked step shows its locked values in the page's top bar instead of the track's own — shape 00 and detune 06, say, on a track set to 15 and 05.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: add
     goal: Lock a parameter value on one step

@@ -32,6 +32,11 @@ facts:
     text: Since OS 1.1.25, stopping the hold player ends its notes with an ordinary note-off, so each note fades out through its release.
     source: https://teenage.engineering/downloads/op-xy#1.1.25
     firmware_min: '1.1.25'
+  - id: screen
+    text: The hold page shows the word hold over a large infinity ribbon of concentric bands; its encoders have nothing to set.
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: use
     goal: Latch notes with the hold player

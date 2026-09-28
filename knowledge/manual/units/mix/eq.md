@@ -29,9 +29,30 @@ facts:
     source: https://teenage.engineering/guides/op-xy/mix#eq
     firmware_min: '1.1.15'
   - id: midi
-    text: Over MIDI, CC90 controls the EQ, with the channel choosing the band — 1 low, 2 mid, 3 high, 4 blend; one community tool reports the blend channel not responding.
-    source: docs/research/20-midi-control.md#31-global-ccs
-    confidence: community-verified
+    text: Over MIDI, CC90 moves the EQ bands, the channel choosing which — 1 low, 2 mid, 3 high.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: midi-blend
+    text: CC90 on channel 4 changed nothing visible on the EQ page, so no MIDI control for blend is confirmed.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: screen
+    text: The EQ page pictures the three bands as groups of panels standing on an isometric grid floor, next to a slider track with an N at one end.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: bands-drawn
+    text: Each band tilts its own group of panels, lying flat at the minimum and upright at the maximum; in a new project all three bands sat at the middle value, 64.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: blend-drawn
+    text: Turning `E4` slides a knob along that track and reshapes the whole scene; as it travels, the low and high panels flatten and the mid panels stand up.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: open
     goal: Open the master EQ

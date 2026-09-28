@@ -27,14 +27,23 @@ facts:
     text: The step keys show the selected track's sequence in its current pattern.
     source: https://teenage.engineering/guides/op-xy/arrange#switching-tracks-and-patterns
   - id: browse
-    text: '`turn E4` moves through the patterns the selected track already has.'
-    source: https://teenage.engineering/guides/op-xy/arrange#sound-link
+    text: '`turn E4` scrolls through the patterns of the selected track, drawn as a column of numbered blocks, so the current one sits on the colour band.'
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
   - id: mute
     text: '`click E4` mutes the selected track.'
     source: https://teenage.engineering/guides/op-xy/arrange#sound-link
   - id: keys
-    text: In arrange, `M1`…`M4` open no pages; they add, copy, paste and remove patterns, and with `shift` held they manage scenes.
-    source: https://teenage.engineering/guides/op-xy/arrange#edit-controls
+    text: In arrange, `M1`…`M4` open no pages; the footer names them new, copy, paste and clear (delete once the track has more than one pattern), and with `shift` held they manage scenes.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: screen
+    text: The arrange page shows eight track columns crossed by a band of track colours; the selected track's segment is bright and dotted with its notes, its number above, and the current scene number sits boxed at the bottom. On the auxiliary side a small icon appears at the top left.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: enter
     goal: Open arrange mode

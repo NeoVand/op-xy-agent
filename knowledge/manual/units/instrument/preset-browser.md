@@ -33,6 +33,26 @@ facts:
     text: Since OS 1.1.15, user preset folders can be nested more deeply.
     source: https://teenage.engineering/downloads/op-xy#1.1.15
     firmware_min: '1.1.15'
+  - id: screen
+    text: The browser shows the track number over the word preset on the left, the engine list in the middle and that engine's presets on the right, the current preset highlighted.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: views
+    text: The first encoder (`E1`) offers a choice between browsing by engine and by category; on the owner's unit the category view began with Nostalgic Synths, bass, drum and keys.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: footer
+    text: The footer reads cut, paste, rename and delete over `M1`…`M4`.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: shift-m1
+    text: On OS 1.1.33, `shift + M1` also brings up this browser, with the engine list in the middle.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: load
     goal: Load a preset on a track

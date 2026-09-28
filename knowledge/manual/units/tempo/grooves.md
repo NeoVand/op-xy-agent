@@ -41,9 +41,10 @@ facts:
     text: On the tempo screen, `turn E3` clockwise past the centre for swing or anticlockwise for shuffle; the two push notes in opposite directions.
     source: https://teenage.engineering/guides/op-xy/tempo#edit-tempo
   - id: types
-    text: '`turn E2` on the tempo screen picks the groove type, in this order: shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over and prophetic.'
-    source: docs/research/40-official-docs.md#52-older-gaps-and-contradictions-true-even-for-1115
-    confidence: community-verified
+    text: '`turn E2` on the tempo screen picks the groove type, in this order: shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over and prophetic. The metronome shows each as two letters — SH, HS, DA, BO, WO, GA, AC, IN, DF, RO, PR.'
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: verified
+    verified_on: '1.1.33'
   - id: plain-types
     text: Shuffle is the everyday swing and half shuffle a lighter version of it; accents emphasises the important beats.
     source: https://teenage.engineering/guides/op-xy/tempo#what-are-grooves
@@ -61,7 +62,12 @@ facts:
     text: "`bar + turn E3` sets a groove amount for the current track that replaces the tempo screen's swing value; the groove type still comes from the tempo screen."
     source: https://teenage.engineering/guides/op-xy/sequencer#extend-with-bar
   - id: cc81
-    text: Over MIDI, CC81 on any channel sets the groove; community tables treat 63 as no groove.
+    text: Over MIDI, CC81 sets the groove amount, drawn as a slider under the metronome on the tempo page — far left at 0, centred at 64, far right at 127.
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: cc81-neutral
+    text: Community MIDI tables give 63 as the no-groove value, one below the slider's centre at 64; which of the two is exactly neutral is not confirmed.
     source: docs/research/20-midi-control.md#31-global-ccs
     confidence: community
 procedures:

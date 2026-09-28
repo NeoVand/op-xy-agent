@@ -33,6 +33,11 @@ facts:
     text: Since OS 1.1.25 a chord entered by holding keys and pressing a step can contain one note in two octaves.
     source: https://teenage.engineering/downloads/op-xy#1.1.25
     firmware_min: '1.1.25'
+  - id: step-popup
+    text: Pressing or holding a step shows its number in a small box on the screen.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: enter
     goal: Put a note on a step

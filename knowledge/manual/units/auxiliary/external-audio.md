@@ -31,9 +31,29 @@ facts:
     text: For an outboard effect, send tracks out of the multi-out, return the effect into the audio input, and balance the return with drive, level and mix.
     source: https://teenage.engineering/guides/op-xy/how-to#send-audio-to-and-from-an-external-effect
   - id: ccs
-    text: 'Community charts for channel 13: CC12 input, CC13 drive, CC15 mix; level seems to be the track level, CC7.'
+    text: Community charts give CC12 on channel 13 as the input select and suggest the level is the track level, CC7.
     source: docs/research/20-midi-control.md#35-auxiliary-tracks-916
     confidence: community
+  - id: midi
+    text: Over MIDI on channel 13, CC13 sets drive and CC15 mix, and CC32, CC35 and CC40–43 reach the filter and LFO pages; CC12, the input select, was left untried so the microphone could not open.
+    source: docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: screen
+    text: '`M1` draws the signal path — a microphone box marked fdbk block (crossed out while it blocks feedback), a line labelled input, then boxes for drive, level and mix.'
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: ranges
+    text: Drive reads 00–20 and mix 00–99; level showed 75 in a new project.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: other-pages
+    text: Its `M2` routing page shows track boxes 1–8 and an out box, and its `M4` LFO aims at syn, filter or amp, with parameters such as param1, hi pass, volume and pan.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

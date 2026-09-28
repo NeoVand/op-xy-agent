@@ -26,9 +26,25 @@ facts:
     source: docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
     confidence: community
   - id: track-send-page
-    text: Instrument tracks repeat these sends on their `M3` shift layer (FX I on `E3`, FX II on `E4`), but TE's drawing of that page stacks FX II above FX I; check the screen labels.
-    source: docs/research/50-hardware-ui.md#33-page-catalogue
-    confidence: conflicting
+    text: Instrument tracks repeat these sends on their `M3` shift layer, whose rows run aux out, tape, FX I, FX II from the top — FX I on `E3`, FX II on `E4`. TE's drawing of that page puts FX II above FX I; the device does not.
+    source: docs/research/59-screen-profiling.md#23-filter-instrument-m3
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: screen
+    text: The page draws eight columns, one per track, each with its number, a level line and a pan dot along the bottom; CC7 and CC10 sent over MIDI move them as they arrive.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: send-display
+    text: Turning `E1` or `E2` briefly swaps the selected track's column for two boxed labels, I and II, each with a dark bar rising to its send level; after about a second the column comes back.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: cc38-quiet
+    text: Sending CC38 changes a track's FX I send without calling up that I and II display.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: set-level
     goal: Set a track's level

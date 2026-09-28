@@ -41,6 +41,21 @@ facts:
     text: Since OS 1.1.21, moving to another pattern stops any arpeggio notes that were being held.
     source: https://teenage.engineering/downloads/op-xy#1.1.21
     firmware_min: '1.1.21'
+  - id: screen
+    text: The arpeggio page shows four boxes in the encoders' greys — a note value for speed, the pattern as a small staircase (or peak, arrow, scattered blocks), a ladder with the octave count for range, and a hand for hold, pale when off and black when on — then a small arrow meaning the page has a shift layer. Under the word arpeggio, fourteen pale blue bars picture the run, one per note, taller for higher notes; a range of 4 over a triad makes a twelve-step staircase.
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: speeds
+    text: Speed shows only a note symbol. It runs from a quarter note (slowest) to a 64th (fastest), with triplets among them; there is no number.
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: shift-screen
+    text: With `shift` held the boxes change to the shift controls — two tied notes whose tie fills white as the note length grows, the style (the first reads off, the others are small bar charts), a squiggle that darkens from the left as glide rises, and a ring that splits into two as stereo rises.
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: latch
     goal: Keep an arpeggio running without holding the keys

@@ -50,6 +50,11 @@ facts:
     text: CC85 counts from zero, so value 0 selects scene 1 and value 98 scene 99.
     source: docs/research/20-midi-control.md#31-global-ccs
     confidence: community-verified
+  - id: footer
+    text: With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: select
     goal: Select scene 1–9

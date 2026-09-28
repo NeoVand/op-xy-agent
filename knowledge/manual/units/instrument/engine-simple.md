@@ -13,11 +13,16 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: character
     text: Simple is meant for fast, basic patches, with leads and plucks as its strengths.
     source: https://teenage.engineering/guides/op-xy/synth-engines#simple
+  - id: picture
+    text: Simple's picture is an isometric glass jar on stacked slabs under a plain-text top bar; stereo splits the jar into two.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

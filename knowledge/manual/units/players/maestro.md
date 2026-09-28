@@ -13,17 +13,35 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: what
     text: Maestro stores a chord; afterwards every key you press plays that chord, moved up or down so it follows the key.
     source: https://teenage.engineering/guides/op-xy/players#maestro
   - id: record
     text: To store the chord, keep `shift` held and play its notes on the keyboard.
-    source: https://teenage.engineering/guides/op-xy/players#maestro
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: verified
+    verified_on: '1.1.33'
   - id: no-e3
-    text: The guide gives the light gray encoder (`E3`) no job on the maestro page.
-    source: https://teenage.engineering/guides/op-xy/players#maestro
+    text: The light gray encoder (`E3`) has no job on the maestro page; its box is crossed out.
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: screen
+    text: Maestro's page shows roll as a wavy arpeggio sign with a number (0, 10, 12 …), pattern as up, down, up/down or random icons, and hold as a hand that fills in when on.
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: slabs
+    text: Under the word maestro two stacks of four pale blue slabs picture the stored chord. A slab stands up for each stored note, filling the left stack from the back and then the right one, and lies flat where there is none; while you enter a new chord they rise one by one, and they stand taller while the chord sounds.
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: eight
+    text: With eight slabs on the page, maestro seems to keep at most eight notes per chord.
+    source: docs/research/59-screen-profiling.md#27-players
+    confidence: derived
 procedures:
   - id: record
     goal: Store a chord in maestro

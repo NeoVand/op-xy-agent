@@ -13,7 +13,7 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: character
     text: Axis is a frequency-modulation engine whose home ground is rich, full string sounds.
@@ -21,6 +21,11 @@ facts:
   - id: ratio-halves
     text: Ratio retunes one of the oscillators; values 0–50 detune it and 51–100 move it up in steps of a fifth.
     source: https://teenage.engineering/guides/op-xy/synth-engines#axis
+  - id: picture
+    text: Axis's picture is an isometric three-armed structure of cubes under a plain-text top bar; each encoder lengthens or reshapes one arm.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

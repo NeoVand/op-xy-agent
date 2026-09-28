@@ -42,6 +42,16 @@ facts:
     text: OS 1.0.45 added the option of stopping playback when the song reaches its end.
     source: https://teenage.engineering/downloads/op-xy#1.0.45
     firmware_min: '1.0.45'
+  - id: screen
+    text: The song page is headed song 1 with a loop icon and shows a grid of 32 slots, eight across in four rows marked 1, 9, 17 and 25; scenes appear as numbered circles, a white line marks where the next scene goes, and a ring walks along the order during playback.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: footer
+    text: Holding `shift` lights the footer with clear all, ←, → and delete over `M1`…`M4`, the song editing keys.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: build
     goal: Build a song from scenes
@@ -82,4 +92,5 @@ related: [arrange.songs, arrange.scenes, arrange.scene-queue]
 
 Song mode turns scenes into a finished structure — intro, verse, chorus — each scene playing for its
 own length before the next. A cursor edits the list, and removing a scene from the song never
-deletes it. Whether loop off is the stop-at-end option of 1.0.45 is not confirmed on a unit.
+deletes it. Whether loop off is the stop-at-end option of 1.0.45 is not confirmed on a unit, nor how
+the 32-slot grid shows an order longer than 32.

@@ -13,11 +13,16 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: character
     text: Hardsync is built for short stabs and firm, solid bass lines.
     source: https://teenage.engineering/guides/op-xy/synth-engines#hardsync
+  - id: picture
+    text: Hardsync's picture is a hair dryer blowing animated blocks, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

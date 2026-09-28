@@ -26,6 +26,16 @@ facts:
   - id: cable
     text: Use a splitter cable that separates left and right, not one that keeps stereo — tip to the CV input, ring to the gate input.
     source: https://teenage.engineering/guides/op-xy/how-to#how-to-control-an-analog-synth%20with%20cv%20and%20gate
+  - id: screen
+    text: The CV track's page is a voltmeter labelled CV, reading from −5 to +5 V.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: no-ccs
+    text: CC12–15 on its channel (12) move nothing on that page.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: multi-out
     goal: Set the multi-out to CV and gate
@@ -38,5 +48,6 @@ procedures:
 related: [com.multi-out, howto.control-cv-synth]
 ---
 
-The simplest aux track: the guide gives it no page settings, only notes. Set the multi-out to cv
+The simplest aux track: the guide gives it no page settings, only notes, and on the unit its page is
+just a voltmeter. Set the multi-out to cv
 before plugging in, patch pitch and gate into the synth, then play `T4` like any other track.

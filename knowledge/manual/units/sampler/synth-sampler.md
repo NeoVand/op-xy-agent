@@ -39,6 +39,21 @@ facts:
     text: Synth sampler settings accept parameter locks.
     source: https://teenage.engineering/downloads/op-xy#1.1.0
     firmware_min: '1.1.0'
+  - id: screen
+    text: The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: shift-screen
+    text: With `shift` held it shows direction, tune as a note symbol and a value such as −12.00, crossfade as a percentage drawn as a dark wedge at the loop, and gain.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: no-cc
+    text: CC12–15 on the track's channel move nothing on this page.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

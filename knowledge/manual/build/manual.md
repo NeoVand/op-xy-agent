@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 158 units, 946 facts, 187 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 158 units, 1053 facts, 187 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -77,6 +77,9 @@ Facts:
 - On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M1`, `shift + M3` and `shift + M4` choose the engine, filter type and LFO type. [#instrument-pages] [s2]
 - Auxiliary tracks use the pages their own way; on the brain track, M1 sets key and scale and M2 routes tracks into it. [#aux-pages] [s3]
 - In mix mode, M1 holds levels, pans and sends per track, M2 the master EQ, M3 the master saturator and M4 the master section. [#mix-pages] [s4]
+- On screen, each parameter carries a small dot or cap in its encoder's shade — dark for `E1`, mid grey for `E2`, light grey for `E3`, white for `E4` — so a glance tells which knob moves what. [#encoder-marks] (verified 1.1.33) [s5]
+- Brief popups, such as the octave card or the mixer's send display, sit over the page and fade away on their own after a second or two. [#popups] (verified 1.1.33) [s6]
+- On some auxiliary tracks the next page slides in sideways — the brain's routing page from its `M1`, and the external MIDI track's CC pages from `M1` to `M2` to `M3`. [#slide] (verified 1.1.33) [s6]
 
 Procedures:
 - Edit a page's shift-layer parameters [#shift-params] [s1]
@@ -84,7 +87,7 @@ Procedures:
 
 Related: [basics.main-modes], [instrument.engine-prism], [sequencer.parameter-locks]
 
-Sources: s1 guide:main-modes#5.2%20modules · s2 guide:instrument · s3 guide:auxiliary#brain · s4 guide:mix
+Sources: s1 guide:main-modes#5.2%20modules · s2 guide:instrument · s3 guide:auxiliary#brain · s4 guide:mix · s5 research:59-screen-profiling#2-what-the-screens-show · s6 research:59-screen-profiling#21-general
 
 ### Track keys and the active track [basics.track-buttons]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -249,22 +252,23 @@ Facts:
 - Pressing `play` again during playback jumps back to the start of the pattern. [#play-again] [s6]
 - A second press of `stop` cuts off every note and sound that is still ringing. [#stop-again] [s6]
 - `[-]` and `[+]` move the keyboard one octave down or up; several pages give them other jobs. [#octave-keys] [s6]
+- On an instrument page, `[-]` and `[+]` bring up a small white card low in the middle of the screen, with a mini keyboard and the octave offset in thin digits (+0, +1, −1, −3 …); it fades after a second or two. On the external CV page the offset appears inside the meter card instead. [#octave-popup] (verified 1.1.33) [s7]
 - `shift` does nothing alone: held with another key it opens that key's secondary function or page. [#shift-key] [s6]
-- The two-octave keyboard of 24 keys lies right of the transport keys, below the step keys. [#keyboard] [s7]
-- Every white key carries the icon of one step component; counted from the left they are `natural 1`…`natural 14`. [#naturals] [s8]
-- The ten black keys double as number keys, marked 1–9 and 0 from the left; this manual calls them `accidental 1`…`accidental 0`. [#accidentals] [s9]
-- `sample` (top right corner) starts sampling from any screen. [#sample-key] [s10]
-- `project` opens the list of projects, where you create, open and manage them. [#project-key] [s11]
-- `tempo` sets the song speed, the swing and the metronome. [#tempo-key] [s12]
-- `com` is the hub for system settings, wired and wireless connections and output routing. [#com-key] [s13]
-- `player` turns the notes of a track into arpeggios, chords and other note effects. [#player-key] [s14]
-- `bar` lengthens the sequence and holds sequence-wide settings such as quantisation. [#bar-key] [s15]
-- The volume knob is at the top left, next to the speaker. [#volume] [s16]
-- The four encoders shade from dark to light: dark gray, mid gray, light gray and white. This manual calls them `E1`, `E2`, `E3` and `E4` in that order. [#encoders] [s17]
-- The pitchbend strip on the lower left edge responds to pressure — push its left end to bend down, its right end to bend up. [#pitchbend] [s18]
-- The right side carries the power switch, the USB-C port and four 3.5 mm jacks — audio out, multi-out, MIDI in and audio in. [#sockets] [s19]
-- A small built-in microphone and a vertical LED level meter sit in the top right margin. [#mic-and-meter] [s19]
-- Holding `com` turns the level meter into a rough battery gauge. [#battery] (since 1.0.36) [s20]
+- The two-octave keyboard of 24 keys lies right of the transport keys, below the step keys. [#keyboard] [s8]
+- Every white key carries the icon of one step component; counted from the left they are `natural 1`…`natural 14`. [#naturals] [s9]
+- The ten black keys double as number keys, marked 1–9 and 0 from the left; this manual calls them `accidental 1`…`accidental 0`. [#accidentals] [s10]
+- `sample` (top right corner) starts sampling from any screen. [#sample-key] [s11]
+- `project` opens the list of projects, where you create, open and manage them. [#project-key] [s12]
+- `tempo` sets the song speed, the swing and the metronome. [#tempo-key] [s13]
+- `com` is the hub for system settings, wired and wireless connections and output routing. [#com-key] [s14]
+- `player` turns the notes of a track into arpeggios, chords and other note effects. [#player-key] [s15]
+- `bar` lengthens the sequence and holds sequence-wide settings such as quantisation. [#bar-key] [s16]
+- The volume knob is at the top left, next to the speaker. [#volume] [s17]
+- The four encoders shade from dark to light: dark gray, mid gray, light gray and white. This manual calls them `E1`, `E2`, `E3` and `E4` in that order. [#encoders] [s18]
+- The pitchbend strip on the lower left edge responds to pressure — push its left end to bend down, its right end to bend up. [#pitchbend] [s19]
+- The right side carries the power switch, the USB-C port and four 3.5 mm jacks — audio out, multi-out, MIDI in and audio in. [#sockets] [s20]
+- A small built-in microphone and a vertical LED level meter sit in the top right margin. [#mic-and-meter] [s20]
+- Holding `com` turns the level meter into a rough battery gauge. [#battery] (since 1.0.36) [s21]
 
 Procedures:
 - Switch to another main mode [#switch-mode] [s2]
@@ -282,12 +286,12 @@ Procedures:
   1. `stop → stop`
 - Move the keyboard an octave down or up [#octave] [s6]
   1. `[-]/[+]`
-- Check the battery level [#battery] (since 1.0.36) [s20]
+- Check the battery level [#battery] (since 1.0.36) [s21]
   1. `hold com` — read the level meter in the top right margin
 
 Related: [sequencer.step-components], [com.midi-settings]
 
-Sources: s1 research:50-hardware-ui#14-the-grid-plan-view · s2 guide:layout#main-modes · s3 guide:layout#modules · s4 guide:layout#track-buttons · s5 guide:layout#sequencer · s6 guide:layout#transport-controls · s7 guide:layout#keyboard · s8 guide:step-components#adding-step-components-to-a-sequence · s9 guide:step-components#step-components-ref-table · s10 guide:layout#sample · s11 guide:layout#projects · s12 guide:layout#tempo · s13 guide:layout#com · s14 guide:layout#players · s15 guide:layout#bar · s16 guide:layout#volume · s17 guide:layout#encoders · s18 guide:hardware-overview#speaker-volume-pitchbend · s19 guide:hardware-overview#inputs-outputs · s20 changelog:1.0.36
+Sources: s1 research:50-hardware-ui#14-the-grid-plan-view · s2 guide:layout#main-modes · s3 guide:layout#modules · s4 guide:layout#track-buttons · s5 guide:layout#sequencer · s6 guide:layout#transport-controls · s7 research:59-screen-profiling#212-octave-popup · s8 guide:layout#keyboard · s9 guide:step-components#adding-step-components-to-a-sequence · s10 guide:step-components#step-components-ref-table · s11 guide:layout#sample · s12 guide:layout#projects · s13 guide:layout#tempo · s14 guide:layout#com · s15 guide:layout#players · s16 guide:layout#bar · s17 guide:layout#volume · s18 guide:layout#encoders · s19 guide:hardware-overview#speaker-volume-pitchbend · s20 guide:hardware-overview#inputs-outputs · s21 changelog:1.0.36
 
 ### Power, battery and charging [hardware.power-and-charging]
 current · OS ≥ 1.0.9 · changed in 1.0.36 · guide v1.1.15
@@ -589,6 +593,7 @@ Facts:
 - With a step held, pressing a key adds that note to the step, or takes it off if the step already has it. [#toggle-note] [s1]
 - On a drum track each of the 24 keys is a different sound, so step entry places sounds rather than pitches. [#drums] [s2]
 - Since OS 1.1.25 a chord entered by holding keys and pressing a step can contain one note in two octaves. [#same-note-octaves] (since 1.1.25) [s3]
+- Pressing or holding a step shows its number in a small box on the screen. [#step-popup] (verified 1.1.33) [s4]
 
 Procedures:
 - Put a note on a step [#enter] [s1]
@@ -600,7 +605,7 @@ Procedures:
 
 Related: [sequencer.single-sound], [sequencer.extend-notes], [sequencer.copy-step]
 
-Sources: s1 guide:sequencer#step-sequencing · s2 guide:get-started#4.1%20sequencing%20a%20drum%20beat · s3 changelog:1.1.25
+Sources: s1 guide:sequencer#step-sequencing · s2 guide:get-started#4.1%20sequencing%20a%20drum%20beat · s3 changelog:1.1.25 · s4 research:59-screen-profiling#28-bar-steps
 
 ### Step recording [sequencer.step-recording]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -780,6 +785,7 @@ Facts:
 - Holding a step copies everything on it — notes, step components and parameter locks. [#copy] [s1]
 - After you let go, pressing an empty step pastes the copy onto it. [#paste] [s1]
 - Copying by holding a step arrived in OS 1.0.13. [#since] [s2]
+- When a held step is copied, its number box on the screen adds the word copied. [#copied] (verified 1.1.33) [s3]
 
 Procedures:
 - Copy one step to another [#copy-paste] [s1]
@@ -787,7 +793,7 @@ Procedures:
 
 Related: [sequencer.bars-and-length], [arrange.patterns]
 
-Sources: s1 guide:sequencer#step-sequencing · s2 changelog:1.0.13
+Sources: s1 guide:sequencer#step-sequencing · s2 changelog:1.0.13 · s3 research:59-screen-profiling#28-bar-steps
 
 ### Transposing a track's sequence [sequencer.transpose-sequence]
 current · OS ≥ 1.0.9 · changed in 1.0.45 · guide v1.1.15
@@ -832,39 +838,41 @@ Firmware history matters here: sampler tracks gained locks in 1.1.0, rotating a 
 carried its locks along since 1.1.21, and locks on empty steps work reliably from 1.1.33.
 
 Facts:
-- To lock a value, keep a step held and turn an encoder; the step remembers the value you dial in. [#record] [s1]
-- Each time the sequencer reaches a locked step, the parameter takes that step's stored value. [#playback] [s1]
-- Any parameter on the four module pages can carry locks; the settings of players cannot. [#scope] [s1]
-- By default the value jumps at each locked step. The shape control in the bar menu (`bar + turn E4`) smooths the movement between locks. [#stepped] [s2]
-- Knob moves recorded live while holding `record` are also stored step by step, so they play back stepped until you add smoothing. [#live-automation] [s3]
-- Copying a step to an empty step brings its locks along with its notes and step components. [#copy] [s1]
-- `bar + M2` removes every lock in the pattern and leaves the notes in place. [#clear-pattern] [s2]
-- Clearing the whole track with `record + hold stop` removes its locks too. [#clear-track] (since 1.0.15) [s4]
-- The skip parameter lock step component (`natural 12`) lets a step's locks play only on every Nth pass, for automation that appears once every few repeats. [#skip-component] [s5]
-- Tracks using the drum or synth sampler accept locks as well. [#samplers] (since 1.1.0) [s6]
-- Duplicating a bar with `bar + shift + [+]` copies its locks and step components too. [#duplicate-bar] (since 1.1.3) [s7]
-- Shifting a track's sequence with `Tn + [-]/[+]` moves the locks together with the notes. [#rotate] (since 1.1.21) [s8]
-- A lock can sit on a step that has no note; before OS 1.1.33 a bug prevented adding one there. [#empty-steps] (since 1.1.33) [s9]
+- To lock a value, keep a step held and turn an encoder; the step remembers the value you dial in. [#record] (verified 1.1.33) [s1]
+- Each time the sequencer reaches a locked step, the parameter takes that step's stored value. [#playback] [s2]
+- Any parameter on the four module pages can carry locks; the settings of players cannot. [#scope] [s2]
+- By default the value jumps at each locked step. The shape control in the bar menu (`bar + turn E4`) smooths the movement between locks. [#stepped] [s3]
+- Knob moves recorded live while holding `record` are also stored step by step, so they play back stepped until you add smoothing. [#live-automation] [s4]
+- Copying a step to an empty step brings its locks along with its notes and step components. [#copy] [s2]
+- `bar + M2` removes every lock in the pattern and leaves the notes in place. [#clear-pattern] [s3]
+- Clearing the whole track with `record + hold stop` removes its locks too. [#clear-track] (since 1.0.15) [s5]
+- The skip parameter lock step component (`natural 12`) lets a step's locks play only on every Nth pass, for automation that appears once every few repeats. [#skip-component] [s6]
+- Tracks using the drum or synth sampler accept locks as well. [#samplers] (since 1.1.0) [s7]
+- Duplicating a bar with `bar + shift + [+]` copies its locks and step components too. [#duplicate-bar] (since 1.1.3) [s8]
+- Shifting a track's sequence with `Tn + [-]/[+]` moves the locks together with the notes. [#rotate] (since 1.1.21) [s9]
+- A lock can sit on a step that has no note; before OS 1.1.33 a bug prevented adding one there. [#empty-steps] (since 1.1.33) [s10]
+- While you record a lock, the held step's number box on the screen turns orange. [#lock-box] (verified 1.1.33) [s1]
+- Holding a locked step shows its locked values in the page's top bar instead of the track's own — shape 00 and detune 06, say, on a track set to 15 and 05. [#show-locks] (verified 1.1.33) [s1]
 
 Procedures:
-- Lock a parameter value on one step [#add] [s1]
+- Lock a parameter value on one step [#add] [s2]
   Needs: the track is selected; the module page with the parameter is on screen
   1. `step n + turn E1…E4` — keep holding the step while turning; any page parameter works
   Result: The step plays back with the new value from now on.
-- Record knob movements into the pattern while it plays [#record-live] [s3]
+- Record knob movements into the pattern while it plays [#record-live] [s4]
   Needs: the pattern is playing
   1. `record + turn E1…E4`
   Result: The movement is stored per step, like locks.
-- Glide between locked values instead of jumping [#smooth] [s2]
+- Glide between locked values instead of jumping [#smooth] [s3]
   1. `bar + turn E4`
-- Remove all locks from the pattern but keep its notes [#clear] [s2]
+- Remove all locks from the pattern but keep its notes [#clear] [s3]
   1. `bar + M2`
-- Copy a step, locks included, to another step [#copy-step] [s1]
+- Copy a step, locks included, to another step [#copy-step] [s2]
   1. `hold step n → step m` — let go of the first step, then press the target step, which must be empty
 
 Related: [sequencer.step-components], [sequencer.component-skip-parameter-lock], [sequencer.bar-menu], [instrument.engine-prism]
 
-Sources: s1 guide:sequencer#step-sequencing · s2 guide:sequencer#extend-with-bar · s3 guide:sequencer#live-recording · s4 changelog:1.0.15 · s5 guide:step-components · s6 changelog:1.1.0 · s7 changelog:1.1.3 · s8 changelog:1.1.21 · s9 changelog:1.1.33
+Sources: s1 research:59-screen-profiling#28-bar-steps · s2 guide:sequencer#step-sequencing · s3 guide:sequencer#extend-with-bar · s4 guide:sequencer#live-recording · s5 changelog:1.0.15 · s6 guide:step-components · s7 changelog:1.1.0 · s8 changelog:1.1.3 · s9 changelog:1.1.21 · s10 changelog:1.1.33
 
 ### Clearing a sequence and undo [sequencer.clear-and-undo]
 current · OS ≥ 1.0.9 · changed in 1.0.15 · guide v1.1.15
@@ -1288,7 +1296,7 @@ Related: [sequencer.component-skip-step-component], [sequencer.step-component-re
 Sources: s1 guide:step-components · s2 guide:step-components#step-components-ref-table · s3 guide:step-components#adding-step-components-to-a-sequence
 
 ### Bar menu [sequencer.bar-menu]
-current · OS ≥ 1.0.9 · changed in 1.1.15, 1.1.25 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.1.15, 1.1.25 · guide v1.1.15 · verified on 1.1.33
 Also called: bar page, bar screen, quantise, quantize, quantisation, note length, track groove, lock smoothing
 Where: modes instrument, auxiliary; screens bar
 
@@ -1300,10 +1308,13 @@ keys set the length, `M1`, `M2` and `M4` clear — while the encoders handle fee
 
 Facts:
 - The bar page stays on screen only while `bar` is held; `shift + bar` pins it until you press `bar` again. [#held] [s1]
-- In a new project quantisation reads 100, according to decoded project files. [#quantise-default] (community-verified) [s2]
+- In a new project the card reads quant 100, length 50 and track scale 1, with groove shown as a dash and shape as a small step symbol. [#quantise-default] (verified 1.1.33) [s2]
 - Since OS 1.1.25, tracks with an odd track scale (3, 5, 6 or 7) quantise to a grid made for that scale. [#odd-grid] (since 1.1.25) [s3]
 - The groove type (shuffle, bombora and the rest) is picked on the tempo page; the bar menu sets only this track's amount. [#groove-type] [s1]
-- Decoded project files store length, track scale, quantisation, groove and smoothing in each pattern, so a track's patterns can differ. [#per-pattern] (community-verified) [s2]
+- Decoded project files store length, track scale, quantisation, groove and smoothing in each pattern, so a track's patterns can differ. [#per-pattern] (community-verified) [s4]
+- Holding `bar` lays a white card over the dimmed page — bar numbers 1 to 4 along the top with the current one inverted, the track scale beside them, then rows for quant, length, groove and shape, each marked with its encoder's dot. The card fades when `bar` is let go. [#card] (verified 1.1.33) [s2]
+- A faint mini piano roll on the right of the card shows a dash for each note in the pattern. [#roll] (verified 1.1.33) [s2]
+- The card's footer names the clearing keys — clr notes on `M1`, clr params on `M2`, clr all on `M4`. [#clear-labels] (verified 1.1.33) [s2]
 
 Procedures:
 - Change a pattern-wide setting [#adjust] [s1]
@@ -1314,14 +1325,14 @@ Parameters:
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | bar | `turn E1` | quantisation | – | – | – | pulls live-recorded notes onto the steps; at 100 nothing can be nudged s1 |
-| bar | `click E1` | quantisation on/off | – | – | – | 1.1.15 added a click that toggles quantisation; that it is this encoder is assumed (since 1.1.15) (derived) s4 |
+| bar | `click E1` | quantisation on/off | – | – | – | 1.1.15 added a click that toggles quantisation; that it is this encoder is assumed (since 1.1.15) (derived) s5 |
 | bar | `turn E2` | note length | – | – | – | for notes entered by pressing steps s1 |
 | bar | `turn E3` | groove | – | – | – | this track's amount; replaces the tempo page's swing s1 |
 | bar | `turn E4` | shape | – | no smoothing | – | smooths between parameter locks and recorded automation s1 |
 
 Related: [sequencer.track-scale], [sequencer.bars-and-length], [sequencer.clear-and-undo]
 
-Sources: s1 guide:sequencer#extend-with-bar · s2 research:10-xy-format#34-patternstruct-base-clones-walking · s3 changelog:1.1.25 · s4 changelog:1.1.15
+Sources: s1 guide:sequencer#extend-with-bar · s2 research:59-screen-profiling#28-bar-steps · s3 changelog:1.1.25 · s4 research:10-xy-format#34-patternstruct-base-clones-walking · s5 changelog:1.1.15
 
 ### Track scale [sequencer.track-scale]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.25 · guide v1.1.15
@@ -1385,7 +1396,7 @@ Sources: s1 guide:sequencer#extend-with-bar · s2 changelog:1.1.3 · s3 research
 Per-track note players: arpeggio, maestro chords and hold.
 
 ### Players [players.overview]
-outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
+outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15 · verified on 1.1.33
 Also called: player, player key, note player, player type, player style
 Where: modes instrument, auxiliary; screens player
 
@@ -1399,22 +1410,25 @@ patterns copy the current player type (1.1.25), the type seems to belong to the 
 Facts:
 - A player takes the notes a track receives, from the keyboard or its sequence, and turns them into a variation such as an arpeggio or a chord hit; the recorded notes stay as they are. [#what] [s1]
 - Every instrument track and every auxiliary track can run a player of its own. [#tracks] [s1]
-- The first press of `player` shows the player page of the selected track; a second press switches the player on. [#enable] [s1]
-- `shift + player` changes the player type. There are three: arpeggio, maestro and hold. [#types] [s1]
-- Player settings cannot be parameter-locked; only module-page parameters can. [#no-locks] [s2]
-- Since OS 1.1.25, a pattern you add to a track starts out with the player type that is selected at that moment. [#new-pattern] (since 1.1.25) [s3]
+- The first press of `player` shows the selected track's player page, dimmed under an off box; a second press switches the player on. [#enable] (verified 1.1.33) [s2]
+- `shift + player` opens the player list, headed with the track number and the word player: arpeggio, hold and maestro, the current type boxed. [#types] (verified 1.1.33) [s2]
+- The first `shift + player` only opens the list. Each further press of `player`, with shift still held, moves the box to the next type (arpeggio → hold → maestro → arpeggio); letting go of shift opens the chosen player's page. [#list-steps] (verified 1.1.33) [s2]
+- Player settings cannot be parameter-locked; only module-page parameters can. [#no-locks] [s3]
+- Since OS 1.1.25, a pattern you add to a track starts out with the player type that is selected at that moment. [#new-pattern] (since 1.1.25) [s4]
 
 Procedures:
 - Switch on a player for the selected track [#enable] [s1]
   Needs: instrument or auxiliary mode; the track is selected
   1. `player` — opens the player page
   2. `player` — switches the player on
-- Choose another player type [#change-type] [s1]
-  1. `shift + player` — pick arpeggio, maestro or hold
+- Choose another player type [#change-type] (verified 1.1.33) [s2]
+  1. `shift + player` — opens the list with the current type boxed; keep shift held
+  2. `shift + player` — each further press of player moves to the next type (arpeggio, hold, maestro)
+  Result: Letting go of shift opens the chosen player's page.
 
 Related: [players.arpeggio], [players.maestro], [players.hold], [arrange.patterns], [sequencer.parameter-locks]
 
-Sources: s1 guide:players#players · s2 guide:sequencer#step-sequencing · s3 changelog:1.1.25
+Sources: s1 guide:players#players · s2 research:59-screen-profiling#27-players · s3 guide:sequencer#step-sequencing · s4 changelog:1.1.25
 
 ### Arpeggio player [players.arpeggio]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.0, 1.1.17, 1.1.21 · guide v1.1.15
@@ -1436,6 +1450,9 @@ Facts:
 - Since OS 1.1.17, a sustain pedal has no effect on arpeggiated notes. [#sustain] (since 1.1.17) [s4]
 - Since OS 1.1.17, the brain transposes arpeggios along with the rest of the track. [#brain] (since 1.1.17) [s4]
 - Since OS 1.1.21, moving to another pattern stops any arpeggio notes that were being held. [#pattern-switch] (since 1.1.21) [s5]
+- The arpeggio page shows four boxes in the encoders' greys — a note value for speed, the pattern as a small staircase (or peak, arrow, scattered blocks), a ladder with the octave count for range, and a hand for hold, pale when off and black when on — then a small arrow meaning the page has a shift layer. Under the word arpeggio, fourteen pale blue bars picture the run, one per note, taller for higher notes; a range of 4 over a triad makes a twelve-step staircase. [#screen] (verified 1.1.33) [s6]
+- Speed shows only a note symbol. It runs from a quarter note (slowest) to a 64th (fastest), with triplets among them; there is no number. [#speeds] (verified 1.1.33) [s6]
+- With `shift` held the boxes change to the shift controls — two tied notes whose tie fills white as the note length grows, the style (the first reads off, the others are small bar charts), a squiggle that darkens from the left as glide rises, and a ring that splits into two as stereo rises. [#shift-screen] (verified 1.1.33) [s6]
 
 Procedures:
 - Keep an arpeggio running without holding the keys [#latch] [s1]
@@ -1458,10 +1475,10 @@ Parameters:
 
 Related: [players.overview], [players.hold], [basics.linked-tracks]
 
-Sources: s1 guide:players#arpeggio · s2 changelog:1.0.15 · s3 changelog:1.1.0 · s4 changelog:1.1.17 · s5 changelog:1.1.21
+Sources: s1 guide:players#arpeggio · s2 changelog:1.0.15 · s3 changelog:1.1.0 · s4 changelog:1.1.17 · s5 changelog:1.1.21 · s6 research:59-screen-profiling#27-players
 
 ### Maestro player [players.maestro]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: maestro, chord player, one-finger chords, chord memory, strum
 Where: modes instrument, auxiliary; screens player
 
@@ -1474,8 +1491,11 @@ chord fully replaces the old one.
 
 Facts:
 - Maestro stores a chord; afterwards every key you press plays that chord, moved up or down so it follows the key. [#what] [s1]
-- To store the chord, keep `shift` held and play its notes on the keyboard. [#record] [s1]
-- The guide gives the light gray encoder (`E3`) no job on the maestro page. [#no-e3] [s1]
+- To store the chord, keep `shift` held and play its notes on the keyboard. [#record] (verified 1.1.33) [s2]
+- The light gray encoder (`E3`) has no job on the maestro page; its box is crossed out. [#no-e3] (verified 1.1.33) [s2]
+- Maestro's page shows roll as a wavy arpeggio sign with a number (0, 10, 12 …), pattern as up, down, up/down or random icons, and hold as a hand that fills in when on. [#screen] (verified 1.1.33) [s2]
+- Under the word maestro two stacks of four pale blue slabs picture the stored chord. A slab stands up for each stored note, filling the left stack from the back and then the right one, and lies flat where there is none; while you enter a new chord they rise one by one, and they stand taller while the chord sounds. [#slabs] (verified 1.1.33) [s2]
+- With eight slabs on the page, maestro seems to keep at most eight notes per chord. [#eight] (derived) [s2]
 
 Procedures:
 - Store a chord in maestro [#record] [s1]
@@ -1493,7 +1513,7 @@ Parameters:
 
 Related: [players.overview], [players.hold]
 
-Sources: s1 guide:players#maestro
+Sources: s1 guide:players#maestro · s2 research:59-screen-profiling#27-players
 
 ### Hold player [players.hold]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.3, 1.1.25 · guide v1.1.15
@@ -1512,6 +1532,7 @@ Facts:
 - Pressing `stop`, or switching the player off with `player`, releases every held note. [#release] [s1]
 - Since OS 1.1.3, pressing a key that is already held does not switch that note off, which makes held chords easier to play. [#no-toggle] (since 1.1.3) [s2]
 - Since OS 1.1.25, stopping the hold player ends its notes with an ordinary note-off, so each note fades out through its release. [#note-off] (since 1.1.25) [s3]
+- The hold page shows the word hold over a large infinity ribbon of concentric bands; its encoders have nothing to set. [#screen] (verified 1.1.33) [s4]
 
 Procedures:
 - Latch notes with the hold player [#use] [s1]
@@ -1524,7 +1545,7 @@ Procedures:
 
 Related: [players.overview], [players.maestro]
 
-Sources: s1 guide:players#hold · s2 changelog:1.1.3 · s3 changelog:1.1.25
+Sources: s1 guide:players#hold · s2 changelog:1.1.3 · s3 changelog:1.1.25 · s4 research:59-screen-profiling#27-players
 
 ## Instrument
 
@@ -1580,10 +1601,12 @@ Facts:
 - Three sampler engines play recorded audio — the synth sampler, the drum sampler and the multisampler. [#samplers] [s3]
 - The midi engine makes no sound of its own; it turns the track into a MIDI sequencer for external gear and uses `M2` and `M3` for CC controls. [#midi] [s4]
 - The engine list holds all twelve — the eight synths, the three samplers and midi. [#list] (derived) [s5]
-- Over MIDI, CC12–15 on the track's channel reach the four `M1` encoders, whichever engine is loaded. [#midi-ccs] (community-verified) [s6]
+- Over MIDI, CC12–15 on the track's channel move the four `M1` parameters of every synth engine; the drum sampler, synth sampler and multisampler pages ignore them. [#midi-ccs] (verified 1.1.33) [s6]
+- A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis — above a picture that, on most engines, never stops moving. [#top-bar] (verified 1.1.33) [s7]
+- On OS 1.1.33, `shift + M1` brings up a browser headed with the track number and the word preset, with the engine list in the middle and the highlighted engine's presets on the right. [#browser] (verified 1.1.33) [s8]
 
 Procedures:
-- Change the engine of the selected instrument track [#choose] [s7]
+- Change the engine of the selected instrument track [#choose] [s9]
   Needs: instrument mode; the track is selected
   1. `shift + M1` — the engine list opens
   2. `turn E1` — highlight an engine
@@ -1592,7 +1615,7 @@ Procedures:
 
 Related: [instrument.overview], [instrument.engine-axis], [instrument.engine-dissolve], [instrument.engine-epiano], [instrument.engine-hardsync], [instrument.engine-midi], [instrument.engine-organ], [instrument.engine-prism], [instrument.engine-simple], [instrument.engine-wavetable], [instrument.preset-browser], [sampler.overview], [com.midi-track-ccs]
 
-Sources: s1 guide:instrument#engine · s2 guide:synth-engines · s3 guide:sample · s4 guide:synth-engines#external · s5 research:20-midi-control#21-the-16-tracks-and-their-default-channels · s6 research:20-midi-control#34-engine-resolved-names-for-cc1215-p1p4 · s7 guide:synth-engines#change-engine
+Sources: s1 guide:instrument#engine · s2 guide:synth-engines · s3 guide:sample · s4 guide:synth-engines#external · s5 research:20-midi-control#21-the-16-tracks-and-their-default-channels · s6 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s7 research:59-screen-profiling#21-general · s8 research:59-screen-profiling#26-preset-browser-shift--m1 · s9 guide:synth-engines#change-engine
 
 ### Amp and filter envelopes (M2) [instrument.envelopes]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
@@ -1658,6 +1681,7 @@ Facts:
 - The curve of the portamento glide (portamento style) is set separately in the preset settings. [#portamento-style] [s2]
 - Turning bend range fully anti-clockwise switches pitch bending off, which is what you want when the pitchbend strip is routed to another target. [#bend-off] [s3]
 - Over MIDI, CC28–31 reach these four settings; play mode reads the value as one of three steps. [#midi-ccs] (community-verified) [s4]
+- Holding `shift` on `M2` brings up a white card of four rows over the dimmed page, each with its encoder's dot — play mode (poly, mono or legato), portamento (off, then numbers), bend range (semitones, up to an octave) and preset volume (a number). [#card] (verified 1.1.33) [s5]
 
 Procedures:
 - Switch a track between poly, mono and legato [#set-mode] [s1]
@@ -1676,14 +1700,14 @@ Parameters:
 
 Related: [instrument.envelopes], [instrument.preset-settings], [instrument.overview]
 
-Sources: s1 guide:instrument#envelopes · s2 guide:instrument#preset-settings · s3 guide:how-to#pitch-bend · s4 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+Sources: s1 guide:instrument#envelopes · s2 guide:instrument#preset-settings · s3 guide:how-to#pitch-bend · s4 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s5 research:59-screen-profiling#22-envelope-editor-instrument-m2
 
 ### Filter (M3) [instrument.filter]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: filter page, cutoff, resonance, filter type, lowpass, highpass, ladder filter, key tracking
 Where: modes instrument; screens M3
 
-`M3` is the track's filter: cutoff, resonance, filter-envelope amount and key tracking. `shift + M3` changes the filter type; factory presets use z lowpass, ladder, svf and z hipass.
+`M3` is the track's filter: cutoff, resonance, filter-envelope amount and key tracking. `shift + M3` picks one of four types — ladder, svf, z hipass or z lowpass — and then returns to `M1`.
 
 The filter is a track's main tone control. Lower the cutoff to darken a sound, add resonance for a
 sharper edge, and raise envelope amount so the filter envelope sweeps the cutoff on every note — the
@@ -1692,9 +1716,14 @@ classic plucky bass. The shift layer of this page holds the track's sends, not f
 Facts:
 - The filter takes away part of the frequency range and can emphasise the frequencies around its cutoff. [#purpose] [s1]
 - `shift + M3` opens the choice of filter types, each with its own character. [#type] [s1]
-- The guide names no filter types; factory presets use four — z lowpass, ladder, svf and z hipass — and more may exist. [#type-names] (community-verified) [s2]
-- Presets also store whether the filter is switched on at all; the guide does not describe how to toggle it. [#on-off] (community-verified) [s2]
-- Over MIDI, CC32–35 reach cutoff, resonance, envelope amount and key tracking; no CC is known for the filter type. [#midi-ccs] (community-verified) [s3]
+- The type list, headed with the track number and the word filter, offers ladder, svf, z hipass and z lowpass, the current one boxed. [#type-names] (verified 1.1.33) [s2]
+- Picking a type takes you back to the engine page (`M1`); `M3` then shows the new type. [#type-return] (verified 1.1.33) [s2]
+- Presets also store whether the filter is switched on at all. [#on-off] (community-verified) [s3]
+- With the filter off, the page is dimmed under an off box; pressing `M3` again switches the filter on. [#off] (verified 1.1.33) [s2]
+- The page draws the filter's curve over tinted bands, with the type name at the top left, a frequency axis marked 50, 1k, 2k, 5k and 20kHz, and a small value box on the curve. [#screen] (verified 1.1.33) [s2]
+- Cutoff slides the curve's slope along the axis, key tracking moves an arrow along the bottom from left to right, and a positive envelope amount adds a hatched ghost of the curve to its right; z hipass mirrors the drawing. [#drawn] (verified 1.1.33) [s2]
+- Over MIDI, CC32–35 on the track's channel move cutoff, resonance, envelope amount and key tracking, and the page redraws as they arrive. [#midi-ccs] (verified 1.1.33) [s4]
+- No MIDI CC is known for the filter type. [#no-type-cc] (community-verified) [s5]
 
 Procedures:
 - Change the filter type of the selected track [#type] [s1]
@@ -1712,7 +1741,7 @@ Parameters:
 
 Related: [instrument.envelopes], [instrument.track-sends], [instrument.lfo]
 
-Sources: s1 guide:instrument#filter · s2 research:30-presets-samples#25-fx-m3-filter-and-lfo-m4 · s3 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+Sources: s1 guide:instrument#filter · s2 research:59-screen-profiling#23-filter-instrument-m3 · s3 research:30-presets-samples#25-fx-m3-filter-and-lfo-m4 · s4 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s5 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
 
 ### Track sends to aux out, tape, FX I and FX II (M3 + shift) [instrument.track-sends]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -1726,14 +1755,14 @@ FX II for the shared send effects, tape for replaying tricks, aux out for the ex
 and the multi-out jack. Sends are set per track and can be parameter-locked.
 
 Facts:
-- Holding `shift` while `M3` is open shows the sends; `E1` is aux out, `E2` tape, `E3` FX I and `E4` FX II. [#where] [s1]
+- Holding `shift` while `M3` is open brings up a white card of four send rows, worked by `E1`…`E4` from the top — aux out (a plug icon), tape (a reel icon), FX I and FX II; a row reads no send at zero. [#where] (verified 1.1.33) [s1]
 - Aux out feeds the external audio track (auxiliary `T5`), whose output leaves through the multi-out jack when that jack is set to audio. [#aux-out] (derived) [s2]
 - The tape send makes the track's audio available to the tape track (auxiliary `T6`), which replays and mangles it. [#tape] (derived) [s3]
 - FX I and FX II are the two send-effect tracks (auxiliary `T7` and `T8`); what the send does depends on the effect loaded there. [#fx] [s4]
 - Over MIDI, CC36–39 set the four sends in the same order. [#midi-ccs] (community-verified) [s5]
 
 Procedures:
-- Send part of a track to the FX I effect [#fx-send] [s1]
+- Send part of a track to the FX I effect [#fx-send] [s6]
   Needs: instrument mode; the track is selected
   1. `M3`
   2. `shift + turn E3`
@@ -1742,17 +1771,17 @@ Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| M3 | `shift + turn E1` | aux out | – | – | 36 | s1 |
-| M3 | `shift + turn E2` | tape | – | – | 37 | s1 |
-| M3 | `shift + turn E3` | fx i | – | – | 38 | s1 |
-| M3 | `shift + turn E4` | fx ii | – | – | 39 | s1 |
+| M3 | `shift + turn E1` | aux out | – | – | 36 | s6 |
+| M3 | `shift + turn E2` | tape | – | – | 37 | s6 |
+| M3 | `shift + turn E3` | fx i | – | – | 38 | s6 |
+| M3 | `shift + turn E4` | fx ii | – | – | 39 | s6 |
 
 Related: [instrument.filter], [auxiliary.fx-sends], [auxiliary.tape], [auxiliary.external-audio], [mix.levels-pans-sends]
 
-Sources: s1 guide:instrument#filter · s2 guide:auxiliary#external-audio · s3 guide:auxiliary#tape · s4 guide:auxiliary#fx-i-and-fx-ii · s5 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+Sources: s1 research:59-screen-profiling#23-filter-instrument-m3 · s2 guide:auxiliary#external-audio · s3 guide:auxiliary#tape · s4 guide:auxiliary#fx-i-and-fx-ii · s5 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s6 guide:instrument#filter
 
 ### LFO page and LFO types (M4) [instrument.lfo]
-current · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.0, 1.1.3 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.0, 1.1.3 · guide v1.1.15 · verified on 1.1.33
 Also called: lfo, low frequency oscillator, modulation, lfo type, modulation source, M4 page
 Where: modes instrument; screens M4
 
@@ -1771,7 +1800,9 @@ Facts:
 - Speed controls are tempo-synced over their anti-clockwise range; turned clockwise until a dial icon appears, they run at a free rate. [#speed] [s1]
 - The amount can go below zero to invert the modulation; OS 1.1.3 fixed how negative amounts are drawn. [#negative] (since 1.1.3) (derived) [s3]
 - On drum tracks the LFO restarts with every new note. [#drum-reset] (since 1.0.15) [s4]
-- CC40–43 probably follow the four `M4` encoders, but community labels for them disagree; the LFO type has no known CC. [#midi-ccs] (conflicting) [s5]
+- Over MIDI, CC40–43 on the track's channel drive the four `M4` encoders in order, in all five LFO types. [#midi-ccs] (verified 1.1.33) [s5]
+- No MIDI CC is known for the LFO type. [#no-type-cc] (community-verified) [s6]
+- With the LFO off, the page is dimmed under an off box; pressing `M4` again switches the LFO on. [#off] (verified 1.1.33) [s7]
 
 Procedures:
 - Change the LFO type of the selected track [#type] [s1]
@@ -1780,10 +1811,10 @@ Procedures:
 
 Related: [instrument.lfo-duck], [instrument.lfo-element], [instrument.lfo-random], [instrument.lfo-tremolo], [instrument.lfo-value], [sequencer.parameter-locks]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 changelog:1.0.15 · s5 research:20-midi-control#37-known-conflicts--errata-in-the-sources
+Sources: s1 guide:instrument#lfo · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 changelog:1.0.15 · s5 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s6 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s7 research:59-screen-profiling#24-lfo-instrument-m4-five-types
 
 ### Duck LFO (sidechain pumping) [instrument.lfo-duck]
-current · OS ≥ 1.1.0 · changed in 1.1.3 · guide v1.1.15
+current · OS ≥ 1.1.0 · changed in 1.1.3 · guide v1.1.15 · verified on 1.1.33
 Also called: duck, ducking, sidechain, sidechain compression, pumping, duck lfo
 Where: modes instrument; screens M4
 
@@ -1799,6 +1830,7 @@ Facts:
 - The duck LFO type was added in OS 1.1.0. [#new] [s2]
 - Any of the 16 tracks can be the source — instrument tracks 1–8 or auxiliary tracks 9–16 — and so can the metronome, for an even duck on every beat. [#sources] [s1]
 - OS 1.1.3 fixed using a MIDI track as the duck source. [#midi-source] (since 1.1.3) [s3]
+- Duck shows its source as a track number (tr 1 and on), the last position a metronome icon, then amount, a live signal box and cards for hold and release. [#screen] (verified 1.1.33) [s4]
 
 Parameters:
 
@@ -1812,10 +1844,10 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.lfo-tremolo]
 
-Sources: s1 guide:instrument#duck · s2 changelog:1.1.0 · s3 changelog:1.1.3
+Sources: s1 guide:instrument#duck · s2 changelog:1.1.0 · s3 changelog:1.1.3 · s4 research:59-screen-profiling#24-lfo-instrument-m4-five-types
 
 ### Element LFO (gyroscope, microphone, envelope) [instrument.lfo-element]
-current · OS ≥ 1.0.9 · changed in 1.0.50, 1.1.0 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.0.50, 1.1.0 · guide v1.1.15 · verified on 1.1.33
 Also called: element, gyro, gyroscope, tilt, motion control, microphone modulation, mic lfo
 Where: modes instrument; screens M4
 
@@ -1829,6 +1861,7 @@ Facts:
 - Element takes its modulation from the OP-XY itself rather than from an oscillator. [#what] [s1]
 - OS 1.0.50 raised the maximum depth of gyroscope modulation. [#gyro-depth] (since 1.0.50) [s2]
 - OS 1.1.0 fixed a bug that affected element when the amp envelope was its source. [#envelope-fix] (since 1.1.0) [s3]
+- Element shows its source as an icon — G for the gyroscope, a microphone, ^ for the envelope, or sum — then amount on a tick ladder, destination cards (synth wave, env, filter, amp) and a card naming the parameter, such as attack, cutoff, pitch or pan. [#screen] (verified 1.1.33) [s4]
 
 Parameters:
 
@@ -1841,10 +1874,10 @@ Parameters:
 
 Related: [instrument.lfo]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.0.50 · s3 changelog:1.1.0
+Sources: s1 guide:instrument#lfo · s2 changelog:1.0.50 · s3 changelog:1.1.0 · s4 research:59-screen-profiling#24-lfo-instrument-m4-five-types
 
 ### Random LFO [instrument.lfo-random]
-current · OS ≥ 1.0.9 · changed in 1.0.38 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.0.38 · guide v1.1.15 · verified on 1.1.33
 Also called: random, sample and hold, random modulation, random values
 Where: modes instrument; screens M4
 
@@ -1858,6 +1891,7 @@ Facts:
 - Random modulates its target with values from a random generator. [#what] [s1]
 - Every page appears twice as a destination, normal and free. On a normal one the modulation restarts with each key press; on a free one it keeps running. [#free] [s1]
 - Since OS 1.0.38, a random LFO on a free destination is not reset by new notes, and a reset snaps it to the correct value. [#reset] (since 1.0.38) [s2]
+- Random's page looks like the value LFO's, plus an animated random step wave under speed and an envelope-ramp card under the destination. [#screen] (verified 1.1.33) [s3]
 
 Parameters:
 
@@ -1871,10 +1905,10 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.lfo-value]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.0.38
+Sources: s1 guide:instrument#lfo · s2 changelog:1.0.38 · s3 research:59-screen-profiling#24-lfo-instrument-m4-five-types
 
 ### Tremolo LFO (vibrato and tremolo) [instrument.lfo-tremolo]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: tremolo, vibrato, tremolo lfo, pitch wobble, volume wobble
 Where: modes instrument; screens M4
 
@@ -1888,6 +1922,9 @@ at once.
 Facts:
 - Tremolo varies the track's pitch and volume directly, so it has no destination or parameter to choose. [#what] [s1]
 - `shift + turn E2` sets the tremolo's waveform shape. TE's caption for that control repeats the random LFO's envelope text; its title and diagram point to shape. [#shape] (derived) [s1]
+- The tremolo page labels its fields rate, vib, vol and env, with a card labelled shape under env that shows the waveform (sine, square …); vib and vol are pointers on tick ladders. [#screen] (verified 1.1.33) [s2]
+- While synced, rate shows a note-value icon with a multiplier (8, 6, 4, 2 …); turned further clockwise it becomes a clock dial whose hand turns, and the rate runs free. [#rate-drawn] (verified 1.1.33) [s2]
+- Env is drawn as a line that rises at 0, lies flat at 64 and falls at 127. [#env-drawn] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -1901,10 +1938,10 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.engine-organ], [instrument.engine-axis]
 
-Sources: s1 guide:instrument#lfo
+Sources: s1 guide:instrument#lfo · s2 research:59-screen-profiling#24-lfo-instrument-m4-five-types
 
 ### Value LFO [instrument.lfo-value]
-current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15 · verified on 1.1.33
 Also called: value, classic lfo, periodic lfo, lfo wave
 Where: modes instrument; screens M4
 
@@ -1919,6 +1956,8 @@ Facts:
 - Every page appears twice as a destination, normal and free. On a normal one the modulation restarts with each key press; on a free one it keeps running. [#free] [s1]
 - The normal destinations give the triggered behaviour and the free ones the continuous behaviour. [#modes] (derived) [s1]
 - Before OS 1.1.15, the slowest free-running speed stopped the value LFO altogether. [#slow-fix] (since 1.1.15) [s2]
+- The value page shows speed, amount on a tick ladder, a scrolling column of destination cards and a large card naming the target parameter (attack, cutoff, res, key …) over an animated knob. [#screen] (verified 1.1.33) [s3]
+- In the destination column each page's card, such as syn (the engine), env or filter, is followed by a twin labelled free with the same icon. [#free-cards] (verified 1.1.33) [s3]
 
 Procedures:
 - Sweep a track's filter cutoff in time with the tempo [#sweep] [s1]
@@ -1939,10 +1978,10 @@ Parameters:
 
 Related: [instrument.lfo], [instrument.lfo-random]
 
-Sources: s1 guide:instrument#lfo · s2 changelog:1.1.15
+Sources: s1 guide:instrument#lfo · s2 changelog:1.1.15 · s3 research:59-screen-profiling#24-lfo-instrument-m4-five-types
 
 ### Axis synth engine [instrument.engine-axis]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: axis, axis engine, fm strings, fm synth
 Where: modes instrument; screens M1
 
@@ -1956,6 +1995,7 @@ without using the LFO. Load it with `shift + M1`.
 Facts:
 - Axis is a frequency-modulation engine whose home ground is rich, full string sounds. [#character] [s1]
 - Ratio retunes one of the oscillators; values 0–50 detune it and 51–100 move it up in steps of a fifth. [#ratio-halves] [s1]
+- Axis's picture is an isometric three-armed structure of cubes under a plain-text top bar; each encoder lengthens or reshapes one arm. [#picture] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -1968,10 +2008,10 @@ Parameters:
 
 Related: [instrument.engine], [instrument.lfo-tremolo]
 
-Sources: s1 guide:synth-engines#axis
+Sources: s1 guide:synth-engines#axis · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Dissolve synth engine [instrument.engine-dissolve]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: dissolve, dissolve engine, noise synth, tonal noise
 Where: modes instrument; screens M1
 
@@ -1984,6 +2024,7 @@ noisy plucks. Load it with `shift + M1`.
 
 Facts:
 - Dissolve mixes noise into pitched oscillators, which suits ambient pads and bright, rough-edged leads. [#character] [s1]
+- Dissolve fills the screen with a mosaic of squares that never stops moving; raising fm or detune whitens it. [#picture] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -1996,23 +2037,26 @@ Parameters:
 
 Related: [instrument.engine]
 
-Sources: s1 guide:synth-engines#dissolve
+Sources: s1 guide:synth-engines#dissolve · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Epiano synth engine [instrument.engine-epiano]
-current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
+outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15 · verified on 1.1.33
 Also called: epiano, e-piano, electric piano, epiano engine, keys engine
 Where: modes instrument; screens M1
 
-An electric-piano model that also reaches plucks, strong leads and thick basses; its M1 page sets tone, texture, punch and tine.
+An electric-piano model that also reaches plucks, strong leads and thick basses; its M1 page sets tone, texture, tine and punch.
 
 Epiano recreates the struck-tine electric piano. Tine sets how much bell-like attack each note has,
 tone the overall brightness, texture adds dirt and punch adds movement. With the tine up and a medium
 decay it sounds like classic keys; the guide also pitches it for leads and basses, so try it outside
-piano parts. Load it with `shift + M1`.
+piano parts. The guide (1.1.15) lists punch before tine; on 1.1.33, after the 1.1.25 fix to the
+epiano's labels, tine sits on `E3` and punch on `E4`. Load it with `shift + M1`.
 
 Facts:
 - Epiano imitates an electric piano and stretches to plucky keys, strong leads and heavy basses. [#character] [s1]
 - OS 1.1.25 corrected wrongly named parameters on the epiano screen, so older firmware may label its encoders differently. [#label-fix] (since 1.1.25) [s2]
+- On OS 1.1.33 the third encoder is tine and the fourth punch — the guide lists them the other way round. [#order] (verified 1.1.33) [s3]
+- Epiano's picture is an isometric stack of layers with tines, under a top bar of coloured cells labelled tone, texture, tine and punch. [#picture] (verified 1.1.33) [s3]
 
 Parameters:
 
@@ -2020,15 +2064,15 @@ Parameters:
 | --- | --- | --- | --- | --- | --- | --- |
 | M1 | `turn E1` | tone | – | – | 12 | darker ↔ brighter s1 |
 | M1 | `turn E2` | texture | – | – | 13 | adds grit s1 |
-| M1 | `turn E3` | punch | – | – | 14 | adds movement s1 |
-| M1 | `turn E4` | tine | – | – | 15 | bright, metallic attack at the start of each note s1 |
+| M1 | `turn E3` | tine | – | – | 14 | bright, metallic attack at the start of each note; the guide puts it on `E4` (verified 1.1.33) s3 |
+| M1 | `turn E4` | punch | – | – | 15 | adds movement; the guide puts it on `E3` (verified 1.1.33) s3 |
 
 Related: [instrument.engine]
 
-Sources: s1 guide:synth-engines#epiano · s2 changelog:1.1.25
+Sources: s1 guide:synth-engines#epiano · s2 changelog:1.1.25 · s3 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Hardsync synth engine [instrument.engine-hardsync]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: hardsync, hard sync, hardsync engine, oscillator sync
 Where: modes instrument; screens M1
 
@@ -2041,6 +2085,7 @@ Load it with `shift + M1`.
 
 Facts:
 - Hardsync is built for short stabs and firm, solid bass lines. [#character] [s1]
+- Hardsync's picture is a hair dryer blowing animated blocks, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises. [#picture] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -2053,7 +2098,7 @@ Parameters:
 
 Related: [instrument.engine]
 
-Sources: s1 guide:synth-engines#hardsync
+Sources: s1 guide:synth-engines#hardsync · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Midi engine (called external in the guide) [instrument.engine-midi]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.0.15, 1.0.45, 1.0.50, 1.1.15, 1.1.32 · guide v1.1.15
@@ -2099,7 +2144,7 @@ Related: [instrument.engine], [auxiliary.external-midi], [howto.control-synth-mi
 Sources: s1 guide:synth-engines#external · s2 changelog:1.0.15 · s3 guide:how-to#how-to-control-a-synth-with-midi · s4 changelog:1.0.45 · s5 changelog:1.0.50 · s6 changelog:1.1.15 · s7 changelog:1.1.32
 
 ### Organ synth engine [instrument.engine-organ]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: organ, organ engine, combo organ, church organ, transistor organ
 Where: modes instrument; screens M1
 
@@ -2112,6 +2157,7 @@ shimmer. Because the tremolo lives on `M1`, the `M4` LFO stays free for somethin
 
 Facts:
 - Organ covers a wide spread of organ sounds, from transistor instruments to church organs, chosen with the type control. [#character] [s1]
+- Organ's picture is four drawbars, each with a scale from 8 to 1 and an icon on its cap; each encoder slides one drawbar, and the bars glide into place. [#picture] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -2124,10 +2170,10 @@ Parameters:
 
 Related: [instrument.engine], [instrument.lfo-tremolo]
 
-Sources: s1 guide:synth-engines#organ
+Sources: s1 guide:synth-engines#organ · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Prism synth engine [instrument.engine-prism]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: prism, prism engine, prism synth
 Where: modes instrument; screens M1
 
@@ -2139,18 +2185,21 @@ narrow image keep it tight for bass; more of both makes it broad enough for lead
 
 Everything else about the sound — how notes start and fade (M2), the filter (M3) and modulation
 (M4) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.
-TE's guide gives no numeric ranges or defaults for prism's parameters; read them off the screen
-while turning, and treat the CC numbers as community findings rather than TE documentation.
+TE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you
+turn, and the CC numbers are confirmed on the owner's unit.
 
 Facts:
 - Prism is one of the eight built-in synth engines. Each instrument track runs one engine, chosen per track. [#one-of-eight] [s1]
 - Prism is the everyday workhorse among the engines, suited to bass lines, leads and most parts in between. [#character] [s2]
 - Only the M1 page belongs to the engine. Envelopes (M2), filter (M3) and LFO (M4) work the same whichever synth engine a track uses. [#m1-is-engine] [s3]
 - Like every module-page parameter, prism's four M1 settings can be parameter-locked per step. [#lockable] [s4]
-- Over MIDI, the four M1 encoders answer CC12, CC13, CC14 and CC15 on the track's channel, whatever engine is loaded. [#midi-ccs] (community-verified) [s5]
+- Over MIDI, CC12, CC13, CC14 and CC15 on the track's channel move shape, ratio, detune and stereo. [#midi-ccs] (verified 1.1.33) [s5]
+- Prism's picture is a row of four optics — a triangle, a convex lens, a concave lens and a wedge — with light rays passing through the lenses on every note. [#picture] (verified 1.1.33) [s6]
+- Shape grows the triangle, ratio thickens the convex lens, detune slides the concave lens and stereo opens the wedge into an arrowhead. [#drawn] (verified 1.1.33) [s6]
+- Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16. [#ratio-steps] (verified 1.1.33) [s7]
 
 Procedures:
-- Put the prism engine on the selected instrument track [#choose] [s6]
+- Put the prism engine on the selected instrument track [#choose] [s8]
   Needs: instrument mode; the track is selected
   1. `shift + M1` — opens the engine list
   2. `turn E1` — scroll to prism
@@ -2168,10 +2217,10 @@ Parameters:
 
 Related: [sequencer.parameter-locks], [instrument.save-to-same-snapshot]
 
-Sources: s1 guide:synth-engines#arrange · s2 guide:synth-engines#prism · s3 guide:instrument#engine · s4 guide:sequencer#step-sequencing · s5 research:20-midi-control#34-engine-resolved-names-for-cc1215-p1p4 · s6 guide:synth-engines#change-engine
+Sources: s1 guide:synth-engines#arrange · s2 guide:synth-engines#prism · s3 guide:instrument#engine · s4 guide:sequencer#step-sequencing · s5 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s6 research:59-screen-profiling#25-engine-pages-instrument-m1 · s7 research:57-synth-engines#prism--shape-ratio-detune-stereo · s8 guide:synth-engines#change-engine
 
 ### Simple synth engine [instrument.engine-simple]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: simple, simple engine, basic synth, pulse width, subtractive synth
 Where: modes instrument; screens M1
 
@@ -2183,6 +2232,7 @@ the shaping, it is the easiest engine to learn sound design on. Load it with `sh
 
 Facts:
 - Simple is meant for fast, basic patches, with leads and plucks as its strengths. [#character] [s1]
+- Simple's picture is an isometric glass jar on stacked slabs under a plain-text top bar; stereo splits the jar into two. [#picture] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -2195,10 +2245,10 @@ Parameters:
 
 Related: [instrument.engine], [instrument.filter]
 
-Sources: s1 guide:synth-engines#simple
+Sources: s1 guide:synth-engines#simple · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Wavetable synth engine [instrument.engine-wavetable]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: wavetable, wavetable engine, wavetables, morphing oscillator
 Where: modes instrument; screens M1
 
@@ -2212,6 +2262,8 @@ metallic, unstable results. Load it with `shift + M1`.
 Facts:
 - A wavetable is a row of waveforms stored one after another; moving through it morphs the oscillator smoothly from shape to shape. [#what] [s1]
 - The engine offers nine wavetables. [#nine] [s1]
+- The first cell of the top bar names the current table; turning `E1` steps through basic, buzz, crush, drawbars, fibonacci, fractal, geometric, primes and zap. [#tables] (verified 1.1.33) [s2]
+- The picture is the waveform itself, morphing and leaving trails as it changes; drift fans it out into moving ghost copies. [#picture] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -2224,7 +2276,7 @@ Parameters:
 
 Related: [instrument.engine], [instrument.lfo-value]
 
-Sources: s1 guide:synth-engines#wavetable
+Sources: s1 guide:synth-engines#wavetable · s2 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Preset settings (tuning, velocity, width, mod routing) [instrument.preset-settings]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -2318,6 +2370,10 @@ Facts:
 - Loading a preset replaces the track's whole sound and copies it into the project, so later changes to the preset file leave existing tracks alone. [#whole-sound] (community-verified) [s2]
 - Factory categories include bass, drum, keys, lead, organ, pad, pluck and strings, plus fx, wind and bells; top-level folders under presets on the unit's storage show up as categories. [#categories] (community-verified) [s3]
 - Since OS 1.1.15, user preset folders can be nested more deeply. [#deeper-folders] (since 1.1.15) [s4]
+- The browser shows the track number over the word preset on the left, the engine list in the middle and that engine's presets on the right, the current preset highlighted. [#screen] (verified 1.1.33) [s5]
+- The first encoder (`E1`) offers a choice between browsing by engine and by category; on the owner's unit the category view began with Nostalgic Synths, bass, drum and keys. [#views] (verified 1.1.33) [s5]
+- The footer reads cut, paste, rename and delete over `M1`…`M4`. [#footer] (verified 1.1.33) [s5]
+- On OS 1.1.33, `shift + M1` also brings up this browser, with the engine list in the middle. [#shift-m1] (verified 1.1.33) [s5]
 
 Procedures:
 - Load a preset on a track [#load] [s1]
@@ -2340,7 +2396,7 @@ Parameters:
 
 Related: [instrument.preset-management], [instrument.save-copy-scramble], [instrument.save-to-same-snapshot], [com.mtp]
 
-Sources: s1 guide:instrument#view-and-create-preset · s2 research:30-presets-samples#42-how-a-project-points-at-a-preset-decoded-xy · s3 research:30-presets-samples#41-what-mtp-shows · s4 changelog:1.1.15
+Sources: s1 guide:instrument#view-and-create-preset · s2 research:30-presets-samples#42-how-a-project-points-at-a-preset-decoded-xy · s3 research:30-presets-samples#41-what-mtp-shows · s4 changelog:1.1.15 · s5 research:59-screen-profiling#26-preset-browser-shift--m1
 
 ### Organise presets (cut, paste, rename, delete, folders) [instrument.preset-management]
 current · OS ≥ 1.0.9 · changed in 1.1.15, 1.1.25 · guide v1.1.15
@@ -2560,6 +2616,9 @@ Facts:
 - After sampling on the unit, the loop runs from 20 % to 80 % of the sample, set to loop forever. [#defaults] (community-verified) [s2]
 - Tune works in cents; sample gain spans −30 to +20 dB. [#ranges] (community-verified) [s2]
 - Synth sampler settings accept parameter locks. [#p-locks] (since 1.1.0) [s3]
+- The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers. [#screen] (verified 1.1.33) [s4]
+- With `shift` held it shows direction, tune as a note symbol and a value such as −12.00, crossfade as a percentage drawn as a dark wedge at the loop, and gain. [#shift-screen] (verified 1.1.33) [s4]
+- CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s4]
 
 Parameters:
 
@@ -2577,7 +2636,7 @@ Parameters:
 
 Related: [sampler.overview], [sampler.sampling], [sampler.multisampler]
 
-Sources: s1 guide:sample#one-shot-synth-sampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 changelog:1.1.0
+Sources: s1 guide:sample#one-shot-synth-sampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 changelog:1.1.0 · s4 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Drum sampler [sampler.drum-sampler]
 current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15
@@ -2629,6 +2688,9 @@ Facts:
 - Pan runs from −100 to +100, sample fade from 0 to 99, sample gain from −30 to +20 dB. [#ranges] (community-verified) [s4]
 - The screen draws the sample fade over the waveform. [#fade-drawn] (since 1.1.15) [s5]
 - The guide's texts for pan and sample fade describe tune and loop crossfade — copied from the synth sampler by mistake. [#guide-errors] (derived) [s6]
+- The page shows the selected key's waveform with the skipped parts tinted blue and start and end markers; tune reads as a note symbol and a signed value such as −16.10, moving in steps of 0.1, and play mode as one of four icons — an arrow to a bar, a plain arrow, an arrow with G, or a loop. [#screen] (verified 1.1.33) [s7]
+- With `shift` held the page shows direction, pan as a bar from L to R, fade as a dark ramp drawn over the wave, and gain, which scales the drawn wave. [#shift-screen] (verified 1.1.33) [s7]
+- CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s7]
 
 Parameters:
 
@@ -2645,7 +2707,7 @@ Parameters:
 
 Related: [sampler.drum-sampler], [sampler.slicing]
 
-Sources: s1 guide:sample#drum-sampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 changelog:1.0.45 · s4 research:30-presets-samples#26-regions-how-each-field-reaches-the-device-decoded · s5 changelog:1.1.15 · s6 research:40-official-docs#53-te-errata-we-keep-verbatim-and-our-manual-must-not-copy
+Sources: s1 guide:sample#drum-sampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 changelog:1.0.45 · s4 research:30-presets-samples#26-regions-how-each-field-reaches-the-device-decoded · s5 changelog:1.1.15 · s6 research:40-official-docs#53-te-errata-we-keep-verbatim-and-our-manual-must-not-copy · s7 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Slicing a sample across the keys [sampler.slicing]
 current · OS ≥ 1.1.0 · guide v1.1.15
@@ -2699,6 +2761,8 @@ Facts:
 - The guide titles `shift + turn E2` and `shift + turn E3` pan and sample fade but describes tune and loop crossfade; zones store tune and crossfade, not pan. [#caption-mixup] (derived) [s2]
 - There are no velocity layers or round robins — one sample per zone. [#no-layers] (community) [s3]
 - OS 1.1.25 improved how multisamples follow global transpose. [#transpose] (since 1.1.25) [s4]
+- The top strip is a full keyboard on which the zone of the sample being played lights up, jumping with the octave; each zone brings its own waveform and markers, and the shift layer matches the synth sampler's. [#screen] (verified 1.1.33) [s5]
+- CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s5]
 
 Procedures:
 - Multisample an instrument [#record-zones] [s1]
@@ -2709,7 +2773,7 @@ Procedures:
 
 Related: [sampler.synth-sampler], [sampler.sampling]
 
-Sources: s1 guide:sample#multisampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 research:30-presets-samples#32-counts-and-structure-limits · s4 changelog:1.1.25
+Sources: s1 guide:sample#multisampler · s2 research:30-presets-samples#27-region-fields-by-type · s3 research:30-presets-samples#32-counts-and-structure-limits · s4 changelog:1.1.25 · s5 research:59-screen-profiling#25-engine-pages-instrument-m1
 
 ### Sample library [sampler.sample-library]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.0, 1.1.15, 1.1.17 · guide v1.1.15
@@ -2808,7 +2872,7 @@ Related: [auxiliary.brain], [auxiliary.punch-in-fx], [auxiliary.external-midi], 
 Sources: s1 guide:auxiliary#auxiliary · s2 guide:auxiliary · s3 guide:track-buttons#6.1%20using-the-track-buttons · s4 research:10-xy-format#311-auxiliary-tracks-t9t16 · s5 research:20-midi-control#21-the-16-tracks-and-their-default-channels · s6 guide:mix#levels-pans-and-sends
 
 ### Brain [auxiliary.brain]
-current · OS ≥ 1.0.9 · changed in 1.0.25, 1.0.29, 1.1.17 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.0.25, 1.0.29, 1.1.17 · guide v1.1.15 · verified on 1.1.33
 Also called: brain track, key detection, auto transpose, chord changes
 Where: modes auxiliary; screens M1, M2
 
@@ -2824,10 +2888,15 @@ Facts:
 - The brain's manual mode lets you set the key yourself when detection gets it wrong. [#manual] [s1]
 - Tracks left out of the routing on M2 are neither transposed nor used for key detection. [#routing] [s1]
 - In a new project tracks 3–8 are routed to the brain and drum tracks 1 and 2 are not. [#default-routing] (community) [s3]
-- Scales: major, dorian, phrygian, lydian, mixolydian, minor, locrian. [#scales] (community) [s4]
+- The brain has seven scales, shown in this order as major, dorian, phrygian, lydian, mixo (mixolydian), minor and locrian. [#scales] (verified 1.1.33) [s4]
 - Brain settings are stored per pattern. [#per-pattern] (since 1.0.25) [s5]
 - The brain's routing is stored per pattern, not per scene. [#routing-per-pattern] (since 1.0.29) [s6]
 - Arpeggiator notes follow the brain; OS 1.1.17 fixed arpeggios ignoring it. [#arp] (since 1.1.17) [s7]
+- The brain's `M1` is headed with the current key, such as c major, and draws a mini keyboard marking the scale's notes. Manual mode shows a hand and the root and scale fields; auto mode shows a brain head instead. [#screen] (verified 1.1.33) [s4]
+- Link reads a crossed box when off and a two-digit number otherwise; with CC15 at 32, 64, 96 and 127 it showed 02, 04, 06 and 08. [#link-values] (verified 1.1.33) [s4]
+- `M2` slides in from `M1` and shows an in bracket running from the brain to track boxes 1–8, each on or off. [#routing-page] (verified 1.1.33) [s4]
+- The brain has no filter page; CC32 and CC35 on its channel change nothing. [#no-filter] (verified 1.1.33) [s4]
+- Over MIDI, CC12–15 on the brain's channel (9) drive its four `M1` encoders; CC12 shows manual at 0 and auto at 127. [#midi] (verified 1.1.33) [s4]
 
 Procedures:
 - Take a track into or out of the brain [#route] [s1]
@@ -2839,14 +2908,14 @@ Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| M1 | `turn E1` | manual / auto | – | – | – | s1 |
-| M1 | `turn E2` | key | – | – | – | s1 |
-| M1 | `turn E3` | scale | – | – | – | s1 |
-| M1 | `turn E4` | link | – | – | – | links an instrument track, to riff over the song as it transposes s1 |
+| M1 | `turn E1` | manual / auto | – | – | 12 | s1 |
+| M1 | `turn E2` | root | 12 notes, c … b | – | 13 | the guide calls it key (verified 1.1.33) s4 |
+| M1 | `turn E3` | scale | major / dorian / phrygian / lydian / mixo / minor / locrian | – | 14 | (verified 1.1.33) s4 |
+| M1 | `turn E4` | link | – | – | 15 | links an instrument track, to riff over the song as it transposes s1 |
 
 Related: [auxiliary.overview], [auxiliary.routing-filter-lfo]
 
-Sources: s1 guide:auxiliary#brain · s2 guide:how-to#write-a-song-fast-with-brain · s3 research:10-xy-format#34-patternstruct-base-clones-walking · s4 research:10-xy-format#311-auxiliary-tracks-t9t16 · s5 changelog:1.0.25 · s6 changelog:1.0.29 · s7 changelog:1.1.17
+Sources: s1 guide:auxiliary#brain · s2 guide:how-to#write-a-song-fast-with-brain · s3 research:10-xy-format#34-patternstruct-base-clones-walking · s4 research:59-screen-profiling#213-auxiliary-tracks · s5 changelog:1.0.25 · s6 changelog:1.0.29 · s7 changelog:1.1.17
 
 ### Punch-in FX [auxiliary.punch-in-fx]
 current · OS ≥ 1.0.9 · changed in 1.0.32, 1.0.50 · guide v1.1.15
@@ -2868,6 +2937,7 @@ Facts:
 - When effects conflict, the mute effect takes priority. [#mute-wins] (since 1.0.50) [s4]
 - OS 1.0.32 stopped `shift + key` from triggering punch-in FX while external MIDI is in use. [#midi-shortcut] (since 1.0.32) [s5]
 - Notes on MIDI channel 10 trigger punch-in FX; which note fires which effect is unpublished. [#midi-notes] (community-verified) [s6]
+- On `T2` each of the 24 keys plays its own animation on the screen — planets, a digit clock, noise, hands, waves, sweeping lines and bars, and more. [#animations] (verified 1.1.33) [s7]
 
 Procedures:
 - Record punch-in FX from an instrument track [#record-shortcut] [s2]
@@ -2877,12 +2947,12 @@ Procedures:
 
 Related: [auxiliary.overview], [howto.first-punch-in]
 
-Sources: s1 guide:get-started#4.4.%20adding-punch-in-fx · s2 guide:auxiliary#punch-in-fx · s3 guide:mix#master · s4 changelog:1.0.50 · s5 changelog:1.0.32 · s6 research:20-midi-control#43-punch-in-fx-notes-ch10
+Sources: s1 guide:get-started#4.4.%20adding-punch-in-fx · s2 guide:auxiliary#punch-in-fx · s3 guide:mix#master · s4 changelog:1.0.50 · s5 changelog:1.0.32 · s6 research:20-midi-control#43-punch-in-fx-notes-ch10 · s7 research:59-screen-profiling#213-auxiliary-tracks
 
 ### External MIDI track [auxiliary.external-midi]
-current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15 · verified on 1.1.33
 Also called: midi track, ext midi, control a synth, midi cc slots
-Where: modes auxiliary; screens M1, M2, M3
+Where: modes auxiliary; screens M1, M2, M3, M4
 
 `T3` plays and sequences outside MIDI gear over USB-C or the multi-out; M1 sets channel, bank and program, M2 and M3 hold eight CC slots, and M4 has an LFO.
 
@@ -2896,10 +2966,14 @@ Facts:
 - M2 and M3 hold four CC slots each; turning sends a slot's value, `shift + turn E1…E4` switches a slot on and picks its CC number, and the values can be sequenced and recorded. [#slots] [s1]
 - The external MIDI track's LFO (M4) modulates the track's own parameters, such as a CC slot. [#lfo] [s1]
 - Program changes can be parameter-locked; OS 1.1.15 fixed such locks not working. [#program-locks] (since 1.1.15) [s2]
-- Community charts for channel 11: CC12–14 channel, bank, program; CC20–23 and CC32–35 slot values; CC28–31 and CC36–39 slot numbers; CC40–43 LFO. [#ccs] (community) [s3]
+- Community charts put the slot values on CC20–23 and CC32–35 of channel 11 and the slot numbers on CC28–31 and CC36–39. [#ccs] (community) [s3]
+- Over MIDI on channel 11, CC12–14 set channel, bank and program and CC40–43 drive the `M4` LFO; CC15 does nothing. [#midi] (verified 1.1.33) [s4]
+- The `M1` page is headed midi with a DIN socket icon; channel reads 01–16, and bank and program show a crossed box at 0, then 1–128. [#screen] (verified 1.1.33) [s4]
+- `M2` and `M3` slide in sideways from `M1`; each CC slot is a crossed box while off, or a large value with cc and its number underneath. [#slot-pages] (verified 1.1.33) [s4]
+- The `M4` LFO offers the CC slots as its destinations; a slot without a CC shows no cc set as the parameter. [#lfo-screen] (verified 1.1.33) [s4]
 
 Procedures:
-- Play an outside synth from the OP-XY [#setup] [s4]
+- Play an outside synth from the OP-XY [#setup] [s5]
   Needs: the synth is connected over USB-C or the multi-out
   1. `auxiliary → T3`
   2. `turn E1` — the synth's MIDI channel, on M1
@@ -2909,13 +2983,13 @@ Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| M1 | `turn E1` | channel | 1–16 | – | – | s1 |
-| M1 | `turn E2` | bank | – | – | – | s1 |
-| M1 | `turn E3` | program | – | – | – | s1 |
+| M1 | `turn E1` | channel | 1–16 | – | 12 | s1 |
+| M1 | `turn E2` | bank | off, 1–128 | – | 13 | (verified 1.1.33) s4 |
+| M1 | `turn E3` | program | off, 1–128 | – | 14 | (verified 1.1.33) s4 |
 
 Related: [instrument.engine-midi], [com.multi-out], [sequencer.parameter-locks]
 
-Sources: s1 guide:auxiliary#external-midi · s2 changelog:1.1.15 · s3 research:20-midi-control#35-auxiliary-tracks-916 · s4 guide:how-to#how-to-control-a-synth-with-midi
+Sources: s1 guide:auxiliary#external-midi · s2 changelog:1.1.15 · s3 research:20-midi-control#35-auxiliary-tracks-916 · s4 research:59-screen-profiling#213-auxiliary-tracks · s5 guide:how-to#how-to-control-a-synth-with-midi
 
 ### External CV track [auxiliary.external-cv]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -2924,7 +2998,8 @@ Where: modes auxiliary
 
 `T4` sends note pitch as control voltage and a gate from the multi-out jack, so the keyboard and sequencer can play modular and vintage synths.
 
-The simplest aux track: the guide gives it no page settings, only notes. Set the multi-out to cv
+The simplest aux track: the guide gives it no page settings, only notes, and on the unit its page is
+just a voltmeter. Set the multi-out to cv
 before plugging in, patch pitch and gate into the synth, then play `T4` like any other track.
 
 Facts:
@@ -2932,6 +3007,8 @@ Facts:
 - On the external CV track (`T4`) the keyboard and sequencer play the connected CV device. [#track] [s1]
 - The multi-out carries CV on its tip (left) and gate on its ring (right). [#jack] [s1]
 - Use a splitter cable that separates left and right, not one that keeps stereo — tip to the CV input, ring to the gate input. [#cable] [s2]
+- The CV track's page is a voltmeter labelled CV, reading from −5 to +5 V. [#screen] (verified 1.1.33) [s3]
+- CC12–15 on its channel (12) move nothing on that page. [#no-ccs] (verified 1.1.33) [s3]
 
 Procedures:
 - Set the multi-out to CV and gate [#multi-out] [s2]
@@ -2941,7 +3018,7 @@ Procedures:
 
 Related: [com.multi-out], [howto.control-cv-synth]
 
-Sources: s1 guide:auxiliary#external-cv · s2 guide:how-to#how-to-control-an-analog-synth%20with%20cv%20and%20gate
+Sources: s1 guide:auxiliary#external-cv · s2 guide:how-to#how-to-control-an-analog-synth%20with%20cv%20and%20gate · s3 research:59-screen-profiling#213-auxiliary-tracks
 
 ### External audio track [auxiliary.external-audio]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -2960,7 +3037,11 @@ Facts:
 - Sending audio out needs the multi-out set to audio. [#out] [s1]
 - M2 sends instrument tracks to the aux output on the multi-out; only routed tracks leave there, each at an amount independent of the main mix. [#routing] [s1]
 - For an outboard effect, send tracks out of the multi-out, return the effect into the audio input, and balance the return with drive, level and mix. [#outboard] [s2]
-- Community charts for channel 13: CC12 input, CC13 drive, CC15 mix; level seems to be the track level, CC7. [#ccs] (community) [s3]
+- Community charts give CC12 on channel 13 as the input select and suggest the level is the track level, CC7. [#ccs] (community) [s3]
+- Over MIDI on channel 13, CC13 sets drive and CC15 mix, and CC32, CC35 and CC40–43 reach the filter and LFO pages; CC12, the input select, was left untried so the microphone could not open. [#midi] (verified 1.1.33) [s4]
+- `M1` draws the signal path — a microphone box marked fdbk block (crossed out while it blocks feedback), a line labelled input, then boxes for drive, level and mix. [#screen] (verified 1.1.33) [s5]
+- Drive reads 00–20 and mix 00–99; level showed 75 in a new project. [#ranges] (verified 1.1.33) [s5]
+- Its `M2` routing page shows track boxes 1–8 and an out box, and its `M4` LFO aims at syn, filter or amp, with parameters such as param1, hi pass, volume and pan. [#other-pages] (verified 1.1.33) [s5]
 
 Parameters:
 
@@ -2974,7 +3055,7 @@ Parameters:
 
 Related: [auxiliary.routing-filter-lfo], [instrument.track-sends], [com.multi-out]
 
-Sources: s1 guide:auxiliary#external-audio · s2 guide:how-to#send-audio-to-and-from-an-external-effect · s3 research:20-midi-control#35-auxiliary-tracks-916
+Sources: s1 guide:auxiliary#external-audio · s2 guide:how-to#send-audio-to-and-from-an-external-effect · s3 research:20-midi-control#35-auxiliary-tracks-916 · s4 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s5 research:59-screen-profiling#213-auxiliary-tracks
 
 ### Tape track [auxiliary.tape]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
@@ -2990,9 +3071,11 @@ Facts:
 - Tape picks out and rearranges audio playing inside the OP-XY, which makes glitchy effects easy. [#what] [s1]
 - On the tape track (`T6`) the keyboard plays clips of whatever tracks are routed into the tape. [#keyboard] [s1]
 - Only tracks routed on M2 run through the tape, each at its own amount, independent of the main mix. [#routing] [s1]
-- Tape pitch reads as a speed multiple, x1 by default, and tape speed as a percentage around 100 %. [#values] (community) [s2]
-- Tape settings can be parameter-locked; OS 1.1.15 fixed locks not showing on the tape screen. [#p-locks] (since 1.1.15) [s3]
-- Community charts for channel 14: CC12 pitch, CC13 speed, CC14 length (one chart labels it otherwise), CC15 mix. [#ccs] (community) [s2]
+- Community charts read tape pitch as a speed multiple, x1 by default. [#values] (community) [s2]
+- The tape page shows a reel icon with the speed as a percentage, a tape strip carrying a mini keyboard and the loop length as a number, and a mix box. [#screen] (verified 1.1.33) [s3]
+- Speed runs from 50 % to 200 %, length from 1 to 16 and mix from 00 to 99. Over MIDI, CC13 at 63 gives 99 % and at 64 gives 101 %, so exactly 100 % cannot be sent. [#ranges] (verified 1.1.33) [s3]
+- Tape settings can be parameter-locked; OS 1.1.15 fixed locks not showing on the tape screen. [#p-locks] (since 1.1.15) [s4]
+- Over MIDI on channel 14, CC13 moves speed, CC14 length and CC15 mix on the tape page, and CC12 changes it only slightly. [#ccs] (verified 1.1.33) [s3]
 
 Parameters:
 
@@ -3005,7 +3088,7 @@ Parameters:
 
 Related: [auxiliary.routing-filter-lfo], [instrument.track-sends]
 
-Sources: s1 guide:auxiliary#tape · s2 research:20-midi-control#35-auxiliary-tracks-916 · s3 changelog:1.1.15
+Sources: s1 guide:auxiliary#tape · s2 research:20-midi-control#35-auxiliary-tracks-916 · s3 research:59-screen-profiling#213-auxiliary-tracks · s4 changelog:1.1.15
 
 ### FX I and FX II send tracks [auxiliary.fx-sends]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3026,10 +3109,13 @@ Facts:
 - Instrument tracks send from their send page (`shift` held on M3, `E3` for FX I, `E4` for FX II). [#track-sends] [s2]
 - In mix mode, M1 sets each track's FX I send with `turn E1` and FX II send with `turn E2`. [#mix-sends] [s3]
 - The guide's FX routing card repeats a CV sentence and its filter card names the tape track — copy slips. [#guide-slips] (derived) [s1]
+- The FX I page is headed with a boxed FX I and the effect's name, then four columns with labels above and values below, each a bar split by a marker at the value's height. [#screen] (verified 1.1.33) [s4]
+- On FX I, `shift + T7` lists the effects — chorus, delay, dist, lofi, phaser and reverb. [#type-list] (verified 1.1.33) [s4]
+- Over MIDI, CC12–15 on channel 15 move the four columns of FX I. [#midi] (verified 1.1.33) [s5]
 
 Related: [fx.overview], [auxiliary.routing-filter-lfo], [mix.levels-pans-sends]
 
-Sources: s1 guide:auxiliary#fx-i-and-fx-ii · s2 guide:instrument#filter · s3 guide:mix#levels-pans-and-sends
+Sources: s1 guide:auxiliary#fx-i-and-fx-ii · s2 guide:instrument#filter · s3 guide:mix#levels-pans-and-sends · s4 research:59-screen-profiling#213-auxiliary-tracks · s5 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen
 
 ### Aux routing, filter and LFO pages [auxiliary.routing-filter-lfo]
 current · OS ≥ 1.0.9 · changed in 1.1.32 · guide v1.1.15
@@ -3046,17 +3132,19 @@ Facts:
 - On a routing page, an encoder click toggles the page between tracks 1–4 and tracks 5–8; turning a track's encoder adds or removes it, and on tape and external audio sets how much goes in. [#routing-use] [s2]
 - External audio, tape and both FX tracks have the filter on M3; those four plus external MIDI have the LFO on M4. [#which-tracks] [s1]
 - OS 1.1.32 fixed aux track LFOs failing to affect the page parameters. [#lfo-fix] (since 1.1.32) [s3]
-- Community charts put the filter on CC32 (high-pass) and CC35 (low-pass), the sends on CC37–39 and the LFO on CC40–43 of the aux track's channel. [#ccs] (community) [s4]
+- Community charts put the aux sends on CC37–39 of the track's channel. [#ccs] (community) [s4]
+- Over MIDI, CC32 and CC35 move the external audio track's high-pass and low-pass and CC40–43 its LFO; the external MIDI track's LFO answers CC40–43 too. [#midi] (verified 1.1.33) [s5]
+- On external audio the `M3` filter starts switched off; its high-pass is drawn rising from the left and its low-pass falling from the right. [#filter-drawn] (verified 1.1.33) [s6]
 
 Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| M3 | `turn E1` | high-pass cutoff | – | – | – | s2 |
-| M3 | `turn E4` | low-pass cutoff | – | – | – | s2 |
-| M3 | `shift + turn E2` | tape send | – | – | – | external audio only s5 |
-| M3 | `shift + turn E3` | FX I send | – | – | – | external audio and tape s5 |
-| M3 | `shift + turn E4` | FX II send | – | – | – | external audio, tape, and FX I (into FX II) s5 |
+| M3 | `turn E1` | high-pass cutoff | – | – | 32 | s2 |
+| M3 | `turn E4` | low-pass cutoff | – | – | 35 | s2 |
+| M3 | `shift + turn E2` | tape send | – | – | – | external audio only s7 |
+| M3 | `shift + turn E3` | FX I send | – | – | – | external audio and tape s7 |
+| M3 | `shift + turn E4` | FX II send | – | – | – | external audio, tape, and FX I (into FX II) s7 |
 | M4 | `turn E1` | LFO speed | – | – | – | s2 |
 | M4 | `turn E2` | LFO amount | – | – | – | s2 |
 | M4 | `turn E3` | destination | – | – | – | the page to modulate s2 |
@@ -3064,7 +3152,7 @@ Parameters:
 
 Related: [auxiliary.overview], [auxiliary.external-audio], [auxiliary.tape], [auxiliary.fx-sends]
 
-Sources: s1 guide:auxiliary · s2 guide:auxiliary#tape · s3 changelog:1.1.32 · s4 research:20-midi-control#35-auxiliary-tracks-916 · s5 guide:auxiliary#external-audio
+Sources: s1 guide:auxiliary · s2 guide:auxiliary#tape · s3 changelog:1.1.32 · s4 research:20-midi-control#35-auxiliary-tracks-916 · s5 research:59-screen-profiling#3-midi-reach-on-1133-verified-on-screen · s6 research:59-screen-profiling#213-auxiliary-tracks · s7 guide:auxiliary#external-audio
 
 ## Effects
 
@@ -3088,6 +3176,7 @@ Facts:
 - Two slots hold them, the FX tracks FX I and FX II, which are auxiliary tracks `T7` and `T8`; either slot can take any of the six. [#slots] [s1]
 - The loaded effect's four parameters sit on the FX track's `M1` page. [#m1] [s2]
 - No MIDI CC is known that changes the effect type; choose it on the unit. [#no-type-cc] (community) [s3]
+- The effect list on the unit spells them chorus, delay, dist, lofi, phaser and reverb. [#list-names] (verified 1.1.33) [s4]
 
 Procedures:
 - Load a different effect on FX I or FX II [#change] [s1]
@@ -3100,10 +3189,10 @@ Procedures:
 
 Related: [fx.chorus], [fx.delay], [fx.distortion], [fx.lofi], [fx.phaser], [fx.reverb], [auxiliary.fx-sends], [mix.levels-pans-sends]
 
-Sources: s1 guide:fx#fx · s2 guide:auxiliary#fx-i-and-fx-ii · s3 research:20-midi-control#35-auxiliary-tracks-916
+Sources: s1 guide:fx#fx · s2 guide:auxiliary#fx-i-and-fx-ii · s3 research:20-midi-control#35-auxiliary-tracks-916 · s4 research:59-screen-profiling#213-auxiliary-tracks
 
 ### Chorus effect [fx.chorus]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: chorus, chorus fx, ensemble, widening
 Where: modes auxiliary; screens M1
 
@@ -3117,6 +3206,7 @@ spread across the field.
 Facts:
 - The chorus layers copies of the incoming sound whose pitch and timing drift a little against the original, which thickens and widens it; pushed far, the drift becomes an obvious effect. [#what] [s1]
 - High feedback settings turn the chorus into a short delay with wobbling pitch. [#feedback-echo] [s1]
+- The chorus's columns read rate, depth, feedback and stereo, as the guide names them. [#labels] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -3129,47 +3219,49 @@ Parameters:
 
 Related: [fx.overview], [fx.phaser]
 
-Sources: s1 guide:fx#chorus
+Sources: s1 guide:fx#chorus · s2 research:59-screen-profiling#213-auxiliary-tracks
 
 ### Delay effect [fx.delay]
-current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15 · verified on 1.1.33
 Also called: delay, echo, delay fx, delay time, repeats
 Where: modes auxiliary; screens M1
 
-An echo for FX I or FX II; M1 sets the repeat spacing in eight steps, fine-tunes it, and sets the feedback and the amount of dry signal.
+An echo for FX I or FX II; M1 sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.
 
 Set the rough echo distance with size, then fine-tune it and choose how long the echoes keep coming
-back. For a classic send, keep dry at 0 so the FX track returns only the echoes. The 1.1.25 fix for
-jittery external clocks suggests the spacing follows the tempo, though the guide does not say so.
+back. For a classic send, keep dry at 0 so the FX track returns only the echoes. TE's guide calls the
+middle controls amount and fine and describes size as eight named steps from micro to insane; on
+1.1.33 the screen reads fine and feedback, and size shows note values, so the spacing follows the
+tempo.
 
 Facts:
 - The delay plays back what it receives as a series of echoes. [#what] [s1]
-- Size (`E1`) picks the spacing of the repeats in eight steps, labelled from micro to insane. [#size] [s1]
-- The guide names `E2` amount and `E3` fine, but describes `E2` as fine-tuning the spacing and `E3` as setting the feedback, so the screen may show the names the other way round; not yet checked on a unit. [#labels] (conflicting) [s1]
+- Size (`E1`) sets the spacing of the repeats and reads as a note value, such as 1/8 dotted. [#size] (verified 1.1.33) [s2]
+- The delay's columns read size, fine, feedback and dry — `E2` fine-tunes the spacing and `E3` sets the feedback. [#labels] (verified 1.1.33) [s2]
 - Dry (`E4`) sets the untreated signal against the echoes; at 0 only the repeats are heard. [#dry] [s1]
-- Since OS 1.1.25 the delay stays steady when the tempo of an external clock wobbles. [#jitter] (since 1.1.25) [s2]
+- Since OS 1.1.25 the delay stays steady when the tempo of an external clock wobbles. [#jitter] (since 1.1.25) [s3]
 
 Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| M1 | `turn E1` | size | 8 steps, micro … insane | – | 12 | coarse spacing between repeats s1 |
-| M1 | `turn E2` | amount | – | – | 13 | described as fine-tuning the spacing s1 |
-| M1 | `turn E3` | fine | – | – | 14 | described as feedback, the number of repeats s1 |
+| M1 | `turn E1` | size | note values, e.g. 1/8 dotted | – | 12 | coarse spacing between repeats (verified 1.1.33) s2 |
+| M1 | `turn E2` | fine | – | – | 13 | fine-tunes the spacing; the guide calls it amount (verified 1.1.33) s2 |
+| M1 | `turn E3` | feedback | – | – | 14 | how many repeats come back; the guide calls it fine (verified 1.1.33) s2 |
 | M1 | `turn E4` | dry | – | – | 15 | level of the untreated signal s1 |
 
 Related: [fx.overview], [fx.reverb]
 
-Sources: s1 guide:fx#delay · s2 changelog:1.1.25
+Sources: s1 guide:fx#delay · s2 research:59-screen-profiling#213-auxiliary-tracks · s3 changelog:1.1.25
 
 ### Distortion effect [fx.distortion]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: distortion, overdrive, drive, clipping, dirt
 Where: modes auxiliary; screens M1
 
 A clipping distortion for FX I or FX II; M1 sets the drive into it, the clipping amount and low and high cuts that shape what enters it.
 
-Drive sets how hot the signal hits the distortion, amount how hard it is clipped. Because the two
+Drive sets how hot the signal hits the distortion, clip how hard it is clipped. Because the two
 cuts sit in front of the clipping, trimming the lows keeps bass from turning to mud, and trimming
 the highs gives a darker, smoother crunch. As a send, it lets you add dirt to a drum bus or a lead
 by degrees while the dry track stays clean.
@@ -3177,19 +3269,20 @@ by degrees while the dry track stays clean.
 Facts:
 - The distortion clips the signal it receives, adding grit and harmonics. [#what] [s1]
 - Low cut (`E3`) and high cut (`E4`) act on the input, trimming bass and treble before the clipping rather than after it. [#pre-filters] [s1]
+- The unit lists the effect as dist, and its columns read drive, clip, lo cut and hi cut — the guide's amount is labelled clip. [#labels] (verified 1.1.33) [s2]
 
 Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | M1 | `turn E1` | drive | – | – | 12 | level going into the distortion s1 |
-| M1 | `turn E2` | amount | – | – | 13 | how hard the signal is clipped s1 |
+| M1 | `turn E2` | clip | – | – | 13 | how hard the signal is clipped; the guide calls it amount (verified 1.1.33) s2 |
 | M1 | `turn E3` | low cut | – | – | 14 | how much bass reaches the distortion s1 |
 | M1 | `turn E4` | high cut | – | – | 15 | how much treble reaches the distortion s1 |
 
 Related: [fx.overview], [fx.lofi], [mix.saturator]
 
-Sources: s1 guide:fx#distorsion
+Sources: s1 guide:fx#distorsion · s2 research:59-screen-profiling#213-auxiliary-tracks
 
 ### Lofi effect [fx.lofi]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3221,7 +3314,7 @@ Related: [fx.overview], [fx.distortion]
 Sources: s1 guide:fx#lofi
 
 ### Phaser effect [fx.phaser]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: phaser, phase shifter, phasing, sweep
 Where: modes auxiliary; screens M1
 
@@ -3235,6 +3328,7 @@ Facts:
 - The phaser blends filtered copies of the sound with the dry signal; where the two are out of phase they cancel, which carves moving notches into the spectrum. [#what] [s1]
 - The phaser is a 12-pole design with 12 notches. [#poles] [s1]
 - More feedback (`E4`) sends more of the phaser's output back into it, making the sweep ring and sing. [#feedback] [s1]
+- The phaser's columns read frequency, depth, rate and feedback, as the guide names them. [#labels] (verified 1.1.33) [s2]
 
 Parameters:
 
@@ -3247,10 +3341,10 @@ Parameters:
 
 Related: [fx.overview], [fx.chorus]
 
-Sources: s1 guide:fx#phaser
+Sources: s1 guide:fx#phaser · s2 research:59-screen-profiling#213-auxiliary-tracks
 
 ### Reverb effect [fx.reverb]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: reverb, reverberation, room, hall, space
 Where: modes auxiliary; screens M1
 
@@ -3258,13 +3352,13 @@ A reverb for FX I or FX II, from a small room to a cathedral; M1 sets size, modu
 
 The reverb is the classic send: one instance on an FX track, with each track sending as much as it
 needs. Size sets the space, modulation moves the tail and the tone control darkens or brightens it.
-Because TE's names for `E3` and `E4` do not match their descriptions, check the screen labels before
-quoting a name.
+TE's guide names `E3` and `E4` rate and feedback; the screen calls them tone and dry, which matches
+what they do.
 
 Facts:
 - The reverb puts a sound in a space, anything from a small room to a cathedral. Use it to make a part stand out or to smooth the whole mix. [#what] [s1]
 - Modulation (`E2`) adds a slowly swelling, chorus-like movement to the reverb. [#modulation] [s1]
-- The guide names `E3` rate and `E4` feedback, but describes them as a tone filter and as the dry/wet balance, so the screen may use other names; not yet checked on a unit. [#labels] (conflicting) [s1]
+- The reverb's columns read size, mod, tone and dry, so `E3` is the tone control and `E4` the dry level. [#labels] (verified 1.1.33) [s2]
 - The dry/wet control (`E4`) moves smoothly between send-style use, where only the reverb returns, and insert-style use, where dry signal passes through as well. [#send-insert] [s1]
 
 Parameters:
@@ -3273,12 +3367,12 @@ Parameters:
 | --- | --- | --- | --- | --- | --- | --- |
 | M1 | `turn E1` | size | – | – | 12 | room size, small room to cathedral s1 |
 | M1 | `turn E2` | modulation | – | – | 13 | chorus-like swell s1 |
-| M1 | `turn E3` | rate | – | – | 14 | described as tone, filtering highs or lows s1 |
-| M1 | `turn E4` | feedback | – | – | 15 | described as the dry/wet balance s1 |
+| M1 | `turn E3` | tone | – | – | 14 | darkens or brightens the reverb; the guide calls it rate (verified 1.1.33) s2 |
+| M1 | `turn E4` | dry | – | – | 15 | dry signal against the reverb; the guide calls it feedback (verified 1.1.33) s2 |
 
 Related: [fx.overview], [fx.delay]
 
-Sources: s1 guide:fx#reverb
+Sources: s1 guide:fx#reverb · s2 research:59-screen-profiling#213-auxiliary-tracks
 
 ## Arrange
 
@@ -3301,9 +3395,10 @@ Facts:
 - Pressing `arrange` while already in arrange mode flips between the instrument tracks and the auxiliary tracks; both kinds have patterns. [#toggle] [s2]
 - A track key picks the track to work on; instrument tracks light white and auxiliary tracks red, as in the other modes. [#select] [s2]
 - The step keys show the selected track's sequence in its current pattern. [#steps] [s2]
-- `turn E4` moves through the patterns the selected track already has. [#browse] [s3]
-- `click E4` mutes the selected track. [#mute] [s3]
-- In arrange, `M1`…`M4` open no pages; they add, copy, paste and remove patterns, and with `shift` held they manage scenes. [#keys] [s4]
+- `turn E4` scrolls through the patterns of the selected track, drawn as a column of numbered blocks, so the current one sits on the colour band. [#browse] (verified 1.1.33) [s3]
+- `click E4` mutes the selected track. [#mute] [s4]
+- In arrange, `M1`…`M4` open no pages; the footer names them new, copy, paste and clear (delete once the track has more than one pattern), and with `shift` held they manage scenes. [#keys] (verified 1.1.33) [s3]
+- The arrange page shows eight track columns crossed by a band of track colours; the selected track's segment is bright and dotted with its notes, its number above, and the current scene number sits boxed at the bottom. On the auxiliary side a small icon appears at the top left. [#screen] (verified 1.1.33) [s3]
 
 Procedures:
 - Open arrange mode [#enter] [s1]
@@ -3311,14 +3406,14 @@ Procedures:
 - Switch arrange between instrument and auxiliary tracks [#track-kind] [s2]
   Needs: arrange mode
   1. `arrange`
-- Play another existing pattern on a track [#change-pattern] [s3]
+- Play another existing pattern on a track [#change-pattern] [s4]
   Needs: arrange mode
   1. `Tn` — select the track
   2. `turn E4` — step to the pattern
 
 Related: [arrange.patterns], [arrange.sound-link], [arrange.scenes], [arrange.song-mode], [basics.patterns-scenes-songs], [mix.mute-solo]
 
-Sources: s1 guide:arrange#arrange · s2 guide:arrange#switching-tracks-and-patterns · s3 guide:arrange#sound-link · s4 guide:arrange#edit-controls
+Sources: s1 guide:arrange#arrange · s2 guide:arrange#switching-tracks-and-patterns · s3 research:59-screen-profiling#29-arrange-and-song-mode · s4 guide:arrange#sound-link
 
 ### New, copy, paste and remove patterns [arrange.patterns]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.15, 1.1.25 · guide v1.1.15
@@ -3338,7 +3433,8 @@ Facts:
 - `M2` copies the selected pattern together with its engine and all other settings. [#copy] [s1]
 - `M3` pastes the copy. Pasted onto another track, it brings the complete instrument, engine and parameters included. [#paste] [s1]
 - `M4` removes a pattern from the selected track. [#remove] [s1]
-- TE's screen art for arrange labels the four keys clear, copy, paste and new from left to right, the reverse of the guide text for `M1` and `M4`; not yet checked on a unit. [#labels] (conflicting) [s3]
+- On the device the arrange footer reads new, copy, paste and then clear or delete from left to right, so `M1` adds a pattern as the guide says; TE's screen art, which shows the order reversed, is wrong. [#labels] (verified 1.1.33) [s3]
+- `M4` is labelled clear while the track has only one pattern and delete once it has more. [#m4-label] (verified 1.1.33) [s3]
 - Since OS 1.1.25, a newly added pattern takes over the player type currently in use. [#player] (since 1.1.25) [s4]
 
 Procedures:
@@ -3354,11 +3450,11 @@ Procedures:
   3. `M3` — paste
 - Remove a pattern from a track [#remove] [s1]
   Needs: arrange mode; the pattern is selected
-  1. `M4` — check the label on screen first
+  1. `M4` — labelled clear while the track has one pattern, delete once it has more
 
 Related: [arrange.overview], [arrange.sound-link], [arrange.scenes], [players.overview], [sequencer.overview]
 
-Sources: s1 guide:arrange#edit-controls · s2 changelog:1.1.15 · s3 research:50-hardware-ui#33-page-catalogue · s4 changelog:1.1.25
+Sources: s1 guide:arrange#edit-controls · s2 changelog:1.1.15 · s3 research:59-screen-profiling#29-arrange-and-song-mode · s4 changelog:1.1.25
 
 ### Sound link [arrange.sound-link]
 current · OS ≥ 1.1.0 · changed in 1.1.3 · guide v1.1.15
@@ -3414,6 +3510,7 @@ Facts:
 - `shift + M2` copies a scene and `shift + M3` pastes it into another. [#copy-paste] (since 1.0.45) [s1]
 - Over MIDI, on any channel, CC85 selects a scene at once and CC83 and CC84 step to the previous and the next scene. [#midi] [s3]
 - CC85 counts from zero, so value 0 selects scene 1 and value 98 scene 99. [#midi-zero] (community-verified) [s4]
+- With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions. [#footer] (verified 1.1.33) [s5]
 
 Procedures:
 - Select scene 1–9 [#select] [s1]
@@ -3430,7 +3527,7 @@ Procedures:
 
 Related: [arrange.scene-queue], [arrange.song-mode], [arrange.patterns], [mix.overview], [project.settings]
 
-Sources: s1 guide:arrange#scenes · s2 research:10-xy-format#32-projectsettings-0x00000x0094 · s3 guide:midi-references · s4 research:20-midi-control#31-global-ccs
+Sources: s1 guide:arrange#scenes · s2 research:10-xy-format#32-projectsettings-0x00000x0094 · s3 guide:midi-references · s4 research:20-midi-control#31-global-ccs · s5 research:59-screen-profiling#29-arrange-and-song-mode
 
 ### Queued scene switching [arrange.scene-queue]
 current · OS ≥ 1.1.0 · guide v1.1.15
@@ -3471,7 +3568,8 @@ Song mode chains scenes into a song order of up to 96 slots — dialled in with 
 
 Song mode turns scenes into a finished structure — intro, verse, chorus — each scene playing for its
 own length before the next. A cursor edits the list, and removing a scene from the song never
-deletes it. Whether loop off is the stop-at-end option of 1.0.45 is not confirmed on a unit.
+deletes it. Whether loop off is the stop-at-end option of 1.0.45 is not confirmed on a unit, nor how
+the 32-slot grid shows an order longer than 32.
 
 Facts:
 - In arrange mode, `shift + arrange` opens song mode. [#enter] [s1]
@@ -3482,6 +3580,8 @@ Facts:
 - `shift + M4` takes the scene at the cursor out of the song; the scene itself stays in the project. [#delete] [s1]
 - `shift + M1` empties the whole song order without deleting any scene. [#clear] [s1]
 - OS 1.0.45 added the option of stopping playback when the song reaches its end. [#stop-at-end] (since 1.0.45) [s3]
+- The song page is headed song 1 with a loop icon and shows a grid of 32 slots, eight across in four rows marked 1, 9, 17 and 25; scenes appear as numbered circles, a white line marks where the next scene goes, and a ring walks along the order during playback. [#screen] (verified 1.1.33) [s4]
+- Holding `shift` lights the footer with clear all, ←, → and delete over `M1`…`M4`, the song editing keys. [#footer] (verified 1.1.33) [s4]
 
 Procedures:
 - Build a song from scenes [#build] [s1]
@@ -3505,7 +3605,7 @@ Parameters:
 
 Related: [arrange.songs], [arrange.scenes], [arrange.scene-queue]
 
-Sources: s1 guide:arrange#song-mode · s2 changelog:1.1.0 · s3 changelog:1.0.45
+Sources: s1 guide:arrange#song-mode · s2 changelog:1.1.0 · s3 changelog:1.0.45 · s4 research:59-screen-profiling#29-arrange-and-song-mode
 
 ### Multiple songs and cueing [arrange.songs]
 current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15
@@ -3591,7 +3691,10 @@ Facts:
 - `M1` in mix mode is the page for levels, pans and sends; a track key chooses which track the encoders adjust. [#page] [s1]
 - Over MIDI, CC7 sets a track's level and CC10 its pan, each on the track's own channel (1–16). [#midi] [s2]
 - On an instrument track's channel, CC38 and CC39 set its FX I and FX II sends — presumably the same values this page shows. [#midi-sends] (community) [s3]
-- Instrument tracks repeat these sends on their `M3` shift layer (FX I on `E3`, FX II on `E4`), but TE's drawing of that page stacks FX II above FX I; check the screen labels. [#track-send-page] (conflicting) [s4]
+- Instrument tracks repeat these sends on their `M3` shift layer, whose rows run aux out, tape, FX I, FX II from the top — FX I on `E3`, FX II on `E4`. TE's drawing of that page puts FX II above FX I; the device does not. [#track-send-page] (verified 1.1.33) [s4]
+- The page draws eight columns, one per track, each with its number, a level line and a pan dot along the bottom; CC7 and CC10 sent over MIDI move them as they arrive. [#screen] (verified 1.1.33) [s5]
+- Turning `E1` or `E2` briefly swaps the selected track's column for two boxed labels, I and II, each with a dark bar rising to its send level; after about a second the column comes back. [#send-display] (verified 1.1.33) [s5]
+- Sending CC38 changes a track's FX I send without calling up that I and II display. [#cc38-quiet] (verified 1.1.33) [s5]
 
 Procedures:
 - Set a track's level [#set-level] [s1]
@@ -3615,7 +3718,7 @@ Parameters:
 
 Related: [mix.overview], [mix.mute-solo], [fx.overview], [auxiliary.fx-sends], [instrument.track-sends]
 
-Sources: s1 guide:mix#levels-pans-and-sends · s2 guide:midi-references · s3 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s4 research:50-hardware-ui#33-page-catalogue
+Sources: s1 guide:mix#levels-pans-and-sends · s2 guide:midi-references · s3 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s4 research:59-screen-profiling#23-filter-instrument-m3 · s5 research:59-screen-profiling#210-mixer
 
 ### Mute and solo [mix.mute-solo]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3668,7 +3771,11 @@ Facts:
 - `E1`, `E2` and `E3` boost or cut the low, mid and high frequencies. [#bands] [s1]
 - `E4` fades between a flat response and the band settings: low values leave the mix neutral, high values apply the boosts and cuts in full. [#blend] [s1]
 - Clicking `E1`, `E2` or `E3` resets that band; clicking `E4` resets every EQ value. [#reset] (since 1.1.15) [s1]
-- Over MIDI, CC90 controls the EQ, with the channel choosing the band — 1 low, 2 mid, 3 high, 4 blend; one community tool reports the blend channel not responding. [#midi] (community-verified) [s2]
+- Over MIDI, CC90 moves the EQ bands, the channel choosing which — 1 low, 2 mid, 3 high. [#midi] (verified 1.1.33) [s2]
+- CC90 on channel 4 changed nothing visible on the EQ page, so no MIDI control for blend is confirmed. [#midi-blend] (verified 1.1.33) [s2]
+- The EQ page pictures the three bands as groups of panels standing on an isometric grid floor, next to a slider track with an N at one end. [#screen] (verified 1.1.33) [s2]
+- Each band tilts its own group of panels, lying flat at the minimum and upright at the maximum; in a new project all three bands sat at the middle value, 64. [#bands-drawn] (verified 1.1.33) [s2]
+- Turning `E4` slides a knob along that track and reshapes the whole scene; as it travels, the low and high panels flatten and the mid panels stand up. [#blend-drawn] (verified 1.1.33) [s2]
 
 Procedures:
 - Open the master EQ [#open] [s1]
@@ -3689,7 +3796,7 @@ Parameters:
 
 Related: [mix.overview], [mix.saturator], [mix.master]
 
-Sources: s1 guide:mix#eq · s2 research:20-midi-control#31-global-ccs
+Sources: s1 guide:mix#eq · s2 research:59-screen-profiling#210-mixer
 
 ### Master saturator [mix.saturator]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3707,6 +3814,7 @@ Facts:
 - Clip (`E2`) flattens the loudest peaks, reining in the dynamics. [#clip] [s1]
 - Mix (`E4`) sets how much of the saturated signal you hear in the master. [#mix] [s1]
 - No MIDI CC is known for the master saturator. [#no-cc] (community) [s2]
+- The saturator page shows four vertical tick ladders — gain, clip, tone and mix from left to right — each topped by a cap in its encoder's style. [#screen] (verified 1.1.33) [s3]
 
 Procedures:
 - Open the master saturator [#open] [s1]
@@ -3723,7 +3831,7 @@ Parameters:
 
 Related: [mix.overview], [mix.eq], [mix.master], [fx.distortion]
 
-Sources: s1 guide:mix#saturator · s2 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+Sources: s1 guide:mix#saturator · s2 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s3 research:59-screen-profiling#210-mixer
 
 ### Master groups, compressor and output [mix.master]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -3741,6 +3849,7 @@ Facts:
 - `E3` compresses the master bus. Light settings even out loud and quiet moments; heavy settings squash the mix into a denser, harder-hitting sound. [#compressor] [s1]
 - `E4` raises the master level on its way into the output limiter. [#limiter] [s1]
 - No MIDI CC is known for the group levels or the compressor. [#no-cc] (community) [s2]
+- The master page shows the percussion and melodic levels as large numbers, a tall bar in the middle that `E3` shortens, and a VU meter from −20 to +3 above the word master. [#screen] (verified 1.1.33) [s3]
 
 Procedures:
 - Open the master page [#open] [s1]
@@ -3757,7 +3866,7 @@ Parameters:
 
 Related: [mix.overview], [mix.saturator], [mix.eq]
 
-Sources: s1 guide:mix#master · s2 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+Sources: s1 guide:mix#master · s2 research:20-midi-control#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines · s3 research:59-screen-profiling#210-mixer
 
 ## Project
 
@@ -4003,7 +4112,7 @@ Sources: s1 guide:project#project-settings · s2 research:20-midi-control#22-rec
 Tempo, tap tempo, grooves, swing and the metronome.
 
 ### Tempo, tap tempo and metronome [tempo.tempo-screen]
-current · OS ≥ 1.0.9 · guide v1.1.15
+current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: bpm, tempo, tap tempo, metronome, click, speed, change tempo
 Where: screens tempo
 
@@ -4014,30 +4123,34 @@ groove settings on E2 and E3 are explained under grooves.
 
 Facts:
 - `tempo` opens the tempo screen from any screen. [#open] [s1]
-- Tapping `tempo` repeatedly in time with the music sets the tempo. [#tap] [s1]
-- `turn E4` sets the metronome volume and `click E4` switches the metronome on or off. [#metronome] [s2]
-- Over MIDI, CC80 on any channel sets the tempo; on OS 1.1.33 the result is twice the value in BPM, held within 40–220, so only even tempos can be sent. [#cc80] (verified 1.1.33) [s3]
-- A new empty project on the owner's unit ran at 120 BPM. [#new-project] (verified 1.1.33) [s3]
+- Tapping `tempo` repeatedly in time with the music sets the tempo. [#tap] (verified 1.1.33) [s2]
+- `turn E4` sets the metronome volume and `click E4` switches the metronome on or off. [#metronome] [s3]
+- Over MIDI, CC80 on any channel sets the tempo; on OS 1.1.33 the result is twice the value in BPM, held within 40–220, so only even tempos can be sent. [#cc80] (verified 1.1.33) [s4]
+- A new empty project on the owner's unit ran at 120 BPM. [#new-project] (verified 1.1.33) [s4]
+- The tempo page has a light background, the BPM as a large number on the left and a metronome in the middle carrying the groove type's two-letter abbreviation. [#screen] (verified 1.1.33) [s2]
+- The metronome's weight slides down its arm as the tempo rises, from the top at 40 BPM to the bottom at 220. [#weight] (verified 1.1.33) [s2]
+- The speaker icon at the top right loses its sound waves as `E4` turns the metronome down. [#speaker] (verified 1.1.33) [s2]
+- While the sequencer plays, the pendulum swings and leaves motion trails. [#pendulum] (verified 1.1.33) [s2]
 
 Procedures:
 - Set the tempo by tapping [#tap] [s1]
   1. `tempo → tempo → tempo → tempo` — tap in time with the beat
-- Switch the metronome on or off [#metronome] [s2]
+- Switch the metronome on or off [#metronome] [s3]
   1. `tempo → click E4`
 
 Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| tempo | `turn E1` | tempo | – | – | 80 | song tempo in BPM s2 |
-| tempo | `turn E2` | groove type | – | – | – | the style of swing (see grooves) s2 |
-| tempo | `turn E3` | groove amount | – | – | – | right of centre adds swing, left of centre adds shuffle s2 |
-| tempo | `turn E4` | metronome level | – | – | – | s2 |
-| tempo | `click E4` | metronome on/off | – | – | – | s2 |
+| tempo | `turn E1` | tempo | – | – | 80 | song tempo in BPM s3 |
+| tempo | `turn E2` | groove type | – | – | – | the style of swing (see grooves) s3 |
+| tempo | `turn E3` | groove amount | – | – | – | right of centre adds swing, left of centre adds shuffle s3 |
+| tempo | `turn E4` | metronome level | – | – | – | s3 |
+| tempo | `click E4` | metronome on/off | – | – | – | s3 |
 
 Related: [tempo.grooves], [com.midi-settings]
 
-Sources: s1 guide:tempo#project · s2 guide:tempo#edit-tempo · s3 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
+Sources: s1 guide:tempo#project · s2 research:59-screen-profiling#211-tempo · s3 guide:tempo#edit-tempo · s4 research:90-device-probe#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
 
 ### Grooves, swing and shuffle [tempo.grooves]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -4053,13 +4166,14 @@ Facts:
 - A groove changes the feel of the sequencer by moving the timing of notes and changing their velocity. [#what] [s1]
 - Grooves also vary timing and velocity slightly at random, so the swing sounds less mechanical. [#human] [s1]
 - On the tempo screen, `turn E3` clockwise past the centre for swing or anticlockwise for shuffle; the two push notes in opposite directions. [#amount] [s2]
-- `turn E2` on the tempo screen picks the groove type, in this order: shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over and prophetic. [#types] (community-verified) [s3]
+- `turn E2` on the tempo screen picks the groove type, in this order: shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over and prophetic. The metronome shows each as two letters — SH, HS, DA, BO, WO, GA, AC, IN, DF, RO, PR. [#types] (verified 1.1.33) [s3]
 - Shuffle is the everyday swing and half shuffle a lighter version of it; accents emphasises the important beats. [#plain-types] [s1]
 - Bombora breaks up the beats on 2 and 4, and wobbly deliberately loosens the timing for a funkier, messier feel. [#wild-types] [s1]
 - TE describes gaussian and island nod only in jokes, so judge them by ear. [#joke-types] [s1]
-- The online guide leaves out four types. Danish relaxes the beat, disfunk turns funky one way and groovy the other, and roll over gives a slow, lazy hip-hop feel. TE gives prophetic no description at all. [#extra-types] [s3]
-- `bar + turn E3` sets a groove amount for the current track that replaces the tempo screen's swing value; the groove type still comes from the tempo screen. [#per-track] [s4]
-- Over MIDI, CC81 on any channel sets the groove; community tables treat 63 as no groove. [#cc81] (community) [s5]
+- The online guide leaves out four types. Danish relaxes the beat, disfunk turns funky one way and groovy the other, and roll over gives a slow, lazy hip-hop feel. TE gives prophetic no description at all. [#extra-types] [s4]
+- `bar + turn E3` sets a groove amount for the current track that replaces the tempo screen's swing value; the groove type still comes from the tempo screen. [#per-track] [s5]
+- Over MIDI, CC81 sets the groove amount, drawn as a slider under the metronome on the tempo page — far left at 0, centred at 64, far right at 127. [#cc81] (verified 1.1.33) [s3]
+- Community MIDI tables give 63 as the no-groove value, one below the slider's centre at 64; which of the two is exactly neutral is not confirmed. [#cc81-neutral] (community) [s6]
 
 Procedures:
 - Add swing to the whole project [#swing] [s2]
@@ -4069,7 +4183,7 @@ Procedures:
 
 Related: [tempo.tempo-screen], [project.settings]
 
-Sources: s1 guide:tempo#what-are-grooves · s2 guide:tempo#edit-tempo · s3 research:40-official-docs#52-older-gaps-and-contradictions-true-even-for-1115 · s4 guide:sequencer#extend-with-bar · s5 research:20-midi-control#31-global-ccs
+Sources: s1 guide:tempo#what-are-grooves · s2 guide:tempo#edit-tempo · s3 research:59-screen-profiling#211-tempo · s4 research:40-official-docs#52-older-gaps-and-contradictions-true-even-for-1115 · s5 guide:sequencer#extend-with-bar · s6 research:20-midi-control#31-global-ccs
 
 ## Connectivity
 

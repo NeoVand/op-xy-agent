@@ -32,9 +32,20 @@ facts:
     source: docs/research/20-midi-control.md#21-the-16-tracks-and-their-default-channels
     confidence: derived
   - id: midi-ccs
-    text: Over MIDI, CC12–15 on the track's channel reach the four `M1` encoders, whichever engine is loaded.
-    source: docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4
-    confidence: community-verified
+    text: Over MIDI, CC12–15 on the track's channel move the four `M1` parameters of every synth engine; the drum sampler, synth sampler and multisampler pages ignore them.
+    source: docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: top-bar
+    text: A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis — above a picture that, on most engines, never stops moving.
+    source: docs/research/59-screen-profiling.md#21-general
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: browser
+    text: On OS 1.1.33, `shift + M1` brings up a browser headed with the track number and the word preset, with the engine list in the middle and the highlighted engine's presets on the right.
+    source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: choose
     goal: Change the engine of the selected instrument track

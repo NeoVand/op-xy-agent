@@ -13,7 +13,7 @@ firmware:
   min: '1.0.9'
   changed_in: ['1.0.38']
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: what
     text: Random modulates its target with values from a random generator.
@@ -25,6 +25,11 @@ facts:
     text: Since OS 1.0.38, a random LFO on a free destination is not reset by new notes, and a reset snaps it to the correct value.
     source: https://teenage.engineering/downloads/op-xy#1.0.38
     firmware_min: '1.0.38'
+  - id: screen
+    text: Random's page looks like the value LFO's, plus an animated random step wave under speed and an envelope-ramp card under the destination.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M4
     encoder: E1

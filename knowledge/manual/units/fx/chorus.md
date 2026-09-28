@@ -13,7 +13,7 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: what
     text: The chorus layers copies of the incoming sound whose pitch and timing drift a little against the original, which thickens and widens it; pushed far, the drift becomes an obvious effect.
@@ -21,6 +21,11 @@ facts:
   - id: feedback-echo
     text: High feedback settings turn the chorus into a short delay with wobbling pitch.
     source: https://teenage.engineering/guides/op-xy/fx#chorus
+  - id: labels
+    text: The chorus's columns read rate, depth, feedback and stereo, as the guide names them.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

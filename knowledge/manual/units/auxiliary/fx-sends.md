@@ -39,6 +39,21 @@ facts:
     text: The guide's FX routing card repeats a CV sentence and its filter card names the tape track — copy slips.
     source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
     confidence: derived
+  - id: screen
+    text: The FX I page is headed with a boxed FX I and the effect's name, then four columns with labels above and values below, each a bar split by a marker at the value's height.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: type-list
+    text: On FX I, `shift + T7` lists the effects — chorus, delay, dist, lofi, phaser and reverb.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: midi
+    text: Over MIDI, CC12–15 on channel 15 move the four columns of FX I.
+    source: docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen
+    confidence: verified
+    verified_on: '1.1.33'
 related: [fx.overview, auxiliary.routing-filter-lfo, mix.levels-pans-sends]
 ---
 

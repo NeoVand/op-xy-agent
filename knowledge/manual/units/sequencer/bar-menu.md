@@ -23,15 +23,16 @@ firmware:
   min: '1.0.9'
   changed_in: ['1.1.15', '1.1.25']
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: held
     text: The bar page stays on screen only while `bar` is held; `shift + bar` pins it until you press `bar` again.
     source: https://teenage.engineering/guides/op-xy/sequencer#extend-with-bar
   - id: quantise-default
-    text: In a new project quantisation reads 100, according to decoded project files.
-    source: docs/research/10-xy-format.md#34-patternstruct-base-clones-walking
-    confidence: community-verified
+    text: In a new project the card reads quant 100, length 50 and track scale 1, with groove shown as a dash and shape as a small step symbol.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
   - id: odd-grid
     text: Since OS 1.1.25, tracks with an odd track scale (3, 5, 6 or 7) quantise to a grid made for that scale.
     source: https://teenage.engineering/downloads/op-xy#1.1.25
@@ -43,6 +44,21 @@ facts:
     text: Decoded project files store length, track scale, quantisation, groove and smoothing in each pattern, so a track's patterns can differ.
     source: docs/research/10-xy-format.md#34-patternstruct-base-clones-walking
     confidence: community-verified
+  - id: card
+    text: Holding `bar` lays a white card over the dimmed page — bar numbers 1 to 4 along the top with the current one inverted, the track scale beside them, then rows for quant, length, groove and shape, each marked with its encoder's dot. The card fades when `bar` is let go.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: roll
+    text: A faint mini piano roll on the right of the card shows a dash for each note in the pattern.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: clear-labels
+    text: The card's footer names the clearing keys — clr notes on `M1`, clr params on `M2`, clr all on `M4`.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: adjust
     goal: Change a pattern-wide setting

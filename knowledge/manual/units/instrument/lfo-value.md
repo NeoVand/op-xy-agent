@@ -13,7 +13,7 @@ firmware:
   min: '1.0.9'
   changed_in: ['1.1.15']
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: what
     text: Value drives its target with a low-frequency oscillator that either runs continuously or is triggered.
@@ -29,6 +29,16 @@ facts:
     text: Before OS 1.1.15, the slowest free-running speed stopped the value LFO altogether.
     source: https://teenage.engineering/downloads/op-xy#1.1.15
     firmware_min: '1.1.15'
+  - id: screen
+    text: The value page shows speed, amount on a tick ladder, a scrolling column of destination cards and a large card naming the target parameter (attack, cutoff, res, key …) over an animated knob.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: free-cards
+    text: In the destination column each page's card, such as syn (the engine), env or filter, is followed by a twin labelled free with the same icon.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: sweep
     goal: Sweep a track's filter cutoff in time with the tempo

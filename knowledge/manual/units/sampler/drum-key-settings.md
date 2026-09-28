@@ -41,6 +41,21 @@ facts:
     text: The guide's texts for pan and sample fade describe tune and loop crossfade — copied from the synth sampler by mistake.
     source: docs/research/40-official-docs.md#53-te-errata-we-keep-verbatim-and-our-manual-must-not-copy
     confidence: derived
+  - id: screen
+    text: The page shows the selected key's waveform with the skipped parts tinted blue and start and end markers; tune reads as a note symbol and a signed value such as −16.10, moving in steps of 0.1, and play mode as one of four icons — an arrow to a bar, a plain arrow, an arrow with G, or a loop.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: shift-screen
+    text: With `shift` held the page shows direction, pan as a bar from L to R, fade as a dark ramp drawn over the wave, and gain, which scales the drawn wave.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: no-cc
+    text: CC12–15 on the track's channel move nothing on this page.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

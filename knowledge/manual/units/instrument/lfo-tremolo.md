@@ -13,7 +13,7 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: what
     text: Tremolo varies the track's pitch and volume directly, so it has no destination or parameter to choose.
@@ -22,6 +22,21 @@ facts:
     text: "`shift + turn E2` sets the tremolo's waveform shape. TE's caption for that control repeats the random LFO's envelope text; its title and diagram point to shape."
     source: https://teenage.engineering/guides/op-xy/instrument#lfo
     confidence: derived
+  - id: screen
+    text: The tremolo page labels its fields rate, vib, vol and env, with a card labelled shape under env that shows the waveform (sine, square …); vib and vol are pointers on tick ladders.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: rate-drawn
+    text: While synced, rate shows a note-value icon with a multiplier (8, 6, 4, 2 …); turned further clockwise it becomes a clock dial whose hand turns, and the rate runs free.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: env-drawn
+    text: Env is drawn as a line that rises at 0, lies flat at 64 and falls at 127.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M4
     encoder: E1

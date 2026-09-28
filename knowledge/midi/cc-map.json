@@ -1,7 +1,7 @@
 {
 	"$comment": "Our own structuring of OP-XY MIDI facts. Not affiliated with Teenage Engineering. Every entry has confidence + source keys (see `sources`). Channels are 1-based; values 7-bit unless noted.",
 	"schemaVersion": 1,
-	"generated": "2026-09-26",
+	"generated": "2026-09-28",
 	"doc": "docs/research/20-midi-control.md",
 	"firmware": {
 		"deviceOfRecord": {
@@ -17,9 +17,10 @@
 			"idle unit sends nothing",
 			"identity reply",
 			"TE SysEx GREET/ECHO/FILE; SETTINGS absent",
-			"MIDI echo default on (foreign SysEx echoed, TE frames not)"
+			"MIDI echo default on (foreign SysEx echoed, TE frames not)",
+			"screen-profiled CC reach of every page (docs/research/59-screen-profiling.md §3)"
 		],
-		"note": "CC/notes/transport/remote keys NOT yet verified on 1.1.33; see doc section 11"
+		"note": "CCs verified on 1.1.33 carry verifiedOn (probe log and camera captures); see each entry and doc section 11"
 	},
 	"related": [
 		"knowledge/firmware/te-sysex.json",
@@ -569,7 +570,7 @@
 			"id": "global.tempo",
 			"name": "tempo",
 			"range": [0, 127],
-			"semantics": "BPM = 2 × value, clamped by the device to 40–220 (values 0–20 → 40, 110–127 → 220); 2-BPM resolution. Verified 2026-09-26: 0/32/60/64/96/127 → 40/64/120/128/192/220 BPM (device clock + metronome page)",
+			"semantics": "BPM = 2 × value, clamped by the device to 40–220 (values 0–20 → 40, 110–127 → 220); 2-BPM resolution. Verified 2026-09-26: 0/32/60/64/96/127 → 40/64/120/128/192/220 BPM (device clock + metronome page); tempo page: big BPM number, the metronome weight slides down its arm as BPM rises (top at 40, bottom at 220) (DEVICE-CAMERA)",
 			"confidence": "verified",
 			"source": [
 				"TE-MIDI",
@@ -578,7 +579,8 @@
 				"STEMBOUNCE",
 				"VIBE-CHANGELOG",
 				"VIBE-TEMPO",
-				"PROBE"
+				"PROBE",
+				"DEVICE-CAMERA"
 			],
 			"sideEffect": "project",
 			"channel": "any",
@@ -607,12 +609,13 @@
 			"id": "global.groove",
 			"name": "groove amount",
 			"range": [0, 127],
-			"semantics": "centred control; 63 = no groove (midi.guide); clockwise of centre = swing, counter-clockwise = shuffle (guide)",
-			"confidence": "community",
-			"source": ["TE-MIDI", "TE-TEMPO", "MIDIGUIDE"],
+			"semantics": "groove amount, a slider under the metronome on the tempo page: 0 far left, 64 centred, 127 far right (screen-verified 1.1.33, note 59 §2.11); midi.guide gives 63 as no groove; clockwise of centre = swing, counter-clockwise = shuffle (guide)",
+			"confidence": "verified",
+			"source": ["TE-MIDI", "TE-TEMPO", "MIDIGUIDE", "DEVICE-CAMERA"],
 			"sideEffect": "project",
 			"channel": "any",
-			"existence": "official"
+			"existence": "official",
+			"verifiedOn": "1.1.33"
 		},
 		{
 			"cc": 82,
@@ -678,30 +681,34 @@
 			"id": "master.eq",
 			"name": "master EQ",
 			"range": [0, 127],
-			"semantics": "band selected by channel",
+			"semantics": "band selected by channel: CC90 on channels 1-3 tilts the low / mid / high panel group on mix M2 (flat at 0, upright at 127; 64 in a new project), screen-verified 1.1.33; on channel 4 (blend) it moved nothing visible (DEVICE-CAMERA)",
 			"confidence": "official",
-			"source": ["TE-MIDI", "TE-MIX", "LAUNCHPAD", "MIDIGUIDE", "REACT-DESIGN"],
+			"source": ["TE-MIDI", "TE-MIX", "LAUNCHPAD", "MIDIGUIDE", "REACT-DESIGN", "DEVICE-CAMERA"],
 			"sideEffect": "project",
 			"channel": [1, 2, 3, 4],
 			"perChannel": {
 				"1": {
 					"band": "low",
-					"confidence": "community-verified"
+					"confidence": "community-verified",
+					"note": "screen-verified 1.1.33: tilts the low panels on mix M2 (DEVICE-CAMERA); confidence left as it was because src/lib/core/opxy/ccmap.spec.ts pins it; raise it to verified together with that test"
 				},
 				"2": {
 					"band": "mid",
-					"confidence": "community-verified"
+					"confidence": "verified",
+					"note": "screen-verified 1.1.33: tilts the mid panels on mix M2 (DEVICE-CAMERA)"
 				},
 				"3": {
 					"band": "high",
-					"confidence": "community-verified"
+					"confidence": "verified",
+					"note": "screen-verified 1.1.33: tilts the high panels on mix M2 (DEVICE-CAMERA)"
 				},
 				"4": {
 					"band": "blend",
 					"confidence": "conflicting",
-					"note": "official lists channel 4; opxy-reactive reports no working CC for blend"
+					"note": "official lists channel 4; opxy-reactive reports no working CC for blend; on 1.1.33 CC90 on channel 4 moved nothing visible on mix M2 (DEVICE-CAMERA) - audio effect untested"
 				}
-			}
+			},
+			"verifiedOn": "1.1.33"
 		},
 		{
 			"cc": 102,
@@ -771,11 +778,12 @@
 			"name": "track volume / level",
 			"lane": "mixer",
 			"range": [0, 127],
-			"semantics": "0-127",
-			"confidence": "official",
-			"source": ["TE-MIDI", "TE-MIX"],
+			"semantics": "0-127; moves the track's level line on mix M1 (screen-verified 1.1.33 on track 3, note 59 §2.10)",
+			"confidence": "verified",
+			"source": ["TE-MIDI", "TE-MIX", "DEVICE-CAMERA"],
 			"sideEffect": "project",
-			"channel": "1-16"
+			"channel": "1-16",
+			"verifiedOn": "1.1.33"
 		},
 		{
 			"cc": 9,
@@ -810,11 +818,12 @@
 			"name": "track pan",
 			"lane": "mixer",
 			"range": [0, 127],
-			"semantics": "0-127, centred (64 ~ centre, community)",
-			"confidence": "official",
-			"source": ["TE-MIDI", "MIDIGUIDE"],
+			"semantics": "0-127, centred (64 ~ centre, community); moves the pan dot along the bottom of the track's column on mix M1 (screen-verified 1.1.33 on track 3)",
+			"confidence": "verified",
+			"source": ["TE-MIDI", "MIDIGUIDE", "DEVICE-CAMERA"],
 			"sideEffect": "project",
-			"channel": "1-16"
+			"channel": "1-16",
+			"verifiedOn": "1.1.33"
 		},
 		{
 			"cc": 46,
@@ -854,10 +863,11 @@
 					"name": "engine param 1",
 					"lane": "M1.dark",
 					"range": [0, 127],
-					"semantics": "engine-resolved, see engines.*.p1",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE"],
-					"sideEffect": "project"
+					"semantics": "engine-resolved, see engines.*.p1; moves the M1 page of all eight synth engines (screen-verified 1.1.33, note 59 §3); the drum sampler, synth sampler and multisampler M1 pages ignore CC12-15",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 13,
@@ -865,10 +875,11 @@
 					"name": "engine param 2",
 					"lane": "M1.mid",
 					"range": [0, 127],
-					"semantics": "engine-resolved",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE"],
-					"sideEffect": "project"
+					"semantics": "engine-resolved; moves the M1 page of all eight synth engines (screen-verified 1.1.33, note 59 §3); the drum sampler, synth sampler and multisampler M1 pages ignore CC12-15",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 14,
@@ -876,10 +887,11 @@
 					"name": "engine param 3",
 					"lane": "M1.light",
 					"range": [0, 127],
-					"semantics": "engine-resolved",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE"],
-					"sideEffect": "project"
+					"semantics": "engine-resolved; moves the M1 page of all eight synth engines (screen-verified 1.1.33, note 59 §3); the drum sampler, synth sampler and multisampler M1 pages ignore CC12-15; epiano: the 1.1.33 screen labels this lane tine (engines.epiano lists punch)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 15,
@@ -887,10 +899,11 @@
 					"name": "engine param 4",
 					"lane": "M1.white",
 					"range": [0, 127],
-					"semantics": "engine-resolved",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE"],
-					"sideEffect": "project"
+					"semantics": "engine-resolved; moves the M1 page of all eight synth engines (screen-verified 1.1.33, note 59 §3); the drum sampler, synth sampler and multisampler M1 pages ignore CC12-15; epiano: the 1.1.33 screen labels this lane punch (engines.epiano lists tine)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "MIDIGUIDE", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 16,
@@ -1085,8 +1098,11 @@
 					"lane": "M3.dark",
 					"range": [0, 127],
 					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST"],
-					"sideEffect": "project"
+					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "slides the slope of the curve on the M3 filter page (screen-verified 1.1.33, note 59 §2.3)",
+					"verifiedOn": "1.1.33",
+					"confidenceNote": "confidence left as it was because src/lib/core/opxy/ccmap.spec.ts pins it; raise it to verified together with that test"
 				},
 				{
 					"cc": 33,
@@ -1094,9 +1110,11 @@
 					"name": "resonance",
 					"lane": "M3.mid",
 					"range": [0, 127],
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "the M3 filter curve redraws as it changes (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 34,
@@ -1104,9 +1122,11 @@
 					"name": "filter envelope amount",
 					"lane": "M3.light",
 					"range": [0, 127],
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "positive amounts add a hatched ghost of the curve to its right on M3 (screen-verified 1.1.33); the value where the ghost appears is still to be read",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 35,
@@ -1114,9 +1134,11 @@
 					"name": "key tracking",
 					"lane": "M3.white",
 					"range": [0, 127],
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-PLOCK-LOG", "XYF-WRITER", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "slides an arrow along the bottom of M3, left to right over 0-127 (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 36,
@@ -1145,8 +1167,9 @@
 					"lane": "M3+shift.light",
 					"range": [0, 127],
 					"confidence": "community-verified",
-					"source": ["SHEET", "TE-INST", "XYF-WRITER", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"source": ["SHEET", "TE-INST", "XYF-WRITER", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "note 59 §2.10: changes the FX I send without the mixer's I/II send popup (DEVICE-CAMERA)"
 				},
 				{
 					"cc": 39,
@@ -1164,10 +1187,11 @@
 					"name": "LFO knob 1 (speed / source)",
 					"lane": "M4.dark",
 					"range": [0, 127],
-					"semantics": "lane model: speed (random/tremolo/value), source (element/duck); chart label 'LFO destination' (synth) / 'LFO shape' (aux)",
-					"confidence": "conflicting",
-					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST"],
-					"sideEffect": "project"
+					"semantics": "M4 E1 in all five LFO types (screen-verified 1.1.33): tremolo rate (synced: note icon with a multiplier 8/6/4/2; free: a turning clock dial), value/random speed, element source (gyro G, mic, envelope ^, sum), duck source (tr 1 ... ; last position = metronome)",
+					"confidence": "verified",
+					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 41,
@@ -1175,10 +1199,11 @@
 					"name": "LFO knob 2 (amount)",
 					"lane": "M4.mid",
 					"range": [0, 127],
-					"semantics": "lane model: amount (tremolo: vibrato amount); chart label 'LFO parameter/envelope' / 'LFO onset/dest'",
-					"confidence": "conflicting",
-					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST"],
-					"sideEffect": "project"
+					"semantics": "M4 E2 in all five LFO types (screen-verified 1.1.33): amount on a tick ladder (tremolo: vib depth)",
+					"confidence": "verified",
+					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 42,
@@ -1186,10 +1211,11 @@
 					"name": "LFO knob 3 (destination)",
 					"lane": "M4.light",
 					"range": [0, 127],
-					"semantics": "midi.guide 'LFO parameter 3'; lane model: destination (tremolo: volume, duck: hold)",
-					"confidence": "community",
-					"source": ["MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST"],
-					"sideEffect": "project"
+					"semantics": "M4 E3 in all five LFO types (screen-verified 1.1.33): destination cards, each page twice (normal, free) (tremolo: vol depth; duck: hold)",
+					"confidence": "verified",
+					"source": ["MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 43,
@@ -1197,10 +1223,11 @@
 					"name": "LFO knob 4 (parameter)",
 					"lane": "M4.white",
 					"range": [0, 127],
-					"semantics": "midi.guide 'LFO parameter 4'; lane model: parameter (tremolo: envelope, duck: release)",
-					"confidence": "community",
-					"source": ["MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST"],
-					"sideEffect": "project"
+					"semantics": "M4 E4 in all five LFO types (screen-verified 1.1.33): the parameter card (tremolo: env line rising at 0, flat at 64, falling at 127; duck: release)",
+					"confidence": "verified",
+					"source": ["MIDIGUIDE", "XYF-AUX-LOGS", "TE-INST", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				}
 			],
 			"noKnownCc": [
@@ -1220,35 +1247,38 @@
 				{
 					"cc": 12,
 					"id": "brain.mode",
-					"name": "manual/auto key detection?",
+					"name": "manual / auto",
 					"lane": "M1.dark",
 					"range": [0, 127],
-					"semantics": "M1 dark",
-					"confidence": "derived",
-					"source": ["TE-AUX"],
-					"sideEffect": "project"
+					"semantics": "M1 E1: 0 = manual (hand icon; root and scale fields shown), 127 = auto (brain-head icon) (screen-verified 1.1.33, note 59 §2.13)",
+					"confidence": "verified",
+					"source": ["TE-AUX", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 13,
 					"id": "brain.key",
-					"name": "key?",
+					"name": "root (key)",
 					"lane": "M1.mid",
 					"range": [0, 127],
-					"semantics": "M1 mid; stored as 12 buckets",
-					"confidence": "derived",
-					"source": ["TE-AUX", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"semantics": "M1 E2: root note, 12 values c ... b; the page title reads e.g. \"b locrian\" (screen-verified 1.1.33)",
+					"confidence": "verified",
+					"source": ["TE-AUX", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 14,
 					"id": "brain.scale",
-					"name": "scale?",
+					"name": "scale",
 					"lane": "M1.light",
 					"range": [0, 127],
-					"semantics": "M1 light; 7 buckets major..locrian",
-					"confidence": "derived",
-					"source": ["TE-AUX", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"semantics": "M1 E3: 7 scales in order major, dorian, phrygian, lydian, mixo, minor, locrian (127 = locrian) (screen-verified 1.1.33)",
+					"confidence": "verified",
+					"source": ["TE-AUX", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 15,
@@ -1256,10 +1286,11 @@
 					"name": "link channel",
 					"lane": "M1.white",
 					"range": [0, 127],
-					"semantics": "M1 white: link an instrument track to brain",
-					"confidence": "community",
-					"source": ["SHEET", "MIDIGUIDE", "TE-AUX"],
-					"sideEffect": "project"
+					"semantics": "M1 E4: 0 = off (crossed box), then two-digit numbers (32/64/96/127 showed 02/04/06/08) (screen-verified 1.1.33); links an instrument track (guide)",
+					"confidence": "verified",
+					"source": ["SHEET", "MIDIGUIDE", "TE-AUX", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 40,
@@ -1281,7 +1312,8 @@
 					"source": ["SHEET"],
 					"sideEffect": "project"
 				}
-			]
+			],
+			"notes": "no filter page: CC32 and CC35 on channel 9 change nothing on 1.1.33 (DEVICE-CAMERA); M2 is the routing page (track boxes 1-8, on/off)"
 		},
 		"punchIn": {
 			"tracks": [10],
@@ -1326,11 +1358,12 @@
 					"name": "outgoing MIDI channel",
 					"lane": "M1.dark",
 					"range": [0, 127],
-					"semantics": "16 buckets, channel = index + 1",
-					"confidence": "community",
-					"source": ["SHEET", "XYF-AUX-LOGS", "XYF-PLOCK-LOG"],
+					"semantics": "16 buckets, channel = index + 1; M1 reads 01-16 (screen-verified 1.1.33, note 59 §2.13)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-AUX-LOGS", "XYF-PLOCK-LOG", "DEVICE-CAMERA"],
 					"sideEffect": "project",
-					"values": "16 buckets"
+					"values": "16 buckets",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 13,
@@ -1338,10 +1371,11 @@
 					"name": "bank",
 					"lane": "M1.mid",
 					"range": [0, 127],
-					"semantics": "129 buckets: off, 1-128 (not every bucket reachable with 7 bits)",
-					"confidence": "community",
-					"source": ["SHEET", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"semantics": "0 = off (crossed box), higher values read 1-128 (not every number reachable with 7 bits) (screen-verified 1.1.33)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 14,
@@ -1349,10 +1383,11 @@
 					"name": "program",
 					"lane": "M1.light",
 					"range": [0, 127],
-					"semantics": "129 buckets: off, 1-128",
-					"confidence": "community",
-					"source": ["SHEET", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"semantics": "0 = off (crossed box), higher values read 1-128 (screen-verified 1.1.33)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 20,
@@ -1536,9 +1571,11 @@
 					"name": "LFO speed",
 					"lane": "M4.dark",
 					"range": [0, 127],
-					"confidence": "derived",
-					"source": ["XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "M4 E1: LFO speed (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 41,
@@ -1546,9 +1583,11 @@
 					"name": "LFO amount",
 					"lane": "M4.mid",
 					"range": [0, 127],
-					"confidence": "derived",
-					"source": ["XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "M4 E2: LFO amount, shown as amt (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 42,
@@ -1556,9 +1595,11 @@
 					"name": "LFO destination (off/cc1/cc2...)",
 					"lane": "M4.light",
 					"range": [0, 127],
-					"confidence": "derived",
-					"source": ["XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "M4 E3: destination = the CC slots (crossed box = off, cc1, cc2 ...) (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 43,
@@ -1566,12 +1607,14 @@
 					"name": "LFO parameter",
 					"lane": "M4.white",
 					"range": [0, 127],
-					"confidence": "derived",
-					"source": ["XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "M4 E4: the parameter card, \"no cc set\" while the slot has no CC (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				}
 			],
-			"notes": "opxy-reactive maps CC32-39 as 'user CC 1-8' (REACT-MAP) - contradicts the chart's value/number split"
+			"notes": "opxy-reactive maps CC32-39 as 'user CC 1-8' (REACT-MAP) - contradicts the chart's value/number split; screen (1.1.33, DEVICE-CAMERA): CC15 moves nothing on M1; M2 and M3 each hold four CC slots (value on turn, CC number on shift + turn), consistent with the chart's split - slot CCs were not sent"
 		},
 		"externalCv": {
 			"tracks": [12],
@@ -1627,7 +1670,8 @@
 					"source": ["MIDIGUIDE"],
 					"sideEffect": "project"
 				}
-			]
+			],
+			"notes": "M1 is a voltmeter (-5 ... +5 V); CC12-15 move nothing on it on 1.1.33 (DEVICE-CAMERA). The entries below are midi.guide-only and were not tested"
 		},
 		"externalAudio": {
 			"tracks": [13],
@@ -1651,10 +1695,11 @@
 					"name": "drive",
 					"lane": "M1.mid",
 					"range": [0, 127],
-					"semantics": "analog inputs only",
-					"confidence": "community",
-					"source": ["SHEET", "TE-AUX"],
-					"sideEffect": "project"
+					"semantics": "analog inputs only; the M1 drive box reads 00-20 (screen-verified 1.1.33, note 59 §2.13)",
+					"confidence": "verified",
+					"source": ["SHEET", "TE-AUX", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 15,
@@ -1662,9 +1707,11 @@
 					"name": "mix into main output",
 					"lane": "M1.white",
 					"range": [0, 127],
-					"confidence": "community",
-					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "the M1 mix box reads 00-99 (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 32,
@@ -1672,9 +1719,11 @@
 					"name": "HP cutoff",
 					"lane": "M3.dark",
 					"range": [0, 127],
-					"confidence": "community",
-					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "M3 high-pass, drawn rising from the left; the M3 filter is off by default (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 35,
@@ -1682,9 +1731,11 @@
 					"name": "LP cutoff",
 					"lane": "M3.white",
 					"range": [0, 127],
-					"confidence": "community",
-					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "MIDIGUIDE", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "M3 low-pass, drawn falling from the right (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 37,
@@ -1720,7 +1771,7 @@
 					"sideEffect": "project"
 				}
 			],
-			"notes": "M1 light 'level' is stored in the track-level lane, so level = CC7 (derived from XYF-AUX-LOGS); CC14 has no chart entry"
+			"notes": "M1 light 'level' is stored in the track-level lane, so level = CC7 (derived from XYF-AUX-LOGS); CC14 has no chart entry; screen (1.1.33, DEVICE-CAMERA): CC40-43 drive the M4 LFO (destinations syn / filter / amp; parameters param1, hi pass, volume, pan); in the captures CC14 left the level box at 75 (note 59 §3 lists CC13-15 as answering); CC12 (input select) was not sent"
 		},
 		"tape": {
 			"tracks": [14],
@@ -1732,10 +1783,11 @@
 					"name": "pitch ('x speed')",
 					"lane": "M1.dark",
 					"range": [0, 127],
-					"semantics": "x1 default ... x10",
-					"confidence": "community-verified",
-					"source": ["SHEET", "XYF-AUX-LOGS", "XYF-PLOCK-LOG"],
-					"sideEffect": "project"
+					"semantics": "x1 default ... x10: CC12 changes the x multiplier at the left end of the M1 tape strip (x1 at 0, x10 at 127 in the captures; note 59 §2.13 records it only as a small change)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-AUX-LOGS", "XYF-PLOCK-LOG", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 13,
@@ -1743,10 +1795,11 @@
 					"name": "speed",
 					"lane": "M1.mid",
 					"range": [0, 127],
-					"semantics": "100% centre; 50%-200%",
-					"confidence": "community",
-					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"semantics": "100% centre; M1 reads 50 %-200 %: 63 -> 99 %, 64 -> 101 %, so exactly 100 % is out of reach (screen-verified 1.1.33)",
+					"confidence": "verified",
+					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 14,
@@ -1754,10 +1807,12 @@
 					"name": "length",
 					"lane": "M1.light",
 					"range": [0, 127],
-					"semantics": "guide M1 light = length; chart says 'key scale' (likely mis-transcription)",
+					"semantics": "the length digit 1-16 on the M1 tape strip (screen-verified 1.1.33), which settles the conflict for the guide's length (not the chart's key scale)",
 					"confidence": "conflicting",
-					"source": ["TE-AUX", "XYF-AUX-LOGS", "SHEET"],
-					"sideEffect": "project"
+					"source": ["TE-AUX", "XYF-AUX-LOGS", "SHEET", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33",
+					"confidenceNote": "confidence left as it was because src/lib/core/opxy/ccmap.spec.ts pins it; raise it to verified together with that test"
 				},
 				{
 					"cc": 15,
@@ -1765,9 +1820,11 @@
 					"name": "mix",
 					"lane": "M1.white",
 					"range": [0, 127],
-					"confidence": "community",
-					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS"],
-					"sideEffect": "project"
+					"confidence": "verified",
+					"source": ["SHEET", "TE-AUX", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"semantics": "the M1 mix box reads 00-99 (screen-verified 1.1.33)",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 32,
@@ -1821,10 +1878,11 @@
 					"name": "effect param 1",
 					"lane": "M1.dark",
 					"range": [0, 127],
-					"semantics": "effect-resolved, see fxEngines",
-					"confidence": "community",
-					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG"],
-					"sideEffect": "project"
+					"semantics": "effect-resolved, see fxEngines; moves FX I's M1 columns (screen-verified 1.1.33 on channel 15, note 59 §3; FX II not yet checked)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-CCMAP", "XYF-PLOCK-LOG", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 13,
@@ -1832,10 +1890,11 @@
 					"name": "effect param 2",
 					"lane": "M1.mid",
 					"range": [0, 127],
-					"semantics": "effect-resolved",
-					"confidence": "community",
-					"source": ["SHEET", "XYF-CCMAP"],
-					"sideEffect": "project"
+					"semantics": "effect-resolved; moves FX I's M1 columns (screen-verified 1.1.33 on channel 15, note 59 §3; FX II not yet checked)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-CCMAP", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 14,
@@ -1843,10 +1902,11 @@
 					"name": "effect param 3",
 					"lane": "M1.light",
 					"range": [0, 127],
-					"semantics": "effect-resolved",
-					"confidence": "community",
-					"source": ["SHEET", "XYF-CCMAP"],
-					"sideEffect": "project"
+					"semantics": "effect-resolved; moves FX I's M1 columns (screen-verified 1.1.33 on channel 15, note 59 §3; FX II not yet checked)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-CCMAP", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 15,
@@ -1854,10 +1914,11 @@
 					"name": "effect param 4",
 					"lane": "M1.white",
 					"range": [0, 127],
-					"semantics": "effect-resolved",
-					"confidence": "community",
-					"source": ["SHEET", "XYF-CCMAP"],
-					"sideEffect": "project"
+					"semantics": "effect-resolved; moves FX I's M1 columns (screen-verified 1.1.33 on channel 15, note 59 §3; FX II not yet checked)",
+					"confidence": "verified",
+					"source": ["SHEET", "XYF-CCMAP", "DEVICE-CAMERA"],
+					"sideEffect": "project",
+					"verifiedOn": "1.1.33"
 				},
 				{
 					"cc": 32,
@@ -1923,8 +1984,8 @@
 			"p3": "punch",
 			"p4": "tine",
 			"confidence": "official",
-			"source": ["TE-SYN", "TE-DL"],
-			"notes": "1.1.25: 'fix: incorrect parameter names on epiano screen'"
+			"source": ["TE-SYN", "TE-DL", "DEVICE-CAMERA"],
+			"notes": "1.1.25: 'fix: incorrect parameter names on epiano screen'; screen (1.1.33, DEVICE-CAMERA): the top bar reads tone, texture, tine, punch - CC14 moves tine and CC15 punch, the reverse of p3/p4 here"
 		},
 		"hardsync": {
 			"p1": "freq",
@@ -1948,7 +2009,8 @@
 			"p3": "detune",
 			"p4": "stereo",
 			"confidence": "official",
-			"source": ["TE-SYN"]
+			"source": ["TE-SYN", "DEVICE-CAMERA"],
+			"notes": "screen (1.1.33, DEVICE-CAMERA): ratio reads as a frequency ratio, 2:1 ... 1:16 (ten zones per note 57)"
 		},
 		"simple": {
 			"p1": "shape",
@@ -1964,8 +2026,8 @@
 			"p3": "warp",
 			"p4": "drift",
 			"confidence": "official",
-			"source": ["TE-SYN"],
-			"notes": "9 wavetables"
+			"source": ["TE-SYN", "DEVICE-CAMERA"],
+			"notes": "9 wavetables; screen (1.1.33, DEVICE-CAMERA): the table cell names basic, buzz, crush, drawbars, fibonacci, fractal, geometric, primes, zap in knob order"
 		},
 		"drum": {
 			"p1": "tune",
@@ -1973,8 +2035,8 @@
 			"p3": "sample end",
 			"p4": "play mode",
 			"confidence": "community",
-			"source": ["REACT-MAP", "XYF-IMGMAP"],
-			"notes": "whether CC12-15 act on the selected drum key or all keys is unknown"
+			"source": ["REACT-MAP", "XYF-IMGMAP", "DEVICE-CAMERA"],
+			"notes": "whether CC12-15 act on the selected drum key or all keys is unknown; screen (1.1.33, DEVICE-CAMERA): the M1 page ignores CC12-15 (nothing moved)"
 		},
 		"sampler": {
 			"p1": "sample start",
@@ -1982,7 +2044,8 @@
 			"p3": "loop end",
 			"p4": "sample end",
 			"confidence": "community",
-			"source": ["REACT-MAP"]
+			"source": ["REACT-MAP", "DEVICE-CAMERA"],
+			"notes": "screen (1.1.33, DEVICE-CAMERA): the M1 page ignores CC12-15 (nothing moved)"
 		},
 		"multisampler": {
 			"p1": "sample start",
@@ -1990,7 +2053,8 @@
 			"p3": "loop end",
 			"p4": "sample end",
 			"confidence": "community",
-			"source": ["REACT-MAP"]
+			"source": ["REACT-MAP", "DEVICE-CAMERA"],
+			"notes": "screen (1.1.33, DEVICE-CAMERA): the M1 page ignores CC12-15 (nothing moved)"
 		},
 		"midi": {
 			"p1": "midi channel",
@@ -2009,7 +2073,8 @@
 			"p3": "feedback",
 			"p4": "stereo",
 			"confidence": "official",
-			"source": ["TE-FX"]
+			"source": ["TE-FX", "DEVICE-CAMERA"],
+			"notes": "screen (1.1.33, DEVICE-CAMERA): columns read rate, depth, feedback, stereo; CC12-15 swept on FX I"
 		},
 		"delay": {
 			"p1": "size",
@@ -2017,8 +2082,8 @@
 			"p3": "fine",
 			"p4": "dry",
 			"confidence": "official",
-			"source": ["TE-FX", "XYF-AUX-LOGS"],
-			"notes": "size has 8 steps micro..insane; guide describes 'fine' as feedback; default on FX I"
+			"source": ["TE-FX", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+			"notes": "size has 8 steps micro..insane; guide describes 'fine' as feedback; default on FX I; screen (1.1.33, DEVICE-CAMERA): columns read size (a note value, e.g. 1/8 dotted), fine, feedback, dry - p2 is fine and p3 feedback on the device"
 		},
 		"distortion": {
 			"p1": "drive",
@@ -2026,7 +2091,8 @@
 			"p3": "low cut",
 			"p4": "high cut",
 			"confidence": "official",
-			"source": ["TE-FX"]
+			"source": ["TE-FX", "DEVICE-CAMERA"],
+			"notes": "screen (1.1.33, DEVICE-CAMERA): listed as dist; columns read drive, clip, lo cut, hi cut"
 		},
 		"lofi": {
 			"p1": "rate",
@@ -2042,8 +2108,8 @@
 			"p3": "rate",
 			"p4": "feedback",
 			"confidence": "official",
-			"source": ["TE-FX"],
-			"notes": "12-pole"
+			"source": ["TE-FX", "DEVICE-CAMERA"],
+			"notes": "12-pole; screen (1.1.33, DEVICE-CAMERA): columns read frequency, depth, rate, feedback"
 		},
 		"reverb": {
 			"p1": "size",
@@ -2051,8 +2117,8 @@
 			"p3": "rate",
 			"p4": "feedback",
 			"confidence": "official",
-			"source": ["TE-FX", "XYF-AUX-LOGS"],
-			"notes": "guide describes 'rate' as tone and 'feedback' as dry/wet; default on FX II"
+			"source": ["TE-FX", "XYF-AUX-LOGS", "DEVICE-CAMERA"],
+			"notes": "guide describes 'rate' as tone and 'feedback' as dry/wet; default on FX II; screen (1.1.33, DEVICE-CAMERA): columns read size, mod, tone, dry"
 		}
 	},
 	"fxTypeBytes": {
@@ -2494,12 +2560,14 @@
 				"LFO knobs 1/2 = speed/amount (lane model)",
 				"LFO parameter 1/2 (midi.guide)"
 			],
-			"source": ["SHEET", "XYF-AUX-LOGS", "MIDIGUIDE"]
+			"source": ["SHEET", "XYF-AUX-LOGS", "MIDIGUIDE", "DEVICE-CAMERA"],
+			"resolution": "lane model: CC40-43 drive M4 E1-E4 in every LFO type, screen-verified on 1.1.33"
 		},
 		{
 			"topic": "CC90 channel 4 (blend)",
 			"candidates": ["works (official lists ch1-4)", "no working CC (opxy-reactive)"],
-			"source": ["TE-MIDI", "REACT-DESIGN"]
+			"source": ["TE-MIDI", "REACT-DESIGN", "DEVICE-CAMERA"],
+			"note": "on 1.1.33 CC90 on channel 4 moved nothing visible on mix M2 (audio untested)"
 		},
 		{
 			"topic": "CC28-31 identity",
@@ -2514,7 +2582,8 @@
 		{
 			"topic": "tape CC14",
 			"candidates": ["length (guide M1 light)", "key scale (chart)"],
-			"source": ["TE-AUX", "SHEET"]
+			"source": ["TE-AUX", "SHEET", "DEVICE-CAMERA"],
+			"resolution": "length (guide): CC14 moves the tape strip's length digit 1-16 on 1.1.33"
 		},
 		{
 			"topic": "external MIDI CC32-39",

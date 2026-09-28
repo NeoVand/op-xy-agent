@@ -40,9 +40,15 @@ facts:
     text: '`M4` removes a pattern from the selected track.'
     source: https://teenage.engineering/guides/op-xy/arrange#edit-controls
   - id: labels
-    text: TE's screen art for arrange labels the four keys clear, copy, paste and new from left to right, the reverse of the guide text for `M1` and `M4`; not yet checked on a unit.
-    source: docs/research/50-hardware-ui.md#33-page-catalogue
-    confidence: conflicting
+    text: On the device the arrange footer reads new, copy, paste and then clear or delete from left to right, so `M1` adds a pattern as the guide says; TE's screen art, which shows the order reversed, is wrong.
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: m4-label
+    text: '`M4` is labelled clear while the track has only one pattern and delete once it has more.'
+    source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
+    confidence: verified
+    verified_on: '1.1.33'
   - id: player
     text: Since OS 1.1.25, a newly added pattern takes over the player type currently in use.
     source: https://teenage.engineering/downloads/op-xy#1.1.25
@@ -73,7 +79,7 @@ procedures:
     preconditions: [arrange mode, the pattern is selected]
     steps:
       - keys: M4
-        note: check the label on screen first
+        note: labelled clear while the track has one pattern, delete once it has more
     source: https://teenage.engineering/guides/op-xy/arrange#edit-controls
 related:
   [arrange.overview, arrange.sound-link, arrange.scenes, players.overview, sequencer.overview]

@@ -28,6 +28,11 @@ facts:
     text: No MIDI CC is known that changes the effect type; choose it on the unit.
     source: docs/research/20-midi-control.md#35-auxiliary-tracks-916
     confidence: community
+  - id: list-names
+    text: The effect list on the unit spells them chorus, delay, dist, lofi, phaser and reverb.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: change
     goal: Load a different effect on FX I or FX II

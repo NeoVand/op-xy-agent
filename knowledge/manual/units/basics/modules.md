@@ -33,6 +33,21 @@ facts:
   - id: mix-pages
     text: In mix mode, M1 holds levels, pans and sends per track, M2 the master EQ, M3 the master saturator and M4 the master section.
     source: https://teenage.engineering/guides/op-xy/mix
+  - id: encoder-marks
+    text: On screen, each parameter carries a small dot or cap in its encoder's shade — dark for `E1`, mid grey for `E2`, light grey for `E3`, white for `E4` — so a glance tells which knob moves what.
+    source: docs/research/59-screen-profiling.md#2-what-the-screens-show
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: popups
+    text: Brief popups, such as the octave card or the mixer's send display, sit over the page and fade away on their own after a second or two.
+    source: docs/research/59-screen-profiling.md#21-general
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: slide
+    text: On some auxiliary tracks the next page slides in sideways — the brain's routing page from its `M1`, and the external MIDI track's CC pages from `M1` to `M2` to `M3`.
+    source: docs/research/59-screen-profiling.md#21-general
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: shift-params
     goal: Edit a page's shift-layer parameters

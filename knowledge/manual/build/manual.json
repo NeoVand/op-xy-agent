@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "3c09dac8",
+	"bundle_hash": "4fc351d4",
 	"stats": {
 		"units": 158,
-		"facts": 946,
+		"facts": 1053,
 		"procedures": 187,
 		"parameters": 207,
-		"verified_items": 40,
-		"words": 35409,
+		"verified_items": 181,
+		"words": 38498,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -27,8 +27,8 @@
 			"howto": 17
 		},
 		"by_status": {
-			"current": 142,
-			"outdated-in-guide": 13,
+			"current": 141,
+			"outdated-in-guide": 14,
 			"changelog-only": 2,
 			"unverified": 1
 		}
@@ -617,6 +617,30 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "encoder-marks",
+					"text": "On screen, each parameter carries a small dot or cap in its encoder's shade — dark for `E1`, mid grey for `E2`, light grey for `E3`, white for `E4` — so a glance tells which knob moves what.",
+					"source": "docs/research/59-screen-profiling.md#2-what-the-screens-show",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "popups",
+					"text": "Brief popups, such as the octave card or the mixer's send display, sit over the page and fade away on their own after a second or two.",
+					"source": "docs/research/59-screen-profiling.md#21-general",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "slide",
+					"text": "On some auxiliary tracks the next page slides in sideways — the brain's routing page from its `M1`, and the external MIDI track's CC pages from `M1` to `M2` to `M3`.",
+					"source": "docs/research/59-screen-profiling.md#21-general",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -660,6 +684,14 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/mix",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#2-what-the-screens-show",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#21-general",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/main-modes#5.2%20modules",
@@ -1524,6 +1556,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "octave-popup",
+					"text": "On an instrument page, `[-]` and `[+]` bring up a small white card low in the middle of the screen, with a mini keyboard and the octave offset in thin digits (+0, +1, −1, −3 …); it fades after a second or two. On the external CV page the offset appears inside the meter card instead.",
+					"source": "docs/research/59-screen-profiling.md#212-octave-popup",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "shift-key",
 					"text": "`shift` does nothing alone: held with another key it opens that key's secondary function or page.",
 					"source": "https://teenage.engineering/guides/op-xy/layout#transport-controls",
@@ -1814,6 +1854,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/layout#transport-controls",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#212-octave-popup",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/guides/op-xy/layout#keyboard",
@@ -3361,6 +3405,14 @@
 					"firmware_min": "1.1.25",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "step-popup",
+					"text": "Pressing or holding a step shows its number in a small box on the screen.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -3432,6 +3484,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.25",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
@@ -4429,6 +4485,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "copied",
+					"text": "When a held step is copied, its number box on the screen adds the word copied.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -4463,6 +4527,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.0.13",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
@@ -4624,10 +4692,10 @@
 				{
 					"id": "record",
 					"text": "To lock a value, keep a step held and turn an encoder; the step remembers the value you dial in.",
-					"source": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "playback",
@@ -4724,6 +4792,22 @@
 					"firmware_min": "1.1.33",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "lock-box",
+					"text": "While you record a lock, the held step's number box on the screen turns orange.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "show-locks",
+					"text": "Holding a locked step shows its locked values in the page's top bar instead of the track's own — shape 00 and detune 06, say, on a track set to 15 and 05.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -4822,6 +4906,10 @@
 			],
 			"body": "A parameter lock pins one value of one parameter to one step. Hold a hi-hat step and open the\nfilter a little, hold the next one and close it, and the pattern gains movement without any\nrecording pass. Locks work on everything the module pages show — engine, envelopes, filter, LFO —\nbut not on player settings.\n\nLocks and live-recorded knob moves share their storage and their smoothing: both change the value\nin steps unless the bar menu's shape control (`bar + turn E4`) blends between them. To thin locks\nout over time, pair them with the skip parameter lock step component.\n\nFirmware history matters here: sampler tracks gained locks in 1.1.0, rotating a sequence has\ncarried its locks along since 1.1.21, and locks on empty steps work reliably from 1.1.33.",
 			"sources": [
+				{
+					"url": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"kind": "research"
+				},
 				{
 					"url": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
 					"kind": "guide"
@@ -7075,7 +7163,7 @@
 					"1.1.25"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -7088,11 +7176,11 @@
 				},
 				{
 					"id": "quantise-default",
-					"text": "In a new project quantisation reads 100, according to decoded project files.",
-					"source": "docs/research/10-xy-format.md#34-patternstruct-base-clones-walking",
+					"text": "In a new project the card reads quant 100, length 50 and track scale 1, with groove shown as a dash and shape as a small step symbol.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community-verified"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "odd-grid",
@@ -7117,6 +7205,30 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community-verified"
+				},
+				{
+					"id": "card",
+					"text": "Holding `bar` lays a white card over the dimmed page — bar numbers 1 to 4 along the top with the current one inverted, the track scale beside them, then rows for quant, length, groove and shape, each marked with its encoder's dot. The card fades when `bar` is let go.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "roll",
+					"text": "A faint mini piano roll on the right of the card shows a dash for each note in the pattern.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "clear-labels",
+					"text": "The card's footer names the clearing keys — clr notes on `M1`, clr params on `M2`, clr all on `M4`.",
+					"source": "docs/research/59-screen-profiling.md#28-bar-steps",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -7231,12 +7343,16 @@
 					"kind": "guide"
 				},
 				{
-					"url": "docs/research/10-xy-format.md#34-patternstruct-base-clones-walking",
+					"url": "docs/research/59-screen-profiling.md#28-bar-steps",
 					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.25",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/10-xy-format.md#34-patternstruct-base-clones-walking",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.15",
@@ -7609,7 +7725,7 @@
 					"1.1.25"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -7630,19 +7746,27 @@
 				},
 				{
 					"id": "enable",
-					"text": "The first press of `player` shows the player page of the selected track; a second press switches the player on.",
-					"source": "https://teenage.engineering/guides/op-xy/players#players",
+					"text": "The first press of `player` shows the selected track's player page, dimmed under an off box; a second press switches the player on.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "types",
-					"text": "`shift + player` changes the player type. There are three: arpeggio, maestro and hold.",
-					"source": "https://teenage.engineering/guides/op-xy/players#players",
+					"text": "`shift + player` opens the player list, headed with the track number and the word player: arpeggio, hold and maestro, the current type boxed.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "list-steps",
+					"text": "The first `shift + player` only opens the list. Each further press of `player`, with shift still held, moves the box to the next type (arpeggio → hold → maestro → arpeggio); letting go of shift opens the chosen player's page.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "no-locks",
@@ -7692,14 +7816,18 @@
 					"steps": [
 						{
 							"keys": "shift + player",
-							"note": "pick arpeggio, maestro or hold"
+							"note": "opens the list with the current type boxed; keep shift held"
+						},
+						{
+							"keys": "shift + player",
+							"note": "each further press of player moves to the next type (arpeggio, hold, maestro)"
 						}
 					],
-					"result": null,
-					"source": "https://teenage.engineering/guides/op-xy/players#players",
+					"result": "Letting go of shift opens the chosen player's page.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"parameters": [],
@@ -7715,6 +7843,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/players#players",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#27-players",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
@@ -7824,6 +7956,30 @@
 					"firmware_min": "1.1.21",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The arpeggio page shows four boxes in the encoders' greys — a note value for speed, the pattern as a small staircase (or peak, arrow, scattered blocks), a ladder with the octave count for range, and a hand for hold, pale when off and black when on — then a small arrow meaning the page has a shift layer. Under the word arpeggio, fourteen pale blue bars picture the run, one per note, taller for higher notes; a range of 4 over a triad makes a twelve-step staircase.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "speeds",
+					"text": "Speed shows only a note symbol. It runs from a quarter note (slowest) to a 64th (fastest), with triplets among them; there is no number.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "shift-screen",
+					"text": "With `shift` held the boxes change to the shift controls — two tied notes whose tie fills white as the note length grows, the style (the first reads off, the others are small bar charts), a squiggle that darkens from the left as glide rises, and a ring that splits into two as stereo rises.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -8006,6 +8162,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.21",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#27-players",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/players#arpeggio",
@@ -8069,7 +8229,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -8083,18 +8243,42 @@
 				{
 					"id": "record",
 					"text": "To store the chord, keep `shift` held and play its notes on the keyboard.",
-					"source": "https://teenage.engineering/guides/op-xy/players#maestro",
+					"source": "docs/research/59-screen-profiling.md#27-players",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "no-e3",
-					"text": "The guide gives the light gray encoder (`E3`) no job on the maestro page.",
-					"source": "https://teenage.engineering/guides/op-xy/players#maestro",
+					"text": "The light gray encoder (`E3`) has no job on the maestro page; its box is crossed out.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "Maestro's page shows roll as a wavy arpeggio sign with a number (0, 10, 12 …), pattern as up, down, up/down or random icons, and hold as a hand that fills in when on.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "slabs",
+					"text": "Under the word maestro two stacks of four pale blue slabs picture the stored chord. A slab stands up for each stored note, filling the left stack from the back and then the right one, and lies flat where there is none; while you enter a new chord they rise one by one, and they stand taller while the chord sounds.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "eight",
+					"text": "With eight slabs on the page, maestro seems to keep at most eight notes per chord.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
 					"firmware_min": null,
 					"verified_on": null,
-					"confidence": "official"
+					"confidence": "derived"
 				}
 			],
 			"procedures": [
@@ -8176,6 +8360,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/players#maestro",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#27-players",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/players#maestro",
@@ -8283,6 +8471,14 @@
 					"firmware_min": "1.1.25",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The hold page shows the word hold over a large infinity ribbon of concentric bands; its encoders have nothing to set.",
+					"source": "docs/research/59-screen-profiling.md#27-players",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -8343,6 +8539,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.25",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#27-players",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/players#hold",
@@ -8621,11 +8821,27 @@
 				},
 				{
 					"id": "midi-ccs",
-					"text": "Over MIDI, CC12–15 on the track's channel reach the four `M1` encoders, whichever engine is loaded.",
-					"source": "docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4",
+					"text": "Over MIDI, CC12–15 on the track's channel move the four `M1` parameters of every synth engine; the drum sampler, synth sampler and multisampler pages ignore them.",
+					"source": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community-verified"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "top-bar",
+					"text": "A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis — above a picture that, on most engines, never stops moving.",
+					"source": "docs/research/59-screen-profiling.md#21-general",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "browser",
+					"text": "On OS 1.1.33, `shift + M1` brings up a browser headed with the track number and the word preset, with the engine list in the middle and the highlighted engine's presets on the right.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -8696,7 +8912,15 @@
 					"kind": "research"
 				},
 				{
-					"url": "docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4",
+					"url": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#21-general",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"kind": "research"
 				},
 				{
@@ -9061,6 +9285,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community-verified"
+				},
+				{
+					"id": "card",
+					"text": "Holding `shift` on `M2` brings up a white card of four rows over the dimmed page, each with its encoder's dot — play mode (poly, mono or legato), portamento (off, then numbers), bend range (semitones, up to an octave) and preset volume (a number).",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -9176,6 +9408,10 @@
 				{
 					"url": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
 					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
@@ -9212,13 +9448,13 @@
 					"M3"
 				]
 			},
-			"summary": "`M3` is the track's filter: cutoff, resonance, filter-envelope amount and key tracking. `shift + M3` changes the filter type; factory presets use z lowpass, ladder, svf and z hipass.",
+			"summary": "`M3` is the track's filter: cutoff, resonance, filter-envelope amount and key tracking. `shift + M3` picks one of four types — ladder, svf, z hipass or z lowpass — and then returns to `M1`.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -9239,23 +9475,63 @@
 				},
 				{
 					"id": "type-names",
-					"text": "The guide names no filter types; factory presets use four — z lowpass, ladder, svf and z hipass — and more may exist.",
-					"source": "docs/research/30-presets-samples.md#25-fx-m3-filter-and-lfo-m4",
+					"text": "The type list, headed with the track number and the word filter, offers ladder, svf, z hipass and z lowpass, the current one boxed.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community-verified"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "type-return",
+					"text": "Picking a type takes you back to the engine page (`M1`); `M3` then shows the new type.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "on-off",
-					"text": "Presets also store whether the filter is switched on at all; the guide does not describe how to toggle it.",
+					"text": "Presets also store whether the filter is switched on at all.",
 					"source": "docs/research/30-presets-samples.md#25-fx-m3-filter-and-lfo-m4",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community-verified"
 				},
 				{
+					"id": "off",
+					"text": "With the filter off, the page is dimmed under an off box; pressing `M3` again switches the filter on.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "The page draws the filter's curve over tinted bands, with the type name at the top left, a frequency axis marked 50, 1k, 2k, 5k and 20kHz, and a small value box on the curve.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "drawn",
+					"text": "Cutoff slides the curve's slope along the axis, key tracking moves an arrow along the bottom from left to right, and a positive envelope amount adds a hatched ghost of the curve to its right; z hipass mirrors the drawing.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "midi-ccs",
-					"text": "Over MIDI, CC32–35 reach cutoff, resonance, envelope amount and key tracking; no CC is known for the filter type.",
+					"text": "Over MIDI, CC32–35 on the track's channel move cutoff, resonance, envelope amount and key tracking, and the page redraws as they arrive.",
+					"source": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "no-type-cc",
+					"text": "No MIDI CC is known for the filter type.",
 					"source": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
 					"firmware_min": null,
 					"verified_on": null,
@@ -9361,7 +9637,15 @@
 					"kind": "guide"
 				},
 				{
+					"url": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"kind": "research"
+				},
+				{
 					"url": "docs/research/30-presets-samples.md#25-fx-m3-filter-and-lfo-m4",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
 					"kind": "research"
 				},
 				{
@@ -9414,11 +9698,11 @@
 			"facts": [
 				{
 					"id": "where",
-					"text": "Holding `shift` while `M3` is open shows the sends; `E1` is aux out, `E2` tape, `E3` FX I and `E4` FX II.",
-					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"text": "Holding `shift` while `M3` is open brings up a white card of four send rows, worked by `E1`…`E4` from the top — aux out (a plug icon), tape (a reel icon), FX I and FX II; a row reads no send at zero.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "aux-out",
@@ -9554,8 +9838,8 @@
 			"body": "Sends copy part of a track's audio to the auxiliary tracks and leave the dry sound as it is: FX I and\nFX II for the shared send effects, tape for replaying tricks, aux out for the external audio track\nand the multi-out jack. Sends are set per track and can be parameter-locked.",
 			"sources": [
 				{
-					"url": "https://teenage.engineering/guides/op-xy/instrument#filter",
-					"kind": "guide"
+					"url": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
@@ -9572,9 +9856,13 @@
 				{
 					"url": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
 					"kind": "research"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/instrument#filter",
+					"kind": "guide"
 				}
 			],
-			"official_url": "https://teenage.engineering/guides/op-xy/instrument#filter",
+			"official_url": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
 			"controls": [
 				"key.m3",
 				"key.shift",
@@ -9616,7 +9904,7 @@
 					"1.1.3"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -9685,11 +9973,27 @@
 				},
 				{
 					"id": "midi-ccs",
-					"text": "CC40–43 probably follow the four `M4` encoders, but community labels for them disagree; the LFO type has no known CC.",
-					"source": "docs/research/20-midi-control.md#37-known-conflicts--errata-in-the-sources",
+					"text": "Over MIDI, CC40–43 on the track's channel drive the four `M4` encoders in order, in all five LFO types.",
+					"source": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "no-type-cc",
+					"text": "No MIDI CC is known for the LFO type.",
+					"source": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
 					"firmware_min": null,
 					"verified_on": null,
-					"confidence": "conflicting"
+					"confidence": "community-verified"
+				},
+				{
+					"id": "off",
+					"text": "With the LFO off, the page is dimmed under an off box; pressing `M4` again switches the LFO on.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -9741,7 +10045,15 @@
 					"kind": "changelog"
 				},
 				{
-					"url": "docs/research/20-midi-control.md#37-known-conflicts--errata-in-the-sources",
+					"url": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
 					"kind": "research"
 				}
 			],
@@ -9781,7 +10093,7 @@
 					"1.1.3"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -9815,6 +10127,14 @@
 					"firmware_min": "1.1.3",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "Duck shows its source as a track number (tr 1 and on), the last position a metronome icon, then amount, a live signal box and cards for hold and release.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -9917,6 +10237,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.3",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#duck",
@@ -9959,7 +10283,7 @@
 					"1.1.0"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -9985,6 +10309,14 @@
 					"firmware_min": "1.1.0",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "Element shows its source as an icon — G for the gyroscope, a microphone, ^ for the envelope, or sum — then amount on a tick ladder, destination cards (synth wave, env, filter, amp) and a card naming the parameter, such as attack, cutoff, pitch or pan.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -10070,6 +10402,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.0",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#lfo",
@@ -10108,7 +10444,7 @@
 					"1.0.38"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -10134,6 +10470,14 @@
 					"firmware_min": "1.0.38",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "Random's page looks like the value LFO's, plus an animated random step wave under speed and an envelope-ramp card under the destination.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -10232,6 +10576,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.0.38",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#lfo",
@@ -10270,7 +10618,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -10288,6 +10636,30 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "derived"
+				},
+				{
+					"id": "screen",
+					"text": "The tremolo page labels its fields rate, vib, vol and env, with a card labelled shape under env that shows the waveform (sine, square …); vib and vol are pointers on tick ladders.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "rate-drawn",
+					"text": "While synced, rate shows a note-value icon with a multiplier (8, 6, 4, 2 …); turned further clockwise it becomes a clock dial whose hand turns, and the rate runs free.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "env-drawn",
+					"text": "Env is drawn as a line that rises at 0, lies flat at 64 and falls at 127.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -10383,6 +10755,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#lfo",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#lfo",
@@ -10422,7 +10798,7 @@
 					"1.1.15"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -10456,6 +10832,22 @@
 					"firmware_min": "1.1.15",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The value page shows speed, amount on a tick ladder, a scrolling column of destination cards and a large card naming the target parameter (attack, cutoff, res, key …) over an animated knob.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "free-cards",
+					"text": "In the destination column each page's card, such as syn (the engine), env or filter, is followed by a twin labelled free with the same icon.",
+					"source": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -10570,6 +10962,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.15",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#lfo",
@@ -10606,7 +11002,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -10624,6 +11020,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "picture",
+					"text": "Axis's picture is an isometric three-armed structure of cubes under a plain-text top bar; each encoder lengthens or reshapes one arm.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -10702,6 +11106,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#axis",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/synth-engines#axis",
@@ -10738,7 +11146,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -10748,6 +11156,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "picture",
+					"text": "Dissolve fills the screen with a mosaic of squares that never stops moving; raising fm or detune whitens it.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -10825,6 +11241,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#dissolve",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/synth-engines#dissolve",
@@ -10856,15 +11276,15 @@
 					"M1"
 				]
 			},
-			"summary": "An electric-piano model that also reaches plucks, strong leads and thick basses; its M1 page sets tone, texture, punch and tine.",
-			"status": "current",
+			"summary": "An electric-piano model that also reaches plucks, strong leads and thick basses; its M1 page sets tone, texture, tine and punch.",
+			"status": "outdated-in-guide",
 			"firmware": {
 				"min": "1.0.9",
 				"changed_in": [
 					"1.1.25"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -10882,6 +11302,22 @@
 					"firmware_min": "1.1.25",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "order",
+					"text": "On OS 1.1.33 the third encoder is tine and the fourth punch — the guide lists them the other way round.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "picture",
+					"text": "Epiano's picture is an isometric stack of layers with tines, under a top bar of coloured cells labelled tone, texture, tine and punch.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -10923,38 +11359,38 @@
 					"encoder": "E3",
 					"layer": "base",
 					"keys": "turn E3",
-					"name": "punch",
+					"name": "tine",
 					"range": null,
 					"default": null,
 					"cc": 14,
 					"cc_confidence": "community-verified",
-					"note": "adds movement",
-					"source": "https://teenage.engineering/guides/op-xy/synth-engines#epiano",
+					"note": "bright, metallic attack at the start of each note; the guide puts it on `E4`",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
 					"encoder": "E4",
 					"layer": "base",
 					"keys": "turn E4",
-					"name": "tine",
+					"name": "punch",
 					"range": null,
 					"default": null,
 					"cc": 15,
 					"cc_confidence": "community-verified",
-					"note": "bright, metallic attack at the start of each note",
-					"source": "https://teenage.engineering/guides/op-xy/synth-engines#epiano",
+					"note": "adds movement; the guide puts it on `E3`",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"related": [
 				"instrument.engine"
 			],
-			"body": "Epiano recreates the struck-tine electric piano. Tine sets how much bell-like attack each note has,\ntone the overall brightness, texture adds dirt and punch adds movement. With the tine up and a medium\ndecay it sounds like classic keys; the guide also pitches it for leads and basses, so try it outside\npiano parts. Load it with `shift + M1`.",
+			"body": "Epiano recreates the struck-tine electric piano. Tine sets how much bell-like attack each note has,\ntone the overall brightness, texture adds dirt and punch adds movement. With the tine up and a medium\ndecay it sounds like classic keys; the guide also pitches it for leads and basses, so try it outside\npiano parts. The guide (1.1.15) lists punch before tine; on 1.1.33, after the 1.1.25 fix to the\nepiano's labels, tine sits on `E3` and punch on `E4`. Load it with `shift + M1`.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#epiano",
@@ -10963,6 +11399,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.25",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/synth-engines#epiano",
@@ -10999,7 +11439,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -11009,6 +11449,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "picture",
+					"text": "Hardsync's picture is a hair dryer blowing animated blocks, with two dots for sub and an S-curve for the low cut that slides right as lowcut rises.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -11086,6 +11534,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#hardsync",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/synth-engines#hardsync",
@@ -11365,7 +11817,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -11375,6 +11827,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "picture",
+					"text": "Organ's picture is four drawbars, each with a scale from 8 to 1 and an icon on its cap; each encoder slides one drawbar, and the bars glide into place.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -11453,6 +11913,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#organ",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/synth-engines#organ",
@@ -11488,7 +11952,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -11525,11 +11989,35 @@
 				},
 				{
 					"id": "midi-ccs",
-					"text": "Over MIDI, the four M1 encoders answer CC12, CC13, CC14 and CC15 on the track's channel, whatever engine is loaded.",
-					"source": "docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4",
+					"text": "Over MIDI, CC12, CC13, CC14 and CC15 on the track's channel move shape, ratio, detune and stereo.",
+					"source": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community-verified"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "picture",
+					"text": "Prism's picture is a row of four optics — a triangle, a convex lens, a concave lens and a wedge — with light rays passing through the lenses on every note.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "drawn",
+					"text": "Shape grows the triangle, ratio thickens the convex lens, detune slides the concave lens and stereo opens the wedge into an arrowhead.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "ratio-steps",
+					"text": "Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16.",
+					"source": "docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -11631,7 +12119,7 @@
 				"sequencer.parameter-locks",
 				"instrument.save-to-same-snapshot"
 			],
-			"body": "Prism runs several oscillators and gives you four controls over how they relate: their waveform,\ntheir tuning ratio, how far apart they drift in pitch and how wide they spread. Little detune and a\nnarrow image keep it tight for bass; more of both makes it broad enough for leads and pads.\n\nEverything else about the sound — how notes start and fade (M2), the filter (M3) and modulation\n(M4) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.\nTE's guide gives no numeric ranges or defaults for prism's parameters; read them off the screen\nwhile turning, and treat the CC numbers as community findings rather than TE documentation.",
+			"body": "Prism runs several oscillators and gives you four controls over how they relate: their waveform,\ntheir tuning ratio, how far apart they drift in pitch and how wide they spread. Little detune and a\nnarrow image keep it tight for bass; more of both makes it broad enough for leads and pads.\n\nEverything else about the sound — how notes start and fade (M2), the filter (M3) and modulation\n(M4) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.\nTE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you\nturn, and the CC numbers are confirmed on the owner's unit.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#arrange",
@@ -11650,7 +12138,15 @@
 					"kind": "guide"
 				},
 				{
-					"url": "docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4",
+					"url": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo",
 					"kind": "research"
 				},
 				{
@@ -11695,7 +12191,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -11705,6 +12201,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "picture",
+					"text": "Simple's picture is an isometric glass jar on stacked slabs under a plain-text top bar; stereo splits the jar into two.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -11783,6 +12287,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#simple",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/synth-engines#simple",
@@ -11819,7 +12327,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -11837,6 +12345,22 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "tables",
+					"text": "The first cell of the top bar names the current table; turning `E1` steps through basic, buzz, crush, drawbars, fibonacci, fractal, geometric, primes and zap.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "picture",
+					"text": "The picture is the waveform itself, morphing and leaving trails as it changes; drift fans it out into moving ghost copies.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -11915,6 +12439,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#wavetable",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/synth-engines#wavetable",
@@ -12372,6 +12900,38 @@
 					"firmware_min": "1.1.15",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The browser shows the track number over the word preset on the left, the engine list in the middle and that engine's presets on the right, the current preset highlighted.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "views",
+					"text": "The first encoder (`E1`) offers a choice between browsing by engine and by category; on the owner's unit the category view began with Nostalgic Synths, bass, drum and keys.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "footer",
+					"text": "The footer reads cut, paste, rename and delete over `M1`…`M4`.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "shift-m1",
+					"text": "On OS 1.1.33, `shift + M1` also brings up this browser, with the engine list in the middle.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -12499,6 +13059,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.15",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#view-and-create-preset",
@@ -13573,6 +14137,30 @@
 					"firmware_min": "1.1.0",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "shift-screen",
+					"text": "With `shift` held it shows direction, tune as a note symbol and a value such as −12.00, crossfade as a percentage drawn as a dark wedge at the loop, and gain.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "no-cc",
+					"text": "CC12–15 on the track's channel move nothing on this page.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -13740,6 +14328,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.0",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
@@ -14032,6 +14624,30 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "derived"
+				},
+				{
+					"id": "screen",
+					"text": "The page shows the selected key's waveform with the skipped parts tinted blue and start and end markers; tune reads as a note symbol and a signed value such as −16.10, moving in steps of 0.1, and play mode as one of four icons — an arrow to a bar, a plain arrow, an arrow with G, or a loop.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "shift-screen",
+					"text": "With `shift` held the page shows direction, pan as a bar from L to R, fade as a dark ramp drawn over the wave, and gain, which scales the drawn wave.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "no-cc",
+					"text": "CC12–15 on the track's channel move nothing on this page.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -14193,6 +14809,10 @@
 				},
 				{
 					"url": "docs/research/40-official-docs.md#53-te-errata-we-keep-verbatim-and-our-manual-must-not-copy",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
 					"kind": "research"
 				}
 			],
@@ -14503,6 +15123,22 @@
 					"firmware_min": "1.1.25",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The top strip is a full keyboard on which the zone of the sample being played lights up, jumping with the octave; each zone brings its own waveform and markers, and the shift layer matches the synth sampler's.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "no-cc",
+					"text": "CC12–15 on the track's channel move nothing on this page.",
+					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -14555,6 +15191,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.25",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/sample#multisampler",
@@ -15128,7 +15768,7 @@
 					"1.1.17"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -15181,11 +15821,11 @@
 				},
 				{
 					"id": "scales",
-					"text": "Scales: major, dorian, phrygian, lydian, mixolydian, minor, locrian.",
-					"source": "docs/research/10-xy-format.md#311-auxiliary-tracks-t9t16",
+					"text": "The brain has seven scales, shown in this order as major, dorian, phrygian, lydian, mixo (mixolydian), minor and locrian.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "per-pattern",
@@ -15210,6 +15850,46 @@
 					"firmware_min": "1.1.17",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The brain's `M1` is headed with the current key, such as c major, and draws a mini keyboard marking the scale's notes. Manual mode shows a hand and the root and scale fields; auto mode shows a brain head instead.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "link-values",
+					"text": "Link reads a crossed box when off and a two-digit number otherwise; with CC15 at 32, 64, 96 and 127 it showed 02, 04, 06 and 08.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "routing-page",
+					"text": "`M2` slides in from `M1` and shows an in bracket running from the brain to track boxes 1–8, each on or off.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "no-filter",
+					"text": "The brain has no filter page; CC32 and CC35 on its channel change nothing.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "midi",
+					"text": "Over MIDI, CC12–15 on the brain's channel (9) drive its four `M1` encoders; CC12 shows manual at 0 and auto at 127.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -15247,8 +15927,8 @@
 					"name": "manual / auto",
 					"range": null,
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
+					"cc": 12,
+					"cc_confidence": "community-verified",
 					"note": null,
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#brain",
 					"firmware_min": null,
@@ -15260,16 +15940,16 @@
 					"encoder": "E2",
 					"layer": "base",
 					"keys": "turn E2",
-					"name": "key",
-					"range": null,
+					"name": "root",
+					"range": "12 notes, c … b",
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
-					"note": null,
-					"source": "https://teenage.engineering/guides/op-xy/auxiliary#brain",
+					"cc": 13,
+					"cc_confidence": "community-verified",
+					"note": "the guide calls it key",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
@@ -15277,15 +15957,15 @@
 					"layer": "base",
 					"keys": "turn E3",
 					"name": "scale",
-					"range": null,
+					"range": "major / dorian / phrygian / lydian / mixo / minor / locrian",
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
+					"cc": 14,
+					"cc_confidence": "community-verified",
 					"note": null,
-					"source": "https://teenage.engineering/guides/op-xy/auxiliary#brain",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
@@ -15295,8 +15975,8 @@
 					"name": "link",
 					"range": null,
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
+					"cc": 15,
+					"cc_confidence": "community-verified",
 					"note": "links an instrument track, to riff over the song as it transposes",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#brain",
 					"firmware_min": null,
@@ -15323,7 +16003,7 @@
 					"kind": "research"
 				},
 				{
-					"url": "docs/research/10-xy-format.md#311-auxiliary-tracks-t9t16",
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"kind": "research"
 				},
 				{
@@ -15451,6 +16131,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community-verified"
+				},
+				{
+					"id": "animations",
+					"text": "On `T2` each of the 24 keys plays its own animation on the screen — planets, a digit clock, noise, hands, waves, sweeping lines and bars, and more.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -15507,6 +16195,10 @@
 				{
 					"url": "docs/research/20-midi-control.md#43-punch-in-fx-notes-ch10",
 					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/get-started#4.4.%20adding-punch-in-fx",
@@ -15559,7 +16251,8 @@
 				"screens": [
 					"M1",
 					"M2",
-					"M3"
+					"M3",
+					"M4"
 				]
 			},
 			"summary": "`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; M1 sets channel, bank and program, M2 and M3 hold eight CC slots, and M4 has an LFO.",
@@ -15570,7 +16263,7 @@
 					"1.1.15"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -15615,11 +16308,43 @@
 				},
 				{
 					"id": "ccs",
-					"text": "Community charts for channel 11: CC12–14 channel, bank, program; CC20–23 and CC32–35 slot values; CC28–31 and CC36–39 slot numbers; CC40–43 LFO.",
+					"text": "Community charts put the slot values on CC20–23 and CC32–35 of channel 11 and the slot numbers on CC28–31 and CC36–39.",
 					"source": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community"
+				},
+				{
+					"id": "midi",
+					"text": "Over MIDI on channel 11, CC12–14 set channel, bank and program and CC40–43 drive the `M4` LFO; CC15 does nothing.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "The `M1` page is headed midi with a DIN socket icon; channel reads 01–16, and bank and program show a crossed box at 0, then 1–128.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "slot-pages",
+					"text": "`M2` and `M3` slide in sideways from `M1`; each CC slot is a crossed box while off, or a large value with cc and its number underneath.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "lfo-screen",
+					"text": "The `M4` LFO offers the CC slots as its destinations; a slot without a CC shows no cc set as the parameter.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -15659,8 +16384,8 @@
 					"name": "channel",
 					"range": "1–16",
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
+					"cc": 12,
+					"cc_confidence": "community-verified",
 					"note": null,
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
 					"firmware_min": null,
@@ -15673,15 +16398,15 @@
 					"layer": "base",
 					"keys": "turn E2",
 					"name": "bank",
-					"range": null,
+					"range": "off, 1–128",
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
+					"cc": 13,
+					"cc_confidence": "community-verified",
 					"note": null,
-					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
@@ -15689,15 +16414,15 @@
 					"layer": "base",
 					"keys": "turn E3",
 					"name": "program",
-					"range": null,
+					"range": "off, 1–128",
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
+					"cc": 14,
+					"cc_confidence": "community-verified",
 					"note": null,
-					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"related": [
@@ -15717,6 +16442,10 @@
 				},
 				{
 					"url": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"kind": "research"
 				},
 				{
@@ -15816,6 +16545,22 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The CV track's page is a voltmeter labelled CV, reading from −5 to +5 V.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "no-ccs",
+					"text": "CC12–15 on its channel (12) move nothing on that page.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -15847,7 +16592,7 @@
 				"com.multi-out",
 				"howto.control-cv-synth"
 			],
-			"body": "The simplest aux track: the guide gives it no page settings, only notes. Set the multi-out to cv\nbefore plugging in, patch pitch and gate into the synth, then play `T4` like any other track.",
+			"body": "The simplest aux track: the guide gives it no page settings, only notes, and on the unit its page is\njust a voltmeter. Set the multi-out to cv\nbefore plugging in, patch pitch and gate into the synth, then play `T4` like any other track.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#external-cv",
@@ -15856,6 +16601,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-an-analog-synth%20with%20cv%20and%20gate",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/auxiliary#external-cv",
@@ -15937,11 +16686,43 @@
 				},
 				{
 					"id": "ccs",
-					"text": "Community charts for channel 13: CC12 input, CC13 drive, CC15 mix; level seems to be the track level, CC7.",
+					"text": "Community charts give CC12 on channel 13 as the input select and suggest the level is the track level, CC7.",
 					"source": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community"
+				},
+				{
+					"id": "midi",
+					"text": "Over MIDI on channel 13, CC13 sets drive and CC15 mix, and CC32, CC35 and CC40–43 reach the filter and LFO pages; CC12, the input select, was left untried so the microphone could not open.",
+					"source": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "`M1` draws the signal path — a microphone box marked fdbk block (crossed out while it blocks feedback), a line labelled input, then boxes for drive, level and mix.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "ranges",
+					"text": "Drive reads 00–20 and mix 00–99; level showed 75 in a new project.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "other-pages",
+					"text": "Its `M2` routing page shows track boxes 1–8 and an out box, and its `M4` LFO aims at syn, filter or amp, with parameters such as param1, hi pass, volume and pan.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -16045,6 +16826,14 @@
 				{
 					"url": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
 					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
@@ -16113,11 +16902,27 @@
 				},
 				{
 					"id": "values",
-					"text": "Tape pitch reads as a speed multiple, x1 by default, and tape speed as a percentage around 100 %.",
+					"text": "Community charts read tape pitch as a speed multiple, x1 by default.",
 					"source": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community"
+				},
+				{
+					"id": "screen",
+					"text": "The tape page shows a reel icon with the speed as a percentage, a tape strip carrying a mini keyboard and the loop length as a number, and a mix box.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "ranges",
+					"text": "Speed runs from 50 % to 200 %, length from 1 to 16 and mix from 00 to 99. Over MIDI, CC13 at 63 gives 99 % and at 64 gives 101 %, so exactly 100 % cannot be sent.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "p-locks",
@@ -16129,11 +16934,11 @@
 				},
 				{
 					"id": "ccs",
-					"text": "Community charts for channel 14: CC12 pitch, CC13 speed, CC14 length (one chart labels it otherwise), CC15 mix.",
-					"source": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
+					"text": "Over MIDI on channel 14, CC13 moves speed, CC14 length and CC15 mix on the tape page, and CC12 changes it only slightly.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -16215,6 +17020,10 @@
 				},
 				{
 					"url": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"kind": "research"
 				},
 				{
@@ -16320,6 +17129,30 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "derived"
+				},
+				{
+					"id": "screen",
+					"text": "The FX I page is headed with a boxed FX I and the effect's name, then four columns with labels above and values below, each a bar split by a marker at the value's height.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "type-list",
+					"text": "On FX I, `shift + T7` lists the effects — chorus, delay, dist, lofi, phaser and reverb.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "midi",
+					"text": "Over MIDI, CC12–15 on channel 15 move the four columns of FX I.",
+					"source": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -16342,6 +17175,14 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/mix#levels-pans-and-sends",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",
@@ -16414,11 +17255,27 @@
 				},
 				{
 					"id": "ccs",
-					"text": "Community charts put the filter on CC32 (high-pass) and CC35 (low-pass), the sends on CC37–39 and the LFO on CC40–43 of the aux track's channel.",
+					"text": "Community charts put the aux sends on CC37–39 of the track's channel.",
 					"source": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community"
+				},
+				{
+					"id": "midi",
+					"text": "Over MIDI, CC32 and CC35 move the external audio track's high-pass and low-pass and CC40–43 its LFO; the external MIDI track's LFO answers CC40–43 too.",
+					"source": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "filter-drawn",
+					"text": "On external audio the `M3` filter starts switched off; its high-pass is drawn rising from the left and its low-pass falling from the right.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -16431,8 +17288,8 @@
 					"name": "high-pass cutoff",
 					"range": null,
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
+					"cc": 32,
+					"cc_confidence": "community-verified",
 					"note": null,
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#tape",
 					"firmware_min": null,
@@ -16447,8 +17304,8 @@
 					"name": "low-pass cutoff",
 					"range": null,
 					"default": null,
-					"cc": null,
-					"cc_confidence": null,
+					"cc": 35,
+					"cc_confidence": "community-verified",
 					"note": null,
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#tape",
 					"firmware_min": null,
@@ -16593,6 +17450,14 @@
 					"kind": "research"
 				},
 				{
+					"url": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
+				},
+				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
 					"kind": "guide"
 				}
@@ -16669,6 +17534,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community"
+				},
+				{
+					"id": "list-names",
+					"text": "The effect list on the unit spells them chorus, delay, dist, lofi, phaser and reverb.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -16729,6 +17602,10 @@
 				{
 					"url": "docs/research/20-midi-control.md#35-auxiliary-tracks-916",
 					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/fx#fx",
@@ -16766,7 +17643,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -16784,6 +17661,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "labels",
+					"text": "The chorus's columns read rate, depth, feedback and stereo, as the guide names them.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -16862,6 +17747,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/fx#chorus",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/fx#chorus",
@@ -16893,7 +17782,7 @@
 					"M1"
 				]
 			},
-			"summary": "An echo for FX I or FX II; M1 sets the repeat spacing in eight steps, fine-tunes it, and sets the feedback and the amount of dry signal.",
+			"summary": "An echo for FX I or FX II; M1 sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -16901,7 +17790,7 @@
 					"1.1.25"
 				],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -16914,19 +17803,19 @@
 				},
 				{
 					"id": "size",
-					"text": "Size (`E1`) picks the spacing of the repeats in eight steps, labelled from micro to insane.",
-					"source": "https://teenage.engineering/guides/op-xy/fx#delay",
+					"text": "Size (`E1`) sets the spacing of the repeats and reads as a note value, such as 1/8 dotted.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "labels",
-					"text": "The guide names `E2` amount and `E3` fine, but describes `E2` as fine-tuning the spacing and `E3` as setting the feedback, so the screen may show the names the other way round; not yet checked on a unit.",
-					"source": "https://teenage.engineering/guides/op-xy/fx#delay",
+					"text": "The delay's columns read size, fine, feedback and dry — `E2` fine-tunes the spacing and `E3` sets the feedback.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "conflicting"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "dry",
@@ -16953,47 +17842,47 @@
 					"layer": "base",
 					"keys": "turn E1",
 					"name": "size",
-					"range": "8 steps, micro … insane",
+					"range": "note values, e.g. 1/8 dotted",
 					"default": null,
 					"cc": 12,
 					"cc_confidence": "community-verified",
 					"note": "coarse spacing between repeats",
-					"source": "https://teenage.engineering/guides/op-xy/fx#delay",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
 					"encoder": "E2",
 					"layer": "base",
 					"keys": "turn E2",
-					"name": "amount",
+					"name": "fine",
 					"range": null,
 					"default": null,
 					"cc": 13,
 					"cc_confidence": "community-verified",
-					"note": "described as fine-tuning the spacing",
-					"source": "https://teenage.engineering/guides/op-xy/fx#delay",
+					"note": "fine-tunes the spacing; the guide calls it amount",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
 					"encoder": "E3",
 					"layer": "base",
 					"keys": "turn E3",
-					"name": "fine",
+					"name": "feedback",
 					"range": null,
 					"default": null,
 					"cc": 14,
 					"cc_confidence": "community-verified",
-					"note": "described as feedback, the number of repeats",
-					"source": "https://teenage.engineering/guides/op-xy/fx#delay",
+					"note": "how many repeats come back; the guide calls it fine",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
@@ -17016,11 +17905,15 @@
 				"fx.overview",
 				"fx.reverb"
 			],
-			"body": "Set the rough echo distance with size, then fine-tune it and choose how long the echoes keep coming\nback. For a classic send, keep dry at 0 so the FX track returns only the echoes. The 1.1.25 fix for\njittery external clocks suggests the spacing follows the tempo, though the guide does not say so.",
+			"body": "Set the rough echo distance with size, then fine-tune it and choose how long the echoes keep coming\nback. For a classic send, keep dry at 0 so the FX track returns only the echoes. TE's guide calls the\nmiddle controls amount and fine and describes size as eight named steps from micro to insane; on\n1.1.33 the screen reads fine and feedback, and size shows note values, so the spacing follows the\ntempo.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/fx#delay",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.1.25",
@@ -17062,7 +17955,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -17080,6 +17973,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "labels",
+					"text": "The unit lists the effect as dist, and its columns read drive, clip, lo cut and hi cut — the guide's amount is labelled clip.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -17105,16 +18006,16 @@
 					"encoder": "E2",
 					"layer": "base",
 					"keys": "turn E2",
-					"name": "amount",
+					"name": "clip",
 					"range": null,
 					"default": null,
 					"cc": 13,
 					"cc_confidence": "community-verified",
-					"note": "how hard the signal is clipped",
-					"source": "https://teenage.engineering/guides/op-xy/fx#distorsion",
+					"note": "how hard the signal is clipped; the guide calls it amount",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
@@ -17154,11 +18055,15 @@
 				"fx.lofi",
 				"mix.saturator"
 			],
-			"body": "Drive sets how hot the signal hits the distortion, amount how hard it is clipped. Because the two\ncuts sit in front of the clipping, trimming the lows keeps bass from turning to mud, and trimming\nthe highs gives a darker, smoother crunch. As a send, it lets you add dirt to a drum bus or a lead\nby degrees while the dry track stays clean.",
+			"body": "Drive sets how hot the signal hits the distortion, clip how hard it is clipped. Because the two\ncuts sit in front of the clipping, trimming the lows keeps bass from turning to mud, and trimming\nthe highs gives a darker, smoother crunch. As a send, it lets you add dirt to a drum bus or a lead\nby degrees while the dry track stays clean.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/fx#distorsion",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/fx#distorsion",
@@ -17329,7 +18234,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -17355,6 +18260,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "labels",
+					"text": "The phaser's columns read frequency, depth, rate and feedback, as the guide names them.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [],
@@ -17433,6 +18346,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/fx#phaser",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/fx#phaser",
@@ -17470,7 +18387,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -17491,11 +18408,11 @@
 				},
 				{
 					"id": "labels",
-					"text": "The guide names `E3` rate and `E4` feedback, but describes them as a tone filter and as the dry/wet balance, so the screen may use other names; not yet checked on a unit.",
-					"source": "https://teenage.engineering/guides/op-xy/fx#reverb",
+					"text": "The reverb's columns read size, mod, tone and dry, so `E3` is the tone control and `E4` the dry level.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "conflicting"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "send-insert",
@@ -17545,43 +18462,47 @@
 					"encoder": "E3",
 					"layer": "base",
 					"keys": "turn E3",
-					"name": "rate",
+					"name": "tone",
 					"range": null,
 					"default": null,
 					"cc": 14,
 					"cc_confidence": "community-verified",
-					"note": "described as tone, filtering highs or lows",
-					"source": "https://teenage.engineering/guides/op-xy/fx#reverb",
+					"note": "darkens or brightens the reverb; the guide calls it rate",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"screen": "M1",
 					"encoder": "E4",
 					"layer": "base",
 					"keys": "turn E4",
-					"name": "feedback",
+					"name": "dry",
 					"range": null,
 					"default": null,
 					"cc": 15,
 					"cc_confidence": "community-verified",
-					"note": "described as the dry/wet balance",
-					"source": "https://teenage.engineering/guides/op-xy/fx#reverb",
+					"note": "dry signal against the reverb; the guide calls it feedback",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"related": [
 				"fx.overview",
 				"fx.delay"
 			],
-			"body": "The reverb is the classic send: one instance on an FX track, with each track sending as much as it\nneeds. Size sets the space, modulation moves the tail and the tone control darkens or brightens it.\nBecause TE's names for `E3` and `E4` do not match their descriptions, check the screen labels before\nquoting a name.",
+			"body": "The reverb is the classic send: one instance on an FX track, with each track sending as much as it\nneeds. Size sets the space, modulation moves the tail and the tone control darkens or brightens it.\nTE's guide names `E3` and `E4` rate and feedback; the screen calls them tone and dry, which matches\nwhat they do.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/fx#reverb",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/fx#reverb",
@@ -17655,11 +18576,11 @@
 				},
 				{
 					"id": "browse",
-					"text": "`turn E4` moves through the patterns the selected track already has.",
-					"source": "https://teenage.engineering/guides/op-xy/arrange#sound-link",
+					"text": "`turn E4` scrolls through the patterns of the selected track, drawn as a column of numbered blocks, so the current one sits on the colour band.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "mute",
@@ -17671,11 +18592,19 @@
 				},
 				{
 					"id": "keys",
-					"text": "In arrange, `M1`…`M4` open no pages; they add, copy, paste and remove patterns, and with `shift` held they manage scenes.",
-					"source": "https://teenage.engineering/guides/op-xy/arrange#edit-controls",
+					"text": "In arrange, `M1`…`M4` open no pages; the footer names them new, copy, paste and clear (delete once the track has more than one pattern), and with `shift` held they manage scenes.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "The arrange page shows eight track columns crossed by a band of track colours; the selected track's segment is bright and dotted with its notes, its number above, and the current scene number sits boxed at the bottom. On the auxiliary side a small icon appears at the top left.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -17756,11 +18685,11 @@
 					"kind": "guide"
 				},
 				{
-					"url": "https://teenage.engineering/guides/op-xy/arrange#sound-link",
-					"kind": "guide"
+					"url": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"kind": "research"
 				},
 				{
-					"url": "https://teenage.engineering/guides/op-xy/arrange#edit-controls",
+					"url": "https://teenage.engineering/guides/op-xy/arrange#sound-link",
 					"kind": "guide"
 				}
 			],
@@ -17853,11 +18782,19 @@
 				},
 				{
 					"id": "labels",
-					"text": "TE's screen art for arrange labels the four keys clear, copy, paste and new from left to right, the reverse of the guide text for `M1` and `M4`; not yet checked on a unit.",
-					"source": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"text": "On the device the arrange footer reads new, copy, paste and then clear or delete from left to right, so `M1` adds a pattern as the guide says; TE's screen art, which shows the order reversed, is wrong.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "conflicting"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "m4-label",
+					"text": "`M4` is labelled clear while the track has only one pattern and delete once it has more.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "player",
@@ -17928,7 +18865,7 @@
 					"steps": [
 						{
 							"keys": "M4",
-							"note": "check the label on screen first"
+							"note": "labelled clear while the track has one pattern, delete once it has more"
 						}
 					],
 					"result": null,
@@ -17957,7 +18894,7 @@
 					"kind": "changelog"
 				},
 				{
-					"url": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"url": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
 					"kind": "research"
 				},
 				{
@@ -18236,6 +19173,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community-verified"
+				},
+				{
+					"id": "footer",
+					"text": "With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -18327,6 +19272,10 @@
 				},
 				{
 					"url": "docs/research/20-midi-control.md#31-global-ccs",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
 					"kind": "research"
 				}
 			],
@@ -18582,6 +19531,22 @@
 					"firmware_min": "1.0.45",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "screen",
+					"text": "The song page is headed song 1 with a loop icon and shows a grid of 32 slots, eight across in four rows marked 1, 9, 17 and 25; scenes appear as numbered circles, a white line marks where the next scene goes, and a ring walks along the order during playback.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "footer",
+					"text": "Holding `shift` lights the footer with clear all, ←, → and delete over `M1`…`M4`, the song editing keys.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -18676,7 +19641,7 @@
 				"arrange.scenes",
 				"arrange.scene-queue"
 			],
-			"body": "Song mode turns scenes into a finished structure — intro, verse, chorus — each scene playing for its\nown length before the next. A cursor edits the list, and removing a scene from the song never\ndeletes it. Whether loop off is the stop-at-end option of 1.0.45 is not confirmed on a unit.",
+			"body": "Song mode turns scenes into a finished structure — intro, verse, chorus — each scene playing for its\nown length before the next. A cursor edits the list, and removing a scene from the song never\ndeletes it. Whether loop off is the stop-at-end option of 1.0.45 is not confirmed on a unit, nor how\nthe 32-slot grid shows an order longer than 32.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
@@ -18689,6 +19654,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.0.45",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
@@ -19107,11 +20076,35 @@
 				},
 				{
 					"id": "track-send-page",
-					"text": "Instrument tracks repeat these sends on their `M3` shift layer (FX I on `E3`, FX II on `E4`), but TE's drawing of that page stacks FX II above FX I; check the screen labels.",
-					"source": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"text": "Instrument tracks repeat these sends on their `M3` shift layer, whose rows run aux out, tape, FX I, FX II from the top — FX I on `E3`, FX II on `E4`. TE's drawing of that page puts FX II above FX I; the device does not.",
+					"source": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "conflicting"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "The page draws eight columns, one per track, each with its number, a level line and a pan dot along the bottom; CC7 and CC10 sent over MIDI move them as they arrive.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "send-display",
+					"text": "Turning `E1` or `E2` briefly swaps the selected track's column for two boxed labels, I and II, each with a dark bar rising to its send level; after about a second the column comes back.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "cc38-quiet",
+					"text": "Sending CC38 changes a track's FX I send without calling up that I and II display.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -19280,7 +20273,11 @@
 					"kind": "research"
 				},
 				{
-					"url": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"url": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#210-mixer",
 					"kind": "research"
 				}
 			],
@@ -19543,11 +20540,43 @@
 				},
 				{
 					"id": "midi",
-					"text": "Over MIDI, CC90 controls the EQ, with the channel choosing the band — 1 low, 2 mid, 3 high, 4 blend; one community tool reports the blend channel not responding.",
-					"source": "docs/research/20-midi-control.md#31-global-ccs",
+					"text": "Over MIDI, CC90 moves the EQ bands, the channel choosing which — 1 low, 2 mid, 3 high.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community-verified"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "midi-blend",
+					"text": "CC90 on channel 4 changed nothing visible on the EQ page, so no MIDI control for blend is confirmed.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "The EQ page pictures the three bands as groups of panels standing on an isometric grid floor, next to a slider track with an N at one end.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "bands-drawn",
+					"text": "Each band tilts its own group of panels, lying flat at the minimum and upright at the maximum; in a new project all three bands sat at the middle value, 64.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "blend-drawn",
+					"text": "Turning `E4` slides a knob along that track and reshapes the whole scene; as it travels, the low and high panels flatten and the mid panels stand up.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -19681,7 +20710,7 @@
 					"kind": "guide"
 				},
 				{
-					"url": "docs/research/20-midi-control.md#31-global-ccs",
+					"url": "docs/research/59-screen-profiling.md#210-mixer",
 					"kind": "research"
 				}
 			],
@@ -19757,6 +20786,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community"
+				},
+				{
+					"id": "screen",
+					"text": "The saturator page shows four vertical tick ladders — gain, clip, tone and mix from left to right — each topped by a cap in its encoder's style.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -19858,6 +20895,10 @@
 				{
 					"url": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
 					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#210-mixer",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/mix#saturator",
@@ -19934,6 +20975,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community"
+				},
+				{
+					"id": "screen",
+					"text": "The master page shows the percussion and melodic levels as large numbers, a tall bar in the middle that `E3` shortens, and a VU meter from −20 to +3 above the word master.",
+					"source": "docs/research/59-screen-profiling.md#210-mixer",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -20033,6 +21082,10 @@
 				},
 				{
 					"url": "docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#210-mixer",
 					"kind": "research"
 				}
 			],
@@ -21275,7 +22328,7 @@
 				"min": "1.0.9",
 				"changed_in": [],
 				"guide_version": "1.1.15",
-				"verified_on": null
+				"verified_on": "1.1.33"
 			},
 			"facts": [
 				{
@@ -21289,10 +22342,10 @@
 				{
 					"id": "tap",
 					"text": "Tapping `tempo` repeatedly in time with the music sets the tempo.",
-					"source": "https://teenage.engineering/guides/op-xy/tempo#project",
+					"source": "docs/research/59-screen-profiling.md#211-tempo",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "official"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "metronome",
@@ -21314,6 +22367,38 @@
 					"id": "new-project",
 					"text": "A new empty project on the owner's unit ran at 120 BPM.",
 					"source": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "screen",
+					"text": "The tempo page has a light background, the BPM as a large number on the left and a metronome in the middle carrying the groove type's two-letter abbreviation.",
+					"source": "docs/research/59-screen-profiling.md#211-tempo",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "weight",
+					"text": "The metronome's weight slides down its arm as the tempo rises, from the top at 40 BPM to the bottom at 220.",
+					"source": "docs/research/59-screen-profiling.md#211-tempo",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "speaker",
+					"text": "The speaker icon at the top right loses its sound waves as `E4` turns the metronome down.",
+					"source": "docs/research/59-screen-profiling.md#211-tempo",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "pendulum",
+					"text": "While the sequencer plays, the pendulum swings and leaves motion trails.",
+					"source": "docs/research/59-screen-profiling.md#211-tempo",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
@@ -21446,6 +22531,10 @@
 					"kind": "guide"
 				},
 				{
+					"url": "docs/research/59-screen-profiling.md#211-tempo",
+					"kind": "research"
+				},
+				{
 					"url": "https://teenage.engineering/guides/op-xy/tempo#edit-tempo",
 					"kind": "guide"
 				},
@@ -21528,11 +22617,11 @@
 				},
 				{
 					"id": "types",
-					"text": "`turn E2` on the tempo screen picks the groove type, in this order: shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over and prophetic.",
-					"source": "docs/research/40-official-docs.md#52-older-gaps-and-contradictions-true-even-for-1115",
+					"text": "`turn E2` on the tempo screen picks the groove type, in this order: shuffle, half shuffle, danish, bombora, wobbly, gaussian, accents, island nod, disfunk, roll over and prophetic. The metronome shows each as two letters — SH, HS, DA, BO, WO, GA, AC, IN, DF, RO, PR.",
+					"source": "docs/research/59-screen-profiling.md#211-tempo",
 					"firmware_min": null,
-					"verified_on": null,
-					"confidence": "community-verified"
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				},
 				{
 					"id": "plain-types",
@@ -21576,7 +22665,15 @@
 				},
 				{
 					"id": "cc81",
-					"text": "Over MIDI, CC81 on any channel sets the groove; community tables treat 63 as no groove.",
+					"text": "Over MIDI, CC81 sets the groove amount, drawn as a slider under the metronome on the tempo page — far left at 0, centred at 64, far right at 127.",
+					"source": "docs/research/59-screen-profiling.md#211-tempo",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "cc81-neutral",
+					"text": "Community MIDI tables give 63 as the no-groove value, one below the slider's centre at 64; which of the two is exactly neutral is not confirmed.",
 					"source": "docs/research/20-midi-control.md#31-global-ccs",
 					"firmware_min": null,
 					"verified_on": null,
@@ -21623,6 +22720,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/tempo#edit-tempo",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#211-tempo",
+					"kind": "research"
 				},
 				{
 					"url": "docs/research/40-official-docs.md#52-older-gaps-and-contradictions-true-even-for-1115",

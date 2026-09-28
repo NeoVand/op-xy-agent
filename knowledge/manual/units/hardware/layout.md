@@ -54,6 +54,11 @@ facts:
   - id: octave-keys
     text: '`[-]` and `[+]` move the keyboard one octave down or up; several pages give them other jobs.'
     source: https://teenage.engineering/guides/op-xy/layout#transport-controls
+  - id: octave-popup
+    text: On an instrument page, `[-]` and `[+]` bring up a small white card low in the middle of the screen, with a mini keyboard and the octave offset in thin digits (+0, +1, −1, −3 …); it fades after a second or two. On the external CV page the offset appears inside the meter card instead.
+    source: docs/research/59-screen-profiling.md#212-octave-popup
+    confidence: verified
+    verified_on: '1.1.33'
   - id: shift-key
     text: "`shift` does nothing alone: held with another key it opens that key's secondary function or page."
     source: https://teenage.engineering/guides/op-xy/layout#transport-controls

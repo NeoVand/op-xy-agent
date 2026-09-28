@@ -16,8 +16,10 @@ firmware:
   verified_on: null
 facts:
   - id: where
-    text: Holding `shift` while `M3` is open shows the sends; `E1` is aux out, `E2` tape, `E3` FX I and `E4` FX II.
-    source: https://teenage.engineering/guides/op-xy/instrument#filter
+    text: Holding `shift` while `M3` is open brings up a white card of four send rows, worked by `E1`…`E4` from the top — aux out (a plug icon), tape (a reel icon), FX I and FX II; a row reads no send at zero.
+    source: docs/research/59-screen-profiling.md#23-filter-instrument-m3
+    confidence: verified
+    verified_on: '1.1.33'
   - id: aux-out
     text: Aux out feeds the external audio track (auxiliary `T5`), whose output leaves through the multi-out jack when that jack is set to audio.
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio

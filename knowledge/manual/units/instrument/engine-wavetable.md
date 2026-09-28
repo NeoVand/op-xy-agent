@@ -13,7 +13,7 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: what
     text: A wavetable is a row of waveforms stored one after another; moving through it morphs the oscillator smoothly from shape to shape.
@@ -21,6 +21,16 @@ facts:
   - id: nine
     text: The engine offers nine wavetables.
     source: https://teenage.engineering/guides/op-xy/synth-engines#wavetable
+  - id: tables
+    text: The first cell of the top bar names the current table; turning `E1` steps through basic, buzz, crush, drawbars, fibonacci, fractal, geometric, primes and zap.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: picture
+    text: The picture is the waveform itself, morphing and leaving trails as it changes; drift fans it out into moving ghost copies.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

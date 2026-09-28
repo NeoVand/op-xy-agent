@@ -45,6 +45,16 @@ facts:
     text: OS 1.1.25 improved how multisamples follow global transpose.
     source: https://teenage.engineering/downloads/op-xy#1.1.25
     firmware_min: '1.1.25'
+  - id: screen
+    text: The top strip is a full keyboard on which the zone of the sample being played lights up, jumping with the octave; each zone brings its own waveform and markers, and the shift layer matches the synth sampler's.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: no-cc
+    text: CC12–15 on the track's channel move nothing on this page.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: record-zones
     goal: Multisample an instrument

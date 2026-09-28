@@ -13,7 +13,7 @@ firmware:
   min: '1.0.9'
   changed_in: ['1.0.15', '1.1.0', '1.1.3']
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: types
     text: '`shift + M4` switches the LFO type between duck, element, random, tremolo and value.'
@@ -44,9 +44,19 @@ facts:
     source: https://teenage.engineering/downloads/op-xy#1.0.15
     firmware_min: '1.0.15'
   - id: midi-ccs
-    text: CC40–43 probably follow the four `M4` encoders, but community labels for them disagree; the LFO type has no known CC.
-    source: docs/research/20-midi-control.md#37-known-conflicts--errata-in-the-sources
-    confidence: conflicting
+    text: Over MIDI, CC40–43 on the track's channel drive the four `M4` encoders in order, in all five LFO types.
+    source: docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: no-type-cc
+    text: No MIDI CC is known for the LFO type.
+    source: docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
+    confidence: community-verified
+  - id: off
+    text: With the LFO off, the page is dimmed under an off box; pressing `M4` again switches the LFO on.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: type
     goal: Change the LFO type of the selected track

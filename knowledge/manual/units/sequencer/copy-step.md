@@ -23,6 +23,11 @@ facts:
   - id: since
     text: Copying by holding a step arrived in OS 1.0.13.
     source: https://teenage.engineering/downloads/op-xy#1.0.13
+  - id: copied
+    text: When a held step is copied, its number box on the screen adds the word copied.
+    source: docs/research/59-screen-profiling.md#28-bar-steps
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: copy-paste
     goal: Copy one step to another

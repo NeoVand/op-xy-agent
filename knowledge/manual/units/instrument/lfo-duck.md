@@ -13,7 +13,7 @@ firmware:
   min: '1.1.0'
   changed_in: ['1.1.3']
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: what
     text: Duck lowers the track's own volume in response to a source, giving the pumping effect usually made with a sidechain compressor.
@@ -28,6 +28,11 @@ facts:
     text: OS 1.1.3 fixed using a MIDI track as the duck source.
     source: https://teenage.engineering/downloads/op-xy#1.1.3
     firmware_min: '1.1.3'
+  - id: screen
+    text: Duck shows its source as a track number (tr 1 and on), the last position a metronome icon, then amount, a live signal box and cards for hold and release.
+    source: docs/research/59-screen-profiling.md#24-lfo-instrument-m4-five-types
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M4
     encoder: E1

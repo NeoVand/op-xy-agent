@@ -44,6 +44,11 @@ facts:
     text: Notes on MIDI channel 10 trigger punch-in FX; which note fires which effect is unpublished.
     source: docs/research/20-midi-control.md#43-punch-in-fx-notes-ch10
     confidence: community-verified
+  - id: animations
+    text: On `T2` each of the 24 keys plays its own animation on the screen — planets, a digit clock, noise, hands, waves, sweeping lines and bars, and more.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: record-shortcut
     goal: Record punch-in FX from an instrument track

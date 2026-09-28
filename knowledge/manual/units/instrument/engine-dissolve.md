@@ -13,11 +13,16 @@ firmware:
   min: '1.0.9'
   changed_in: []
   guide_version: '1.1.15'
-  verified_on: null
+  verified_on: '1.1.33'
 facts:
   - id: character
     text: Dissolve mixes noise into pitched oscillators, which suits ambient pads and bright, rough-edged leads.
     source: https://teenage.engineering/guides/op-xy/synth-engines#dissolve
+  - id: picture
+    text: Dissolve fills the screen with a mosaic of squares that never stops moving; raising fm or detune whitens it.
+    source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
+    confidence: verified
+    verified_on: '1.1.33'
 parameters:
   - screen: M1
     encoder: E1

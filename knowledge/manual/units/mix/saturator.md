@@ -28,6 +28,11 @@ facts:
     text: No MIDI CC is known for the master saturator.
     source: docs/research/20-midi-control.md#33-instrument-tracks-18-synth-drum-sampler-multisampler-engines
     confidence: community
+  - id: screen
+    text: The saturator page shows four vertical tick ladders — gain, clip, tone and mix from left to right — each topped by a cap in its encoder's style.
+    source: docs/research/59-screen-profiling.md#210-mixer
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: open
     goal: Open the master saturator
