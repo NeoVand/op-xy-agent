@@ -251,6 +251,42 @@ const CASES: readonly HowtoCase[] = [
 			return fails;
 		}
 	},
+	// the agent panel's starter suggestions, word for word
+	{
+		id: 'starter-walkthrough',
+		prompt: 'walk me through setting the filter cutoff on track 3',
+		check(o) {
+			const fails: string[] = [];
+			if (o.guided.length === 0) fails.push('no walkthrough on the replica');
+			if (showed(o)) fails.push('played the steps itself');
+			return fails;
+		}
+	},
+	{
+		id: 'starter-pump',
+		prompt: 'make the bass pump with the kick',
+		check(o) {
+			const fails: string[] = [];
+			const lfo = o.state.tracks[2].lfo;
+			if (lfo.type !== 'duck' || !lfo.on) fails.push(`track 3's lfo is ${lfo.type}`);
+			if (lfo.source !== 1 && lfo.source !== DUCK_METRONOME) fails.push(`source ${lfo.source}`);
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			return fails;
+		}
+	},
+	{
+		id: 'starter-loop',
+		prompt: 'build a little house loop and play it',
+		check(o) {
+			const fails: string[] = [];
+			const kicks = o.virtual.readPattern(1).notes.filter((n) => n.note === 53);
+			if (kicks.length < 4) fails.push(`${kicks.length} kicks on track 1`);
+			const others = [2, 3, 4, 5, 6, 7, 8].filter((t) => o.virtual.readPattern(t).notes.length > 0);
+			if (others.length === 0) fails.push('only drums');
+			if (!o.state.transport.playing) fails.push('not playing');
+			return fails;
+		}
+	},
 	{
 		id: 'pluck',
 		prompt:
