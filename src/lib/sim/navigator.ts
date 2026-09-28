@@ -557,9 +557,10 @@ export function planSettings(state: SimState, goals: readonly ParamGoal[]): Sett
 // ─────────────────────────────────────────────────────────────────── values on the other pages
 
 /**
- * A value an auxiliary or mixer page shows, named the way the page's description names it
- * ("size" on FX II, "speed" on the tape, "low" on the master EQ, "level" on mix M1). No table
- * says which encoder carries it: the navigator turns each one on a copy and watches the page.
+ * A value an auxiliary, mixer or player page shows, named the way the page's description names it
+ * ("size" on FX II, "speed" on the tape, "low" on the master EQ, "level" on mix M1, "style" on the
+ * player's shift layer). No table says which encoder carries it: the navigator turns each one on a
+ * copy and watches the page.
  */
 export interface PageValueGoal {
 	readonly area: 'auxiliary' | 'mix' | 'player';
@@ -724,7 +725,10 @@ function walkToPage(rec: Recorder, goal: PageValueGoal, page: PageNumber): void 
 	if ((bank === 'instrument' ? s.track : s.auxTrack) !== index) rec.do(`T${index + 1}`);
 }
 
-/** Steps that set a value an auxiliary or mixer page shows, run on a copy of the simulator. */
+/**
+ * Steps that set a value an auxiliary, mixer or player page shows, run on a copy of the
+ * simulator. When the exact reading is skipped, the steps stop at the nearest one.
+ */
 export function planPageValue(state: SimState, goal: PageValueGoal): NavPlan {
 	// the player is one page; the others have four
 	const pages: readonly PageNumber[] =
