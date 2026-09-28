@@ -20,6 +20,10 @@ export interface StepHold {
 	place: boolean;
 	/** Something happened while it was down (a key, a lock, a nudge, an extend), so its release does nothing. */
 	edited: boolean;
+	/** When it went down on the simulator's clock (`SequencerState.clock`), for the screen. */
+	at: number;
+	/** Held long enough with its notes to be copied (the device says "copied" while it is down). */
+	copied: boolean;
 }
 
 /** What the screen showed before `bar` went down, restored when it comes up. */
@@ -103,8 +107,20 @@ export interface SequencerState {
 	/** Maestro chord hits so far (its up/down strum alternates). */
 	hits: number;
 
+	// the screen's transient parts (research 59 §2.8, §2.12): time left, in ms of `clock`
+	/** The octave popup after [-] / [+]. */
+	octavePopup: number;
+	/** "copied" over the top bar once a held step was copied. */
+	copiedPopup: number;
+	/** The bar card fading out after it went. */
+	barFade: number;
+	/** The bar card's clear labels still sliding up into place. */
+	barSlide: number;
+	/** A lock was just turned on a held step: its box is orange. */
+	locking: number;
+
 	// time
-	/** Milliseconds the simulator has advanced (LED blinking). */
+	/** Milliseconds the simulator has advanced (LED blinking, the screen's timers). */
 	clock: number;
 }
 
@@ -142,6 +158,11 @@ export function initialSequencer(): SequencerState {
 		chordFresh: true,
 		playerList: false,
 		hits: 0,
+		octavePopup: 0,
+		copiedPopup: 0,
+		barFade: 0,
+		barSlide: 0,
+		locking: 0,
 		clock: 0
 	};
 }

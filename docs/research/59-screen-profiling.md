@@ -290,6 +290,39 @@ are design px (capture rows × 220/222).
   - recording a lock turns the box orange;
   - holding a locked step shows the locked values in the top bar (e.g. shape 00, detune 06 against
     15 / 05).
+- **Measured** (design px, overlays within about half a pixel on average; built in
+  `src/lib/sim/areas/sequencer/bar-draw.ts` and `popup-draw.ts`):
+  - **Card:** 320 × 130 at (80, 40), radius ≈ 6, over the page it covers, which shows at about 30 %
+    (it is an overlay, not a page of its own).
+  - **Bar boxes:** 35 × 34.5 at x 82.5 + 40i, y 43.5, radius 3. The shown bar is filled; other
+    existing bars are outlined in 1 px ink. Digits are 29.25 px, pen at x 91.5 + 40i, baseline 70.8.
+    bar + [+] / [−] adds or removes boxes live.
+  - **"track scale":** 20 px, pen 244.5, baseline 71.2; its value at pen ≈ 363.5.
+  - **Faint rules** (≈ #cdcdcd): one under the top row at y 81.5; a divider at x 240 over the full
+    height; columns at x 160 and 200 below the top row; the roll grid every 20 px across (260–380)
+    and every 10 px down (91.5–161.5).
+  - **Table:** light weight, 20 px. Labels at pen x 84.5, baselines 100.3 + 20k; values centred at
+    x 179.5; dots centred at (220, 95.4 + 20k). Groove reads "-" at 0 and "+16" above; quant reads
+    "100", "96"; shape is only a glyph, a 1.5 px polyline from (171.1, b − 0.45) through a knee at
+    x = 189.4 − 18.3 × smoothing to (189.4, b − 13.8).
+  - **Roll:** x = 240 + 10 × step, a 1.5 px dash as long as the note (5 px at 50 %). Dash heights
+    seen: 113.8, 119.85, 129.9, 135.8. Pitch is placed one pixel per semitone (ours; which keys
+    were played was not logged).
+  - **Clear labels:** 20 px, baseline 215. "clr notes" starts at x 9.5 (not centred over M1),
+    "clr params" is centred at 174.4, "clr all" at 439.6. They slide up as the card opens (one frame
+    caught them 13.4 px low).
+  - **Release:** the camera's rolling shutter caught the card's opacity falling from 0.66 to 0.27
+    across the screen, so the whole fade takes about 30–50 ms. The page's dimming lifts first.
+  - **Step box:** 50 × 50 at (215, 25), radius ≈ 4.5. The number is 39–40 px, centred at x 239.4,
+    baseline 65.2. It turns orange with a white number while a lock is written, and the top bar shows
+    the locked value live (shape 20 → 10 → 00). It goes white again within a second of the last
+    detent.
+  - **"copied":** a white tab at x 202.5–278.5 from the top edge down to y 22.3, the word 20 px,
+    centred at x 238.7, baseline 17.45. It appears within about a second while the step is still
+    held (the copy happens during the hold, not on release) and stays 1–2 s.
+  - **Digits:** the device's 1 is proportional (left bearing ≈ 65 font units, advance ≈ 394,
+    against 138 and 545 in the tabular figures), which is why "13", "100" and "+16" look tighter
+    (`device-text.ts`). Light-on-dark text looks bold only because of camera bloom.
 
 ### 2.9 Arrange and song mode
 
@@ -373,6 +406,11 @@ below gave: M1 popup 1.0 / 0.3 px, EQ 0.26 / 0.17, saturator 0.33 / 0.25, master
 - [+] / [−] on an instrument page show a small white card with a mini piano and the offset in a thin
   font: +1, **+0**, −1, −3. It appears low in the middle and fades after ~1–2 s.
 - On the external CV page it appears inside the meter card.
+- **Measured:** the card is 100 × 50 at (190, 155), radius ≈ 5. White-key dividers sit at x 200,
+  210 and 220, with an edge line at x 230 over the full height; the black keys are ≈ 5 px wide, from
+  the card top to y 184.5. The sign is 38 px, its ink centred at x 247.4, baseline 191.5 (3 px above
+  the digit's); the digit is 39 px, pen fixed at x 258.8, baseline 194.5. No fading frame was caught.
+  The device reached −3.
 
 ### 2.13 Auxiliary tracks
 

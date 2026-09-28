@@ -1,11 +1,15 @@
 /**
  * Simulator states that show the sequencer area's pages (see `../../scenarios.ts`). TE's guide has
- * no picture of any of them (`png: null`), so each says the layout is ours.
+ * no picture of any of them (`png: null`): each says whether the page follows the device's own
+ * screen (camera captures, research 59) or is our layout.
  */
 import type { Scenario } from '../../scenarios';
 import type { OpxySim } from '../../opxy-sim.svelte';
+import { BAR_SLIDE_MS } from './model';
 
 const OURS = 'No guide art for this page: our layout in TE’s visual language.';
+/** A page rebuilt from camera captures of the owner's unit (research 59 §2.7, §2.8, §2.12). */
+const DEVICE = 'No guide art for this page: drawn as the device draws it (camera captures).';
 
 /** Holds a key or encoder push down (no release). */
 const hold = (sim: OpxySim, id: string) => sim.input({ type: 'press', id });
@@ -22,7 +26,7 @@ export const scenarios: readonly Scenario[] = [
 		png: null,
 		title: 'bar menu (bar held)',
 		page: 'bar',
-		note: OURS,
+		note: DEVICE,
 		setup: (sim) => {
 			sim.press('track.3');
 			place(sim, 'c4', [1, 4, 7, 11, 13]);
@@ -31,6 +35,7 @@ export const scenarios: readonly Scenario[] = [
 			sim.press('step.12'); // which plays 12 of its steps
 			sim.turn(1, -24); // quantise 76
 			sim.turn(3, 9); // groove 21
+			sim.advance(BAR_SLIDE_MS); // the clear labels in place
 		}
 	},
 	{
@@ -54,7 +59,7 @@ export const scenarios: readonly Scenario[] = [
 		png: null,
 		title: 'player · arpeggio',
 		page: 'player',
-		note: OURS,
+		note: DEVICE,
 		setup: (sim) => {
 			sim.press('track.3');
 			sim.press('key.player');
@@ -69,7 +74,7 @@ export const scenarios: readonly Scenario[] = [
 		png: null,
 		title: 'player · maestro',
 		page: 'player',
-		note: OURS,
+		note: DEVICE,
 		setup: (sim) => {
 			sim.press('track.4');
 			sim.combo('key.shift', 'key.player'); // maestro
@@ -85,7 +90,7 @@ export const scenarios: readonly Scenario[] = [
 		png: null,
 		title: 'M3 · a step held, cutoff locked',
 		page: 'lock',
-		note: OURS,
+		note: `${DEVICE} The box is orange while the lock is being written.`,
 		setup: (sim) => {
 			sim.press('track.3');
 			place(sim, 'c4', [1, 5, 9, 13]);
@@ -93,6 +98,17 @@ export const scenarios: readonly Scenario[] = [
 			hold(sim, 'step.5');
 			sim.turn(1, -40);
 			sim.turn(2, 30);
+		}
+	},
+	{
+		id: 'octave',
+		png: null,
+		title: 'octave popup ([+])',
+		page: 'popup',
+		note: `${DEVICE} It goes after about a second, as on the device.`,
+		setup: (sim) => {
+			sim.press('track.3'); // a new project's T3 plays an octave down
+			sim.press('key.plus'); // +0
 		}
 	}
 ];

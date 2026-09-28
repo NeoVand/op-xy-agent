@@ -671,6 +671,47 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 		});
 	});
 
+	describe('what the device shows while sequencing (OS 1.1.33 by camera: note 59 §2.8, §2.12)', () => {
+		it('shows the bar card over the page it covers, with a box for each bar the pattern has', async () => {
+			const d = await start();
+			await synth(d);
+			await d.holding('key.bar', async () => {
+				await d.click('key.plus');
+				const f = d.frame;
+				expect(f.page).toBe('bar');
+				if (f.page === 'bar')
+					expect(f).toMatchObject({ bars: 2, shown: 0, base: { page: 'synth' } });
+				expect(d.screen()).toMatch(/^bar menu: quant 100, length 50, groove -, shape 00/);
+			});
+			await d.wait(100); // the card fades out in about 50 ms
+			expect(d.frame.page).toBe('synth');
+		});
+
+		it('shows the keyboard octave for a moment after [+] / [-], "+0" included', async () => {
+			const d = await start();
+			await synth(d); // a new project's track 3 plays an octave down
+			await d.click('key.plus');
+			expect(d.screen()).toMatch(/^octave \+0: /);
+			await d.click('key.minus');
+			expect(d.screen()).toMatch(/^octave -1: /);
+			await d.wait(1500);
+			expect(d.screen()).not.toMatch(/^octave/);
+		});
+
+		it('shows a held step’s number, and "copied" once it has been held long enough', async () => {
+			const d = await start();
+			await synth(d);
+			await play(d, 'c4');
+			await d.click(step(3));
+			await d.holding(step(3), async () => {
+				expect(d.screen()).toMatch(/^step 3 held/);
+				await d.wait(HOLD_MS);
+				expect(d.screen()).toMatch(/^copied: step 3 held/);
+			});
+			expect(notes(d, 3)).toEqual([48]); // copied, not cleared
+		});
+	});
+
 	describe('8.2 adding step components', () => {
 		it('dims the steps that have notes but no component while shift is held', async () => {
 			const d = await start();

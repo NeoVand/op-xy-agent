@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { OpxySim } from '../../opxy-sim.svelte';
 import type { ScreenFrame } from '../../screen/frame';
+import { COLORS } from '../../screen/palette';
 import { RecordingContext } from '../../screen/recording';
 import { describeFrame, renderFrame } from '../../screen/render';
 import { NUDGE, OVERLAP, currentPattern, getComponent, type Pattern } from '../../sequencer';
@@ -11,9 +12,19 @@ import {
 	describeComponent,
 	naturalIndex
 } from './components';
+import { figuresLayout } from './device-text';
 import { flashing } from './leds';
 import { lockParam, lockTarget, lockedTrack, turnedValue } from './locks';
-import { trackOctave } from './model';
+import {
+	BAR_FADE_MS,
+	BAR_SLIDE_MS,
+	COPIED_POPUP_MS,
+	COPY_MS,
+	LOCKING_MS,
+	OCTAVE_POPUP_MS,
+	POPUP_FADE_MS,
+	trackOctave
+} from './model';
 import { COUNT_IN } from './recording';
 
 /** A simulator on a clock the test moves. */
@@ -59,22 +70,39 @@ function place(sim: OpxySim, key: string, steps: readonly number[]): void {
 const SIXTEENTH = 125;
 
 describe('bar menu (manual: sequencer/bar-menu)', () => {
-	it('shows while bar is held, then returns to the page it covered', () => {
+	it('shows the card over the page it covers while bar is held, then fades it out', () => {
 		const { sim } = rig();
 		sim.press('track.3');
 		sim.press('key.m3');
 		down(sim, 'key.bar');
 		const bar = page(sim, 'bar');
 		expect(bar.header.map((c) => `${c.label} ${c.value}`)).toEqual([
-			'quantise 100',
+			'quant 100',
 			'length 50',
-			'groove 00',
+			'groove -',
 			'shape 00'
 		]);
 		expect(bar).toMatchObject({ bars: 1, length: 16, scale: '1', shown: 0, pinned: false });
-		expect(bar.soft.map((l) => l?.text ?? null)).toEqual(['notes', 'params', null, 'all']);
+		expect(bar).toMatchObject({ going: false, fade: 1, base: { page: 'filter' } });
+		expect(bar.soft.map((l) => l?.text ?? null)).toEqual([
+			'clr notes',
+			'clr params',
+			null,
+			'clr all'
+		]);
+		// the clear labels slide up into place
+		expect(bar.slide).toBe(0);
+		sim.advance(BAR_SLIDE_MS / 2);
+		expect(page(sim, 'bar').slide).toBeCloseTo(0.5);
+		sim.advance(BAR_SLIDE_MS / 2);
+		expect(page(sim, 'bar').slide).toBe(1);
 		up(sim, 'key.bar');
 		expect(sim.state.overlay).toBeNull();
+		// the card fades out over the page, which is no longer dimmed
+		expect(page(sim, 'bar')).toMatchObject({ going: true, fade: 1, base: { page: 'filter' } });
+		sim.advance(BAR_FADE_MS / 2);
+		expect(page(sim, 'bar').fade).toBeCloseTo(0.5);
+		sim.advance(BAR_FADE_MS / 2);
 		expect(sim.frame.page).toBe('filter');
 	});
 
@@ -94,7 +122,12 @@ describe('bar menu (manual: sequencer/bar-menu)', () => {
 		// bar + step 12: the last bar plays 12 steps
 		sim.press('step.12');
 		expect(pattern(sim).length).toBe(28);
-		expect(page(sim, 'bar').cells[1].filter((c) => c === 'trimmed')).toHaveLength(4);
+		// the card: two bars, the first on the step keys, its notes in the roll (half a step long)
+		expect(page(sim, 'bar')).toMatchObject({ bars: 2, shown: 0, length: 28 });
+		expect(page(sim, 'bar').notes).toEqual([
+			{ at: 0, length: 0.5, note: 48 },
+			{ at: 4, length: 0.5, note: 48 }
+		]);
 		// the step keys show the length: notes white, the rest of it dim
 		expect(stepLeds(sim)).toBe('wdddwddddddddddd');
 		// bar + black key: the track scale (the key marked 4 is 4; 0 is 1/2), lit while bar is held
@@ -106,6 +139,7 @@ describe('bar menu (manual: sequencer/bar-menu)', () => {
 		sim.press('keyboard.c4'); // a white key does nothing here
 		expect(pattern(sim).scale).toBe(0.5);
 		up(sim, 'key.bar');
+		sim.advance(BAR_FADE_MS);
 		expect(sim.frame.page).toBe('synth');
 		// the combos above were not taps: the keys still show bar 1
 		expect(sim.track.sequence.page).toBe(0);
@@ -118,10 +152,11 @@ describe('bar menu (manual: sequencer/bar-menu)', () => {
 		sim.turn(2, 10);
 		sim.turn(3, 3);
 		sim.turn(4, 5);
-		expect(page(sim, 'bar').header.map((c) => c.value)).toEqual(['76', '60', '07', '05']);
+		expect(page(sim, 'bar').header.map((c) => c.value)).toEqual(['76', '60', '+07', '05']);
+		expect(page(sim, 'bar').smoothing).toBeCloseTo(5 / 99);
 		sim.turn(2, 100);
 		sim.turn(3, -10);
-		expect(page(sim, 'bar').header.map((c) => c.value)).toEqual(['76', '100', '–16', '05']);
+		expect(page(sim, 'bar').header.map((c) => c.value)).toEqual(['76', '100', '-16', '05']);
 		sim.click(1);
 		expect(page(sim, 'bar').header[0].value).toBe('off');
 		expect(pattern(sim)).toMatchObject({ quantise: 76, quantiseOn: false, noteLength: 1 });
@@ -208,7 +243,38 @@ describe('bar menu (manual: sequencer/bar-menu)', () => {
 		sim.press('key.m4');
 		up(sim, 'key.bar');
 		expect(counts()).toEqual({ notes: 0, locks: 0 });
+		sim.advance(BAR_FADE_MS);
 		expect(sim.frame.page).toBe('synth');
+	});
+
+	it('draws the card as the device does: the page dimmed, bars, table, roll, clear labels', () => {
+		const { sim } = rig();
+		sim.press('track.3');
+		place(sim, 'c4', [1, 5]); // 48: a new project has T3's keyboard an octave down
+		down(sim, 'key.bar');
+		sim.press('key.plus'); // a second bar
+		sim.advance(BAR_SLIDE_MS);
+		const ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		// the page under the card at 30 %
+		const veil = ctx.fillsOf(COLORS.black).filter((f) => f.alpha === 0.7);
+		expect(veil).toEqual([{ color: COLORS.black, alpha: 0.7, x0: 0, y0: 0, x1: 480, y1: 220 }]);
+		const box = (f: { x0: number; y0: number; x1: number; y1: number }) => [f.x0, f.y0, f.x1, f.y1];
+		// the card, and bar 1's box filled (the bar on the step keys)
+		expect(ctx.fillsOf(COLORS.white).map(box)).toContainEqual([80, 40, 400, 170]);
+		const ink = ctx.fillsOf(COLORS.ink);
+		expect(ink.map(box)).toContainEqual([82.5, 43.5, 117.5, 78]);
+		// a dash per note, as long as the note, a pixel a semitone: C3 on steps 1 and 5
+		expect(ink.filter((f) => f.y1 - f.y0 === 1.5).map(box)).toEqual([
+			[240, 129.05, 245, 130.55],
+			[280, 129.05, 285, 130.55]
+		]);
+		// letting go: the card fades over the page, no longer dimmed
+		up(sim, 'key.bar');
+		const going = new RecordingContext();
+		renderFrame(going, sim.frame);
+		expect(going.fillsOf(COLORS.black).filter((f) => f.alpha === 0.7)).toEqual([]);
+		expect(going.fillsOf(COLORS.white).map(box)).toContainEqual([80, 40, 400, 170]);
 	});
 });
 
@@ -425,6 +491,110 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		expect(lockParam('lfo.speed')?.format(20)).toBe('08');
 		expect(lockParam('nope')).toBeNull();
 		expect(lockedTrack(t, {})).toBe(t);
+	});
+});
+
+describe('popups and the held step’s box (research 59 §2.8, §2.12)', () => {
+	it('shows a held step’s number, orange while a lock is written and white again after', () => {
+		const { sim } = rig();
+		sim.press('track.3');
+		down(sim, 'step.5');
+		expect(page(sim, 'lock')).toMatchObject({ step: 5, locking: false });
+		sim.turn(1, 5);
+		expect(page(sim, 'lock')).toMatchObject({ step: 5, locking: true });
+		const ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		const box = (f: { x0: number; y0: number; x1: number; y1: number }) => [f.x0, f.y0, f.x1, f.y1];
+		expect(ctx.fillsOf(COLORS.record).map(box)).toEqual([[215, 25, 265, 75]]);
+		sim.advance(LOCKING_MS);
+		expect(page(sim, 'lock').locking).toBe(false);
+		const white = new RecordingContext();
+		renderFrame(white, sim.frame);
+		expect(white.fillsOf(COLORS.record)).toEqual([]);
+		expect(white.fillsOf(COLORS.white).map(box)).toContainEqual([215, 25, 265, 75]);
+		up(sim, 'step.5');
+	});
+
+	it('says "copied" once a held step is copied, while it is down and a moment after', () => {
+		const { sim, clock } = rig();
+		sim.press('track.3');
+		place(sim, 'c4', [1]); // 48: a new project has T3's keyboard an octave down
+		down(sim, 'step.1');
+		clock.t += COPY_MS;
+		sim.advance(COPY_MS);
+		const popup = page(sim, 'popup');
+		expect(popup.copied).toEqual({ alpha: 1 });
+		expect(popup.octave).toBeNull();
+		expect(popup.base).toMatchObject({ page: 'lock', step: 1 });
+		expect(describeFrame(popup)).toMatch(/^copied: step 1 held/);
+		expect(sim.state.areas.sequencer.clipboard?.notes.map((n) => n.note)).toEqual([48]);
+		up(sim, 'step.1');
+		expect(notesOn(sim, 0)).toEqual([48]); // copied, not cleared
+		expect(page(sim, 'popup').base.page).toBe('synth');
+		sim.advance(COPIED_POPUP_MS);
+		expect(sim.frame.page).toBe('synth');
+		// the next empty step gets the copy
+		sim.press('step.9');
+		expect(notesOn(sim, 8)).toEqual([48]);
+	});
+
+	it('shows the octave after [-] / [+], "+0" included, and fades it out', () => {
+		const { sim } = rig();
+		sim.press('track.3'); // a new project's T3 plays an octave down
+		sim.press('key.m2');
+		sim.press('key.plus');
+		const popup = page(sim, 'popup');
+		expect(popup.octave).toEqual({ value: 0, alpha: 1 });
+		expect(popup.base.page).toBe('envelope');
+		expect(describeFrame(popup)).toMatch(/^octave \+0: amp envelope/);
+		sim.press('key.minus');
+		sim.press('key.minus');
+		expect(describeFrame(sim.frame)).toMatch(/^octave -2: /);
+		sim.advance(OCTAVE_POPUP_MS - POPUP_FADE_MS / 2);
+		expect(page(sim, 'popup').octave?.alpha).toBeCloseTo(0.5);
+		sim.advance(POPUP_FADE_MS / 2);
+		expect(sim.frame.page).toBe('envelope');
+		// at the end of the range it still shows where the keyboard is
+		for (let i = 0; i < 3; i++) sim.press('key.minus');
+		expect(page(sim, 'popup').octave?.value).toBe(-3);
+	});
+
+	it('gets out of the way: turns reach the page under it, and other keys take it down', () => {
+		const { sim } = rig();
+		sim.press('track.3'); // prism: a new project's shape shows 15
+		sim.press('key.plus');
+		sim.turn(1, 3);
+		expect(page(sim, 'synth').header[0].value).toBe('18');
+		sim.press('key.plus');
+		expect(sim.frame.page).toBe('popup');
+		sim.press('keyboard.c4');
+		expect(sim.frame.page).toBe('synth');
+		// the drum keys do not move: no popup
+		sim.press('track.1');
+		sim.press('key.plus');
+		expect(sim.frame.page).toBe('drum');
+	});
+
+	it('draws the octave card: a mini piano and the octave', () => {
+		const { sim } = rig();
+		sim.press('track.3');
+		sim.press('key.plus');
+		const ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		const box = (f: { x0: number; y0: number; x1: number; y1: number }) => [f.x0, f.y0, f.x1, f.y1];
+		expect(ctx.fillsOf(COLORS.white).map(box)).toContainEqual([190, 155, 290, 205]);
+		// three black keys hanging from the card's top edge
+		const keys = ctx.fillsOf(COLORS.ink).filter((f) => f.y0 === 155 && f.y1 === 184.5);
+		expect(keys.map((f) => f.x0)).toEqual([197.5, 207.5, 217.5]);
+	});
+
+	it('sets the device’s proportional 1: tighter runs, a lone 1 starting where digits start', () => {
+		const { glyphs, width } = figuresLayout('13', 40);
+		expect(width).toBeCloseTo((394 + 545) * 0.04);
+		expect(glyphs.map((g) => g.ch)).toEqual(['1', '3']);
+		expect(glyphs[0].x).toBeCloseTo(-73 * 0.04);
+		expect(glyphs[1].x).toBeCloseTo(394 * 0.04);
+		expect(figuresLayout('96', 20).width).toBeCloseTo(21.8);
 	});
 });
 
@@ -950,7 +1120,9 @@ describe('auxiliary tracks and rendering', () => {
 			expect(ctx.fills.length, frame.page).toBeGreaterThan(5);
 			expect(describeFrame(frame).length).toBeGreaterThan(10);
 		}
-		expect(describeFrame(frames[0])).toContain('bar menu: quantise 100');
+		expect(describeFrame(frames[0])).toBe(
+			'bar menu: quant 100, length 50, groove -, shape 00; bar 1 of 1, 16 steps, track scale 1; 2 notes in the bar'
+		);
 		expect(describeFrame(frames[2])).toBe(
 			'step components on steps 3: jump to step 13; on them: jump'
 		);

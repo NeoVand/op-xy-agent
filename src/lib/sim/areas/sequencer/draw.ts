@@ -2,82 +2,25 @@
  * Drawing the sequencer area's frames on the 480 × 220 screen (see `../../screen/areas.ts`): one entry per
  * frame page, with a short spoken description for screen readers.
  *
- * TE's guide shows none of these pages. The player pages are drawn as the device draws them
- * (`player-draw.ts`, measured by camera). The rest are still ours, built from the pieces of the
- * pages the guide does show (research 55 §5): the header's grey ramp for the bar menu's four
- * encoders, list selection styles (a white fill for on, an outline for off), 10 px labels over
- * 20 px values, soft labels over M1–M4, and TE's key icons for the step components.
+ * TE's guide shows none of these pages. The player pages (`player-draw.ts`), the bar card
+ * (`bar-draw.ts`) and the step and octave popups (`popup-draw.ts`) are drawn as the device draws
+ * them, measured by camera (research 59 §2.7, §2.8, §2.12). The step components page is still
+ * ours, built from the pieces of the pages the guide does show (research 55 §5): list selection
+ * styles (a white fill for on, an outline for off), 10 px labels over 20 px values, and TE's key
+ * icons for the step components.
  */
 import type { AreaDrawers } from '../../screen/areas';
 import type { ScreenCtx } from '../../screen/context';
-import { card, fillBox, header, softLabels, strokeBox, text } from '../../screen/draw';
+import { card, fillBox, strokeBox, text } from '../../screen/draw';
 import { screenFont } from '../../screen/font';
 import { drawIcon } from '../../screen/icons';
 import { COLORS } from '../../screen/palette';
 import { describeFrame, renderFrame } from '../../screen/render';
+import { drawBar } from './bar-draw';
 import { COMPONENT_ICONS, COMPONENT_NAMES } from './components';
 import { drawPlayer } from './player-draw';
-import type { BarFrame, ComponentsFrame, LockFrame, SequencerFrame } from './frames';
-
-// ─────────────────────────────────────────────────────────────────────────── bar menu
-
-/** The pattern map: 16 cells a row, a small gap after every beat, one row per bar. */
-const MAP = { x: 35, y: 35, cell: 20, pitch: 25, beatGap: 5, rowPitch: 30 } as const;
-const cellX = (i: number) => MAP.x + MAP.pitch * i + MAP.beatGap * Math.floor(i / 4);
-const rowY = (bar: number) => MAP.y + MAP.rowPitch * bar;
-
-/** The bar menu: encoder header, pattern map, bars / steps / scale, and what M1 / M2 / M4 clear. */
-function drawBar(ctx: ScreenCtx, frame: BarFrame): void {
-	header(ctx, frame.header);
-	frame.cells.forEach((row, bar) => {
-		const y = rowY(bar);
-		const exists = bar < frame.bars;
-		text(
-			ctx,
-			String(bar + 1),
-			20,
-			y + 14,
-			10,
-			bar === frame.shown ? COLORS.white : COLORS.dim,
-			'center'
-		);
-		if (exists && bar === frame.shown) {
-			strokeBox(
-				ctx,
-				MAP.x - 4.5,
-				y - 4.5,
-				cellX(15) + MAP.cell - MAP.x + 9,
-				MAP.cell + 9,
-				COLORS.white,
-				1,
-				2.5
-			);
-		}
-		row.forEach((cell, i) => {
-			const x = cellX(i);
-			const head = frame.playhead === bar * 16 + i;
-			if (cell === 'none')
-				strokeBox(ctx, x + 0.5, y + 0.5, MAP.cell - 1, MAP.cell - 1, COLORS.dark, 0.5, 2);
-			else if (cell === 'trimmed')
-				strokeBox(ctx, x + 0.5, y + 0.5, MAP.cell - 1, MAP.cell - 1, COLORS.grey1, 1, 2);
-			else if (cell === 'empty')
-				fillBox(ctx, x, y, MAP.cell, MAP.cell, head ? COLORS.grey4 : COLORS.dark, 2);
-			else fillBox(ctx, x, y, MAP.cell, MAP.cell, head ? COLORS.light : COLORS.white, 2);
-		});
-	});
-	const readouts: [string, string][] = [
-		['bars', String(frame.bars)],
-		['steps', String(frame.length)],
-		['scale', frame.scale]
-	];
-	readouts.forEach(([label, value], i) => {
-		const x = MAP.x + 120 * i;
-		text(ctx, label, x, 162, 10, COLORS.light);
-		text(ctx, value, x, 186, 20, COLORS.white);
-	});
-	if (frame.pinned) text(ctx, 'pinned', MAP.x + 360, 162, 10, COLORS.light);
-	softLabels(ctx, frame.soft);
-}
+import { drawCopied, drawOctave, drawStepBox, octaveText } from './popup-draw';
+import type { ComponentsFrame, LockFrame, PopupFrame, SequencerFrame } from './frames';
 
 // ─────────────────────────────────────────────────────────────────────────── step components
 
@@ -133,30 +76,35 @@ function drawComponents(ctx: ScreenCtx, frame: ComponentsFrame): void {
 	});
 }
 
-// ─────────────────────────────────────────────────────────────────────────── locks
+// ─────────────────────────────────────────────────────────────────────────── locks, popups
 
-/**
- * A held step's page: the page itself (its values the step's), and a white tag at the bottom
- * right naming the step, how many locks it has, and the lock turned last.
- */
+/** A held step's page: the page itself (its values the step's), and the step's number over it. */
 function drawLock(ctx: ScreenCtx, frame: LockFrame, tick: number): void {
 	renderFrame(ctx, frame.base, { tick });
-	const head = `step ${frame.step}${frame.locks > 0 ? `  ${frame.locks} lock${frame.locks === 1 ? '' : 's'}` : ''}`;
-	const last = frame.last ? `${frame.last.label} ${frame.last.value}` : null;
-	const w = Math.max(screenFont.measure(head, 10), last ? screenFont.measure(last, 20) : 0) + 10;
-	const h = last ? 38 : 18;
-	const x = 474 - w;
-	const y = 214 - h;
-	fillBox(ctx, x, y, w, h, COLORS.white, 2.5);
-	text(ctx, head, x + 5, y + 13, 10, COLORS.ink);
-	if (last) text(ctx, last, x + 5, y + 33, 20, COLORS.ink);
+	drawStepBox(ctx, frame.step, frame.locking);
+}
+
+/** The popups over the page under them. */
+function drawPopup(ctx: ScreenCtx, frame: PopupFrame, tick: number): void {
+	renderFrame(ctx, frame.base, { tick });
+	if (frame.copied) drawCopied(ctx, frame.copied.alpha);
+	if (frame.octave) drawOctave(ctx, frame.octave.value, frame.octave.alpha);
+}
+
+/** The popups in words, then the page under them. */
+function describePopup(frame: PopupFrame): string {
+	const popups = [
+		frame.octave ? `octave ${octaveText(frame.octave.value)}` : null,
+		frame.copied ? 'copied' : null
+	].filter(Boolean);
+	return `${popups.join(', ')}: ${describeFrame(frame.base)}`;
 }
 
 export const drawers: AreaDrawers<SequencerFrame> = {
 	bar: {
-		draw: (ctx, frame) => drawBar(ctx, frame),
+		draw: (ctx, frame, options) => drawBar(ctx, frame, options.tick ?? 0),
 		describe: (f) =>
-			`bar menu: ${f.header.map((c) => `${c.label} ${c.value}`).join(', ')}; ${f.bars} bar${f.bars === 1 ? '' : 's'}, ${f.length} steps, scale ${f.scale}`
+			`bar menu: ${f.header.map((c) => `${c.label} ${c.value}`).join(', ')}; bar ${f.shown + 1} of ${f.bars}, ${f.length} steps, track scale ${f.scale}; ${f.notes.length} note${f.notes.length === 1 ? '' : 's'} in the bar`
 	},
 	components: {
 		draw: (ctx, frame) => drawComponents(ctx, frame),
@@ -189,5 +137,9 @@ export const drawers: AreaDrawers<SequencerFrame> = {
 		draw: (ctx, frame, options) => drawLock(ctx, frame, options.tick ?? 0),
 		describe: (f) =>
 			`step ${f.step} held, ${f.locks} lock${f.locks === 1 ? '' : 's'}${f.last ? `, ${f.last.label} ${f.last.value}` : ''}: ${describeFrame(f.base)}`
+	},
+	popup: {
+		draw: (ctx, frame, options) => drawPopup(ctx, frame, options.tick ?? 0),
+		describe: describePopup
 	}
 };

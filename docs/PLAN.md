@@ -53,7 +53,11 @@
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).
-- **M4 our manual: done.** 158 reworded units, 100% guide coverage, verbatim guard, search.
+- **M4 our manual: done.** 163 reworded units, 100% guide coverage, verbatim guard, search.
+- **F4, the agent from idea to steps** (2026-09-28): the navigator plans exact keys and turns to any
+  instrument page or value, tried on a copy of the simulator. `plan_steps` reads them out or plays
+  them on the replica, one setting or a whole sound at a time. Five sound-design recipes run as
+  written (tested). The how-to eval checks the virtual OP-XY's end state.
 - **Next:** T28 with the owner (track MIDI channels → notes out), then M5 composer + live playback and
   M6 native projects. M6 starts by **reading the current project over WebUSB-MTP**: it is the only way
   the replica can load what is on the device (steps, tempo, sounds), since the device never reports
@@ -151,9 +155,11 @@ owner flagged, then what users see most.
 2. [x] **Players:** the off state; arpeggio (and its shift layer); hold; maestro; the selection list.
        The list steps on each further press of `player` with shift held. Speeds run from 1/4 to 1/64
        with triplets. The bars rise by pitch rank. Maestro keeps 8 notes.
-3. [ ] **Bar card** (mini piano roll, bar row, clear labels) and the **step popups** (number box,
-       copied, orange while locking, locked values in the top bar).
-4. [ ] **Octave popup** (piano plus ±N, "+0", fades).
+3. [x] **Bar card** (mini piano roll, bar row, clear labels) and the **step popups** (number box,
+       copied, orange while locking, locked values in the top bar). The card is an overlay on the
+       page it covers; a held step copies during the hold. Left: the roll's pitch scale (one pixel
+       per semitone is ours) and the aux tracks' popups.
+4. [x] **Octave popup** (piano plus ±N, "+0", fades).
 5. [x] **Mixer:** the FX I/II send overlay, the EQ scene, the saturator ladders, the master page.
        Left: the core M1 strips under the popup (level bar thickness, dark numbers on light
        strips, pan dot position); the VU needle's motion with sound.
@@ -187,16 +193,22 @@ owner flagged, then what users see most.
 - [ ] **Device map:** exported from the simulator. For each page it records how to reach it, the
       parameters per encoder and layer, ranges and formats, the CC lane, and whether MIDI can set it.
       It is data, so the agent never has to guess a key combo.
-- [ ] **Navigator:** a deterministic path from the replica's current state to any page or parameter
-      value, as key presses and encoder turns. It is checked by running it on the simulator.
-- [ ] **Tools:** `how_to` (exact steps for a goal), `guide` (an interactive walkthrough on the replica,
-      step by step, with the screen each step leads to), and `set_params` (virtual OP-XY, and the
-      device through CCs where it listens).
-- [ ] **Recipes:** multi-step setups (a sidechain duck, routing tracks into the brain, sampling and
-      slicing, a song from scenes, sound design from an idea, grounded in the factory presets'
-      parameter values).
-- [ ] **Evals:** how-to steps executed on the simulator must reach the goal state; idea-to-device tasks
-      judged by rubric plus state checks; screen Q&A.
+- [x] **Navigator** (`src/lib/sim/navigator.ts`): a deterministic path from the replica's current
+      state to any page or parameter value, as key presses and encoder turns. Every plan runs on a
+      copy of the simulator before it is returned. It covers instrument pages and their shift layers,
+      the envelopes, the lists (engine, filter type, LFO type, switching an off module on), tempo,
+      mix, arrange and the players; `planSettings` sets several parameters in a row. Left: auxiliary
+      and mixer parameters.
+- [x] **Tools:** one `plan_steps` tool gives the exact steps for a page, a value or several
+      settings. With `show` it walks the replica through them, step by step, so the virtual OP-XY
+      ends up there. Left: setting values on the device through CCs where it listens.
+- [x] **Recipes:** five sound-design recipes (`howto.sidechain-duck`, `pluck`, `pad-swell`,
+      `wobble`, `acid-bass`). Their steps carry machine-readable settings, and
+      `src/lib/sim/recipes.spec.ts` runs every recipe on a new project. Left: brain routing,
+      sampling and slicing, and a song from scenes as runnable recipes (the prose units exist), and
+      values taken from the factory presets.
+- [x] **Evals:** `evals/agent/howto.mjs` checks how-to answers and idea-to-device set-ups against the
+      simulator's end state (7 cases). Left: screen Q&A.
 
 ### F5 — Next capture session (with the owner)
 

@@ -1,17 +1,18 @@
 /**
  * The sequencer area (manual sequencer/*, players/*): the bar menu while `bar` is held or pinned,
- * the player page, the step component page while shift is held with steps selected, and a held
- * step's values on the instrument pages (parameter locks). Its `claim` sees every input first and
- * takes the gestures that start anywhere: `bar`, `player`, the bar menu's combinations, shift +
- * steps and keys, recording (`record`, `play`, `stop`), `[-]` / `[+]`, and encoder turns with a
- * step held or while recording. Plain step and keyboard presses stay with the core, which calls
- * `steps.ts`; the LEDs are `leds.ts`, called by the core's `buildLeds`.
+ * the player page, the step component page while shift is held with steps selected, a held
+ * step's values on the instrument pages (parameter locks), and the popups that come and go over
+ * any page (the octave after [-] / [+], "copied"; research 59 §2.8, §2.12). Its `claim` sees
+ * every input first and takes the gestures that start anywhere: `bar`, `player`, the bar menu's
+ * combinations, shift + steps and keys, recording (`record`, `play`, `stop`), `[-]` / `[+]`, and
+ * encoder turns with a step held or while recording. Plain step and keyboard presses stay with
+ * the core, which calls `steps.ts`; the LEDs are `leds.ts`, called by the core's `buildLeds`.
  */
 import type { AreaContext, SimArea } from '../types';
 import type { SimInput } from '../../input';
 import type { SimState } from '../../params';
 import { buildFrame } from '../../frames';
-import { barClick, barCombo, barFrame, barPress, barRelease, barTurn } from './bar';
+import { barClick, barCombo, barFading, barFrame, barPress, barRelease, barTurn } from './bar';
 import {
 	componentKey,
 	componentsActive,
@@ -19,10 +20,11 @@ import {
 	endComponents,
 	selectStep
 } from './components';
-import type { LockFrame } from './frames';
+import type { LockFrame, PopupFrame } from './frames';
 import { lockLabel, lockParam, lockedTrack } from './locks';
 import {
 	CLEAR_MS,
+	POPUP_FADE_MS,
 	activeBank,
 	activePattern,
 	barDown,
@@ -36,7 +38,8 @@ import {
 	seq,
 	sequencing,
 	stepIndex,
-	syncRecordingFlag
+	syncRecordingFlag,
+	trackOctave
 } from './model';
 import { playerClick, playerFrame, playerKey, playerPress, playerTurn } from './players';
 import {
@@ -53,7 +56,7 @@ import {
 	stopPress,
 	stopRelease
 } from './recording';
-import { lockTurn, plusMinus, repeatNudge } from './steps';
+import { copyHeldSteps, lockTurn, plusMinus, repeatNudge } from './steps';
 
 const encoderIndex = (id: string) => {
 	const m = /^encoder\.([1-4])$/.exec(id);
@@ -73,7 +76,7 @@ export function lockView(s: SimState): boolean {
 	);
 }
 
-/** The instrument page as it plays on the held step, and the tag naming the step. */
+/** The instrument page as it plays on the held step, and the step's number over it. */
 function lockFrame(s: SimState): LockFrame {
 	const st = seq(s);
 	const index = heldSteps(s)[0];
@@ -89,12 +92,52 @@ function lockFrame(s: SimState): LockFrame {
 		page: 'lock',
 		base: buildFrame(view),
 		step: index + 1,
+		locking: st.locking > 0,
 		locks: Object.keys(step.locks).length,
 		last:
 			last && step.locks[last.id] !== undefined
 				? { label: lockLabel(last.id, track), value: last.format(step.locks[last.id]) }
 				: null
 	};
+}
+
+/** Whether a popup is up (the octave after [-] / [+], or "copied"). */
+export function popupShowing(s: SimState): boolean {
+	const st = seq(s);
+	return st.octavePopup > 0 || st.copiedPopup > 0;
+}
+
+/** The popups over the page under them, each fading out over its last moments. */
+function popupFrame(s: SimState): PopupFrame {
+	const st = seq(s);
+	const quiet: SimState = {
+		...s,
+		areas: { ...s.areas, sequencer: { ...st, octavePopup: 0, copiedPopup: 0 } }
+	};
+	const alpha = (left: number) => Math.min(1, left / POPUP_FADE_MS);
+	return {
+		page: 'popup',
+		base: buildFrame(quiet),
+		octave: st.octavePopup > 0 ? { value: trackOctave(s), alpha: alpha(st.octavePopup) } : null,
+		copied: st.copiedPopup > 0 ? { alpha: alpha(st.copiedPopup) } : null
+	};
+}
+
+/**
+ * The popups and the fading bar card go as soon as anything else happens (ours: the captures show
+ * them only timing out), so the page under them takes the input: any turn, click or press but
+ * [-] / [+] (which bring the octave up again). Releases leave them.
+ */
+function endPassing(s: SimState, input: SimInput): void {
+	const keep =
+		input.type === 'release' ||
+		input.type === 'bend' ||
+		(input.type === 'press' && (input.id === 'key.plus' || input.id === 'key.minus'));
+	if (keep) return;
+	const st = seq(s);
+	st.octavePopup = 0;
+	st.copiedPopup = 0;
+	st.barFade = 0;
 }
 
 /** The core's encoder clicks on instrument pages, while a held step's values are on screen. */
@@ -215,9 +258,16 @@ function claimTurn(ctx: AreaContext, id: string, raw: number, fine: boolean): bo
 
 export const sequencer: SimArea = {
 	id: 'sequencer',
-	owns: (s) => s.overlay === 'bar' || s.overlay === 'players' || componentsActive(s) || lockView(s),
+	owns: (s) =>
+		s.overlay === 'bar' ||
+		s.overlay === 'players' ||
+		componentsActive(s) ||
+		lockView(s) ||
+		barFading(s) ||
+		popupShowing(s),
 	frame: (s) => {
-		if (s.overlay === 'bar') return barFrame(s);
+		if (popupShowing(s)) return popupFrame(s);
+		if (s.overlay === 'bar' || barFading(s)) return barFrame(s);
 		if (s.overlay === 'players') return playerFrame(s);
 		if (componentsActive(s)) return componentsFrame(s);
 		return lockFrame(s);
@@ -225,6 +275,7 @@ export const sequencer: SimArea = {
 	claim(ctx: AreaContext, input: SimInput): boolean {
 		const s = ctx.state;
 		const st = seq(s);
+		endPassing(s, input);
 		// tidy up what other keys or a following device changed under the gestures
 		if (st.barPinned && s.overlay !== 'bar') st.barPinned = false;
 		if (!s.transport.playing && (st.recLatch || st.countIn)) endRecording(s);
@@ -250,6 +301,13 @@ export const sequencer: SimArea = {
 	advance(s: SimState, ms: number): void {
 		const st = seq(s);
 		st.clock += ms;
+		// the screen's passing parts run down (a save from before them has none: `> 0` is false)
+		if (st.octavePopup > 0) st.octavePopup = Math.max(0, st.octavePopup - ms);
+		if (st.copiedPopup > 0) st.copiedPopup = Math.max(0, st.copiedPopup - ms);
+		if (st.barFade > 0) st.barFade = Math.max(0, st.barFade - ms);
+		if (st.barSlide > 0) st.barSlide = Math.max(0, st.barSlide - ms);
+		if (st.locking > 0) st.locking = Math.max(0, st.locking - ms);
+		copyHeldSteps(s);
 		repeatNudge(s);
 		if (st.clearClock !== null && st.clock - st.clearClock >= CLEAR_MS) clearTrack(s);
 		if (recordingAny(s) || s.transport.recording) syncRecordingFlag(s);

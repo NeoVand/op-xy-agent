@@ -28,6 +28,24 @@ export const BLINK_MS = 250;
 /** Keyboard octave range. */
 export const OCTAVES = { min: -3, max: 3 } as const;
 
+// Screen timings, in milliseconds of the simulator's clock (research 59 §2.8, §2.12). The camera
+// saw 10 frames a second with a rolling shutter, so these are estimates.
+/**
+ * The bar card fades this fast once it goes: frame b1-642 caught it mid-fade, its opacity falling
+ * across the screen with the camera's rolling shutter, which puts the whole fade at 30–50 ms.
+ */
+export const BAR_FADE_MS = 50;
+/** The card's clear labels slide up from below as it appears (ours: one frame, b1-498). */
+export const BAR_SLIDE_MS = 150;
+/** The octave popup after [-] / [+] (1–2 s on the device, b1-268…280; the 1.2 s is ours). */
+export const OCTAVE_POPUP_MS = 1200;
+/** "copied" once a held step is copied (1–2 s, b1-633/634, 708–710; the 1.2 s is ours). */
+export const COPIED_POPUP_MS = 1200;
+/** Popups fade out over their last … (ours: no frame caught one fading). */
+export const POPUP_FADE_MS = 150;
+/** A held step's box stays orange after a lock turn (ours: under a second, b1-697/698). */
+export const LOCKING_MS = 400;
+
 /** The sequencer area's state slice. */
 export const seq = (s: SimState): SequencerState => s.areas.sequencer;
 

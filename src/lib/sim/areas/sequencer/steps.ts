@@ -38,14 +38,18 @@ import {
 	activePattern,
 	activeSequence,
 	activeTrack,
+	COPIED_POPUP_MS,
 	COPY_MS,
 	editHolds,
+	fixedKeys,
 	heldKeys,
 	heldNotes,
 	heldSteps,
 	heldTrackKey,
 	isDrumTrack,
 	keyNote,
+	LOCKING_MS,
+	OCTAVE_POPUP_MS,
 	octaveKey,
 	OCTAVES,
 	remember,
@@ -54,6 +58,7 @@ import {
 	trackOctave
 } from './model';
 import { moveCursor } from './recording';
+import type { StepHold } from './state';
 
 /**
  * Remembers the sequence for undo at the first edit made while steps are held, so one undo takes
@@ -75,6 +80,15 @@ export function stepPress(ctx: AreaContext, key: number): void {
 	const index = stepIndex(s, key);
 	if (index >= pattern.length) return;
 	const now = ctx.now();
+	const hold = (notes: boolean, place: boolean, edited: boolean): StepHold => ({
+		index,
+		since: now,
+		notes,
+		place,
+		edited,
+		at: st.clock,
+		copied: false
+	});
 	if (Object.keys(st.holds).length === 0) st.holdUndo = false;
 
 	// a later step pressed while a step with notes is held: stretch its notes to here
@@ -86,7 +100,7 @@ export function stepPress(ctx: AreaContext, key: number): void {
 		rememberOnce(s);
 		extendNotes(pattern, from.index, index);
 		from.edited = true;
-		st.holds[id] = { index, since: now, notes: false, place: false, edited: true };
+		st.holds[id] = hold(false, false, true);
 		return;
 	}
 	// a step with notes held while another goes down is being edited, not tapped
@@ -99,11 +113,37 @@ export function stepPress(ctx: AreaContext, key: number): void {
 		if (hasNotes(step)) for (const note of keys) toggleNote(pattern, index, note);
 		else toggleStep(pattern, index, keys);
 		if (keys.length === 1) st.single = { note: keys[0], key: heldKeys(s)[0] };
-		st.holds[id] = { index, since: now, notes: false, place: false, edited: true };
+		st.holds[id] = hold(false, false, true);
 		return;
 	}
 	const notes = hasNotes(step);
-	st.holds[id] = { index, since: now, notes, place: !notes, edited: false };
+	st.holds[id] = hold(notes, !notes, false);
+}
+
+/**
+ * A step with notes held past {@link COPY_MS} on the simulator's clock is copied there and then,
+ * and the screen says "copied" while it is still down (research 59 §2.8: b1-633, 678, 708); called
+ * as time passes. The release still copies a hold that long by the gesture clock.
+ */
+export function copyHeldSteps(s: SimState): void {
+	const st = seq(s);
+	const pattern = activePattern(s);
+	for (const hold of Object.values(st.holds)) {
+		if (hold.copied || !hold.notes || hold.edited || st.clock - hold.at < COPY_MS) continue;
+		const step = pattern.steps[hold.index];
+		if (!step || !hasNotes(step)) continue;
+		hold.copied = true;
+		st.clipboard = cloneStep(step);
+		sayCopied(s);
+	}
+}
+
+/**
+ * "copied" over the top bar, on an instrument track's pages (ours: the auxiliary tracks' pages
+ * show no step popups yet).
+ */
+function sayCopied(s: SimState): void {
+	if (activeBank(s) === 'instrument') seq(s).copiedPopup = COPIED_POPUP_MS;
 }
 
 /** A step key (0–15) came up: a tap clears, a hold copies, an empty step gets its note. */
@@ -119,8 +159,10 @@ export function stepRelease(ctx: AreaContext, key: number): void {
 	const step = pattern.steps[hold.index];
 	if (!step) return;
 	if (hold.notes) {
+		if (hold.copied) return;
 		if (ctx.now() - hold.since >= COPY_MS) {
 			st.clipboard = cloneStep(step);
+			sayCopied(s);
 			return;
 		}
 		remember(s);
@@ -174,6 +216,7 @@ export function lockTurn(s: SimState, e: number, delta: number, fine: boolean): 
 			setLock(pattern, index, aux.id, Math.min(aux.max, Math.max(aux.min, from + delta)));
 		}
 		seq(s).lastLock = { step: indexes[0], id: aux.id };
+		seq(s).locking = LOCKING_MS;
 		return true;
 	}
 	const target = lockTarget(s, e);
@@ -185,6 +228,8 @@ export function lockTurn(s: SimState, e: number, delta: number, fine: boolean): 
 		setLock(pattern, index, target.id, turnedValue(target, track, locks, delta, fine));
 	}
 	seq(s).lastLock = { step: indexes[0], id: target.id };
+	// the held step's box turns orange while the lock is being written (research 59 §2.8)
+	seq(s).locking = LOCKING_MS;
 	return true;
 }
 
@@ -250,5 +295,9 @@ export function plusMinus(s: SimState, direction: -1 | 1): boolean {
 	}
 	const key = octaveKey(activeBank(s), activeIndex(s));
 	st.octaves[key] = Math.max(OCTAVES.min, Math.min(OCTAVES.max, trackOctave(s) + direction));
+	// the octave popup (research 59 §2.12), at the ends of the range too (ours). Seen over an
+	// instrument page; the drum and punch-in keys do not move (ours: no popup), and the auxiliary
+	// tracks put it in their own pages (the external CV page's meter card; not drawn yet)
+	if (activeBank(s) === 'instrument' && !fixedKeys(s)) st.octavePopup = OCTAVE_POPUP_MS;
 	return true;
 }
