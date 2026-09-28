@@ -163,6 +163,32 @@ describe('the navigator: parameters', () => {
 		expect(back.screen).toMatch(/^drum key /);
 	});
 
+	it('sets an LFO’s destination by the names its page shows: free twins, element’s own four', () => {
+		const sim = boot();
+		// value (and random): each page, then its free twin under it (research 59 §2.4)
+		const free = planSettings(sim.state, [
+			{ track: 3, param: 'lfo type', value: 'value' },
+			{ track: 3, param: 'lfo destination', value: 'filter free' }
+		]);
+		expect(free.reached).toBe(true);
+		for (const step of free.steps) playStep(sim, step);
+		expect(sim.state.tracks[2].lfo.destination).toBe(5);
+		// element follows a sensor: syn, env, filter and amp, with no free twins (the stored sixth
+		// place reads as its last, amp)
+		const env = planSettings(sim.state, [
+			{ track: 3, param: 'lfo type', value: 'element' },
+			{ track: 3, param: 'lfo destination', value: 'env' }
+		]);
+		expect(env.reached).toBe(true);
+		expect(env.steps.at(-1)).toMatchObject({ keys: 'turn E3', clicks: -3 });
+		for (const step of env.steps) playStep(sim, step);
+		expect(sim.state.tracks[2].lfo).toMatchObject({ type: 'element', destination: 1 });
+		expect(env.screen).toBe('element lfo: source G, amount 0, destination env');
+		const amp = planParam(sim.state, { track: 3, param: 'lfo destination', value: 'amp' });
+		expect(amp.reached).toBe(true);
+		expect(amp.screen).toBe('element lfo: source G, amount 0, destination amp');
+	});
+
 	it('reaches the midi engine at the end of the browser’s engines, with its starting sound (ours)', () => {
 		const sim = boot();
 		const midi = planParam(sim.state, { track: 3, param: 'engine', value: 'midi' });
