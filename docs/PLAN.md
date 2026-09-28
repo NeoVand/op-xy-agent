@@ -11,6 +11,15 @@
   missed is now captured: the sequencer and player screens, the envelope editor, the aux tracks and the
   engines. We also know which pages MIDI can drive. Phase F turns that into the replica, our manual and
   the agent. It runs until the next capture session.
+  - **Rebuilt from the captures so far** (overlays within about half a pixel): the envelope editor,
+    the players, the mixer, the bar card and step popups, the octave popup, the tempo page, arrange
+    and song mode. Still in progress: the filter and LFO pages, the auxiliary tracks, the engine
+    pages.
+  - **The agent** plans exact steps on a copy of the simulator for any page or value, auxiliary and
+    mixer values included. It can read them out, play them on the replica, or walk the user through
+    them one lit key at a time. It sets whole sounds up from an idea (five tested recipes) and sets a
+    connected device's sound over the verified CCs. Evals: how-to and idea-to-device cases pass;
+    the regression run is 42/42 Q&A and 18/18 device tasks.
 - **M0 research, M1 foundations: done.** Core MIDI/TE-SysEx/OP-XY data, design system + shell, device
   layer (Web MIDI, single send choke point, GREET session, mirror, monitor), `/lab`; verified by the
   owner on the live site.
