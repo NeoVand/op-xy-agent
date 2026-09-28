@@ -116,6 +116,8 @@ export interface PlayModeFrame {
 /** M3: the filter graph. */
 export interface FilterFrame extends FilterView {
 	readonly page: 'filter';
+	/** The filter is switched off: the page dims under "off" (M3 again switches it on). */
+	readonly off?: boolean;
 }
 
 /** Shift + M3: send cards over the dimmed filter graph. */
@@ -133,6 +135,8 @@ export type LfoType = 'value' | 'random' | 'tremolo' | 'element' | 'duck';
 export interface LfoFrame {
 	readonly page: 'lfo';
 	readonly type: LfoType;
+	/** The LFO is switched off: the page dims under "off" (M4 again switches it on). */
+	readonly off?: boolean;
 	/** Speed: tempo-synced (division shown as a count) or free (the clock dial, 0–1). */
 	readonly speed: { readonly synced: boolean; readonly label: string; readonly position: number };
 	/** Amount −100…100 (the ruler's pointer); tremolo uses it for vibrato. */

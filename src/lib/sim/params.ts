@@ -65,8 +65,8 @@ export const PLAY_MODES = ['poly', 'mono', 'legato'] as const;
 
 /** LFO types in the order shift + M4 lists them (manual: duck, element, random, tremolo, value). */
 export const LFO_TYPES: readonly LfoType[] = ['duck', 'element', 'random', 'tremolo', 'value'];
-/** Filter types (the four factory presets use; the manual says more may exist). */
-export const FILTER_TYPES: readonly FilterType[] = ['svf', 'ladder', 'z lowpass', 'z hipass'];
+/** Filter types in the order shift + M3 lists them on the device (camera, 1.1.33; research 59 §2.3). */
+export const FILTER_TYPES: readonly FilterType[] = ['ladder', 'svf', 'z hipass', 'z lowpass'];
 /**
  * Groove types on the tempo page, in the order the device stores them (project header byte 3;
  * `10-xy-format.md` §3). The online guide describes seven; TE's printed guide v1.1.5 all eleven.

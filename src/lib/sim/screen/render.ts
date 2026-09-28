@@ -4,7 +4,7 @@
  */
 import { describeAreaFrame, drawAreaFrame } from './areas';
 import type { ScreenCtx } from './context';
-import { roundRectPath } from './draw';
+import { fillBox, roundRectPath, strokeBox, text } from './draw';
 import type { ScreenFrame } from './frame';
 import { drawCom } from './pages/com';
 import { drawDrum } from './pages/drum';
@@ -54,13 +54,13 @@ export function renderFrame(ctx: ScreenCtx, frame: ScreenFrame, options: RenderO
 			drawPlayMode(ctx, frame);
 			break;
 		case 'filter':
-			drawFilter(ctx, frame);
+			dimmedIfOff(ctx, frame.off, () => drawFilter(ctx, frame));
 			break;
 		case 'sends':
 			drawSends(ctx, frame);
 			break;
 		case 'lfo':
-			drawLfo(ctx, frame);
+			dimmedIfOff(ctx, frame.off, () => drawLfo(ctx, frame));
 			break;
 		case 'mix':
 			drawMix(ctx, frame);
@@ -100,6 +100,24 @@ function describeSampler(frame: Extract<ScreenFrame, { page: 'drum' }>): string 
 	return `drum key ${frame.key}${layer}: tune ${frame.tune}, play mode ${frame.playMode}${empty}`;
 }
 
+/**
+ * A module switched off (the filter, the LFO) as the device shows it: the page at 40 % under "off"
+ * in a black box, the same box as a player that is off (research 59 §2.3, §2.7).
+ */
+function dimmedIfOff(ctx: ScreenCtx, off: boolean | undefined, draw: () => void): void {
+	if (!off) {
+		draw();
+		return;
+	}
+	ctx.save();
+	ctx.globalAlpha = 0.4;
+	draw();
+	ctx.restore();
+	fillBox(ctx, 210.5, 90.5, 60, 40, COLORS.black, 4);
+	strokeBox(ctx, 210.5, 90.5, 60, 40, COLORS.white, 1.5, 4);
+	text(ctx, 'off', 240.5, 121, 30, COLORS.white, 'center', 0, true);
+}
+
 /** A short spoken description of what the screen shows (for `aria-live`). */
 export function describeFrame(frame: ScreenFrame): string {
 	switch (frame.page) {
@@ -118,16 +136,16 @@ export function describeFrame(frame: ScreenFrame): string {
 		case 'playmode':
 			return `play mode ${frame.values[0]}, portamento ${frame.values[1]}, bend ${frame.values[2]}, volume ${frame.values[3]}`;
 		case 'filter':
-			return `${frame.type} filter: cutoff ${lane(frame.cutoff)}, resonance ${lane(frame.resonance)}`;
+			return `${frame.type} filter${frame.off ? ' off' : ''}: cutoff ${lane(frame.cutoff)}, resonance ${lane(frame.resonance)}`;
 		case 'sends':
 			return `sends: aux ${frame.values[0]}, tape ${frame.values[1]}, fx I ${frame.values[2]}, fx II ${frame.values[3]}`;
 		case 'lfo':
 			if (frame.type === 'duck') {
 				const kind = frame.sourceAudio === false ? 'notes' : 'audio';
-				return `duck lfo: source ${frame.source} (${kind}), amount ${Math.round(frame.amount)}`;
+				return `duck lfo${frame.off ? ' off' : ''}: source ${frame.source} (${kind}), amount ${Math.round(frame.amount)}`;
 			}
 			return (
-				`${frame.type} lfo: ` +
+				`${frame.type} lfo${frame.off ? ' off' : ''}: ` +
 				(frame.type === 'element' ? `source ${frame.source}, ` : '') +
 				`amount ${Math.round(frame.amount)}, destination ${frame.destination.label}`
 			);

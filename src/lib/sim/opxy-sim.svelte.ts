@@ -390,6 +390,13 @@ export class OpxySim {
 				this.#openPicker(page === 1 ? 'engine' : page === 3 ? 'filter' : 'lfo');
 				return;
 			}
+			// pressed on its own page, M3 switches the filter on or off and M4 the LFO (the device
+			// shows the page dimmed under "off" until then: research 59 §2.3, §2.4)
+			if (s.pages.instrument === page && !s.shift && !filterless) {
+				const t = this.track;
+				if (page === 3) t.filter.on = !t.filter.on;
+				else if (page === 4) t.lfo.on = !t.lfo.on;
+			}
 			s.pages.instrument = page;
 		} else if (s.mode === 'auxiliary') s.pages.auxiliary = page;
 		else if (s.mode === 'mix') s.pages.mix = page;
@@ -719,6 +726,9 @@ export class OpxySim {
 		} else if (picker.kind === 'filter') {
 			t.filter.type = FILTER_TYPES[picker.index];
 			t.filter.on = true;
+			// the device goes back to the engine page after a filter type is picked (research 59
+			// §2.3); after an LFO type it is not known, so that stays on M4 (ours)
+			s.pages.instrument = 1;
 		} else {
 			t.lfo.type = LFO_TYPES[picker.index];
 			t.lfo.on = true;

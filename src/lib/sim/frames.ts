@@ -192,9 +192,9 @@ function instrumentFrame(s: SimState): ScreenFrame {
 					values: [two(aux), two(tape), two(fx1), two(fx2)]
 				};
 			}
-			return { page: 'filter', ...filterView(t) };
+			return { page: 'filter', ...filterView(t), ...(t.filter.on ? {} : { off: true }) };
 		case 4:
-			return lfoFrame(t);
+			return t.lfo.on ? lfoFrame(t) : { ...lfoFrame(t), off: true };
 	}
 }
 

@@ -316,7 +316,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(1, 50);
 			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
 			await d.click('track.4');
-			expect(d.screen()).toBe('z hipass filter: cutoff 79, resonance 52');
+			expect(d.screen()).toBe('z hipass filter off: cutoff 79, resonance 52');
 			await d.click('track.3');
 			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
 		});
@@ -1031,10 +1031,13 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				seen.push(d.screen());
 				await d.turn(1, 1);
 			}
-			// the four types factory presets use; which others exist, and their order, is a device check
-			expect(seen).toEqual(['svf', 'ladder', 'z lowpass', 'z hipass']);
+			// the device's list, in its order (camera, 1.1.33)
+			expect(seen).toEqual(['ladder', 'svf', 'z hipass', 'z lowpass']);
 			await scrollTo(d, FILTER_TYPES, 'ladder');
 			await d.push(1);
+			// the device goes back to the engine page after the pick (camera, 1.1.33)
+			expect(d.frame.page).toBe('synth');
+			await d.click('key.m3');
 			// a new type keeps the cutoff and resonance (ours; device check)
 			expect(d.screen()).toBe('ladder filter: cutoff 00, resonance 09');
 		});
@@ -1045,6 +1048,8 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('key.m3');
 			await openList(d, 3);
 			await scrollTo(d, FILTER_TYPES, 'z lowpass');
+			await d.click('key.m3');
+			expect(d.frame.page).toBe('synth');
 			await d.click('key.m3');
 			expect(d.screen()).toBe('z lowpass filter: cutoff 00, resonance 09');
 		});
@@ -1087,7 +1092,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m4');
-			expect(d.screen()).toBe('tremolo lfo: amount 0, destination syn');
+			expect(d.screen()).toBe('tremolo lfo off: amount 0, destination syn');
 		});
 
 		it('lists the LFO types with shift + M4: duck, element, random, tremolo and value', async () => {
@@ -1524,7 +1529,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await loadEngine(d, 'midi');
 			await d.click('key.m4');
-			expect(d.screen()).toBe('tremolo lfo: amount 0, destination syn');
+			expect(d.screen()).toBe('tremolo lfo off: amount 0, destination syn');
 		});
 
 		it('keeps the synth’s settings through a switch to midi and back (OS 1.0.50)', async () => {

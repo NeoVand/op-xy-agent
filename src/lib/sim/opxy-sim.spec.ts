@@ -14,7 +14,7 @@ import {
 import { SCENARIOS } from './scenarios';
 import type { ScreenFrame } from './screen/frame';
 import { RecordingContext } from './screen/recording';
-import { renderFrame } from './screen/render';
+import { describeFrame, renderFrame } from './screen/render';
 
 /** The frame, narrowed to one page (fails the test on another page). */
 function page<P extends ScreenFrame['page']>(
@@ -169,6 +169,9 @@ describe('OpxySim: navigation', () => {
 		sim.combo('key.shift', 'key.m3');
 		sim.turn(1, 2);
 		sim.click(1);
+		// a filter pick goes back to the engine page, as on the device
+		expect(sim.frame.page).toBe('drum');
+		sim.press('key.m3');
 		expect(page(sim, 'filter').type).toBe('z hipass');
 	});
 
@@ -447,5 +450,33 @@ describe('scenarios (states that reproduce TE’s guide art)', () => {
 		expect(new Set(SCENARIOS.map((s) => s.id)).size).toBe(SCENARIOS.length);
 		const pictures = SCENARIOS.flatMap((s) => (s.png === null ? [] : [s.png]));
 		expect(new Set(pictures).size).toBe(pictures.length);
+	});
+});
+
+describe('modules switched off (research 59 §2.3, §2.4)', () => {
+	it('switches the filter with M3 on its page and the LFO with M4 on its, dimming each under "off"', () => {
+		const sim = new OpxySim();
+		sim.press('track.3');
+		sim.press('key.m3');
+		expect(sim.state.tracks[2].filter.on).toBe(true);
+		sim.press('key.m3');
+		expect(sim.state.tracks[2].filter.on).toBe(false);
+		expect(page(sim, 'filter').off).toBe(true);
+		expect(describeFrame(sim.frame)).toMatch(/^svf filter off: /);
+		const ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		// the black box "off" sits in, over the page drawn at 40 %
+		expect(ctx.fills.some((f) => f.x0 === 210.5 && f.y0 === 90.5 && f.alpha === 1)).toBe(true);
+		expect(ctx.fills.some((f) => f.alpha === 0.4)).toBe(true);
+		sim.press('key.m3');
+		expect(page(sim, 'filter').off).toBeUndefined();
+		// arriving from another page never switches it
+		sim.press('key.m4');
+		const on = sim.state.tracks[2].lfo.on;
+		sim.press('key.m4');
+		expect(sim.state.tracks[2].lfo.on).toBe(!on);
+		sim.press('key.m1');
+		sim.press('key.m3');
+		expect(sim.state.tracks[2].filter.on).toBe(true);
 	});
 });
