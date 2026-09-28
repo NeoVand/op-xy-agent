@@ -53,12 +53,13 @@ answer and date (and into `DECISIONS.md` when they shape the project).
 8. **Punch-in FX and the tape** (read-only). Their screens are captured (10 fps, every punch-in key;
    note 59) and the replica now draws them: the idle heartbeat and a still of each key's animation,
    matched to keys by the order they were pressed (please confirm the order if you remember it).
-   All 24 punch-in keys are now recorded over a playing project, fired over MIDI (channel 10, 6 s
-   each; note 60 §6); what each effect is still has to be worked out from that, and your notes on
-   them would speed it up. The tape's sounds are still needed. The replica's punch-in FX (aux T2) and tape (aux T6)
-   patterns light up but make no sound: TE never published which of the 24 keys plays which effect.
-   A short phone video pressing each punch-in key in turn over a beat, or notes on what each does,
-   would let us build them; the same for the tape's clips.
+   The punch-in effects are now worked out from the recordings (note 60 §6: mute, stutter, two
+   repeats, pan, octave, follow, the fills and ramps, short, soft attack, random) and the replica
+   plays them. Still open, each quick to hear on the unit: does G repeat on the drums; does the
+   upper G♯ (pan) follow tilting the unit; what does B (follow) do; do the drum fills (C, D) play
+   with the transport stopped; how far do the ramps climb, and by what intervals does random jump.
+   The tape's sounds are still needed: its patterns (aux T6) light up but make no sound, and a short
+   phone video of its clips, or notes on them, would let us build them.
 9. **Wavetable tables: our approach, and the eighth table's name.** Our wavetable frames are
    formulas fitted to the device's harmonics, not its data. For crush, geometric and basic the
    fitted rules reproduce the device's frames closely; drawbars uses a measured registration (nine

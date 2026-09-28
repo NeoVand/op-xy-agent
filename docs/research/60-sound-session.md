@@ -95,10 +95,47 @@ old model gave decay and release the attack's law: a CC 80 decay took 7.7 s inst
 ## 6. Punch-in FX
 
 Channel 10 reaches the punch-in track: notes 53–76 fire the 24 effects (the screen showed each
-animation). Over a project the owner played ("agent"), each key held 6 s: keys 1, 3, 22 and 24 cut
-the highs by 11–36 dB; 8, 10 and 15 add them (+12 to +31 dB); 12 thins the lows (−11 dB); 13, 14
-and 21 chop the level (13 also collapses the stereo image). What each effect is remains to be
-worked out from the recording (and the owner's knowledge of them).
+animation). Two recordings: "keys", a project the owner played at 123 BPM with each key held 6 s,
+2 s apart; and "mix", a 120 BPM loop sent from the computer (drums on T2, synths on T3–T5) with each
+key held 2 s. `punchin_effects.py` measures them (`grid`, `steps`, `fold`, `mix`); `punchin_plots.py`
+draws the spectrograms. The keys make twelve effects, the same twelve in each octave: the lower
+octave acts on the percussion group, the upper on the melodic group, each effect shaped to the group
+it acts on. TE shows only a picture per key: the names are ours.
+
+| Key (lower / upper) | Percussion group (lower octave)                                                    | Melodic group (upper octave)                                                          | Acts on               | Evidence                                                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| F (1 / 13)          | mute                                                                               | mute                                                                                  | the sound             | observed: mix drums −72 dB; keys: the melodic parts gone                                                                     |
+| F♯ (2 / 14)         | stutter: each sixteenth's first ~30 ms, in mono (kick keeps its click only)        | stutter: each sixteenth starts over at 1/12, 1/6, 1/3 and 1/2 of it, silent from 7/12 | the sound             | melodic observed (`fold 14`: ~18 dB down from 7/12); drums observed (mix hats 35 → 26 ms, −16 dB), mechanism inferred        |
+| G (3 / 15)          | repeat the two sixteenths from the press                                           | the same                                                                              | the sequencer         | melodic observed (`steps`: p2 +0.12); drums not seen (p2 +0.01), inferred                                                    |
+| G♯ (4 / 16)         | pan: each hit placed to one side by its sixteenth (about 10 dB, a one-bar pattern) | pan: the parts swing to one side (left, about −0.8, while the owner tilted the unit)  | each note / the sound | observed (hat balance sd 6.9 dB, repeating each bar; melodic balance +9 dB); that tilt steers the melodic pan inferred       |
+| A (5 / 17)          | repeat three sixteenths                                                            | the same                                                                              | the sequencer         | observed (p3 +0.08 in the drums' band, +0.17 in the melodic band)                                                            |
+| A♯ (6 / 18)         | octave up                                                                          | octave down                                                                           | the sequencer         | melodic observed (−12 semitones, r 0.90); drums inferred                                                                     |
+| B (7 / 19)          | follow: the group's other tracks play the notes too                                | the same                                                                              | the sequencer         | inferred (community descriptions; not heard apart in these recordings)                                                       |
+| C (8 / 20)          | kick and snare fill                                                                | ramp up: each step's notes a little higher, gliding                                   | the sequencer         | drums observed (snares on 1, 3, 6, 9, 11, 14, kicks changing bar to bar); melodic observed rising (+12 overall), ladder ours |
+| C♯ (9 / 21)         | short: every hit cut after ~25 ms                                                  | short                                                                                 | each note             | observed (mix hats 35 → 20 ms)                                                                                               |
+| D (10 / 22)         | hat fill: closed hat every sixteenth, open on the off-beat eighths                 | ramp down                                                                             | the sequencer         | drums observed (mix hats 35 → 65 ms); melodic lower (−19 overall, weak), ladder ours                                         |
+| D♯ (11 / 23)        | soft: hits fade in over ~35 ms (peaks −7.5 dB)                                     | soft attack (at least 60 ms)                                                          | each note             | observed (mix hats −7.5 dB; melodic notes ~50 ms to their peak), how it is made inferred                                     |
+| E (12 / 24)         | random: each step a random key of the kit                                          | random notes (fourths, fifths, octaves), gliding                                      | the sequencer         | changed steps observed; the rules inferred (community descriptions)                                                          |
+
+- **Three levels.** The computer's drums in "mix" were left alone by keys 3, 5, 6, 7 and 12 and
+  changed by 1, 2, 4, 9 and 11 (8 and 10 added hits): the repeats, octave, follow and random work on
+  the sequencer's own notes; mute and stutter on the track's sound; pan, short and soft on each note
+  as it starts.
+- **Tempo.** The stutter and the repeats lock to the sequencer's sixteenths (`grid`: 123.00 BPM
+  over the plain playback). With the transport stopped the replica counts them from the press (ours).
+- **Held keys combine; mute wins** (OS 1.0.50): the replica multiplies the mute into whatever else
+  holds.
+- **Motion.** The manual says some effects follow the unit's movement or the pitch-bend strip,
+  without saying which; the owner tilted the unit through the keys recording. The melodic pan moved
+  (left for most of the hold), so it is the likely one. The replica has no motion to read and
+  sweeps it by itself: leftwards first to 0.8, a cycle every 8 beats (ours).
+- **The replica** (`src/lib/sound/punch/`): the table (`effects.ts`), the sound effects in an
+  AudioWorklet on each track's channel (`core.ts`, before the sends), the note effects in the engine
+  and the sequencer's in the scheduler (`sequence.ts`). A `shift + key` effect lasts while its key is
+  held, as the simulator records it.
+- **Open:** G on the drums; how the drums' stutter and soft attack are made; the fills past two bars,
+  and whether they play with the transport stopped (the replica's play only while it runs); the
+  ramps' ladders and random's intervals; follow; which effects follow tilt or the pitch-bend strip.
 
 ## 7. Open
 
