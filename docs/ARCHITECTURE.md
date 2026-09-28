@@ -24,6 +24,8 @@ src/lib/
     mtp/       MTP with the OP-XY in MTP mode: containers, datasets, a session over any byte pipe,
                the write policy (reads; new files only after approval; never delete/move), installPreset
     dsp/       shared signal processing (the FFT)
+    voice/     (M8) OpenAI realtime as the voice speaks it: the session it mints, events, its three
+               tools, the state machine (turns, barge-in, tool outputs, transcript lines), mic pick
   device/      Browser adapters (Web MIDI, workers, audio). Everything injected for tests:
                access, transport (the single send choke point + policy), monitor, device mirror,
                scheduler + tick worker, session (identity + GREET), expect(), mtp (WebUSB pipe)
@@ -31,6 +33,8 @@ src/lib/
                track select through the transport; device notes/clock → replica LEDs), app-wide contexts,
                project transfer (.xy files from disk or the device over MTP, and back)
   agent/       (M3) conductor harness on @anthropic-ai/sdk, tools, subagents, approvals, journal
+  voice/       (M8) the voice front end: WebRTC call (rtc), VoiceSession, the ask_claude bridge to the
+               conductor, spoken summaries, the mic key and voice strip
   replica/     (M2) SVG digital twin: geometry model (mm), components, screen canvas, animations
   sim/         (M2.5) the virtual OP-XY: state, input → state, frames → the screen's pages (drawn
                from TE's art and the device captures), the sequencer, the navigator (exact steps
@@ -45,7 +49,22 @@ knowledge/     committed data the app imports via the `$knowledge` alias
 ```
 
 Dependency direction: `routes → app → (replica | agent | manual | ui) → (sim | sound) → device →
-core`. `core` imports nothing outside `core` (and `$knowledge` JSON). Nothing imports `routes`.
+core`. `voice` sits over `agent` (it hands requests to the conductor; `agent` never imports
+`voice`). `core` imports nothing outside `core` (and `$knowledge` JSON). Nothing imports `routes`.
+
+## Voice (M8)
+
+OpenAI's realtime model over WebRTC is a front desk; Claude does the work (`research/71-voice.md`).
+The user's OpenAI key mints one short-lived client secret per call; the call runs on that secret.
+`core/voice/machine.ts` makes every decision (push-to-talk commits, hands-free VAD, barge-in with
+`response.cancel` + `output_audio_buffer.clear`, when an owed response is asked for, transcript
+lines); `voice/session.svelte.ts` carries events between it, the call (`voice/rtc.ts`, every browser
+API injected), the conductor and the UI. `ask_claude` sends the request to the conductor as a
+normal user turn marked voice, so tools, approvals and undo are the chat's own. A spoken approval
+goes through the same `Conductor.decide` as the sheet, and counts only when the user spoke after
+the question and their transcript is a clear yes; "allow for this session" is never offered by
+voice. Heard and said lines reach the chat through `Conductor.voiceLine` and are never sent to
+Claude.
 
 ## The agent: from an idea to steps
 

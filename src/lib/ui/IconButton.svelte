@@ -27,6 +27,8 @@ technology and doubles as its tooltip.
 		toggle?: boolean;
 		/** Show the LED window in this state (like track, step and keyboard keys). */
 		led?: LedState;
+		/** Blink or breathe the lit LED (see `Led`). */
+		ledBlink?: false | 'slow' | 'fast' | 'breathe';
 		/** Show `label` as a tooltip on hover and keyboard focus. */
 		showTooltip?: boolean;
 		children?: Snippet;
@@ -40,6 +42,7 @@ technology and doubles as its tooltip.
 		pressed = $bindable(),
 		toggle = false,
 		led,
+		ledBlink = false,
 		showTooltip = true,
 		class: className,
 		onclick,
@@ -68,7 +71,7 @@ technology and doubles as its tooltip.
 >
 	<span class="ikey__cap">
 		{#if ledState}
-			<Led state={ledState} size={size === 'lg' ? 'md' : 'sm'} class="ikey__led" />
+			<Led state={ledState} blink={ledBlink} size={size === 'lg' ? 'md' : 'sm'} class="ikey__led" />
 		{/if}
 		<span class="ikey__glyph">
 			{#if children}

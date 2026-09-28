@@ -119,8 +119,35 @@ export interface ConductorOptions {
 	readonly session?: string;
 }
 
+/** How a message reached the conductor. */
+export interface SendOptions {
+	/** Handed over by the voice front end (M8): marked in the chat, and Claude knows it is heard. */
+	readonly via?: 'voice';
+}
+
+/** How an approval was answered. */
+export interface DecideOptions {
+	/** A spoken yes or no, passed on by the voice front end (M8). */
+	readonly via?: 'voice';
+}
+
+/** A spoken line for the conversation (M8), from the voice front end. */
+export interface VoiceLineInput {
+	/** The realtime item id; the same line updates while it is transcribed or spoken. */
+	readonly id: string;
+	readonly role: 'user' | 'assistant';
+	readonly text: string;
+	readonly live: boolean;
+	readonly interrupted: boolean;
+}
+
 const PREF_THREAD = 'opxy:agent-thread';
 const PREF_MODEL = 'opxy:agent-model';
+
+/** Told to Claude with a request the voice handed over: the answer will be summarised aloud. */
+const VOICE_NOTE =
+	'The user asked this by voice. A voice assistant will say a one- or two-sentence summary of ' +
+	'your answer aloud and the full answer stays on screen, so lead with the answer itself.';
 
 const GLOBAL_TIMERS: AgentTimers = {
 	setTimeout: (callback, ms) => globalThis.setTimeout(callback, ms),
@@ -319,7 +346,11 @@ export class Conductor {
 	 * Sends a user message, with any files (see `attachments.ts`), and runs the agent until it
 	 * answers. Files that `attachmentProblem` refuses are not sent (nor is the message).
 	 */
-	async send(text: string, attachments: readonly PreparedAttachment[] = []): Promise<void> {
+	async send(
+		text: string,
+		attachments: readonly PreparedAttachment[] = [],
+		options: SendOptions = {}
+	): Promise<void> {
 		const trimmed = text.trim();
 		if ((!trimmed && attachments.length === 0) || this.busy || this.#disposed) return;
 		if (this.attachmentProblem(attachments)) return;
@@ -330,9 +361,11 @@ export class Conductor {
 			kind: 'user',
 			id: entryId('user'),
 			text: trimmed,
-			...(attachments.length > 0 ? { attachments: attachments.map((a) => a.view) } : {})
+			...(attachments.length > 0 ? { attachments: attachments.map((a) => a.view) } : {}),
+			...(options.via ? { via: options.via } : {})
 		});
 		this.#messages.push({ role: 'user', content: userContent(trimmed, attachments) });
+		if (options.via === 'voice') this.#pendingNotes.push(VOICE_NOTE);
 		const note = this.#deviceUpdate();
 		if (note) this.#messages.push({ role: 'system', content: note });
 		await this.#run();
@@ -353,8 +386,8 @@ export class Conductor {
 		if (this.#resolveApproval) this.decide({ kind: 'cancelled' });
 	}
 
-	/** Answers the pending approval request. */
-	decide(decision: ApprovalDecision): void {
+	/** Answers the pending approval request (from the approval sheet, or a spoken yes or no). */
+	decide(decision: ApprovalDecision, options: DecideOptions = {}): void {
 		const request = this.approval;
 		const resolve = this.#resolveApproval;
 		if (!request || !resolve) return;
@@ -378,10 +411,58 @@ export class Conductor {
 			id: entryId('approval'),
 			outcome,
 			labels: request.actions.map((a) => a.preview.label),
-			note: decision.kind === 'reject' ? decision.note?.trim() || null : null
+			note: decision.kind === 'reject' ? decision.note?.trim() || null : null,
+			...(options.via ? { via: options.via } : {})
 		});
 		resolve(decision);
 		this.#emit({ type: 'approval_resolved', id: request.id, decision });
+	}
+
+	/**
+	 * Shows or updates a spoken line (voice, M8): what the mic heard or what the voice said. The
+	 * lines are for the user to read; Claude only sees what the voice hands over with `send`. A
+	 * line that ends with no words (a cough) is dropped; a finished one is saved with the thread.
+	 */
+	voiceLine(line: VoiceLineInput): void {
+		if (this.#disposed) return;
+		const id = `voice-${line.id}`;
+		const empty = !line.live && !line.text.trim();
+		let index = -1;
+		for (let i = this.entries.length - 1; i >= 0; i--) {
+			if (this.entries[i].id === id) {
+				index = i;
+				break;
+			}
+		}
+		const entry = index < 0 ? null : this.entries[index];
+		if (entry?.kind === 'voice') {
+			if (empty) this.entries.splice(index, 1);
+			else {
+				entry.text = line.text;
+				entry.live = line.live;
+				entry.interrupted = line.interrupted;
+			}
+		} else if (!empty) {
+			this.entries.push({
+				kind: 'voice',
+				id,
+				role: line.role,
+				text: line.text,
+				live: line.live,
+				interrupted: line.interrupted
+			});
+		}
+		if (line.live) return;
+		// A conversation started by voice takes its title from the first thing heard.
+		if (
+			line.role === 'user' &&
+			!empty &&
+			this.#messages.length === 0 &&
+			this.threadTitle === 'new conversation'
+		) {
+			this.threadTitle = titleFrom(line.text);
+		}
+		void this.#save();
 	}
 
 	/** Asks for approval again for every tool allowed for this session. */
@@ -674,7 +755,7 @@ export class Conductor {
 		this.#answered = record.messages.some((m) => m.role === 'assistant');
 		this.#repairTranscript();
 		this.entries = record.entries;
-		settleEntries(this.entries);
+		settleEntries(this.entries, { voice: true });
 		this.todos = record.todos;
 		this.usage = { ...emptyUsage(), ...record.usage };
 		this.lastError = null;

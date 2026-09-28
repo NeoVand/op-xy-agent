@@ -88,6 +88,14 @@ answer and date (and into `DECISIONS.md` when they shape the project).
     as `test 1` adds `projects/user/test 1.xy`, written over the open project. On the device: does
     `test 1` show in the project list and open, and does it play the replica's patterns with the
     device's sounds? (note 10 §7.7 lists what else to check: 16 patterns, the cutoff lock.)
+14. **Voice with a real mic** (nothing goes to the device unless you approve a change). With both
+    keys in settings, hold the mic key beside send (or the backquote key) and ask something; then
+    try hands-free (the switch in the voice strip), talking over the voice, and a change by voice
+    ("set the tempo to 96", then "yes"). Three things to settle: is a spoken yes fine for device
+    changes (it now counts only when your own words read as a clear yes after the question;
+    otherwise voice would only announce and wait for a tap), `gpt-realtime-2.1` or mini as the
+    default, and whether the strip names the right microphone with the OP-XY plugged in (the app
+    skips the OP-XY's own input; note 71).
 
 ## Answered
 

@@ -39,6 +39,11 @@ export const icons = {
 	minus: [{ d: 'M4 12h16', cap: 'butt' }],
 	close: [{ d: 'M6.5 6.5l11 11M17.5 6.5l-11 11' }],
 	check: [{ d: 'M5 12.5l4.5 4.5L19 7.5' }],
+	/* A microphone: capsule, cradle and stem (the voice key). */
+	mic: [
+		{ d: 'M12 4a2.75 2.75 0 0 1 2.75 2.75v4.5a2.75 2.75 0 0 1-5.5 0v-4.5A2.75 2.75 0 0 1 12 4z' },
+		{ d: 'M7 11.25a5 5 0 0 0 10 0M12 16.25V20' }
+	],
 	record: [{ d: 'M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z', fill: true }],
 	play: [{ d: 'M8.5 6.5v11l9-5.5-9-5.5z', fill: true }],
 	stop: [{ d: hatch(6.5, 6.5, 11, 2.75), cap: 'butt', width: 1.25 }],

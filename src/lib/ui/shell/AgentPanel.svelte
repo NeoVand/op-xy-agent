@@ -15,6 +15,10 @@ screenshot, say) or by dropping them anywhere on the page; they are read in the 
 
 In development builds `?demo=1` plays a scripted run without a key (`demo.dev.ts`; `?demo=idle`
 waits for you to ask); production builds drop that code.
+
+Voice (M8): the mic key beside send talks to the agent through OpenAI's realtime model, with the
+user's own OpenAI key; the voice hands every request to this conductor (`$lib/voice`). A strip
+above the composer says what voice is doing while it is on.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -47,6 +51,9 @@ waits for you to ask); production builds drop that code.
 	import type { DeviceStack } from '$lib/device/stack';
 	import { getReplicaState } from '$lib/replica/context';
 	import type { ReplicaState } from '$lib/replica/state.svelte';
+	import { VoiceSession } from '$lib/voice/session.svelte';
+	import VoiceKey from '$lib/voice/ui/VoiceKey.svelte';
+	import VoiceStrip from '$lib/voice/ui/VoiceStrip.svelte';
 	import Button from '../Button.svelte';
 	import IconButton from '../IconButton.svelte';
 	import Kbd from '../Kbd.svelte';
@@ -80,6 +87,9 @@ waits for you to ask); production builds drop that code.
 	const uid = $props.id();
 
 	let conductor = $state.raw<Conductor | null>(null);
+	// The voice front end hands everything to whichever conductor is running. Nothing starts until
+	// the mic key is pressed.
+	const voice = new VoiceSession({ apiKey: () => keys.get('openai'), conductor: () => conductor });
 	let booting = $state(false);
 	let bootError = $state<string | null>(null);
 	let settingsOpen = $state(false);
@@ -182,10 +192,14 @@ waits for you to ask); production builds drop that code.
 
 	onMount(() => {
 		keys.load();
+		voice.load();
 		const demoMode = import.meta.env.DEV ? new URLSearchParams(location.search).get('demo') : null;
 		if (demoMode !== null) void bootDemo(demoMode !== 'idle');
 		else if (keys.has('anthropic')) void boot();
-		return () => conductor?.dispose();
+		return () => {
+			voice.dispose();
+			conductor?.dispose();
+		};
 	});
 
 	/** Development only: a conductor on a paced fake API, optionally asking its question at once. */
@@ -244,6 +258,12 @@ waits for you to ask); production builds drop that code.
 	}
 
 	function onKeyChange(provider: KeyProvider): void {
+		if (provider === 'openai') {
+			// A new key clears "voice needs your key"; a removed one ends the call.
+			if (keys.has('openai')) voice.dismiss();
+			else voice.disconnect();
+			return;
+		}
 		if (provider !== 'anthropic') return;
 		if (keys.has('anthropic')) {
 			settingsOpen = false;
@@ -453,6 +473,9 @@ waits for you to ask); production builds drop that code.
 						onchange={onKeyChange}
 						{keyStatus}
 						manualLabel={conductor ? `${conductor.manualLabel}` : null}
+						voiceModels={voice.models}
+						voiceModel={voice.model}
+						onvoicemodel={(id) => voice.setModel(id)}
 					/>
 				</div>
 			{:else if conductor && conductor.entries.length > 0}
@@ -568,6 +591,9 @@ waits for you to ask); production builds drop that code.
 				{/if}
 			</div>
 		{/if}
+		{#if voice.visible && !settingsOpen}
+			<VoiceStrip {voice} claudeBusy={busy} onsettings={openSettings} />
+		{/if}
 		<form class="composer" onsubmit={submit}>
 			<div class="composer__row">
 				<IconButton
@@ -597,6 +623,7 @@ waits for you to ask); production builds drop that code.
 					{@attach trackComposer}
 					onkeydown={onKeyDown}
 					onpaste={onPaste}></textarea>
+				<VoiceKey {voice} disabled={!conductor || settingsOpen} />
 				{#if busy}
 					<IconButton
 						type="button"

@@ -86,6 +86,14 @@
   USB (MTP through WebUSB) once the owner confirms. `/lab` browses the unit's storage over MTP,
   read-only, the first step of M6's project read. Left: both on the owner's unit (`QUESTIONS.md`
   11, 12).
+- **M8 voice** (2026-09-28): the mic key beside send talks to the agent. OpenAI's realtime model
+  (WebRTC, the user's own key, `gpt-realtime-2.1` or mini) is a front desk that hands every
+  request to the Claude conductor (`ask_claude`), so the request, its tools, approvals and undo
+  show in the conversation, and says the answer back in short. Push-to-talk (hold the key, or
+  the backquote key) and hands-free, barge-in, heard and said lines in the chat, spoken
+  approvals checked against what the user said (`research/71-voice.md`). Live: the app's
+  session mints on both models and a text round trip hands questions to Claude and approvals to
+  the user. Left: the owner's try with a real mic (`QUESTIONS.md` 14).
 - **Next:** T28 with the owner (track MIDI channels → notes out), then M5 composer + live playback and
   the M6 device session. M6 continues by **reading the current project over WebUSB-MTP**: it is the
   only way the replica can load what is on the device (steps, tempo, sounds), since the device never
@@ -387,6 +395,21 @@ generated sources; install via FILE PUT if the spike confirms it, otherwise expo
 
 OpenAI realtime (WebRTC) as the voice front-end delegating to the Claude conductor via
 `ask_claude`; push-to-talk and hands-free; barge-in; spoken confirmations for approvals.
+
+- [x] **Protocol** (`src/lib/core/voice`, 2026-09-28): the session the app mints (instructions,
+      turn taking, `gpt-live-transcribe` with the device's words, three tools), the realtime
+      events, and a pure state machine for push-to-talk, hands-free, barge-in, tool outputs and
+      transcript lines. Verified against the live API (`evals/voice/smoke.mjs`, note 71 §8).
+- [x] **Call** (`src/lib/voice/rtc.ts`): microphone first (never the OP-XY's own input), a 120 s
+      client secret minted with the user's key, the WebRTC call and its events channel.
+- [x] **Delegation** (`src/lib/voice/bridge.ts`): `ask_claude` is a normal user turn marked voice;
+      it returns Claude's answer as speakable sentences, a waiting approval, or "working" (then an
+      update); `stop_claude`; spoken approvals through the sheet's own `decide`, counted only on
+      the user's own clear yes after the question.
+- [x] **UI**: the mic key (hold it, or the backquote key; LED red while the mic is live, breathing while it
+      connects or thinks), the voice strip (state, hands-free switch, cost, end), heard and said
+      lines in the conversation, the realtime model in settings.
+- [ ] The owner's try with a real mic (`QUESTIONS.md` 14); a microphone and voice picker.
 
 ### M9 — Listening loop
 
