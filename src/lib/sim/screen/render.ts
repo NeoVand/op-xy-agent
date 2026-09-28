@@ -17,6 +17,7 @@ import { drawProject } from './pages/project';
 import { drawSynth } from './pages/synth';
 import { drawTempo } from './pages/tempo';
 import { COLORS, SCREEN, SCREEN_CORNER_RADIUS } from './palette';
+import { two } from '../params';
 
 /** Options for {@link renderFrame}. */
 export interface RenderOptions {
@@ -82,7 +83,8 @@ export function renderFrame(ctx: ScreenCtx, frame: ScreenFrame, options: RenderO
 	ctx.restore();
 }
 
-const pct = (v: number) => `${Math.round(v * 100)}`;
+/** A 0–1 view of a 0–99 lane as the device writes the lane ("00"…"99"), the number a lock shows. */
+const lane = (v: number) => two(v * 99);
 
 /** The sampler engines' M1 page (the drum frame): what the key, the root or the zone holds. */
 function describeSampler(frame: Extract<ScreenFrame, { page: 'drum' }>): string {
@@ -111,12 +113,12 @@ export function describeFrame(frame: ScreenFrame): string {
 			return `midi: channel ${frame.channel}, bank ${frame.bank ?? 'none'}, program ${frame.program}`;
 		case 'envelope': {
 			const e = frame.selected === 'amp' ? frame.amp : frame.filter;
-			return `${frame.selected} envelope: attack ${pct(e.attack)}, decay ${pct(e.decay)}, sustain ${pct(e.sustain)}, release ${pct(e.release)}`;
+			return `${frame.selected} envelope: attack ${lane(e.attack)}, decay ${lane(e.decay)}, sustain ${lane(e.sustain)}, release ${lane(e.release)}`;
 		}
 		case 'playmode':
 			return `play mode ${frame.values[0]}, portamento ${frame.values[1]}, bend ${frame.values[2]}, volume ${frame.values[3]}`;
 		case 'filter':
-			return `${frame.type} filter: cutoff ${pct(frame.cutoff)}, resonance ${pct(frame.resonance)}`;
+			return `${frame.type} filter: cutoff ${lane(frame.cutoff)}, resonance ${lane(frame.resonance)}`;
 		case 'sends':
 			return `sends: aux ${frame.values[0]}, tape ${frame.values[1]}, fx I ${frame.values[2]}, fx II ${frame.values[3]}`;
 		case 'lfo':

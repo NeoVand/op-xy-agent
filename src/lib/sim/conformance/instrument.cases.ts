@@ -314,11 +314,11 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await d.click('key.m3');
 			await d.turn(1, 50);
-			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 10');
+			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
 			await d.click('track.4');
-			expect(d.screen()).toBe('z hipass filter: cutoff 80, resonance 53');
+			expect(d.screen()).toBe('z hipass filter: cutoff 79, resonance 52');
 			await d.click('track.3');
-			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 10');
+			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
 		});
 
 		it('shows a page’s extra parameters while shift is held, and the page again when it comes up', async () => {
@@ -790,7 +790,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await loadEngine(d, 'wavetable');
 			expect(header(d)).toEqual(['table 00', 'position 00', 'warp 00', 'drift 00']);
 			await d.click('key.m3');
-			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 10');
+			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
 		});
 
 		it('edits the drum key last played on a drum track’s M1: tune, start, end, play mode', async () => {
@@ -893,12 +893,12 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await d.click('key.m2');
 			// a new project's bass: a sharp attack, a decay to a low sustain, a long release
-			expect(d.screen()).toBe('amp envelope: attack 0, decay 32, sustain 39, release 80');
+			expect(d.screen()).toBe('amp envelope: attack 00, decay 31, sustain 38, release 79');
 			await d.turn(1, 20);
 			await d.turn(2, 20);
 			await d.turn(3, -26);
 			await d.turn(4, 10);
-			expect(d.screen()).toBe('amp envelope: attack 20, decay 52, sustain 12, release 90');
+			expect(d.screen()).toBe('amp envelope: attack 20, decay 51, sustain 12, release 89');
 		});
 
 		it('swaps to the filter envelope with a click of any encoder, and back; turns edit the one shown', async () => {
@@ -912,11 +912,11 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			}
 			expect(shown).toEqual(['filter', 'amp', 'filter', 'amp']);
 			await d.push(3);
-			expect(d.screen()).toBe('filter envelope: attack 0, decay 64, sustain 68, release 29');
+			expect(d.screen()).toBe('filter envelope: attack 00, decay 63, sustain 67, release 28');
 			await d.turn(1, 49);
-			expect(d.screen()).toBe('filter envelope: attack 49, decay 64, sustain 68, release 29');
+			expect(d.screen()).toBe('filter envelope: attack 49, decay 63, sustain 67, release 28');
 			await d.push(1);
-			expect(d.screen()).toBe('amp envelope: attack 0, decay 32, sustain 39, release 80');
+			expect(d.screen()).toBe('amp envelope: attack 00, decay 31, sustain 38, release 79');
 		});
 
 		it('has both envelopes on a drum track too', async () => {
@@ -998,7 +998,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(2, 31);
 			await d.turn(3, -64);
 			await d.turn(4, 43);
-			expect(d.screen()).toBe('svf filter: cutoff 51, resonance 40');
+			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 40');
 			expect(on(d, 'filter')).toMatchObject({
 				cutoff: 50 / 99,
 				resonance: 40 / 99,
@@ -1035,7 +1035,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await scrollTo(d, FILTER_TYPES, 'ladder');
 			await d.push(1);
 			// a new type keeps the cutoff and resonance (ours; device check)
-			expect(d.screen()).toBe('ladder filter: cutoff 0, resonance 10');
+			expect(d.screen()).toBe('ladder filter: cutoff 00, resonance 09');
 		});
 
 		it('confirms the highlighted filter type with M3 as well (ours, like M1 in the engine list; device check)', async () => {
@@ -1045,7 +1045,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await openList(d, 3);
 			await scrollTo(d, FILTER_TYPES, 'z lowpass');
 			await d.click('key.m3');
-			expect(d.screen()).toBe('z lowpass filter: cutoff 0, resonance 10');
+			expect(d.screen()).toBe('z lowpass filter: cutoff 00, resonance 09');
 		});
 
 		it('leaves the filter types unchanged with another module key (ours)', async () => {
@@ -1073,7 +1073,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				await d.turn(4, 25);
 				expect(d.screen()).toBe('sends: aux 50, tape 31, fx I 77, fx II 25');
 			});
-			expect(d.screen()).toBe('svf filter: cutoff 0, resonance 10');
+			expect(d.screen()).toBe('svf filter: cutoff 00, resonance 09');
 			await d.click('track.4');
 			await d.withShift(async () => {
 				expect(d.screen()).toBe('sends: aux 00, tape 99, fx I 00, fx II 23');

@@ -79,11 +79,13 @@ describe('planAnimation', () => {
 		expect(plan.steps[0]).toEqual({ at: 0, kind: 'highlight', id: 'key.m1', highlight: 'hold' });
 	});
 
-	it('pushes an encoder for a click', () => {
-		expect(actions(planAnimation(parseKeys('click E3')).steps)).toEqual([
-			'0 press encoder.3',
-			`${T.pressMs} release encoder.3`
-		]);
+	it('pushes an encoder for a click, and lets it go as a click (so the simulator takes it)', () => {
+		const plan = planAnimation(parseKeys('click E3'));
+		expect(actions(plan.steps)).toEqual(['0 press encoder.3', `${T.pressMs} release encoder.3`]);
+		expect(plan.steps).toContainEqual({ at: T.pressMs, kind: 'click', id: 'encoder.3' });
+		// a held push around a turn is no click
+		const held = planAnimation(parseKeys('click E1 + turn E2')).steps;
+		expect(held.some((s) => s.kind === 'click')).toBe(false);
 	});
 
 	it('shows one stand-in for a placeholder and marks the others as candidates', () => {

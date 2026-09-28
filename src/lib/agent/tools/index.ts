@@ -4,18 +4,21 @@
  */
 import { DEVICE_TOOLS } from './device';
 import { KNOWLEDGE_TOOLS } from './knowledge';
+import { NAVIGATE_TOOLS } from './navigate';
 import { VIRTUAL_TOOLS } from './virtual';
 import { ToolRegistry, type AnyTool } from './define';
 
 export * from './define';
 export * from './device';
 export * from './knowledge';
+export * from './navigate';
 export * from './virtual';
 
 /** Every tool the conductor may use. */
 export const CONDUCTOR_TOOLS: readonly AnyTool[] = [
 	...DEVICE_TOOLS,
 	...KNOWLEDGE_TOOLS,
+	...NAVIGATE_TOOLS,
 	...VIRTUAL_TOOLS
 ];
 

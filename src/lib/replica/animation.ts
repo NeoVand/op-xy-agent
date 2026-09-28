@@ -33,6 +33,8 @@ export type PlanStep =
 	  }
 	| { readonly at: number; readonly kind: 'press'; readonly id: ControlId }
 	| { readonly at: number; readonly kind: 'release'; readonly id: ControlId }
+	/** An encoder push let go without turning: what the device (and the simulator) take as a click. */
+	| { readonly at: number; readonly kind: 'click'; readonly id: ControlId }
 	| { readonly at: number; readonly kind: 'turn'; readonly id: ControlId; readonly delta: 1 | -1 }
 	| {
 			readonly at: number;
@@ -185,6 +187,9 @@ export function planAnimation(
 					if (isPushable(id)) {
 						steps.push({ at: t, kind: 'press', id });
 						steps.push({ at: t + down, kind: 'release', id });
+						if (term.gesture === 'click' && getControl(id).kind === 'encoder') {
+							steps.push({ at: t + down, kind: 'click', id });
+						}
 					}
 					t += down;
 					break;

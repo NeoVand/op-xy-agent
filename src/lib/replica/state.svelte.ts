@@ -618,6 +618,9 @@ export class ReplicaState {
 				}
 				break;
 			}
+			case 'click':
+				if (getControl(step.id).kind === 'encoder') this.click(step.id as EncoderId, 'demo');
+				break;
 			case 'turn': {
 				if (step.id === 'knob.volume') {
 					const next = Math.min(1, Math.max(0, this.#volume + step.delta * DEMO_VOLUME_STEP));
