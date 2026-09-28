@@ -5,6 +5,8 @@ import { z } from 'zod';
 import {
 	asksForApproval,
 	defineTool,
+	MAX_OPTIONAL_PARAMETERS,
+	optionalParameters,
 	strictJsonSchema,
 	ToolDefinitionError,
 	ToolRegistry,
@@ -128,6 +130,15 @@ describe('ToolRegistry', () => {
 });
 
 describe('the conductor tool set', () => {
+	it('stays within the API’s budget of optional parameters (it refuses more than 24)', () => {
+		const tools = createConductorRegistry().apiTools();
+		const optional = tools.reduce(
+			(n, t) => n + optionalParameters(t.input_schema as Record<string, unknown>),
+			0
+		);
+		expect(optional).toBeLessThanOrEqual(MAX_OPTIONAL_PARAMETERS);
+	});
+
 	it('has every planned tool with the right kind', () => {
 		const kinds = Object.fromEntries(CONDUCTOR_TOOLS.map((t) => [t.name, t.kind]));
 		expect(kinds).toEqual({
@@ -144,8 +155,7 @@ describe('the conductor tool set', () => {
 			read_screen: 'read',
 			write_todos: 'ui',
 			task: 'read',
-			plan_steps: 'read',
-			guide: 'ui',
+			plan_steps: 'ui',
 			write_pattern: 'mutate',
 			read_pattern: 'read',
 			write_arrangement: 'mutate'

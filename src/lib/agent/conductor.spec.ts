@@ -149,7 +149,8 @@ describe('conductor: requests and streaming', () => {
 		expect(names).toContain('set_tempo');
 		expect(names).not.toContain('load_project');
 		for (const tool of body.tools) {
-			expect(tool.strict).toBe(true);
+			// every tool but plan_steps, whose goal fields would overflow the strict grammar
+			expect(tool.strict).toBe(tool.name !== 'plan_steps');
 			expect(tool.input_schema.additionalProperties).toBe(false);
 		}
 

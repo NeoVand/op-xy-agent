@@ -1,9 +1,10 @@
 /**
- * Step-by-step tools (Phase F4): `plan_steps` gives the exact keys and encoder turns from where the
- * replica stands to a page, or to a parameter set to a value, tried on a copy of the simulator
- * first (`$lib/sim/navigator.ts`); `guide` then walks the replica through them, one animated step
- * at a time, so the user watches the keys and the screen change. Neither sends anything to a
- * connected device.
+ * The step-by-step tool (Phase F4): `plan_steps` gives the exact keys and encoder turns from where
+ * the replica stands to a page, or to a parameter set to a value, tried on a copy of the simulator
+ * first (`$lib/sim/navigator.ts`); with `show` it also walks the replica through them, one animated
+ * step at a time, so the user watches the keys and the screen change and the virtual OP-XY ends up
+ * there. It never sends anything to a connected device. One non-strict tool rather than two strict
+ * ones keeps the tool set within the API's grammar limits (`MAX_OPTIONAL_PARAMETERS`).
  */
 import { z } from 'zod';
 import type { NavPlan, Place } from '$lib/sim/navigator';
@@ -11,6 +12,11 @@ import type { NavGoal } from '../virtual-opxy';
 import { defineTool, errorResult, jsonResult, type AgentEnvironment } from './define';
 
 const goalInput = z.object({
+	show: z
+		.boolean()
+		.describe(
+			'true: also animate the steps on the replica, which leaves the virtual OP-XY there (when the user wants to be shown, or asks you to set it up); false: only plan'
+		),
 	area: z
 		.enum(['instrument', 'auxiliary', 'mix', 'arrange', 'tempo', 'player'])
 		.optional()
@@ -24,10 +30,6 @@ const goalInput = z.object({
 			'Track 1–16 (9–16 are the auxiliary tracks); default: the selected one. For a parameter, the instrument track whose parameter it is.'
 		),
 	page: z.int().min(1).max(4).optional().describe('The M-page, 1–4 (instrument, auxiliary, mix)'),
-	envelope: z
-		.enum(['amp', 'filter'])
-		.optional()
-		.describe('On instrument M2: which envelope the encoders should edit'),
 	param: z
 		.string()
 		.min(1)
@@ -60,12 +62,7 @@ function toGoal(input: GoalInput, env: AgentEnvironment): NavGoal | string {
 	switch (input.area) {
 		case 'instrument':
 			if (track > 8) return 'instrument tracks are 1–8';
-			place = {
-				area: 'instrument',
-				track,
-				page: (input.page ?? 1) as 1 | 2 | 3 | 4,
-				...(input.envelope ? { envelope: input.envelope } : {})
-			};
+			place = { area: 'instrument', track, page: (input.page ?? 1) as 1 | 2 | 3 | 4 };
 			break;
 		case 'auxiliary':
 			place = { area: 'auxiliary', track: aux, page: (input.page ?? 1) as 1 | 2 | 3 | 4 };
@@ -112,12 +109,17 @@ const summaryOf = (plan: NavPlan) =>
 			: `${plan.steps.length} step${plan.steps.length === 1 ? '' : 's'}: ${plan.steps.map((s) => (s.clicks ? `${s.keys} ×${Math.abs(s.clicks)}` : s.keys)).join(', ')}`
 		: `not reachable: ${plan.note ?? 'unknown'}`;
 
+/** Longest a turn's animation runs, however many detents it has. */
+const TURN_MS = 1800;
+
 export const planStepsTool = defineTool({
 	name: 'plan_steps',
 	label: 'plan steps',
-	kind: 'read',
+	kind: 'ui',
+	// its optional goal fields would push the strict grammar over the API's size limit
+	strict: false,
 	description:
-		'The exact steps from where the replica stands now to a page ("the filter page of track 3", "mix M2", "the tempo page", "track 4\'s player") or to a parameter set to a value ("track 3 cutoff 40", "tempo 128", "amp release 60"), tried on a copy of the simulator first so they are known to work. Each step is a key combo in the key grammar; turns carry the number of detents and the direction; each step says what the screen shows after it. Use it for every "how do I get to / set …" question instead of working the keys out yourself. It changes nothing.',
+		'The exact steps from where the replica stands now to a page ("the filter page of track 3", "mix M2", "the tempo page", "track 4\'s player") or to a parameter set to a value ("track 3 cutoff 40", "tempo 128", "amp release 60"), tried on a copy of the simulator first so they are known to work. Each step is a key combo in the key grammar; turns carry the number of detents and the direction; each step says what the screen shows after it. Use it for every "how do I get to / set …" question instead of working the keys out yourself. With show, it also animates the steps on the replica (the virtual OP-XY ends up there, as if the user had pressed the keys); nothing is sent to a connected device.',
 	input: goalInput,
 	async run(input, ctx) {
 		const virtual = ctx.env.virtual;
@@ -126,26 +128,7 @@ export const planStepsTool = defineTool({
 		const goal = toGoal(input, ctx.env);
 		if (typeof goal === 'string') return errorResult(goal, 'bad goal');
 		const plan = virtual.plan(goal);
-		return jsonResult(planView(plan), summaryOf(plan));
-	}
-});
-
-/** Longest a turn's animation runs, however many detents it has. */
-const TURN_MS = 1800;
-
-export const guideTool = defineTool({
-	name: 'guide',
-	label: 'guide on replica',
-	kind: 'ui',
-	description:
-		'Walk the replica through the steps to a page or a parameter value (the same goal as plan_steps), animating each key press and turn so the user watches it happen; the virtual OP-XY ends up there, as if the user had pressed the keys. Nothing is sent to a connected device. Use it when the user wants to be shown, or asks you to set something on the virtual OP-XY; then tell them the steps so they can do it on their own device.',
-	input: goalInput,
-	async run(input, ctx) {
-		const virtual = ctx.env.virtual;
-		if (!virtual) return errorResult('There is no replica to guide in this session.', 'no replica');
-		const goal = toGoal(input, ctx.env);
-		if (typeof goal === 'string') return errorResult(goal, 'bad goal');
-		const plan = virtual.plan(goal);
+		if (!input.show) return jsonResult(planView(plan), summaryOf(plan));
 		const replica = ctx.env.replica;
 		if (!plan.reached || !replica) {
 			return jsonResult(
@@ -173,10 +156,10 @@ export const guideTool = defineTool({
 		const after = virtual.plan(goal);
 		return jsonResult(
 			{ shown: true, arrived: after.reached && after.steps.length === 0, ...planView(plan) },
-			`guided: ${summaryOf(plan)}`
+			`shown: ${summaryOf(plan)}`
 		);
 	}
 });
 
 /** The step-by-step tools. */
-export const NAVIGATE_TOOLS = [planStepsTool, guideTool];
+export const NAVIGATE_TOOLS = [planStepsTool];

@@ -3,6 +3,28 @@
 Re-run with `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5` (needs `ANTHROPIC_API_KEY`
 in `.env`; never printed). Newest first.
 
+## 2026-09-28 — how-to: exact steps and the replica, conductor claude-opus-5-5
+
+`node evals/agent/howto.mjs`: the agent is asked how to reach a value, to show something on the
+replica, and to set a sound up from an idea. The replica is a real `ReplicaState` driving the
+simulator, as in the app, so `plan_steps` with `show` leaves the virtual OP-XY where it led. We
+check the steps it gave, the tools it used and the values it left.
+
+| Case          | Request                                                        | Result | Tools it used                      |
+| ------------- | -------------------------------------------------------------- | ------ | ---------------------------------- |
+| `cutoff`      | how to set track 3's cutoff to 40                              | pass   | plan_steps → show_on_replica       |
+| `release`     | notes should stop the moment the keys come up: what, which way | pass   | plan_steps → show_on_replica       |
+| `tempo`       | show on the replica how to set tempo 96                        | pass   | plan_steps (show)                  |
+| `slow-filter` | set up a slowly opening filter on track 3, then give the steps | pass   | plan_steps ×2 (show) → read_screen |
+| `pluck`       | a plucky bass on track 3 (short decay, no sustain, more reso)  | pass   | plan_steps ×4 (show) → read_screen |
+
+$1.31 for the five ($0.73 of it the manual cache on the first). The answers give the exact keys
+(`T3` → `M3` → turn `E1` 40 detents clockwise) and the release direction (clockwise is shorter, as
+on the device). The first run failed every request: the two tools' optional fields pushed the tool
+set over the API's limits (24 optional parameters; then the strict grammar's size). The registry
+now refuses more than 24, and `plan_steps` is sent without `strict` (zod still checks its input).
+The virtual eval (below) passes 3/3 again with it.
+
 ## 2026-09-27 — the virtual OP-XY: programming without a device, conductor claude-opus-5-5
 
 `node evals/agent/virtual.mjs`: no device connected; the agent gets a request in plain words and

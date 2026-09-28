@@ -133,6 +133,12 @@ export interface ToolDefinition<I = unknown, S = unknown> {
 	readonly priority?: boolean;
 	/** Override the kind's default policy (`mutate` asks, everything else runs). */
 	readonly approval?: 'ask' | 'auto';
+	/**
+	 * false sends the schema without `strict`: the API then does not compile it into its grammar,
+	 * which has a size limit that a schema with many optional fields can push the whole tool set
+	 * over. The input is still validated with zod on arrival.
+	 */
+	readonly strict?: boolean;
 	/** Captures the state the call is about to change (before approval and again before running). */
 	snapshot?(input: I, env: AgentEnvironment): S;
 	/** What the change will do, for the approval sheet and the journal. */
@@ -287,6 +293,31 @@ export function strictJsonSchema(schema: z.ZodType, name = 'tool'): BetaTool.Inp
 	return strictify(raw, name) as BetaTool.InputSchema;
 }
 
+/**
+ * The API compiles strict schemas into a grammar and refuses a request whose strict tools have more
+ * than 24 optional parameters in all ("Schemas contains too many optional parameters"), or whose
+ * grammar grows too large, so a registry over the count is refused here, where a test catches it.
+ */
+export const MAX_OPTIONAL_PARAMETERS = 24;
+
+/** Properties not listed as required, at any depth of a strict schema. */
+export function optionalParameters(node: JsonSchema): number {
+	let count = 0;
+	if (node.type === 'object' && node.properties && typeof node.properties === 'object') {
+		const properties = node.properties as Record<string, JsonSchema>;
+		const required = new Set(Array.isArray(node.required) ? node.required : []);
+		for (const [key, value] of Object.entries(properties)) {
+			if (!required.has(key)) count++;
+			count += optionalParameters(value);
+		}
+	}
+	if (node.items && typeof node.items === 'object')
+		count += optionalParameters(node.items as JsonSchema);
+	for (const branch of [...((node.anyOf as JsonSchema[] | undefined) ?? [])])
+		count += optionalParameters(branch);
+	return count;
+}
+
 // ─── registry ───────────────────────────────────────────────────────────────────────────────────
 
 /** Outcome of validating a call's input. */
@@ -349,12 +380,24 @@ export class ToolRegistry {
 	 * guarantee the shape; ranges are re-checked by {@link ToolRegistry.parse}.
 	 */
 	apiTools(): BetaTool[] {
-		this.#api ??= this.#tools.map((tool) => ({
-			name: tool.name,
-			description: tool.description,
-			input_schema: strictJsonSchema(tool.input, tool.name),
-			strict: true
-		}));
+		if (!this.#api) {
+			const api = this.#tools.map((tool) => ({
+				name: tool.name,
+				description: tool.description,
+				input_schema: strictJsonSchema(tool.input, tool.name),
+				strict: tool.strict !== false
+			}));
+			// the budget counts the schemas the API compiles: the strict ones
+			const optional = api
+				.filter((tool) => tool.strict)
+				.reduce((sum, tool) => sum + optionalParameters(tool.input_schema as JsonSchema), 0);
+			if (optional > MAX_OPTIONAL_PARAMETERS) {
+				throw new ToolDefinitionError(
+					`the tools have ${optional} optional parameters; the API takes at most ${MAX_OPTIONAL_PARAMETERS}`
+				);
+			}
+			this.#api = api;
+		}
 		return this.#api;
 	}
 
