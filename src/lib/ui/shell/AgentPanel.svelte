@@ -173,9 +173,9 @@ waits for you to ask); production builds drop that code.
 
 	const EXAMPLES = [
 		'what does shift + M1 do?',
-		'how do I record automation for the filter?',
-		'set the tempo to 96 and mute track 2',
-		'play a C minor chord on track 3'
+		'walk me through setting the filter cutoff on track 3',
+		'make the bass pump with the kick',
+		'build a little house loop and play it'
 	];
 
 	onMount(() => {
