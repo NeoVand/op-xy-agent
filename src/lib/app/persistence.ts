@@ -21,9 +21,10 @@ import { DEFAULT_LEVEL, defaultState, type SimState } from '$lib/sim/params';
 
 /**
  * Bumped when a save can no longer simply be merged onto the defaults; older versions that can be
- * brought up to date are ({@link upgradeV1}, {@link upgradeGrooves}, {@link upgradeArpSpeeds}).
+ * brought up to date are ({@link upgradeV1}, {@link upgradeGrooves}, {@link upgradeArpSpeeds},
+ * {@link upgradeAuxScales}).
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 /** What is stored. */
 export interface SavedSim {
@@ -168,6 +169,59 @@ export function upgradeArpSpeeds(project: unknown): void {
 	}
 }
 
+/**
+ * A version 1–4 save's auxiliary values whose scale changed with the device's pages (research 59
+ * §2.13). The delay's size was one of eight steps and is now a lane: the middle of that step's zone.
+ * External audio's drive ran 0–99 where the device's runs 0–20. In place.
+ */
+export function upgradeAuxScales(project: unknown): void {
+	if (!isObject(project) || !isObject(project.areas)) return;
+	const aux = project.areas.auxiliary;
+	if (!isObject(aux)) return;
+	for (const slot of Array.isArray(aux.fx) ? aux.fx : []) {
+		const params = isObject(slot) && slot.type === 'delay' ? slot.params : null;
+		if (Array.isArray(params) && typeof params[0] === 'number') {
+			const step = Math.min(7, Math.max(0, Math.round(params[0])));
+			params[0] = ((16 * step + 8) * 99) / 127;
+		}
+	}
+	if (isObject(aux.audio) && typeof aux.audio.drive === 'number') {
+		aux.audio.drive = Math.round((aux.audio.drive * 20) / 99);
+	}
+}
+
+/** The upgrades a project saved by `version` needs (all but version 1's, which spans the library). */
+function upgradeProject(project: unknown, version: number): void {
+	if (version < 3) upgradeGrooves(project);
+	if (version < 4) upgradeArpSpeeds(project);
+	if (version < 5) upgradeAuxScales(project);
+}
+
+/** The same upgrades for the projects kept in the projects folder (their content is JSON). */
+function upgradeStoredProjects(library: unknown, version: number): void {
+	const folders = isObject(library) && isObject(library.projects) ? library.projects : null;
+	if (!folders) return;
+	const upgraded = (json: unknown) => {
+		if (typeof json !== 'string') return json;
+		try {
+			const project: unknown = JSON.parse(json);
+			upgradeProject(project, version);
+			return JSON.stringify(project);
+		} catch {
+			return json;
+		}
+	};
+	for (const entries of Object.values(folders)) {
+		for (const entry of Array.isArray(entries) ? entries : []) {
+			if (!isObject(entry)) continue;
+			entry.snapshot = upgraded(entry.snapshot);
+			for (const v of Array.isArray(entry.versions) ? entry.versions : []) {
+				if (isObject(v)) v.snapshot = upgraded(v.snapshot);
+			}
+		}
+	}
+}
+
 // ───────────────────────────────────────────────────────────────────── capture / apply
 
 /** The state's work, ready to store. */
@@ -232,8 +286,8 @@ export function applySaved(state: SimState, saved: SavedSim): boolean {
 		return false;
 	}
 	if (version === 1) upgradeV1(project, library);
-	if (version < 3) upgradeGrooves(project);
-	if (version < 4) upgradeArpSpeeds(project);
+	upgradeProject(project, version);
+	upgradeStoredProjects(library, version);
 	const fresh = defaultState();
 	const freshProject = JSON.parse(snapshot(fresh)) as Record<string, unknown>;
 	restore(state, JSON.stringify(mergeDefaults(project, freshProject)), saved.name);

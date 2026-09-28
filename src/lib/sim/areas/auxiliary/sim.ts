@@ -1,21 +1,30 @@
 /**
  * Auxiliary tracks (T1–T8 with auxiliary): brain, punch-in FX, external MIDI, external CV,
  * external audio, tape, FX I and FX II, with their M1–M4 pages (guide art auxiliary-004 … 130;
- * manual: auxiliary/*, fx/*). The brain has a main page and routing; punch-in FX and external CV
- * have only their main page; external MIDI has CC slots on M2 and M3 and an LFO; external audio,
- * tape and the FX tracks have routing (M2), a filter with sends on its shift layer (M3) and an LFO
- * (M4). A track without a page keeps its main page on that key (ours: the manual lists no page).
- * Routing into external audio, tape and the FX tracks is the instrument tracks' own sends (the
- * community's project files store it there), so their M3 shift layer and mix M1 show the same
- * values. Aux tracks sequence like instrument tracks: brain notes transpose until the next one,
- * punch-in notes fire effects and tape notes play clips for as long as they last, and the CV needle
- * holds the last note until the next. `shift + key` on an instrument track fires punch-in effects
- * from anywhere, so the area claims it.
+ * manual: auxiliary/*, fx/*), as the owner's device shows them on OS 1.1.33
+ * (docs/research/59-screen-profiling.md §2.13). The brain has a main page and routing; punch-in FX
+ * and external CV have only their main page; external MIDI has CC slots on M2 and M3 and an LFO;
+ * external audio, tape and the FX tracks have routing (M2), a filter with sends on its shift layer
+ * (M3) and an LFO (M4). A track without a page keeps its main page on that key (ours: the manual
+ * lists no page). The filters and LFOs start switched off, as on the device, and M3 or M4 pressed
+ * on its own page switches them, as on the instrument tracks. Routing into external audio, tape and
+ * the FX tracks is the instrument tracks' own sends (the community's project files store it there),
+ * so their M3 shift layer and mix M1 show the same values. Aux tracks sequence like instrument
+ * tracks: brain notes transpose until the next one, punch-in notes fire effects and tape notes play
+ * clips for as long as they last, and the CV needle holds the last note until the next.
+ * `shift + key` on an instrument track fires punch-in effects from anywhere, so the area claims it.
  */
 import { KEYBOARD_NOTE_NAMES, type KeyId } from '$lib/core/opxy';
-import { LFO_SYNC_STEPS, clamp, detent, two, type PageNumber, type SimState } from '../../params';
-import type { ListFrame, LfoFrame, ScreenFrame } from '../../screen/frame';
-import type { SoftLabel } from '../../screen/draw';
+import {
+	LFO_SYNC_STEPS,
+	clamp,
+	detent,
+	shown,
+	two,
+	type PageNumber,
+	type SimState
+} from '../../params';
+import type { LfoFrame, ScreenFrame } from '../../screen/frame';
 import type { SimInput } from '../../input';
 import { currentPattern, recordNote, stepAt, type Pattern } from '../../sequencer';
 import type { MusicalScale } from '../../sequencer-playback';
@@ -25,13 +34,17 @@ import type {
 	AuxCcFrame,
 	AuxFilterView,
 	AuxFxFrame,
+	AuxFxListFrame,
+	AuxLfoDestination,
 	AuxLfoFrame,
+	AuxPunchFrame,
 	AuxRouteFrame,
 	AuxTapeFrame
 } from './frames';
 import {
 	AUDIO_INPUTS,
 	DELAY_SIZES,
+	FX_NAMES,
 	FX_PARAMS,
 	FX_TYPES,
 	KEYS,
@@ -94,24 +107,26 @@ const ROUTE_TARGET = ['brain', '', '', '', 'aux out', 'tape', 'FX I', 'FX II'] a
 /** The FX slots' names. */
 const SLOT_NAMES = ['FX I', 'FX II'] as const;
 
-/** External MIDI pages carry TE's soft labels (auxiliary-031); the other aux pages show none. */
-const MIDI_SOFT: readonly SoftLabel[] = [
-	{ text: 'main' },
-	{ text: 'set I' },
-	{ text: 'set II' },
-	{ text: 'modulation' }
-];
-
 /** A module an aux LFO can reach and its parameters by encoder ('' where the page has none). */
 interface Destination {
-	readonly name: string;
+	readonly name: AuxLfoDestination;
 	readonly params: readonly string[];
 }
 
-const FILTER_DESTINATION: Destination = {
-	name: 'filter',
-	params: ['high-pass', '', '', 'low-pass']
-};
+/**
+ * The LFO of external audio (and, ours, of tape and the FX tracks) reaches the track's own page,
+ * its filter and its amp, as the device lists them: syn, filter, amp (steps-904…953). It names the
+ * track's own parameters param1…; "param1", "hi pass", "volume" and "pan" were seen, the rest is
+ * ours after them.
+ */
+const TRACK_DESTINATIONS: readonly Destination[] = [
+	{ name: 'syn', params: ['param1', 'param2', 'param3', 'param4'] },
+	{ name: 'filter', params: ['hi pass', '', '', 'lo pass'] },
+	{ name: 'amp', params: ['volume', 'pan', '', ''] }
+];
+
+/** What the external MIDI LFO's parameter card reads when it reaches no CC. */
+const NO_CC = 'no cc set';
 
 const pitchClass = (note: number) => ((note % 12) + 12) % 12;
 
@@ -183,6 +198,35 @@ const keysOf = (notes: readonly number[]) =>
 
 /** Sorted, without repeats. */
 const unique = (keys: readonly number[]) => [...new Set(keys)].sort((a, b) => a - b);
+
+/** Effects playing on the punch-in track now: keys held, and the pattern's notes while playing. */
+const punchActive = (s: SimState) => unique([...heldKeys(s), ...keysOf(soundingNotes(s, 1))]);
+
+/**
+ * The punch-in page's heartbeat (research 59 §2.13; the recordings punch-white and punch-black):
+ * one lit dot runs along row 8 at 15.2 columns a second and comes back to the left edge every
+ * 2.78 s (the 40 columns take 2.63 s; the rest of the loop it is off the screen).
+ */
+const HEARTBEAT = { row: 8, speed: 15.2, loop: 2780 } as const;
+
+/** Its spike, rows by column: a row down, up to row 4, down past the line and back (an ECG's). */
+const HEARTBEAT_SPIKE: Readonly<Record<number, number>> = {
+	17: 9,
+	18: 7,
+	19: 6,
+	20: 4,
+	21: 7,
+	22: 9
+};
+
+/** The heartbeat dot's column `ms` into its loop (40 and past: off the screen). */
+const heartbeatColumn = (ms: number) =>
+	Math.floor(((ms % HEARTBEAT.loop) / 1000) * HEARTBEAT.speed);
+
+/** The heartbeat's dot in column `col`, or null off the screen. */
+function heartbeatDot(col: number): AuxPunchFrame['beat'] {
+	return col >= 0 && col < 40 ? { col, row: HEARTBEAT_SPIKE[col] ?? HEARTBEAT.row } : null;
+}
 
 /** The page the screen shows (shift on a filter with sends shows the send cards). */
 function kindOf(s: SimState): Kind {
@@ -295,10 +339,10 @@ function brainFrame(s: SimState): AuxBrainFrame {
 	const steps: readonly number[] = SCALES[scale].steps;
 	return {
 		page: 'aux-brain',
-		title: `${KEYS[root]} ${SCALES[scale].name}`,
+		title: `${KEYS[root]} ${SCALES[scale].label}`,
 		auto: b.auto,
 		root: KEYS[key],
-		scale: SCALES[scale].name,
+		scale: SCALES[scale].label,
 		link: b.link === null ? null : two(b.link + 1),
 		notes: Array.from({ length: 12 }, (_, pc) => steps.includes((pc - root + 12) % 12))
 	};
@@ -341,7 +385,7 @@ function routeFrame(s: SimState, track: number): AuxRouteFrame {
 		tracks: s.tracks.map((t, i) => {
 			if (send === null) return { routed: routes[i], amount: routes[i] ? 1 : 0, value: '' };
 			const v = t.sends[send];
-			return { routed: v > 0, amount: v / 99, value: two(v) };
+			return { routed: v > 0, amount: v / 99, value: String(shown(v)) };
 		}),
 		half: s.areas.auxiliary.pages[track].half
 	};
@@ -364,28 +408,24 @@ function turnRoute(s: SimState, track: number, e: number, delta: number): void {
 
 // ───────────────────────────────────────────────────────────── external midi and cv
 
-/** A slot's name: its CC number when on. */
+/** A slot's CC as the LFO's parameter card names it: "cc 74", or none. */
 function slotLabel(aux: AuxiliaryState, slot: number): string {
 	const cc = aux.midi.slots[slot].cc;
-	return cc === null ? `slot ${slot + 1}` : `cc ${cc}`;
+	return cc === null ? NO_CC : `cc ${cc}`;
 }
 
+/**
+ * External MIDI M2 / M3 as the device draws them (b1-4103…4159): four slots, each its value in
+ * the box and its CC under it, or crossed and "off". Shift + turn changes the CC under the box.
+ */
 function ccFrame(s: SimState, set: 'I' | 'II'): AuxCcFrame {
-	const aux = s.areas.auxiliary;
 	const first = set === 'I' ? 0 : 4;
 	return {
 		page: 'aux-cc',
 		set,
-		shift: s.shift,
-		slots: aux.midi.slots.slice(first, first + 4).map((slot, i) => {
-			if (s.shift)
-				return { label: `slot ${first + i + 1}`, value: slot.cc === null ? null : String(slot.cc) };
-			return {
-				label: slotLabel(aux, first + i),
-				value: slot.cc === null ? null : String(slot.value)
-			};
-		}),
-		soft: MIDI_SOFT
+		slots: s.areas.auxiliary.midi.slots
+			.slice(first, first + 4)
+			.map((slot) => ({ cc: slot.cc, value: String(slot.value) }))
 	};
 }
 
@@ -423,6 +463,10 @@ function cvVolts(s: SimState): number {
 
 // ───────────────────────────────────────────────────────── external audio, tape, fx
 
+/**
+ * Tape M1 as the device writes it (CC sweeps, research 59 §2.13): pitch x1–x10, speed 50–200 %,
+ * length 1–16 and mix 00–99.
+ */
 function tapeFrame(s: SimState): AuxTapeFrame {
 	const tape = s.areas.auxiliary.tape;
 	// the loop runs `length` beats (ours); routed tracks' notes land on it where they fall in the
@@ -440,30 +484,37 @@ function tapeFrame(s: SimState): AuxTapeFrame {
 	});
 	return {
 		page: 'aux-tape',
-		pitch: `X${tape.pitch}`,
+		pitch: `x${tape.pitch}`,
 		speed: String(tape.speed),
 		length: String(tape.length),
 		mix: two(tape.mix),
 		hits: unique(hits),
 		// nothing moves on the tape while counting in
 		head: (Math.max(0, s.transport.position) % loop) / loop,
-		keys: unique([...heldKeys(s), ...keysOf(soundingNotes(s, 5))]),
-		clip: tape.clip === null ? '' : String(tape.clip + 1)
+		keys: unique([...heldKeys(s), ...keysOf(soundingNotes(s, 5))])
 	};
 }
 
+/** Which of `count` equal zones a 0–99 lane is in (as the engines' stepped labels). */
+const zone = (v: number, count: number) =>
+	Math.min(count - 1, Math.floor((clamp(v, 0, 99) / 99) * count));
+
+/**
+ * FX M1 as the device writes it (research 59 §2.13): each column's label, its value (two digits;
+ * the delay's size a note value) and the marker's height, which follows the lane even where the
+ * value is a note value.
+ */
 function fxFrame(s: SimState, slot: 0 | 1): AuxFxFrame {
 	const fx = s.areas.auxiliary.fx[slot];
 	return {
 		page: 'aux-fx',
 		slot: SLOT_NAMES[slot],
-		type: fx.type,
+		type: FX_NAMES[fx.type],
 		params: FX_PARAMS[fx.type].map((label, i) => {
 			const v = fx.params[i];
-			if (fx.type === 'delay' && i === 0) {
-				return { label, value: DELAY_SIZES[v], level: v / (DELAY_SIZES.length - 1) };
-			}
-			return { label, value: two(v), level: v / 99 };
+			const size = fx.type === 'delay' && i === 0;
+			const value = size ? DELAY_SIZES[zone(v, DELAY_SIZES.length)] : two(v);
+			return { label, value, level: clamp(v, 0, 99) / 99 };
 		})
 	};
 }
@@ -475,19 +526,22 @@ function turnMain(s: SimState, kind: Kind, e: number, delta: number): void {
 	if (kind === 'audio') {
 		const a = aux.audio;
 		if (e === 0) a.input = step(a.input, 0, AUDIO_INPUTS.length - 1);
-		else if (e === 1) a.drive = step(a.drive, 0, 99);
+		else if (e === 1) a.drive = step(a.drive, 0, 20);
 		else if (e === 2) a.level = step(a.level, 0, 99);
 		else a.mix = step(a.mix, 0, 99);
 	} else if (kind === 'tape') {
 		const t = aux.tape;
 		if (e === 0) t.pitch = step(t.pitch, 1, 10);
 		else if (e === 1) t.speed = step(t.speed, 50, 200);
-		else if (e === 2) t.length = step(t.length, 1, 10);
+		else if (e === 2) t.length = step(t.length, 1, 16);
 		else t.mix = step(t.mix, 0, 99);
 	} else if (kind === 'fx') {
 		const fx = aux.fx[s.auxTrack === 6 ? 0 : 1];
-		const max = fx.type === 'delay' && e === 0 ? DELAY_SIZES.length - 1 : 99;
-		fx.params[e] = step(fx.params[e], 0, max);
+		// the delay's size moves a note value a detent: an eighth of its lane (the device's marker
+		// lands on k/8 as E1 turns, b1-4583…4596)
+		if (fx.type === 'delay' && e === 0) {
+			fx.params[0] = clamp(fx.params[0] + (delta * 99) / DELAY_SIZES.length, 0, 99);
+		} else fx.params[e] = step(fx.params[e], 0, 99);
 	}
 }
 
@@ -498,34 +552,21 @@ function filterView(s: SimState): AuxFilterView {
 	return { highpass: p.highpass / 99, lowpass: p.lowpass / 99 };
 }
 
-/** The modules an aux track's LFO can reach (ours past the manual's "the track's own pages"). */
+/**
+ * The modules an aux track's LFO can reach. External MIDI's reach its two CC sets, "cc1" and
+ * "cc2" after "off" (the device's column, steps-788…828; the community's project files show the
+ * same three stops), each naming the chosen slot by its CC; the other tracks' reach their own
+ * page, filter and amp ({@link TRACK_DESTINATIONS}).
+ */
 function destinations(s: SimState, track: number): readonly Destination[] {
-	const aux = s.areas.auxiliary;
-	switch (track) {
-		case 2: {
-			// the community's project files show three stops: off and the two CC sets
-			const set = (first: number) => [0, 1, 2, 3].map((i) => slotLabel(aux, first + i));
-			return [
-				{ name: 'off', params: [] },
-				{ name: 'set I', params: set(0) },
-				{ name: 'set II', params: set(4) }
-			];
-		}
-		case 4:
-			return [{ name: 'audio', params: ['input', 'drive', 'level', 'mix'] }, FILTER_DESTINATION];
-		case 5:
-			return [{ name: 'tape', params: ['pitch', 'speed', 'length', 'mix'] }, FILTER_DESTINATION];
-		default:
-			return [
-				{ name: 'fx', params: FX_PARAMS[aux.fx[track === 6 ? 0 : 1].type] },
-				FILTER_DESTINATION
-			];
-	}
+	if (track !== 2) return TRACK_DESTINATIONS;
+	const set = (first: number) => [0, 1, 2, 3].map((i) => slotLabel(s.areas.auxiliary, first + i));
+	return [
+		{ name: 'off', params: [] },
+		{ name: 'cc1', params: set(0) },
+		{ name: 'cc2', params: set(4) }
+	];
 }
-
-/** Encoders of a destination that have a parameter. */
-const usable = (d: Destination) =>
-	d.params.flatMap((name, i) => (name ? [i] : [])) as readonly number[];
 
 /** The LFO speed's card: synced steps first, then the free range (as the instrument LFO). */
 function lfoSpeed(speed: number): LfoFrame['speed'] {
@@ -540,17 +581,23 @@ function lfoFrame(s: SimState, track: number): AuxLfoFrame {
 	const at = clamp(l.destination, 0, list.length - 1);
 	return {
 		page: 'aux-lfo',
+		off: !l.on,
 		speed: lfoSpeed(l.speed),
 		amount: (l.amount * 100) / 99,
 		destinations: list.map((d) => d.name),
 		destination: at,
-		parameterName: list[at].params[l.parameter] ?? '',
-		parameter: l.parameter,
-		soft: track === 2 ? MIDI_SOFT : []
+		// an encoder with nothing to move reads "-" (the amp's E3 and E4, steps-936…940)
+		parameterName: list[at].params[l.parameter] || (track === 2 ? NO_CC : '-'),
+		parameter: l.parameter
 	};
 }
 
-/** E1 speed, E2 amount, E3 destination, E4 parameter (manual: auxiliary/routing-filter-lfo). */
+/**
+ * E1 speed, E2 amount, E3 destination, E4 parameter (manual: auxiliary/routing-filter-lfo). The
+ * parameter is an encoder of the destination page, E1 … E4, whether or not it moves anything
+ * there (the device's CC43 sweep: volume, pan, then "-" twice on amp); a new destination starts
+ * on E1.
+ */
 function turnLfo(s: SimState, e: number, delta: number): void {
 	const l = s.areas.auxiliary.pages[s.auxTrack].lfo;
 	const list = destinations(s, s.auxTrack);
@@ -558,13 +605,8 @@ function turnLfo(s: SimState, e: number, delta: number): void {
 	else if (e === 1) l.amount = clamp(l.amount + delta, -99, 99);
 	else if (e === 2) {
 		l.destination = clamp(l.destination + delta, 0, list.length - 1);
-		// a new module starts on its first parameter
-		l.parameter = usable(list[l.destination])[0] ?? 0;
-	} else {
-		const params = usable(list[clamp(l.destination, 0, list.length - 1)]);
-		const at = Math.max(0, params.indexOf(l.parameter));
-		l.parameter = params[clamp(at + delta, 0, params.length - 1)] ?? 0;
-	}
+		l.parameter = 0;
+	} else l.parameter = clamp(l.parameter + delta, 0, 3);
 }
 
 /** M3: E1 high-pass, E4 low-pass; with shift, the track's sends. */
@@ -616,14 +658,16 @@ export function auxLockTarget(s: SimState, e: number): AuxLock | null {
 		}
 		case 'audio': {
 			const field = (['drive', 'level', 'mix'] as const)[e - 1];
-			return field ? lock(`audio.${field}`, 0, 99, (st) => st.areas.auxiliary.audio[field]) : null;
+			if (!field) return null;
+			const max = field === 'drive' ? 20 : 99;
+			return lock(`audio.${field}`, 0, max, (st) => st.areas.auxiliary.audio[field]);
 		}
 		case 'tape': {
 			const [field, min, max] = (
 				[
 					['pitch', 1, 10],
 					['speed', 50, 200],
-					['length', 1, 10],
+					['length', 1, 16],
 					['mix', 0, 99]
 				] as const
 			)[e];
@@ -631,8 +675,7 @@ export function auxLockTarget(s: SimState, e: number): AuxLock | null {
 		}
 		case 'fx': {
 			const slot = track === 6 ? 0 : 1;
-			const max = aux.fx[slot].type === 'delay' && e === 0 ? DELAY_SIZES.length - 1 : 99;
-			return lock(`fx.${e + 1}`, 0, max, (st) => st.areas.auxiliary.fx[slot].params[e]);
+			return lock(`fx.${e + 1}`, 0, 99, (st) => st.areas.auxiliary.fx[slot].params[e]);
 		}
 		case 'filter':
 			if (e === 0)
@@ -659,22 +702,17 @@ export function auxLockTarget(s: SimState, e: number): AuxLock | null {
 
 // ────────────────────────────────────────────────────────────────── the effect list
 
-/** The list shift + T7 / T8 opens (manual: fx/overview), drawn like the core's pickers. */
-function pickerFrame(s: SimState): ListFrame {
+/**
+ * The list shift + T7 / T8 opens (manual: fx/overview): the FX track's number as the device counts
+ * tracks (15, 16) and the six effects by the names the list writes.
+ */
+function pickerFrame(s: SimState): AuxFxListFrame {
 	const picker = s.areas.auxiliary.picker ?? { slot: 0, index: 0 };
 	return {
-		page: 'list',
-		columns: [
-			{
-				items: [String(7 + picker.slot), 'fx'],
-				selected: null,
-				style: 'outline',
-				x: 5,
-				width: 100
-			},
-			{ items: FX_TYPES, selected: picker.index, style: 'white', x: 120, width: 170 }
-		],
-		soft: []
+		page: 'aux-fx-list',
+		track: String(15 + picker.slot),
+		items: FX_TYPES.map((type) => FX_NAMES[type]),
+		selected: picker.index
 	};
 }
 
@@ -698,19 +736,24 @@ function auxFrame(s: SimState): ScreenFrame {
 	switch (kindOf(s)) {
 		case 'brain':
 			return brainFrame(s);
-		case 'punch':
+		case 'punch': {
+			const active = punchActive(s);
+			// the key pressed last shows its effect's picture, else the pattern's highest (ours)
+			const held = heldKeys(s);
 			return {
 				page: 'aux-punch',
-				active: unique([...heldKeys(s), ...keysOf(soundingNotes(s, 1))])
+				active,
+				picture: held.length > 0 ? held[held.length - 1] : (active[active.length - 1] ?? null),
+				beat: active.length > 0 ? null : heartbeatDot(aux.heartbeat.col)
 			};
+		}
 		case 'midi': {
 			const m = aux.midi;
 			return {
 				page: 'aux-midi',
-				channel: String(m.channel),
+				channel: String(m.channel).padStart(2, '0'),
 				bank: m.bank === null ? null : String(m.bank),
-				program: m.program === null ? null : String(m.program),
-				soft: MIDI_SOFT
+				program: m.program === null ? null : String(m.program)
 			};
 		}
 		case 'cc':
@@ -723,7 +766,7 @@ function auxFrame(s: SimState): ScreenFrame {
 				page: 'aux-audio',
 				input: AUDIO_INPUTS[a.input],
 				on: a.on,
-				drive: two(a.drive),
+				drive: String(clamp(Math.round(a.drive), 0, 20)).padStart(2, '0'),
 				level: two(a.level),
 				mix: two(a.mix)
 			};
@@ -735,12 +778,13 @@ function auxFrame(s: SimState): ScreenFrame {
 		case 'route':
 			return routeFrame(s, track);
 		case 'filter':
-			return { page: 'aux-filter', ...filterView(s) };
+			return { page: 'aux-filter', off: !aux.pages[track].filterOn, ...filterView(s) };
 		case 'sends': {
 			const sends = aux.pages[track].sends;
 			return {
 				page: 'aux-sends',
 				filter: filterView(s),
+				// two digits, as the instrument's sends frame (the page writes "no send" at 00)
 				values: sends.map((v, i) => (SENDS[track].includes(i) ? two(v) : null))
 			};
 		}
@@ -824,6 +868,17 @@ export const auxiliary: SimArea = {
 			if (id.startsWith('keyboard.') || id.startsWith('encoder.')) return false;
 			if (!(fxKey && s.shift)) aux.picker = null;
 		}
+		// pressed on its own page, M3 switches the filter on or off and M4 the LFO, as on the
+		// instrument tracks: the device shows both dimmed under "off" in a new project (research 59
+		// §2.13: external audio's filter, external MIDI's and external audio's LFO)
+		const module = /^key\.m([34])$/.exec(id);
+		if (module && !s.shift && s.pages.auxiliary === Number(module[1])) {
+			const p = aux.pages[s.auxTrack];
+			const kind = PAGES[s.auxTrack][s.pages.auxiliary - 1];
+			if (kind === 'filter') p.filterOn = !p.filterOn;
+			else if (kind === 'lfo') p.lfo.on = !p.lfo.on;
+			if (kind === 'filter' || kind === 'lfo') return true;
+		}
 		if (fxKey && s.shift && !muting) {
 			// shift + T7 / T8 opens that slot's effect list (manual: fx/overview)
 			const slot = id === 'track.7' ? 0 : 1;
@@ -897,13 +952,10 @@ export const auxiliary: SimArea = {
 				if (e === 0) turnBrain(s, 0, currentBrain(s).auto ? -1 : 1);
 				return;
 			case 'lfo': {
-				// E4 steps through the destination's parameters, as on instrument tracks (ours)
+				// E4 steps on through the destination page's encoders, as on instrument tracks (ours)
 				if (e !== 3) return;
 				const l = aux.pages[s.auxTrack].lfo;
-				const list = destinations(s, s.auxTrack);
-				const params = usable(list[clamp(l.destination, 0, list.length - 1)]);
-				if (params.length === 0) return;
-				l.parameter = params[(Math.max(0, params.indexOf(l.parameter)) + 1) % params.length];
+				l.parameter = (l.parameter + 1) % 4;
 				return;
 			}
 			default:
@@ -922,5 +974,20 @@ export const auxiliary: SimArea = {
 		for (const k of keysOf(soundingNotes(s, track))) {
 			leds[`keyboard.${KEYBOARD_NOTE_NAMES[k]}` as KeyId] = 'white';
 		}
+	},
+
+	/**
+	 * The punch-in page's heartbeat runs while the page shows with no effect playing and waits at
+	 * the left edge otherwise: it starts there as an effect ends (the device) or the page opens
+	 * (ours).
+	 */
+	advance(s: SimState, ms: number): void {
+		const aux = s.areas.auxiliary;
+		const idle =
+			auxiliary.owns(s) && !aux.picker && kindOf(s) === 'punch' && punchActive(s).length === 0;
+		const beat = aux.heartbeat;
+		beat.ms = idle ? (beat.ms + ms) % HEARTBEAT.loop : 0;
+		// the screen reads only the column, so it redraws as the dot moves rather than every frame
+		beat.col = heartbeatColumn(beat.ms);
 	}
 };

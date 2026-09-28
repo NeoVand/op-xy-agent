@@ -15,6 +15,7 @@ y is scaled by 220/222.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -99,7 +100,96 @@ AUXILIARY = {
     "auxiliary.amp": dict(frames=AUX_AMP, box=(241.15, 80, 60, 60), region=(8, 4, 52, 36), polarity="dark"),
 }
 
-GROUPS = {"players": PLAYERS, "tempo": TEMPO, "arrange": ARRANGE, "auxiliary": AUXILIARY}
+# The punch-in page (research 59 §2.13): every keyboard key plays its own animation on the 40 × 18
+# dot matrix. One frame of each is read off the 10 fps recordings of every key
+# (captures/screens/punch-white and punch-black, rectified at 2× like the aligned frames), dot by
+# dot: lit (about 250 there) or unlit (about 41). The recordings name no keys: each holds 14 (white)
+# or 10 (black) animations between idle stretches, taken here in keyboard order, as the owner played
+# them left to right. Keyboard key (0 = F3 … 23 = E5) → frame.
+PUNCH_WHITE = {0: 358, 2: 430, 4: 455, 6: 542, 7: 600, 9: 652, 11: 695,
+               12: 747, 14: 852, 16: 882, 18: 929, 19: 992, 21: 1058, 23: 1102}
+PUNCH_BLACK = {1: 281, 3: 336, 5: 406, 8: 467, 10: 535, 13: 640, 15: 677, 17: 768, 20: 855, 22: 901}
+# the recordings' dot centres in capture pixels: first column, column pitch, first row, row pitch
+PUNCH_LATTICE = (12.93, 23.975, 10.9, 23.904)
+
+
+def punch_patterns() -> dict:
+    screens = ROOT / "research/device/captures/screens"
+    x0, px, y0, py = PUNCH_LATTICE
+    out = {}
+    for rec, table in (("punch-white", PUNCH_WHITE), ("punch-black", PUNCH_BLACK)):
+        for key, n in table.items():
+            img = cv2.imread(str(screens / rec / f"{n:05d}.jpg"), cv2.IMREAD_GRAYSCALE)
+            if img is None:
+                raise SystemExit(f"no recording frame {rec}/{n:05d}")
+            g = img.astype(np.float32)
+            grid = []
+            for j in range(18):
+                y = int(round(y0 + py * j))
+                cells = [g[y - 4:y + 5, int(round(x0 + px * i)) - 4:int(round(x0 + px * i)) + 5].mean()
+                         for i in range(40)]
+                grid.append("".join("2" if level > 150 else "1" for level in cells))
+            # TE's grid (auxiliary-021's dog): 12 px cells from (0.49, 2.2), unlit panel, lit white
+            out[f"auxiliary.punch.{key}"] = {"cell": 12, "x": 0.49, "y": 2.2,
+                                             "colors": ["#16161e", "#f7f5f5"], "grid": grid}
+    return {name: out[name] for name in sorted(out, key=lambda name: int(name.rsplit(".", 1)[1]))}
+
+
+# groups whose file also carries cell patterns, and what reads them
+PATTERN_GROUPS = {"auxiliary": punch_patterns}
+
+
+def steps(*patterns: str) -> list[str]:
+    """The CC-sweep captures matching glob patterns (steps-NNN-<label>-ccXX-VVV)."""
+    out: list[str] = []
+    for p in patterns:
+        out += sorted(f.stem for f in ALIGNED.glob(f"steps-{p}.png"))
+    return out
+
+
+# The LFO pages (docs/research/59-screen-profiling.md §2.4): pictograms TE's guide art never drew,
+# or drew otherwise. Each box is the card it sits on: value's and random's speed card (60, 50),
+# element's source card (60, 50) around its black disc, tremolo's shape card (330, 110), element's
+# destination card at the column's selected place (240, 80), duck's source card (90, 50); random's
+# step wave sits on the black under its speed card. Ink on white, except the white source icons on
+# element's disc and random's pale step wave.
+SPEED_CARD = (60, 50, 120, 120)
+SOURCE_DISC = (34, 34, 86, 86)  # around the disc (r 24) at the card's centre, masked to it
+DISC = (60, 60, 24)
+NOTE_REGION = (20, 22, 100, 102)  # clear of the count (top right) and random's rule (bottom)
+AMP_CARD = steps("*-lfo-element-cc42-096", "*-lfo-element-cc42-112", "*-lfo-element-cc42-127")
+MODULES = {
+    "lfo.note.32nd": dict(frames=steps("*-lfo-value-cc40-000", "*-lfo-random-cc40-000"), box=SPEED_CARD,
+                          region=NOTE_REGION, polarity="dark"),
+    "lfo.note.16th": dict(frames=steps("*-lfo-value-cc40-016", "*-lfo-random-cc40-016"), box=SPEED_CARD,
+                          region=NOTE_REGION, polarity="dark"),
+    "lfo.note.quarter": dict(frames=steps("*-lfo-value-cc40-032", "*-lfo-random-cc40-032", "*-lfo-value-start",
+                                          "*-lfo-random-start"), box=SPEED_CARD, region=NOTE_REGION,
+                             polarity="dark"),
+    "lfo.note.whole": dict(frames=steps("*-lfo-value-cc40-048", "*-lfo-random-cc40-048"), box=SPEED_CARD,
+                           region=NOTE_REGION, polarity="dark"),
+    "lfo.shape": dict(frames=steps("*-lfo-tremolo-cc4[0-3]-*", "*-lfo-m4-start"), box=(330, 110, 60, 60),
+                      region=(4, 4, 56, 56), polarity="dark"),
+    "lfo.source.gyro": dict(frames=steps("*-lfo-element-cc40-000", "*-lfo-element-cc40-016"), box=SPEED_CARD,
+                            region=SOURCE_DISC, circle=DISC, polarity="light"),
+    "lfo.source.mic": dict(frames=steps("*-lfo-element-cc40-032", "*-lfo-element-cc40-048"), box=SPEED_CARD,
+                           region=SOURCE_DISC, circle=DISC, polarity="light"),
+    "lfo.source.envelope": dict(frames=steps("*-lfo-element-cc40-064", "*-lfo-element-cc40-080",
+                                             "*-lfo-element-start"), box=SPEED_CARD, region=SOURCE_DISC,
+                                circle=DISC, polarity="light"),
+    "lfo.source.sum": dict(frames=steps("*-lfo-element-cc40-096", "*-lfo-element-cc40-112",
+                                        "*-lfo-element-cc40-127"), box=SPEED_CARD, region=SOURCE_DISC,
+                           circle=DISC, polarity="light"),
+    # the speaker and its small wave apart: the wave's thin line is paler than the speaker
+    "lfo.dest.amp": dict(frames=AMP_CARD, box=(240, 80, 60, 60), region=(6, 5, 31, 31), polarity="dark"),
+    "lfo.dest.amp.wave": dict(frames=AMP_CARD, box=(240, 80, 60, 60), region=(31, 6, 53, 28), polarity="dark"),
+    "lfo.duck.metronome": dict(frames=steps("*-lfo-duck-cc40-127", "*-lfo-duck-cc41-*"), box=(90, 50, 120, 120),
+                               region=(44, 30, 80, 80), polarity="dark"),
+    "lfo.random": dict(frames=steps("*-lfo-random-*"), box=(60, 170, 120, 50), region=(10, 1, 110, 42),
+                       polarity="light"),
+}
+
+GROUPS = {"players": PLAYERS, "tempo": TEMPO, "arrange": ARRANGE, "auxiliary": AUXILIARY, "modules": MODULES}
 
 
 def grey(name: str, channel: str = "grey") -> np.ndarray:
@@ -125,6 +215,16 @@ def trace(spec: dict, name: str, show: Path | None) -> dict:
     up = cv2.GaussianBlur(up, (0, 0), 1.0)
     ring = np.concatenate([up[:3].ravel(), up[-3:].ravel(), up[:, :3].ravel(), up[:, -3:].ravel()])
     card = float(np.median(ring))
+    if "circle" in spec:
+        # a pictogram on a disc (x, y, r relative to the box): the disc's own shade just inside its
+        # rim is the background, and everything outside the disc is taken as that shade
+        ccx, ccy, cr = spec["circle"]
+        jj, ii = np.mgrid[0:up.shape[0], 0:up.shape[1]]
+        dx = (ii + 0.5) / (2 * UP) + cx0 / 2 - bx - ccx
+        dy = ((jj + 0.5) / (2 * UP) + cy0 / 2) * K - by - ccy
+        dist = np.hypot(dx, dy)
+        card = float(np.median(up[(dist > cr - 3) & (dist < cr - 1)]))
+        up = np.where(dist > cr - 1, card, up)
     ink = float(np.percentile(up, 99 if spec["polarity"] == "light" else 1))
     level = (card + ink) / 2
     mask = (up > level) if spec["polarity"] == "light" else (up < level)
@@ -162,9 +262,16 @@ def main() -> None:
         if only and group != only:
             continue
         icons = {name: trace(spec, name, show) for name, spec in specs.items()}
+        data = {"$comment": comment, "format": 1, "icons": icons}
+        if group in PATTERN_GROUPS:
+            # pictures read dot by dot off a cell grid (the punch-in matrix)
+            data["$comment"] += " Patterns: one character per dot, 1 unlit and 2 lit."
+            data["patterns"] = PATTERN_GROUPS[group]()
         path = OUT / f"{group}.json"
-        path.write_text(json.dumps({"$comment": comment, "format": 1, "icons": icons}, indent="\t") + "\n")
-        print(f"wrote {path.relative_to(ROOT)}: {', '.join(icons)}")
+        # a pattern's two colours on one line, as the repository's formatter writes them
+        text = re.sub(r'\[\s+("#[0-9a-f]{6}"),\s+("#[0-9a-f]{6}")\s+\]', r"[\1, \2]", json.dumps(data, indent="\t"))
+        path.write_text(text + "\n")
+        print(f"wrote {path.relative_to(ROOT)}: {', '.join([*icons, *data.get('patterns', {})])}")
 
 
 if __name__ == "__main__":

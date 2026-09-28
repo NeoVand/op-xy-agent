@@ -10,8 +10,11 @@
  * The same cases run on the bare simulator (`auxiliary.spec.ts`, Node) and on the app in a browser,
  * clicking the rendered replica (`src/lib/app/auxiliary-conformance.svelte.spec.ts`).
  *
- * Where the guide leaves something open the case says "ours" and pins our choice. Skipped cases
- * name the file whose bug they catch; they pass once it is fixed.
+ * Where the guide leaves something open the case says "ours" and pins our choice. Where the owner's
+ * device (OS 1.1.33) writes its pages differently from the guide, the case follows the device and
+ * says so (docs/research/59-screen-profiling.md §2.13): the effects' labels, the delay's size as a
+ * note value, the tape's percent, pitch multiplier and 16 lengths, the aux filters and LFOs off in
+ * a new project. Skipped cases name the file whose bug they catch; they pass once it is fixed.
  */
 import { describe, expect, it } from 'vitest';
 import type { SimState } from '../params';
@@ -281,15 +284,8 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 				scales.push(page(d, 'aux-brain').scale);
 				await d.turn(3, 1);
 			}
-			expect(scales).toEqual([
-				'major',
-				'dorian',
-				'phrygian',
-				'lydian',
-				'mixolydian',
-				'minor',
-				'locrian'
-			]);
+			// the device's screen writes mixolydian "mixo" (OS 1.1.33)
+			expect(scales).toEqual(['major', 'dorian', 'phrygian', 'lydian', 'mixo', 'minor', 'locrian']);
 		});
 
 		it('links an instrument track with E4, or none at the left end', async () => {
@@ -491,6 +487,21 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 	});
 
 	describe('15.2 punch-in fx', () => {
+		it('idles with a heartbeat across the dot matrix; a held key shows its effect (the device)', async () => {
+			const d = await start();
+			await aux(d, 2);
+			// running from the left edge since the page opened
+			expect(page(d, 'aux-punch').beat).toMatchObject({ row: 8 });
+			expect(page(d, 'aux-punch').beat?.col).toBeLessThan(5);
+			await d.down(key('g3'));
+			await d.wait(GAP_MS);
+			expect(page(d, 'aux-punch')).toMatchObject({ picture: 2, beat: null });
+			await d.up(key('g3')); // back at the left edge
+			expect(page(d, 'aux-punch').beat).toEqual({ col: 0, row: 8 });
+			await d.wait(1340); // the spike's top
+			expect(page(d, 'aux-punch').beat).toEqual({ col: 20, row: 4 });
+		});
+
 		it('fires each key’s effect while it is held, and combines keys held together', async () => {
 			const d = await start();
 			await aux(d, 2);
@@ -668,69 +679,56 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 		it('sets the channel with E1, the bank with E2 and the program with E3 on M1', async () => {
 			const d = await start();
 			await aux(d, 3);
-			expect(d.screen()).toBe('external midi: channel 1, bank none, program none');
+			// the device writes the channel in two digits, bank and program crossed at none
+			expect(d.screen()).toBe('external midi: channel 01, bank none, program none');
 			await d.turn(1, 9);
 			await d.turn(2, 3);
 			await d.turn(3, 8);
 			expect(d.screen()).toBe('external midi: channel 10, bank 3, program 8');
-			// channel 1–16; bank and program none below 1, 128 at most (ours, after the community's
-			// 129 steps)
+			// channel 01–16; bank and program none below 1, 128 at most (the device's CC sweeps)
 			await d.turn(1, 20);
 			await d.turn(2, -5);
 			await d.turn(3, 200);
 			expect(d.screen()).toBe('external midi: channel 16, bank none, program 128');
 			await d.turn(1, -30);
-			expect(page(d, 'aux-midi').channel).toBe('1');
+			expect(page(d, 'aux-midi').channel).toBe('01');
 			await d.turn(4, 5); // E4 has nothing to set
-			expect(d.screen()).toBe('external midi: channel 1, bank none, program 128');
+			expect(d.screen()).toBe('external midi: channel 01, bank none, program 128');
 		});
 
 		it('keeps four CC slots on M2 (set I), each off until shift + turn picks its CC number', async () => {
 			const d = await start();
 			await aux(d, 3, 2);
-			expect(d.screen()).toBe(
-				'external midi cc set I: slot 1 off, slot 2 off, slot 3 off, slot 4 off'
-			);
+			// the device crosses an off slot and writes "off" under it
+			expect(d.screen()).toBe('external midi set I: off, off, off, off');
 			await d.turn(1, 10); // an off slot has no value to send (ours)
-			expect(page(d, 'aux-cc').slots[0].value).toBeNull();
+			expect(page(d, 'aux-cc').slots[0]).toEqual({ cc: null, value: '0' });
 			await d.withShift(async () => {
 				await d.turn(1, 75); // off, then CC 0 … 74
-				expect(d.screen()).toBe(
-					'external midi cc set I numbers: slot 1 74, slot 2 off, slot 3 off, slot 4 off'
-				);
+				expect(d.screen()).toBe('external midi set I: cc 74 0, off, off, off');
 			});
-			expect(d.screen()).toBe(
-				'external midi cc set I: cc 74 0, slot 2 off, slot 3 off, slot 4 off'
-			);
+			expect(d.screen()).toBe('external midi set I: cc 74 0, off, off, off');
 			await d.turn(1, 64);
-			expect(page(d, 'aux-cc').slots[0]).toEqual({ label: 'cc 74', value: '64' });
+			expect(page(d, 'aux-cc').slots[0]).toEqual({ cc: 74, value: '64' });
 			await d.turn(1, 100);
 			expect(page(d, 'aux-cc').slots[0].value).toBe('127');
 			// below CC 0 the slot is off again (ours)
 			await d.withShift(() => d.turn(1, -80));
-			expect(page(d, 'aux-cc').slots[0]).toEqual({ label: 'slot 1', value: null });
+			expect(page(d, 'aux-cc').slots[0].cc).toBeNull();
 		});
 
 		it('keeps four more slots on M3 (set II), apart from set I', async () => {
 			const d = await start();
 			await aux(d, 3, 3);
 			await d.withShift(() => d.turn(4, 12));
-			expect(d.screen()).toBe(
-				'external midi cc set II: slot 5 off, slot 6 off, slot 7 off, cc 11 0'
-			);
+			expect(d.screen()).toBe('external midi set II: off, off, off, cc 11 0');
 			await d.turn(4, 90);
 			expect(page(d, 'aux-cc').slots[3].value).toBe('90');
 			await d.click('key.m2');
-			expect(d.screen()).toBe(
-				'external midi cc set I: slot 1 off, slot 2 off, slot 3 off, slot 4 off'
-			);
-			// TE's soft labels name the four pages
-			expect(page(d, 'aux-cc').soft.map((s) => s?.text)).toEqual([
-				'main',
-				'set I',
-				'set II',
-				'modulation'
-			]);
+			expect(d.screen()).toBe('external midi set I: off, off, off, off');
+			// the device's midi pages carry no soft labels (TE's art wrote main, set I, set II,
+			// modulation)
+			expect(page(d, 'aux-cc').set).toBe('I');
 		});
 
 		it('aims its LFO on M4 at a slot of either set, naming the slot by its CC', async () => {
@@ -738,18 +736,21 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await aux(d, 3, 2);
 			await d.withShift(() => d.turn(2, 8)); // slot 2: CC 7
 			await d.click('key.m4');
-			expect(d.screen()).toBe('lfo: amount 0, destination off');
+			// off in a new project, as the device shows it: M4 again switches it on
+			expect(d.screen()).toBe('lfo off: amount 0, destination off, parameter no cc set');
+			await d.click('key.m4');
+			expect(d.screen()).toBe('lfo: amount 0, destination off, parameter no cc set');
 			await d.turn(3, 1);
-			expect(d.screen()).toBe('lfo: amount 0, destination set I, parameter slot 1');
+			expect(d.screen()).toBe('lfo: amount 0, destination cc1, parameter no cc set');
 			await d.turn(4, 1);
-			expect(d.screen()).toBe('lfo: amount 0, destination set I, parameter cc 7');
+			expect(d.screen()).toBe('lfo: amount 0, destination cc1, parameter cc 7');
 			await d.turn(3, 1);
-			expect(d.screen()).toBe('lfo: amount 0, destination set II, parameter slot 5');
+			expect(d.screen()).toBe('lfo: amount 0, destination cc2, parameter no cc set');
 			await d.turn(2, -99);
 			await d.turn(1, 1);
 			expect(page(d, 'aux-lfo')).toMatchObject({
 				amount: -100,
-				speed: { synced: true, label: '5' }
+				speed: { synced: true, label: '12' }
 			});
 		});
 
@@ -864,16 +865,16 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			expect(page(d, 'aux-audio').on).toBe(false);
 		});
 
-		it('sets drive with E2, level with E3 and mix with E4, 0–99', async () => {
+		it('sets drive 00–20 with E2, level with E3 and mix with E4, 0–99', async () => {
 			const d = await start();
 			await aux(d, 5);
-			// the community's project files: drive 0, level 75, mix 99
-			await d.turn(2, 25);
+			// the community's project files: drive 0, level 75, mix 99; the device writes drive 00–20
+			await d.turn(2, 15);
 			await d.turn(3, -80);
 			await d.turn(4, -24);
-			expect(d.screen()).toBe('external audio: mic off, drive 25, level 00, mix 75');
+			expect(d.screen()).toBe('external audio: mic off, drive 15, level 00, mix 75');
 			await d.turn(2, 200);
-			expect(page(d, 'aux-audio').drive).toBe('99');
+			expect(page(d, 'aux-audio').drive).toBe('20');
 		});
 
 		it('routes instrument tracks out of the aux output on M2, each at its own amount (how-to)', async () => {
@@ -904,6 +905,9 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 		it('filters on M3 (E1 high-pass, E4 low-pass); with shift it sends to tape, FX I and FX II', async () => {
 			const d = await start();
 			await aux(d, 5, 3);
+			// off in a new project, as the device shows it: M3 again switches it on
+			expect(d.screen()).toBe('filter off: high-pass 0, low-pass 99');
+			await d.click('key.m3');
 			expect(d.screen()).toBe('filter: high-pass 0, low-pass 99');
 			await d.turn(1, 20);
 			await d.turn(4, -30);
@@ -911,6 +915,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.turn(3, 5);
 			expect(d.screen()).toBe('filter: high-pass 20, low-pass 69');
 			await d.withShift(async () => {
+				// (the device's send cards write "no send" at 00)
 				expect(d.screen()).toBe('sends: tape 00, fx I 00, fx II 00');
 				await d.turn(1, 10); // no aux out send from the aux out's own track (ours)
 				await d.turn(2, 20);
@@ -919,21 +924,29 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 				expect(d.screen()).toBe('sends: tape 20, fx I 30, fx II 40');
 			});
 			expect(d.screen()).toBe('filter: high-pass 20, low-pass 69');
+			await d.click('key.m3');
+			expect(d.screen()).toBe('filter off: high-pass 20, low-pass 69');
 		});
 
-		it('aims its LFO on M4 at its own controls or its filter (ours past the guide)', async () => {
+		it('aims its LFO on M4 at its own page, its filter or its amp, as the device lists them', async () => {
 			const d = await start();
 			await aux(d, 5, 4);
-			expect(d.screen()).toBe('lfo: amount 0, destination audio, parameter input');
+			expect(d.screen()).toBe('lfo off: amount 0, destination syn, parameter param1');
+			await d.click('key.m4');
+			expect(d.screen()).toBe('lfo: amount 0, destination syn, parameter param1');
 			await d.turn(4, 2);
-			expect(page(d, 'aux-lfo').parameterName).toBe('level');
+			expect(page(d, 'aux-lfo').parameterName).toBe('param3'); // ours past param1
 			await d.push(4); // an E4 click steps on, round to the first (ours)
 			await d.push(4);
-			expect(page(d, 'aux-lfo').parameterName).toBe('input');
+			expect(page(d, 'aux-lfo').parameterName).toBe('param1');
 			await d.turn(3, 1);
-			expect(d.screen()).toBe('lfo: amount 0, destination filter, parameter high-pass');
-			await d.turn(4, 1); // the filter page has nothing on E2 and E3
-			expect(page(d, 'aux-lfo').parameterName).toBe('low-pass');
+			expect(d.screen()).toBe('lfo: amount 0, destination filter, parameter hi pass');
+			await d.turn(3, 1);
+			expect(d.screen()).toBe('lfo: amount 0, destination amp, parameter volume');
+			await d.turn(4, 1);
+			expect(page(d, 'aux-lfo').parameterName).toBe('pan');
+			await d.turn(4, 1); // nothing on the amp's E3 and E4: "-"
+			expect(page(d, 'aux-lfo').parameterName).toBe('-');
 		});
 	});
 
@@ -941,35 +954,37 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 		it('sets pitch with E1, speed with E2, loop length with E3 and mix with E4', async () => {
 			const d = await start();
 			await aux(d, 6);
-			// the mix reads "dry" on the screen, as in TE's picture
-			expect(d.screen()).toBe('tape: pitch X1, speed 100, length 1, dry 00');
+			// the device writes the pitch "x1", the speed with a percent sign and "mix" over its box
+			// (TE's picture: "X1", no percent, "dry")
+			expect(d.screen()).toBe('tape: pitch x1, speed 100, length 1, mix 00');
 			await d.turn(1, 1);
 			await d.turn(2, -16);
 			await d.turn(3, 2);
 			await d.turn(4, 72);
-			expect(d.screen()).toBe('tape: pitch X2, speed 84, length 3, dry 72'); // TE's picture
-			// ranges (ours): pitch X1–X10, speed 50–200, length 1–10, mix 0–99
+			expect(d.screen()).toBe('tape: pitch x2, speed 84, length 3, mix 72'); // TE's picture
+			// ranges as the device's CC sweeps show them: x1–x10, 50–200 %, length 1–16, mix 00–99
 			await d.turn(1, 20);
 			await d.turn(2, -100);
 			await d.turn(3, 20);
 			await d.turn(4, 50);
-			expect(d.screen()).toBe('tape: pitch X10, speed 50, length 10, dry 99');
+			expect(d.screen()).toBe('tape: pitch x10, speed 50, length 16, mix 99');
 		});
 
-		it('plays clips from its keyboard: the keys held light and the last clip’s number shows', async () => {
+		it('plays clips from its keyboard: the keys held light and are dotted on the page', async () => {
 			const d = await start();
 			await aux(d, 6);
 			await d.down(key('e4'));
 			await d.wait(GAP_MS);
 			expect(d.lit()).toEqual(['e4']);
-			expect(d.screen()).toBe('tape: pitch X1, speed 100, length 1, dry 00, clip 12');
+			expect(page(d, 'aux-tape').keys).toEqual([11]);
 			await d.down(key('fs4'));
 			await d.wait(GAP_MS);
-			expect(page(d, 'aux-tape')).toMatchObject({ keys: [11, 13], clip: '14' });
+			expect(page(d, 'aux-tape').keys).toEqual([11, 13]);
 			await d.up(key('fs4'));
 			await d.up(key('e4'));
 			await d.wait(GAP_MS);
-			expect(page(d, 'aux-tape')).toMatchObject({ keys: [], clip: '14' });
+			// the device writes the loop length where TE's picture had the last clip's number
+			expect(page(d, 'aux-tape')).toMatchObject({ keys: [], length: '1' });
 			expect(d.lit()).toEqual([]);
 		});
 
@@ -1024,20 +1039,20 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 				await d.turn(4, 35);
 				expect(d.screen()).toBe('sends: fx I 25, fx II 35');
 			});
-			expect(d.screen()).toBe('filter: high-pass 0, low-pass 99');
+			expect(d.screen()).toBe('filter off: high-pass 0, low-pass 99');
 		});
 
-		it('aims its LFO on M4 at the tape’s controls or its filter (ours past the guide)', async () => {
+		it('aims its LFO on M4 at its own page, its filter or its amp (ours after external audio’s)', async () => {
 			const d = await start();
 			await aux(d, 6, 4);
-			expect(d.screen()).toBe('lfo: amount 0, destination tape, parameter pitch');
+			expect(d.screen()).toBe('lfo off: amount 0, destination syn, parameter param1');
 			await d.turn(4, 1);
-			expect(page(d, 'aux-lfo').parameterName).toBe('speed');
+			expect(page(d, 'aux-lfo').parameterName).toBe('param2');
 			await d.turn(3, 1);
 			expect(page(d, 'aux-lfo')).toMatchObject({
-				destinations: ['tape', 'filter'],
+				destinations: ['syn', 'filter', 'amp'],
 				destination: 1,
-				parameterName: 'high-pass'
+				parameterName: 'hi pass'
 			});
 		});
 	});
@@ -1045,11 +1060,11 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 	describe('15.7 fx i and fx ii', () => {
 		it('starts with the delay on FX I and the reverb on FX II', async () => {
 			const d = await start();
-			// as a new project on the device sets them
+			// as a new project on the device sets them, labelled as its screen labels them
 			await aux(d, 7);
-			expect(d.screen()).toBe('FX I delay: size 6, amount 50, fine 50, dry 99');
+			expect(d.screen()).toBe('FX I delay: size 1/8 dotted, fine 50, feedback 50, dry 99');
 			await d.click('track.8');
-			expect(d.screen()).toBe('FX II reverb: size 69, modulation 00, rate 29, feedback 99');
+			expect(d.screen()).toBe('FX II reverb: size 69, mod 00, tone 29, dry 99');
 		});
 
 		it('routes instrument tracks in on M2: the same sends as their send pages and mix M1', async () => {
@@ -1065,9 +1080,10 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.click('key.mix');
 			await d.turn(2, 20);
 			await aux(d, 8, 2);
+			// the device writes the sends on its routing pages as plain numbers ("0", "39")
 			expect(page(d, 'aux-route').tracks.map((t) => t.value)).toEqual([
-				'00',
-				'00',
+				'0',
+				'0',
 				'20',
 				'23',
 				'39',
@@ -1098,33 +1114,34 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 				await d.turn(4, 45);
 				expect(d.screen()).toBe('sends: fx II 45');
 			});
-			expect(d.screen()).toBe('filter: high-pass 0, low-pass 99');
+			expect(d.screen()).toBe('filter off: high-pass 0, low-pass 99');
 			await d.click('track.8');
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('filter: high-pass 0, low-pass 99');
+				expect(d.screen()).toBe('filter off: high-pass 0, low-pass 99');
 			});
 		});
 
 		it('filters its return on M3: E1 high-pass, E4 low-pass', async () => {
 			const d = await start();
 			await aux(d, 8, 3);
+			await d.click('key.m3'); // on: a new project's is off
 			await d.turn(1, 15);
 			await d.turn(4, -9);
 			expect(d.screen()).toBe('filter: high-pass 15, low-pass 90');
-			await d.click('track.7'); // each FX track has its own filter
-			expect(d.screen()).toBe('filter: high-pass 0, low-pass 99');
+			await d.click('track.7'); // each FX track has its own filter, on or off
+			expect(d.screen()).toBe('filter off: high-pass 0, low-pass 99');
 		});
 
-		it('aims its LFO on M4 at the loaded effect’s controls, by name, or at the filter (ours past the guide)', async () => {
+		it('aims its LFO on M4 at its own page, its filter or its amp (ours after external audio’s)', async () => {
 			const d = await start();
 			await aux(d, 8, 4);
-			expect(d.screen()).toBe('lfo: amount 0, destination fx, parameter size');
+			expect(d.screen()).toBe('lfo off: amount 0, destination syn, parameter param1');
 			await d.turn(4, 1);
-			expect(page(d, 'aux-lfo').parameterName).toBe('modulation');
-			await d.click('track.7');
-			expect(page(d, 'aux-lfo').parameterName).toBe('size'); // the delay's size
+			expect(page(d, 'aux-lfo').parameterName).toBe('param2');
+			await d.click('track.7'); // each FX track keeps its own
+			expect(page(d, 'aux-lfo').parameterName).toBe('param1');
 			await d.turn(3, 1);
-			expect(page(d, 'aux-lfo').parameterName).toBe('high-pass');
+			expect(page(d, 'aux-lfo').parameterName).toBe('hi pass');
 		});
 
 		it('lights the keys played on an FX track, which audition the last instrument track', async () => {
@@ -1147,8 +1164,10 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await aux(d, 7);
 			await d.withShift(() => d.click('track.7'));
-			const list = page(d, 'list');
-			expect(list.columns[1].items).toEqual([...EFFECTS]);
+			// the device's list: FX I is track 15, and the distortion is "dist"
+			const list = page(d, 'aux-fx-list');
+			expect(list.track).toBe('15');
+			expect(list.items).toEqual(['chorus', 'delay', 'dist', 'lofi', 'phaser', 'reverb']);
 			expect(d.screen()).toBe('delay'); // the list opens on the loaded effect
 			await d.turn(4, 3);
 			expect(d.screen()).toBe('phaser');
@@ -1196,7 +1215,7 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.turn(3, 3);
 			expect(d.screen()).toBe('delay');
 			await play(d, 'c4');
-			expect(d.frame.page).toBe('list');
+			expect(d.frame.page).toBe('aux-fx-list');
 			await d.click('track.3');
 			expect(d.screen()).toMatch(/^external midi: /);
 			await d.click('track.7');
@@ -1246,15 +1265,15 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			]);
 		});
 
-		it('21.2 delay: size, amount, fine and dry', async () => {
+		it('21.2 delay: size, fine, feedback and dry (the device’s labels; the guide: amount, fine)', async () => {
 			// the delay a new project loads (choosing it again keeps it)
 			expect(await turnAll('delay')).toEqual([
-				'FX I delay: size 6, amount 50, fine 50, dry 99',
-				'FX I delay: size insane, amount 30, fine 80, dry 99'
+				'FX I delay: size 1/8 dotted, fine 50, feedback 50, dry 99',
+				'FX I delay: size 1/2, fine 30, feedback 80, dry 99'
 			]);
 		});
 
-		it('21.2 delay: size steps through eight spacings, micro to insane', async () => {
+		it('21.2 delay: size steps through eight note values, a detent each (the device, not micro … insane)', async () => {
 			const d = await start();
 			await aux(d, 7);
 			await d.turn(1, -10);
@@ -1263,15 +1282,24 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 				sizes.push(page(d, 'aux-fx').params[0].value);
 				await d.turn(1, 1);
 			}
-			// the guide names the ends; the steps between show their number (ours)
-			expect(sizes).toEqual(['micro', '2', '3', '4', '5', '6', '7', 'insane']);
-			expect(page(d, 'aux-fx').params[0].value).toBe('insane');
+			// "1/8" never showed on camera: ours by the pattern
+			expect(sizes).toEqual([
+				'1/32',
+				'1/32 dotted',
+				'1/16',
+				'1/16 dotted',
+				'1/8',
+				'1/8 dotted',
+				'1/4',
+				'1/2'
+			]);
+			expect(page(d, 'aux-fx').params[0].value).toBe('1/2');
 		});
 
-		it('21.3 distortion: drive, amount, low cut and high cut', async () => {
+		it('21.3 distortion: drive, clip, lo cut and hi cut ("dist" on the device)', async () => {
 			expect(await turnAll('distortion')).toEqual([
-				'FX I distortion: drive 50, amount 50, low cut 50, high cut 50',
-				'FX I distortion: drive 60, amount 30, low cut 80, high cut 99'
+				'FX I dist: drive 50, clip 50, lo cut 50, hi cut 50',
+				'FX I dist: drive 60, clip 30, lo cut 80, hi cut 99'
 			]);
 		});
 
@@ -1289,10 +1317,10 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			]);
 		});
 
-		it('21.6 reverb: size, modulation, rate and feedback', async () => {
+		it('21.6 reverb: size, mod, tone and dry (the device’s labels; the guide: rate, feedback)', async () => {
 			expect(await turnAll('reverb')).toEqual([
-				'FX I reverb: size 50, modulation 50, rate 50, feedback 50',
-				'FX I reverb: size 60, modulation 30, rate 80, feedback 99'
+				'FX I reverb: size 50, mod 50, tone 50, dry 50',
+				'FX I reverb: size 60, mod 30, tone 80, dry 99'
 			]);
 		});
 	});
@@ -1342,20 +1370,16 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await aux(d, 3);
 			await d.turn(1, 4);
-			expect(page(d, 'aux-midi').channel).toBe('5');
+			expect(page(d, 'aux-midi').channel).toBe('05');
 			await d.click('key.m2');
 			await d.withShift(() => d.turn(2, 75));
 			await d.turn(2, 100);
 			await d.click('key.m3');
 			await d.withShift(() => d.turn(1, 72));
 			await d.turn(1, 40);
-			expect(d.screen()).toBe(
-				'external midi cc set II: cc 71 40, slot 6 off, slot 7 off, slot 8 off'
-			);
+			expect(d.screen()).toBe('external midi set II: cc 71 40, off, off, off');
 			await d.click('key.m2');
-			expect(d.screen()).toBe(
-				'external midi cc set I: slot 1 off, cc 74 100, slot 3 off, slot 4 off'
-			);
+			expect(d.screen()).toBe('external midi set I: off, cc 74 100, off, off');
 			await holdKeys(d, ['c4', 'e4', 'g4'], async () => {
 				expect(d.lit()).toEqual(['c4', 'e4', 'g4']);
 			});
@@ -1372,10 +1396,10 @@ export function auxiliaryConformance(start: () => Promise<Driver>): void {
 			await d.click('key.m2');
 			await d.turn(3, 60); // track 3 out of the aux output
 			await d.click('key.m1');
-			await d.turn(2, 30);
+			await d.turn(2, 15);
 			await d.turn(3, 5);
 			await d.turn(4, -40);
-			expect(d.screen()).toBe('external audio: audio input on, drive 30, level 80, mix 59');
+			expect(d.screen()).toBe('external audio: audio input on, drive 15, level 80, mix 59');
 			await d.click('key.m2');
 			// with T5, whose lead a new project sends out of the aux output
 			expect(d.screen()).toBe('aux out routing: tracks 1–4 on the encoders, routed 3 5');

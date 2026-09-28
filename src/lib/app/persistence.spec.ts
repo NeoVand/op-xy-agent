@@ -130,6 +130,28 @@ describe('saving the virtual OP-XY’s work', () => {
 		expect([speed(2), speed(3)]).toEqual(['1/16', '1/4']);
 	});
 
+	it('moves an older save’s delay size and drive onto the device’s scales, stored projects too', () => {
+		const work = withWork();
+		const saved = captureSim(work.state);
+		const project = JSON.parse(saved.project);
+		project.areas.auxiliary.fx[0] = { type: 'delay', params: [5, 50, 50, 99] }; // the sixth step
+		project.areas.auxiliary.audio.drive = 99;
+		const library = JSON.parse(saved.library);
+		library.projects.user[0].snapshot = JSON.stringify(project);
+		const sim = new OpxySim({ now: () => 0 });
+		applySaved(sim.state, {
+			...saved,
+			version: 4,
+			project: JSON.stringify(project),
+			library: JSON.stringify(library)
+		});
+		const middleOfSixthZone = ((16 * 5 + 8) * 99) / 127;
+		expect(sim.state.areas.auxiliary.fx[0].params[0]).toBeCloseTo(middleOfSixthZone);
+		expect(sim.state.areas.auxiliary.audio.drive).toBe(20);
+		const stored = JSON.parse(sim.state.areas.system.projects.user[0].snapshot ?? '{}');
+		expect(stored.areas.auxiliary.fx[0].params[0]).toBeCloseTo(middleOfSixthZone);
+	});
+
 	it('leaves the state alone for a save it cannot read', () => {
 		const sim = new OpxySim({ now: () => 0 });
 		const before = JSON.stringify(sim.state.tracks);

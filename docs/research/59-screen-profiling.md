@@ -496,6 +496,37 @@ below gave: M1 popup 1.0 / 0.3 px, EQ 0.26 / 0.17, saturator 0.33 / 0.25, master
 | T6 tape (14)           | a reel icon and speed % (CC13: 50–200 %; 63 → 99 %, 64 → 101 %); a tape strip with a length digit 1–16 (CC14); mix (CC15, 00–99); CC12 small change                                                                                            |                                                                                                                                                                                                                                                                      |
 | T7 FX I (15)           | "FX I" boxed plus the type; four columns 100 px wide at x 40, 140, 240, 340, labels above and values below, partial strips at both edges; each column a bar split by a marker at the value's height                                            | types (shift + T7 lists them): chorus (rate, depth, feedback, stereo), delay (size, shown as a note value such as "1/8 dotted"; fine, feedback, dry), dist (…, clip, lo cut, hi cut), lofi, phaser (frequency, depth, rate, feedback), reverb (size, mod, tone, dry) |
 
+**Measured** (design px, labels 12 px bold; `src/lib/sim/areas/auxiliary/`). The simulator's bright
+pixels land 0.0–0.2 px from the device's on every page. The reverse check reads higher on the grey
+pages only because the camera lifts their fills; the edges agree within about 1 px by eye.
+
+- **Brain:** a band y 80–145 with a white head (or hand) card, a dark root box, a mid-grey scale
+  box and a white link box. Root and scale show only when set by hand; the link is a crossed box or
+  two digits. The routing boxes are 25 px on a 30 px pitch from x 172.
+- **External MIDI:** four 65 px boxes from x 110: channel "01"–"16" on black, bank on dark, program
+  on mid grey, the big figures TE's digits at 0.91 × their width and 1.05 × their height. Only the
+  lower arrow is drawn, and there are no soft labels. On the LFO page the destinations are off,
+  cc1 and cc2.
+- **External CV:** the meter's centre (240.03, 186.28), arc radius 68.5, 7° per volt over ±5 V; the
+  needle runs from radius 58.5 to 79 and is 3 px wide.
+- **External audio:** drive "00"–"20", level and mix "00"–"99"; routing values are plain numbers.
+  The filter and LFO start off (the page at 40 % under an "off" box; M3 or M4 switches them on). The
+  filter's band dividers sit at x 159.5, 248.5 and 328.5; the low-pass edge at x = 83.7 + 404.2 ·
+  value and the high-pass edge at x = −53.4 + 397 · value.
+- **Tape:** speed 50–200 %, length 1–16, pitch "x1"–"x10", mix 00–99 under a "mix" label.
+- **FX I / II:** the columns carry an 8 px marker at the value; labels at y 75.8, values at y
+  160.35. The delay's size is one of eight note values, 1/32 up to 1/2, over eight equal zones of
+  the lane (a new project's 21495 of 32767 reads 1/8 dotted). `shift + T7/T8` opens the effect list,
+  headed with the track number ("15").
+- **Punch-in:** TE's 40 × 18 dot grid (the device's is within 0.4 px), dots 10 px across where TE
+  drew 11. Idle, the device shows no dog: one dot traces a heartbeat along row 8 at 15.2 columns
+  per second, looping every 2.78 s (fitted over 25 loops), its spike over columns 17–22 at rows 9,
+  7, 6, 4, 7, 9; it restarts at the left edge each time an effect ends (13 of 13). Each key plays its
+  own 4–8 s animation; the simulator shows one still frame per key from the 10 fps recordings.
+  Which animation belongs to which key is inferred from the order they were pressed.
+- **Ours, not seen:** the FX II title, the lofi labels, tape and FX routing with their filters and
+  LFOs, and the aux sends layer. b1-4028 may be a brain LFO page, not modelled.
+
 ## 3. MIDI reach on 1.1.33 (verified on screen)
 
 | Answers                                                                                                                                                                                                                                                 | Ignores                                                                                                    |

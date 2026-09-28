@@ -6,23 +6,23 @@
  * §3.11, 20-midi-control.md §3.5), and where both are silent they are ours and say so.
  */
 import { newProjectFile } from '$lib/core/opxy';
-import { fromQ15, stepOf } from '../../defaults';
+import { fromQ15 } from '../../defaults';
 
 /** Key names as the brain shows them ("c#": lowercase, sharps). */
 export const KEYS = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'] as const;
 
 /**
  * The brain's seven scales in the order the device stores them (manual: auxiliary/brain), each as
- * semitones above the root.
+ * semitones above the root, with the name its screen writes (OS 1.1.33: "mixo" for mixolydian).
  */
 export const SCALES = [
-	{ name: 'major', steps: [0, 2, 4, 5, 7, 9, 11] },
-	{ name: 'dorian', steps: [0, 2, 3, 5, 7, 9, 10] },
-	{ name: 'phrygian', steps: [0, 1, 3, 5, 7, 8, 10] },
-	{ name: 'lydian', steps: [0, 2, 4, 6, 7, 9, 11] },
-	{ name: 'mixolydian', steps: [0, 2, 4, 5, 7, 9, 10] },
-	{ name: 'minor', steps: [0, 2, 3, 5, 7, 8, 10] },
-	{ name: 'locrian', steps: [0, 1, 3, 5, 6, 8, 10] }
+	{ name: 'major', label: 'major', steps: [0, 2, 4, 5, 7, 9, 11] },
+	{ name: 'dorian', label: 'dorian', steps: [0, 2, 3, 5, 7, 9, 10] },
+	{ name: 'phrygian', label: 'phrygian', steps: [0, 1, 3, 5, 7, 8, 10] },
+	{ name: 'lydian', label: 'lydian', steps: [0, 2, 4, 6, 7, 9, 11] },
+	{ name: 'mixolydian', label: 'mixo', steps: [0, 2, 4, 5, 7, 9, 10] },
+	{ name: 'minor', label: 'minor', steps: [0, 2, 3, 5, 7, 8, 10] },
+	{ name: 'locrian', label: 'locrian', steps: [0, 1, 3, 5, 6, 8, 10] }
 ] as const;
 
 /** What the brain stores per pattern (manual: settings since 1.0.25, routing since 1.0.29). */
@@ -76,21 +76,22 @@ export interface AudioState {
 	input: number;
 	/** Whether the input is switched on (E1 click; the how-to switches it on after choosing). */
 	on: boolean;
-	/** Preamp drive, input level, and how much of the routed tracks returns to the main mix, 0–99. */
+	/** Preamp drive, 0–20 (the screen writes 00–20: CC13 sweeps, research 59 §2.13). */
 	drive: number;
+	/** Input level and how much of the routed tracks returns to the main mix, 0–99. */
 	level: number;
 	mix: number;
 }
 
 /** The tape track (T6). */
 export interface TapeState {
-	/** Pitch as a speed multiple, 1–10 ("X1" … "X10"; community notes: x1 default). */
+	/** Pitch as a speed multiple, 1–10 (the screen writes "x1" … "x10"; x1 default). */
 	pitch: number;
 	/** Speed in percent, 50–200 (100 default). */
 	speed: number;
-	/** Loop length, 1–10 (1 default); we read it as beats. */
+	/** Loop length, 1–16 (1 default); we read it as beats. */
 	length: number;
-	/** Tape against the original audio, 0–99 (0 default); TE's art labels it "dry". */
+	/** How much of the tape returns against the original audio, 0–99 (0 default): "mix" on screen. */
 	mix: number;
 	/** The keyboard key (0–23) that played the last clip, or null. */
 	clip: number | null;
@@ -100,31 +101,61 @@ export interface TapeState {
 export const FX_TYPES = ['chorus', 'delay', 'distortion', 'lofi', 'phaser', 'reverb'] as const;
 export type FxType = (typeof FX_TYPES)[number];
 
-/** Each effect's four M1 parameters, E1 … E4, with TE's names (manual: fx/*). */
-export const FX_PARAMS: Readonly<Record<FxType, readonly [string, string, string, string]>> = {
-	chorus: ['rate', 'depth', 'feedback', 'stereo'],
-	delay: ['size', 'amount', 'fine', 'dry'],
-	distortion: ['drive', 'amount', 'low cut', 'high cut'],
-	lofi: ['rate', 'bits', 'quality', 'drift'],
-	phaser: ['frequency', 'depth', 'rate', 'feedback'],
-	reverb: ['size', 'modulation', 'rate', 'feedback']
+/** Each effect's name as the device's list and FX page write it (OS 1.1.33: "dist"). */
+export const FX_NAMES: Readonly<Record<FxType, string>> = {
+	chorus: 'chorus',
+	delay: 'delay',
+	distortion: 'dist',
+	lofi: 'lofi',
+	phaser: 'phaser',
+	reverb: 'reverb'
 };
 
 /**
- * The delay's size in eight steps. The manual names only the ends (micro … insane); the steps
- * between show their number (ours).
+ * Each effect's four M1 parameters, E1 … E4, as the device labels its columns on OS 1.1.33
+ * (research 59 §2.13): the delay's middle two are fine and feedback where TE's guide says amount
+ * and fine, the reverb's last two tone and dry where it says rate and feedback, and dist writes
+ * clip, lo cut and hi cut. Lofi was never on camera: its labels are the guide's.
  */
-export const DELAY_SIZES = ['micro', '2', '3', '4', '5', '6', '7', 'insane'] as const;
+export const FX_PARAMS: Readonly<Record<FxType, readonly [string, string, string, string]>> = {
+	chorus: ['rate', 'depth', 'feedback', 'stereo'],
+	delay: ['size', 'fine', 'feedback', 'dry'],
+	distortion: ['drive', 'clip', 'lo cut', 'hi cut'],
+	lofi: ['rate', 'bits', 'quality', 'drift'],
+	phaser: ['frequency', 'depth', 'rate', 'feedback'],
+	reverb: ['size', 'mod', 'tone', 'dry']
+};
+
+/**
+ * The delay's size as the device writes it: a note value, in eight equal zones of the lane (CC12
+ * sweeps on OS 1.1.33 read these at 0, 16, 32 … 112, 127; the guide's micro … insane is older). A
+ * new project's size (21495 of 32767) is 1/8 dotted.
+ */
+export const DELAY_SIZES = [
+	'1/32',
+	'1/32 dotted',
+	'1/16',
+	'1/16 dotted',
+	'1/8',
+	'1/8 dotted',
+	'1/4',
+	'1/2'
+] as const;
 
 /** One FX slot (T7 FX I, T8 FX II). */
 export interface FxSlot {
 	type: FxType;
-	/** E1 … E4, 0–99; the delay's size is a step 0–7 of {@link DELAY_SIZES}. */
+	/**
+	 * E1 … E4, 0–99. The delay's size is a lane like the others: its bar moves with it while the
+	 * screen names the zone's note value ({@link DELAY_SIZES}).
+	 */
 	params: [number, number, number, number];
 }
 
 /** An aux track's LFO (M4): speed, amount, destination module and its parameter (encoder). */
 export interface AuxLfo {
+	/** Switched on (M4 on its own page); off in a new project, as the device shows it. */
+	on: boolean;
 	/** Synced steps first, then the free range (as the instrument LFO's speed). */
 	speed: number;
 	/** −99…99. */
@@ -137,6 +168,8 @@ export interface AuxLfo {
 
 /** The pages several aux tracks share (manual: auxiliary/routing-filter-lfo). */
 export interface AuxPages {
+	/** M3: switched on (M3 on its own page); off in a new project, as the device shows it. */
+	filterOn: boolean;
 	/** M3: high-pass and low-pass cutoffs, 0–99. */
 	highpass: number;
 	lowpass: number;
@@ -172,6 +205,12 @@ export interface AuxiliaryState {
 	picker: { slot: 0 | 1; index: number } | null;
 	/** Punch-in effects being recorded from instrument tracks, by keyboard key id. */
 	punchTakes: Record<string, PunchTake>;
+	/**
+	 * The punch-in page's heartbeat: ms into its loop while the page shows with no effect playing (0
+	 * otherwise, so it starts again at the left edge), and the column its dot is in (40 and past:
+	 * off the screen), which alone the screen reads.
+	 */
+	heartbeat: { ms: number; col: number };
 }
 
 /**
@@ -188,26 +227,19 @@ export function defaultBrain(): BrainSettings {
 	};
 }
 
-/**
- * A fresh effect. The manual gives no defaults; ours sit mid-range, with the delay at its middle
- * size.
- */
+/** A fresh effect. The manual gives no defaults; ours sit mid-range (the delay's size at 1/8). */
 export function defaultFx(type: FxType): FxSlot {
-	return { type, params: type === 'delay' ? [3, 50, 50, 50] : [50, 50, 50, 50] };
+	return { type, params: [50, 50, 50, 50] };
 }
 
 /**
  * A new project's effects as the device stores them (`knowledge/presets/new-project.json`): FX I a
- * delay (size 6 of 8, its dry signal full), FX II a reverb.
+ * delay (1/8 dotted, its dry signal full), FX II a reverb.
  */
 function newProjectFx(): [FxSlot, FxSlot] {
 	const { fx1, fx2 } = newProjectFile.effects;
-	const [size, ...rest] = fx1.params;
 	return [
-		{
-			type: 'delay',
-			params: [stepOf(size, DELAY_SIZES.length), ...rest.map(fromQ15)] as FxSlot['params']
-		},
+		{ type: 'delay', params: fx1.params.map(fromQ15) as FxSlot['params'] },
 		{ type: 'reverb', params: fx2.params.map(fromQ15) as FxSlot['params'] }
 	];
 }
@@ -227,14 +259,16 @@ export function initialAuxiliary(): AuxiliaryState {
 		tape: { pitch: 1, speed: 100, length: 1, mix: 0, clip: null },
 		fx: newProjectFx(),
 		pages: Array.from({ length: 8 }, () => ({
+			filterOn: false,
 			highpass: 0,
 			lowpass: 99,
 			sends: [0, 0, 0, 0],
-			lfo: { speed: 3, amount: 0, destination: 0, parameter: 0 },
+			lfo: { on: false, speed: 7, amount: 0, destination: 0, parameter: 0 },
 			half: 0
 		})),
 		picker: null,
-		punchTakes: {}
+		punchTakes: {},
+		heartbeat: { ms: 0, col: 0 }
 	};
 }
 

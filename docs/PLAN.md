@@ -182,8 +182,9 @@ owner flagged, then what users see most.
        turns the jack black and how E4's click treats the level.
 10. [ ] **Engine pages:** top-bar styles, each engine's picture and its motion; sampler pages and their
         shift layers; the preset browser.
-11. [ ] **Aux tracks:** brain M1/M2 (slide), external MIDI (CC slots, LFO), external CV (meter),
-        external audio (signal flow), tape, FX I/II (four columns per type); punch-in animations.
+11. [x] **Aux tracks:** brain M1/M2 (slide), external MIDI (CC slots, LFO), external CV (meter),
+        external audio (signal flow), tape, FX I/II (four columns per type); punch-in (the idle
+        heartbeat; one still frame per key). Left: the punch-in animations in motion.
 12. [ ] **Behaviour:** the MIDI reach table (sampler M1 and CV ignore CCs); value formats read off the
         captures (tape %, drive 0–20, bank/program crossed at 0, brain link, prism ratio steps).
 
