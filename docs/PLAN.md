@@ -72,10 +72,17 @@
   instrument page or value, tried on a copy of the simulator. `plan_steps` reads them out or plays
   them on the replica, one setting or a whole sound at a time. Five sound-design recipes run as
   written (tested). The how-to eval checks the virtual OP-XY's end state.
+- **M6 native projects: the no-device part is done** (2026-09-28). `src/lib/xy/` is the TS port of
+  kmorrill/xy-format: container, lane-aware walk, project model, reader, and a template writer that
+  keeps every byte it does not own. It writes the Python library's exact bytes on 26 golden op lists
+  (17 of them device captures) and reads every lane-free corpus file as the library does. `simToXy`
+  compiles the simulator's project (settings, patterns, notes, components, locks, scenes, songs) over
+  a template and lists what it cannot carry yet (sounds, players…). The owner's 1.1.33 blank project
+  has the 1.1.4 layout. Left: the device session (note 10 §7.7), the transfer path and a UI.
 - **Next:** T28 with the owner (track MIDI channels → notes out), then M5 composer + live playback and
-  M6 native projects. M6 starts by **reading the current project over WebUSB-MTP**: it is the only way
-  the replica can load what is on the device (steps, tempo, sounds), since the device never reports
-  its knobs or keys over MIDI.
+  the M6 device session. M6 continues by **reading the current project over WebUSB-MTP**: it is the
+  only way the replica can load what is on the device (steps, tempo, sounds), since the device never
+  reports its knobs or keys over MIDI; `readProject` now decodes what such a pull returns.
 - **Device facts (1.1.33):** CC80 = 2 × BPM (40–220), CC9 level mute, CC102/104/105 work, remote keys
   CC106/107 dead; with clock = both it sends FA/FC and continuous F8; notes and pitch bend go out only
   from tracks the project gives a MIDI channel (all off in a fresh project); keys, M-keys and encoders
@@ -92,7 +99,7 @@ each with a clear job:
 | **Live MIDI** (notes, CC, transport, clock) | play, mix, tempo, scenes, project load, engine/filter/envelope params per track   | ports present; CC map mostly community, needs probing                                             | [20](research/20-midi-control.md)                                   |
 | **Remote keys** (CC106/107)                 | press any front-panel key from the computer → the replica drives the real UI      | unknown on 1.1.33 (worked ≤1.0.21 and on 1.1.4) — **spike**                                       | [20 §7](research/20-midi-control.md)                                |
 | **TE SysEx** (GREET, FILE)                  | exact firmware version; a filesystem over MIDI with writable `drum/` and `synth/` | **verified** GREET/ECHO/FILE LIST; FILE PUT untested                                              | [60 §4](research/60-firmware.md), [90](research/90-device-probe.md) |
-| **Native `.xy` projects**                   | the device's own sequencer: notes, p-locks, step components, scenes, songs        | format well understood (device-validated on 1.1.4); nothing checked on 1.1.33; transfer path open | [10](research/10-xy-format.md)                                      |
+| **Native `.xy` projects**                   | the device's own sequencer: notes, p-locks, step components, scenes, songs        | TS codec + compiler done; the 1.1.33 blank = 1.1.4 layout; authored files untested; transfer open | [10](research/10-xy-format.md)                                      |
 | **Presets / samples** (`patch.json` + WAV)  | AI-made drum kits and instruments                                                 | well understood; install path = FILE PUT (spike) or MTP                                           | [30](research/30-presets-samples.md)                                |
 | **USB audio**                               | the agent can listen to what the OP-XY plays                                      | class-compliant UAC1 input; untested                                                              | [90](research/90-device-probe.md)                                   |
 
@@ -317,6 +324,18 @@ TS port of `xy-format` (~3k lines; golden tests against the upstream corpus + Py
 `SongIR → .xy` compiler, device verification on 1.1.33 (header, 16 patterns), transfer path (MTP /
 Field Kit first; WebUSB-MTP if the spike allows), load via CC86. Upstream the corrections we found
 to `kmorrill/xy-format`.
+
+- [x] Codec (`src/lib/xy/`): container and RLE, lane-aware walk, project model, `readProject`,
+      `writeProject` over a template (1.1.4 or 1.1.33). Fixtures and goldens from the Python library
+      (`scripts/xy-fixtures.py`); the full upstream corpus runs locally (note 10 §7.7).
+- [x] Simulator → `.xy`: `simToXy(state, template)` with a `skipped` list; the agent's patterns,
+      scenes and songs compile note for note. (SongIR does not exist yet: the simulator's model is the
+      source.)
+- [ ] Device session on 1.1.33: authored files over both templates, 16 patterns, the cutoff lock's
+      union mask, save-as round trips (note 10 §7.7).
+- [ ] Sounds in the writer: sound block words, presets by donor copy with octaves, drum regions.
+- [ ] Transfer path and CC86 load; a UI to export and import projects; `xyToSim` for projects pulled
+      from the device.
 
 ### M7 — Sounds
 

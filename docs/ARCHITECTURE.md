@@ -15,8 +15,10 @@ src/lib/
     opxy/      The OP-XY as data: controls inventory, tracks/channels, CC map, remote keys,
                firmware profile — loaded from knowledge/*.json and validated with zod
     music/     notation, melodies, harmony; later SongIR, arranger, MIDI-file import
-    xy/        (M6) .xy codec, ported from kmorrill/xy-format
     presets/   (M7) patch.json builder, slicer
+  xy/          (M6) the device's .xy project files, ported from kmorrill/xy-format: container and RLE,
+               project model, reader, template writer (pure, like core); from-sim.ts compiles the
+               simulator's state into a project
   device/      Browser adapters (Web MIDI, workers, audio). Everything injected for tests:
                access, transport (the single send choke point + policy), monitor, device mirror,
                scheduler + tick worker, session (identity + GREET), expect()
@@ -36,7 +38,9 @@ knowledge/     committed data the app imports via the `$knowledge` alias
 ```
 
 Dependency direction: `routes → app → (replica | agent | manual | ui) → (sim | sound) → device →
-core`. `core` imports nothing outside `core` (and `$knowledge` JSON). Nothing imports `routes`.
+core`. `core` imports nothing outside `core` (and `$knowledge` JSON). `xy/` is as pure, with one
+exception: `xy/from-sim.ts` reads `sim/` (import it on its own; `$lib/xy` itself does not). Nothing
+imports `routes`.
 
 ## The agent: from an idea to steps
 

@@ -18,6 +18,12 @@
 > **Author / date.** OP-XY Agent research, 2026-09-26. Our reference firmware is **OS 1.1.33**
 > (`docs/DECISIONS.md` D3). Upstream evidence stops at **1.1.25**, so every claim here still has to be
 > re-verified on 1.1.33 (§8).
+>
+> **Port status (2026-09-28).** The TypeScript port is in `src/lib/xy/`: container, lane-aware walk,
+> project model, reader, template writer, and `simToXy`, the compiler from the simulator's state. It
+> reproduces the Python library byte for byte, 17 device captures included, and walks the owner's
+> 1.1.33 blank project, whose layout is the 1.1.4 one. What is ported and verified, and what is left for
+> the device session: §7.7.
 
 ---
 
@@ -151,13 +157,13 @@ Sources: `README.md`, `xy/rle.py`, `docs/format/record_structure.md` §0, and
 
 ### 2.1 The 8-byte header
 
-| Offset | Size | Observed values                                                       | Meaning                                                                          | Confidence                                       |
-| ------ | ---- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------ |
-| 0      | 4    | `DD CC BB AA`                                                         | Magic                                                                            | **D**                                            |
-| 4      | 1    | `09` (all 915 files)                                                  | Unknown; constant                                                                | **U**                                            |
-| 5      | 1    | `13` (all files in repo)                                              | Layout family; selects the global header size (below)                            | **C** (other values from issue #19, not in repo) |
-| 6      | 1    | `03` (1.1.4 era, 891 files); `06` (1.1.21 factory captures, 24 files) | Probably a minor format/firmware revision; the layout is identical for 03 and 06 | **C**/H                                          |
-| 7      | 1    | `86` (all files)                                                      | Unknown; constant                                                                | **U**                                            |
+| Offset | Size | Observed values                                                                         | Meaning                                                                              | Confidence                                       |
+| ------ | ---- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| 0      | 4    | `DD CC BB AA`                                                                           | Magic                                                                                | **D**                                            |
+| 4      | 1    | `09` (all 915 files)                                                                    | Unknown; constant                                                                    | **U**                                            |
+| 5      | 1    | `13` (all files in repo); `14` (OS 1.1.33, the owner's blank project)                   | Layout family; selects the global header size (below)                                | **C** (other values from issue #19, not in repo) |
+| 6      | 1    | `03` (1.1.4 era, 891 files); `06` (1.1.21 factory captures, 24 files); `07` (OS 1.1.33) | Probably a minor format/firmware revision; the layout is identical for 03, 06 and 07 | **C**/H                                          |
+| 7      | 1    | `86` (all files)                                                                        | Unknown; constant                                                                    | **U**                                            |
 
 Sources: `xy/rle.py` (`HEADER_LEN = 8`, `MAGIC`) and my tally over all 915 files (Appendix C).
 
@@ -170,6 +176,7 @@ validated 1,039 device files):
 | `0x0E`, `0x0F` | 3,933                  | Older firmware (not in repo)                                                                                           |
 | `0x10`, `0x11` | 3,433                  | Older firmware (not in repo). 16 bytes smaller, which suspiciously equals the 16-byte per-track MIDI channel array (H) |
 | `0x13`         | 3,449 (`0x0D79`)       | Every file in the repo, firmware 1.1.4 through 1.1.21                                                                  |
+| `0x14`         | 3,449 (`0x0D79`)       | OS 1.1.33 (2026-09-28): the owner's blank project decodes to the same 289,521 B and walks with the 1.1.4 layout (§7.7) |
 
 **The header is copied verbatim** from the baseline by every writer (`encode_project(header, image)`).
 There is no length field. `docs/parse_capability_checklist.md` §1 claims "magic, payload length", which
@@ -179,6 +186,12 @@ is wrong. There is no checksum anywhere: edited bodies load on device.
 only `0x13`**, the only family with authored-file device evidence. Whether 1.1.33 writes `09 13 06 86`
 or something newer is open question Q1. Files authored from the 1.1.4 baseline (`… 03 86`) were
 accepted by a 1.1.25 device (`docs/logs/2026-08-26_plock_rotation_carry_curve.md`).
+
+**As ported (2026-09-28).** OS 1.1.33 writes `09 14 07 86`, with the 0x13 layout. The TS writer takes
+templates of families `0x13` and `0x14` and keeps the template's header, so a file authored over a
+1.1.33 blank project carries the header the device itself writes. It refuses the older families,
+whose global header is not mapped. Whether 1.1.33 loads a file authored over the 1.1.4 template is
+still Q3.
 
 ### 2.2 RLE: exact specification
 
@@ -398,7 +411,7 @@ Pattern-relative map (base = leader start, or clone start − 1):
 | `+0x0008`          | 1     | i8               | Per-track groove                                             | `3 × index` into the UI sequence, saturated ±0x7F (sequence in `xy/bar_menu_inspection.py`)                        | **C** (`bar-g*`)                         |
 | `+0x0009`          | 1     | u8               | Brain route mask (meaningful on T9)                          | bit0=T1..bit7=T8; default `0xFC` on every struct. Per pattern (changelog 1.0.x: "store brain routing per pattern") | **C** (AUX-BRAIN)                        |
 | `+0x000A..+0x0010` | 7     | —                | Unknown                                                      | never varies                                                                                                       | U                                        |
-| `+0x0011`          | 2     | u16              | "Pristine" field                                             | 8 = never edited; the device writes 0 on any edit. Values 1/2 seen in some multi-bar captures (UI page?)           | **D** (replications require clearing it) |
+| `+0x0011`          | 2     | u16              | "Pristine" field                                             | 8 = never edited; the device writes 0 on an edit (not every one ★, below the table). 1/2 seen too                  | **D** (replications require clearing it) |
 | `+0x0013..+0x029F` | 653   | —                | Low preset state (opaque, copied by `set_preset`)            | Contains the fields below                                                                                          | U/P                                      |
 | `+0x0014`          | 1     | u8               | Engine id                                                    | table §3.12                                                                                                        | **D**                                    |
 | `+0x001C`          | 1     | u8               | LFO type                                                     | 0 tremolo, 1 value, 2 random, 3 element, **6 duck** ★ (u32)                                                        | **C**                                    |
@@ -421,6 +434,12 @@ Pattern-relative map (base = leader start, or clone start − 1):
 | `+0x4570`          | 12·n  | Note[n]          | Note records (§3.7)                                          |                                                                                                                    | **D**                                    |
 | after notes        | 3+    | Lane[3]          | ★ Performance lanes PB, MW, AT (§3.7)                        | 1 byte each when empty                                                                                             | **C★**                                   |
 | after lanes        | 97    | —                | Fixed tail (engine-specific, e.g. EPiano 22×s16 table)       | Preserve; copied by `set_preset`                                                                                   | U                                        |
+
+★ **Not every edit clears the pristine field** (corpus scan, 2026-09-28). Notes, steps, track scale,
+quantisation, groove, note length, components and grid locks all do. Smoothing alone leaves it at 8
+(all six `bar-s-*` captures), and so did the hold-recorded locks on the drum tracks T1 and T2 of
+u121, where T3–T8 went to 0. Upstream's `set_plock_shape_raw` already leaves it alone. The TS writer
+writes the field as the model has it and lets its callers decide (§7.7).
 
 ### 3.5 SampleRegion[24] (drum kits, sampler, multisampler) ★
 
@@ -1165,6 +1184,86 @@ The throwaway prototype (erasable-syntax TS, runs directly on Node 24):
 
 The core code is in Appendix B.
 
+### 7.7 What is ported and verified (2026-09-28)
+
+The port lives in `src/lib/xy/`: about 1,500 lines of TypeScript for the codec, 400 for `simToXy`
+and 1,500 of tests. All of it is pure except `from-sim.ts`, which reads the simulator. It follows the
+plan of §7.2 for the MVP of §7.3, steps 1–3, plus step components and locks from milestone 2. Every
+ported file names its upstream source (MIT notice in `NOTICE.md` and
+`src/lib/xy/fixtures/README.md`). The small `bytes.ts`, `errors.ts` and `index.ts` are not listed.
+
+| Module         | Lines | Upstream source                                                                | What it does                                                                                       |
+| -------------- | ----: | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `rle.ts`       |    69 | `xy/rle.py`                                                                    | Two-pass decode, canonical-greedy encode                                                           |
+| `container.ts` |    82 | `xy/rle.py`, `TRACK_BASE_BY_FIRMWARE`                                          | Header and magic, layout family → Track 1 base (0x14 added), the families we map                   |
+| `layout.ts`    |   230 | `pattern_starts_from_image`, the offset constants                              | Offsets; the lane-aware walk (A.1); the 14 song slots, which must end at EOF (A.7)                 |
+| `model.ts`     |   338 | enums of `project_config_inspection`, `PLOCK_PARAMS`, `bar_menu_inspection`    | The project model; lock columns, step components, engines, scales, groove detents, conversions     |
+| `read.ts`      |   185 | the inspection modules                                                         | `readProject`: settings, 100 scenes, every pattern's bar settings, notes, components, locks, lanes |
+| `write.ts`     |   488 | `ImageProject` setters, `set_plock`, `set_step_component`, `build_arrangement` | `writeProject(model, template)`: writes what differs from the template, keeps every other byte     |
+| `from-sim.ts`  |   394 | —                                                                              | `simToXy(state, template)`: the simulator's project as a file, and what it could not take          |
+
+The model holds the file's own values where the file is exact (ticks, bytes, 0–32767 lock values),
+so a project read and written again comes back byte for byte; a pattern's `sound` (engine, preset
+path, volume, pan) is read-only. **The writer writes only what differs** from the template's own
+reading: a changed note list is rewritten in tick order with its lanes; locks are set or cleared cell,
+mask bit, current value and carry (§3.9), then the union mask is recomputed (A.2); a changed step's
+components are rewritten; song slots are rebuilt in place. A pattern the template lacks starts as the
+track's first pattern there, emptied (locks, current values, carries, components, notes and lanes
+cleared; sound kept). The pristine field is written as the model has it: the device's rule depends on
+how a pattern was edited (§3.4), so callers decide; `simToXy` clears it for a changed pattern.
+
+**Deliberate differences from upstream:** the union mask (A.2), lane-aware walking (A.1), slots
+rewritten whatever their length (A.7), notes sorted by tick (§3.7), family 0x14, and no setters for
+the sound block, drum regions or presets yet (milestones 2–3 of §7.3). The legacy raw-space modules
+(`xy/container.py`, `structs.py`, `plocks.py`, `step_components.py`) are not ported (Appendix E).
+
+**Verification.**
+
+| Check                                                                       | Result                                                                                                                                                                                                                |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RLE cases of `tests/test_rle.py`, fuzz                                      | pass                                                                                                                                                                                                                  |
+| Reader vs the Python library, committed fixtures (`fixtures/expected.json`) | 7/7 files, every field: settings, scenes, songs, each pattern's bar settings, notes, components, locks, union bytes, lane counts                                                                                      |
+| Reader vs the Python library, whole corpus (one-off check, 2026-09-28)      | 907/907 lane-free files agree field for field; the 6 with lanes are the ones upstream's scanner misreads                                                                                                              |
+| Writer vs the Python library (`fixtures/goldens.json`, 26 op lists)         | 26/26 byte-exact; 17 equal device captures (u2, u5, u8, u10, u11, u19, u20–u22, u41, u59, u81, u92, j05, j06, image probes 01 and 02)                                                                                 |
+| Corpus (local only, skipped without the clone)                              | 909/915 re-encode byte-exact (6 legacy outputs are not canonical RLE); 913/915 walk (2 broken legacy); every walkable file reads and writes back unchanged, and carries onto the blank template with its model intact |
+| The owner's 1.1.33 blank project (local only)                               | Header `09 14 07 86`; 289,521 B, Track 1 at 3,449, 16 single patterns, the 56-byte footer; round-trips; takes edits as a template                                                                                     |
+| `simToXy`                                                                   | A new simulator project writes back as either template, but for the metronome byte; a project the agent writes through the virtual OP-XY reads back note for note                                                     |
+
+**The 1.1.33 blank project against the 1.1.4 one.** Same size and structure; 56 bytes differ: T1's
+keyboard octave (−1 where 1.1.4 has 0), scene 1's flag (set on 1.1.33), sound word k57 (`+0x393B`,
+`0x3FFFFFE7` on T1–T8 where 1.1.4 has 0), two framecount bytes of T1's region 18, and five
+crossfade words of T8's regions (zero on 1.1.33). None of it is sequence data.
+
+**Fixtures** (`src/lib/xy/fixtures/`, about 140 KB): the blank 1.1.4 template, four of upstream's
+device-tested image probes (01, 02, 06, 07), two projects the library writes from our op lists
+(`song.xy`, `locks.xy`), and the JSON above. `scripts/xy-fixtures.py` regenerates them with the
+library as the oracle and checks each claimed device equality. No TE factory projects, factory
+preset captures, user presets or commercial-song arrangements are committed.
+
+**`simToXy` (the simulator → a file).** It writes tempo, groove type and amount, the metronome, the
+project settings (transpose, scene length, time signature, voices, MIDI channels), the keyboard
+octaves of tracks whose keys transpose, every track's patterns (length, note length, scale,
+quantisation, groove, smoothing, notes with micro-timing and gates, step components, the locks
+with a known column: engine parameters 1–4, both envelopes, portamento, engine volume, the filter,
+the four sends), the 99 scenes (patterns, mutes) and the 14 songs. Where the template's byte reads
+as the simulator's value it stays, so an untouched project writes back as its template. It reports
+in `skipped` what the file does not take yet: players, quantisation's on/off switch, the track
+scales 3–8, locks of the LFO, play mode, bend, sampler keys, the MIDI program and the auxiliary
+pages, and differences from the template in engines, presets, preset settings, mixer levels and
+pans, and per-scene mixes. Two simulator facts to settle: its metronome starts off, which the file
+can only store as volume 0 (a new device project stores 0xA8, "on", in both firmwares); and its
+scenes keep mixes while the file keeps mutes only (volume is per pattern, Q7).
+
+**Left for the device session (with the owner, announced first):**
+
+1. Q3: does 1.1.33 load files authored over the 1.1.4 template, and over its own blank project?
+   Start with `simToXy` of a small song over the owner's blank project, then the same over 1.1.4.
+2. Q2: 16 patterns on a track (the `sixteen patterns` golden is ready to author).
+3. Q6: which union mask plays and displays a cutoff lock (ours is the device's own OR).
+4. Save-as on the device and pull back: diff the decoded images of what we wrote and what it saved
+   (pristine fields, lock carries, current values, scene flags).
+5. The transfer path (Q28) and CC86 loading (Q29).
+
 ---
 
 ## 8. Open questions / verify on the real device
@@ -1176,7 +1275,9 @@ cheapest (Q1).
 1. **OS 1.1.33 header and layout.** Pull one blank project saved on 1.1.33. Check header bytes 4..7
    (`09 13 06 86`?), that T1 starts at 3,449, that there are 100 scene slots, the 56-byte footer, and
    that decoded size is 289,521 for a blank project. Then decode the owner's real projects: all must
-   walk (lanes!) and round-trip.
+   walk (lanes!) and round-trip. **Blank project answered (2026-09-28, §7.7):** header
+   `09 14 07 86`, T1 at 3,449, 289,521 B, the 56-byte footer; it walks and round-trips. Still open:
+   projects with content.
 2. **16 patterns per track.** Capture a device project with 16 patterns on one track. Then device-test
    an authored file with 16 patterns on T1 and scenes selecting P16 (upstream never tested >9).
 3. **Cross-version acceptance.** Do files authored from the 1.1.4 baseline (header `… 03 86`) load on
