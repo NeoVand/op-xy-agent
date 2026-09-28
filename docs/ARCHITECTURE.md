@@ -55,6 +55,11 @@ core`. `core` imports nothing outside `core` (and `$knowledge` JSON). Nothing im
 - **`plan_steps`** reads the plan out, plays it on the replica (`show`, which leaves the virtual
   OP-XY there), or hands it to the walkthrough (`guide`, `app/guide.svelte.ts`). The walkthrough
   lights one step at a time and moves on when the replica's screen shows where the step leads.
+- **Device map** (`sim/device-map.ts` → `knowledge/opxy/device-map.json`, rebuilt with
+  `node scripts/build-device-map.mjs`; a test fails while it is stale): every page with its keys
+  from a new project, what its screen says, and each encoder per layer (found by turning it on a
+  copy) with its range, display format, CC and MIDI reach on OS 1.1.33. The agent reads it with
+  `device_map`.
 - **Recipes** (`knowledge/manual/units/howto/*`) mark the steps that set values
   (`set: { param, value }`); `sim/recipes.spec.ts` runs every recipe on a new project.
 - **Device**: `set_sound` sends a connected OP-XY's sound parameters over the lane CCs verified on

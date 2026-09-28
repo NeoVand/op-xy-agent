@@ -23,8 +23,10 @@
   - **The agent** plans exact steps on a copy of the simulator for any page or value, auxiliary and
     mixer values included. It can read them out, play them on the replica, or walk the user through
     them one lit key at a time. It sets whole sounds up from an idea (five tested recipes) and sets a
-    connected device's sound over the verified CCs. Evals: how-to and idea-to-device cases pass;
-    the regression run is 42/42 Q&A and 18/18 device tasks.
+    connected device's sound over the verified CCs. A device map exported from the simulator
+    (`device_map`) tells it what every page holds: encoders per layer, ranges, CCs, MIDI reach.
+    Evals: how-to and idea-to-device cases pass; the regression run is 42/42 Q&A and 18/18 device
+    tasks.
 - **M0 research, M1 foundations: done.** Core MIDI/TE-SysEx/OP-XY data, design system + shell, device
   layer (Web MIDI, single send choke point, GREET session, mirror, monitor), `/lab`; verified by the
   owner on the live site.
@@ -220,14 +222,19 @@ owner flagged, then what users see most.
       CC 12–15.
 - [x] `knowledge/midi/cc-map.json`: lanes seen working marked verified, with their display ranges.
       Filter cutoff, tape length and EQ channel 1 are held back by tests that pin them.
-- [ ] Screen descriptions the agent can use ("what will I see?"): generated from the simulator's pages
-      and checked against the captures.
+- [x] Screen descriptions the agent can use ("what will I see?"): generated from the simulator's pages
+      and checked against the captures. Each page of the device map (F4) carries what its screen
+      says, with the note-59 section it was rebuilt from; a test holds the map to what the captures
+      showed (value lists, ranges, labels, MIDI reach).
 
 ### F4 — The agent: from idea to steps
 
-- [ ] **Device map:** exported from the simulator. For each page it records how to reach it, the
+- [x] **Device map:** exported from the simulator. For each page it records how to reach it, the
       parameters per encoder and layer, ranges and formats, the CC lane, and whether MIDI can set it.
-      It is data, so the agent never has to guess a key combo.
+      It is data, so the agent never has to guess a key combo. `knowledge/opxy/device-map.json`
+      (65 pages, 336 controls, each found by turning it on a copy) from
+      `scripts/build-device-map.mjs`; a test fails while it is stale; the agent reads it with
+      `device_map`.
 - [x] **Navigator** (`src/lib/sim/navigator.ts`): a deterministic path from the replica's current
       state to any page or parameter value, as key presses and encoder turns. Every plan runs on a
       copy of the simulator before it is returned. It covers instrument pages and their shift layers,
