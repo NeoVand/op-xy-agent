@@ -68,8 +68,9 @@ device, caption and plate fit the height of the window).
 				</p>
 			</div>
 			<div class="stage__cta">
+				<!-- the mid-grey metallic key, as "add your anthropic key" (the owner's choice) -->
 				<Button
-					variant={canConnect ? 'primary' : 'key'}
+					variant={canConnect ? 'secondary' : 'key'}
 					size="lg"
 					onclick={onconnect}
 					disabled={webMidi === 'unavailable'}
