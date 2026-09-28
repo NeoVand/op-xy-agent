@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "6307e1e3",
+	"bundle_hash": "681fda78",
 	"stats": {
-		"units": 163,
-		"facts": 1118,
-		"procedures": 196,
+		"units": 165,
+		"facts": 1144,
+		"procedures": 201,
 		"parameters": 207,
-		"verified_items": 220,
-		"words": 41646,
+		"verified_items": 224,
+		"words": 43034,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -24,10 +24,10 @@
 			"project": 8,
 			"tempo": 2,
 			"com": 12,
-			"howto": 22
+			"howto": 24
 		},
 		"by_status": {
-			"current": 146,
+			"current": 148,
 			"outdated-in-guide": 14,
 			"changelog-only": 2,
 			"unverified": 1
@@ -288,11 +288,13 @@
 				"howto.back-up-projects",
 				"howto.load-samples",
 				"howto.song-with-brain",
+				"howto.song-from-scenes",
 				"howto.sidechain-duck",
 				"howto.pluck",
 				"howto.pad-swell",
 				"howto.wobble",
-				"howto.acid-bass"
+				"howto.acid-bass",
+				"howto.slice-a-loop"
 			]
 		}
 	],
@@ -27888,7 +27890,10 @@
 				"write a song fast",
 				"chord progression with brain",
 				"auto transpose",
-				"key detection"
+				"key detection",
+				"brain routing",
+				"keep a track out of the brain",
+				"set the key by hand"
 			],
 			"area": "howto",
 			"order": 32,
@@ -27897,9 +27902,13 @@
 				"modes": [
 					"auxiliary"
 				],
-				"screens": []
+				"screens": [
+					"M1",
+					"M2",
+					"bar"
+				]
 			},
-			"summary": "Build a tiny loop — drums, a one- or two-note bassline, one chord — then record a progression on the brain's keyboard (`T1` in auxiliary mode) and the routed tracks transpose along.",
+			"summary": "Build a tiny loop — drums, a one- or two-note bassline, one chord — then record a progression on the brain's keyboard (`T1` in auxiliary mode) and the routed tracks transpose along; take a lead out of the routing on `M2`, and set the key by hand when detection gets it wrong.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -27963,6 +27972,38 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "lead-track",
+					"text": "In a new project the lead is `T5`, the dissolve preset lead/gaussian.",
+					"source": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "routed-by-default",
+					"text": "A new project routes tracks 3–8 to the brain, the lead among them, and leaves the drum tracks 1 and 2 out.",
+					"source": "docs/research/10-xy-format.md#34-patternstruct-base-clones-walking",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "community"
+				},
+				{
+					"id": "routing-turns",
+					"text": "The routing page draws the tracks the brain hears as boxes 1–8; on the replica an encoder turned clockwise takes its track in and counter-clockwise takes it out, a direction the guide does not give.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "by-hand",
+					"text": "The brain's manual mode sits at the counter-clockwise end of `E1` (CC12 at 0 showed manual), and in manual `E2` sets the root and `E3` the scale.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -27976,13 +28017,18 @@
 					"steps": [
 						{
 							"keys": "auxiliary → T1",
-							"note": null,
+							"note": "the brain",
 							"set": null
 						},
 						{
 							"keys": "bar + accidental 4",
 							"note": "four bars per brain sequence",
-							"set": null
+							"set": {
+								"param": "track scale",
+								"value": 4,
+								"area": "bar",
+								"track": 9
+							}
 						},
 						{
 							"keys": "record + play",
@@ -27995,7 +28041,7 @@
 							"set": null
 						}
 					],
-					"result": null,
+					"result": "The bass and the chord follow the progression; drums stay where they are.",
 					"source": "https://teenage.engineering/guides/op-xy/how-to#write-a-song-fast-with-brain",
 					"firmware_min": null,
 					"verified_on": null,
@@ -28003,22 +28049,80 @@
 				},
 				{
 					"id": "exclude",
-					"goal": "Keep a track out of the brain's transposition",
+					"goal": "Keep the lead on T5 out of the brain's transposition",
 					"preconditions": [],
 					"steps": [
 						{
 							"keys": "M2",
+							"note": "the brain's routing, tracks 1–4 on the encoders",
+							"set": null
+						},
+						{
+							"keys": "click E1",
+							"note": "tracks 5–8 on the encoders",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "counter-clockwise, T5 out",
+							"set": {
+								"param": "track 5",
+								"value": "out",
+								"area": "auxiliary",
+								"track": 9,
+								"page": 2
+							}
+						}
+					],
+					"result": "The lead keeps its notes while everything routed moves.",
+					"source": "https://teenage.engineering/guides/op-xy/how-to#write-a-song-fast-with-brain",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "key-by-hand",
+					"goal": "Set the brain to A minor by hand",
+					"preconditions": [],
+					"steps": [
+						{
+							"keys": "M1",
 							"note": null,
 							"set": null
 						},
 						{
-							"keys": "turn E1…E4",
-							"note": "remove the track (`click E1` swaps to tracks 5–8)",
-							"set": null
+							"keys": "turn E1",
+							"note": "counter-clockwise, manual",
+							"set": {
+								"param": "mode",
+								"value": "manual",
+								"area": "auxiliary",
+								"track": 9
+							}
+						},
+						{
+							"keys": "turn E2",
+							"note": "root a",
+							"set": {
+								"param": "root",
+								"value": "a",
+								"area": "auxiliary",
+								"track": 9
+							}
+						},
+						{
+							"keys": "turn E3",
+							"note": "scale minor",
+							"set": {
+								"param": "scale",
+								"value": "minor",
+								"area": "auxiliary",
+								"track": 9
+							}
 						}
 					],
-					"result": null,
-					"source": "https://teenage.engineering/guides/op-xy/how-to#write-a-song-fast-with-brain",
+					"result": "The brain's page reads a minor, and the routed tracks' step components move in that scale.",
+					"source": "https://teenage.engineering/guides/op-xy/auxiliary#brain",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
@@ -28027,10 +28131,11 @@
 			"parameters": [],
 			"related": [
 				"auxiliary.brain",
-				"howto.get-started",
+				"sequencer.track-scale",
+				"howto.song-from-scenes",
 				"howto.first-chords"
 			],
-			"body": "The brain does the harmony work: write simple parts in one key, then let the brain move them as you\nplay. Take any part that should stay put, such as a lead, out of its routing.",
+			"body": "The brain does the harmony work: write simple parts in one key, then let the brain move them as you\nplay. Take any part that should stay put, such as a lead, out of its routing, and give the brain a\nkey by hand when it guesses wrong on a sparse loop. The progression can also be written rather than\nplayed: one note per chord change on the brain's own pattern, which at track scale 4 lasts four\ntimes as long as the loop. Once it works, arrange it into a song with scenes.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/how-to#write-a-song-fast-with-brain",
@@ -28039,6 +28144,18 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#brain",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/10-xy-format.md#34-patternstruct-base-clones-walking",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/how-to#write-a-song-fast-with-brain",
@@ -28074,9 +28191,255 @@
 				"keyboard.e5",
 				"key.m2",
 				"encoder.1",
+				"key.m1",
 				"encoder.2",
-				"encoder.3",
-				"encoder.4"
+				"encoder.3"
+			]
+		},
+		{
+			"id": "howto.song-from-scenes",
+			"title": "Recipe — build a song from scenes",
+			"aliases": [
+				"song from scenes",
+				"arrange a song",
+				"verse and chorus",
+				"chain scenes",
+				"make a song",
+				"song order",
+				"scenes into a song"
+			],
+			"area": "howto",
+			"order": 33,
+			"path": "knowledge/manual/units/howto/song-from-scenes.md",
+			"context": {
+				"modes": [
+					"arrange"
+				],
+				"screens": [
+					"song"
+				]
+			},
+			"summary": "In arrange, a scene is a snapshot of which pattern every track plays — copy scene 1 into scene 2 with `shift + accidental 2`, give a track a new pattern there with `M1`, then key the scenes into song mode (`shift + arrange`) in playing order and choose whether the song loops.",
+			"status": "current",
+			"firmware": {
+				"min": "1.0.9",
+				"changed_in": [
+					"1.0.45",
+					"1.1.0"
+				],
+				"guide_version": "1.1.15",
+				"verified_on": null
+			},
+			"facts": [
+				{
+					"id": "scene",
+					"text": "A scene remembers the pattern every track plays and their mix; a project has 99.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#scenes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "copy-on-select",
+					"text": "Choosing an empty scene fills it with a copy of the one playing, so the next section starts as the last one did.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#scenes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "pick-scene",
+					"text": "`shift` and a black key choose scenes 1–9; scenes 10–99 start with `shift + accidental 0` and two more black keys.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#scenes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "new-pattern",
+					"text": "In arrange, `M1` adds a new pattern to the selected track; the replica plays it at once in the current scene, which then remembers it, while other scenes keep their own choice.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#edit-controls",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "song-mode",
+					"text": "`shift + arrange` opens song mode, where `shift` and black keys add scenes to the song order one after another and `shift + M1` empties it.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "loop",
+					"text": "`E1` in song mode turns looping on or off; with it on, the song starts over from its first scene after the last.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "stop-at-end",
+					"text": "OS 1.0.45 added stopping playback at the song's end; the replica stops there with loop off, which is not yet confirmed on a unit.",
+					"source": "https://teenage.engineering/downloads/op-xy#1.0.45",
+					"firmware_min": "1.0.45",
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "shift-keys",
+					"text": "Since OS 1.1.0 the black keys add scenes in song mode only with `shift` held.",
+					"source": "https://teenage.engineering/downloads/op-xy#1.1.0",
+					"firmware_min": "1.1.0",
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "chorus-idea",
+					"text": "A chorus often needs only one or two tracks to change, such as a busier drum pattern or a new bassline, while the rest carry on; each changed track gets its own pattern in the chorus scene.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#scenes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"procedures": [
+				{
+					"id": "chorus",
+					"goal": "Make a chorus scene in which track 3 plays a second pattern",
+					"preconditions": [
+						"the verse's patterns play in scene 1"
+					],
+					"steps": [
+						{
+							"keys": "arrange",
+							"note": "scene 1, the verse",
+							"set": null
+						},
+						{
+							"keys": "shift + accidental 2",
+							"note": "scene 2, a copy of scene 1",
+							"set": {
+								"param": "scene",
+								"value": 2,
+								"area": "arrange"
+							}
+						},
+						{
+							"keys": "T3 → M1",
+							"note": "a new, empty pattern 2 for track 3, playing in scene 2",
+							"set": {
+								"param": "pattern",
+								"value": 2,
+								"area": "arrange",
+								"track": 3
+							}
+						},
+						{
+							"keys": "instrument",
+							"note": "program the chorus bassline on track 3's new pattern",
+							"set": null
+						}
+					],
+					"result": "Scene 1 still plays track 3's pattern 1; scene 2 plays its pattern 2.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#scenes",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "song",
+					"goal": "Chain the scenes into a song that plays through once",
+					"preconditions": [],
+					"steps": [
+						{
+							"keys": "arrange",
+							"note": null,
+							"set": null
+						},
+						{
+							"keys": "shift + arrange",
+							"note": "song mode",
+							"set": null
+						},
+						{
+							"keys": "shift + M1",
+							"note": "clear the song order",
+							"set": null
+						},
+						{
+							"keys": "shift + accidental 1 → + accidental 1 → + accidental 2 → + accidental 2",
+							"note": "shift held, verse twice, chorus twice",
+							"set": {
+								"param": "song",
+								"value": "1 1 2 2",
+								"area": "arrange"
+							}
+						},
+						{
+							"keys": "turn E1",
+							"note": "counter-clockwise, loop off",
+							"set": {
+								"param": "loop",
+								"value": "off",
+								"area": "arrange"
+							}
+						},
+						{
+							"keys": "play",
+							"note": "the song plays from its first scene",
+							"set": null
+						}
+					],
+					"result": "Verse, verse, chorus, chorus, and no start over at the end.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				}
+			],
+			"parameters": [],
+			"related": [
+				"arrange.scenes",
+				"arrange.song-mode",
+				"arrange.patterns",
+				"howto.song-with-brain"
+			],
+			"body": "Scenes turn loops into sections and song mode strings the sections together. Start from a loop that\nalready works as the verse, copy it into the next scene and change as little as makes the chorus lift:\none new pattern is often enough. Keep adding scenes for a bridge or an ending, then key the song in\nthe order it should play. With the loop left on, the song starts over at the end, handy while\nwriting; switch it off for a finished take.",
+			"sources": [
+				{
+					"url": "https://teenage.engineering/guides/op-xy/arrange#scenes",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/arrange#edit-controls",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/downloads/op-xy#1.0.45",
+					"kind": "changelog"
+				},
+				{
+					"url": "https://teenage.engineering/downloads/op-xy#1.1.0",
+					"kind": "changelog"
+				}
+			],
+			"official_url": "https://teenage.engineering/guides/op-xy/arrange#scenes",
+			"controls": [
+				"key.arrange",
+				"key.shift",
+				"keyboard.gs3",
+				"track.3",
+				"key.m1",
+				"key.instrument",
+				"keyboard.fs3",
+				"encoder.1",
+				"key.play"
 			]
 		},
 		{
@@ -28350,6 +28713,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "derived"
+				},
+				{
+					"id": "factory",
+					"text": "A new project's two plucks show the shape in numbers. Beach bum on `T4` (epiano) and dielectric on `T6` (hardsync) start at attack 0, decay by 20 and 30 and release at 69 and 60; dielectric closes its ladder filter with an envelope amount of 48 and a filter decay of 14.",
+					"source": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -28375,7 +28746,7 @@
 						},
 						{
 							"keys": "turn E2",
-							"note": "decay around 25",
+							"note": "decay around 25, between the factory plucks' 20 and 30",
 							"set": {
 								"param": "amp decay",
 								"value": 25
@@ -28391,10 +28762,10 @@
 						},
 						{
 							"keys": "turn E4",
-							"note": "release around 80, a short tail",
+							"note": "release around 65, a short tail like the factory plucks'",
 							"set": {
 								"param": "amp release",
-								"value": 80
+								"value": 65
 							}
 						}
 					],
@@ -28416,10 +28787,10 @@
 						},
 						{
 							"keys": "turn E2",
-							"note": "filter decay around 30",
+							"note": "filter decay around 15, dielectric's snap",
 							"set": {
 								"param": "filter decay",
-								"value": 30
+								"value": 15
 							}
 						},
 						{
@@ -28453,10 +28824,10 @@
 						},
 						{
 							"keys": "turn E3",
-							"note": "envelope amount around 50",
+							"note": "envelope amount 48, as dielectric",
 							"set": {
 								"param": "env amount",
-								"value": 50
+								"value": 48
 							}
 						}
 					],
@@ -28487,6 +28858,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#filter",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
@@ -28580,18 +28955,34 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "measured"
+				},
+				{
+					"id": "factory",
+					"text": "A new project's strings and pad show the shape in numbers. Draemy on `T7` (axis) swells in at attack 50 and bandpasser on `T8` (multisampler) at 35; both hold a high sustain, 76 and 99, and release at 30 and 33. Draemy's filter envelope opens at attack 64 with an envelope amount of only 17, and the track sends 53 to FX II.",
+					"source": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "from-a-lead",
+					"text": "Any sound can become a pad; in a new project `T5`, the legato lead, shows every step at work, since the strings on `T7` already swell.",
+					"source": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				}
 			],
 			"procedures": [
 				{
 					"id": "swell",
-					"goal": "Make the chords on T7 swell in and fade out",
+					"goal": "Make the chords on T5 swell in and fade out",
 					"preconditions": [
 						"instrument mode"
 					],
 					"steps": [
 						{
-							"keys": "T7 → M2",
+							"keys": "T5 → M2",
 							"note": "the amp envelope; click an encoder if the filter envelope is in front",
 							"set": null
 						},
@@ -28605,15 +28996,15 @@
 						},
 						{
 							"keys": "turn E1",
-							"note": "attack around 60",
+							"note": "attack around 50, the factory strings' swell",
 							"set": {
 								"param": "amp attack",
-								"value": 60
+								"value": 50
 							}
 						},
 						{
 							"keys": "turn E3",
-							"note": "sustain around 85",
+							"note": "sustain around 85, held high as the factory pads hold it",
 							"set": {
 								"param": "amp sustain",
 								"value": 85
@@ -28621,10 +29012,10 @@
 						},
 						{
 							"keys": "turn E4",
-							"note": "release around 20, a long fade",
+							"note": "release around 30, the factory pads' long fade",
 							"set": {
 								"param": "amp release",
-								"value": 20
+								"value": 30
 							}
 						}
 					],
@@ -28646,10 +29037,10 @@
 						},
 						{
 							"keys": "turn E1",
-							"note": "filter attack around 70",
+							"note": "filter attack 64, as the factory strings",
 							"set": {
 								"param": "filter attack",
-								"value": 70
+								"value": 64
 							}
 						},
 						{
@@ -28667,18 +29058,18 @@
 						},
 						{
 							"keys": "turn E3",
-							"note": "envelope amount around 40",
+							"note": "envelope amount 17, the strings' gentle opening",
 							"set": {
 								"param": "env amount",
-								"value": 40
+								"value": 17
 							}
 						},
 						{
 							"keys": "shift + turn E4",
-							"note": "FX II send around 50",
+							"note": "FX II send 53, as the strings send",
 							"set": {
 								"param": "fx ii send",
-								"value": 50
+								"value": 53
 							}
 						}
 					],
@@ -28717,7 +29108,7 @@
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
 			"controls": [
-				"track.7",
+				"track.5",
 				"key.m2",
 				"key.shift",
 				"encoder.1",
@@ -29145,6 +29536,245 @@
 				"encoder.2",
 				"encoder.3",
 				"key.m2"
+			]
+		},
+		{
+			"id": "howto.slice-a-loop",
+			"title": "Recipe — sample a loop and play it in slices",
+			"aliases": [
+				"slice a loop",
+				"chop a break",
+				"sample a loop",
+				"record a loop onto a key",
+				"even slices",
+				"slice a sample into the keys"
+			],
+			"area": "howto",
+			"order": 45,
+			"path": "knowledge/manual/units/howto/slice-a-loop.md",
+			"context": {
+				"modes": [
+					"instrument"
+				],
+				"screens": [
+					"sample",
+					"M1"
+				]
+			},
+			"summary": "On a drum track, record a loop onto its top key from the `sample` page, then hold that key and press `M1` to cut it into even slices that spread over the keyboard and choke each other, ready to replay in a new order.",
+			"status": "current",
+			"firmware": {
+				"min": "1.1.0",
+				"changed_in": [],
+				"guide_version": "1.1.15",
+				"verified_on": null
+			},
+			"facts": [
+				{
+					"id": "drum-track",
+					"text": "Slicing is the drum sampler's, and a new project has drum kits on `T1` and `T2`.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "record-onto-key",
+					"text": "On a drum track the record page records onto the selected key; press the key first, then `sample`.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "inputs",
+					"text": "On the record page `turn E1` picks the source (the built-in mic, line in or USB), `turn E3` the gain and `turn E4` the threshold.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "threshold",
+					"text": "Holding `M1` arms the recorder and the take begins once the input passes the threshold, so a low threshold catches the loop's first hit.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "open",
+					"text": "Holding a key and pressing `M1` opens the slicer on that key's sample.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "even",
+					"text": "Even mode splits the sample into equal parts and `turn E4` sets how many; sixteen suits a one-bar loop cut into sixteenths.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "spread",
+					"text": "The slices spread over the keyboard and choke each other, so one slice sounds at a time, as in a chopped break.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "top-key",
+					"text": "The replica fills the keys from the lowest, F3, upward (the guide says only that the slices fill the keyboard), so a loop kept on the top key, E5, stays whole there for up to 23 slices.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "done",
+					"text": "The slicer offers cancel and done, which the guide does not place on keys; the replica puts done on `M4` and cancel on `M3`.",
+					"source": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "transient",
+					"text": "For a drum loop with clear hits, transient mode cuts at the loudest ones instead; a sample with fewer hits gives fewer slices than `E4` asks for.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"procedures": [
+				{
+					"id": "record",
+					"goal": "Record a loop onto the drum track's top key",
+					"preconditions": [
+						"the loop plays into line in"
+					],
+					"steps": [
+						{
+							"keys": "T1 → key E5",
+							"note": "the drum track and its top key",
+							"set": null
+						},
+						{
+							"keys": "sample",
+							"note": "the record page, recording onto E5",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "line in",
+							"set": {
+								"param": "source",
+								"value": "line in",
+								"area": "sample",
+								"track": 1
+							}
+						},
+						{
+							"keys": "turn E4",
+							"note": "a low threshold, around 10",
+							"set": {
+								"param": "threshold",
+								"value": 10,
+								"area": "sample",
+								"track": 1
+							}
+						},
+						{
+							"keys": "hold M1",
+							"note": "start the loop playing, and let go once it has played through",
+							"set": null
+						}
+					],
+					"result": "E5 holds the loop; `M2` plays the take back.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "slice",
+					"goal": "Cut the loop into sixteen even slices",
+					"preconditions": [],
+					"steps": [
+						{
+							"keys": "key E5 + M1",
+							"note": "hold the loop's key; the slicer opens on it",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "even",
+							"set": null
+						},
+						{
+							"keys": "turn E4",
+							"note": "sixteen slices",
+							"set": null
+						},
+						{
+							"keys": "M4",
+							"note": "done (on the replica; press the key your screen labels done)",
+							"set": {
+								"param": "even slices",
+								"value": 16,
+								"area": "sample",
+								"track": 1,
+								"key": "E5"
+							}
+						}
+					],
+					"result": "Sixteen keys play the loop's sixteenths in order, each cutting off the one before; E5 still plays the whole loop.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"parameters": [],
+			"related": [
+				"sampler.slicing",
+				"sampler.sampling",
+				"sampler.drum-sampler",
+				"howto.load-samples"
+			],
+			"body": "Slicing turns a recording into an instrument: once the loop is spread over the keys, step-enter the\nslices in a new order, repeat the kick slice, or play the hits live against the original loop on\nE5. Even slices keep the loop's timing grid, so a straight beat cut into sixteenths lines up with\nthe sequencer's steps; tap mode suits phrases that do not sit on a grid.",
+			"sources": [
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"kind": "guide"
+				},
+				{
+					"url": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"kind": "research"
+				}
+			],
+			"official_url": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
+			"controls": [
+				"track.1",
+				"keyboard.e5",
+				"key.sample",
+				"encoder.1",
+				"encoder.4",
+				"key.m1",
+				"key.m4"
 			]
 		}
 	]

@@ -21,7 +21,10 @@ describe('recipes', () => {
 				'howto.pluck',
 				'howto.pad-swell',
 				'howto.wobble',
-				'howto.acid-bass'
+				'howto.acid-bass',
+				'howto.song-with-brain',
+				'howto.slice-a-loop',
+				'howto.song-from-scenes'
 			])
 		);
 	});
