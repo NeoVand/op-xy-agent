@@ -8,7 +8,13 @@
  */
 import type { EngineId } from '$lib/core/opxy';
 import type { Region as SampleRegion } from '$lib/sim/areas/sample/state';
-import { ELEMENT_SOURCES, LFO_SYNC_STEPS, type Envelope99, type Lfo } from '$lib/sim/params';
+import {
+	DUCK_METRONOME,
+	ELEMENT_SOURCES,
+	LFO_SYNC_STEPS,
+	type Envelope99,
+	type Lfo
+} from '$lib/sim/params';
 import type { FilterType } from '$lib/sim/screen/frame';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from '$lib/sim/screen/pages/lfo';
 
@@ -298,7 +304,10 @@ export type LfoRoute =
 	  }
 	| {
 			readonly kind: 'duck';
-			/** The instrument track (0–7) whose notes duck this one. */
+			/**
+			 * The instrument track (0–7) whose notes duck this one, {@link DUCK_ON_BEAT} for the
+			 * metronome, or {@link DUCK_ON_NOTHING} for an auxiliary track (none sounds here).
+			 */
 			readonly source: number;
 			/** 0–1 of the level taken away. */
 			readonly depth: number;
@@ -369,9 +378,15 @@ export function lfoRoute(lfo: Lfo, bpm: number): LfoRoute {
 		case 'duck': {
 			const depth = Math.abs(clamp(lfo.amount, -99, 99)) / 99;
 			if (depth === 0) return NO_LFO;
+			const source = Math.round(lfo.source);
 			return {
 				kind: 'duck',
-				source: clamp(Math.round(lfo.source), 1, 8) - 1,
+				source:
+					source >= DUCK_METRONOME
+						? DUCK_ON_BEAT
+						: source > 8
+							? DUCK_ON_NOTHING
+							: Math.max(1, source) - 1,
 				depth,
 				hold: sweep(lfo.hold, 0.01, 1),
 				release: sweep(lfo.release, 0.02, 2)
@@ -381,6 +396,11 @@ export function lfoRoute(lfo: Lfo, bpm: number): LfoRoute {
 			return NO_LFO;
 	}
 }
+
+/** A duck's source when it is the metronome: every beat while the sequence plays. */
+export const DUCK_ON_BEAT = -1;
+/** A duck's source when it is an auxiliary track, whose notes make no sound in the browser. */
+export const DUCK_ON_NOTHING = -2;
 
 /** How far a full-depth LFO moves the cutoff (cents) and the resonance (dB). */
 export const LFO_CUTOFF_CENTS = 3600;

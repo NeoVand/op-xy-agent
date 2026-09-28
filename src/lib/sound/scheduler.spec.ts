@@ -29,6 +29,7 @@ function rig(options: { follow?: () => boolean } = {}) {
 	const notes: ScheduledNote[] = [];
 	const settings: TrackState[] = [];
 	const clicks: ClickEvent[] = [];
+	const beats: number[] = [];
 	const stops: number[] = [];
 	const automations: {
 		track: number;
@@ -44,6 +45,7 @@ function rig(options: { follow?: () => boolean } = {}) {
 				settings.push(s);
 			},
 			click: (e) => clicks.push(e),
+			beat: (t) => beats.push(t),
 			stop: (t) => stops.push(t),
 			automate: (track, locks, time) => automations.push({ track, locks, time })
 		},
@@ -74,6 +76,7 @@ function rig(options: { follow?: () => boolean } = {}) {
 		notes,
 		settings,
 		clicks,
+		beats,
 		stops,
 		automations,
 		scheduler,
@@ -377,6 +380,24 @@ describe('the lookahead scheduler', () => {
 		expect(clicks.map((c) => c.accent)).toEqual([false, true, false, false]);
 		expect(clicks[1].time - clicks[0].time).toBeCloseTo(0.5);
 		expect(clicks[0].gain).toBeGreaterThan(0);
+	});
+
+	it('marks every beat of the sequence, heard or not, for what ducks on the metronome', () => {
+		const { play, run, clicks, beats, scheduler } = rig();
+		play();
+		run(2);
+		expect(clicks).toHaveLength(0);
+		expect(beats.length).toBeGreaterThanOrEqual(4);
+		expect(beats[0]).toBeCloseTo(scheduler.anchor!.time);
+		expect(beats[1] - beats[0]).toBeCloseTo(0.5);
+	});
+
+	it('marks no beats through a count-in bar, only from where the pattern starts', () => {
+		const { play, run, beats, scheduler } = rig();
+		play(-16);
+		run(2.3);
+		expect(beats.length).toBeGreaterThanOrEqual(1);
+		expect(beats[0] - scheduler.anchor!.time).toBeCloseTo(2);
 	});
 
 	it('counts a recording in: a bar of clicks before the pattern starts, metronome or not', () => {

@@ -85,6 +85,11 @@ export interface SchedulerSink {
 	/** A note, with the track's settings as it starts (the step's locks applied). */
 	note(event: ScheduledNote, settings: TrackState): void;
 	click(event: ClickEvent): void;
+	/**
+	 * Every beat while the sequence plays, heard or not: what follows the metronome (a duck LFO with
+	 * the metronome as its source).
+	 */
+	beat?(time: number): void;
 	/** The transport stopped or jumped at `time`: end the sequence's notes, drop what comes later. */
 	stop(time: number): void;
 	/**
@@ -287,6 +292,7 @@ interface Automation {
 type Due =
 	| { readonly kind: 'note'; readonly event: ScheduledNote; readonly settings: TrackState }
 	| { readonly kind: 'click'; readonly event: ClickEvent }
+	| { readonly kind: 'beat'; readonly event: { readonly time: number } }
 	| { readonly kind: 'automate'; readonly event: Automation };
 
 /** Whether two steps' locks hold the same values. */
@@ -369,6 +375,7 @@ export class Scheduler {
 		for (const item of due) {
 			if (item.kind === 'note') this.#sink.note(item.event, item.settings);
 			else if (item.kind === 'click') this.#sink.click(item.event);
+			else if (item.kind === 'beat') this.#sink.beat?.(item.event.time);
 			else this.#sink.automate?.(item.event.track, item.event.locks, item.event.time);
 		}
 	}
@@ -649,10 +656,12 @@ export class Scheduler {
 		const { on, level } = state.tempo.metronome;
 		while (this.#nextClick * 4 < until) {
 			const beat = this.#nextClick++;
-			// the metronome while it is on, and always through a recording's count-in bar
-			if (level <= 0 || (!on && beat >= 0)) continue;
 			const time = Math.max(timeAt(anchor, beat * 4), anchor.time);
 			if (time < now - LATE) continue;
+			// every beat of the sequence itself, not a count-in's, whether the metronome is heard or not
+			if (beat >= 0) due.push({ kind: 'beat', event: { time } });
+			// the metronome while it is on, and always through a recording's count-in bar
+			if (level <= 0 || (!on && beat >= 0)) continue;
 			due.push({
 				kind: 'click',
 				event: { time, accent: ((beat % 4) + 4) % 4 === 0, gain: metronomeGain(level) }

@@ -27,6 +27,7 @@ import {
 	cutoffHz,
 	dbGain,
 	engineControls,
+	DUCK_ON_BEAT,
 	envAmountCents,
 	envelopeSeconds,
 	eqGainDb,
@@ -246,6 +247,7 @@ export class SoundEngine {
 					pan: event.pan
 				}),
 			click: (event) => this.click(event),
+			beat: (time) => this.#duckFrom(DUCK_ON_BEAT, time),
 			stop: (time) => this.stopSequence(time),
 			automate: (track, locks, time) => this.automate(track, locks, time)
 		};
@@ -835,7 +837,7 @@ export class SoundEngine {
 		};
 	}
 
-	/** A note on track `source` dips every track whose LFO ducks on it. */
+	/** A note on track `source` (or a beat, {@link DUCK_ON_BEAT}) dips every track that ducks on it. */
 	#duckFrom(source: number, time: number): void {
 		this.#channels.forEach((channel, k) => {
 			const route = channel.route;

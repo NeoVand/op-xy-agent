@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { defaultRegion, type Region } from '$lib/sim/areas/sample/state';
-import { defaultTrack, type Lfo } from '$lib/sim/params';
+import { DUCK_METRONOME, defaultTrack, type Lfo } from '$lib/sim/params';
 import {
+	DUCK_ON_BEAT,
+	DUCK_ON_NOTHING,
 	bendCents,
 	cutoffHz,
 	engineControls,
@@ -155,6 +157,15 @@ describe('mapping: the LFO', () => {
 			kind: 'duck',
 			source: 0,
 			depth: 1
+		});
+		// the metronome ducks on every beat; an auxiliary track's notes make no sound here
+		expect(lfoRoute(lfo({ type: 'duck', amount: 60, source: DUCK_METRONOME }), 120)).toMatchObject({
+			kind: 'duck',
+			source: DUCK_ON_BEAT
+		});
+		expect(lfoRoute(lfo({ type: 'duck', amount: 60, source: 12 }), 120)).toMatchObject({
+			kind: 'duck',
+			source: DUCK_ON_NOTHING
 		});
 	});
 
