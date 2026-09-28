@@ -167,7 +167,8 @@ owner flagged, then what users see most.
        body that matches the unit rather than the milky one.
 7. [ ] **Filter** (types, off, envelope hatch, key-tracking arrow, a type pick returning to M1, shift
        sends) and **LFO** (five types, off).
-8. [ ] **Arrange and song mode** (footer labels, pattern column, scene box, 32-slot song grid).
+8. [x] **Arrange and song mode** (footer labels, pattern column, scene box, 32-slot song grid).
+       Left: the cross-fades and slides (b1-741, b1-852).
 9. [x] **Tempo** (metronome weight by BPM, groove slider, speaker waves, pendulum). Left: what
        turns the jack black and how E4's click treats the level.
 10. [ ] **Engine pages:** top-bar styles, each engine's picture and its motion; sampler pages and their

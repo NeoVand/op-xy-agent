@@ -340,6 +340,43 @@ are design px (capture rows × 220/222).
   - a 32-slot grid (8 × 4, rows marked [1] [9] [17] [25], [32] on the last slot), scenes as numbered
     circles, a white cursor line at the insertion point, a ring walking along during playback;
   - footer: clear all · ← · → · delete, lit while shift is held.
+- **Measured** (design px, x corrected for the captures' 0.23–0.29 % horizontal squeeze; edges agree
+  to a median 0.48 px over 18 cases; `src/lib/sim/areas/arrange/`). Thin-line colours are inferred
+  from camera brightness.
+  - **Rules:** 1 px at x = 60i from y 0 to 192.8, in the ramp's #484850.
+  - **Band:** y 94.45–125.35. T1's segment is the near-black #16161e and T2–T8 are ramp greys 1–7;
+    the selected track's segment is not drawn.
+  - **The selected track's stack:** blocks span x 60i − 0.5 to 60i + 60.5, over both rules. The
+    playing pattern sits at y 88.95–120.7 and the others are 29.73 px each, touching it above and
+    below; the stack is cut off at 192.8. The fill steps one ramp grey per pattern away: white,
+    #afafb4 (inferred: the camera saturates it), #96969b, #7a7a82. Pattern numbers are 10 px bold in
+    ink, 1.85 px into the column, baseline at the slot centre + 11.75 (slot centres 105.04 + 29.73k).
+  - **Notes:** a dash about 2.7 × 1 px per note, step i at the column + 14.6 + 2.6875i, one pixel
+    per semitone centred on the slot. Other tracks' band segments show their notes too, without a
+    number.
+  - **Label over the selected column:** 20 px bold white, 23.1 px into the column, baseline 19.5. The
+    aux side shows TE's pictogram in its place (the brain at (20, 4)).
+  - **Scene box:** white, x 214–266, y 146.15–198.25, radius 5.65; a black disc at (240, 172.2),
+    radius 21.3; the digit 30 px bold, centred at 239.45, baseline 182.7.
+  - **Soft labels:** 20 px bold in #afafb4, baseline 214.5, all four the same grey.
+  - **Song header:** a white bar 0–23.85 tall with rounded lower corners (radius 6). "song N" is 20 px
+    regular in ink, centred at 240, baseline 17.2. "count" is 10 px bold from x 403.5, baseline 10.6,
+    beside a black box x 439.75–477.25, y 3.05–20.75. The box holds 17 px bold digits centred at
+    459.6, baseline 18.5: the number of scenes in the song, not the cursor's slot.
+  - **Song grid:** 1 px lines in #2f2f37. Vertical lines at x 80 + 40c from y 23.85 to 192.65;
+    horizontal lines at y 40.35 + 37.81r across the width, none under the last row. Column numbers are
+    10 px bold white, 3.8 px into each column, baseline 35.2. The row labels end near x 66; the device
+    spaces its brackets about 1 px wider at 10 px than our font.
+  - **Entries:** discs of radius 15 in #2f2f37 at (100 + 40c, 59.22 + 37.81r), numbers 20 px bold at
+    the centre + 6.95. The playing entry wears a white ring, mid-radius 17, 3 px wide. The ring has a
+    black notch about 1 px wide that goes round once per scene (seen at 4°, 201°, 40°, 237.5°,
+    76.5°). After stop, the ring stays on the entry that was playing.
+  - **Cursor:** a 3 px white bar centred on the slot's left grid line, shown with the lit labels only
+    while shift is held. The labels are #afafb4 then, #646464 otherwise.
+  - **Not modelled:** the cross-fade when the selected track changes (b1-741), the stack sliding as
+    E4 turns, the song labels and cursor fading with shift (b1-852). Where the captures are silent
+    (queued-scene box, mute hatching, the link mark, long notes, two-digit scenes, the loop-off sign),
+    the simulator's choices are marked ours.
 
 ### 2.10 Mixer
 

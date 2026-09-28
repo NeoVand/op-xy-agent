@@ -33,10 +33,10 @@ export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 export type PatternAction = 'new' | 'copy' | 'paste' | 'clear';
 
 /**
- * The pattern action on M1…M4. The manual (arrange/patterns) gives M1 new, M2 copy, M3 paste and
- * M4 clear (remove); TE's screen art labels the keys the other way round at the ends (clear, copy,
- * paste, new). We follow the manual until a unit settles it: reversing this list moves both the
- * labels and the actions.
+ * The pattern action on M1…M4: M1 new, M2 copy, M3 paste and M4 clear (remove), as the manual
+ * (arrange/patterns) and the owner's unit have them (research 59 §2.9: the screen labels M4 "clear"
+ * while the track has one pattern and "delete" once it has more). TE's screen art has the ends the
+ * other way round (clear, copy, paste, new).
  */
 export const PATTERN_KEYS: readonly PatternAction[] = ['new', 'copy', 'paste', 'clear'];
 

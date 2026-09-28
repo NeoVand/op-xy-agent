@@ -67,7 +67,7 @@ describe('song mode: the song order (manual: arrange/song-mode)', () => {
 		sim.press('key.arrange');
 		withShift(sim, 'key.arrange');
 		const f = song(sim);
-		expect(f).toMatchObject({ song: 1, loop: true, length: 1, count: '02', first: 1, cursor: 1 });
+		expect(f).toMatchObject({ song: 1, loop: true, length: 1, count: '01', first: 1, cursor: 1 });
 		expect(entries(f)).toEqual(['1']);
 		sim.press('key.arrange');
 		expect(sim.frame.page).toBe('arrange');
@@ -76,12 +76,12 @@ describe('song mode: the song order (manual: arrange/song-mode)', () => {
 		expect(sim.frame.page).toBe('arrange');
 	});
 
-	it('keys scenes in at the cursor like a phone number; count is the cursor’s slot', () => {
+	it('keys scenes in at the cursor like a phone number; count is how many scenes the song holds', () => {
 		const sim = songMode();
-		expect(song(sim)).toMatchObject({ length: 0, count: '01', cursor: 0 });
+		expect(song(sim)).toMatchObject({ length: 0, count: '00', at: 1, cursor: 0 });
 		withShift(sim, accidentalKey(1), accidentalKey(3), accidentalKey(3));
 		expect(entries(song(sim))).toEqual(['1', '3', '3']);
-		expect(song(sim)).toMatchObject({ count: '04', cursor: 3 });
+		expect(song(sim)).toMatchObject({ count: '03', at: 4, cursor: 3 });
 		sim.press(accidentalKey(5)); // without shift a black key only plays
 		expect(song(sim).length).toBe(3);
 	});
@@ -90,7 +90,8 @@ describe('song mode: the song order (manual: arrange/song-mode)', () => {
 		const sim = songMode();
 		withShift(sim, accidentalKey(1), accidentalKey(2), accidentalKey(3));
 		withShift(sim, 'key.m2', 'key.m2');
-		expect(song(sim)).toMatchObject({ count: '02', cursor: 1 });
+		// the device's count stays the song's length wherever the cursor goes (b1-854…863)
+		expect(song(sim)).toMatchObject({ count: '03', at: 2, cursor: 1 });
 		withShift(sim, accidentalKey(9));
 		expect(entries(song(sim))).toEqual(['1', '9', '2', '3']);
 		withShift(sim, 'key.m3', 'key.m3', 'key.m3');
@@ -118,13 +119,13 @@ describe('song mode: the song order (manual: arrange/song-mode)', () => {
 	it('holds at most 96 scenes and scrolls to keep the cursor in view', () => {
 		const sim = songMode();
 		withShift(sim, ...Array(40).fill(accidentalKey(1)));
-		expect(song(sim)).toMatchObject({ first: 17, count: '41', cursor: 24 });
+		expect(song(sim)).toMatchObject({ first: 17, count: '40', at: 41, cursor: 24 });
 		withShift(sim, ...Array(40).fill('key.m2'));
 		expect(song(sim)).toMatchObject({ first: 1, cursor: 0 });
 		withShift(sim, ...Array(70).fill(accidentalKey(2)));
 		expect(song(sim).length).toBe(SONG_LENGTH);
 		withShift(sim, ...Array(90).fill('key.m3'));
-		expect(song(sim)).toMatchObject({ first: 73, count: '96', cursor: 24 });
+		expect(song(sim)).toMatchObject({ first: 73, count: '96', at: 96, cursor: 24 });
 	});
 
 	it('loops or not with E1: turned right on, left off, a click toggles', () => {
@@ -241,6 +242,21 @@ describe('song playback', () => {
 		expect(sim.state.transport.playing).toBe(false);
 		expect(sim.state.transport.position).toBe(0);
 		expect(sim.state.areas.arrange.playing).toBe(false);
+		// ours: the ring rests on the last entry, as it does where stop is pressed
+		expect(song(sim).slots[2]?.playing).toBe(true);
+	});
+
+	it('walks a notch round the playing entry’s ring once per scene, from the top (b1-865…869)', () => {
+		const sim = threeScenes();
+		expect(song(sim).slots[0]?.progress).toBeNull();
+		sim.press('key.play');
+		play(sim, 4);
+		expect(song(sim).slots[0]?.progress).toBeCloseTo(0.25, 5);
+		play(sim, 12.4); // the second scene, a fortieth in
+		const slots = song(sim).slots;
+		expect([slots[0]?.progress, slots[1]?.progress]).toEqual([null, expect.closeTo(0.025, 5)]);
+		sim.press('key.stop');
+		expect(song(sim).slots[1]).toMatchObject({ playing: true, progress: null });
 	});
 
 	it('jumps to a cued entry at the next scene end (shift + [-] / [+])', () => {
@@ -265,6 +281,8 @@ describe('song playback', () => {
 		expect(scene(sim)).toBe(2);
 		sim.press('key.stop');
 		expect(sim.state.areas.arrange.playing).toBe(false);
+		// the ring stays on the entry that was playing (b1-870, 871)
+		expect(sim.state.areas.arrange.position).toBe(1);
 		sim.press('key.play');
 		play(sim, 16.2);
 		expect(scene(sim)).toBe(2);
@@ -284,29 +302,53 @@ describe('song playback', () => {
 });
 
 describe('song drawing and the arrange-028 scenario', () => {
-	it('reproduces the art: song 9, count 06, the cursor before the sixth entry', () => {
+	it('reaches the art’s state: song 9, eight entries, the cursor before the sixth', () => {
 		const s = SCENARIOS.find((x) => x.id === 'arrange-song');
 		if (!s) throw new Error('arrange-song');
 		const sim = new OpxySim({ now: () => 0 });
 		s.setup(sim);
 		const f = song(sim);
-		expect(f).toMatchObject({ song: 9, loop: true, count: '06', first: 1, cursor: 5 });
+		// the art's count reads 06; the device's counts the song's scenes
+		expect(f).toMatchObject({ song: 9, loop: true, count: '08', at: 6, first: 1, cursor: 5 });
 		expect(entries(f)).toEqual(['99', '1', '1', '1', '1', '3', '3', '5']);
 		expect(f.slots[0]?.playing).toBe(true);
 	});
 
-	it('draws the header, the entries as discs and the cursor bar', () => {
+	it('draws the header, the entries as discs, and the cursor only while shift is held', () => {
 		const sim = songMode();
 		withShift(sim, accidentalKey(1), accidentalKey(2));
 		sim.turn(1, -1);
-		const ctx = new RecordingContext();
+		let ctx = new RecordingContext();
 		renderFrame(ctx, sim.frame);
-		expect(ctx.fills.some((f) => f.color === COLORS.white && f.y0 === 0 && f.y1 === 25)).toBe(true);
-		expect(ctx.fills.some((f) => f.color === COLORS.dark && f.x0 === 125 && f.x1 === 155)).toBe(
-			true
-		);
-		const bar = ctx.ops.find((op) => op.op === 'moveTo' && op.args[0] === 160 && op.args[1] === 40);
-		expect(bar).toBeDefined();
+		expect(ctx.fillsOf(COLORS.white).some((f) => f.y0 === 0 && f.y1 === 23.85)).toBe(true);
+		expect(ctx.fillsOf(COLORS.dark).some((f) => f.x0 === 125 && f.x1 === 155)).toBe(true);
+		// no cursor without shift, and the keys dimmed
+		const cursor = (c: RecordingContext) =>
+			c.fillsOf(COLORS.white).some((f) => f.x0 === 158.5 && f.y0 === 39.85 && f.x1 === 161.5);
+		expect(cursor(ctx)).toBe(false);
+		expect(song(sim)).toMatchObject({ lit: false, cursor: 2 });
+		expect(song(sim).soft.map((l) => l?.tone)).toEqual(['dim', 'dim', 'dim', 'dim']);
+		sim.input({ type: 'press', id: 'key.shift' });
+		ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		expect(cursor(ctx)).toBe(true);
+		expect(song(sim).soft.map((l) => l?.tone)).toEqual(['light', 'light', 'light', 'light']);
+	});
+
+	it('draws the song’s position as a ring, and its notch while the song plays', () => {
+		const sim = threeScenes();
+		const ring = (c: RecordingContext) =>
+			c.ops.filter((op) => op.op === 'arc' && op.args[0] === 100 && op.args[2] === 17).length;
+		let ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		expect(ring(ctx)).toBe(1);
+		sim.press('key.play');
+		play(sim, 4); // a quarter of the way: the notch at three o'clock
+		ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		const notch = ctx.ops.findIndex((op) => op.op === 'moveTo' && op.args[0] === 114.5);
+		expect(notch).toBeGreaterThan(0);
+		expect(ctx.ops[notch].args[1]).toBeCloseTo(59.24, 1);
 	});
 });
 

@@ -5,7 +5,8 @@
  * pressed again flipping to the auxiliary tracks).
  *
  * Keys (manual units in brackets; "ours" where the manual is silent):
- * - `M1`…`M4`: new, copy, paste, clear a pattern of the selected track [arrange/patterns];
+ * - `M1`…`M4`: new, copy, paste, clear a pattern of the selected track [arrange/patterns], M4
+ *   labelled delete once the track has more than one (the device, research 59 §2.9);
  *   `shift + M1`…`M4`: clone, copy, paste, reset the scene [arrange/scenes].
  * - `shift + accidental 1–9`: scene 1–9; `shift + accidental 0` then two black keys: scene 10–99; an
  *   empty scene starts as a copy of the current one [arrange/scenes].
@@ -17,8 +18,8 @@
  *   clears, `turn E1` loops, `shift + natural` picks one of 14 songs, `shift + natural + M2 / M3`
  *   copies and pastes songs, and `shift + [-] / [+]` cue entries while the song plays
  *   [arrange/songs]. `arrange` (or `shift + arrange`) goes back (ours).
- * - `play` in song mode plays the song from its first scene; `stop` ends it (ours: when a song
- *   starts is not documented).
+ * - `play` in song mode plays the song from its first scene (ours: when a song starts is not
+ *   documented); `stop` stops it where it is, the ring staying on that entry (the device).
  */
 import type { SimArea } from '../types';
 import {
@@ -32,6 +33,7 @@ import {
 	copySong,
 	cueSong,
 	deleteFromSong,
+	haltSong,
 	moveCursor,
 	movedArrange,
 	naturalNumber,
@@ -129,7 +131,7 @@ export const arrange: SimArea = {
 		}
 		if (input.type !== 'press') return false;
 		if (input.id === 'key.stop') {
-			stopSong(a);
+			haltSong(a);
 			a.queued = null;
 			a.armed = false;
 			return false;

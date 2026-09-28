@@ -561,10 +561,19 @@ export function startSong(s: SimState): void {
 	selectScene(s, order[0]);
 }
 
-/** The song stops playing (stop, or the song ran out). */
+/** The song is over: it stops playing and its position goes back to the first entry. */
 export function stopSong(a: ArrangeState): void {
 	a.playing = false;
 	a.position = 0;
+	a.cue = null;
+}
+
+/**
+ * The song stops where it is (stop, or a song that does not loop running out): the ring stays on
+ * the entry that was playing, as on the device (camera b1-870, 871); play starts over from the top.
+ */
+export function haltSong(a: ArrangeState): void {
+	a.playing = false;
 	a.cue = null;
 }
 
@@ -593,7 +602,7 @@ function sceneEnded(s: SimState): 'next' | 'again' | 'stop' {
 	a.cue = null;
 	if (next >= song.order.length) {
 		if (!song.loop) {
-			stopSong(a);
+			haltSong(a);
 			return 'stop';
 		}
 		next = 0;

@@ -23,8 +23,9 @@ const STEP_MS = 125;
 const BAR_MS = 16 * STEP_MS;
 
 /**
- * The module keys in arrange as the guide's text gives them: M1 new, M2 copy, M3 paste, M4 clear.
- * TE's screen art labels M1 "clear" and M4 "new" (device check).
+ * The module keys in arrange as the guide's text and the owner's unit give them: M1 new, M2 copy,
+ * M3 paste, M4 clear (labelled delete once the track has more than one pattern, research 59 §2.9).
+ * TE's screen art labels M1 "clear" and M4 "new".
  */
 const NEW = 'key.m1';
 const COPY = 'key.m2';
@@ -142,7 +143,7 @@ function values(d: Driver): string[] {
 
 export function arrangeMixConformance(start: () => Promise<Driver>): void {
 	describe('16 arrange mode', () => {
-		it('opens with the arrange key: scene 1 in the red box, the instrument tracks, T1 lit white', async () => {
+		it('opens with the arrange key: scene 1 in its box, the instrument tracks, T1 lit white', async () => {
 			const d = await start();
 			await d.click('key.arrange');
 			expect(d.screen()).toBe('arrange, scene 1, instrument tracks, T1 pattern 1 of 1');
@@ -152,7 +153,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect(tracks(d)).toBe('w.......');
 		});
 
-		it('labels M1–M4 new, copy, paste, clear as the text does (TE’s art swaps M1 and M4: device check)', async () => {
+		it('labels M1–M4 new, copy, paste, clear as the text and the device do (TE’s art swaps M1 and M4)', async () => {
 			const d = await start();
 			await d.click('key.arrange');
 			expect(page(d, 'arrange').soft.map((l) => l?.text)).toEqual([
@@ -161,6 +162,14 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 				'paste',
 				'clear'
 			]);
+		});
+
+		it('labels M4 delete once the track has more than one pattern, as the device does', async () => {
+			const d = await start();
+			await d.clicks('key.arrange', NEW);
+			expect(page(d, 'arrange').soft[3]?.text).toBe('delete');
+			await d.click(CLEAR); // back to one pattern
+			expect(page(d, 'arrange').soft[3]?.text).toBe('clear');
 		});
 
 		it('keeps the track chosen in another mode (ours)', async () => {
@@ -260,11 +269,11 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			await d.turn(4, -2);
 			let column = page(d, 'arrange').columns[2];
 			expect(column).toMatchObject({ selected: true, pattern: 3, patterns: 5 });
-			expect(column.cells.map((c) => c.number)).toEqual([1, 2, 3, 4, 5]);
+			expect(column.blocks.map((b) => b.number)).toEqual([1, 2, 3, 4, 5]);
 			await d.click(track(1));
 			column = page(d, 'arrange').columns[2];
-			// closed again: one cell on the band, edges for the patterns before and after it
-			expect(column.cells).toHaveLength(1);
+			// closed again: one segment on the band, edges for the patterns before and after it (ours)
+			expect(column.blocks).toHaveLength(1);
 			expect([column.above, column.below]).toEqual([2, 2]);
 		});
 
@@ -563,7 +572,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 	});
 
 	describe('16.3 scenes', () => {
-		it('selects scenes 1–9 with shift and the numbered black keys, shown in the red box', async () => {
+		it('selects scenes 1–9 with shift and the numbered black keys, shown in the scene box', async () => {
 			const d = await start();
 			await d.click('key.arrange');
 			await scene(d, 5);
@@ -945,7 +954,8 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			await d.withShift(() => d.clicks(accidental(1), accidental(2), accidental(2), accidental(3)));
 			expect(entries(d)).toEqual(['1', '2', '2', '3']);
 			expect(d.screen()).toBe('song 1, looping: 4 scenes, cursor at 5');
-			expect(page(d, 'song').count).toBe('05');
+			// the device's count is how many scenes the song holds (research 59 §2.9)
+			expect(page(d, 'song').count).toBe('04');
 		});
 
 		it('takes scenes only with shift held (OS 1.1.0): a black key alone just plays', async () => {
@@ -990,7 +1000,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			await emptySong(d);
 			await d.withShift(() => d.clicks(accidental(1), accidental(2), accidental(3)));
 			await d.withShift(() => d.clicks('key.m2', 'key.m2'));
-			expect(page(d, 'song')).toMatchObject({ count: '02', cursor: 1 });
+			expect(page(d, 'song')).toMatchObject({ count: '03', cursor: 1 });
 			await d.withShift(() => d.click(accidental(9)));
 			expect(entries(d)).toEqual(['1', '9', '2', '3']);
 			await d.withShift(() => d.clicks('key.m3', 'key.m3', 'key.m3'));
@@ -1099,6 +1109,18 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			]);
 		});
 
+		it('lights its soft keys and shows the cursor only while shift is held, as the device does', async () => {
+			const d = await start();
+			await d.click('key.arrange');
+			await d.withShift(() => d.click('key.arrange'));
+			expect(page(d, 'song')).toMatchObject({ lit: false, cursor: 1 });
+			expect(page(d, 'song').soft.map((l) => l?.tone)).toEqual(['dim', 'dim', 'dim', 'dim']);
+			await d.withShift(async () => {
+				expect(page(d, 'song').lit).toBe(true);
+				expect(page(d, 'song').soft.every((l) => l?.tone === 'light')).toBe(true);
+			});
+		});
+
 		it('lights the current song’s white key while shift is held (ours)', async () => {
 			const d = await start();
 			await d.click('key.arrange');
@@ -1130,6 +1152,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect([ring(d), shown(d)]).toEqual([2, 1]);
 			await d.click('key.stop');
 			expect(d.screen()).toBe('song 1, looping: 3 scenes, cursor at 4');
+			expect(ring(d)).toBe(2); // the ring stays where the song stopped, as on the device
 		});
 
 		it('plays each scene of the song for its own length: a two-bar scene lasts two bars', async () => {
@@ -1306,7 +1329,7 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			await d.click('key.stop');
 		});
 
-		it('shows the song’s scene in the red box when the tracks are looked at while it plays', async () => {
+		it('shows the song’s scene in the scene box when the tracks are looked at while it plays', async () => {
 			const d = await start();
 			await threeScenes(d);
 			await emptySong(d);

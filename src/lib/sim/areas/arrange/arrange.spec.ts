@@ -10,7 +10,7 @@ import { SCENE_LENGTH_MODES as PROJECT_LENGTH_MODES, SIGNATURES } from '../syste
 import type { PatternsFrame } from './frames';
 import { accidentalKey, lengthIn, lengthSettings, sceneLength } from './model';
 import { PATTERN_KEYS } from './state';
-import { previewDots } from './view';
+import { BAND, COLUMN, STACK, patternNotes } from './view';
 
 /** A fresh simulator in arrange mode (instrument tracks, T1 selected). */
 function arrange(): OpxySim {
@@ -52,9 +52,22 @@ describe('arrange mode: the page', () => {
 		expect(f.columns.map((c) => c.label)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
 		expect(f.columns.map((c) => c.selected)).toEqual([true, ...Array(7).fill(false)]);
 		expect(f.soft.map((l) => l?.text)).toEqual([...PATTERN_KEYS]);
-		expect(f.soft[PATTERN_KEYS.indexOf('new')]?.tone).toBe('white');
+		// the device lights all four alike (research 59 §2.9)
+		expect(f.soft.map((l) => l?.tone)).toEqual(['light', 'light', 'light', 'light']);
 		sim.input({ type: 'press', id: 'key.shift' });
 		expect(frame(sim).soft.map((l) => l?.text)).toEqual(['clone', 'copy', 'paste', 'reset']);
+	});
+
+	it('labels M4 clear while the track has one pattern and delete once it has more', () => {
+		const sim = arrange();
+		expect(frame(sim).soft[3]?.text).toBe('clear');
+		sim.press(key('new'));
+		expect(frame(sim).soft[3]?.text).toBe('delete');
+		sim.press('track.2');
+		expect(frame(sim).soft[3]?.text).toBe('clear');
+		sim.press('track.1');
+		sim.press(key('clear'));
+		expect(frame(sim).soft[3]?.text).toBe('clear');
 	});
 
 	it('flips to the auxiliary tracks when arrange is pressed again, with their pictograms', () => {
@@ -78,30 +91,58 @@ describe('arrange mode: the page', () => {
 		expect(sim.leds['track.6']).toBe('red');
 	});
 
-	it('puts each track’s pattern on the band in its ramp step; a black cell is edged', () => {
+	it('puts each other track’s pattern on the band in its colour, T1 near black, unnumbered', () => {
 		const sim = arrange();
 		sim.press('track.2');
 		const f = frame(sim);
 		const closed = f.columns[2];
-		expect(closed.cells).toHaveLength(1);
-		expect(closed.cells[0]).toMatchObject({ y: 100, color: RAMP[2], number: null, outline: false });
-		expect(f.columns[0].cells[0]).toMatchObject({ y: 100, color: RAMP[0], outline: true });
+		expect(closed.blocks).toHaveLength(1);
+		expect(closed.blocks[0]).toMatchObject({
+			top: BAND.top,
+			bottom: BAND.bottom,
+			color: RAMP[2],
+			ink: COLORS.ink,
+			number: null
+		});
+		expect(f.columns[0].blocks[0]).toMatchObject({ color: COLORS.panel, ink: COLORS.light });
+		expect(f.columns[7].blocks[0].color).toBe(RAMP[7]);
 	});
 
-	it('opens the selected track’s stack 10 px up, each pattern a ramp step lighter and numbered', () => {
+	it('stacks the selected track’s patterns around the one playing, a ramp step darker each away', () => {
 		const sim = arrange();
 		sim.press('track.6');
 		sim.press(key('new'));
 		sim.press(key('new'));
 		sim.turn(4, -1);
 		const tape = frame(sim).columns[5];
-		expect(tape.cells.map((c) => [c.y, c.color, c.number])).toEqual([
-			[60, RAMP[5], 1],
-			[90, RAMP[6], 2],
-			[120, RAMP[7], 3]
+		expect(tape.blocks.map((b) => [b.top, b.bottom, b.color, b.number])).toEqual([
+			[59.22, STACK.top, RAMP[6], 1],
+			[STACK.top, STACK.bottom, RAMP[7], 2],
+			[STACK.bottom, 150.43, RAMP[6], 3]
 		]);
-		expect(tape.cells.map((c) => c.ink)).toEqual([COLORS.black, COLORS.black, COLORS.black]);
+		// notes and numbers keep to the slots, a block apart
+		expect(tape.blocks.map((b) => b.centre)).toEqual([75.31, STACK.centre, 134.77]);
+		expect(tape.blocks.map((b) => b.ink)).toEqual([COLORS.ink, COLORS.ink, COLORS.ink]);
 		expect(tape).toMatchObject({ pattern: 2, patterns: 3, above: 0, below: 0 });
+		// turning E4 scrolls the stack: the pattern playing stays on the band
+		sim.turn(4, 1);
+		const scrolled = frame(sim).columns[5].blocks;
+		expect(scrolled.map((b) => [b.number, b.color])).toEqual([
+			[1, RAMP[5]],
+			[2, RAMP[6]],
+			[3, RAMP[7]]
+		]);
+		expect(scrolled[2]).toMatchObject({ top: STACK.top, bottom: STACK.bottom });
+	});
+
+	it('leaves the patterns off the screen out of the stack', () => {
+		const sim = arrange();
+		for (let i = 0; i < MAX_PATTERNS - 1; i++) sim.press(key('new'));
+		sim.turn(4, -8); // pattern 8 of 16
+		const blocks = frame(sim).columns[0].blocks;
+		// three above the band and three below, the lowest cut off at the column's foot
+		expect(blocks.map((b) => b.number)).toEqual([5, 6, 7, 8, 9, 10, 11]);
+		expect(blocks.map((b) => b.color)).toEqual([...RAMP.slice(4), RAMP[6], RAMP[5], RAMP[4]]);
 	});
 
 	it('draws stack edges on closed tracks for the patterns before and after the one playing', () => {
@@ -117,18 +158,28 @@ describe('arrange mode: the page', () => {
 		expect(frame(sim).columns[2]).toMatchObject({ above: 3, below: 0 });
 	});
 
-	it('shows a pattern’s notes as a tiny piano roll, and its number, on a closed track', () => {
+	it('shows a pattern’s notes as dashes: a bar over 43 px, a step long, a pitch a pixel up', () => {
 		const sim = arrange();
 		const steps = sim.state.tracks[1].sequence.patterns[0].steps;
-		steps[0].notes = [{ note: 60, velocity: 100, length: 1, offset: 0 }];
-		steps[8].notes = [{ note: 64, velocity: 100, length: 1, offset: 0 }];
-		const cell = frame(sim).columns[1].cells[0];
-		expect(cell.number).toBe(1);
-		expect(cell.dots).toHaveLength(2);
-		const [[x0, y0], [x1, y1]] = cell.dots;
-		expect(x1 - x0).toBeCloseTo(8 * 2.8333, 1);
-		expect(y0 - y1).toBeCloseTo(4 * 2.125, 1);
-		expect(previewDots(emptyPattern())).toEqual([]);
+		steps[0].notes = [{ note: 60, velocity: 100, length: 0.5, offset: 0 }];
+		steps[8].notes = [{ note: 64, velocity: 100, length: 0.5, offset: 0 }];
+		const block = frame(sim).columns[1].blocks[0];
+		expect(block.number).toBeNull();
+		expect(block.notes).toEqual([
+			[14.6, 2, 2.69],
+			[36.1, -2, 2.69]
+		]);
+		expect(patternNotes(emptyPattern())).toEqual([]);
+	});
+
+	it('draws longer notes as longer dashes and squeezes a wide range into the block (ours)', () => {
+		const p = emptyPattern();
+		p.steps[0].notes = [{ note: 30, velocity: 100, length: 4, offset: 0 }];
+		p.steps[4].notes = [{ note: 80, velocity: 100, length: 1, offset: 0.5 }];
+		const [low, high] = patternNotes(p);
+		expect(low[2]).toBeCloseTo(4 * 2.6875, 2);
+		expect(high[0] - low[0]).toBeCloseTo(4.5 * 2.6875, 1);
+		expect(low[1] - high[1]).toBe(25);
 	});
 
 	it('hatches a muted track, marks a linked one and describes the page', () => {
@@ -532,28 +583,67 @@ describe('arrange mode: LEDs while shift is held', () => {
 });
 
 describe('arrange drawing', () => {
-	it('draws the red scene box, the column cells and the pictograms', () => {
+	it('draws the rules, the band, the selected track’s stack, its number and the scene box', () => {
+		const sim = arrange();
+		sim.press('track.3');
+		sim.press(key('new'));
+		const ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		// the scene: a white box with a black disc
+		const box = ctx.fillsOf(COLORS.white).find((f) => f.x0 === 214 && f.x1 === 266);
+		expect(box).toMatchObject({ y0: 146.15, y1: 198.25 });
+		expect(ctx.fillsOf(COLORS.black).some((f) => f.x0 === 218.7 && f.y1 === 193.5)).toBe(true);
+		// the band in the tracks' colours, T3's segment given way to its stack
+		const band = ctx.fills.filter((f) => f.y0 === BAND.top && f.y1 === BAND.bottom);
+		expect(band.map((f) => [f.x0, f.color])).toEqual([
+			[0, COLORS.panel],
+			[60, RAMP[1]],
+			[180, RAMP[3]],
+			[240, RAMP[4]],
+			[300, RAMP[5]],
+			[360, RAMP[6]],
+			[420, RAMP[7]]
+		]);
+		// T3's two patterns over both rules: the one playing white and raised, the first above it
+		const stack = ctx.fills.filter((f) => f.x0 === 119.5 && f.x1 === 180.5);
+		expect(stack.map((f) => [f.y0, f.y1, f.color])).toEqual([
+			[59.22, STACK.top, RAMP[6]],
+			[STACK.top, STACK.bottom, RAMP[7]]
+		]);
+		// seven rules from the top to the column's foot
+		const ends = ctx.ops.filter((op) => op.op === 'lineTo' && op.args[1] === COLUMN.bottom);
+		expect(ends.map((op) => op.args[0])).toEqual([60, 120, 180, 240, 300, 360, 420]);
+	});
+
+	it('draws the selected auxiliary track’s pictogram instead of a number', () => {
 		const sim = arrange();
 		sim.press('key.arrange');
 		const ctx = new RecordingContext();
 		renderFrame(ctx, sim.frame);
-		expect(ctx.fills.some((f) => f.color === COLORS.red && f.x0 === 215 && f.y1 === 70)).toBe(true);
-		for (const color of RAMP.slice(1)) {
-			expect(ctx.fills.some((f) => f.color === color && f.y0 === 100 && f.y1 === 130)).toBe(true);
-		}
-		// the brain pictogram of the selected T1 is lit
 		expect(
 			ctx.fills.some((f) => f.color === COLORS.white && f.x0 >= 20 && f.x1 <= 40 && f.y1 <= 26)
 		).toBe(true);
+		// no other track shows a pictogram
+		expect(ctx.fills.some((f) => f.color === COLORS.white && f.x0 >= 60 && f.y1 <= 30)).toBe(false);
+	});
+
+	it('draws a queued scene beside the scene’s box (ours)', () => {
+		const sim = arrange();
+		sim.press('key.play');
+		withShift(sim, 'key.play', accidentalKey(4));
+		const ctx = new RecordingContext();
+		renderFrame(ctx, sim.frame);
+		expect(frame(sim).queued).toBe('4');
+		expect(ctx.ops.some((op) => op.op === 'moveTo' && op.args[1] === 158.2)).toBe(true);
 	});
 
 	it('draws every scenario of the area on its page', () => {
 		const ids = SCENARIOS.filter((s) => s.id.startsWith('arrange')).map((s) => s.id);
-		expect(ids).toEqual(['arrange-tracks', 'arrange-scenes', 'arrange-song']);
+		expect(ids).toEqual(['arrange-tracks', 'arrange-scenes', 'arrange-song', 'arrange-device']);
 	});
 });
 
-describe('arrange scenarios (TE’s guide art)', () => {
+describe('arrange scenarios', () => {
 	const scenario = (id: string) => {
 		const s = SCENARIOS.find((x) => x.id === id);
 		if (!s) throw new Error(id);
@@ -565,14 +655,30 @@ describe('arrange scenarios (TE’s guide art)', () => {
 	it('arrange-003: scene 10, the auxiliary tracks, tape open on its second of three patterns', () => {
 		const f = frame(scenario('arrange-tracks'));
 		expect(f).toMatchObject({ bank: 'auxiliary', scene: '10' });
-		expect(f.columns[5].cells.map((c) => [c.y, c.number])).toEqual([
-			[60, 1],
-			[90, 2],
-			[120, 3]
+		expect(f.columns[5].blocks.map((b) => [b.top, b.number])).toEqual([
+			[59.22, 1],
+			[STACK.top, 2],
+			[STACK.bottom, 3]
 		]);
-		expect(f.columns[0].cells[0]).toMatchObject({ number: 1, outline: true });
-		expect(f.columns[0].cells[0].dots).toHaveLength(6);
+		expect(f.columns[0].blocks[0]).toMatchObject({ number: null, top: BAND.top });
+		expect(f.columns[0].blocks[0].notes).toHaveLength(6);
 		expect([f.columns[2].below, f.columns[6].below]).toEqual([3, 3]);
 		expect(f.columns.filter((c) => c.selected).map((c) => c.name)).toEqual(['tape']);
+	});
+
+	it('the device’s b1-826: T3 on the third of five patterns, the figure on the first, scene 2', () => {
+		const f = frame(scenario('arrange-device'));
+		expect(f).toMatchObject({ scene: '2' });
+		const t3 = f.columns[2];
+		expect(t3.blocks.map((b) => [b.number, b.color])).toEqual([
+			[1, RAMP[5]],
+			[2, RAMP[6]],
+			[3, RAMP[7]],
+			[4, RAMP[6]],
+			[5, RAMP[5]]
+		]);
+		expect(t3.blocks[0].notes.map(([, y]) => y)).toEqual([11, 5, -5, -11]);
+		expect([t3.blocks[0].top, t3.blocks[4].bottom]).toEqual([29.49, 180.16]);
+		expect(f.soft.map((l) => l?.text)).toEqual(['new', 'copy', 'paste', 'delete']);
 	});
 });
