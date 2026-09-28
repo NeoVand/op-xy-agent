@@ -27,10 +27,12 @@ function setup(withReplica = false) {
 			};
 		}
 	} as unknown as ReplicaState;
+	const guided: { goal: string; steps: readonly { keys: string }[] }[] = [];
 	const env: AgentEnvironment = {
 		device: null,
 		replica: withReplica ? replica : null,
 		virtual,
+		guide: { start: (goal, steps) => void guided.push({ goal, steps }) },
 		manual: NO_MANUAL,
 		timers: time,
 		confirmWindowMs: 0,
@@ -46,7 +48,7 @@ function setup(withReplica = false) {
 		};
 		return tool.run(tool.input.parse(input), ctx);
 	};
-	return { sim, run, animated };
+	return { sim, run, animated, guided };
 }
 
 const json = (result: ToolResult) => JSON.parse(String(result.content));
@@ -151,6 +153,19 @@ describe('plan_steps with show', () => {
 			await run(planStepsTool, { show: false, area: 'mix', param: 'flux', value: 1 })
 		);
 		expect(missing.note).toMatch(/no page shows "flux"/);
+	});
+
+	it('hands the steps to the walkthrough with guide, and moves nothing itself', async () => {
+		const { sim, run, animated, guided } = setup(true);
+		const result = json(
+			await run(planStepsTool, { show: false, guide: true, track: 3, param: 'cutoff', value: 40 })
+		);
+		expect(result).toMatchObject({ guided: true, reached: true });
+		expect(guided).toHaveLength(1);
+		expect(guided[0].goal).toBe('track 3 cutoff 40');
+		expect(guided[0].steps.map((s) => s.keys)).toEqual(['T3', 'M3', 'turn E1']);
+		expect(animated).toEqual([]);
+		expect(sim.state.track).toBe(0);
 	});
 
 	it('only returns the plan without a replica', async () => {

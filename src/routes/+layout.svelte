@@ -9,16 +9,24 @@
 	import {
 		AppSimulator,
 		AppSound,
+		ReplicaGuide,
 		SimPersistence,
 		createIdbSimStore,
 		setAppSimulator,
 		setAppSound,
+		setReplicaGuide,
 		setSimPersistence
 	} from '$lib/app';
-	import { browserDeviceOptions, createDeviceStack, setDeviceStack } from '$lib/device';
+	import {
+		browserDeviceOptions,
+		browserTimers,
+		createDeviceStack,
+		setDeviceStack
+	} from '$lib/device';
 	import type { SessionPhase } from '$lib/device';
 	import { ReplicaState, setReplicaState } from '$lib/replica';
 	import { setScreenFrameSource } from '$lib/replica/screen';
+	import { describeFrame } from '$lib/sim/screen/render';
 	import { Theme, setTheme } from '$lib/ui/theme.svelte';
 	import AppHeader from '$lib/ui/shell/AppHeader.svelte';
 	import StatusBar from '$lib/ui/shell/StatusBar.svelte';
@@ -46,6 +54,14 @@
 	const simulator = new AppSimulator({ replica, stack: device });
 	setAppSimulator(simulator);
 	setScreenFrameSource(simulator);
+
+	// The agent's walkthroughs: the replica lights one step at a time until its screen gets there.
+	const guide = new ReplicaGuide({
+		replica,
+		read: () => describeFrame(simulator.frame),
+		timers: browserTimers
+	});
+	setReplicaGuide(guide);
 
 	// Its sound while no OP-XY makes one: synthesized in the browser, silent while a device is
 	// connected unless asked. Nothing is loaded or started until the first key press.

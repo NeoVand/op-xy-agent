@@ -17,6 +17,12 @@ const goalInput = z.object({
 		.describe(
 			'true: also animate the steps on the replica, which leaves the virtual OP-XY there (when the user wants to be shown, or asks you to set it up); false: only plan'
 		),
+	guide: z
+		.boolean()
+		.optional()
+		.describe(
+			'true (with show false): walk the user through the steps on the replica instead: it lights one step at a time, with the turn direction for encoders, and waits until the user has done it; for someone who wants to learn by doing it themselves'
+		),
 	area: z
 		.enum(['instrument', 'auxiliary', 'mix', 'arrange', 'tempo', 'player'])
 		.optional()
@@ -160,6 +166,16 @@ const summaryOf = (plan: NavPlan) =>
 			: `not reachable: ${plan.note ?? 'unknown'}`
 		: `${plan.steps.length} step${plan.steps.length === 1 ? '' : 's'}: ${plan.steps.map((s) => (s.clicks ? `${s.keys} ×${Math.abs(s.clicks)}` : s.keys)).join(', ')}${plan.reached ? '' : ` (not all: ${plan.note ?? 'unknown'})`}`;
 
+/** The walkthrough's goal in a few words, for its card ("track 3 cutoff 40", "mix M2"). */
+function goalText(input: GoalInput): string {
+	const track = input.track !== undefined ? `track ${input.track} ` : '';
+	if (input.settings)
+		return `${track}${input.settings.map((s) => `${s.param} ${s.value}`).join(', ')}`;
+	if (input.param !== undefined) return `${track}${input.param} ${input.value ?? ''}`.trim();
+	const page = input.page !== undefined ? ` M${input.page}` : '';
+	return `${track}${input.area ?? ''}${page}`.trim();
+}
+
 /** Longest a turn's animation runs, however many detents it has. */
 const TURN_MS = 1800;
 
@@ -179,6 +195,30 @@ export const planStepsTool = defineTool({
 		const goal = toGoal(input, ctx.env);
 		if (typeof goal === 'string') return errorResult(goal, 'bad goal');
 		const plan = virtual.plan(goal);
+		if (input.guide && !input.show) {
+			const guide = ctx.env.guide;
+			if (!guide || plan.steps.length === 0) {
+				return jsonResult(
+					{
+						guided: false,
+						...planView(plan),
+						reason: !guide
+							? 'No replica walkthrough in this view.'
+							: 'Nothing to do: already there.'
+					},
+					summaryOf(plan)
+				);
+			}
+			guide.start(goalText(input), plan.steps);
+			return jsonResult(
+				{
+					guided: true,
+					note: 'The replica now lights each step in turn and waits for the user; tell them to follow the lit keys. It moves on by itself when the screen shows where a step leads.',
+					...planView(plan)
+				},
+				`guiding: ${summaryOf(plan)}`
+			);
+		}
 		if (!input.show) return jsonResult(planView(plan), summaryOf(plan));
 		const replica = ctx.env.replica;
 		// several settings show the ones that work; a single goal only when it is reachable

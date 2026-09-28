@@ -12,7 +12,7 @@ import { createAnthropicClient } from './client';
 import { Conductor, type PreferenceStore } from './conductor.svelte';
 import { loadManualSource } from './manual-source';
 import { createIdbThreadStore } from './threads';
-import type { ScreenReader } from './tools';
+import type { GuideHost, ScreenReader } from './tools';
 
 /** What the panel hands over. */
 export interface BrowserConductorOptions {
@@ -26,6 +26,8 @@ export interface BrowserConductorOptions {
 	readonly sound?: VirtualSound | null;
 	/** Told after every change the agent makes to the virtual OP-XY, so it is saved. */
 	readonly persistence?: { markDirty(): void } | null;
+	/** The replica walkthrough that plan_steps with guide starts. */
+	readonly guide?: GuideHost | null;
 }
 
 /** read_screen's view of the simulator: the page in words plus where the interface stands. */
@@ -95,6 +97,7 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 					changed: () => options.persistence?.markDirty()
 				})
 			: null,
+		guide: options.guide ?? null,
 		manual,
 		store: createIdbThreadStore(),
 		preferences: browserPreferences()

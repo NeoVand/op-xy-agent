@@ -1,7 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { getAppSound, HintCaption, ReplicaBridge, StageHint, sweepSteps } from '$lib/app';
+	import {
+		getAppSound,
+		getReplicaGuide,
+		GuideCard,
+		HintCaption,
+		ReplicaBridge,
+		StageHint,
+		sweepSteps
+	} from '$lib/app';
 	import { browserClock, browserTimers, getDeviceStack, type SessionPhase } from '$lib/device';
 	import { getReplicaState, Replica } from '$lib/replica';
 	import { Button, Led, Readout, tooltip } from '$lib/ui';
@@ -35,6 +43,8 @@
 	});
 	// What the device can't take remotely, said under the replica now and then.
 	const caption = new HintCaption({ clock: browserClock, timers: browserTimers });
+	// The agent's walkthrough takes the caption line while it runs.
+	const guide = getReplicaGuide();
 
 	onMount(() => {
 		const stopBridge = bridge.start();
@@ -184,6 +194,14 @@
 {/snippet}
 
 {#snippet hints()}
+	{#if guide && guide.status !== 'idle'}
+		<GuideCard {guide} />
+	{:else}
+		{@render caption_line()}
+	{/if}
+{/snippet}
+
+{#snippet caption_line()}
 	<StageHint {caption}>
 		{#snippet idle()}
 			<p class="line">

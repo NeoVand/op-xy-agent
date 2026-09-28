@@ -57,6 +57,7 @@ import {
 	createConductorRegistry,
 	type AgentEnvironment,
 	type AgentTimers,
+	type GuideHost,
 	type ScreenReader,
 	type SubagentResult,
 	type ToolContext,
@@ -91,6 +92,8 @@ export interface ConductorOptions {
 	readonly screen?: ScreenReader | null;
 	/** The virtual OP-XY on screen (programming tools, and live tools with no device); absent when headless. */
 	readonly virtual?: VirtualOpxy | null;
+	/** The replica walkthrough (plan_steps with guide); absent when headless. */
+	readonly guide?: GuideHost | null;
 	readonly manual: ManualSource;
 	readonly store: ThreadStore;
 	/** Remembers the last thread and the chosen model; memory-only when absent. */
@@ -253,6 +256,7 @@ export class Conductor {
 			replica: options.replica,
 			screen: options.screen ?? null,
 			virtual: options.virtual ?? null,
+			guide: options.guide ?? null,
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,

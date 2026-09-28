@@ -3,7 +3,7 @@
  * simulator is the replica's virtual OP-XY (screen, LEDs, transport) and the sound its voice when no
  * device makes one, and persistence keeps its work across reloads; the bridge maps replica input to MIDI (through the transport) and mirrors the
  * device back onto the replica; hints explain what cannot be done remotely; the caption shows them,
- * rate-limited.
+ * rate-limited; the guide walks the user through the agent's steps on the replica.
  */
 export { BridgeError, ReplicaBridge, type ReplicaBridgeOptions } from './bridge.svelte';
 export { HINT_REPEAT_MS, HintCaption, type HintCaptionOptions } from './caption.svelte';
@@ -56,3 +56,13 @@ export {
 	type SimStore
 } from './persistence';
 export { default as StageHint } from './StageHint.svelte';
+export {
+	GUIDE_DONE_MS,
+	ReplicaGuide,
+	getReplicaGuide,
+	setReplicaGuide,
+	type GuideStatus,
+	type GuideStep,
+	type ReplicaGuideOptions
+} from './guide.svelte';
+export { default as GuideCard } from './GuideCard.svelte';

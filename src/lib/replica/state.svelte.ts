@@ -528,6 +528,12 @@ export class ReplicaState {
 		else this.#highlights.set(id, kind);
 	}
 
+	/** Shows which way to turn a control for teaching (`null` clears it). */
+	setTurnHint(id: TurnableId, direction: 1 | -1 | null): void {
+		if (direction === null) this.#hints.delete(id);
+		else this.#hints.set(id, direction);
+	}
+
 	/** Clears every teaching mark. */
 	clearHighlights(): void {
 		this.#highlights.clear();

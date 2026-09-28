@@ -51,6 +51,8 @@ export interface AgentEnvironment {
 	 * programming tools write to it. Absent when headless.
 	 */
 	readonly virtual?: VirtualOpxy | null;
+	/** Walks the user through steps on the replica, one lit step at a time; absent when headless. */
+	readonly guide?: GuideHost | null;
 	readonly manual: ManualSource;
 	readonly timers: AgentTimers;
 	/** How long device tools wait to see the device confirm a change (e.g. echoed start); 0 = no wait. */
@@ -65,6 +67,15 @@ export interface AgentEnvironment {
 		description: string,
 		ctx: ToolContext
 	) => Promise<SubagentResult>;
+}
+
+/** The app's walkthrough (`$lib/app/guide.svelte.ts`) as the tools see it. */
+export interface GuideHost {
+	/** Starts lighting `steps` on the replica, each until the screen shows where it leads. */
+	start(
+		goal: string,
+		steps: readonly { readonly keys: string; readonly clicks?: number; readonly screen: string }[]
+	): void;
 }
 
 /** What the replica's screen shows now (the app's UI simulator, not the real device's screen). */
