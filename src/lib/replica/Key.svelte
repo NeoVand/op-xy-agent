@@ -36,6 +36,8 @@ does the rest, so a key press never re-renders the legend paths.
 	interface Props {
 		part: KeyPart;
 		replica: ReplicaState;
+		/** The computer keys that press it (`aria-keyshortcuts`), when the keyboard plays the replica. */
+		shortcut?: string;
 		/** The key that currently takes Tab focus (roving tabindex across the keys). */
 		tabbable?: boolean;
 		onfocuskey?: (id: KeyId) => void;
@@ -43,7 +45,7 @@ does the rest, so a key press never re-renders the legend paths.
 		onnavigate?: (id: KeyId, dx: number, dy: number) => void;
 	}
 
-	let { part, replica, tabbable = false, onfocuskey, onnavigate }: Props = $props();
+	let { part, replica, shortcut, tabbable = false, onfocuskey, onnavigate }: Props = $props();
 
 	const pressed = $derived(replica.isPressed(part.id));
 	const led = $derived(part.art.led ? replica.led(part.id) : 'off');
@@ -138,6 +140,7 @@ does the rest, so a key press never re-renders the legend paths.
 	role="button"
 	tabindex={tabbable ? 0 : -1}
 	aria-label={label}
+	aria-keyshortcuts={shortcut}
 	aria-pressed={pressed}
 	{onpointerdown}
 	onpointerup={lift}

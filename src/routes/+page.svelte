@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import {
+		getAppSimulator,
 		getAppSound,
 		getReplicaGuide,
 		GuideCard,
@@ -22,8 +23,34 @@
 	const stack = getDeviceStack();
 	const { session, mirror } = stack;
 	const replica = getReplicaState();
+	// The replica's virtual OP-XY (root layout): whether its transport runs, for Space.
+	const simulator = getAppSimulator();
 	// The replica's own sound (root layout): on while simulated, off while the OP-XY plays.
 	const sound = getAppSound();
+
+	// The computer keyboard plays the replica's keys; the choice is remembered in this browser.
+	const KEYS_STORE = 'opxy.computer-keys';
+	let computerKeys = $state(readKeysChoice());
+
+	function readKeysChoice(): boolean {
+		try {
+			return globalThis.localStorage?.getItem(KEYS_STORE) !== 'off';
+		} catch {
+			return true;
+		}
+	}
+
+	function toggleKeys(): void {
+		computerKeys = !computerKeys;
+		try {
+			localStorage.setItem(KEYS_STORE, computerKeys ? 'on' : 'off');
+		} catch {
+			// private windows and blocked storage: the choice lasts until the page closes
+		}
+	}
+
+	const keysTip =
+		'your keyboard plays the keys: z to m the lower twelve (black keys s d f h j), q to u the upper twelve (2 3 4 6 7); - and = the octave, space play and stop; with shift, 1–9 and 0 are the numbered black keys';
 	const soundTip = $derived(
 		!sound.available
 			? 'this browser cannot make sound'
@@ -126,7 +153,11 @@
 			plate={engaged ? connection : undefined}
 			caption={hints}
 		>
-			<Replica {replica} />
+			<Replica
+				{replica}
+				keys={computerKeys}
+				playing={() => simulator?.sim.state.transport.playing ?? false}
+			/>
 		</DeviceStage>
 	</section>
 	<AgentPanel class="home__agent" />
@@ -223,6 +254,16 @@
 					<span class="line__state">simulated</span>
 					<span>the replica works like an op-xy; nothing is sent</span>
 				{/if}
+				<button
+					type="button"
+					class="sound"
+					aria-pressed={computerKeys}
+					onclick={toggleKeys}
+					{@attach tooltip(keysTip)}
+				>
+					<Led state={computerKeys ? 'white' : 'off'} size="sm" />
+					keys
+				</button>
 				<button
 					type="button"
 					class="sound"

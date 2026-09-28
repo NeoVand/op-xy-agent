@@ -8,7 +8,9 @@ the power-switch tab and the pitch-bend pad reach just outside that box, as on t
 Everything reactive lives in the `ReplicaState` you pass in. Keys share one Tab stop (arrow keys
 move between them); encoders, the volume knob and the pitch bend each have their own. The
 computer's Shift key holds the replica's shift (except while typing in a text field), so a click
-on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for combos.
+on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for combos. With
+`keys`, the computer keyboard plays the replica too (`keyboard.ts`: two rows of keys, `-` `=` for
+the octave, Space for play and stop).
 
 ```svelte
 <script lang="ts">
@@ -32,6 +34,7 @@ on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for
 	import Screen from './Screen.svelte';
 	import VolumeKnob from './VolumeKnob.svelte';
 	import { BODY_RADIUS, ENCODER_PARTS, KEY_PARTS, PANEL_H, PANEL_W, SCREEN_PART } from './geometry';
+	import { COMPUTER_KEYS, ComputerKeys } from './keyboard';
 	import { ComputerShift, isTyping } from './modifiers';
 	import type { ReplicaState } from './state.svelte';
 
@@ -41,15 +44,58 @@ on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for
 		label?: string;
 		/** A barely perceptible satin grain over the body (off = perfectly smooth). */
 		grain?: boolean;
+		/** The computer keyboard plays the replica's keys (one replica on the page should). */
+		keys?: boolean;
+		/** Whether the transport runs, so Space plays or stops. */
+		playing?: () => boolean;
 		class?: ClassValue;
 	}
 
-	let { replica, label = 'OP-XY replica', grain = true, class: className }: Props = $props();
+	let {
+		replica,
+		label = 'OP-XY replica',
+		grain = true,
+		keys = false,
+		playing,
+		class: className
+	}: Props = $props();
 
 	/** The key that holds the keys' single Tab stop. */
 	let focusKey = $state<KeyId>('key.play');
 	/** The computer's Shift, held on the replica's shift key. */
 	const shift = new ComputerShift(() => replica);
+	/** The computer's keys, played on the replica's (while `keys`). */
+	const computer = new ComputerKeys(() => replica, { playing: () => playing?.() ?? false });
+
+	/** Nothing that answers Space itself has focus (a key, an encoder, a button, a field). */
+	const free = (target: EventTarget | null) =>
+		target === null || target === document.body || target === document.documentElement;
+
+	function onkeydown(event: KeyboardEvent) {
+		const typing = isTyping(event.target);
+		shift.keydown({ key: event.key, code: event.code, repeat: event.repeat, typing });
+		if (!keys) return;
+		const taken = computer.keydown({
+			code: event.code,
+			repeat: event.repeat,
+			typing,
+			command: event.metaKey || event.ctrlKey || event.altKey,
+			free: free(event.target)
+		});
+		if (taken) event.preventDefault();
+	}
+
+	function onkeyup(event: KeyboardEvent) {
+		shift.keyup(event);
+		// even after `keys` went off: a key it pressed still comes up
+		if (computer.keyup(event)) event.preventDefault();
+	}
+
+	function releaseAll() {
+		shift.releaseAll();
+		computer.releaseAll();
+	}
+
 	let svg: SVGSVGElement | null = null;
 
 	const active = SCREEN_PART.active;
@@ -93,18 +139,8 @@ on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for
 	}
 </script>
 
-<svelte:window
-	onkeydown={(event) =>
-		shift.keydown({
-			key: event.key,
-			code: event.code,
-			repeat: event.repeat,
-			typing: isTyping(event.target)
-		})}
-	onkeyup={(event) => shift.keyup(event)}
-	onblur={() => shift.releaseAll()}
-/>
-<svelte:document onvisibilitychange={() => document.hidden && shift.releaseAll()} />
+<svelte:window {onkeydown} {onkeyup} onblur={releaseAll} />
+<svelte:document onvisibilitychange={() => document.hidden && releaseAll()} />
 
 <div
 	class={['replica', className]}
@@ -131,6 +167,7 @@ on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for
 				<Key
 					{part}
 					{replica}
+					shortcut={keys ? COMPUTER_KEYS[part.id] : undefined}
 					tabbable={part.id === focusKey}
 					onfocuskey={(id) => (focusKey = id)}
 					onnavigate={navigate}
