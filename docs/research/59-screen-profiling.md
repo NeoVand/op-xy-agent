@@ -523,6 +523,17 @@ Not tested on purpose: ext audio CC12 (input select: could open the mic and feed
 - **Instrument:** the M2 shift layer swept by CC 28–31.
 - **Readings:** the external CV needle with notes; the filter page's value box (which parameter it
   shows).
+- **Open from the page rebuilds (2026-09-28):**
+  - bar card: the roll's pitch scale, with C3 and C4 entered on two steps (one pixel per semitone is
+    ours);
+  - tempo: what turns the jack black; how fast the weight slides when the tempo changes; `click E4`
+    at a known level (does it zero and restore the level, as frames 3888–3890 suggest?);
+  - arrange: the cross-fade when the selected track changes and the stack sliding with E4 (a 10 fps
+    run); a queued scene, a muted track, a linked track; two-digit scenes; song mode with loop off
+    and a song running out;
+  - the aux tracks' octave popup and "copied".
+- **Agent checks:** a walkthrough (`plan_steps` with guide) followed on the real unit, to confirm
+  that the steps' screens match the device page by page.
 - **Sounds over USB audio:** punch-in FX, the tape, filters and LFOs (`QUESTIONS.md` 5 and 7), and
   envelope decay and release times against the new handle model.
 - **Before starting:** calibrate on the tempo page, `check` it every ~30 minutes, and keep the device
