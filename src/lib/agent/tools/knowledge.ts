@@ -129,6 +129,7 @@ export const showOnReplicaTool = defineTool({
 				`${keys} (no replica)`
 			);
 		}
+		ctx.env.guide?.stop();
 		const handle = replica.animate(parsed.value);
 		return jsonResult(
 			{ shown: true, keys, seconds: Math.round(handle.plan.duration / 100) / 10 },

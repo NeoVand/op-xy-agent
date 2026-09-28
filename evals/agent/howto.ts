@@ -344,7 +344,7 @@ async function runCase(c: HowtoCase, model: string, apiKey: string): Promise<Cas
 		replica,
 		screen,
 		virtual,
-		guide: { start: (goal) => void guided.push(goal) },
+		guide: { start: (goal) => void guided.push(goal), stop: () => {} },
 		manual: await loadManualSource({ dev: false }),
 		store: createMemoryThreadStore(),
 		autoApprove: true,

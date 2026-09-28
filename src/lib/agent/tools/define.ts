@@ -76,6 +76,8 @@ export interface GuideHost {
 		goal: string,
 		steps: readonly { readonly keys: string; readonly clicks?: number; readonly screen: string }[]
 	): void;
+	/** Ends a walkthrough (an animation on the replica would clear its marks). */
+	stop(): void;
 }
 
 /** What the replica's screen shows now (the app's UI simulator, not the real device's screen). */

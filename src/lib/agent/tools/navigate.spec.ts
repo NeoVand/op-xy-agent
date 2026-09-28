@@ -28,11 +28,15 @@ function setup(withReplica = false) {
 		}
 	} as unknown as ReplicaState;
 	const guided: { goal: string; steps: readonly { keys: string }[] }[] = [];
+	const stops: number[] = [];
 	const env: AgentEnvironment = {
 		device: null,
 		replica: withReplica ? replica : null,
 		virtual,
-		guide: { start: (goal, steps) => void guided.push({ goal, steps }) },
+		guide: {
+			start: (goal, steps) => void guided.push({ goal, steps }),
+			stop: () => void stops.push(1)
+		},
 		manual: NO_MANUAL,
 		timers: time,
 		confirmWindowMs: 0,
@@ -48,7 +52,7 @@ function setup(withReplica = false) {
 		};
 		return tool.run(tool.input.parse(input), ctx);
 	};
-	return { sim, run, animated, guided };
+	return { sim, run, animated, guided, stops };
 }
 
 const json = (result: ToolResult) => JSON.parse(String(result.content));
@@ -82,7 +86,7 @@ describe('plan_steps', () => {
 
 describe('plan_steps with show', () => {
 	it('animates every step on the replica and leaves the virtual OP-XY at the goal', async () => {
-		const { sim, run, animated } = setup(true);
+		const { sim, run, animated, stops } = setup(true);
 		const result = json(await run(planStepsTool, { show: true, param: 'tempo', value: 100 }));
 		expect(result).toMatchObject({ shown: true, arrived: true, reached: true });
 		expect(animated).toEqual([
@@ -90,6 +94,8 @@ describe('plan_steps with show', () => {
 			{ keys: 'turn E1', turnSteps: 20, direction: -1, turnStepMs: 90 }
 		]);
 		expect(sim.state.tempo.bpm).toBe(100);
+		// a walkthrough in progress ends first: the animation would clear its marks
+		expect(stops).toHaveLength(1);
 	});
 
 	it('sets a whole sound up from several settings, grouped by the parameter they set', async () => {

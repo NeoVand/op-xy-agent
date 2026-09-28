@@ -234,6 +234,7 @@ export const planStepsTool = defineTool({
 				summaryOf(plan)
 			);
 		}
+		ctx.env.guide?.stop();
 		for (const step of plan.steps) {
 			if (ctx.signal.aborted) break;
 			const clicks = Math.abs(step.clicks ?? 0);
