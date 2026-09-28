@@ -72,6 +72,21 @@ describe('the replica’s project as a .xy file', () => {
 		expect(mtp.sessionOpen).toBe(false);
 	});
 
+	it('does not call a load or a save failed when the unit leaves MTP mode before answering the close', async () => {
+		const { device, mtp, sim, transfer } = setup();
+		device.leaveOnClose = true;
+		await transfer.loadFromDevice();
+		expect(transfer.error).toBeNull();
+		expect(transfer.message).toBe('loaded op-xy project');
+		expect(sim.state.project.name).toBe('op-xy project');
+		const again = setup();
+		again.device.leaveOnClose = true;
+		expect(await again.transfer.saveToDevice('kept')).toBe('projects/user/kept.xy');
+		expect(again.transfer.error).toBeNull();
+		expect(again.mtp.find('projects/user/kept.xy')).toBeDefined();
+		expect(mtp.operations.at(-1)).toBe(OP.closeSession);
+	});
+
 	it('refuses a name the device would not take before asking for the device', async () => {
 		const { transfer, requests } = setup();
 		expect(await transfer.saveToDevice('My Song!')).toBeNull();

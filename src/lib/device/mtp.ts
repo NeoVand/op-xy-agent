@@ -117,7 +117,10 @@ export class MtpConnection {
 		if (this.#closed) return;
 		this.#closed = true;
 		try {
-			if (this.session.isOpen) await this.session.close();
+			// the OP-XY leaves MTP mode the moment the session closes, sometimes before its answer
+			// is read (seen on the owner's unit: "A transfer error has occurred"): a failed read
+			// here is the device going away as it should, not an error to report
+			if (this.session.isOpen) await this.session.close().catch(() => {});
 		} finally {
 			await this.device.releaseInterface(this.interfaceNumber).catch(() => {});
 			await this.device.close().catch(() => {});
