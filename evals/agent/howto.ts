@@ -20,6 +20,8 @@ import { buildFrame } from '$lib/sim/frames';
 import { planSettings, playStep } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { DUCK_METRONOME, PLAY_MODES, shown, type SimState } from '$lib/sim/params';
+import { KEYS, SCALES, brainSettings } from '$lib/sim/areas/auxiliary/state';
+import { currentPattern } from '$lib/sim/sequencer';
 import { describeFrame } from '$lib/sim/screen/render';
 import { anthropicKey } from './key';
 
@@ -325,6 +327,101 @@ const CASES: readonly HowtoCase[] = [
 			if (shown(t.amp.decay) > 50) fails.push(`amp decay still ${shown(t.amp.decay)}`);
 			if (shown(t.filter.resonance) <= 10) fails.push(`resonance ${shown(t.filter.resonance)}`);
 			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			return fails;
+		}
+	},
+	// the runnable recipes (howto.song-with-brain, slice-a-loop, song-from-scenes) and values the
+	// navigator reaches by name: a drum key, the player list
+	{
+		id: 'brain-lead',
+		prompt:
+			'On the virtual OP-XY, keep the lead on track 5 out of the brain’s transposition, and make the brain’s sequence four bars long. Then tell me the keys so I can do the same on my own unit.',
+		check(o) {
+			const fails: string[] = [];
+			const brain = brainSettings(o.state.areas.auxiliary, o.state.aux[0].sequence.current);
+			if (brain.routes[4]) fails.push('track 5 is still routed to the brain');
+			const others = [2, 3, 5, 6, 7].filter((t) => !brain.routes[t]).map((t) => t + 1);
+			if (others.length) fails.push(`took tracks ${others.join(', ')} out too`);
+			const scale = currentPattern(o.state.aux[0].sequence).scale;
+			if (scale !== 4) fails.push(`the brain's track scale is ${scale}`);
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			for (const w of mentions(o, 'M2', 'bar')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
+		id: 'brain-key',
+		prompt:
+			'The brain keeps guessing the wrong key for my loop. On the virtual OP-XY, set it by hand to A minor.',
+		check(o) {
+			const fails: string[] = [];
+			const brain = brainSettings(o.state.areas.auxiliary, o.state.aux[0].sequence.current);
+			if (brain.auto) fails.push('the brain is still on auto');
+			if (brain.key !== 9 || brain.scale !== 5) {
+				fails.push(`the brain is set to ${KEYS[brain.key]} ${SCALES[brain.scale].name}`);
+			}
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			return fails;
+		}
+	},
+	{
+		id: 'slice',
+		prompt:
+			'The drum track, track 1, has a loop on its top key, E5. Chop it into 16 equal slices across the keys on the virtual OP-XY, and tell me how to do it on my own OP-XY.',
+		check(o) {
+			const fails: string[] = [];
+			const files = o.state.areas.sample.tracks[0].keys;
+			const keys = o.state.tracks[0].drumKeys;
+			const loop = files[23]?.id;
+			const sliced =
+				files.slice(0, 16).every((f) => f?.id === loop) &&
+				keys.slice(0, 16).every((k) => k.playMode === 'mute group');
+			if (!sliced) fails.push('the keys from F3 do not hold 16 slices of the loop');
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			for (const w of mentions(o, 'M1', 'E4')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
+		id: 'song-scenes',
+		prompt:
+			'Build a small song structure on the virtual OP-XY: scene 2 is a copy of scene 1 in which track 3 plays a new pattern 2, and the song plays scene 1 twice, then scene 2 twice, and does not loop. Set it up with the keys, as I would on the device, and tell me the steps.',
+		check(o) {
+			const fails: string[] = [];
+			const a = o.virtual.readArrangement();
+			const track3 = (n: number) => a.scenes.find((s) => s.scene === n)?.patterns[2];
+			if (track3(1) !== 1) fails.push(`scene 1 plays track 3's pattern ${track3(1)}`);
+			if (track3(2) !== 2) fails.push(`scene 2 plays track 3's pattern ${track3(2)}`);
+			if (a.song.order.join(' ') !== '1 1 2 2') fails.push(`the song is ${a.song.order.join(' ')}`);
+			if (a.song.loop) fails.push('the song loops');
+			if (!used(o, 'plan_steps')) fails.push('did not plan the steps');
+			for (const w of mentions(o, 'shift + arrange')) fails.push(`answer lacks "${w}"`);
+			return fails;
+		}
+	},
+	{
+		id: 'drum-tune',
+		prompt: 'Tune the snare on track 1 of the virtual OP-XY down two semitones.',
+		check(o) {
+			const fails: string[] = [];
+			// a new project's snare 1 sits on G3, the third key
+			const tune = o.state.tracks[0].drumKeys[2].tune;
+			if (tune !== -2) fails.push(`the snare's tune is ${tune}`);
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			return fails;
+		}
+	},
+	{
+		id: 'maestro',
+		prompt:
+			'Switch track 4’s player to maestro on the virtual OP-XY and turn its hold on, then tell me how I get to the maestro page on my unit.',
+		check(o) {
+			const fails: string[] = [];
+			const player = currentPattern(o.state.tracks[3].sequence).player;
+			if (player.type !== 'maestro') fails.push(`track 4's player is ${player.type}`);
+			if (!player.maestro.hold) fails.push("maestro's hold is off");
+			if (!showed(o)) fails.push('changed nothing on the virtual OP-XY');
+			for (const w of mentions(o, 'shift + player')) fails.push(`answer lacks "${w}"`);
 			return fails;
 		}
 	}

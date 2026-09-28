@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 163 units, 1118 facts, 196 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 165 units, 1144 facts, 201 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -5135,13 +5135,16 @@ Sources: s1 guide:how-to#how-to-load-samples · s2 teenage.engineering/downloads
 
 ### Recipe — sketch a song fast with the brain [howto.song-with-brain]
 current · OS ≥ 1.0.9 · guide v1.1.15
-Also called: brain song, write a song fast, chord progression with brain, auto transpose, key detection
-Where: modes auxiliary
+Also called: brain song, write a song fast, chord progression with brain, auto transpose, key detection, brain routing, keep a track out of the brain, set the key by hand
+Where: modes auxiliary; screens M1, M2, bar
 
-Build a tiny loop — drums, a one- or two-note bassline, one chord — then record a progression on the brain's keyboard (`T1` in auxiliary mode) and the routed tracks transpose along.
+Build a tiny loop — drums, a one- or two-note bassline, one chord — then record a progression on the brain's keyboard (`T1` in auxiliary mode) and the routed tracks transpose along; take a lead out of the routing on `M2`, and set the key by hand when detection gets it wrong.
 
 The brain does the harmony work: write simple parts in one key, then let the brain move them as you
-play. Take any part that should stay put, such as a lead, out of its routing.
+play. Take any part that should stay put, such as a lead, out of its routing, and give the brain a
+key by hand when it guesses wrong on a sparse loop. The progression can also be written rather than
+played: one note per chord change on the brain's own pattern, which at track scale 4 lasts four
+times as long as the loop. Once it works, arrange it into a song with scenes.
 
 Facts:
 - Start in a new project with a drum beat, a bassline of one or two notes and one chord on a pad or pluck track, one or two bars long. [#start-small] [s1]
@@ -5151,21 +5154,79 @@ Facts:
 - Notes played on the brain's keyboard transpose the routed tracks, chords included, so the simple loop follows a progression. [#transpose] [s1]
 - Parts that must not transpose, such as a lead, come out of the brain's routing on `M2`: turn an encoder to add or remove its track, click to swap between tracks 1–4 and 5–8. [#exclude] [s1]
 - Only routed tracks feed the key detection. [#detection-input] [s2]
+- In a new project the lead is `T5`, the dissolve preset lead/gaussian. [#lead-track] (verified 1.1.33) [s3]
+- A new project routes tracks 3–8 to the brain, the lead among them, and leaves the drum tracks 1 and 2 out. [#routed-by-default] (community) [s4]
+- The routing page draws the tracks the brain hears as boxes 1–8; on the replica an encoder turned clockwise takes its track in and counter-clockwise takes it out, a direction the guide does not give. [#routing-turns] (derived) [s5]
+- The brain's manual mode sits at the counter-clockwise end of `E1` (CC12 at 0 showed manual), and in manual `E2` sets the root and `E3` the scale. [#by-hand] (verified 1.1.33) [s5]
 
 Procedures:
 - Turn a one-chord loop into a progression [#progression] [s1]
   Needs: a short loop of drums; bass and one chord plays
-  1. `auxiliary → T1`
-  2. `bar + accidental 4` — four bars per brain sequence
+  1. `auxiliary → T1` — the brain
+  2. `bar + accidental 4` — four bars per brain sequence {set track scale = 4 (area bar, track 9)}
   3. `record + play`
   4. `keys` — play the progression within the shown scale
-- Keep a track out of the brain's transposition [#exclude] [s1]
-  1. `M2`
-  2. `turn E1…E4` — remove the track (`click E1` swaps to tracks 5–8)
+  Result: The bass and the chord follow the progression; drums stay where they are.
+- Keep the lead on T5 out of the brain's transposition [#exclude] [s1]
+  1. `M2` — the brain's routing, tracks 1–4 on the encoders
+  2. `click E1` — tracks 5–8 on the encoders
+  3. `turn E1` — counter-clockwise, T5 out {set track 5 = out (area auxiliary, track 9, page 2)}
+  Result: The lead keeps its notes while everything routed moves.
+- Set the brain to A minor by hand [#key-by-hand] [s2]
+  1. `M1`
+  2. `turn E1` — counter-clockwise, manual {set mode = manual (area auxiliary, track 9)}
+  3. `turn E2` — root a {set root = a (area auxiliary, track 9)}
+  4. `turn E3` — scale minor {set scale = minor (area auxiliary, track 9)}
+  Result: The brain's page reads a minor, and the routed tracks' step components move in that scale.
 
-Related: [auxiliary.brain], [howto.get-started], [howto.first-chords]
+Related: [auxiliary.brain], [sequencer.track-scale], [howto.song-from-scenes], [howto.first-chords]
 
-Sources: s1 guide:how-to#write-a-song-fast-with-brain · s2 guide:auxiliary#brain
+Sources: s1 guide:how-to#write-a-song-fast-with-brain · s2 guide:auxiliary#brain · s3 note 30 · s4 note 10 · s5 note 59
+
+### Recipe — build a song from scenes [howto.song-from-scenes]
+current · OS ≥ 1.0.9 · changed in 1.0.45, 1.1.0 · guide v1.1.15
+Also called: song from scenes, arrange a song, verse and chorus, chain scenes, make a song, song order, scenes into a song
+Where: modes arrange; screens song
+
+In arrange, a scene is a snapshot of which pattern every track plays — copy scene 1 into scene 2 with `shift + accidental 2`, give a track a new pattern there with `M1`, then key the scenes into song mode (`shift + arrange`) in playing order and choose whether the song loops.
+
+Scenes turn loops into sections and song mode strings the sections together. Start from a loop that
+already works as the verse, copy it into the next scene and change as little as makes the chorus lift:
+one new pattern is often enough. Keep adding scenes for a bridge or an ending, then key the song in
+the order it should play. With the loop left on, the song starts over at the end, handy while
+writing; switch it off for a finished take.
+
+Facts:
+- A scene remembers the pattern every track plays and their mix; a project has 99. [#scene] [s1]
+- Choosing an empty scene fills it with a copy of the one playing, so the next section starts as the last one did. [#copy-on-select] [s1]
+- `shift` and a black key choose scenes 1–9; scenes 10–99 start with `shift + accidental 0` and two more black keys. [#pick-scene] [s1]
+- In arrange, `M1` adds a new pattern to the selected track; the replica plays it at once in the current scene, which then remembers it, while other scenes keep their own choice. [#new-pattern] (derived) [s2]
+- `shift + arrange` opens song mode, where `shift` and black keys add scenes to the song order one after another and `shift + M1` empties it. [#song-mode] [s3]
+- `E1` in song mode turns looping on or off; with it on, the song starts over from its first scene after the last. [#loop] [s3]
+- OS 1.0.45 added stopping playback at the song's end; the replica stops there with loop off, which is not yet confirmed on a unit. [#stop-at-end] (since 1.0.45) [s4]
+- Since OS 1.1.0 the black keys add scenes in song mode only with `shift` held. [#shift-keys] (since 1.1.0) [s5]
+- A chorus often needs only one or two tracks to change, such as a busier drum pattern or a new bassline, while the rest carry on; each changed track gets its own pattern in the chorus scene. [#chorus-idea] (derived) [s1]
+
+Procedures:
+- Make a chorus scene in which track 3 plays a second pattern [#chorus] (derived) [s1]
+  Needs: the verse's patterns play in scene 1
+  1. `arrange` — scene 1, the verse
+  2. `shift + accidental 2` — scene 2, a copy of scene 1 {set scene = 2 (area arrange)}
+  3. `T3 → M1` — a new, empty pattern 2 for track 3, playing in scene 2 {set pattern = 2 (area arrange, track 3)}
+  4. `instrument` — program the chorus bassline on track 3's new pattern
+  Result: Scene 1 still plays track 3's pattern 1; scene 2 plays its pattern 2.
+- Chain the scenes into a song that plays through once [#song] [s3]
+  1. `arrange`
+  2. `shift + arrange` — song mode
+  3. `shift + M1` — clear the song order
+  4. `shift + accidental 1 → + accidental 1 → + accidental 2 → + accidental 2` — shift held, verse twice, chorus twice {set song = 1 1 2 2 (area arrange)}
+  5. `turn E1` — counter-clockwise, loop off {set loop = off (area arrange)}
+  6. `play` — the song plays from its first scene
+  Result: Verse, verse, chorus, chorus, and no start over at the end.
+
+Related: [arrange.scenes], [arrange.song-mode], [arrange.patterns], [howto.song-with-brain]
+
+Sources: s1 guide:arrange#scenes · s2 guide:arrange#edit-controls · s3 guide:arrange#song-mode · s4 changelog:1.0.45 · s5 changelog:1.1.0
 
 ### Recipe — make a track pump with the kick (duck) [howto.sidechain-duck]
 current · OS ≥ 1.1.0 · guide v1.1.15
@@ -5226,27 +5287,28 @@ Facts:
 - Clicking any encoder on `M2` swaps between the amp and the filter envelope, so the same four encoders set both. [#swap] [s1]
 - For a pluck that starts bright and darkens, lower the cutoff on `M3`, raise the envelope amount on `E3`, and give the filter envelope a short decay and no sustain as well. [#filter] (derived) [s3]
 - A little resonance on `E2` of `M3` adds a squelch as the filter closes. [#resonance] (derived) [s3]
+- A new project's two plucks show the shape in numbers. Beach bum on `T4` (epiano) and dielectric on `T6` (hardsync) start at attack 0, decay by 20 and 30 and release at 69 and 60; dielectric closes its ladder filter with an envelope amount of 48 and a filter decay of 14. [#factory] (verified 1.1.33) [s4]
 
 Procedures:
 - Make the notes on T3 pluck [#amp] (derived) [s1]
   Needs: instrument mode
   1. `T3 → M2` — the amp envelope; click an encoder if the filter envelope is in front
   2. `turn E1` — attack 0 {set amp attack = 0}
-  3. `turn E2` — decay around 25 {set amp decay = 25}
+  3. `turn E2` — decay around 25, between the factory plucks' 20 and 30 {set amp decay = 25}
   4. `turn E3` — sustain 0 {set amp sustain = 0}
-  5. `turn E4` — release around 80, a short tail {set amp release = 80}
+  5. `turn E4` — release around 65, a short tail like the factory plucks' {set amp release = 65}
 - Let the filter close with every pluck [#filter] (derived) [s3]
   1. `click E1` — the filter envelope
-  2. `turn E2` — filter decay around 30 {set filter decay = 30}
+  2. `turn E2` — filter decay around 15, dielectric's snap {set filter decay = 15}
   3. `turn E3` — filter sustain 0 {set filter sustain = 0}
   4. `M3` — press it again if the page shows off
   5. `turn E1` — cutoff around 30 {set cutoff = 30}
   6. `turn E2` — resonance around 30 {set resonance = 30}
-  7. `turn E3` — envelope amount around 50 {set env amount = 50}
+  7. `turn E3` — envelope amount 48, as dielectric {set env amount = 48}
 
 Related: [instrument.envelopes], [instrument.filter], [howto.first-bassline], [howto.pad-swell]
 
-Sources: s1 guide:instrument#envelopes · s2 note 59 · s3 guide:instrument#filter
+Sources: s1 guide:instrument#envelopes · s2 note 59 · s3 guide:instrument#filter · s4 note 30
 
 ### Recipe — a pad that swells in and fades slowly [howto.pad-swell]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -5267,22 +5329,24 @@ Facts:
 - For a long fade after the keys come up, turn release on `E4` counter-clockwise; on the OP-XY lower release values ring longer. [#release] (derived) [s2]
 - A slow filter attack with a positive envelope amount on `M3` opens the tone as the chord swells, so the pad brightens as it grows louder. [#filter-swell] (derived) [s3]
 - In a new project FX II holds a reverb, so the FX II send, `shift + turn E4` on `M3`, adds space to the pad. [#reverb] (measured) [s4]
+- A new project's strings and pad show the shape in numbers. Draemy on `T7` (axis) swells in at attack 50 and bandpasser on `T8` (multisampler) at 35; both hold a high sustain, 76 and 99, and release at 30 and 33. Draemy's filter envelope opens at attack 64 with an envelope amount of only 17, and the track sends 53 to FX II. [#factory] (verified 1.1.33) [s4]
+- Any sound can become a pad; in a new project `T5`, the legato lead, shows every step at work, since the strings on `T7` already swell. [#from-a-lead] (derived) [s4]
 
 Procedures:
-- Make the chords on T7 swell in and fade out [#swell] (derived) [s1]
+- Make the chords on T5 swell in and fade out [#swell] (derived) [s1]
   Needs: instrument mode
-  1. `T7 → M2` — the amp envelope; click an encoder if the filter envelope is in front
+  1. `T5 → M2` — the amp envelope; click an encoder if the filter envelope is in front
   2. `shift + turn E1` — play mode poly {set play mode = poly}
-  3. `turn E1` — attack around 60 {set amp attack = 60}
-  4. `turn E3` — sustain around 85 {set amp sustain = 85}
-  5. `turn E4` — release around 20, a long fade {set amp release = 20}
+  3. `turn E1` — attack around 50, the factory strings' swell {set amp attack = 50}
+  4. `turn E3` — sustain around 85, held high as the factory pads hold it {set amp sustain = 85}
+  5. `turn E4` — release around 30, the factory pads' long fade {set amp release = 30}
 - Let the pad brighten as it swells, in a little reverb [#brighten] (derived) [s3]
   1. `click E1` — the filter envelope
-  2. `turn E1` — filter attack around 70 {set filter attack = 70}
+  2. `turn E1` — filter attack 64, as the factory strings {set filter attack = 64}
   3. `M3` — press it again if the page shows off
   4. `turn E1` — cutoff around 35 {set cutoff = 35}
-  5. `turn E3` — envelope amount around 40 {set env amount = 40}
-  6. `shift + turn E4` — FX II send around 50 {set fx ii send = 50}
+  5. `turn E3` — envelope amount 17, the strings' gentle opening {set env amount = 17}
+  6. `shift + turn E4` — FX II send 53, as the strings send {set fx ii send = 53}
 
 Related: [instrument.envelopes], [instrument.play-mode], [instrument.track-sends], [howto.first-chords]
 
@@ -5365,3 +5429,47 @@ Procedures:
 Related: [instrument.filter], [instrument.play-mode], [sequencer.parameter-locks], [howto.wobble]
 
 Sources: s1 note 59 · s2 guide:instrument#filter · s3 guide:instrument#envelopes · s4 guide:sequencer#step-sequencing
+
+### Recipe — sample a loop and play it in slices [howto.slice-a-loop]
+current · OS ≥ 1.1.0 · guide v1.1.15
+Also called: slice a loop, chop a break, sample a loop, record a loop onto a key, even slices, slice a sample into the keys
+Where: modes instrument; screens sample, M1
+
+On a drum track, record a loop onto its top key from the `sample` page, then hold that key and press `M1` to cut it into even slices that spread over the keyboard and choke each other, ready to replay in a new order.
+
+Slicing turns a recording into an instrument: once the loop is spread over the keys, step-enter the
+slices in a new order, repeat the kick slice, or play the hits live against the original loop on
+E5. Even slices keep the loop's timing grid, so a straight beat cut into sixteenths lines up with
+the sequencer's steps; tap mode suits phrases that do not sit on a grid.
+
+Facts:
+- Slicing is the drum sampler's, and a new project has drum kits on `T1` and `T2`. [#drum-track] [s1]
+- On a drum track the record page records onto the selected key; press the key first, then `sample`. [#record-onto-key] [s2]
+- On the record page `turn E1` picks the source (the built-in mic, line in or USB), `turn E3` the gain and `turn E4` the threshold. [#inputs] [s3]
+- Holding `M1` arms the recorder and the take begins once the input passes the threshold, so a low threshold catches the loop's first hit. [#threshold] (derived) [s3]
+- Holding a key and pressing `M1` opens the slicer on that key's sample. [#open] [s1]
+- Even mode splits the sample into equal parts and `turn E4` sets how many; sixteen suits a one-bar loop cut into sixteenths. [#even] (derived) [s1]
+- The slices spread over the keyboard and choke each other, so one slice sounds at a time, as in a chopped break. [#spread] [s1]
+- The replica fills the keys from the lowest, F3, upward (the guide says only that the slices fill the keyboard), so a loop kept on the top key, E5, stays whole there for up to 23 slices. [#top-key] (derived) [s1]
+- The slicer offers cancel and done, which the guide does not place on keys; the replica puts done on `M4` and cancel on `M3`. [#done] (derived) [s4]
+- For a drum loop with clear hits, transient mode cuts at the loudest ones instead; a sample with fewer hits gives fewer slices than `E4` asks for. [#transient] (derived) [s1]
+
+Procedures:
+- Record a loop onto the drum track's top key [#record] (derived) [s3]
+  Needs: the loop plays into line in
+  1. `T1 → key E5` — the drum track and its top key
+  2. `sample` — the record page, recording onto E5
+  3. `turn E1` — line in {set source = line in (area sample, track 1)}
+  4. `turn E4` — a low threshold, around 10 {set threshold = 10 (area sample, track 1)}
+  5. `hold M1` — start the loop playing, and let go once it has played through
+  Result: E5 holds the loop; `M2` plays the take back.
+- Cut the loop into sixteen even slices [#slice] (derived) [s1]
+  1. `key E5 + M1` — hold the loop's key; the slicer opens on it
+  2. `turn E1` — even
+  3. `turn E4` — sixteen slices
+  4. `M4` — done (on the replica; press the key your screen labels done) {set even slices = 16 (area sample, track 1, key E5)}
+  Result: Sixteen keys play the loop's sixteenths in order, each cutting off the one before; E5 still plays the whole loop.
+
+Related: [sampler.slicing], [sampler.sampling], [sampler.drum-sampler], [howto.load-samples]
+
+Sources: s1 guide:sample#sample-slicer · s2 guide:sample#drum-sampler · s3 guide:sample#arrange · s4 note 50

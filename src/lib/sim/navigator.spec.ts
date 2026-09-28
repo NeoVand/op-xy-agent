@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { tryParseKeys } from '$lib/core/opxy';
 import {
 	findParam,
+	keyIndexOf,
 	pageValues,
 	planPageValue,
 	planParam,
@@ -9,9 +10,11 @@ import {
 	planSettings,
 	playStep,
 	reads,
-	type NavPlan
+	type NavPlan,
+	type SettingGoal
 } from './navigator';
 import { shown } from './params';
+import { settingGoal } from './settings';
 import { ARP_STYLES, currentPattern } from './sequencer';
 import { OpxySim } from './opxy-sim.svelte';
 
@@ -383,5 +386,343 @@ describe('the navigator: values on the auxiliary and mixer pages', () => {
 		const plan = planPageValue(sim.state, { area: 'mix', label: 'warp', value: 3 });
 		expect(plan.reached).toBe(false);
 		expect(plan.note).toMatch(/no page shows "warp"; these do: level \(M1\)/);
+	});
+});
+
+describe('the navigator: key grammar the plans use', () => {
+	it('holds a chord’s keys, and keeps them down across “→ +”', () => {
+		const sim = boot();
+		playStep(sim, { keys: 'T3' });
+		// shift stays down while player is pressed again: the list moves on to hold, then maestro
+		playStep(sim, { keys: 'shift + player → + player → + player' });
+		expect(currentPattern(sim.state.tracks[2].sequence).player.type).toBe('maestro');
+		expect(sim.state.shift).toBe(false);
+		// a keyboard key held while M1 is pressed: the drum sampler's slicer on that key
+		playStep(sim, { keys: 'instrument' });
+		playStep(sim, { keys: 'T1' });
+		playStep(sim, { keys: 'key G3 + M1' });
+		expect(sim.state.areas.sample.slicer?.key).toBe(2);
+	});
+
+	it('plans the hold and maestro players from the list shift + player shows', () => {
+		const sim = boot();
+		const maestro = planPlace(sim.state, { area: 'player', track: 3, type: 'maestro' });
+		expect(maestro.reached).toBe(true);
+		expect(keys(maestro)).toEqual(['T3', 'shift + player → + player → + player']);
+		expect(maestro.screen).toMatch(/^maestro player off/);
+		grammatical(maestro);
+		// already on the arpeggio page: one press further on is hold
+		for (const step of planPlace(sim.state, { area: 'player', track: 3 }).steps)
+			playStep(sim, step);
+		const hold = planPlace(sim.state, { area: 'player', track: 3, type: 'hold' });
+		expect(keys(hold)).toEqual(['shift + player → + player']);
+		expect(hold.screen).toBe('hold player off');
+	});
+});
+
+describe('the navigator: sampler keys', () => {
+	it('picks a drum key by name, note or sample, then sets its settings on M1', () => {
+		const sim = boot();
+		expect(keyIndexOf(sim.state, 1, 'G3')).toBe(2);
+		expect(keyIndexOf(sim.state, 1, 'key F#3')).toBe(1);
+		expect(keyIndexOf(sim.state, 1, 'Bb3')).toBe(5);
+		expect(keyIndexOf(sim.state, 1, 'snare 1')).toBe(2);
+		expect(keyIndexOf(sim.state, 1, 3)).toBe(2);
+		expect(keyIndexOf(sim.state, 1, 55)).toBe(2);
+		expect(keyIndexOf(sim.state, 1, 'kazoo')).toBeNull();
+		const tune = planParam(sim.state, { track: 1, param: 'tune', key: 'snare 1', value: -2 });
+		expect(keys(tune)).toEqual(['key G3', 'turn E1 -20']);
+		expect(tune.screen).toBe('drum key G3: tune –2.00, play mode oneshot');
+		const pan = planParam(sim.state, { track: 1, param: 'pan', key: 'G3', value: -40 });
+		expect(keys(pan)).toEqual(['key G3', 'shift + turn E2 -20']);
+		for (const plan of [tune, pan]) grammatical(plan);
+		for (const step of [...tune.steps, ...pan.steps]) playStep(sim, step);
+		expect(sim.state.tracks[0].drumKeys[2]).toMatchObject({ tune: -2, pan: -40 });
+		expect(reads(sim.state, { track: 1, param: 'key.tune', key: 'G3', value: -2 })).toBe(true);
+		expect(reads(sim.state, { track: 1, param: 'key2.pan', value: -40 })).toBe(true);
+	});
+
+	it('tells a key’s play mode from the voice mode by the value, and turns direction anticlockwise', () => {
+		const sim = boot();
+		expect(findParam('play mode', sim.state, 1, 'mute group')).toBe('key.playMode');
+		expect(findParam('play mode', sim.state, 1, 'mono')).toBe('playMode.mode');
+		expect(findParam('play mode', sim.state, 3, 'mono')).toBe('playMode.mode');
+		const reverse = planParam(sim.state, { track: 1, param: 'direction', value: 'reverse' });
+		expect(keys(reverse)).toEqual(['shift + turn E1 -1']);
+		expect(reverse.reached).toBe(true);
+	});
+
+	it('sets the synth sampler’s and a multisampler zone’s values, the zone by its key', () => {
+		const sim = boot();
+		// a new project's T8 runs the multisampler (pad/bandpasser)
+		const tune = planParam(sim.state, { track: 8, param: 'tune', value: 2 });
+		expect(keys(tune)).toEqual(['T8', 'shift + turn E2 20']);
+		const crossfade = planParam(sim.state, { track: 8, param: 'crossfade', value: '40%' });
+		expect(crossfade.reached).toBe(true);
+		expect(crossfade.steps.at(-1)).toMatchObject({ keys: 'shift + turn E3', clicks: 40 });
+		// the loop type is a choice a shifted click steps through
+		const loop = planParam(sim.state, { track: 8, param: 'loop type', value: 'off' });
+		expect(loop.reached).toBe(true);
+		expect(keys(loop).slice(1)).toEqual(['shift + click E3', 'shift + click E3']);
+		grammatical(loop);
+		// the start stops a tenth of a percent before the end, off the detents' grid
+		const start = planParam(sim.state, { track: 8, param: 'start', value: '99.9%' });
+		expect(start.reached).toBe(true);
+		expect(planParam(sim.state, { track: 3, param: 'sample.start', value: 5 }).note).toMatch(
+			/track 3 runs prism/
+		);
+	});
+});
+
+describe('the navigator: values by the names the pages use', () => {
+	it('sets the brain’s mode, link and routing, clicking to tracks 5–8 when it must', () => {
+		const sim = boot();
+		const mode = planPageValue(sim.state, {
+			area: 'auxiliary',
+			track: 1,
+			label: 'mode',
+			value: 'manual'
+		});
+		expect(keys(mode)).toEqual(['auxiliary', 'turn E1 -1']);
+		const link = planPageValue(sim.state, { area: 'auxiliary', track: 1, label: 'link', value: 3 });
+		expect(keys(link)).toEqual(['auxiliary', 'turn E4 3']);
+		expect(link.screen).toMatch(/linked track 3$/);
+		const lead = planPageValue(sim.state, {
+			area: 'auxiliary',
+			track: 1,
+			label: 'track 5',
+			value: 'out'
+		});
+		expect(keys(lead)).toEqual(['auxiliary', 'M2', 'click E1', 'turn E1 -1']);
+		expect(lead.screen).toBe('brain routing: tracks 5–8 on the encoders, routed 3 4 6 7 8');
+		for (const plan of [mode, link, lead]) grammatical(plan);
+	});
+
+	it('finds the page a phrase names: the tape’s speed on M1, its LFO’s on M4, switched on', () => {
+		const sim = boot();
+		const speed = planPageValue(sim.state, {
+			area: 'auxiliary',
+			track: 6,
+			label: 'speed',
+			value: 120
+		});
+		expect(keys(speed)).toEqual(['auxiliary', 'T6', 'turn E2 20']);
+		const lfo = planPageValue(sim.state, {
+			area: 'auxiliary',
+			track: 6,
+			label: 'lfo speed',
+			value: 4
+		});
+		expect(keys(lfo)).toEqual(['auxiliary', 'T6', 'M4', 'M4', 'turn E1 -4']);
+		expect(lfo.steps[3].screen).toMatch(/^lfo: /);
+		// the speed dial runs its synced steps, then the free range from 00
+		const free = planPageValue(sim.state, {
+			area: 'auxiliary',
+			track: 3,
+			label: 'lfo speed',
+			value: 40
+		});
+		expect(free.reached).toBe(true);
+		expect(free.steps.at(-1)).toMatchObject({ keys: 'turn E1', clicks: 45 });
+	});
+
+	it('sets a word of several (play order), a reading with its unit (3 oct) and the player’s type', () => {
+		const sim = boot();
+		const order = planPageValue(sim.state, {
+			area: 'player',
+			track: 3,
+			label: 'pattern',
+			value: 'play order'
+		});
+		expect(keys(order)).toEqual(['T3', 'player', 'turn E2 5']);
+		const range = planPageValue(sim.state, { area: 'player', track: 3, label: 'range', value: 3 });
+		expect(range.screen).toMatch(/range 3 oct/);
+		const on = planPageValue(sim.state, { area: 'player', track: 3, label: 'player', value: 'on' });
+		expect(keys(on)).toEqual(['T3', 'player', 'player']);
+		const plan = planSettings(sim.state, [
+			{ area: 'player', track: 3, label: 'type', value: 'maestro' },
+			{ area: 'player', track: 3, label: 'hold', value: 'on' }
+		]);
+		expect(plan.reached).toBe(true);
+		for (const step of plan.steps) playStep(sim, step);
+		const player = currentPattern(sim.state.tracks[2].sequence).player;
+		expect(player).toMatchObject({
+			type: 'maestro',
+			maestro: expect.objectContaining({ hold: true })
+		});
+	});
+
+	it('reaches COM, the record page, the midi engine’s values and an FX track’s effect', () => {
+		const sim = boot();
+		const multi = planPageValue(sim.state, { area: 'com', label: 'multi-out', value: 'sync16' });
+		expect(keys(multi)).toEqual(['com', 'turn E3 2']);
+		const source = planPageValue(sim.state, {
+			area: 'sample',
+			track: 1,
+			label: 'source',
+			value: 'line in'
+		});
+		expect(keys(source)).toEqual(['sample', 'turn E1 1']);
+		const gain = planPageValue(sim.state, { area: 'sample', track: 1, label: 'gain', value: 6 });
+		expect(gain.screen).toMatch(/gain \+6$/);
+		const chorus = planPageValue(sim.state, {
+			area: 'auxiliary',
+			track: 7,
+			label: 'effect',
+			value: 'chorus'
+		});
+		expect(keys(chorus)).toEqual(['auxiliary', 'T7', 'shift + T7', 'turn E4 -1', 'click E4']);
+		expect(chorus.screen).toMatch(/^FX I chorus: /);
+		// on an instrument track, a value no parameter names is found on its pages by name
+		const midi = boot();
+		for (const step of planParam(midi.state, { track: 3, param: 'engine', value: 'midi' }).steps) {
+			playStep(midi, step);
+		}
+		expect(keys(planParam(midi.state, { track: 3, param: 'channel', value: 5 }))).toEqual([
+			'turn E1 4'
+		]);
+		const cc = planParam(midi.state, { track: 3, param: 'cc slot 2 number', value: 74 });
+		expect(keys(cc)).toEqual(['M2', 'shift + turn E2 75']);
+		for (const plan of [multi, source, chorus, cc]) grammatical(plan);
+	});
+
+	it('loads a preset by name from the browser, as it loads an engine', () => {
+		const sim = boot();
+		const plan = planParam(sim.state, { track: 3, param: 'preset', value: 'pluck/beach bum' });
+		expect(keys(plan)).toEqual(['T3', 'shift + M1', 'turn E1 -4', 'click E2']);
+		expect(plan.screen).toMatch(/^epiano: /);
+		for (const step of plan.steps) playStep(sim, step);
+		expect(sim.state.areas.system.trackPresets[2]).toBe('pluck/beach bum');
+		expect(reads(sim.state, { track: 3, param: 'preset', value: 'beach bum' })).toBe(true);
+		expect(planParam(sim.state, { track: 3, param: 'preset', value: 'nope' }).note).toMatch(
+			/no preset "nope"/
+		);
+	});
+});
+
+describe('the navigator: arrange, slicing and the bar menu', () => {
+	it('adds a pattern, picks scenes (two digits past 9) and keys a song in, then its loop', () => {
+		const sim = boot();
+		const pattern = planPageValue(sim.state, {
+			area: 'arrange',
+			track: 3,
+			label: 'pattern',
+			value: 2
+		});
+		expect(keys(pattern)).toEqual(['arrange', 'T3', 'M1']);
+		expect(pattern.screen).toMatch(/T3 pattern 2 of 2$/);
+		const scene = planPageValue(sim.state, { area: 'arrange', label: 'scene', value: 12 });
+		expect(keys(scene)).toEqual([
+			'arrange',
+			'shift + accidental 0',
+			'accidental 1',
+			'accidental 2'
+		]);
+		const song = planPageValue(sim.state, { area: 'arrange', label: 'song', value: '1 1 2 2' });
+		expect(keys(song)).toEqual([
+			'arrange',
+			'shift + arrange',
+			'shift + M1',
+			'shift + accidental 1',
+			'shift + accidental 1',
+			'shift + accidental 2',
+			'shift + accidental 2'
+		]);
+		expect(song.screen).toBe('song 1, looping: 4 scenes, cursor at 5');
+		for (const plan of [pattern, scene, song]) grammatical(plan);
+		const goals: SettingGoal[] = [
+			{ area: 'arrange', label: 'scene', value: 2 },
+			{ area: 'arrange', track: 3, label: 'pattern', value: 2 },
+			{ area: 'arrange', label: 'song', value: '1 1 2 2' },
+			{ area: 'arrange', label: 'loop', value: 'off' }
+		];
+		const plan = planSettings(sim.state, goals);
+		expect(plan.reached).toBe(true);
+		for (const step of plan.steps) playStep(sim, step);
+		const a = sim.state.areas.arrange;
+		expect(a.songs[0]).toEqual({ order: [0, 0, 1, 1], loop: false });
+		// scene 1 keeps track 3 on pattern 1; scene 2 has it on the new pattern
+		expect(a.scenes[0]?.patterns[2]).toBe(0);
+		expect(sim.state.tracks[2].sequence.current).toBe(1);
+		expect(goals.every((goal) => reads(sim.state, goal))).toBe(true);
+	});
+
+	it('slices a drum key into even slices on the keys from F3, which choke each other', () => {
+		const sim = boot();
+		const goal: SettingGoal = {
+			area: 'sample',
+			track: 1,
+			key: 'E5',
+			label: 'even slices',
+			value: 16
+		};
+		const plan = planPageValue(sim.state, goal);
+		expect(keys(plan)).toEqual(['key E5 + M1', 'turn E1 1', 'turn E4 8', 'M4']);
+		grammatical(plan);
+		for (const step of plan.steps) playStep(sim, step);
+		const [files, drumKeys] = [sim.state.areas.sample.tracks[0].keys, sim.state.tracks[0].drumKeys];
+		expect(files.slice(0, 16).every((f) => f?.id === files[23]?.id)).toBe(true);
+		expect(drumKeys.slice(0, 16).every((k) => k.playMode === 'mute group')).toBe(true);
+		expect(reads(sim.state, goal)).toBe(true);
+		expect(reads(sim.state, { ...goal, value: 8 })).toBe(false);
+		expect(planPageValue(sim.state, { ...goal, track: 3 }).note).toMatch(/drum sampler's/);
+	});
+
+	it('sets the track scale and the bars with bar held, on an auxiliary track too', () => {
+		const sim = boot();
+		const scale = planPageValue(sim.state, {
+			area: 'bar',
+			track: 9,
+			label: 'track scale',
+			value: 4
+		});
+		expect(keys(scale)).toEqual(['auxiliary', 'bar + accidental 4']);
+		const bars = planPageValue(sim.state, { area: 'bar', track: 3, label: 'bars', value: 2 });
+		expect(keys(bars)).toEqual(['T3', 'bar + [+]']);
+		const length = planPageValue(sim.state, { area: 'bar', track: 3, label: 'length', value: 25 });
+		expect(keys(length)).toEqual(['T3', 'bar + turn E2 -25']);
+		for (const plan of [scale, bars, length]) grammatical(plan);
+		for (const step of scale.steps) playStep(sim, step);
+		expect(currentPattern(sim.state.aux[0].sequence).scale).toBe(4);
+		expect(planPageValue(sim.state, { area: 'bar', label: 'track scale', value: 9 }).note).toMatch(
+			/one of 1, 2, 3/
+		);
+	});
+});
+
+describe('the navigator: settings as plan_steps and the recipes write them', () => {
+	it('turns a name, a value and where into a goal', () => {
+		expect(settingGoal({ param: 'cutoff', value: 40 }, 3)).toEqual({
+			track: 3,
+			param: 'cutoff',
+			value: 40
+		});
+		expect(settingGoal({ param: 'size', value: 80, area: 'auxiliary', track: 16 })).toEqual({
+			area: 'auxiliary',
+			track: 8,
+			label: 'size',
+			value: 80
+		});
+		expect(settingGoal({ param: 'tune', value: -2, track: 1, key: 'G3' })).toEqual({
+			track: 1,
+			param: 'tune',
+			value: -2,
+			key: 'G3'
+		});
+		expect(settingGoal({ param: 'track scale', value: 4, area: 'bar', track: 9 })).toEqual({
+			area: 'bar',
+			track: 9,
+			label: 'track scale',
+			value: 4
+		});
+		// tracks 9–16 are the auxiliary ones, as in plan_steps
+		expect(settingGoal({ param: 'cutoff', value: 4, track: 12 })).toMatchObject({
+			area: 'auxiliary',
+			track: 4
+		});
+		expect(settingGoal({ param: 'cutoff', value: 4, area: 'instrument', track: 12 })).toMatch(
+			/instrument tracks/
+		);
+		expect(settingGoal({ param: 'speed', value: 4, area: 'player', track: 12 })).toMatch(/1–8/);
 	});
 });

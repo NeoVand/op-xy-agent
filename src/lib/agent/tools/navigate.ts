@@ -7,9 +7,19 @@
  * ones keeps the tool set within the API's grammar limits (`MAX_OPTIONAL_PARAMETERS`).
  */
 import { z } from 'zod';
-import type { NavPlan, NavStep, Place, SettingsPlan } from '$lib/sim/navigator';
+import type { NavPlan, NavStep, Place, SettingGoal, SettingsPlan } from '$lib/sim/navigator';
+import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
 import type { NavGoal } from '../virtual-opxy';
 import { defineTool, errorResult, jsonResult, type AgentEnvironment } from './define';
+
+/** A setting's value, as plan_steps takes it. */
+const settingValue = z.union([z.number(), z.string().min(1).max(30)]);
+
+/** A sampler track's key, as plan_steps takes it. */
+const samplerKey = z.union([z.number(), z.string().min(1).max(30)]);
+
+/** Where a setting lives (the areas plan_steps plans values in). */
+const settingArea = z.enum(SETTING_AREAS as [SettingArea, ...SettingArea[]]);
 
 const goalInput = z.object({
 	show: z
@@ -24,9 +34,11 @@ const goalInput = z.object({
 			'true (with show false): walk the user through the steps on the replica instead: it lights one step at a time, with the turn direction for encoders, and waits until the user has done it; for someone who wants to learn by doing it themselves'
 		),
 	area: z
-		.enum(['instrument', 'auxiliary', 'mix', 'arrange', 'tempo', 'player'])
+		.enum(['instrument', 'auxiliary', 'mix', 'arrange', 'tempo', 'player', 'sample', 'com', 'bar'])
 		.optional()
-		.describe('For a page: which part of the device (not needed when param is given)'),
+		.describe(
+			"Which part of the device: for a page (sample is the record page), or where param lives (not needed for an instrument track's parameter)"
+		),
 	track: z
 		.int()
 		.min(1)
@@ -42,27 +54,34 @@ const goalInput = z.object({
 		.max(60)
 		.optional()
 		.describe(
-			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "tempo", "groove", an engine parameter such as "shape" or "detune"), a list ("engine", "filter type", "lfo type": value is the name, e.g. "wavetable", "ladder", "duck"; an engine is loaded from the preset browser shift + M1 brings up, as its first preset, which replaces the whole sound; the replica lists the external midi engine last, which the owner\'s unit did not show), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome"), or an id ("filter.cutoff"). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II, "speed" on the tape, "root" or "scale" on the brain, "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii"; "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). With area player: the values of the player page ("speed", "pattern", "range", "hold"; its shift layer "length", "style", "glide", "stereo"). Without page, the first page that shows it.'
+			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "tempo", "groove", an engine parameter such as "shape" or "detune"), a list or a load ("engine", "preset", "filter type", "lfo type": value is the name, e.g. "wavetable", "pluck/beach bum", "ladder", "duck"; an engine or preset is loaded from the preset browser shift + M1 brings up, which replaces the whole sound; the replica lists the external midi engine last, which the owner\'s unit did not show), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome") and "source type" (audio, notes), a sampler track\'s own values with key naming the key ("tune", "start", "end", "play mode" (key, oneshot, mute group, loop), "direction", "pan", "fade", "gain" of a drum key; "start", "loop start", "loop end", "end", "tune", "loop crossfade", "gain", "loop type" of the synth sampler or a multisampler zone), any value a page of the track shows (the midi engine\'s "channel", "bank", "cc slot 1", "cc slot 1 number"), or an id ("filter.cutoff"). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II and their "effect": chorus, delay, dist, lofi, phaser, reverb; "speed" on the tape; the brain\'s "mode" (auto, manual), "root", "scale", "link"; a routing page\'s "track 1"…"track 8" (the brain: in or out; tape, FX and external audio: the send level; tracks 5–8 are a click away, which the plan does); an LFO\'s "lfo speed", "lfo amount"; "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii", "mute"; "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). With area player: "type" (arpeggio, hold, maestro), "player" (on, off) and the page\'s values ("speed", "pattern", "range", "hold"; its shift layer "length", "style", "glide", "stereo"). With area arrange: "pattern" (the pattern the track plays; new ones are added as needed), "scene" (1–99; an empty one starts as a copy of the current), "song" (its scenes in order, e.g. "1 1 2 2") and "loop" (on, off). With area bar (the bar menu, bar held): "track scale" (1–8, 16, 1/2), "bars" (1–4), "quant", "length", "groove", "shape". With area sample: the record page\'s "source" (mic, line in, usb), "gain", "threshold", and on a drum track "even slices" or "transient slices" (value: how many; key: the key whose sample is cut; the slices land on the keys from F3). With area com: "multi-out", "bluetooth advertising", "charging". Without page, the page that shows it.'
 		),
-	value: z
-		.union([z.number(), z.string().min(1).max(30)])
+	value: settingValue
 		.optional()
 		.describe(
 			'The value to set: a number as the screen shows it (0–99 for most, bpm for tempo) or the text the screen shows ("1/16", "danish", "mono")'
+		),
+	key: samplerKey
+		.optional()
+		.describe(
+			'A sampler track\'s key: whose settings param sets on a drum track (its name "G3", its sample\'s such as "snare 1", or 1–24; default: the key selected last), the multisampler zone of that key, or the drum key whose sample "even slices" cuts'
 		),
 	settings: z
 		.array(
 			z.object({
 				param: z.string().min(1).max(60).describe('As for param'),
-				value: z.union([z.number(), z.string().min(1).max(30)]).describe('As for value'),
-				track: z.int().min(1).max(8).optional().describe('Default: the track given above')
+				value: settingValue.describe('As for value'),
+				track: z.int().min(1).max(16).optional().describe('Default: the track given above'),
+				area: settingArea.optional().describe('Default: the area given above'),
+				page: z.int().min(1).max(4).optional().describe('As for page'),
+				key: samplerKey.optional().describe('As for key')
 			})
 		)
 		.min(1)
 		.max(16)
 		.optional()
 		.describe(
-			'Several parameters in one go, in order, instead of param and value: each is planned from where the ones before leave the device. Use it to set up a sound from an idea (a pluck: amp decay, sustain, release, resonance; a sidechain duck: lfo type duck, duck source, lfo amount). Put a list pick (engine, filter type, lfo type) before the parameters that depend on it, the engine first of all (its preset resets the sound).'
+			"Several settings in one go, in order, instead of param and value: each is planned from where the ones before leave the device. Use it to set up a sound from an idea (a pluck: amp decay, sustain, release, resonance; a sidechain duck: lfo type duck, duck source, lfo amount) or a recipe of several parts (a song from scenes: arrange scene 2, track 3's pattern 2, the song). Put a list pick or load (engine, preset, filter type, lfo type, a player's type) before the settings that depend on it, the engine or preset first of all (it resets the sound)."
 		)
 });
 
@@ -72,48 +91,42 @@ type GoalInput = z.infer<typeof goalInput>;
 function toGoal(input: GoalInput, env: AgentEnvironment): NavGoal | string {
 	const selected = env.virtual?.status().selectedTrack ?? 1;
 	const track = input.track ?? selected;
+	const { area, page, key } = input;
 	if (input.settings !== undefined) {
 		if (input.param !== undefined) return 'give either param and value or settings, not both';
-		if (track > 8) return 'only instrument tracks (1–8) have these parameters';
-		return {
-			settings: input.settings.map((s) => ({
-				track: s.track ?? track,
+		const goals: SettingGoal[] = [];
+		for (const s of input.settings) {
+			const spec = {
 				param: s.param,
-				value: s.value
-			}))
-		};
+				value: s.value,
+				area: s.area ?? area,
+				track: s.track ?? input.track,
+				page: s.page ?? page,
+				key: s.key ?? key
+			};
+			const goal = settingGoal(spec, selected);
+			if (typeof goal === 'string') return `${s.param}: ${goal}`;
+			goals.push(goal);
+		}
+		return { settings: goals };
 	}
 	if (input.param !== undefined) {
 		if (input.value === undefined) return 'value is needed with param';
-		const area = input.area ?? (track > 8 ? 'auxiliary' : 'instrument');
-		if (area === 'player' && track > 8) return 'players are on instrument tracks 1–8';
-		if (area === 'auxiliary' || area === 'mix' || area === 'player') {
-			return {
-				area,
-				// auxiliary pages number their tracks 1–8; mix M1 takes 1–16
-				track:
-					input.track === undefined ? undefined : area === 'mix' ? track : ((track - 1) % 8) + 1,
-				page: input.page as 1 | 2 | 3 | 4 | undefined,
-				label: input.param,
-				value: input.value
-			};
-		}
-		if (area !== 'instrument') return `${area} has no parameters to plan; give only the area`;
-		if (track > 8) return 'only instrument tracks (1–8) have these parameters';
-		return { track, param: input.param, value: input.value };
+		const spec = { param: input.param, value: input.value, area, track: input.track, page, key };
+		return settingGoal(spec, selected);
 	}
 	const aux = track > 8 ? track - 8 : track;
 	let place: Place;
-	switch (input.area) {
+	switch (area) {
 		case 'instrument':
 			if (track > 8) return 'instrument tracks are 1–8';
-			place = { area: 'instrument', track, page: (input.page ?? 1) as 1 | 2 | 3 | 4 };
+			place = { area: 'instrument', track, page: (page ?? 1) as 1 | 2 | 3 | 4 };
 			break;
 		case 'auxiliary':
-			place = { area: 'auxiliary', track: aux, page: (input.page ?? 1) as 1 | 2 | 3 | 4 };
+			place = { area: 'auxiliary', track: aux, page: (page ?? 1) as 1 | 2 | 3 | 4 };
 			break;
 		case 'mix':
-			place = { area: 'mix', page: (input.page ?? 1) as 1 | 2 | 3 | 4 };
+			place = { area: 'mix', page: (page ?? 1) as 1 | 2 | 3 | 4 };
 			break;
 		case 'arrange':
 			place = { area: 'arrange' };
@@ -125,6 +138,15 @@ function toGoal(input: GoalInput, env: AgentEnvironment): NavGoal | string {
 			if (track > 8) return 'players are on instrument tracks 1–8 here';
 			place = { area: 'player', track };
 			break;
+		case 'sample':
+			if (track > 8) return 'sampling is on instrument tracks 1–8';
+			place = { area: 'sample', track };
+			break;
+		case 'com':
+			place = { area: 'com' };
+			break;
+		case 'bar':
+			return 'the bar menu shows while bar is held: give a param (track scale, bars, quant, length, groove, shape) and a value';
 		default:
 			return 'give an area (for a page) or a param and value';
 	}
@@ -146,7 +168,8 @@ function planView(plan: NavPlan | SettingsPlan) {
 		...('parts' in plan
 			? {
 					settings: plan.parts.map((p) => ({
-						param: p.goal.param,
+						param: 'label' in p.goal ? p.goal.label : p.goal.param,
+						...('area' in p.goal ? { area: p.goal.area } : {}),
 						value: p.goal.value,
 						track: p.goal.track,
 						reached: p.reached,

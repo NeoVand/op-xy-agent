@@ -22,7 +22,8 @@
     punch-in effects' sounds (recorded, to be worked out) and the loop crossfade.
   - **The agent** plans exact steps on a copy of the simulator for any page or value, auxiliary and
     mixer values included. It can read them out, play them on the replica, or walk the user through
-    them one lit key at a time. It sets whole sounds up from an idea (five tested recipes) and sets a
+    them one lit key at a time. It sets whole sounds and song structures up from an idea (eight tested
+    recipes) and sets a
     connected device's sound over the verified CCs. A device map exported from the simulator
     (`device_map`) tells it what every page holds: encoders per layer, ranges, CCs, MIDI reach.
     Evals: how-to and idea-to-device cases pass; the regression run is 42/42 Q&A and 18/18 device
@@ -69,11 +70,13 @@
 - **M3 conductor agent: v1 done.** Opus 5.5 conductor + Sonnet 5 manual expert, typed read/ui/mutate
   tools with approvals and undo, IndexedDB threads, streaming chat with a live activity line. Evals at
   production parity: 42/42 manual Q&A, 18/18 device tasks (`evals/agent/RESULTS.md`).
-- **M4 our manual: done.** 163 reworded units, 100% guide coverage, verbatim guard, search.
+- **M4 our manual: done.** 165 reworded units, 100% guide coverage, verbatim guard, search.
 - **F4, the agent from idea to steps** (2026-09-28): the navigator plans exact keys and turns to any
   instrument page or value, tried on a copy of the simulator. `plan_steps` reads them out or plays
-  them on the replica, one setting or a whole sound at a time. Five sound-design recipes run as
-  written (tested). The how-to eval checks the virtual OP-XY's end state.
+  them on the replica, one setting or a whole sound at a time. Five sound-design recipes and three
+  of structure (brain routing, sampling and slicing, a song from scenes) run as written (tested),
+  and every control of the device map is plannable. The how-to eval checks the virtual OP-XY's end
+  state.
 - **M6 native projects: the no-device part is done** (2026-09-28). `src/lib/core/xy/` is the TS port of
   kmorrill/xy-format: container, lane-aware walk, project model, reader, and a template writer that
   keeps every byte it does not own. It writes the Python library's exact bytes on 26 golden op lists
@@ -248,7 +251,7 @@ owner flagged, then what users see most.
       It is data, so the agent never has to guess a key combo. `knowledge/opxy/device-map.json`
       (65 pages, 336 controls, each found by turning it on a copy) from
       `scripts/build-device-map.mjs`; a test fails while it is stale; the agent reads it with
-      `device_map`.
+      `device_map`. Every one of its 280 turns names the `plan_steps` parameter that sets it.
 - [x] **Navigator** (`src/lib/sim/navigator.ts`): a deterministic path from the replica's current
       state to any page or parameter value, as key presses and encoder turns. Every plan runs on a
       copy of the simulator before it is returned. It covers instrument pages and their shift layers,
@@ -256,18 +259,29 @@ owner flagged, then what users see most.
       mix, arrange and the players; `planSettings` sets several parameters in a row. Values on the
       auxiliary and mixer pages are found by name from the page's description: the navigator turns
       each encoder on a copy to see which one moves the value, so no table has to list them.
+      Since 2026-09-28 it plays the whole key grammar (`shift + player → + player` picks the hold
+      and maestro players) and reaches what the map listed as out of reach: drum keys' and the
+      samplers' settings (by key), values the frame draws but the description leaves out (the
+      brain's mode, link and routing, the aux LFOs' speed, CC slots, the arpeggio's play order,
+      maestro's hold, COM, the record page), and values set with keys of their own (a preset by
+      name, an FX track's effect, arrange's pattern, scene, song and loop, slicing a drum key, the
+      bar menu's track scale and bars).
 - [x] **Tools:** one `plan_steps` tool gives the exact steps for a page, a value or several
       settings. With `show` it walks the replica through them, step by step, so the virtual OP-XY
       ends up there. `set_sound` sets a connected device's sound parameters over the lane CCs
       verified on 1.1.33, with approval and undo when the app knows the value before.
 - [x] **Recipes:** five sound-design recipes (`howto.sidechain-duck`, `pluck`, `pad-swell`,
-      `wobble`, `acid-bass`). Their steps carry machine-readable settings, and
-      `src/lib/sim/recipes.spec.ts` runs every recipe on a new project. Left: brain routing,
-      sampling and slicing, and a song from scenes as runnable recipes (the prose units exist), and
-      values taken from the factory presets.
+      `wobble`, `acid-bass`) and three of structure: brain routing (`howto.song-with-brain`),
+      sampling and slicing (`howto.slice-a-loop`) and a song from scenes
+      (`howto.song-from-scenes`). Their steps carry machine-readable settings (with `area`, a value
+      of another page), and `src/lib/sim/recipes.spec.ts` runs every recipe on a new project as
+      `plan_steps` would. The pluck and the pad take their values from a new project's factory
+      plucks, strings and pad; no factory sound with known values backs the acid bass, wobble or
+      duck. Left: recording itself (held `M1`, time-based) stays prose.
 - [x] **Evals:** `evals/agent/howto.mjs` checks how-to answers and idea-to-device set-ups against the
       simulator's end state, screen questions asked from elsewhere on the replica, walkthroughs and
-      engine changes through the preset browser (19 cases).
+      engine changes through the preset browser, and the structure recipes, a drum key and the
+      player list (25 cases).
 
 ### F5 — Next capture session (with the owner)
 

@@ -38,6 +38,11 @@ facts:
     text: A little resonance on `E2` of `M3` adds a squelch as the filter closes.
     source: https://teenage.engineering/guides/op-xy/instrument#filter
     confidence: derived
+  - id: factory
+    text: A new project's two plucks show the shape in numbers. Beach bum on `T4` (epiano) and dielectric on `T6` (hardsync) start at attack 0, decay by 20 and 30 and release at 69 and 60; dielectric closes its ladder filter with an envelope amount of 48 and a filter decay of 14.
+    source: docs/research/30-presets-samples.md#11-a-new-projects-sounds
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: amp
     goal: Make the notes on T3 pluck
@@ -49,14 +54,14 @@ procedures:
         note: attack 0
         set: { param: amp attack, value: 0 }
       - keys: turn E2
-        note: decay around 25
+        note: decay around 25, between the factory plucks' 20 and 30
         set: { param: amp decay, value: 25 }
       - keys: turn E3
         note: sustain 0
         set: { param: amp sustain, value: 0 }
       - keys: turn E4
-        note: release around 80, a short tail
-        set: { param: amp release, value: 80 }
+        note: release around 65, a short tail like the factory plucks'
+        set: { param: amp release, value: 65 }
     source: https://teenage.engineering/guides/op-xy/instrument#envelopes
     confidence: derived
   - id: filter
@@ -65,8 +70,8 @@ procedures:
       - keys: click E1
         note: the filter envelope
       - keys: turn E2
-        note: filter decay around 30
-        set: { param: filter decay, value: 30 }
+        note: filter decay around 15, dielectric's snap
+        set: { param: filter decay, value: 15 }
       - keys: turn E3
         note: filter sustain 0
         set: { param: filter sustain, value: 0 }
@@ -79,8 +84,8 @@ procedures:
         note: resonance around 30
         set: { param: resonance, value: 30 }
       - keys: turn E3
-        note: envelope amount around 50
-        set: { param: env amount, value: 50 }
+        note: envelope amount 48, as dielectric
+        set: { param: env amount, value: 48 }
     source: https://teenage.engineering/guides/op-xy/instrument#filter
     confidence: derived
 related: [instrument.envelopes, instrument.filter, howto.first-bassline, howto.pad-swell]

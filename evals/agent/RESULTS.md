@@ -3,6 +3,29 @@
 Re-run with `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5` (needs `ANTHROPIC_API_KEY`
 in `.env`; never printed). Newest first.
 
+## 2026-09-28 — runnable recipes and values by name, conductor claude-opus-5-5
+
+The navigator now plans every value the device map shows by the name its screen uses (a drum key's
+tune, the brain's mode and routing, the player list, arrange's scenes and song, the slicer), and
+three more recipes run on a new project (brain routing, slicing a loop, a song from scenes). Six
+how-to cases cover them (`node evals/agent/howto.mjs --ids brain-lead,brain-key,slice,song-scenes,drum-tune,maestro`).
+
+| Case          | Request                                                       | Result | Tools it used               |
+| ------------- | ------------------------------------------------------------- | ------ | --------------------------- |
+| `brain-lead`  | keep the lead on track 5 out of the brain, a four-bar brain   | pass   | plan_steps (show, settings) |
+| `brain-key`   | the brain guesses the wrong key: set A minor by hand          | pass   | plan_steps (show, settings) |
+| `slice`       | chop the loop on track 1's E5 into 16 equal slices            | pass   | plan_steps (show)           |
+| `song-scenes` | scene 2 with a new pattern on track 3, song 1 1 2 2, no loop  | pass   | plan_steps (show, settings) |
+| `drum-tune`   | the snare on track 1 down two semitones                       | pass   | plan_steps (show)           |
+| `maestro`     | track 4's player to maestro with hold on, and how to reach it | pass   | plan_steps (show, settings) |
+
+$1.29 for the six ($0.86 of it the manual cache on the first), 17–32 s each, one plan_steps call
+per case. The answers give the device's keys: `M2`, a click of `E1` for tracks 5–8 and `E1`
+counter-clockwise to take `T5` out; `key E5 + M1` into the slicer; `shift + accidental 2` for a
+scene that starts as a copy; `key G3` then `E1` 20 clicks down for the snare; `shift + player` with
+shift kept down to step through the player list. For maestro the agent also switched the player on
+and said so.
+
 ## 2026-09-28 — changing engine through the preset browser, conductor claude-opus-5-5
 
 On OS 1.1.33 shift + M1 brings up the preset browser, and the replica now does too, so the navigator

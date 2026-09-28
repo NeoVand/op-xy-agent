@@ -73,10 +73,14 @@ Claude.
 ## The agent: from an idea to steps
 
 - **Navigator** (`sim/navigator.ts`): from where the simulator stands to a page, a parameter value,
-  several values in a row (`planSettings`), or a value an auxiliary or mixer page shows
-  (`planPageValue`, which finds the encoder by turning each one on a copy). Every plan is run on a
-  copy of the simulator before it is returned, so its steps are known to work. Each step says what
-  the screen shows after it.
+  several settings in a row (`planSettings`), or a value any page shows by the name its screen uses
+  (`planPageValue`: the description's values and those the frame draws, `frameValues`; it finds the
+  encoder by turning each one on a copy, or the click or key that switches the value). A few values
+  have keys of their own (the player list, a preset, an FX track's effect, arrange's patterns,
+  scenes and song, slicing, the bar menu). Steps use the whole key grammar, held chords and `→ +`
+  included. Every plan is run on a copy of the simulator before it is returned, so its steps are
+  known to work. Each step says what the screen shows after it. `sim/settings.ts` turns a setting
+  as plan_steps and the recipes write it into the navigator's goal.
 - **`plan_steps`** reads the plan out, plays it on the replica (`show`, which leaves the virtual
   OP-XY there), or hands it to the walkthrough (`guide`, `app/guide.svelte.ts`). The walkthrough
   lights one step at a time and moves on when the replica's screen shows where the step leads.
@@ -86,7 +90,8 @@ Claude.
   copy) with its range, display format, CC and MIDI reach on OS 1.1.33. The agent reads it with
   `device_map`.
 - **Recipes** (`knowledge/manual/units/howto/*`) mark the steps that set values
-  (`set: { param, value }`); `sim/recipes.spec.ts` runs every recipe on a new project.
+  (`set: { param, value }`, with `area`, `track`, `page` and `key` when the value is another page's);
+  `sim/recipes.spec.ts` runs every recipe on a new project, as plan_steps would.
 - **Device**: `set_sound` sends a connected OP-XY's sound parameters over the lane CCs verified on
   OS 1.1.33, through the transport with approval; the other device tools cover tempo, mutes, track
   select, transport, note previews and panic. Patterns, scenes and songs are written to the virtual
