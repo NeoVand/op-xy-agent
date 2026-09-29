@@ -583,6 +583,12 @@ and `…_sampler_project_state.md`:
 4. **Saving a track as a preset** copies the samples into the new `snapshot/…preset` folder and
    repoints the project's paths there.
 
+The app follows these paths (2026-09-29, `app/device-samples.ts`): a project loaded from the device
+brings the files its drum keys, sampler and zones name, read in the same MTP session with
+`/fat32/` as the storage root (`/fat32/presets/drum/x.preset/a.wav` is `presets/drum/x.preset/a.wav`
+over MTP). The `content/samples/…` family is inside the firmware and not on the drive, so those
+sounds stay the replica's stand-ins. Not yet tried on the owner's unit.
+
 **Consequences for our deploy policy:**
 
 - Preset folders are **immutable** once deployed. A new version gets a new folder name (e.g.

@@ -64,15 +64,16 @@ const isObject = (v: unknown): v is Record<string, unknown> =>
 /**
  * `saved` laid over `defaults`: objects merge key by key (keys only the defaults know are kept, so
  * new fields appear); arrays keep the saved length, each object element merged over the default at
- * its index (or the default's first element); anything else keeps the saved value when its type
- * matches the default's, else the default.
+ * its index (or the default's first element), and a null element stays null (an emptied drum key,
+ * a scene slot not in use); anything else keeps the saved value when its type matches the
+ * default's, else the default.
  */
 export function mergeDefaults<T>(saved: unknown, defaults: T): T {
 	if (Array.isArray(defaults)) {
 		if (!Array.isArray(saved)) return defaults;
 		return saved.map((item, i) => {
 			const template = defaults[i] ?? defaults[0];
-			return template === undefined ? item : mergeDefaults(item, template);
+			return template === undefined || item === null ? item : mergeDefaults(item, template);
 		}) as T;
 	}
 	if (isObject(defaults)) {

@@ -35,7 +35,8 @@ src/lib/
                the analysis in a worker)
   app/         Glue between features, e.g. the replica ⇄ device bridge (replica keys → notes/transport/
                track select through the transport; device notes/clock → replica LEDs), app-wide contexts,
-               project transfer (.xy files from disk or the device over MTP, and back)
+               project transfer (.xy files from disk or the device over MTP, and back), and the
+               device samples a loaded project names (read over MTP, kept in IndexedDB by path)
   agent/       (M3) conductor harness on @anthropic-ai/sdk, tools, subagents, approvals, journal
   voice/       (M8) the voice front end: WebRTC call (rtc), VoiceSession, the ask_claude bridge to the
                conductor, spoken summaries, the mic key and voice strip
