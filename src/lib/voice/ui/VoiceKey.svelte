@@ -177,7 +177,7 @@ Keyboard: hold space or enter on the key, or hold the ` key anywhere you are not
 		border: 0;
 		border-radius: 50%;
 		background: none;
-		color: var(--xy-scr-muted);
+		color: var(--xy-fg-subtle);
 		cursor: pointer;
 		transition:
 			color var(--xy-dur-quick, 120ms) ease,
@@ -185,13 +185,13 @@ Keyboard: hold space or enter on the key, or hold the ` key anywhere you are not
 	}
 
 	.voice-round:hover:not(:disabled) {
-		background-color: rgb(255 255 255 / 0.08);
-		color: var(--xy-scr-fg);
+		background-color: var(--xy-hover);
+		color: var(--xy-fg);
 	}
 
 	.voice-round[data-led='white'],
 	.voice-round[data-led='dim'] {
-		color: var(--xy-scr-fg);
+		color: var(--xy-fg);
 	}
 
 	.voice-round[data-led='red'] {
@@ -199,7 +199,7 @@ Keyboard: hold space or enter on the key, or hold the ` key anywhere you are not
 	}
 
 	.voice-round:focus-visible {
-		outline: 1.5px solid var(--xy-scr-muted);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 1px;
 	}
 

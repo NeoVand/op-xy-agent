@@ -6,8 +6,8 @@ A surface. Panels differ by material, not by decoration:
 - `card`: the screen's white card, for the one thing that needs attention (an approval, a result).
 - `sunken`: a recess, for inputs, logs and wells.
 - `device`: the replica's own anodised aluminium (its gradient, rim catch-light and dark outline),
-  for a panel that sits beside the replica as part of the instrument. Dark in both themes, like the
-  device; its text is the legend print.
+  for a panel that sits beside the replica as part of the instrument, its text the legend print; in
+  the light theme, the same slab in the guide's paper and ink.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -52,7 +52,6 @@ A surface. Panels differ by material, not by decoration:
 <svelte:element
 	this={as}
 	class={['panel', `panel--${variant}`, className]}
-	data-theme={variant === 'device' ? 'dark' : undefined}
 	aria-labelledby={title && !rest['aria-label'] ? titleId : undefined}
 	{...rest}
 >
@@ -131,8 +130,9 @@ A surface. Panels differ by material, not by decoration:
 	}
 
 	/* The chassis of the replica (see ReplicaDefs' rx-body and rx-rim): lit along the back edge, a
-	 * faint catch-light along the front, a dark outline where it meets the desk. */
-	.panel--device {
+	 * faint catch-light along the front, a dark outline where it meets the desk. Dark theme only; the
+	 * light theme's slab is below. */
+	:global([data-theme='dark']) .panel--device {
 		--xy-fg: var(--xy-mat-legend);
 		--xy-fg-muted: #b9b8b5;
 		--xy-fg-subtle: #909195;
@@ -154,9 +154,21 @@ A surface. Panels differ by material, not by decoration:
 	}
 
 	/* the header sits on a groove, like the gap between the replica's tiles */
-	.panel--device .panel__head {
+	:global([data-theme='dark']) .panel--device .panel__head {
 		border-bottom-color: rgb(0 0 0 / 0.55);
 		box-shadow: 0 1px 0 rgb(255 255 255 / 0.035);
+	}
+
+	/* on paper: the same slab, white with a soft edge, its wells the page's paper */
+	:global([data-theme='light']) .panel--device {
+		--xy-surface-sunken: var(--xy-bg);
+		border-radius: 1rem;
+		background: linear-gradient(to bottom, #ffffff, #fbfaf9 45%, #f5f4f3);
+		color: var(--xy-fg);
+		box-shadow:
+			inset 0 1px 0 #ffffff,
+			0 0 0 1px #dcdad8,
+			0 1.5rem 3rem -1.5rem rgb(15 14 18 / 0.16);
 	}
 
 	.panel--sunken {

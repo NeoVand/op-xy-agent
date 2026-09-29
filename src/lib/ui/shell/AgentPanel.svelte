@@ -948,13 +948,13 @@ above the composer says what voice is doing while it is on.
 		padding: 0.5rem 0.5rem 0.4375rem;
 		border-radius: 1.25rem;
 		background-color: var(--xy-surface-sunken);
-		color: var(--xy-scr-fg);
-		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+		color: var(--xy-fg);
+		box-shadow: inset 0 0 0 1px var(--xy-line);
 		transition: box-shadow var(--xy-dur-quick, 120ms) ease;
 	}
 
 	.composer:focus-within {
-		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+		box-shadow: inset 0 0 0 1px var(--xy-line-strong);
 	}
 
 	.composer__field {
@@ -964,13 +964,13 @@ above the composer says what voice is doing while it is on.
 		padding: 0.375rem 0.5rem;
 		border: 0;
 		background: none;
-		color: var(--xy-scr-fg);
+		color: var(--xy-fg);
 		font: inherit;
 		font-size: var(--xy-text-sm);
 		line-height: var(--xy-leading-sm);
 		resize: none;
 		field-sizing: content;
-		caret-color: var(--xy-scr-fg);
+		caret-color: var(--xy-fg);
 	}
 
 	.composer__field:focus,
@@ -979,7 +979,7 @@ above the composer says what voice is doing while it is on.
 	}
 
 	.composer__field::placeholder {
-		color: var(--xy-scr-muted);
+		color: var(--xy-fg-subtle);
 	}
 
 	.composer__field:disabled {
@@ -1005,7 +1005,7 @@ above the composer says what voice is doing while it is on.
 		border: 0;
 		border-radius: 50%;
 		background: none;
-		color: var(--xy-scr-muted);
+		color: var(--xy-fg-subtle);
 		cursor: pointer;
 		transition:
 			color var(--xy-dur-quick, 120ms) ease,
@@ -1013,23 +1013,23 @@ above the composer says what voice is doing while it is on.
 	}
 
 	.round:hover:not(:disabled) {
-		background-color: rgb(255 255 255 / 0.08);
-		color: var(--xy-scr-fg);
+		background-color: var(--xy-hover);
+		color: var(--xy-fg);
 	}
 
 	/* send and stop: the one solid key, warm white on the black */
 	.round--solid {
-		background-color: var(--xy-scr-fg);
-		color: var(--xy-scr-bg);
+		background-color: var(--xy-fg);
+		color: var(--xy-bg);
 	}
 
 	.round--solid:hover:not(:disabled) {
 		background-color: #ffffff;
-		color: var(--xy-scr-bg);
+		color: var(--xy-bg);
 	}
 
 	.round:focus-visible {
-		outline: 1.5px solid var(--xy-scr-muted);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 1px;
 	}
 
