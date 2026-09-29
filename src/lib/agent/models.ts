@@ -89,6 +89,22 @@ export const MODEL_MATRIX: readonly ModelProfile[] = [
 		role: 'conductor (default)'
 	},
 	{
+		// probed on 2026-09-29: adaptive thinking with the updates display, effort, mid-conversation
+		// system messages (after a user turn or tool results), fallbacks, caching from 512 tokens
+		id: 'claude-sonnet-5-5',
+		label: 'sonnet 5.5',
+		pricing: { input: 2, cacheWrite5m: 2.5, cacheWrite1h: 4, cacheRead: 0.2, output: 10 },
+		contextTokens: 1_000_000,
+		maxOutputTokens: 128_000,
+		thinking: 'adaptive',
+		thinkingDisplay: 'updates',
+		effort: true,
+		midConversationSystem: true,
+		fallbacks: true,
+		cacheMinTokens: 512,
+		role: 'fast conductor, manual expert'
+	},
+	{
 		id: 'claude-sonnet-5',
 		label: 'sonnet 5',
 		pricing: { input: 2, cacheWrite5m: 2.5, cacheWrite1h: 4, cacheRead: 0.2, output: 10 },

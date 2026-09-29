@@ -13,7 +13,8 @@ stays in view. Files go to the agent from the [+] key (the device's own plus), b
 screenshot, say) or by dropping them anywhere on the page; they are read in the browser
 (`attachments.ts`) and wait in a row above the composer until they go with the message.
 
-In development builds `?demo=1` plays a scripted run without a key (`demo.dev.ts`; `?demo=idle`
+In development builds `?transcripts=1` replays saved eval runs in the chat (`TranscriptViewer.dev.svelte`);
+`?demo=1` plays a scripted run without a key (`demo.dev.ts`; `?demo=idle`
 waits for you to ask); production builds drop that code.
 
 Voice (M8): the mic key beside send talks to the agent through OpenAI's realtime model, with the
@@ -116,6 +117,8 @@ above the composer says what voice is doing while it is on.
 	let undoing = $state<number | null>(null);
 	/** A scripted demo run instead of the API (development builds only: always false otherwise). */
 	let demo = $state(false);
+	/** Saved eval runs replayed in the chat instead of it (development builds only). */
+	let transcripts = $state(false);
 	let composer: HTMLTextAreaElement | null = null;
 
 	/** A file in the composer: being read, ready to go, or refused. */
@@ -212,6 +215,7 @@ above the composer says what voice is doing while it is on.
 		keys.load();
 		voice.load();
 		const demoMode = import.meta.env.DEV ? new URLSearchParams(location.search).get('demo') : null;
+		if (import.meta.env.DEV) transcripts = new URLSearchParams(location.search).has('transcripts');
 		if (demoMode !== null) void bootDemo(demoMode !== 'idle');
 		else if (keys.has('anthropic')) void boot();
 		return () => {
@@ -514,6 +518,15 @@ above the composer says what voice is doing while it is on.
 						onvoicemodel={(id) => voice.setModel(id)}
 					/>
 				</div>
+			{:else if import.meta.env.DEV && transcripts}
+				<!-- The literal DEV check lets production builds drop the viewer and the runs it lists. -->
+				{#await import('$lib/agent/ui/TranscriptViewer.dev.svelte') then viewer}
+					<viewer.default
+						onkeys={replica ? showKeys : undefined}
+						onpoint={pointer}
+						cite={manualCitation}
+					/>
+				{/await}
 			{:else if conductor && conductor.entries.length > 0}
 				<Conversation
 					entries={conductor.entries}

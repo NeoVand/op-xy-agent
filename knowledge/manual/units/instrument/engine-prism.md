@@ -99,4 +99,4 @@ narrow image keep it tight for bass; more of both makes it broad enough for lead
 Everything else about the sound — how notes start and fade (`M2`), the filter (`M3`) and modulation
 (`M4`) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.
 TE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you
-turn, and the CC numbers are confirmed on the owner's unit.
+turn, and the CC numbers are confirmed on OS 1.1.33.

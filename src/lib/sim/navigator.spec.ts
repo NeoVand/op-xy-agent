@@ -123,6 +123,17 @@ describe('the navigator: parameters', () => {
 		expect(keys(groove)).toEqual(['tempo', 'turn E2 2']);
 	});
 
+	it('refuses a number for a list of words rather than clamping it onto the last word', () => {
+		const sim = boot();
+		// "groove 70" meant the swing amount: the groove type is a list, and 70 is none of it
+		const wrong = planParam(sim.state, { param: 'groove', value: 70 });
+		expect(wrong.reached).toBe(false);
+		expect(wrong.note).toContain('shuffle');
+		expect(wrong.note).toContain('swing');
+		expect(sim.state.tempo.groove).toBe(0);
+		expect(planParam(sim.state, { param: 'swing', value: 70 }).reached).toBe(true);
+	});
+
 	it('picks engines, filter types and LFO types from their lists', () => {
 		const sim = boot();
 		const duck = planParam(sim.state, { track: 3, param: 'lfo type', value: 'duck' });

@@ -20,7 +20,7 @@ facts:
     source: https://teenage.engineering/downloads/op-xy#1.1.33
     firmware_min: '1.1.33'
   - id: owner
-    text: The owner's unit runs OS 1.1.33, hardware revision 2.
+    text: This manual was checked on a unit running OS 1.1.33, hardware revision 2.
     source: docs/research/90-device-probe.md#2026-09-26--te-sysex-protocol-read-only-te_sysex_probepy
     verified_on: '1.1.33'
   - id: boot-screen

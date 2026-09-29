@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "09f27bac",
+	"bundle_hash": "20a0f854",
 	"stats": {
 		"units": 166,
 		"facts": 1170,
 		"procedures": 205,
 		"parameters": 207,
 		"verified_items": 246,
-		"words": 44037,
+		"words": 44040,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -1388,7 +1388,7 @@
 				},
 				{
 					"id": "owner",
-					"text": "The owner's unit runs OS 1.1.33, hardware revision 2.",
+					"text": "This manual was checked on a unit running OS 1.1.33, hardware revision 2.",
 					"source": "docs/research/90-device-probe.md#2026-09-26--te-sysex-protocol-read-only-te_sysex_probepy",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -2322,7 +2322,7 @@
 				},
 				{
 					"id": "storage-seen",
-					"text": "Over MTP the owner's unit shows an 8.59 GB volume.",
+					"text": "Over MTP a unit shows an 8.59 GB volume.",
 					"source": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -2362,7 +2362,7 @@
 				},
 				{
 					"id": "model",
-					"text": "The model number is TE033AS001; the owner's unit reports hardware revision 2.",
+					"text": "The model number is TE033AS001; a unit checked on OS 1.1.33 reports hardware revision 2.",
 					"source": "docs/research/90-device-probe.md#2026-09-26--te-sysex-protocol-read-only-te_sysex_probepy",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -8967,7 +8967,7 @@
 				},
 				{
 					"id": "browser-engines",
-					"text": "The owner's unit listed eleven engines there, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last.",
+					"text": "On a unit running OS 1.1.33 it listed eleven engines, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last.",
 					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -11983,7 +11983,7 @@
 				},
 				{
 					"id": "browser-1133",
-					"text": "On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine on the owner's unit, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser.",
+					"text": "On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser.",
 					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -12479,7 +12479,7 @@
 				"sequencer.parameter-locks",
 				"instrument.save-to-same-snapshot"
 			],
-			"body": "Prism runs several oscillators and gives you four controls over how they relate: their waveform,\ntheir tuning ratio, how far apart they drift in pitch and how wide they spread. Little detune and a\nnarrow image keep it tight for bass; more of both makes it broad enough for leads and pads.\n\nEverything else about the sound — how notes start and fade (`M2`), the filter (`M3`) and modulation\n(`M4`) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.\nTE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you\nturn, and the CC numbers are confirmed on the owner's unit.",
+			"body": "Prism runs several oscillators and gives you four controls over how they relate: their waveform,\ntheir tuning ratio, how far apart they drift in pitch and how wide they spread. Little detune and a\nnarrow image keep it tight for bass; more of both makes it broad enough for leads and pads.\n\nEverything else about the sound — how notes start and fade (`M2`), the filter (`M3`) and modulation\n(`M4`) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.\nTE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you\nturn, and the CC numbers are confirmed on OS 1.1.33.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#arrange",
@@ -13258,7 +13258,7 @@
 				},
 				{
 					"id": "categories",
-					"text": "On OS 1.1.33 the category view lists bass, drum, keys, lead, organ, pad, pluck and strings, after any preset pack of the owner's (the owner's Nostalgic Synths came first).",
+					"text": "On OS 1.1.33 the category view lists bass, drum, keys, lead, organ, pad, pluck and strings, after any preset packs installed on the unit (an installed pack is listed first).",
 					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -19809,7 +19809,7 @@
 				},
 				{
 					"id": "select-before-play",
-					"text": "Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6.",
+					"text": "Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 in a test on OS 1.1.33, where the song would have moved on to scene 6.",
 					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -22102,7 +22102,7 @@
 				},
 				{
 					"id": "workspace",
-					"text": "Over MTP the unit also shows projects/workspace.xy; on the owner's unit it held the project that was open.",
+					"text": "Over MTP the unit also shows projects/workspace.xy; it holds the project that is open.",
 					"source": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -23132,7 +23132,7 @@
 				},
 				{
 					"id": "new-project",
-					"text": "A new empty project on the owner's unit ran at 120 BPM.",
+					"text": "A new empty project runs at 120 BPM (OS 1.1.33).",
 					"source": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -28680,7 +28680,7 @@
 				},
 				{
 					"id": "pick-before-play",
-					"text": "Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6.",
+					"text": "Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 in a test on OS 1.1.33, where the song would have moved on to scene 6.",
 					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
 					"firmware_min": null,
 					"verified_on": "1.1.33",

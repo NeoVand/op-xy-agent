@@ -42,7 +42,7 @@ facts:
     text: There are 8 GB of user storage.
     source: https://teenage.engineering/guides/op-xy/hardware-overview#technical-specifications
   - id: storage-seen
-    text: Over MTP the owner's unit shows an 8.59 GB volume.
+    text: Over MTP a unit shows an 8.59 GB volume.
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
     verified_on: '1.1.33'
   - id: battery
@@ -58,7 +58,7 @@ facts:
     text: Polyphony is 24 voices, shared by all tracks.
     source: https://teenage.engineering/guides/op-xy/project#project-settings
   - id: model
-    text: The model number is TE033AS001; the owner's unit reports hardware revision 2.
+    text: The model number is TE033AS001; a unit checked on OS 1.1.33 reports hardware revision 2.
     source: docs/research/90-device-probe.md#2026-09-26--te-sysex-protocol-read-only-te_sysex_probepy
     verified_on: '1.1.33'
   - id: audio-out

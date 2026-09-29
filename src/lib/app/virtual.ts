@@ -7,10 +7,13 @@
  */
 import type {
 	VirtualArrangement,
+	VirtualKitLoad,
 	VirtualOpxy,
 	VirtualPattern,
 	VirtualStatus
 } from '$lib/agent/virtual-opxy';
+import { FIRST_NOTE, KEYS, sampleFile } from '$lib/sim/areas/sample/state';
+import { loadEngineSound } from '$lib/sim/areas/system/presets';
 import { planPageValue, planParam, planPlace, planSettings } from '$lib/sim/navigator';
 import { captureScene, playPattern, startSong, trackSequence } from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
@@ -34,6 +37,10 @@ export interface VirtualSound {
 	readonly enabled: boolean;
 	readonly available: boolean;
 	preview(track: number, note: number, velocity: number, seconds: number): boolean;
+	/** Where sample files' audio lives (a made kit's sounds go in here). */
+	readonly samples?: {
+		setFile(id: string, audio: { sampleRate: number; channels: readonly Float32Array[] }): void;
+	};
 }
 
 /** Options for {@link createVirtualOpxy}. */
@@ -187,6 +194,40 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		},
 
 		readPattern,
+
+		loadKit(track, kit): VirtualKitLoad {
+			const t = trackIndex(track);
+			if (t > 7)
+				throw new VirtualOpxyError(`track ${track} is an auxiliary track: a kit goes on 1–8`);
+			const engineChanged = s.tracks[t].engine !== 'drum';
+			if (engineChanged) loadEngineSound(s, t, 'drum');
+			const held = s.areas.sample.tracks[t];
+			const folder = `kits/${kit.name}`;
+			let keys = 0;
+			for (const sound of kit.sounds) {
+				const index = sound.key - FIRST_NOTE;
+				if (!Number.isInteger(index) || index < 0 || index >= KEYS) continue;
+				const frames = sound.audio.channels[0]?.length ?? 0;
+				const file = sampleFile(
+					`${sound.key} ${sound.name}.wav`,
+					folder,
+					frames / sound.audio.sampleRate
+				);
+				held.keys[index] = file;
+				options.sound?.samples?.setFile(file.id, {
+					sampleRate: sound.audio.sampleRate,
+					channels: [...sound.audio.channels]
+				});
+				keys++;
+			}
+			changed();
+			return {
+				track,
+				keys,
+				engineChanged,
+				audible: Boolean(options.sound?.samples && options.sound.available)
+			};
+		},
 
 		writePattern(track, write) {
 			const t = trackIndex(track);

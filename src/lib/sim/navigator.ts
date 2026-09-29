@@ -708,7 +708,8 @@ function targetValue(
 	if (!Number.isFinite(n)) return null;
 	// the number as the screen shows it (parameter 1 is stored as 0, a synced speed as its place
 	// in the list, a sample's point as a percentage): the reading nearest it; where the readings
-	// are words, the parameter's own units
+	// are words, the parameter's own units, and only inside its range (70 is not a groove type, and
+	// clamping it would quietly pick the last one)
 	let nearest: number | null = null;
 	let gap = Infinity;
 	for (let v = min; v <= max + 1e-9; v += step) {
@@ -716,7 +717,19 @@ function targetValue(
 		if (Number.isFinite(shown) && Math.abs(shown - n) < gap)
 			[nearest, gap] = [v, Math.abs(shown - n)];
 	}
-	return nearest ?? Math.min(max, Math.max(min, n));
+	if (nearest !== null) return nearest;
+	return n >= min - 1e-9 && n <= max + 1e-9 ? n : null;
+}
+
+/** What a parameter's readings are, when they are words (for an error that lists them). */
+function wordReadings(format: (v: number) => string, min: number, max: number, step: number) {
+	const words: string[] = [];
+	for (let v = min; v <= max + 1e-9; v += step) {
+		const reading = format(v);
+		if (Number.isFinite(readingNumber(reading))) return null;
+		words.push(reading);
+	}
+	return words;
 }
 
 /**
@@ -956,7 +969,12 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 	if (tempo) {
 		walk(rec, { area: 'tempo' });
 		const target = targetValue(goal.value, tempo.format, tempo.min, tempo.max, tempo.step);
-		if (target === null) return rec.plan(false, `"${goal.value}" is not a value of ${id}`);
+		if (target === null) {
+			const words = wordReadings(tempo.format, tempo.min, tempo.max, tempo.step);
+			const choices = words ? `: it is one of ${words.join(', ')}` : '';
+			const swing = id === 'tempo.groove' ? '; for how much swing, use swing (−99 … 99)' : '';
+			return rec.plan(false, `"${goal.value}" is not a value of ${id}${choices}${swing}`);
+		}
 		const read = (sim: OpxySim) => tempo.get(sim.state);
 		const ok = turnTo(rec, tempo.encoder, false, read, target, (v) => Math.abs(v - target) < 0.05);
 		return rec.plan(ok, ok ? undefined : `${id} stopped at ${tempo.format(read(rec.sim))}`);

@@ -41,7 +41,7 @@ facts:
     source: https://teenage.engineering/downloads/op-xy#1.1.15
     firmware_min: '1.1.15'
   - id: browser-1133
-    text: On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine on the owner's unit, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser.
+    text: On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser.
     source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
     confidence: verified
     verified_on: '1.1.33'

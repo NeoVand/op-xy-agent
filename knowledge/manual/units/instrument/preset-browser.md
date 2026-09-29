@@ -26,7 +26,7 @@ facts:
     source: docs/research/30-presets-samples.md#42-how-a-project-points-at-a-preset-decoded-xy
     confidence: community-verified
   - id: categories
-    text: On OS 1.1.33 the category view lists bass, drum, keys, lead, organ, pad, pluck and strings, after any preset pack of the owner's (the owner's Nostalgic Synths came first).
+    text: On OS 1.1.33 the category view lists bass, drum, keys, lead, organ, pad, pluck and strings, after any preset packs installed on the unit (an installed pack is listed first).
     source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
     confidence: verified
     verified_on: '1.1.33'

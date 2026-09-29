@@ -122,6 +122,28 @@ export interface VirtualStatus {
 	readonly metronome?: boolean;
 }
 
+/** A drum kit's sounds, one per keyboard key (53–76). */
+export interface VirtualKit {
+	readonly name: string;
+	readonly sounds: readonly {
+		readonly key: number;
+		/** What the sound is ("kick", "closed hat"), for its file name. */
+		readonly name: string;
+		readonly audio: { readonly sampleRate: number; readonly channels: readonly Float32Array[] };
+	}[];
+}
+
+/** What {@link VirtualOpxy.loadKit} did. */
+export interface VirtualKitLoad {
+	readonly track: number;
+	/** Keys that now hold one of the kit's sounds. */
+	readonly keys: number;
+	/** The track was another engine and is a drum sampler now. */
+	readonly engineChanged: boolean;
+	/** The browser can play the kit's audio (else the keys play the replica's stand-in sounds). */
+	readonly audible: boolean;
+}
+
 /** The virtual OP-XY. */
 export interface VirtualOpxy {
 	status(): VirtualStatus;
@@ -138,6 +160,11 @@ export interface VirtualOpxy {
 	writePattern(track: number, write: PatternWrite): VirtualPattern;
 	readArrangement(): VirtualArrangement;
 	writeArrangement(write: ArrangementWrite): VirtualArrangement;
+	/**
+	 * Puts a drum kit on an instrument track (1–8): the track becomes a drum sampler (keeping its key
+	 * settings if it was one) whose keys hold the kit's sounds, so its patterns play the kit.
+	 */
+	loadKit(track: number, kit: VirtualKit): VirtualKitLoad;
 	/**
 	 * The exact steps from where the virtual OP-XY stands to `goal`, played on a copy of it (the
 	 * virtual OP-XY itself does not move) and reporting whether they got there.

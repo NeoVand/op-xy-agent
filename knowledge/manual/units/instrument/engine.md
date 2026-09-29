@@ -56,7 +56,7 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: browser-engines
-    text: The owner's unit listed eleven engines there, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last.
+    text: On a unit running OS 1.1.33 it listed eleven engines, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last.
     source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
     confidence: verified
     verified_on: '1.1.33'

@@ -9,7 +9,9 @@ export default defineConfig({
 	server: {
 		port: Number(process.env.PORT) || 5173,
 		// agent worktrees are whole copies of the repo inside it: never watch or serve from them
-		watch: { ignored: ['**/.claude/worktrees/**'] }
+		watch: { ignored: ['**/.claude/worktrees/**'] },
+		// the dev-only transcript viewer (?transcripts=1) reads saved agent evals from here
+		fs: { allow: ['evals/agent/out'] }
 	},
 	plugins: [
 		tailwindcss(),

@@ -30,7 +30,7 @@ facts:
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
     verified_on: '1.1.33'
   - id: new-project
-    text: A new empty project on the owner's unit ran at 120 BPM.
+    text: A new empty project runs at 120 BPM (OS 1.1.33).
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
     verified_on: '1.1.33'
   - id: new-metronome

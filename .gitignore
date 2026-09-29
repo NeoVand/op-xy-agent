@@ -40,3 +40,6 @@ __pycache__/
 
 # Claude Code agent worktrees (local only)
 .claude/worktrees/
+
+# Agent eval transcripts (evals/agent/quality.mjs): local, re-made by every run
+/evals/agent/out

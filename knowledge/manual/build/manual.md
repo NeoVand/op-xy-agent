@@ -209,7 +209,7 @@ depends on the version, check the boot screen first; this manual assumes 1.1.33.
 Facts:
 - TE's online guide is labelled v1.1.15 and describes OS 1.1.15. [#guide] [s1]
 - The newest release is OS 1.1.33 (2 September 2026); the releases after the guide are 1.1.17, 1.1.18, 1.1.21, 1.1.25, 1.1.32 and 1.1.33. [#latest] (since 1.1.33) [s2]
-- The owner's unit runs OS 1.1.33, hardware revision 2. [#owner] (verified 1.1.33) [s3]
+- This manual was checked on a unit running OS 1.1.33, hardware revision 2. [#owner] (verified 1.1.33) [s3]
 - The installed OS version appears on screen, with the logo, every time the unit starts. [#boot-screen] [s4]
 - Over USB MIDI the unit reports its OS version when asked with TE's own SysEx greeting; the standard MIDI identity request leaves the version blank. [#over-midi] (verified 1.1.33) [s3]
 
@@ -358,12 +358,12 @@ Facts:
 - The guide lists a 480 × 220 pixel IPS TFT screen. [#screen] [s4]
 - TE's product page gives the screen as 480 × 222 pixels. [#screen-alt] [s3]
 - There are 8 GB of user storage. [#storage] [s4]
-- Over MTP the owner's unit shows an 8.59 GB volume. [#storage-seen] (verified 1.1.33) [s5]
+- Over MTP a unit shows an 8.59 GB volume. [#storage-seen] (verified 1.1.33) [s5]
 - The rechargeable battery is rated for 16 hours. [#battery] [s4]
 - Bluetooth LE MIDI is built in. [#wireless] [s4]
 - Inside are two Blackfin processor cores, a three-core DSP co-processor and a 6-axis motion sensor. [#processing] [s3]
 - Polyphony is 24 voices, shared by all tracks. [#voices] [s6]
-- The model number is TE033AS001; the owner's unit reports hardware revision 2. [#model] (verified 1.1.33) [s7]
+- The model number is TE033AS001; a unit checked on OS 1.1.33 reports hardware revision 2. [#model] (verified 1.1.33) [s7]
 - Audio out: 8 dBu (2 Vrms) level, 124 dBA signal-to-noise ratio. [#audio-out] [s8]
 - Audio in: 8 dBu (2 Vrms) level, 98 dBA signal-to-noise ratio, 13 kΩ impedance, 0–31 dB of analogue gain. [#audio-in] [s8]
 - Multi-out: audio at 2 dBu (1 Vrms), CV within ±5 V, sync and gate pulses at 5.2 V. [#multi-out] [s8]
@@ -1606,7 +1606,7 @@ Facts:
 - Over MIDI, CC12–15 on the track's channel move the four `M1` parameters of every synth engine; the drum sampler, synth sampler and multisampler pages ignore them. [#midi-ccs] (verified 1.1.33) [s6]
 - A synth engine page lists its four values in a top bar — coloured cells on prism, epiano and wavetable, plain text on simple and axis, none on organ — above a picture drawn from the four values; prism, dissolve and hardsync animate while notes sound, organ's drawbars glide to new values and wavetable's drift keeps its copies turning. [#top-bar] (verified 1.1.33) [s7]
 - On OS 1.1.33 there is no separate engine list; `shift + M1` brings up the preset browser on the track's current preset — the track number over the word preset at the left, the engines in the middle with the track's engine boxed, and that engine's presets on the right. [#browser] (verified 1.1.33) [s8]
-- The owner's unit listed eleven engines there, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last. [#browser-engines] (verified 1.1.33) [s8]
+- On a unit running OS 1.1.33 it listed eleven engines, alphabetically (axis, dissolve, drum, epiano, hardsync, multisampler, organ, prism, sampler, simple, wavetable) and no midi engine; how OS 1.1.33 puts an instrument track on midi is still open, and this app's replica lists midi last. [#browser-engines] (verified 1.1.33) [s8]
 - Turning `E1` to an engine highlights its first preset; loading a preset changes the engine with the whole sound (all four pages) and returns to the track's `M1` page. [#load-changes-engine] (verified 1.1.33) [s8]
 - In the browser a click of `E1` swaps between by engine and by category (a popup says which) instead of confirming, as it did in the older engine list the guide describes. [#e1-click] (verified 1.1.33) [s8]
 
@@ -2144,7 +2144,7 @@ Facts:
 - Since OS 1.0.45, presets saved from a midi-engine track keep their CC settings. [#presets-keep-ccs] (since 1.0.45) [s4]
 - Since OS 1.0.50, switching a track to the midi engine and back keeps its synth settings. [#switch-back] (since 1.0.50) [s5]
 - Program changes can be parameter-locked per step; OS 1.1.15 fixed such locks not working. [#program-locks] (since 1.1.15) [s6]
-- On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine on the owner's unit, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser. [#browser-1133] (verified 1.1.33) [s7]
+- On OS 1.1.33 the preset browser that `shift + M1` brings up listed no midi engine, so how that firmware puts an instrument track on midi is still open; the external MIDI track (auxiliary `T3`) always works, and this app's replica lists midi last in the browser. [#browser-1133] (verified 1.1.33) [s7]
 - OS 1.1.32 fixed the arpeggiator disturbing a midi-engine parameter. [#arp-fix] (since 1.1.32) [s8]
 
 Procedures:
@@ -2213,7 +2213,7 @@ narrow image keep it tight for bass; more of both makes it broad enough for lead
 Everything else about the sound — how notes start and fade (`M2`), the filter (`M3`) and modulation
 (`M4`) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.
 TE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you
-turn, and the CC numbers are confirmed on the owner's unit.
+turn, and the CC numbers are confirmed on OS 1.1.33.
 
 Facts:
 - Prism is one of the eight built-in synth engines. Each instrument track runs one engine, chosen per track. [#one-of-eight] [s1]
@@ -2395,7 +2395,7 @@ Facts:
 - In instrument mode, `shift + Tn` opens the preset browser for track n. [#open] [s1]
 - The unit ships with factory presets across the engines and the sound categories. [#factory] [s1]
 - Loading a preset replaces the track's whole sound and copies it into the project, so later changes to the preset file leave existing tracks alone. [#whole-sound] (community-verified) [s2]
-- On OS 1.1.33 the category view lists bass, drum, keys, lead, organ, pad, pluck and strings, after any preset pack of the owner's (the owner's Nostalgic Synths came first). [#categories] (verified 1.1.33) [s3]
+- On OS 1.1.33 the category view lists bass, drum, keys, lead, organ, pad, pluck and strings, after any preset packs installed on the unit (an installed pack is listed first). [#categories] (verified 1.1.33) [s3]
 - Top-level folders under presets on the unit's storage show up as categories. [#folders] (community-verified) [s4]
 - Since OS 1.1.15, user preset folders can be nested more deeply. [#deeper-folders] (since 1.1.15) [s5]
 - The browser shows the track number over the word preset on the left, the engine list in the middle and that engine's presets on the right, the current preset highlighted. [#screen] (verified 1.1.33) [s3]
@@ -3565,7 +3565,7 @@ Facts:
 - Over MIDI, on any channel, CC85 selects a scene at once and CC83 and CC84 step to the previous and the next scene. [#midi] [s3]
 - CC85 counts from zero, so value 0 selects scene 1 and value 98 scene 99. [#midi-zero] (community-verified) [s4]
 - Selected while the song plays (`shift` and a black key, in arrange), a scene takes over at once, mid-bar, its patterns carrying on from the song's place in the bar; from then on the unit plays that scene over and over and the song stops moving on. This is how to loop one scene. [#select-while-song] (verified 1.1.33) [s5]
-- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6. [#select-before-play] (verified 1.1.33) [s5]
+- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 in a test on OS 1.1.33, where the song would have moved on to scene 6. [#select-before-play] (verified 1.1.33) [s5]
 - `shift` and the black keys pick scenes only in arrange mode. [#select-arrange-only] (verified 1.1.33) [s5]
 - With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions. [#footer] (verified 1.1.33) [s6]
 
@@ -3986,7 +3986,7 @@ Facts:
 - The history keeps every save and autosave, so older states can be loaded and heard; `M2` in the projects folder opens it for the selected project. [#history] [s2]
 - Versions and autosaves carry the date and time from the clock page of the system settings. [#timestamps] [s3]
 - On a computer (over MTP), the history files sit in a backups folder beside your projects; to back up one project, copy its file together with its history folder. [#backups-folder] [s4]
-- Over MTP the unit also shows projects/workspace.xy; on the owner's unit it held the project that was open. [#workspace] (verified 1.1.33) [s5]
+- Over MTP the unit also shows projects/workspace.xy; it holds the project that is open. [#workspace] (verified 1.1.33) [s5]
 
 Procedures:
 - Save the project and add a version [#save] [s1]
@@ -4190,7 +4190,7 @@ Facts:
 - Tapping `tempo` repeatedly in time with the music sets the tempo. [#tap] (verified 1.1.33) [s2]
 - `turn E4` sets the metronome volume and `click E4` switches the metronome on or off. [#metronome] [s3]
 - Over MIDI, CC80 on any channel sets the tempo; on OS 1.1.33 the result is twice the value in BPM, held within 40–220, so only even tempos can be sent. [#cc80] (verified 1.1.33) [s4]
-- A new empty project on the owner's unit ran at 120 BPM. [#new-project] (verified 1.1.33) [s4]
+- A new empty project runs at 120 BPM (OS 1.1.33). [#new-project] (verified 1.1.33) [s4]
 - A new project starts with the metronome on, at about two thirds of its volume (the project file stores the click volume, with 0 for off). [#new-metronome] (derived) [s5]
 - The tempo page has a light background, the BPM as a large number on the left and a metronome in the middle carrying the groove type's two-letter abbreviation. [#screen] (verified 1.1.33) [s2]
 - The metronome's weight slides down its arm as the tempo rises, from the top at 40 BPM to the bottom at 220. [#weight] (verified 1.1.33) [s2]
@@ -5270,7 +5270,7 @@ scene for good, until scenes are keyed back into song mode.
 Facts:
 - Play runs the current song from its first scene even outside song mode, and after a stop it starts from the first scene again. [#play-runs-song] (verified 1.1.33) [s1]
 - While the song plays, `shift` and a black key in arrange switch to that scene at once, mid-bar, and from then on the unit repeats it; the song stops moving on. [#pick-while-playing] (verified 1.1.33) [s1]
-- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6. [#pick-before-play] (verified 1.1.33) [s1]
+- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 in a test on OS 1.1.33, where the song would have moved on to scene 6. [#pick-before-play] (verified 1.1.33) [s1]
 - `shift` and the black keys choose scenes only in arrange mode. [#arrange-only] (verified 1.1.33) [s1]
 - `shift + M1` in song mode empties the song order without deleting any scene, taking every scene out of the song's playback. [#clear-song] [s2]
 - With the song order empty, play has no song to run, so the scene on screen keeps playing. [#empty-song-plays-scene] (derived) [s2]

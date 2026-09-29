@@ -1,0 +1,177 @@
+[
+	{
+		"id": "h-voices-stolen",
+		"chapter": "troubleshooting",
+		"question": "my pad chords on track 8 keep losing notes, they get chopped off, but only when the whole song is playing. soloed they sound fine. what's going on and how do i fix it?",
+		"facts": [
+			"All tracks share a single pool of 24 voices; once the song needs more than that, notes get cut off so new ones can sound (voice stealing).",
+			"An on-screen voice icon appears once 17 or more voices are in use and flashes red whenever a voice is stolen.",
+			"The voices page of the project settings (project → M4) can give the pad track voices of its own so it takes priority; otherwise voices are shared out automatically.",
+			"Shortening release times or thinning out chords also frees up voices."
+		],
+		"keys": ["project → M4", "turn E1"],
+		"source": "hardware.specifications, project.system-usage-indicators, project.settings"
+	},
+	{
+		"id": "h-brain-routing-per-pattern",
+		"chapter": "troubleshooting",
+		"question": "i took my lead on track 5 out of the brain so it wouldn't get transposed, but when the song gets to the chorus it starts transposing again. why?",
+		"facts": [
+			"Brain routing belongs to each pattern rather than to the scene, so the pattern playing in the chorus can still route track 5 into the brain.",
+			"The fix is to take track 5 out there too: with the chorus playing, open the brain (auxiliary → T1) and its routing page, M2.",
+			"On the routing page an encoder click flips between tracks 1–4 and 5–8 and turning a track's encoder adds or removes it; after the click, track 5 is on E1.",
+			"A track taken out of the routing is no longer transposed and no longer counts toward the brain's key detection."
+		],
+		"keys": ["auxiliary → T1", "M2", "click E1", "turn E1"],
+		"source": "auxiliary.brain, howto.song-with-brain"
+	},
+	{
+		"id": "h-silent-in-one-scene",
+		"chapter": "troubleshooting",
+		"question": "my bass on track 3 plays fine in scene 1, but when the song moves on to scene 2 it goes totally silent. same pattern, the notes are still there. what's going on?",
+		"facts": [
+			"Every scene keeps its own level and mute for each track, so the bass can be muted or turned down in scene 2 alone.",
+			"In mix mode, holding shift lights the keys of unmuted tracks and leaves muted ones dark; shift + T3 unmutes the bass.",
+			"If it is not muted, check its level: on the mix M1 page, select track 3 and turn E4."
+		],
+		"keys": ["shift + Tn", "mix → M1", "turn E4"],
+		"source": "mix.overview, arrange.scenes, mix.mute-solo, mix.levels-pans-sends"
+	},
+	{
+		"id": "h-sample-pitched-across-keys",
+		"chapter": "troubleshooting",
+		"question": "i sampled a snare, but now every key plays that same snare at a different pitch. i wanted each key to be its own drum sound like the default kits. what did i do wrong?",
+		"facts": [
+			"The track uses the synth sampler (sampler in the preset browser), which spreads one sample over the whole keyboard, tuned to the key pressed when recording, so each key plays the snare at another pitch.",
+			"For a kit the track needs the drum sampler (drum in the browser), where every one of the 24 keys holds a separate one-shot sound.",
+			"Change the engine with shift + M1: turn E1 to drum and click E2 to load one of its presets, which swaps the track's whole sound."
+		],
+		"keys": ["shift + M1", "turn E1", "click E2"],
+		"source": "sampler.overview, sampler.synth-sampler, instrument.engine"
+	},
+	{
+		"id": "h-copy-pattern-shorten",
+		"chapter": "16 arrange",
+		"question": "i want a 3/4 version of my drum pattern for the bridge, same beat but only 12 steps long. how do i copy it into a new pattern and shorten the copy without touching the original?",
+		"facts": [
+			"In arrange mode, with the drum track selected, M2 copies the current pattern (notes and its whole sound) and M3 pastes it.",
+			"M1 adds a new pattern to the track (16 at most) and turn E4 steps through its patterns, so the copy can go into a new pattern while the original stays as it is.",
+			"If the copy is longer than one bar, bar + [-] removes the extra bars.",
+			"Holding bar and pressing step 12 makes the pattern play 12 steps; with several bars only the last bar would be trimmed."
+		],
+		"keys": ["arrange → Tn", "M2", "M1", "M3", "bar + step 12"],
+		"source": "arrange.patterns, arrange.overview, sequencer.bars-and-length"
+	},
+	{
+		"id": "h-mic-onto-drum-key",
+		"chapter": "18 sample",
+		"question": "is there a way to record my voice with the built-in mic straight onto one key of my drum kit, without replacing the other drums?",
+		"facts": [
+			"On a drum sampler track (tracks 1 and 2 in a new project) every key has its own sample, and a recording lands only on the key you pick.",
+			"Press sample for the record page and select the key to record onto; it lights up.",
+			"Turn E1 to set the source to the built-in microphone, so no cable is needed; E3 sets the gain and E4 the threshold.",
+			"Hold M1 to record onto that key; drum sampler takes are also kept in the samples folder named user."
+		],
+		"keys": ["sample", "turn E1", "hold M1"],
+		"source": "sampler.drum-sampler, sampler.sampling, instrument.overview, howto.slice-a-loop"
+	},
+	{
+		"id": "h-lock-every-fourth-pass",
+		"chapter": "8 step components",
+		"question": "is there a way to make the filter open up on one hi-hat step, but only every 4th time the loop comes round?",
+		"facts": [
+			"Hold the hi-hat step and turn the cutoff (E1 on the M3 filter page) to lock a value on that step.",
+			"Then, with shift held, press that step, the white key natural 12 (skip parameter lock) and the black key 4.",
+			"With value 4 the lock only takes effect every 4th pass; the other passes play the step with the track's own settings.",
+			"The hi-hat itself still sounds on every pass."
+		],
+		"keys": ["M3", "step n + turn E1", "shift + steps → + natural 12 → + accidental 4"],
+		"source": "sequencer.parameter-locks, sequencer.component-skip-parameter-lock, instrument.filter"
+	},
+	{
+		"id": "h-maestro-one-finger-chords",
+		"chapter": "9 players",
+		"question": "i'm bad at playing chords. can the op-xy play a whole chord from one key, so i can record a progression on my pad track with one finger?",
+		"facts": [
+			"Yes, with the maestro player: shift + player opens the player list, and with shift still held, turn E1 to maestro.",
+			"The player key switches it on: the first press shows the player page, the next turns the player on.",
+			"Store the chord by holding shift and playing its notes; from then on every single key plays that chord, shifted to follow the key.",
+			"Record as usual with record + play; the player reshapes the notes the track receives, while the recorded notes themselves are left as they are."
+		],
+		"keys": ["shift + player", "player → player", "shift + keys", "record + play"],
+		"source": "players.overview, players.maestro, sequencer.live-recording"
+	},
+	{
+		"id": "h-song-length-limits",
+		"chapter": "limits",
+		"question": "how long can a song on the op-xy actually get? how many scenes can one song chain together, and what's the longest a single pattern can last?",
+		"facts": [
+			"One song can chain up to 96 scenes.",
+			"Each scene lasts as long as its longest pattern.",
+			"A single pattern tops out at four 16-step bars, 64 steps.",
+			"Track scale (bar + a black key) lengthens every step; at scale 16 those 64 steps last 64 bars."
+		],
+		"keys": ["bar + accidental"],
+		"source": "arrange.song-mode, arrange.scenes, sequencer.overview, sequencer.track-scale"
+	},
+	{
+		"id": "h-sample-memory-storage",
+		"chapter": "limits",
+		"question": "how much sample memory does one project get before it runs out? and how much storage is on the unit overall?",
+		"facts": [
+			"One project can have up to 64 MB of samples loaded at once.",
+			"A sample memory icon shows up while samples load and once more than 70 % of that memory is in use.",
+			"The unit has 8 GB of user storage, enough for thousands of samples."
+		],
+		"keys": [],
+		"source": "sampler.sample-files, project.system-usage-indicators, hardware.specifications, howto.load-samples"
+	},
+	{
+		"id": "h-battery-size-weight",
+		"chapter": "limits",
+		"question": "taking my op-xy on a long trip. how many hours does the battery last on a full charge, and how big and heavy is it?",
+		"facts": [
+			"The rechargeable battery is rated for 16 hours.",
+			"It measures 288 × 102 × 29 mm.",
+			"It weighs 900 g."
+		],
+		"keys": [],
+		"source": "hardware.specifications"
+	},
+	{
+		"id": "h-bluetooth-headphones",
+		"chapter": "not in manual",
+		"question": "can i pair bluetooth headphones with the op-xy so i can jam on the train without a cable?",
+		"facts": [
+			"The answer says no: the OP-XY's bluetooth is bluetooth LE MIDI, which carries MIDI only (notes and clock), not audio.",
+			"Headphones need a cable into the 3.5 mm stereo audio out, which also takes headsets with a built-in mic.",
+			"The answer does not give steps for pairing headphones or streaming audio over bluetooth."
+		],
+		"keys": [],
+		"source": "com.bluetooth-midi, hardware.specifications, hardware.connectors"
+	},
+	{
+		"id": "h-multiple-undo",
+		"chapter": "not in manual",
+		"question": "i made a bunch of edits i hate. can i press undo a few times to step back, like in a daw?",
+		"facts": [
+			"The answer says no: there is only one undo level, shift + record undoes just the last change, and some actions cannot be undone at all.",
+			"It does not claim that pressing shift + record again steps further back or that a longer undo history exists.",
+			"To go further back, the project's history keeps every save and autosave, and an older version can be loaded.",
+			"The history opens from the projects folder: shift + project, select the project, then M2."
+		],
+		"keys": ["shift + record", "shift + project", "M2"],
+		"source": "sequencer.clear-and-undo, project.versions-and-autosave"
+	},
+	{
+		"id": "h-time-stretch",
+		"chapter": "not in manual",
+		"question": "can the op-xy time-stretch a sampled drum loop so it keeps up when i change the bpm?",
+		"facts": [
+			"The answer says the manual does not describe time-stretching or tempo-syncing sample playback, so it cannot confirm the OP-XY does this.",
+			"It does not invent a setting, menu or key combo that stretches a sample to the tempo."
+		],
+		"keys": [],
+		"source": "sampler.overview, sampler.synth-sampler, sampler.drum-key-settings, sampler.multisampler"
+	}
+]

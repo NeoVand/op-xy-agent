@@ -31,7 +31,7 @@ facts:
     text: On a computer (over MTP), the history files sit in a backups folder beside your projects; to back up one project, copy its file together with its history folder.
     source: https://teenage.engineering/guides/op-xy/how-to#how-to-back-up-your-projects
   - id: workspace
-    text: Over MTP the unit also shows projects/workspace.xy; on the owner's unit it held the project that was open.
+    text: Over MTP the unit also shows projects/workspace.xy; it holds the project that is open.
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
     verified_on: '1.1.33'
 procedures:
