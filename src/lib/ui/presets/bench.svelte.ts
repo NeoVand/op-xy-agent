@@ -922,7 +922,9 @@ export class Workbench {
 	/** A generated kit in a style on every key. */
 	generate(style: KitStyle, seed = 1): void {
 		this.useKit(`${style} kit`, generateKit(style, seed));
-		this.say(`a ${style} kit, made from numbers: turn its voices on the voice page`);
+		// "an 808" (eight), "a 909"
+		const article = style.startsWith('8') ? 'an' : 'a';
+		this.say(`${article} ${style} kit, made from numbers: turn its voices on the voice page`);
 	}
 
 	/** A kit nobody has heard before. */

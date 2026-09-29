@@ -856,6 +856,14 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 
 	// ------------------------------------------------------------------ the agent's kits
 
+	// the view's one orchestrated moment: the keys light once, low to high, as the workbench wakes
+	onMount(() => {
+		const sweep = Array.from({ length: 24 }, (_, i) =>
+			setTimeout(() => flash(DRUM_FIRST_KEY + i, 0.09), 250 + i * 26)
+		);
+		return () => sweep.forEach(clearTimeout);
+	});
+
 	const inbox = getPresetInbox();
 	onMount(() =>
 		inbox?.listen((draft) => {

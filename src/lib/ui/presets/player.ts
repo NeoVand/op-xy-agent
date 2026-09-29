@@ -64,7 +64,8 @@ export class PreviewPlayer {
 				this.#out.gain.value = 0.8;
 				this.#out.connect(this.#context.destination);
 			}
-			if (this.#context.state === 'suspended') void this.#context.resume();
+			// a context that may not resume yet (no gesture, or an offline one) stays as it is
+			if (this.#context.state === 'suspended') this.#context.resume().catch(() => {});
 		} catch {
 			return null;
 		}

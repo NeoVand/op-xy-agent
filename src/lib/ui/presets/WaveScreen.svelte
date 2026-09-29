@@ -378,7 +378,7 @@ with what plays.
 						style:left="{at(frame)}%"
 						role="slider"
 						tabindex="0"
-						aria-label={handle === 'start' ? 'sample start' : 'sample end'}
+						aria-label={handle === 'start' ? 'region start handle' : 'region end handle'}
 						aria-valuemin={0}
 						aria-valuemax={frames}
 						aria-valuenow={frame}
@@ -396,7 +396,7 @@ with what plays.
 						style:left="{at(frame)}%"
 						role="slider"
 						tabindex="0"
-						aria-label={handle === 'fadeIn' ? 'fade in' : 'fade out'}
+						aria-label={handle === 'fadeIn' ? 'fade in handle' : 'fade out handle'}
 						aria-valuemin={0}
 						aria-valuemax={frames}
 						aria-valuenow={handle === 'fadeIn' ? edit.fadeIn : edit.fadeOut}
@@ -412,7 +412,7 @@ with what plays.
 							style:left="{at(frame)}%"
 							role="slider"
 							tabindex="0"
-							aria-label={handle === 'loopStart' ? 'loop start' : 'loop end'}
+							aria-label={handle === 'loopStart' ? 'loop start handle' : 'loop end handle'}
 							aria-valuemin={0}
 							aria-valuemax={frames}
 							aria-valuenow={frame}
