@@ -93,6 +93,8 @@ the conventions.
 ## Credits and licence
 
 MIT, see [`LICENSE`](LICENSE). Adapted code and artwork sources are listed in [`NOTICE.md`](NOTICE.md).
+The preset maker's SoundFont import ports the zone mapping of Charles Vestal's
+[sf2-to-opxy](https://github.com/charlesvestal/sf2-to-opxy) (MIT).
 
 OP-XY Agent is an independent project, not affiliated with or endorsed by Teenage Engineering.
 "OP-XY" and "teenage engineering" are their owner's trademarks, used here only to describe

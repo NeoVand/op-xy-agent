@@ -33,6 +33,7 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		partKeys,
 		slicePattern,
 		voiceValue,
+		parseSoundFont,
 		readPreset,
 		unzip,
 		zipPreset,
@@ -640,6 +641,23 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 	 * naming the preset.
 	 */
 	async function addDropped(entries: readonly DroppedFile[], key?: number) {
+		// a SoundFont: its first instrument (or kit) on the keys, the others a pick away
+		const font = entries.find((e) => /\.sf2$/i.test(e.path));
+		if (font) {
+			try {
+				player.unlock();
+				const parsed = parseSoundFont(new Uint8Array(await font.file.arrayBuffer()));
+				const first = parsed.presets.find((p) => !p.drum) ?? parsed.presets[0];
+				if (!first) throw new Error(`${font.file.name} holds no presets`);
+				stopBeat();
+				bench.openSoundFont(parsed, first.index);
+				page = 'trim';
+				chase();
+			} catch (error) {
+				bench.say(error instanceof Error ? error.message : String(error));
+			}
+			return;
+		}
 		const zip = entries.find((e) => /\.zip$/i.test(e.path));
 		const hasPatch = entries.some((e) => /(^|\/)patch\.json$/i.test(e.path));
 		if (zip || hasPatch) {
@@ -704,7 +722,7 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 	function choose() {
 		const picker = document.createElement('input');
 		picker.type = 'file';
-		picker.accept = 'audio/*,.wav,.aif,.aiff,.flac,.mp3,.ogg,.m4a,.zip';
+		picker.accept = 'audio/*,.wav,.aif,.aiff,.flac,.mp3,.ogg,.m4a,.zip,.sf2';
 		picker.multiple = true;
 		picker.onchange = () => {
 			if (picker.files?.length) {
@@ -725,7 +743,14 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 	}
 
 	function onKeyDown(event: KeyboardEvent) {
-		if (typing(event.target) || event.metaKey || event.ctrlKey || event.altKey) return;
+		if (typing(event.target)) return;
+		if ((event.metaKey || event.ctrlKey) && event.code === 'KeyZ' && !event.shiftKey) {
+			event.preventDefault();
+			stopBeat();
+			bench.undo();
+			return;
+		}
+		if (event.metaKey || event.ctrlKey || event.altKey) return;
 		const name = NOTE_CODES[event.code];
 		if (name) {
 			event.preventDefault();
@@ -1034,6 +1059,26 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 			</div>
 
 			<div class="source">
+				{#if bench.soundFont}
+					{@const font = bench.soundFont}
+					<span class="source__label">from the soundfont {font.name}</span>
+					<select
+						class="source__select"
+						aria-label="the soundfont's preset"
+						value={bench.soundFontPreset}
+						onchange={(event) => {
+							stopBeat();
+							bench.openSoundFont(font, Number(event.currentTarget.value));
+							chase();
+						}}
+					>
+						{#each font.presets as preset (preset.index)}
+							<option value={preset.index}
+								>{preset.bank}:{preset.program} {preset.name}{preset.drum ? ' (kit)' : ''}</option
+							>
+						{/each}
+					</select>
+				{/if}
 				{#if bench.mode === 'drum'}
 					<span class="source__label">make a kit</span>
 					<div class="source__row">
@@ -1188,6 +1233,11 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		<div class="strip__more">
 			{#if (bench.mode === 'drum' || bench.mode === 'slices') && bench.sounds.length > 0}
 				<Button size="sm" variant="ghost" onclick={toReplica}>open on the replica</Button>
+			{/if}
+			{#if bench.canUndo}
+				<span {@attach tooltip('undo the last change (⌘Z)')}>
+					<Button size="sm" variant="ghost" onclick={() => (stopBeat(), bench.undo())}>undo</Button>
+				</span>
 			{/if}
 			{#if !bench.empty}
 				<Button size="sm" variant="ghost" onclick={() => (stopBeat(), bench.clear())}>clear</Button>

@@ -32,10 +32,15 @@ describe('the preset maker', () => {
 		await expect.element(page.getByText('drop sounds anywhere')).toBeVisible();
 		await page.getByRole('button', { name: '909', exact: true }).first().click();
 		await expect.poll(() => labels().length).toBe(24);
-		expect(labels()[0]).toBe('f3: 909 kick, kick');
+		expect(labels()[0]).toBe('f3: kick, kick');
 		await expect.element(page.getByRole('textbox')).toHaveValue('909 kit');
 		await expect.element(page.getByText('909 kit.preset')).toBeVisible();
 		await expect.element(page.getByRole('button', { name: 'download .preset' })).not.toBeDisabled();
+		// clearing is one undo away
+		await page.getByRole('button', { name: 'clear', exact: true }).click();
+		await expect.poll(() => labels().length).toBe(0);
+		await page.getByRole('button', { name: 'undo', exact: true }).click();
+		await expect.poll(() => labels().length).toBe(24);
 	});
 
 	it('puts dropped hits on TE’s layout, by name and by ear', async () => {
@@ -91,9 +96,9 @@ describe('the preset maker', () => {
 		render(PresetMaker);
 		await page.getByRole('button', { name: 'tight', exact: true }).first().click();
 		await expect.poll(() => labels().length).toBe(24);
-		await page.getByRole('button', { name: /^g3: tight snare/ }).click();
+		await page.getByRole('button', { name: /^g3: snare/ }).click();
 		await expect
-			.element(page.getByRole('button', { name: /^g3: tight snare/ }))
+			.element(page.getByRole('button', { name: /^g3: snare/ }))
 			.toHaveAttribute('aria-pressed', 'true');
 		await expect.element(page.getByRole('slider', { name: 'start', exact: true })).toBeVisible();
 		await page.getByRole('button', { name: 'tone', exact: true }).click();

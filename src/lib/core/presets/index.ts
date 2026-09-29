@@ -68,5 +68,14 @@ export type { DrumFeatures, DrumGuess, DrumKind, Placeable } from './classify';
 export { EDIT_RANGES, MIN_SPAN, audibleSpan, clampEdit, defaultEdit, renderEdit } from './edit';
 export { PresetReadError, readPreset, unzip } from './read';
 export type { ImportedPreset, Inflate, PresetFile } from './read';
+export { Sf2Error, parseSoundFont, soundFontSamples } from './sf2';
+export type {
+	SoundFont,
+	SoundFontImport,
+	SoundFontImportOptions,
+	SoundFontPreset,
+	SoundFontSample,
+	SoundFontZone
+} from './sf2';
 export type { LoopEdit, RenderOptions, RenderedSound, SoundEdit } from './edit';
 export type { DrumPlayMode } from './patch';

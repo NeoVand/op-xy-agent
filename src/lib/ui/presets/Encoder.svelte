@@ -150,7 +150,7 @@ patch.json field it writes (in the tooltip).
 		</svg>
 	</div>
 	<span class="encoder__label">{label}</span>
-	<span class="encoder__value">{disabled ? '—' : text}</span>
+	<span class="encoder__value">{disabled && display === undefined ? '—' : text}</span>
 </div>
 
 <style>

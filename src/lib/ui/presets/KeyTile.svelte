@@ -73,6 +73,12 @@ drop files on it to put them right there.
 
 	const MIME = 'application/x-opxy-key';
 
+	/** Kinds as a key has room to print them (the full kind is in its name). */
+	const SHORT: Readonly<Partial<Record<string, string>>> = {
+		'closed hat': 'hat',
+		tambourine: 'tamb'
+	};
+
 	let over = $state(false);
 	let down = $state(false);
 
@@ -194,7 +200,7 @@ drop files on it to put them right there.
 			</svg>
 		</span>
 		<span class="tile__foot">
-			<span class="tile__kind">{kind ?? ''}</span>
+			<span class="tile__kind">{kind ? (SHORT[kind] ?? kind) : ''}</span>
 			<span class="tile__detail">{detail ?? ''}</span>
 		</span>
 	{:else}

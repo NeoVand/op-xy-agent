@@ -36,6 +36,7 @@ import {
 	resample,
 	safeName,
 	sliceAudio,
+	soundFontSamples,
 	slotFromName,
 	zonesFor,
 	type BenchMode,
@@ -49,6 +50,7 @@ import {
 	type PresetProblem,
 	type SampleInput,
 	type SoundEdit,
+	type SoundFont,
 	type Voice,
 	type VoiceParam,
 	type VoiceType,
@@ -84,6 +86,26 @@ export interface BenchSound {
 
 /** How a loop is cut: at its hits, or into equal parts. */
 export type Cut = 'hits' | '8' | '16' | '24';
+
+/** The workbench as it stood, for undo. */
+interface Snapshot {
+	readonly mode: BenchMode;
+	readonly name: string;
+	readonly source: string;
+	readonly kit: (BenchSound | null)[];
+	readonly loop: BenchSound | null;
+	readonly cuts: number[];
+	readonly cut: Cut;
+	readonly sensitivity: number;
+	readonly tempo: LoopTempo | null;
+	readonly sliceEdits: Partial<SoundEdit>[];
+	readonly zones: BenchSound[];
+	readonly one: BenchSound | null;
+	readonly selected: number | null;
+	readonly octave: number;
+	readonly soundFont: SoundFont | null;
+	readonly soundFontPreset: number;
+}
 
 /** The last thing the workbench did, for the screen's message line. */
 export interface BenchNote {
@@ -317,6 +339,79 @@ export class Workbench {
 		this.note = { text, at: Date.now() };
 	}
 
+	// ---------------------------------------------------------------- undo
+
+	/** Whether there is something to undo. */
+	canUndo = $state(false);
+	/** Earlier states, newest last (the sounds are immutable, so a state is a few references). */
+	#past: Snapshot[] = [];
+	#lastTag = '';
+	#lastAt = 0;
+
+	#snapshot(): Snapshot {
+		return {
+			mode: this.mode,
+			name: this.name,
+			source: this.source,
+			kit: this.kit,
+			loop: this.loop,
+			cuts: this.cuts,
+			cut: this.cut,
+			sensitivity: this.sensitivity,
+			tempo: this.tempo,
+			sliceEdits: this.sliceEdits,
+			zones: this.zones,
+			one: this.one,
+			selected: this.selected,
+			octave: this.octave,
+			soundFont: this.soundFont,
+			soundFontPreset: this.soundFontPreset
+		};
+	}
+
+	/**
+	 * Keeps the state before a change. One gesture is one step: the same change repeated within
+	 * a moment (a drag, a knob turning) adds none, nor does a change made inside another.
+	 */
+	#save(tag: string, merge = true): void {
+		const now = Date.now();
+		const inside = now - this.#lastAt < 30;
+		const same = merge && tag === this.#lastTag && now - this.#lastAt < 900;
+		this.#lastAt = now;
+		if (inside || same) return;
+		this.#lastTag = tag;
+		this.#past.push(this.#snapshot());
+		if (this.#past.length > 60) this.#past.shift();
+		this.canUndo = true;
+	}
+
+	/** Puts the workbench back as it was before the last change. */
+	undo(): boolean {
+		const s = this.#past.pop();
+		this.canUndo = this.#past.length > 0;
+		if (!s) return false;
+		this.mode = s.mode;
+		this.name = s.name;
+		this.source = s.source;
+		this.kit = s.kit;
+		this.loop = s.loop;
+		this.cuts = s.cuts;
+		this.cut = s.cut;
+		this.sensitivity = s.sensitivity;
+		this.tempo = s.tempo;
+		this.sliceEdits = s.sliceEdits;
+		this.zones = s.zones;
+		this.one = s.one;
+		this.selected = s.selected;
+		this.octave = s.octave;
+		this.soundFont = s.soundFont;
+		this.soundFontPreset = s.soundFontPreset;
+		this.#lastTag = '';
+		this.#lastAt = 0;
+		this.say('undone');
+		return true;
+	}
+
 	/** Switches what is being made (each mode keeps its own sounds). */
 	setMode(mode: BenchMode): void {
 		this.mode = mode;
@@ -328,6 +423,7 @@ export class Workbench {
 	 * want to be (a loop is sliced, several notes a multisample). `key` drops them on one key.
 	 */
 	add(dropped: readonly { name: string; audio: PcmAudio }[], key?: number): void {
+		this.#save('add', false);
 		if (dropped.length === 0) return;
 		const cut: string[] = [];
 		const sounds = dropped.map((d) => {
@@ -421,6 +517,7 @@ export class Workbench {
 
 	/** Cuts the loop again, at its hits (at the sensitivity) or into equal parts. */
 	recut(): void {
+		this.#save('recut');
 		const loop = this.loop;
 		if (!loop) {
 			this.cuts = [];
@@ -435,6 +532,7 @@ export class Workbench {
 
 	/** Moves one cut of the loop (frames), keeping the cuts in order. */
 	moveCut(index: number, frame: number): void {
+		this.#save(`cut ${index}`);
 		const cuts = [...this.cuts];
 		const lo = index > 0 ? cuts[index - 1] + 64 : 0;
 		const hi =
@@ -450,6 +548,7 @@ export class Workbench {
 
 	/** Adds a cut at `frame` (at most 24 slices). */
 	addCut(frame: number): void {
+		this.#save('add cut', false);
 		if (this.cuts.length >= KEYS || !this.loop) return;
 		const at = Math.round(frame);
 		if (this.cuts.some((c) => Math.abs(c - at) < 256)) return;
@@ -463,6 +562,7 @@ export class Workbench {
 
 	/** Takes a cut away (the first stays: the loop starts there). */
 	removeCut(index: number): void {
+		this.#save('remove cut', false);
 		if (index <= 0 || index >= this.cuts.length) return;
 		this.cuts = this.cuts.filter((_, i) => i !== index);
 		this.sliceEdits = this.sliceEdits.filter((_, i) => i !== index);
@@ -578,6 +678,7 @@ export class Workbench {
 
 	/** Swaps two keys of the kit (drum kits), or moves a zone's root (multisample). */
 	move(from: number, to: number): void {
+		this.#save('move', false);
 		if (from === to) return;
 		if (this.mode === 'drum') {
 			const kit = [...this.kit];
@@ -608,6 +709,7 @@ export class Workbench {
 
 	/** Takes a sound off the workbench. */
 	remove(id: number): void {
+		this.#save('remove', false);
 		if (this.mode === 'drum') this.kit = this.kit.map((s) => (s?.id === id ? null : s));
 		else if (this.mode === 'multisampler') this.zones = this.zones.filter((z) => z.id !== id);
 		else if (this.mode === 'sampler' && this.one?.id === id) this.one = null;
@@ -623,6 +725,7 @@ export class Workbench {
 
 	/** Empties the current mode. */
 	clear(): void {
+		this.#save('clear', false);
 		if (this.mode === 'drum') this.kit = emptyKeys();
 		else if (this.mode === 'slices') {
 			this.loop = null;
@@ -637,6 +740,7 @@ export class Workbench {
 
 	/** Changes a sound's edit (kept valid and in the device's ranges). */
 	edit(id: number, change: Partial<SoundEdit>): void {
+		this.#save(`edit ${id} ${Object.keys(change).join()}`);
 		this.#update(id, (s) => ({
 			...s,
 			edit: clampEdit({ ...s.edit, ...change }, s.audio.channels[0].length)
@@ -651,6 +755,7 @@ export class Workbench {
 
 	/** Sets an instrument sound's root note (moving any zone already there out of the way). */
 	setRoot(id: number, root: number): void {
+		this.#save(`root ${id}`);
 		const r = Math.max(0, Math.min(127, Math.round(root)));
 		if (this.mode === 'sampler') {
 			this.#update(id, (s) => ({ ...s, root: r, rootFrom: 'you' }));
@@ -664,6 +769,7 @@ export class Workbench {
 
 	/** Says a drum sound is another kind (the key stays where it is). */
 	setKind(id: number, kind: DrumKind): void {
+		this.#save('kind', false);
 		this.#update(id, (s) => ({ ...s, kind, kindFrom: 'you', reason: 'you said so' }));
 	}
 
@@ -676,6 +782,7 @@ export class Workbench {
 
 	/** Puts a whole kit on the keys (generated here, or made by the agent's make_kit). */
 	useKit(name: string, samples: readonly SampleInput[]): void {
+		this.#save('kit', false);
 		const kit = emptyKeys();
 		const loose: SampleInput[] = [];
 		for (const s of samples) {
@@ -708,7 +815,9 @@ export class Workbench {
 			voiced && slot >= 0 && sameFamily(voiced, TE_LAYOUT[slot])
 				? TE_LAYOUT[slot]
 				: (voiced ?? guess?.kind ?? 'perc');
-		return makeSound(s.name, audio, 'drum', {
+		// a generated kit's sounds are named after it ("909 kick"): the key shows the sound alone
+		const name = s.voice ? s.name.replace(/^(808|909|lo-fi|tight|boom|rnd)\s+/, '') : s.name;
+		return makeSound(name, audio, 'drum', {
 			kind,
 			kindFrom: s.voice ? 'generated' : (guess?.from ?? 'name'),
 			reason: s.voice ? `a generated ${s.voice.type}` : (guess?.reason ?? ''),
@@ -717,8 +826,32 @@ export class Workbench {
 		});
 	}
 
+	/** A SoundFont dropped here, and which of its presets is on the keys. */
+	soundFont = $state.raw<SoundFont | null>(null);
+	soundFontPreset = $state(0);
+
+	/** Puts one of a SoundFont's presets on the keys: a multisample, or a kit for a drum preset. */
+	openSoundFont(font: SoundFont, index: number): void {
+		const imported = soundFontSamples(font, index);
+		this.openPreset({
+			kind: imported.kind,
+			name: safeName(imported.name, 24),
+			samples: imported.samples,
+			patch: {},
+			warnings: imported.warnings
+		});
+		this.soundFont = font;
+		this.soundFontPreset = index;
+		const zones = imported.kind === 'drum' ? 'keys' : 'zones';
+		this.say(
+			`${imported.name}: ${this.sounds.length} ${zones} from ${font.name || 'the soundfont'}`
+		);
+	}
+
 	/** Opens an existing preset to edit it again: its kind, name, sounds and their edits. */
 	openPreset(preset: ImportedPreset): void {
+		this.#save('open', false);
+		this.soundFont = null;
 		const sound = (s: SampleInput, kind: PresetKind, extra: Partial<BenchSound> = {}) => {
 			const { audio } = atPresetRate(s.audio);
 			const scale = PRESET_RATE / s.audio.sampleRate;
@@ -791,6 +924,7 @@ export class Workbench {
 
 	/** Nudges every generated voice (or only the one being edited). */
 	mutate(onlyCurrent = false): void {
+		this.#save('mutate', false);
 		const seed = Math.floor(Math.random() * 1e6) + 1;
 		let count = 0;
 		this.kit = this.kit.map((s, i) => {
@@ -805,6 +939,7 @@ export class Workbench {
 
 	/** Turns one number of a generated voice, and renders it again. */
 	setVoice(id: number, param: VoiceParam, value: number): void {
+		this.#save(`voice ${id} ${param}`);
 		this.kit = this.kit.map((s) =>
 			s?.id === id && s.voice ? this.#revoice(s, { ...s.voice, [param]: value }) : s
 		);
