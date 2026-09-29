@@ -1,12 +1,14 @@
 <!--
-The manual's landing page: what it is, a search over everything, where to start, the areas as cards
-and every recipe. Our own rewording of TE's guide, checked against a unit (knowledge/manual/units);
+The manual's landing page: what it is, a search over everything, which key is which, where to
+start, the areas as cards and every recipe. Our own rewording of TE's guide, checked against a unit (knowledge/manual/units);
 the agent answers from the same text and cites these pages.
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+	import type { ControlId } from '$lib/core/opxy';
 	import type { AreaId } from '$lib/manual';
+	import { ControlGlyph, controlGlyph } from '$lib/replica';
 	import { HugeIcon } from '$lib/ui';
 	import ManualSearch from '$lib/ui/manual/ManualSearch.svelte';
 	import { AREA_ICONS, areaName } from '$lib/ui/manual/areas';
@@ -16,6 +18,19 @@ the agent answers from the same text and cites these pages.
 
 	const areas = $derived(data.areas.filter((area) => area.id !== 'howto'));
 	const recipesText = $derived(data.areas.find((area) => area.id === 'howto')?.description);
+
+	/** The keys the teaser shows: names the device never prints. */
+	const TEASER: readonly ControlId[] = [
+		'key.m3',
+		'track.5',
+		'keyboard.fs3',
+		'key.player',
+		'encoder.2'
+	];
+	const teaser = TEASER.flatMap((id) => {
+		const art = controlGlyph(id);
+		return art ? [{ id, art }] : [];
+	});
 </script>
 
 <svelte:head>
@@ -39,6 +54,20 @@ the agent answers from the same text and cites these pages.
 			{data.stats.facts} facts · {data.stats.verified} checked on a unit · TE’s guide {data.guide}
 		</p>
 	</header>
+
+	<a class="keys" href={resolve('/manual/keys')}>
+		<span class="keys__glyphs" aria-hidden="true">
+			{#each teaser as key (key.id)}<ControlGlyph art={key.art} name="" />{/each}
+		</span>
+		<span class="keys__text">
+			<span class="keys__title">Which key is which</span>
+			<span class="keys__sub"
+				>M3, T5, accidental 1: the OP-XY prints digits and pictures, never those names. Every key as
+				it looks on the device, with the name the manual uses.</span
+			>
+		</span>
+		<span class="keys__go"><HugeIcon icon={ArrowRight01Icon} size="1rem" /></span>
+	</a>
 
 	{#if data.start.length > 0}
 		<section class="block" aria-labelledby="start">
@@ -140,6 +169,69 @@ the agent answers from the same text and cites these pages.
 		margin: 0;
 		color: var(--xy-fg-faint);
 		font-size: var(--xy-text-xs);
+	}
+
+	/* the keys page, first: the names every other page uses */
+	.keys {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+		margin-top: -1.5rem;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--xy-line);
+		border-radius: 0.875rem;
+		color: var(--xy-fg);
+		text-decoration: none;
+		transition:
+			border-color var(--xy-dur-quick, 120ms) ease,
+			background-color var(--xy-dur-quick, 120ms) ease;
+	}
+
+	.keys:hover {
+		border-color: var(--xy-line-control);
+		background-color: var(--xy-hover);
+	}
+
+	.keys__glyphs {
+		--glyph-size: 2.25rem;
+		display: flex;
+		flex: none;
+		gap: 0.25rem;
+	}
+
+	.keys__text {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 0.25rem;
+		min-width: 0;
+	}
+
+	.keys__title {
+		font-size: var(--xy-text-base);
+	}
+
+	.keys__sub {
+		color: var(--xy-fg-subtle);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+	}
+
+	.keys__go {
+		display: inline-flex;
+		color: var(--xy-fg-faint);
+	}
+
+	@media (max-width: 40rem) {
+		.keys {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.75rem;
+		}
+
+		.keys__go {
+			display: none;
+		}
 	}
 
 	.block {

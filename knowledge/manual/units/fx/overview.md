@@ -7,7 +7,7 @@ order: 0
 context:
   modes: [auxiliary]
   screens: [M1]
-summary: Six built-in send effects — chorus, delay, distortion, lofi, phaser and reverb — can be loaded on the two FX tracks, FX I (T7) and FX II (T8); M1 of an FX track shows the effect's four controls.
+summary: Six built-in send effects — chorus, delay, distortion, lofi, phaser and reverb — can be loaded on the two FX tracks, FX I (`T7`) and FX II (`T8`); `M1` of an FX track shows the effect's four controls.
 status: current
 firmware:
   min: '1.0.9'

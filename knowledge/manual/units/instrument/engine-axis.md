@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1]
-summary: An FM engine made for lush strings; its M1 page sets tone, the ratio of one oscillator (detune or fifths), wave shape and a built-in tremolo.
+summary: An FM engine made for lush strings; its `M1` page sets tone, the ratio of one oscillator (detune or fifths), wave shape and a built-in tremolo.
 status: current
 firmware:
   min: '1.0.9'

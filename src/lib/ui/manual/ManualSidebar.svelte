@@ -13,6 +13,7 @@ units beside it. On narrow screens it is a drawer. Open areas and the fold are r
 	import {
 		ArrowDown01Icon,
 		Home01Icon,
+		CommandIcon,
 		KeyboardIcon,
 		LinkSquare02Icon,
 		SidebarLeftIcon,
@@ -24,6 +25,7 @@ units beside it. On narrow screens it is a drawer. Open areas and the fold are r
 	import { tooltip } from '../tooltip';
 	import ManualSearch from './ManualSearch.svelte';
 	import { AREA_DETAILS, AREA_ICONS, areaName, type UnitSection } from './areas';
+	import { KEYS_PAGE } from './keys';
 
 	interface NavArea {
 		readonly id: string;
@@ -33,7 +35,7 @@ units beside it. On narrow screens it is a drawer. Open areas and the fold are r
 
 	interface Props {
 		nav: readonly NavArea[];
-		/** The unit being read, if any. */
+		/** The unit being read, if any (or the keys page, `KEYS_PAGE`). */
 		current: string | null;
 		/** The sections of the unit being read. */
 		sections: readonly UnitSection[];
@@ -93,8 +95,14 @@ units beside it. On narrow screens it is a drawer. Open areas and the fold are r
 	const resources = $derived<Resource[]>([
 		{ label: 'overview', icon: Home01Icon, href: resolve('/manual'), current: current === null },
 		{
-			label: 'key notation',
+			label: 'which key is which',
 			icon: KeyboardIcon,
+			href: resolve('/manual/keys'),
+			current: current === KEYS_PAGE
+		},
+		{
+			label: 'key notation',
+			icon: CommandIcon,
 			href: resolve('/manual/[id]', { id: 'basics.key-notation' }),
 			current: current === 'basics.key-notation'
 		},

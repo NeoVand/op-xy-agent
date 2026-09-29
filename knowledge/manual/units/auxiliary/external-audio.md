@@ -19,13 +19,13 @@ facts:
     text: The 3.5 mm audio input takes line sources or a microphone, for vocals, horns and the like.
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio
   - id: activate
-    text: On `T5`, choose the input with `turn E1`, then click `E1` to switch it on.
+    text: On `T5`, choose the input with `turn E1`, then `click E1` to switch it on.
     source: https://teenage.engineering/guides/op-xy/how-to#send-audio-to-and-from-an-external-effect
   - id: out
     text: Sending audio out needs the multi-out set to audio.
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio
   - id: routing
-    text: M2 sends instrument tracks to the aux output on the multi-out; only routed tracks leave there, each at an amount independent of the main mix.
+    text: '`M2` sends instrument tracks to the aux output on the multi-out; only routed tracks leave there, each at an amount independent of the main mix.'
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio
   - id: outboard
     text: For an outboard effect, send tracks out of the multi-out, return the effect into the audio input, and balance the return with drive, level and mix.

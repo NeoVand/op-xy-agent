@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1]
-summary: A basic engine for building leads and plucks quickly; its M1 page sets waveform shape, pulse width, noise and stereo spread.
+summary: A basic engine for building leads and plucks quickly; its `M1` page sets waveform shape, pulse width, noise and stereo spread.
 status: current
 firmware:
   min: '1.0.9'

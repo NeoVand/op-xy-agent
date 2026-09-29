@@ -11,7 +11,7 @@ tiny black screen in both themes, like the stage hint; nothing shows while no wa
 -->
 <script lang="ts">
 	import Icon from '$lib/ui/Icon.svelte';
-	import Kbd from '$lib/ui/Kbd.svelte';
+	import KeyCombo from '$lib/replica/glyphs/KeyCombo.svelte';
 	import type { ReplicaGuide } from './guide.svelte';
 
 	interface Props {
@@ -33,7 +33,7 @@ tiny black screen in both themes, like the stage hint; nothing shows while no wa
 		{#key guide.index}
 			<div class="card" data-theme="dark">
 				<span class="card__count">{guide.index + 1}/{guide.steps.length}</span>
-				<Kbd combo={step.keys} size="sm" class="card__keys" />
+				<KeyCombo keys={step.keys} size="sm" class="card__keys" />
 				<p class="card__what">
 					{#if turn}<span class="card__turn">{turn}</span>{/if}
 					<span class="card__screen"><span aria-hidden="true">→ </span>{step.screen}</span>

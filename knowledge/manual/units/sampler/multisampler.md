@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1, sample]
-summary: Up to 24 samples of one instrument, each on its own zone of the keyboard; a sample also plays the empty keys below it, and M1 edits the selected zone like the synth sampler.
+summary: Up to 24 samples of one instrument, each on its own zone of the keyboard; a sample also plays the empty keys below it, and `M1` edits the selected zone like the synth sampler.
 status: current
 firmware:
   min: '1.0.9'
@@ -31,7 +31,7 @@ facts:
     text: The record page works like the drum sampler's — `M1` records, `M2` / `M3` step through filled keys, `M4` unassigns; takes go to the user folder.
     source: https://teenage.engineering/guides/op-xy/sample#multisampler
   - id: editing
-    text: The multisampler's M1 page has the synth sampler's layout, loop type included (`shift + click E3`).
+    text: The multisampler's `M1` page has the synth sampler's layout, loop type included (`shift + click E3`).
     source: https://teenage.engineering/guides/op-xy/sample#multisampler
   - id: caption-mixup
     text: The guide titles `shift + turn E2` and `shift + turn E3` pan and sample fade but describes tune and loop crossfade; zones store tune and crossfade, not pan.

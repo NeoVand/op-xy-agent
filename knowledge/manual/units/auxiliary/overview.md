@@ -24,7 +24,7 @@ facts:
     text: The selected aux track lights its key red; instrument tracks light white.
     source: https://teenage.engineering/guides/op-xy/track-buttons#6.1%20using-the-track-buttons
   - id: pages
-    text: External audio, tape and the FX tracks put main controls on M1, routing on M2, a filter on M3 and an LFO on M4; the brain has M1 and routing, external MIDI puts CCs on M2 and M3.
+    text: External audio, tape and the FX tracks put main controls on `M1`, routing on `M2`, a filter on `M3` and an LFO on `M4`; the brain has `M1` and routing, external MIDI puts CCs on `M2` and `M3`.
     source: https://teenage.engineering/guides/op-xy/auxiliary
   - id: sequenced
     text: Aux tracks have their own patterns, notes, parameter locks and step components, like instrument tracks.

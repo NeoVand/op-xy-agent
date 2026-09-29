@@ -4,8 +4,15 @@
 > Decisions: [`DECISIONS.md`](DECISIONS.md). Questions for the owner: [`QUESTIONS.md`](QUESTIONS.md).
 > Update the **Status** block whenever a milestone moves.
 
-## Status (2026-09-28)
+## Status (2026-09-29)
 
+- **Keys as the device draws them (2026-09-29):** the manual and the chat draw every key combo as
+  the OP-XY's own keys, from the replica's art (`replica/glyphs`: `KeyCombo`, `ControlGlyph`), since
+  the device prints digits and pictures, never "M3" or "T5"; the names live in tooltips and
+  accessible labels. Pointing at a key rings it on the page's replica (`replicaPointer`). A new
+  page, `/manual/keys` ("which key is which"), lays out every key with its name, the keyboard as
+  the panel has it; the manual's prose now backticks every bare control name (150 of them), and
+  the agent is asked to do the same.
 - **Tonight (2026-09-28, night), all on main:** songs and scenes measured on the owner's unit (probe
   log, passive recordings): plain play runs the song from its first scene, outside song mode too; a
   scene selected while the song plays takes over at once and repeats, and one picked while stopped

@@ -7,7 +7,7 @@ order: 20
 context:
   modes: [auxiliary]
   screens: [M1]
-summary: An echo for FX I or FX II; M1 sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.
+summary: An echo for FX I or FX II; `M1` sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.
 status: current
 firmware:
   min: '1.0.9'

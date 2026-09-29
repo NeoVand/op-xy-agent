@@ -19,7 +19,7 @@ facts:
     text: There are 11 user tuning slots, found under settings → tuning in the preset settings.
     source: https://teenage.engineering/guides/op-xy/instrument#preset-settings
   - id: edit
-    text: '`E3` picks a slot and `M4` opens it; in the editor, play a key to choose the note, then turn `E1` for cents and `E2` for micro-cents.'
+    text: '`E3` picks a slot and `M4` opens it; in the editor, play a key to choose the note, then `turn E1` for cents and `E2` for micro-cents.'
     source: https://teenage.engineering/guides/op-xy/instrument#preset-settings
   - id: per-pitch-class
     text: Presets store a user tuning as 12 offsets, one per pitch class, so the same pattern repeats in every octave.

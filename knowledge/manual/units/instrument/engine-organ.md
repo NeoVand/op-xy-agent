@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1]
-summary: An organ engine that spans transistor combos to church organs; its M1 page sets organ type, bass, tremolo amount and tremolo speed.
+summary: An organ engine that spans transistor combos to church organs; its `M1` page sets organ type, bass, tremolo amount and tremolo speed.
 status: current
 firmware:
   min: '1.0.9'

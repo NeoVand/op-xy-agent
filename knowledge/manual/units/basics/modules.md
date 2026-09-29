@@ -7,7 +7,7 @@ order: 20
 context:
   modes: [instrument, auxiliary, mix]
   screens: [M1, M2, M3, M4]
-summary: In instrument, auxiliary and mix mode the keys M1–M4 under the screen open four pages (modules), and the encoders edit what the open page shows. Arrange has no modules.
+summary: In instrument, auxiliary and mix mode the keys `M1…M4` under the screen open four pages (modules), and the encoders edit what the open page shows. Arrange has no modules.
 status: current
 firmware:
   min: '1.0.9'
@@ -25,13 +25,13 @@ facts:
     text: Pages with more than four parameters show the rest while `shift` is held.
     source: https://teenage.engineering/guides/op-xy/main-modes#5.2%20modules
   - id: instrument-pages
-    text: On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine.
+    text: On instrument tracks the pages are engine (`M1`), envelopes (`M2`), filter (`M3`) and LFO (`M4`); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine.
     source: https://teenage.engineering/guides/op-xy/instrument
   - id: aux-pages
-    text: Auxiliary tracks use the pages their own way; on the brain track, M1 sets key and scale and M2 routes tracks into it.
+    text: Auxiliary tracks use the pages their own way; on the brain track, `M1` sets key and scale and `M2` routes tracks into it.
     source: https://teenage.engineering/guides/op-xy/auxiliary#brain
   - id: mix-pages
-    text: In mix mode, M1 holds levels, pans and sends per track, M2 the master EQ, M3 the master saturator and M4 the master section.
+    text: In mix mode, `M1` holds levels, pans and sends per track, `M2` the master EQ, `M3` the master saturator and `M4` the master section.
     source: https://teenage.engineering/guides/op-xy/mix
   - id: encoder-marks
     text: On screen, each parameter carries a small dot or cap in its encoder's shade — dark for `E1`, mid grey for `E2`, light grey for `E3`, white for `E4` — so a glance tells which knob moves what.

@@ -143,7 +143,7 @@ parameters:
     encoder: E4
     layer: base
     name: value
-    note: same as E3
+    note: same as `E3`
     source: https://teenage.engineering/guides/op-xy/com#system-settings
 related: [com.midi-monitor, com.devices, com.midi-cc-reference, hardware.layout]
 ---

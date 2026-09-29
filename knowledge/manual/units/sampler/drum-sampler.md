@@ -7,7 +7,7 @@ order: 30
 context:
   modes: [instrument]
   screens: [M1, sample]
-summary: Gives each of the 24 keys its own one-shot sample; record straight onto a chosen key, step between filled keys, and copy, paste or multi-select keys on the M1 page.
+summary: Gives each of the 24 keys its own one-shot sample; record straight onto a chosen key, step between filled keys, and copy, paste or multi-select keys on the `M1` page.
 status: current
 firmware:
   min: '1.0.9'
@@ -29,7 +29,7 @@ facts:
     text: On the record page, `M2` and `M3` jump to the previous or next key holding a sample; `M4` clears the current key but keeps its file.
     source: https://teenage.engineering/guides/op-xy/sample#drum-sampler
   - id: copy-paste
-    text: On M1, `key + M2` copies that key's sample and `key + M3` pastes the last copy onto the held key.
+    text: On `M1`, `key + M2` copies that key's sample and `key + M3` pastes the last copy onto the held key.
     source: https://teenage.engineering/guides/op-xy/sample#drum-sampler
   - id: copy-since
     text: Drum key copy and paste exists since OS 1.0.29.
@@ -59,5 +59,5 @@ procedures:
 related: [sampler.drum-key-settings, sampler.slicing, sampler.sampling]
 ---
 
-Treat the keyboard as 24 pads: select a key, hold `M1`, make the sound, move on. Takes also land in
+Treat the keyboard as 24 pads: select a key, `hold M1`, make the sound, move on. Takes also land in
 the library, so clearing a key never loses a recording.

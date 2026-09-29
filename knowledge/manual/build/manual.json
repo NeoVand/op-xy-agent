@@ -2,7 +2,7 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "c2065e00",
+	"bundle_hash": "09f27bac",
 	"stats": {
 		"units": 166,
 		"facts": 1170,
@@ -361,7 +361,7 @@
 				},
 				{
 					"id": "combos",
-					"text": "This manual writes a combo with a plus sign (`shift + M1` = hold shift, press M1) and a sequence with an arrow (`record + play → play` = release, then press play again).",
+					"text": "This manual writes a combo with a plus sign (`shift + M1` = hold shift, press `M1`) and a sequence with an arrow (`record + play → play` = release, then press play again).",
 					"source": "docs/research/40-official-docs.md#4-key-combos-replica-how-to-data",
 					"firmware_min": null,
 					"verified_on": null,
@@ -569,7 +569,7 @@
 					"M4"
 				]
 			},
-			"summary": "In instrument, auxiliary and mix mode the keys M1–M4 under the screen open four pages (modules), and the encoders edit what the open page shows. Arrange has no modules.",
+			"summary": "In instrument, auxiliary and mix mode the keys `M1…M4` under the screen open four pages (modules), and the encoders edit what the open page shows. Arrange has no modules.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -604,7 +604,7 @@
 				},
 				{
 					"id": "instrument-pages",
-					"text": "On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine.",
+					"text": "On instrument tracks the pages are engine (`M1`), envelopes (`M2`), filter (`M3`) and LFO (`M4`); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine.",
 					"source": "https://teenage.engineering/guides/op-xy/instrument",
 					"firmware_min": null,
 					"verified_on": null,
@@ -612,7 +612,7 @@
 				},
 				{
 					"id": "aux-pages",
-					"text": "Auxiliary tracks use the pages their own way; on the brain track, M1 sets key and scale and M2 routes tracks into it.",
+					"text": "Auxiliary tracks use the pages their own way; on the brain track, `M1` sets key and scale and `M2` routes tracks into it.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#brain",
 					"firmware_min": null,
 					"verified_on": null,
@@ -620,7 +620,7 @@
 				},
 				{
 					"id": "mix-pages",
-					"text": "In mix mode, M1 holds levels, pans and sends per track, M2 the master EQ, M3 the master saturator and M4 the master section.",
+					"text": "In mix mode, `M1` holds levels, pans and sends per track, `M2` the master EQ, `M3` the master saturator and `M4` the master section.",
 					"source": "https://teenage.engineering/guides/op-xy/mix",
 					"firmware_min": null,
 					"verified_on": null,
@@ -749,7 +749,7 @@
 				},
 				{
 					"id": "aux-order",
-					"text": "In auxiliary mode the keys stand for brain (T1), punch-in FX (T2), external MIDI (T3), external CV (T4), external audio (T5), tape (T6), FX I (T7) and FX II (T8).",
+					"text": "In auxiliary mode the keys stand for brain (`T1`), punch-in FX (`T2`), external MIDI (`T3`), external CV (`T4`), external audio (`T5`), tape (`T6`), FX I (`T7`) and FX II (`T8`).",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary",
 					"firmware_min": null,
 					"verified_on": null,
@@ -967,7 +967,7 @@
 			"related": [
 				"basics.track-buttons"
 			],
-			"body": "Linking is the layering tool: hold `T3` and press `T4`, and a bass line played on track 3 also\nsounds through track 4's synth, each track keeping its own sound and settings.",
+			"body": "Linking is the layering tool: `hold T3` and press `T4`, and a bass line played on track 3 also\nsounds through track 4's synth, each track keeping its own sound and settings.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/track-buttons#6.2%20linking-tracks",
@@ -1853,7 +1853,7 @@
 				"sequencer.step-components",
 				"com.midi-settings"
 			],
-			"body": "The OP-XY packs everything into one flat grid of square keys, so a few landmarks make it easy to\nfind your way. The left block is about _where you are_: the four mode keys (`instrument`,\n`auxiliary`, `arrange`, `mix`) and, below them, the transport. The middle is about _what you edit_:\nthe module keys `M1`…`M4` under the screen choose a page, the track keys under the encoders choose a\ntrack, and the step keys below them are the sequencer. The right-hand column holds the utility keys\n(`sample`, `com`, `player`, `bar`).\n\nMost editing follows one pattern: pick a mode, pick a track, pick a page, then turn `E1`…`E4`.\n`shift` reaches a second layer of almost every key and page, and the keyboard's white and black keys\ndouble as step-component and number keys when a page asks for them.",
+			"body": "The OP-XY packs everything into one flat grid of square keys, so a few landmarks make it easy to\nfind your way. The left block is about _where you are_: the four mode keys (`instrument`,\n`auxiliary`, `arrange`, `mix`) and, below them, the transport. The middle is about _what you edit_:\nthe module keys `M1`…`M4` under the screen choose a page, the track keys under the encoders choose a\ntrack, and the step keys below them are the sequencer. The right-hand column holds the utility keys\n(`sample`, `com`, `player`, `bar`).\n\nMost editing follows one pattern: pick a mode, pick a track, pick a page, then `turn E1`…`E4`.\n`shift` reaches a second layer of almost every key and page, and the keyboard's white and black keys\ndouble as step-component and number keys when a page asks for them.",
 			"sources": [
 				{
 					"url": "docs/research/50-hardware-ui.md#14-the-grid-plan-view",
@@ -7866,7 +7866,7 @@
 				},
 				{
 					"id": "list-steps",
-					"text": "With the list up and shift still held, turning E1 moves the box between arpeggio, hold and maestro; pressing `player` again only switches the player on or off. Letting go of shift opens the chosen player's page.",
+					"text": "With the list up and shift still held, turning `E1` moves the box between arpeggio, hold and maestro; pressing `player` again only switches the player on or off. Letting go of shift opens the chosen player's page.",
 					"source": "docs/research/59-screen-profiling.md#27-players",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -7927,7 +7927,7 @@
 						},
 						{
 							"keys": "shift + player → + turn E1",
-							"note": "E1 moves the box to arpeggio, hold or maestro; pressing player again would only switch the player on or off",
+							"note": "`E1` moves the box to arpeggio, hold or maestro; pressing player again would only switch the player on or off",
 							"set": null
 						}
 					],
@@ -9025,7 +9025,7 @@
 							"set": null
 						}
 					],
-					"result": "The track runs the new engine with that preset's sound, and M1 shows the engine's parameters.",
+					"result": "The track runs the new engine with that preset's sound, and `M1` shows the engine's parameters.",
 					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -9174,7 +9174,7 @@
 				},
 				{
 					"id": "release-direction",
-					"text": "Release is set by where its handle sits, so turning E4 clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade.",
+					"text": "Release is set by where its handle sits, so turning `E4` clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade.",
 					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -9232,10 +9232,10 @@
 			"procedures": [
 				{
 					"id": "switch",
-					"goal": "Show the other envelope on M2",
+					"goal": "Show the other envelope on `M2`",
 					"preconditions": [
 						"instrument mode",
-						"M2 is open"
+						"`M2` is open"
 					],
 					"steps": [
 						{
@@ -9846,7 +9846,7 @@
 					"default": null,
 					"cc": 34,
 					"cc_confidence": "community-verified",
-					"note": "how far the M2 filter envelope sweeps the cutoff",
+					"note": "how far the `M2` filter envelope sweeps the cutoff",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
 					"firmware_min": null,
 					"verified_on": null,
@@ -11191,7 +11191,7 @@
 					"goal": "Sweep a track's filter cutoff in time with the tempo",
 					"preconditions": [
 						"instrument mode",
-						"M4 shows the value LFO"
+						"`M4` shows the value LFO"
 					],
 					"steps": [
 						{
@@ -11335,7 +11335,7 @@
 					"M1"
 				]
 			},
-			"summary": "An FM engine made for lush strings; its M1 page sets tone, the ratio of one oscillator (detune or fifths), wave shape and a built-in tremolo.",
+			"summary": "An FM engine made for lush strings; its `M1` page sets tone, the ratio of one oscillator (detune or fifths), wave shape and a built-in tremolo.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -11479,7 +11479,7 @@
 					"M1"
 				]
 			},
-			"summary": "A tonal-noise engine for airy ambient pads and bright, gritty leads; its M1 page sets swarm (noise modulation), AM, FM and detune.",
+			"summary": "A tonal-noise engine for airy ambient pads and bright, gritty leads; its `M1` page sets swarm (noise modulation), AM, FM and detune.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -11615,7 +11615,7 @@
 					"M1"
 				]
 			},
-			"summary": "An electric-piano model that also reaches plucks, strong leads and thick basses; its M1 page sets tone, texture, tine and punch.",
+			"summary": "An electric-piano model that also reaches plucks, strong leads and thick basses; its `M1` page sets tone, texture, tine and punch.",
 			"status": "outdated-in-guide",
 			"firmware": {
 				"min": "1.0.9",
@@ -11772,7 +11772,7 @@
 					"M1"
 				]
 			},
-			"summary": "A hard-sync engine for punchy stabs and firm basses; its M1 page sets freq (a harmonic sweep), sub, noise and low cut.",
+			"summary": "A hard-sync engine for punchy stabs and firm basses; its `M1` page sets freq (a harmonic sweep), sub, noise and low cut.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -12168,7 +12168,7 @@
 					"M1"
 				]
 			},
-			"summary": "An organ engine that spans transistor combos to church organs; its M1 page sets organ type, bass, tremolo amount and tremolo speed.",
+			"summary": "An organ engine that spans transistor combos to church organs; its `M1` page sets organ type, bass, tremolo amount and tremolo speed.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -12303,7 +12303,7 @@
 					"M1"
 				]
 			},
-			"summary": "A general-purpose synth engine for bass lines, leads and most other parts; its M1 page covers waveform, oscillator ratio, detune and stereo width.",
+			"summary": "A general-purpose synth engine for bass lines, leads and most other parts; its `M1` page covers waveform, oscillator ratio, detune and stereo width.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -12330,7 +12330,7 @@
 				},
 				{
 					"id": "m1-is-engine",
-					"text": "Only the M1 page belongs to the engine. Envelopes (M2), filter (M3) and LFO (M4) work the same whichever synth engine a track uses.",
+					"text": "Only the `M1` page belongs to the engine. Envelopes (`M2`), filter (`M3`) and LFO (`M4`) work the same whichever synth engine a track uses.",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#engine",
 					"firmware_min": null,
 					"verified_on": null,
@@ -12338,7 +12338,7 @@
 				},
 				{
 					"id": "lockable",
-					"text": "Like every module-page parameter, prism's four M1 settings can be parameter-locked per step.",
+					"text": "Like every module-page parameter, prism's four `M1` settings can be parameter-locked per step.",
 					"source": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
 					"firmware_min": null,
 					"verified_on": null,
@@ -12402,7 +12402,7 @@
 							"set": null
 						}
 					],
-					"result": "The track now plays through prism and M1 shows its four parameters.",
+					"result": "The track now plays through prism and `M1` shows its four parameters.",
 					"source": "https://teenage.engineering/guides/op-xy/synth-engines#change-engine",
 					"firmware_min": null,
 					"verified_on": null,
@@ -12479,7 +12479,7 @@
 				"sequencer.parameter-locks",
 				"instrument.save-to-same-snapshot"
 			],
-			"body": "Prism runs several oscillators and gives you four controls over how they relate: their waveform,\ntheir tuning ratio, how far apart they drift in pitch and how wide they spread. Little detune and a\nnarrow image keep it tight for bass; more of both makes it broad enough for leads and pads.\n\nEverything else about the sound — how notes start and fade (M2), the filter (M3) and modulation\n(M4) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.\nTE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you\nturn, and the CC numbers are confirmed on the owner's unit.",
+			"body": "Prism runs several oscillators and gives you four controls over how they relate: their waveform,\ntheir tuning ratio, how far apart they drift in pitch and how wide they spread. Little detune and a\nnarrow image keep it tight for bass; more of both makes it broad enough for leads and pads.\n\nEverything else about the sound — how notes start and fade (`M2`), the filter (`M3`) and modulation\n(`M4`) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.\nTE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you\nturn, and the CC numbers are confirmed on the owner's unit.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/synth-engines#arrange",
@@ -12545,7 +12545,7 @@
 					"M1"
 				]
 			},
-			"summary": "A basic engine for building leads and plucks quickly; its M1 page sets waveform shape, pulse width, noise and stereo spread.",
+			"summary": "A basic engine for building leads and plucks quickly; its `M1` page sets waveform shape, pulse width, noise and stereo spread.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -12681,7 +12681,7 @@
 					"M1"
 				]
 			},
-			"summary": "An engine that morphs through a table of stored waveforms; its M1 page picks one of nine tables and sets position, warp and drift.",
+			"summary": "An engine that morphs through a table of stored waveforms; its `M1` page picks one of nine tables and sets position, warp and drift.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -13070,7 +13070,7 @@
 				},
 				{
 					"id": "edit",
-					"text": "`E3` picks a slot and `M4` opens it; in the editor, play a key to choose the note, then turn `E1` for cents and `E2` for micro-cents.",
+					"text": "`E3` picks a slot and `M4` opens it; in the editor, play a key to choose the note, then `turn E1` for cents and `E2` for micro-cents.",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#preset-settings",
 					"firmware_min": null,
 					"verified_on": null,
@@ -13927,7 +13927,7 @@
 					"steps": [
 						{
 							"keys": "Tn + shift + M4",
-							"note": "hold the track key as for a normal save, add shift, then press M4 — the changelog only says to hold shift, so this order is not yet confirmed on a unit",
+							"note": "hold the track key as for a normal save, add shift, then press `M4` — the changelog only says to hold shift, so this order is not yet confirmed on a unit",
 							"set": null
 						}
 					],
@@ -14121,7 +14121,7 @@
 				},
 				{
 					"id": "m1",
-					"text": "On sampler tracks M1 edits the sample; M2–M4 work as on any instrument track.",
+					"text": "On sampler tracks `M1` edits the sample; `M2…M4` work as on any instrument track.",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#engine",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14153,7 +14153,7 @@
 				},
 				{
 					"id": "ccs",
-					"text": "Over MIDI, M1's encoders answer CC12–15 — start, loop start, loop end, end on the synth sampler and multisampler; tune, start, end, play mode on the drum sampler.",
+					"text": "Over MIDI, `M1`'s encoders answer CC12–15 — start, loop start, loop end, end on the synth sampler and multisampler; tune, start, end, play mode on the drum sampler.",
 					"source": "docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14264,7 +14264,7 @@
 					"sample"
 				]
 			},
-			"summary": "`sample` opens a record page from any screen: pick the input, set gain and threshold, then hold `M1` to capture up to 20 seconds into the current sampler or the sample library.",
+			"summary": "`sample` opens a record page from any screen: pick the input, set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -14486,7 +14486,7 @@
 					"M1"
 				]
 			},
-			"summary": "Plays one sample across the keyboard; M1 sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.",
+			"summary": "Plays one sample across the keyboard; `M1` sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -14791,7 +14791,7 @@
 					"sample"
 				]
 			},
-			"summary": "Gives each of the 24 keys its own one-shot sample; record straight onto a chosen key, step between filled keys, and copy, paste or multi-select keys on the M1 page.",
+			"summary": "Gives each of the 24 keys its own one-shot sample; record straight onto a chosen key, step between filled keys, and copy, paste or multi-select keys on the `M1` page.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -14837,7 +14837,7 @@
 				},
 				{
 					"id": "copy-paste",
-					"text": "On M1, `key + M2` copies that key's sample and `key + M3` pastes the last copy onto the held key.",
+					"text": "On `M1`, `key + M2` copies that key's sample and `key + M3` pastes the last copy onto the held key.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14913,7 +14913,7 @@
 				"sampler.slicing",
 				"sampler.sampling"
 			],
-			"body": "Treat the keyboard as 24 pads: select a key, hold `M1`, make the sound, move on. Takes also land in\nthe library, so clearing a key never loses a recording.",
+			"body": "Treat the keyboard as 24 pads: select a key, `hold M1`, make the sound, move on. Takes also land in\nthe library, so clearing a key never loses a recording.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
@@ -14987,7 +14987,7 @@
 					"M1"
 				]
 			},
-			"summary": "The drum sampler's M1 page shapes the selected key — tune, start, end and play mode, with direction, pan, fade and gain on the shift layer.",
+			"summary": "The drum sampler's `M1` page shapes the selected key — tune, start, end and play mode, with direction, pan, fade and gain on the shift layer.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -15392,7 +15392,7 @@
 					"goal": "Slice a drum loop at its hits",
 					"preconditions": [
 						"the loop is on a key of a drum sampler track",
-						"M1 page"
+						"`M1` page"
 					],
 					"steps": [
 						{
@@ -15494,7 +15494,7 @@
 					"sample"
 				]
 			},
-			"summary": "Up to 24 samples of one instrument, each on its own zone of the keyboard; a sample also plays the empty keys below it, and M1 edits the selected zone like the synth sampler.",
+			"summary": "Up to 24 samples of one instrument, each on its own zone of the keyboard; a sample also plays the empty keys below it, and `M1` edits the selected zone like the synth sampler.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -15547,7 +15547,7 @@
 				},
 				{
 					"id": "editing",
-					"text": "The multisampler's M1 page has the synth sampler's layout, loop type included (`shift + click E3`).",
+					"text": "The multisampler's `M1` page has the synth sampler's layout, loop type included (`shift + click E3`).",
 					"source": "https://teenage.engineering/guides/op-xy/sample#multisampler",
 					"firmware_min": null,
 					"verified_on": null,
@@ -15842,7 +15842,7 @@
 					"default": null,
 					"cc": null,
 					"cc_confidence": null,
-					"note": "E3 and E4 do the same",
+					"note": "`E3` and `E4` do the same",
 					"source": "https://teenage.engineering/guides/op-xy/sample#sample-folder",
 					"firmware_min": null,
 					"verified_on": null,
@@ -16097,7 +16097,7 @@
 				},
 				{
 					"id": "pages",
-					"text": "External audio, tape and the FX tracks put main controls on M1, routing on M2, a filter on M3 and an LFO on M4; the brain has M1 and routing, external MIDI puts CCs on M2 and M3.",
+					"text": "External audio, tape and the FX tracks put main controls on `M1`, routing on `M2`, a filter on `M3` and an LFO on `M4`; the brain has `M1` and routing, external MIDI puts CCs on `M2` and `M3`.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary",
 					"firmware_min": null,
 					"verified_on": null,
@@ -16266,7 +16266,7 @@
 				},
 				{
 					"id": "routing",
-					"text": "Tracks left out of the routing on M2 are neither transposed nor used for key detection.",
+					"text": "Tracks left out of the routing on `M2` are neither transposed nor used for key detection.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#brain",
 					"firmware_min": null,
 					"verified_on": null,
@@ -16857,7 +16857,7 @@
 					"M4"
 				]
 			},
-			"summary": "`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; M1 sets channel, bank and program, M2 and M3 hold eight CC slots, and M4 has an LFO.",
+			"summary": "`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; `M1` sets channel, bank and program, `M2` and `M3` hold eight CC slots, and `M4` has an LFO.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -16886,7 +16886,7 @@
 				},
 				{
 					"id": "slots",
-					"text": "M2 and M3 hold four CC slots each; turning sends a slot's value, `shift + turn E1…E4` switches a slot on and picks its CC number, and the values can be sequenced and recorded.",
+					"text": "`M2` and `M3` hold four CC slots each; turning sends a slot's value, `shift + turn E1…E4` switches a slot on and picks its CC number, and the values can be sequenced and recorded.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
 					"firmware_min": null,
 					"verified_on": null,
@@ -16894,7 +16894,7 @@
 				},
 				{
 					"id": "lfo",
-					"text": "The external MIDI track's LFO (M4) modulates the track's own parameters, such as a CC slot.",
+					"text": "The external MIDI track's LFO (`M4`) modulates the track's own parameters, such as a CC slot.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
 					"firmware_min": null,
 					"verified_on": null,
@@ -16964,7 +16964,7 @@
 						},
 						{
 							"keys": "turn E1",
-							"note": "the synth's MIDI channel, on M1",
+							"note": "the synth's MIDI channel, on `M1`",
 							"set": null
 						},
 						{
@@ -17261,7 +17261,7 @@
 				},
 				{
 					"id": "activate",
-					"text": "On `T5`, choose the input with `turn E1`, then click `E1` to switch it on.",
+					"text": "On `T5`, choose the input with `turn E1`, then `click E1` to switch it on.",
 					"source": "https://teenage.engineering/guides/op-xy/how-to#send-audio-to-and-from-an-external-effect",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17277,7 +17277,7 @@
 				},
 				{
 					"id": "routing",
-					"text": "M2 sends instrument tracks to the aux output on the multi-out; only routed tracks leave there, each at an amount independent of the main mix.",
+					"text": "`M2` sends instrument tracks to the aux output on the multi-out; only routed tracks leave there, each at an amount independent of the main mix.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17501,7 +17501,7 @@
 				},
 				{
 					"id": "routing",
-					"text": "Only tracks routed on M2 run through the tape, each at its own amount, independent of the main mix.",
+					"text": "Only tracks routed on `M2` run through the tape, each at its own amount, independent of the main mix.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#tape",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17699,7 +17699,7 @@
 				},
 				{
 					"id": "m1",
-					"text": "On an FX track, M1 shows the loaded effect's parameters.",
+					"text": "On an FX track, `M1` shows the loaded effect's parameters.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17707,7 +17707,7 @@
 				},
 				{
 					"id": "fx1-to-fx2",
-					"text": "On FX I, `shift + turn E4` on the M3 page sets the send into FX II.",
+					"text": "On FX I, `shift + turn E4` on the `M3` page sets the send into FX II.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17715,7 +17715,7 @@
 				},
 				{
 					"id": "track-sends",
-					"text": "Instrument tracks send from their send page (`shift` held on M3, `E3` for FX I, `E4` for FX II).",
+					"text": "Instrument tracks send from their send page (`shift` held on `M3`, `E3` for FX I, `E4` for FX II).",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#filter",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17723,7 +17723,7 @@
 				},
 				{
 					"id": "mix-sends",
-					"text": "In mix mode, M1 sets each track's FX I send with `turn E1` and FX II send with `turn E2`.",
+					"text": "In mix mode, `M1` sets each track's FX I send with `turn E1` and FX II send with `turn E2`.",
 					"source": "https://teenage.engineering/guides/op-xy/mix#levels-pans-and-sends",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17817,7 +17817,7 @@
 					"M4"
 				]
 			},
-			"summary": "Pages shared by several aux tracks — M2 routes instrument tracks in, M3 is a high-pass and low-pass filter with sends on its shift layer, and M4 is an LFO aimed at one of the track's own parameters.",
+			"summary": "Pages shared by several aux tracks — `M2` routes instrument tracks in, `M3` is a high-pass and low-pass filter with sends on its shift layer, and `M4` is an LFO aimed at one of the track's own parameters.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -17830,7 +17830,7 @@
 			"facts": [
 				{
 					"id": "routing-where",
-					"text": "The brain, external audio, tape and both FX tracks have a routing page on M2.",
+					"text": "The brain, external audio, tape and both FX tracks have a routing page on `M2`.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17846,7 +17846,7 @@
 				},
 				{
 					"id": "which-tracks",
-					"text": "External audio, tape and both FX tracks have the filter on M3; those four plus external MIDI have the LFO on M4.",
+					"text": "External audio, tape and both FX tracks have the filter on `M3`; those four plus external MIDI have the LFO on `M4`.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary",
 					"firmware_min": null,
 					"verified_on": null,
@@ -18101,7 +18101,7 @@
 					"M1"
 				]
 			},
-			"summary": "Six built-in send effects — chorus, delay, distortion, lofi, phaser and reverb — can be loaded on the two FX tracks, FX I (T7) and FX II (T8); M1 of an FX track shows the effect's four controls.",
+			"summary": "Six built-in send effects — chorus, delay, distortion, lofi, phaser and reverb — can be loaded on the two FX tracks, FX I (`T7`) and FX II (`T8`); `M1` of an FX track shows the effect's four controls.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -18249,7 +18249,7 @@
 					"M1"
 				]
 			},
-			"summary": "A chorus for FX I or FX II that layers pitch-wobbled copies over the sound to widen it; M1 sets rate, depth, feedback and stereo width.",
+			"summary": "A chorus for FX I or FX II that layers pitch-wobbled copies over the sound to widen it; `M1` sets rate, depth, feedback and stereo width.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -18394,7 +18394,7 @@
 					"M1"
 				]
 			},
-			"summary": "An echo for FX I or FX II; M1 sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.",
+			"summary": "An echo for FX I or FX II; `M1` sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -18561,7 +18561,7 @@
 					"M1"
 				]
 			},
-			"summary": "A clipping distortion for FX I or FX II; M1 sets the drive into it, the clipping amount and low and high cuts that shape what enters it.",
+			"summary": "A clipping distortion for FX I or FX II; `M1` sets the drive into it, the clipping amount and low and high cuts that shape what enters it.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -18708,7 +18708,7 @@
 					"M1"
 				]
 			},
-			"summary": "A bitcrusher for FX I or FX II; M1 sets the sample rate, bit depth, a quality control and drift, which spreads the result in stereo.",
+			"summary": "A bitcrusher for FX I or FX II; `M1` sets the sample rate, bit depth, a quality control and drift, which spreads the result in stereo.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -18840,7 +18840,7 @@
 					"M1"
 				]
 			},
-			"summary": "A 12-pole phaser for FX I or FX II; M1 sets the centre frequency of the sweep, its depth, its rate and the feedback.",
+			"summary": "A 12-pole phaser for FX I or FX II; `M1` sets the centre frequency of the sweep, its depth, its rate and the feedback.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -18993,7 +18993,7 @@
 					"M1"
 				]
 			},
-			"summary": "A reverb for FX I or FX II, from a small room to a cathedral; M1 sets size, modulation, a tone filter and the dry/wet balance.",
+			"summary": "A reverb for FX I or FX II, from a small room to a cathedral; `M1` sets size, modulation, a tone filter and the dry/wet balance.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -19145,7 +19145,7 @@
 				],
 				"screens": []
 			},
-			"summary": "Arrange mode manages each track's patterns and combines them into scenes and songs; E4 moves between the selected track's patterns and a click on it mutes the track.",
+			"summary": "Arrange mode manages each track's patterns and combines them into scenes and songs; `E4` moves between the selected track's patterns and a click on it mutes the track.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -19344,7 +19344,7 @@
 				],
 				"screens": []
 			},
-			"summary": "In arrange, M1 adds a pattern to the selected track, M2 copies the current pattern with its whole sound, M3 pastes it and M4 removes a pattern; a track holds up to 16.",
+			"summary": "In arrange, `M1` adds a pattern to the selected track, `M2` copies the current pattern with its whole sound, `M3` pastes it and `M4` removes a pattern; a track holds up to 16.",
 			"status": "outdated-in-guide",
 			"firmware": {
 				"min": "1.0.9",
@@ -19706,7 +19706,7 @@
 				],
 				"screens": []
 			},
-			"summary": "A scene stores which pattern each track plays plus the mix; a project has 99. In arrange, shift and a black key select one, and shift + M1…M4 clone, copy, paste or reset.",
+			"summary": "A scene stores which pattern each track plays plus the mix; a project has 99. In arrange, shift and a black key select one, and `shift + M1…M4` clone, copy, paste or reset.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -20134,7 +20134,7 @@
 					"song"
 				]
 			},
-			"summary": "Song mode chains scenes into a song order of up to 96 slots — dialled in with shift and the black keys, edited with a cursor, and set to loop or not with E1.",
+			"summary": "Song mode chains scenes into a song order of up to 96 slots — dialled in with shift and the black keys, edited with a cursor, and set to loop or not with `E1`.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -20423,7 +20423,7 @@
 					"song"
 				]
 			},
-			"summary": "A project holds up to 14 songs, one per white key. In song mode shift and a white key select a song, M2 and M3 copy and paste it, and shift with minus or plus cues other scenes during playback.",
+			"summary": "A project holds up to 14 songs, one per white key. In song mode shift and a white key select a song, `M2` and `M3` copy and paste it, and shift with minus or plus cues other scenes during playback.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -20606,7 +20606,7 @@
 					"M4"
 				]
 			},
-			"summary": "Mix mode sets each track's level, pan and FX sends on M1 and runs the master chain — EQ on M2, saturator on M3, group levels, compressor and output level on M4.",
+			"summary": "Mix mode sets each track's level, pan and FX sends on `M1` and runs the master chain — EQ on `M2`, saturator on `M3`, group levels, compressor and output level on `M4`.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -20768,7 +20768,7 @@
 					"M1"
 				]
 			},
-			"summary": "On mix M1 the four encoders set the selected track's FX I send, FX II send, pan and level; clicking E3 centres the pan and clicking E4 mutes the track.",
+			"summary": "On mix `M1` the four encoders set the selected track's FX I send, FX II send, pan and level; clicking `E3` centres the pan and clicking `E4` mutes the track.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -20867,7 +20867,7 @@
 					"goal": "Put a track back in the centre of the stereo field",
 					"preconditions": [
 						"mix mode",
-						"M1",
+						"`M1`",
 						"the track is selected"
 					],
 					"steps": [
@@ -21229,7 +21229,7 @@
 					"M2"
 				]
 			},
-			"summary": "Mix M2 is a three-band EQ on the master — low, mid, high — plus a blend that fades from flat to the set curve; clicking an encoder resets its band, and E4's click resets the whole EQ.",
+			"summary": "Mix `M2` is a three-band EQ on the master — low, mid, high — plus a blend that fades from flat to the set curve; clicking an encoder resets its band, and `E4`'s click resets the whole EQ.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -21336,7 +21336,7 @@
 					"goal": "Flatten the EQ",
 					"preconditions": [
 						"mix mode",
-						"M2"
+						"`M2`"
 					],
 					"steps": [
 						{
@@ -21482,7 +21482,7 @@
 					"M3"
 				]
 			},
-			"summary": "Mix M3 is a saturator on the master bus; gain drives it, clip shaves off loud peaks, tone filters highs or lows and mix sets how much of it you hear.",
+			"summary": "Mix `M3` is a saturator on the master bus; gain drives it, clip shaves off loud peaks, tone filters highs or lows and mix sets how much of it you hear.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -21672,7 +21672,7 @@
 					"M4"
 				]
 			},
-			"summary": "Mix M4 sets the levels of the percussion and melodic groups, how much the master bus is compressed and the master level that feeds the output limiter.",
+			"summary": "Mix `M4` sets the levels of the percussion and melodic groups, how much the master bus is compressed and the master level that feeds the output limiter.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -21858,7 +21858,7 @@
 					"project"
 				]
 			},
-			"summary": "The project key opens the project view, where you create a new project (hold M1), save (M2), save as (shift + M2), rename (M3) and open the project settings (M4).",
+			"summary": "The project key opens the project view, where you create a new project (`hold M1`), save (`M2`), save as (`shift + M2`), rename (`M3`) and open the project settings (`M4`).",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -22260,7 +22260,7 @@
 				},
 				{
 					"id": "label-order",
-					"text": "The guide's drawing of this screen labels the keys delete, history, duplicate, load from left to right, the reverse of the text for M1 and M4; check the labels on your screen.",
+					"text": "The guide's drawing of this screen labels the keys delete, history, duplicate, load from left to right, the reverse of the text for `M1` and `M4`; check the labels on your screen.",
 					"source": "docs/research/50-hardware-ui.md#33-page-catalogue",
 					"firmware_min": null,
 					"verified_on": null,
@@ -22654,7 +22654,7 @@
 					"project"
 				]
 			},
-			"summary": "M4 in the project view opens the project's own settings — general (transpose), tempo (time signature, groove type), voices and midi — edited with E1 page, E2 setting, E3 value.",
+			"summary": "`M4` in the project view opens the project's own settings — general (transpose), tempo (time signature, groove type), voices and midi — edited with `E1` page, `E2` setting, `E3` value.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -23089,7 +23089,7 @@
 					"tempo"
 				]
 			},
-			"summary": "The tempo key opens the tempo screen from anywhere; tap it to set the tempo by ear. E1 sets BPM, E2 and E3 the groove, E4 the metronome level (click to switch the metronome on or off).",
+			"summary": "The tempo key opens the tempo screen from anywhere; tap it to set the tempo by ear. `E1` sets BPM, `E2` and `E3` the groove, `E4` the metronome level (click to switch the metronome on or off).",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -23309,7 +23309,7 @@
 				"tempo.grooves",
 				"com.midi-settings"
 			],
-			"body": "Tempo and groove are saved with each project, so every project keeps its own speed and feel. The\ngroove settings on E2 and E3 are explained under grooves.",
+			"body": "Tempo and groove are saved with each project, so every project keeps its own speed and feel. The\ngroove settings on `E2` and `E3` are explained under grooves.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/tempo#project",
@@ -23371,7 +23371,7 @@
 					"bar"
 				]
 			},
-			"summary": "A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of eleven types with E2 on the tempo screen and dial swing or shuffle with E3; the bar menu can override the amount per track.",
+			"summary": "A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of eleven types with `E2` on the tempo screen and dial swing or shuffle with `E3`; the bar menu can override the amount per track.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -24126,7 +24126,7 @@
 					"default": null,
 					"cc": null,
 					"cc_confidence": null,
-					"note": "same as E3",
+					"note": "same as `E3`",
 					"source": "https://teenage.engineering/guides/op-xy/com#system-settings",
 					"firmware_min": null,
 					"verified_on": null,
@@ -25478,7 +25478,7 @@
 				"modes": [],
 				"screens": []
 			},
-			"summary": "Community charts and our lane model give each module page four consecutive CCs on the track's channel, one per encoder — M1 on CC12–15 up to the LFO on CC40–43 — and put the 24 drum keys on notes 53–76.",
+			"summary": "Community charts and our lane model give each module page four consecutive CCs on the track's channel, one per encoder — `M1` on CC12–15 up to the LFO on CC40–43 — and put the 24 drum keys on notes 53–76.",
 			"status": "unverified",
 			"firmware": {
 				"min": "1.0.9",
@@ -25497,7 +25497,7 @@
 				},
 				{
 					"id": "m1",
-					"text": "The M1 (engine) page uses CC12–15, whatever engine the track runs.",
+					"text": "The `M1` (engine) page uses CC12–15, whatever engine the track runs.",
 					"source": "docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4",
 					"firmware_min": null,
 					"verified_on": null,
@@ -25505,7 +25505,7 @@
 				},
 				{
 					"id": "m2",
-					"text": "M2 uses CC20–23 for the amp envelope (attack, decay, sustain, release), CC24–27 for the filter envelope and CC28–31 for its shift layer: play mode, portamento, bend range and preset volume.",
+					"text": "`M2` uses CC20–23 for the amp envelope (attack, decay, sustain, release), CC24–27 for the filter envelope and CC28–31 for its shift layer: play mode, portamento, bend range and preset volume.",
 					"source": "docs/research/20-midi-control.md#30-the-lane-model-derived",
 					"firmware_min": null,
 					"verified_on": null,
@@ -25513,7 +25513,7 @@
 				},
 				{
 					"id": "m3",
-					"text": "M3 uses CC32–35 for the filter (cutoff, resonance, envelope amount, key tracking) and CC36–39 for its shift layer, the sends to aux out, tape, FX I and FX II.",
+					"text": "`M3` uses CC32–35 for the filter (cutoff, resonance, envelope amount, key tracking) and CC36–39 for its shift layer, the sends to aux out, tape, FX I and FX II.",
 					"source": "docs/research/20-midi-control.md#30-the-lane-model-derived",
 					"firmware_min": null,
 					"verified_on": null,
@@ -25521,7 +25521,7 @@
 				},
 				{
 					"id": "m4",
-					"text": "M4 (the LFO) most likely uses CC40–43; community charts label these four CCs inconsistently.",
+					"text": "`M4` (the LFO) most likely uses CC40–43; community charts label these four CCs inconsistently.",
 					"source": "docs/research/20-midi-control.md#37-known-conflicts--errata-in-the-sources",
 					"firmware_min": null,
 					"verified_on": null,
@@ -27144,7 +27144,7 @@
 				},
 				{
 					"id": "input",
-					"text": "On the external audio track's `M1` page, turn `E1` to the audio input (the jack icon) and click `E1` to switch it on.",
+					"text": "On the external audio track's `M1` page, `turn E1` to the audio input (the jack icon) and `click E1` to switch it on.",
 					"source": "https://teenage.engineering/guides/op-xy/how-to#send-audio-to-and-from-an-external-effect",
 					"firmware_min": null,
 					"verified_on": null,
@@ -27511,7 +27511,7 @@
 				},
 				{
 					"id": "live-input",
-					"text": "To hear the interface's inputs live, set the external audio track's input to usb audio with `E1` and click `E1` to activate it.",
+					"text": "To hear the interface's inputs live, set the external audio track's input to usb audio with `E1` and `click E1` to activate it.",
 					"source": "https://teenage.engineering/guides/op-xy/how-to#use-an-audio-interface-with-op-xy",
 					"firmware_min": null,
 					"verified_on": null,
@@ -28239,7 +28239,7 @@
 				},
 				{
 					"id": "exclude",
-					"goal": "Keep the lead on T5 out of the brain's transposition",
+					"goal": "Keep the lead on `T5` out of the brain's transposition",
 					"preconditions": [],
 					"steps": [
 						{
@@ -28254,7 +28254,7 @@
 						},
 						{
 							"keys": "turn E1",
-							"note": "counter-clockwise, T5 out",
+							"note": "counter-clockwise, `T5` out",
 							"set": {
 								"param": "track 5",
 								"value": "out",
@@ -28933,7 +28933,7 @@
 			"procedures": [
 				{
 					"id": "set-up",
-					"goal": "Make the bass on T3 pump with the drums on T1",
+					"goal": "Make the bass on `T3` pump with the drums on `T1`",
 					"preconditions": [
 						"instrument mode"
 					],
@@ -29126,7 +29126,7 @@
 			"procedures": [
 				{
 					"id": "amp",
-					"goal": "Make the notes on T3 pluck",
+					"goal": "Make the notes on `T3` pluck",
 					"preconditions": [
 						"instrument mode"
 					],
@@ -29376,7 +29376,7 @@
 			"procedures": [
 				{
 					"id": "swell",
-					"goal": "Make the chords on T5 swell in and fade out",
+					"goal": "Make the chords on `T5` swell in and fade out",
 					"preconditions": [
 						"instrument mode"
 					],
@@ -29593,7 +29593,7 @@
 			"procedures": [
 				{
 					"id": "set-up",
-					"goal": "Make the filter on T3 wobble in time",
+					"goal": "Make the filter on `T3` wobble in time",
 					"preconditions": [
 						"instrument mode"
 					],
@@ -29792,7 +29792,7 @@
 			"procedures": [
 				{
 					"id": "filter",
-					"goal": "Give the bass on T3 a squelchy filter",
+					"goal": "Give the bass on `T3` a squelchy filter",
 					"preconditions": [
 						"instrument mode"
 					],

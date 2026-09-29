@@ -6,7 +6,7 @@ area: tempo
 order: 0
 context:
   screens: [tempo]
-summary: The tempo key opens the tempo screen from anywhere; tap it to set the tempo by ear. E1 sets BPM, E2 and E3 the groove, E4 the metronome level (click to switch the metronome on or off).
+summary: The tempo key opens the tempo screen from anywhere; tap it to set the tempo by ear. `E1` sets BPM, `E2` and `E3` the groove, `E4` the metronome level (click to switch the metronome on or off).
 status: current
 firmware:
   min: '1.0.9'
@@ -107,4 +107,4 @@ related: [tempo.grooves, com.midi-settings]
 ---
 
 Tempo and groove are saved with each project, so every project keeps its own speed and feel. The
-groove settings on E2 and E3 are explained under grooves.
+groove settings on `E2` and `E3` are explained under grooves.

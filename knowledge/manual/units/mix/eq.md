@@ -7,7 +7,7 @@ order: 30
 context:
   modes: [mix]
   screens: [M2]
-summary: Mix M2 is a three-band EQ on the master — low, mid, high — plus a blend that fades from flat to the set curve; clicking an encoder resets its band, and E4's click resets the whole EQ.
+summary: Mix `M2` is a three-band EQ on the master — low, mid, high — plus a blend that fades from flat to the set curve; clicking an encoder resets its band, and `E4`'s click resets the whole EQ.
 status: current
 firmware:
   min: '1.0.9'
@@ -61,7 +61,7 @@ procedures:
     source: https://teenage.engineering/guides/op-xy/mix#eq
   - id: reset-all
     goal: Flatten the EQ
-    preconditions: [mix mode, M2]
+    preconditions: [mix mode, '`M2`']
     steps:
       - keys: click E4
     source: https://teenage.engineering/guides/op-xy/mix#eq

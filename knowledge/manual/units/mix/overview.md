@@ -7,7 +7,7 @@ order: 0
 context:
   modes: [mix]
   screens: [M1, M2, M3, M4]
-summary: Mix mode sets each track's level, pan and FX sends on M1 and runs the master chain — EQ on M2, saturator on M3, group levels, compressor and output level on M4.
+summary: Mix mode sets each track's level, pan and FX sends on `M1` and runs the master chain — EQ on `M2`, saturator on `M3`, group levels, compressor and output level on `M4`.
 status: current
 firmware:
   min: '1.0.9'

@@ -26,7 +26,7 @@ facts:
     source: docs/research/40-official-docs.md#53-te-errata-we-keep-verbatim-and-our-manual-must-not-copy
     confidence: derived
   - id: combos
-    text: This manual writes a combo with a plus sign (`shift + M1` = hold shift, press M1) and a sequence with an arrow (`record + play → play` = release, then press play again).
+    text: This manual writes a combo with a plus sign (`shift + M1` = hold shift, press `M1`) and a sequence with an arrow (`record + play → play` = release, then press play again).
     source: docs/research/40-official-docs.md#4-key-combos-replica-how-to-data
     confidence: derived
   - id: gestures

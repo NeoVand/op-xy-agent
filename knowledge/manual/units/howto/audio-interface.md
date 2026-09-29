@@ -32,7 +32,7 @@ facts:
     source: https://teenage.engineering/guides/op-xy/how-to#use-an-audio-interface-with-op-xy
     confidence: conflicting
   - id: live-input
-    text: To hear the interface's inputs live, set the external audio track's input to usb audio with `E1` and click `E1` to activate it.
+    text: To hear the interface's inputs live, set the external audio track's input to usb audio with `E1` and `click E1` to activate it.
     source: https://teenage.engineering/guides/op-xy/how-to#use-an-audio-interface-with-op-xy
   - id: audio-only-fix
     text: OS 1.1.25 fixed audio-only interfaces being reported as disconnected.

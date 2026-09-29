@@ -15,7 +15,7 @@ area: arrange
 order: 10
 context:
   modes: [arrange]
-summary: In arrange, M1 adds a pattern to the selected track, M2 copies the current pattern with its whole sound, M3 pastes it and M4 removes a pattern; a track holds up to 16.
+summary: In arrange, `M1` adds a pattern to the selected track, `M2` copies the current pattern with its whole sound, `M3` pastes it and `M4` removes a pattern; a track holds up to 16.
 status: outdated-in-guide
 firmware:
   min: '1.0.9'

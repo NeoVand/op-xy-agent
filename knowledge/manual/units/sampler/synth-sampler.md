@@ -7,7 +7,7 @@ order: 20
 context:
   modes: [instrument]
   screens: [M1]
-summary: Plays one sample across the keyboard; M1 sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.
+summary: Plays one sample across the keyboard; `M1` sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.
 status: current
 firmware:
   min: '1.0.9'

@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1]
-summary: An engine that morphs through a table of stored waveforms; its M1 page picks one of nine tables and sets position, warp and drift.
+summary: An engine that morphs through a table of stored waveforms; its `M1` page picks one of nine tables and sets position, warp and drift.
 status: current
 firmware:
   min: '1.0.9'

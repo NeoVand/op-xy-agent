@@ -61,6 +61,8 @@ above the composer says what voice is doing while it is on.
 	import type { AudioCapture } from '$lib/device/listen/capture.svelte';
 	import type { DeviceStack } from '$lib/device/stack';
 	import { getReplicaState } from '$lib/replica/context';
+	import KeyCombo from '$lib/replica/glyphs/KeyCombo.svelte';
+	import { replicaPointer } from '$lib/replica/glyphs/pointing';
 	import type { ReplicaState } from '$lib/replica/state.svelte';
 	import { VoiceSession } from '$lib/voice/session.svelte';
 	import VoiceKey from '$lib/voice/ui/VoiceKey.svelte';
@@ -69,7 +71,6 @@ above the composer says what voice is doing while it is on.
 	import HugeIcon from '../HugeIcon.svelte';
 	import ToolButton from '../ToolButton.svelte';
 	import { tooltip } from '../tooltip';
-	import Kbd from '../Kbd.svelte';
 	import Led from '../Led.svelte';
 	import Panel from '../Panel.svelte';
 	import type { LedState } from '../types';
@@ -91,6 +92,8 @@ above the composer says what voice is doing while it is on.
 
 	const device: DeviceStack | null = fromContext(getDeviceStack);
 	const replica: ReplicaState | null = fromContext(getReplicaState);
+	/** Rings on the replica the keys the reader points at in an answer. */
+	const pointer = replica ? replicaPointer(replica) : undefined;
 	const simulator = fromContext(getAppSimulator);
 	const sound = fromContext(getAppSound);
 	const persistence = fromContext(getSimPersistence);
@@ -517,6 +520,7 @@ above the composer says what voice is doing while it is on.
 					running={busy}
 					activity={conductor.activity}
 					onkeys={replica ? showKeys : undefined}
+					onpoint={pointer}
 					cite={manualCitation}
 					onretry={() => void conductor?.retry()}
 					onsettings={openSettings}
@@ -548,13 +552,13 @@ above the composer says what voice is doing while it is on.
 								{#if conductor}
 									<button type="button" class="empty__example" onclick={() => send(example)}>
 										{#if example.includes('shift + M1')}
-											what does <Kbd combo="shift + M1" size="sm" /> do?
+											what does <KeyCombo keys="shift + M1" size="sm" onpoint={pointer} /> do?
 										{:else}
 											{example}
 										{/if}
 									</button>
 								{:else if example.includes('shift + M1')}
-									what does <Kbd combo="shift + M1" size="sm" /> do?
+									what does <KeyCombo keys="shift + M1" size="sm" onpoint={pointer} /> do?
 								{:else}
 									{example}
 								{/if}

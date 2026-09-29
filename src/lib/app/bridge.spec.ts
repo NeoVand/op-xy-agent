@@ -194,7 +194,7 @@ describe('ReplicaBridge: replica → device', () => {
 		expect(sent()).toEqual(['B0 66 00']);
 		expect(hints.filter((h) => h.kind === 'combo').map((h) => h.keys)).toEqual([
 			'shift + play',
-			'step 5 + C4',
+			'step 5 + key C4',
 			'T1 + T3',
 			'shift + stop'
 		]);

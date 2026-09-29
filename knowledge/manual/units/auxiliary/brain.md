@@ -28,7 +28,7 @@ facts:
     text: The brain's manual mode lets you set the key yourself when detection gets it wrong.
     source: https://teenage.engineering/guides/op-xy/auxiliary#brain
   - id: routing
-    text: Tracks left out of the routing on M2 are neither transposed nor used for key detection.
+    text: Tracks left out of the routing on `M2` are neither transposed nor used for key detection.
     source: https://teenage.engineering/guides/op-xy/auxiliary#brain
   - id: default-routing
     text: In a new project tracks 3–8 are routed to the brain and drum tracks 1 and 2 are not.

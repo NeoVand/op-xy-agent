@@ -7,7 +7,7 @@ order: 30
 context:
   modes: [auxiliary]
   screens: [M1]
-summary: A clipping distortion for FX I or FX II; M1 sets the drive into it, the clipping amount and low and high cuts that shape what enters it.
+summary: A clipping distortion for FX I or FX II; `M1` sets the drive into it, the clipping amount and low and high cuts that shape what enters it.
 status: current
 firmware:
   min: '1.0.9'

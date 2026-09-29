@@ -182,6 +182,11 @@ backtick. In prose (facts, summary, notes, body), **backticks are reserved for k
 control names**: every `code span` must parse (`E1`, `T1…T8` and `volume` name controls). Write
 file names, menu values and MIDI bytes as plain text.
 
+Whenever the text means a key, put it in backticks, even on its own (`M3`, `T5`, `step 5`,
+`E2`): the site and the chat draw it as the device's own key (the OP-XY prints digits and
+pictures, never "M3" or "T5"), and pointing at it rings it on the replica. The track itself
+("track 5") and the page ("the filter page") stay words.
+
 ### Citing sources
 
 Each fact, procedure and parameter cites exactly **one** source:

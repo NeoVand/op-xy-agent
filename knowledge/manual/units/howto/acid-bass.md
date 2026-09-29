@@ -34,7 +34,7 @@ facts:
     confidence: derived
 procedures:
   - id: filter
-    goal: Give the bass on T3 a squelchy filter
+    goal: Give the bass on `T3` a squelchy filter
     preconditions: [instrument mode]
     steps:
       - keys: T3 → shift + M3

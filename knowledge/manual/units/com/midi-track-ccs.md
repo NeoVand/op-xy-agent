@@ -5,7 +5,7 @@ aliases:
   [cc lanes, lane model, parameter ccs, encoder ccs, filter cutoff cc, envelope cc, drum notes]
 area: com
 order: 75
-summary: Community charts and our lane model give each module page four consecutive CCs on the track's channel, one per encoder — M1 on CC12–15 up to the LFO on CC40–43 — and put the 24 drum keys on notes 53–76.
+summary: Community charts and our lane model give each module page four consecutive CCs on the track's channel, one per encoder — `M1` on CC12–15 up to the LFO on CC40–43 — and put the 24 drum keys on notes 53–76.
 status: unverified
 firmware:
   min: '1.0.9'
@@ -18,19 +18,19 @@ facts:
     source: docs/research/20-midi-control.md#30-the-lane-model-derived
     confidence: derived
   - id: m1
-    text: The M1 (engine) page uses CC12–15, whatever engine the track runs.
+    text: The `M1` (engine) page uses CC12–15, whatever engine the track runs.
     source: docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4
     confidence: community-verified
   - id: m2
-    text: 'M2 uses CC20–23 for the amp envelope (attack, decay, sustain, release), CC24–27 for the filter envelope and CC28–31 for its shift layer: play mode, portamento, bend range and preset volume.'
+    text: '`M2` uses CC20–23 for the amp envelope (attack, decay, sustain, release), CC24–27 for the filter envelope and CC28–31 for its shift layer: play mode, portamento, bend range and preset volume.'
     source: docs/research/20-midi-control.md#30-the-lane-model-derived
     confidence: community-verified
   - id: m3
-    text: 'M3 uses CC32–35 for the filter (cutoff, resonance, envelope amount, key tracking) and CC36–39 for its shift layer, the sends to aux out, tape, FX I and FX II.'
+    text: '`M3` uses CC32–35 for the filter (cutoff, resonance, envelope amount, key tracking) and CC36–39 for its shift layer, the sends to aux out, tape, FX I and FX II.'
     source: docs/research/20-midi-control.md#30-the-lane-model-derived
     confidence: community-verified
   - id: m4
-    text: M4 (the LFO) most likely uses CC40–43; community charts label these four CCs inconsistently.
+    text: '`M4` (the LFO) most likely uses CC40–43; community charts label these four CCs inconsistently.'
     source: docs/research/20-midi-control.md#37-known-conflicts--errata-in-the-sources
     confidence: derived
   - id: mixer

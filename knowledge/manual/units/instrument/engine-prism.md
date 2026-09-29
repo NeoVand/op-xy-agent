@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1]
-summary: A general-purpose synth engine for bass lines, leads and most other parts; its M1 page covers waveform, oscillator ratio, detune and stereo width.
+summary: A general-purpose synth engine for bass lines, leads and most other parts; its `M1` page covers waveform, oscillator ratio, detune and stereo width.
 status: current
 firmware:
   min: '1.0.9'
@@ -22,10 +22,10 @@ facts:
     text: Prism is the everyday workhorse among the engines, suited to bass lines, leads and most parts in between.
     source: https://teenage.engineering/guides/op-xy/synth-engines#prism
   - id: m1-is-engine
-    text: Only the M1 page belongs to the engine. Envelopes (M2), filter (M3) and LFO (M4) work the same whichever synth engine a track uses.
+    text: Only the `M1` page belongs to the engine. Envelopes (`M2`), filter (`M3`) and LFO (`M4`) work the same whichever synth engine a track uses.
     source: https://teenage.engineering/guides/op-xy/instrument#engine
   - id: lockable
-    text: Like every module-page parameter, prism's four M1 settings can be parameter-locked per step.
+    text: Like every module-page parameter, prism's four `M1` settings can be parameter-locked per step.
     source: https://teenage.engineering/guides/op-xy/sequencer#step-sequencing
   - id: midi-ccs
     text: Over MIDI, CC12, CC13, CC14 and CC15 on the track's channel move shape, ratio, detune and stereo.
@@ -58,7 +58,7 @@ procedures:
         note: scroll to prism; its first preset is highlighted
       - keys: click E2
         note: loads it, the whole sound with it
-    result: The track now plays through prism and M1 shows its four parameters.
+    result: The track now plays through prism and `M1` shows its four parameters.
     source: https://teenage.engineering/guides/op-xy/synth-engines#change-engine
 parameters:
   - screen: M1
@@ -96,7 +96,7 @@ Prism runs several oscillators and gives you four controls over how they relate:
 their tuning ratio, how far apart they drift in pitch and how wide they spread. Little detune and a
 narrow image keep it tight for bass; more of both makes it broad enough for leads and pads.
 
-Everything else about the sound — how notes start and fade (M2), the filter (M3) and modulation
-(M4) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.
+Everything else about the sound — how notes start and fade (`M2`), the filter (`M3`) and modulation
+(`M4`) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.
 TE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you
 turn, and the CC numbers are confirmed on the owner's unit.

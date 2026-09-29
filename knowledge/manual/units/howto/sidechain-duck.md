@@ -43,7 +43,7 @@ facts:
     confidence: derived
 procedures:
   - id: set-up
-    goal: Make the bass on T3 pump with the drums on T1
+    goal: Make the bass on `T3` pump with the drums on `T1`
     preconditions: [instrument mode]
     steps:
       - keys: T3 → M4

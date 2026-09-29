@@ -22,7 +22,7 @@ facts:
     text: On the tape track (`T6`) the keyboard plays clips of whatever tracks are routed into the tape.
     source: https://teenage.engineering/guides/op-xy/auxiliary#tape
   - id: routing
-    text: Only tracks routed on M2 run through the tape, each at its own amount, independent of the main mix.
+    text: Only tracks routed on `M2` run through the tape, each at its own amount, independent of the main mix.
     source: https://teenage.engineering/guides/op-xy/auxiliary#tape
   - id: values
     text: Community charts read tape pitch as a speed multiple, x1 by default.

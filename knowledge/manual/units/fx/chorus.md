@@ -7,7 +7,7 @@ order: 10
 context:
   modes: [auxiliary]
   screens: [M1]
-summary: A chorus for FX I or FX II that layers pitch-wobbled copies over the sound to widen it; M1 sets rate, depth, feedback and stereo width.
+summary: A chorus for FX I or FX II that layers pitch-wobbled copies over the sound to widen it; `M1` sets rate, depth, feedback and stereo width.
 status: current
 firmware:
   min: '1.0.9'

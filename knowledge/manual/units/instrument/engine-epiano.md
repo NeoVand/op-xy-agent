@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1]
-summary: An electric-piano model that also reaches plucks, strong leads and thick basses; its M1 page sets tone, texture, tine and punch.
+summary: An electric-piano model that also reaches plucks, strong leads and thick basses; its `M1` page sets tone, texture, tine and punch.
 status: outdated-in-guide
 firmware:
   min: '1.0.9'

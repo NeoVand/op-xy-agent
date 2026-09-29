@@ -42,7 +42,7 @@ procedures:
     preconditions: [instrument mode, the track's sound was loaded from a saved snapshot]
     steps:
       - keys: Tn + shift + M4
-        note: hold the track key as for a normal save, add shift, then press M4 — the changelog only says to hold shift, so this order is not yet confirmed on a unit
+        note: hold the track key as for a normal save, add shift, then press `M4` — the changelog only says to hold shift, so this order is not yet confirmed on a unit
     result: The snapshot is updated in place; no new snapshot appears.
     source: https://teenage.engineering/downloads/op-xy#1.1.17
     confidence: derived

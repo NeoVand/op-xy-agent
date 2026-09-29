@@ -39,5 +39,20 @@ export {
 	type PlanStep
 } from './animation';
 export { getReplicaState, setReplicaState } from './context';
+export { default as KeyCombo } from './glyphs/KeyCombo.svelte';
+export { default as ControlGlyph } from './glyphs/ControlGlyph.svelte';
+export {
+	comboIds,
+	comboPieces,
+	parseCombo,
+	controlGlyph,
+	controlName,
+	placeholderGlyph,
+	placeholderName,
+	type ComboGlyph,
+	type ComboPiece,
+	type GlyphArt
+} from './glyphs/art';
+export { replicaPointer, type PointableReplica } from './glyphs/pointing';
 export { ART_SOURCE } from './art.generated';
 export type * from './art.types';

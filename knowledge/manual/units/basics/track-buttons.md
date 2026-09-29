@@ -16,7 +16,7 @@ facts:
     text: The OP-XY has sixteen sequencer tracks in two sets of eight, instrument and auxiliary; `T1`…`T8` address the set the current mode shows.
     source: https://teenage.engineering/guides/op-xy/track-buttons
   - id: aux-order
-    text: In auxiliary mode the keys stand for brain (T1), punch-in FX (T2), external MIDI (T3), external CV (T4), external audio (T5), tape (T6), FX I (T7) and FX II (T8).
+    text: In auxiliary mode the keys stand for brain (`T1`), punch-in FX (`T2`), external MIDI (`T3`), external CV (`T4`), external audio (`T5`), tape (`T6`), FX I (`T7`) and FX II (`T8`).
     source: https://teenage.engineering/guides/op-xy/auxiliary
   - id: active
     text: Notes you play, steps you enter and pages you edit all belong to the active track; pressing another track key makes that track active.

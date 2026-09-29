@@ -34,7 +34,7 @@ facts:
     confidence: derived
 procedures:
   - id: set-up
-    goal: Make the filter on T3 wobble in time
+    goal: Make the filter on `T3` wobble in time
     preconditions: [instrument mode]
     steps:
       - keys: T3 → M4

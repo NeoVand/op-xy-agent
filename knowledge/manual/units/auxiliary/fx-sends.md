@@ -24,16 +24,16 @@ facts:
     text: '`shift + T7` or `shift + T8` changes the effect in that slot; the encoders then pick one.'
     source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
   - id: m1
-    text: On an FX track, M1 shows the loaded effect's parameters.
+    text: On an FX track, `M1` shows the loaded effect's parameters.
     source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
   - id: fx1-to-fx2
-    text: On FX I, `shift + turn E4` on the M3 page sets the send into FX II.
+    text: On FX I, `shift + turn E4` on the `M3` page sets the send into FX II.
     source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
   - id: track-sends
-    text: Instrument tracks send from their send page (`shift` held on M3, `E3` for FX I, `E4` for FX II).
+    text: Instrument tracks send from their send page (`shift` held on `M3`, `E3` for FX I, `E4` for FX II).
     source: https://teenage.engineering/guides/op-xy/instrument#filter
   - id: mix-sends
-    text: In mix mode, M1 sets each track's FX I send with `turn E1` and FX II send with `turn E2`.
+    text: In mix mode, `M1` sets each track's FX I send with `turn E1` and FX II send with `turn E2`.
     source: https://teenage.engineering/guides/op-xy/mix#levels-pans-and-sends
   - id: guide-slips
     text: The guide's FX routing card repeats a CV sentence and its filter card names the tape track — copy slips.

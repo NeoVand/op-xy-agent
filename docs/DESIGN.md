@@ -304,10 +304,12 @@ All live in `src/lib/ui/` and are exported from `$lib/ui`.
   Text flips to ink on the light cells for contrast.
 - **Legend** — small device-voice text. Sizes `2xs`/`xs`/`sm`; tones `fg`, `muted`, `subtle`,
   `print` (key legends), `accent` (live only).
-- **Kbd** — key combos drawn as little keys, like TE's guide: `shift + M1` (hold, then press),
-  `shift → step 5` (then), leading verbs (`hold record + play`, `shift + turn mid encoder`).
-  Record, play, stop, plus and minus render as their pictograms; encoders as knobs in their colour.
-  Use it everywhere a combo appears: manual, agent answers, tooltips. Parser: `parseCombo()`.
+- **KeyCombo** (`$lib/replica`) — a combo in the manual's key grammar drawn as the device's own
+  keys, from the replica's art (`replica/glyphs`): `shift + M1` is the shift key, a plus and the
+  key printed 1; encoders are their coloured knobs (with arrows when turned); `Tn` is a track key
+  marked n. The device prints digits and pictures, never "M3" or "T5", so the names live in the
+  tooltip and the accessible label. `onpoint` + `replicaPointer(replica)` ring the pointed keys on
+  a replica. Use it everywhere a combo appears: manual, agent answers, hints.
 - **Led** — `off | dim | white | red`, optional `blink`. Never the only cue: pair with text or give
   it a `label`.
 - **EncoderDot** — the screen's encoder colour dot; use wherever a value maps to an encoder.
@@ -385,13 +387,13 @@ All live in `src/lib/ui/` and are exported from `$lib/ui`.
 
 ## 13. Files
 
-| Path                                                                         | What                                                 |
-| ---------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `src/lib/ui/tokens.css`                                                      | all tokens, both themes, reduced motion, contrast    |
-| `src/routes/layout.css`                                                      | Tailwind setup, `@theme inline` mapping, base styles |
-| `src/lib/ui/*.svelte`, `index.ts`                                            | primitives                                           |
-| `src/lib/ui/theme.svelte.ts`, `tooltip.ts`, `kbd.ts`, `icons.ts`, `types.ts` | helpers                                              |
-| `src/lib/ui/shell/`                                                          | app shell components and `ShellStatus`               |
-| `src/app.html`                                                               | pre-paint theme script, theme colour                 |
-| `static/favicon.svg`, `apple-touch-icon.png`                                 | our key-and-LED mark (no TE marks)                   |
-| `src/routes/styleguide/`                                                     | the living styleguide                                |
+| Path                                                               | What                                                 |
+| ------------------------------------------------------------------ | ---------------------------------------------------- |
+| `src/lib/ui/tokens.css`                                            | all tokens, both themes, reduced motion, contrast    |
+| `src/routes/layout.css`                                            | Tailwind setup, `@theme inline` mapping, base styles |
+| `src/lib/ui/*.svelte`, `index.ts`                                  | primitives                                           |
+| `src/lib/ui/theme.svelte.ts`, `tooltip.ts`, `icons.ts`, `types.ts` | helpers                                              |
+| `src/lib/ui/shell/`                                                | app shell components and `ShellStatus`               |
+| `src/app.html`                                                     | pre-paint theme script, theme colour                 |
+| `static/favicon.svg`, `apple-touch-icon.png`                       | our key-and-LED mark (no TE marks)                   |
+| `src/routes/styleguide/`                                           | the living styleguide                                |

@@ -117,7 +117,7 @@ parameters:
     encoder: E3
     layer: base
     name: envelope amount
-    note: how far the M2 filter envelope sweeps the cutoff
+    note: how far the `M2` filter envelope sweeps the cutoff
     cc: 34
     source: https://teenage.engineering/guides/op-xy/instrument#filter
   - screen: M3

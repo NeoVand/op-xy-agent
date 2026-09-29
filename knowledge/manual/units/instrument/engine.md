@@ -85,7 +85,7 @@ procedures:
         note: optional; another of its presets
       - keys: click E2
         note: loads it
-    result: The track runs the new engine with that preset's sound, and M1 shows the engine's parameters.
+    result: The track runs the new engine with that preset's sound, and `M1` shows the engine's parameters.
     source: docs/research/59-screen-profiling.md#26-preset-browser-shift--m1
     confidence: verified
     verified_on: '1.1.33'

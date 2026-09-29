@@ -24,7 +24,7 @@ facts:
     text: The multisampler lays up to 24 samples of one instrument over zones of the keyboard.
     source: https://teenage.engineering/guides/op-xy/sample#multisampler
   - id: m1
-    text: On sampler tracks M1 edits the sample; M2–M4 work as on any instrument track.
+    text: On sampler tracks `M1` edits the sample; `M2…M4` work as on any instrument track.
     source: https://teenage.engineering/guides/op-xy/instrument#engine
   - id: groups
     text: In the mix, the drum sampler feeds the percussion group and the synth sampler the melodic group.
@@ -38,7 +38,7 @@ facts:
     source: docs/research/10-xy-format.md#312-enumerations
     confidence: community-verified
   - id: ccs
-    text: Over MIDI, M1's encoders answer CC12–15 — start, loop start, loop end, end on the synth sampler and multisampler; tune, start, end, play mode on the drum sampler.
+    text: Over MIDI, `M1`'s encoders answer CC12–15 — start, loop start, loop end, end on the synth sampler and multisampler; tune, start, end, play mode on the drum sampler.
     source: docs/research/20-midi-control.md#34-engine-resolved-names-for-cc1215-p1p4
     confidence: community
 procedures:

@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1]
-summary: A hard-sync engine for punchy stabs and firm basses; its M1 page sets freq (a harmonic sweep), sub, noise and low cut.
+summary: A hard-sync engine for punchy stabs and firm basses; its `M1` page sets freq (a harmonic sweep), sub, noise and low cut.
 status: current
 firmware:
   min: '1.0.9'

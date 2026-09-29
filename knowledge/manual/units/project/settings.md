@@ -15,7 +15,7 @@ area: project
 order: 50
 context:
   screens: [project]
-summary: M4 in the project view opens the project's own settings — general (transpose), tempo (time signature, groove type), voices and midi — edited with E1 page, E2 setting, E3 value.
+summary: "`M4` in the project view opens the project's own settings — general (transpose), tempo (time signature, groove type), voices and midi — edited with `E1` page, `E2` setting, `E3` value."
 status: current
 firmware:
   min: '1.0.9'

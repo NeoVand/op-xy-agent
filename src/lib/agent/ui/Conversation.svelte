@@ -18,6 +18,7 @@ says what it is doing and for how long.
 	import type { ChatEntry } from '../chat';
 	import ActivityLine from './ActivityLine.svelte';
 	import AttachmentChip from './AttachmentChip.svelte';
+	import type { ControlId } from '$lib/core/opxy';
 	import MessageText, { type CitationTarget } from './MessageText.svelte';
 	import ToolChip from './ToolChip.svelte';
 
@@ -28,6 +29,8 @@ says what it is doing and for how long.
 		/** What the agent is doing right now, for the status line; null when idle. */
 		activity?: Activity | null;
 		onkeys?: (keys: string) => void;
+		/** The controls of the keys pointed at in an answer (null when none): ring them. */
+		onpoint?: (ids: readonly ControlId[] | null) => void;
 		/** Resolves manual citations in answers. */
 		cite?: (ref: string) => CitationTarget | null;
 		/** Re-runs the last turn after an error. */
@@ -41,6 +44,7 @@ says what it is doing and for how long.
 		running = false,
 		activity = null,
 		onkeys,
+		onpoint,
 		cite,
 		onretry,
 		onsettings
@@ -159,10 +163,16 @@ says what it is doing and for how long.
 						citations={entry.citations}
 						streaming={entry.id === streaming}
 						{onkeys}
+						{onpoint}
 						{cite}
 					/>
 				{:else if entry.kind === 'tool'}
-					<ToolChip {entry} nested={entry.name === 'task' ? nested(entry.id) : []} {onkeys} />
+					<ToolChip
+						{entry}
+						nested={entry.name === 'task' ? nested(entry.id) : []}
+						{onkeys}
+						{onpoint}
+					/>
 				{:else if entry.kind === 'approval'}
 					<p class="conv__approval">
 						<Led

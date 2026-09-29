@@ -7,7 +7,7 @@ order: 40
 context:
   modes: [mix]
   screens: [M3]
-summary: Mix M3 is a saturator on the master bus; gain drives it, clip shaves off loud peaks, tone filters highs or lows and mix sets how much of it you hear.
+summary: Mix `M3` is a saturator on the master bus; gain drives it, clip shaves off loud peaks, tone filters highs or lows and mix sets how much of it you hear.
 status: current
 firmware:
   min: '1.0.9'

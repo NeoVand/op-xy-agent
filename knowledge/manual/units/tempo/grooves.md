@@ -23,7 +23,7 @@ area: tempo
 order: 10
 context:
   screens: [tempo, bar]
-summary: A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of eleven types with E2 on the tempo screen and dial swing or shuffle with E3; the bar menu can override the amount per track.
+summary: A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of eleven types with `E2` on the tempo screen and dial swing or shuffle with `E3`; the bar menu can override the amount per track.
 status: current
 firmware:
   min: '1.0.9'

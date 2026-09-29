@@ -50,7 +50,7 @@ facts:
 procedures:
   - id: slice-loop
     goal: Slice a drum loop at its hits
-    preconditions: [the loop is on a key of a drum sampler track, M1 page]
+    preconditions: [the loop is on a key of a drum sampler track, '`M1` page']
     steps:
       - keys: key + M1
         note: hold the key with the loop

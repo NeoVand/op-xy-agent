@@ -7,7 +7,7 @@ order: 40
 context:
   modes: [auxiliary]
   screens: [M1]
-summary: A bitcrusher for FX I or FX II; M1 sets the sample rate, bit depth, a quality control and drift, which spreads the result in stereo.
+summary: A bitcrusher for FX I or FX II; `M1` sets the sample rate, bit depth, a quality control and drift, which spreads the result in stereo.
 status: current
 firmware:
   min: '1.0.9'

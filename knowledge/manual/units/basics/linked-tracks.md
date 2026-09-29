@@ -51,5 +51,5 @@ procedures:
 related: [basics.track-buttons]
 ---
 
-Linking is the layering tool: hold `T3` and press `T4`, and a bass line played on track 3 also
+Linking is the layering tool: `hold T3` and press `T4`, and a bass line played on track 3 also
 sounds through track 4's synth, each track keeping its own sound and settings.

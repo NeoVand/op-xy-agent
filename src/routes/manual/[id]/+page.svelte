@@ -1,7 +1,8 @@
 <!--
-One unit of our manual: what it covers, its procedures (each step's keys drawn as keycaps, the whole
-procedure playable on the replica beside the text), every detail with where it comes from, the
-parameters with their gestures and CCs, and the units around it. The agent cites these pages.
+One unit of our manual: what it covers, its procedures (each step's keys drawn as the device's own
+keys, the whole procedure playable on the replica beside the text), every detail with where it comes
+from, the parameters with their gestures and CCs, and the units around it. Pointing at a key in the
+text rings it on the replica. The agent cites these pages.
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
@@ -19,12 +20,10 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 	} from '@hugeicons/core-free-icons';
 	import type { IconSvgElement } from '@hugeicons/svelte';
 	import MessageText, { type CitationTarget } from '$lib/agent/ui/MessageText.svelte';
-	import { comboForDisplay } from '$lib/agent/ui/markdown';
 	import { tryParseKeys } from '$lib/core/opxy';
 	import type { AreaId, ManualProcedure } from '$lib/manual';
-	import { getReplicaState, Replica } from '$lib/replica';
+	import { comboIds, getReplicaState, KeyCombo, Replica, replicaPointer } from '$lib/replica';
 	import { HugeIcon } from '$lib/ui';
-	import Kbd from '$lib/ui/Kbd.svelte';
 	import { AREA_ICONS, areaName, unitSections } from '$lib/ui/manual/areas';
 	import type { PageProps } from './$types';
 
@@ -37,6 +36,8 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 	 */
 	const body = $derived(unit.body.replace(/([^\n])\n(?![\n\s]*(?:[-*>|]|\d+\.)\s)(?=\S)/g, '$1 '));
 	const replica = getReplicaState();
+	/** Rings on the replica the keys the reader points at. */
+	const point = replicaPointer(replica);
 
 	/** Where the repository's own sources (research notes, knowledge files) are read. */
 	const REPO = 'https://github.com/NeoVand/op-xy-agent/blob/main/';
@@ -141,7 +142,9 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 			{/if}
 			<header class="doc__head">
 				<h1 class="doc__title">{data.title}</h1>
-				<div class="doc__lead"><MessageText text={unit.summary} onkeys={play} {cite} /></div>
+				<div class="doc__lead">
+					<MessageText text={unit.summary} onkeys={play} onpoint={point} {cite} />
+				</div>
 				{#if STATUS[unit.status]}
 					<p class="notice">
 						<HugeIcon icon={InformationCircleIcon} size="1rem" />
@@ -152,7 +155,7 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 
 			{#if body.trim()}
 				<div class="prose">
-					<MessageText text={body} onkeys={play} {cite} />
+					<MessageText text={body} onkeys={play} onpoint={point} {cite} />
 				</div>
 			{/if}
 
@@ -162,7 +165,9 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 					{#each unit.procedures as procedure (procedure.id)}
 						<div class="proc" id={procedure.id}>
 							<div class="proc__head">
-								<h3 class="proc__goal">{procedure.goal}</h3>
+								<h3 class="proc__goal">
+									<MessageText text={procedure.goal} onkeys={play} onpoint={point} {cite} inline />
+								</h3>
 								{#if procedure.steps.some((step) => playable(step.keys))}
 									<button type="button" class="proc__play" onclick={() => playProcedure(procedure)}>
 										<HugeIcon icon={PlayIcon} size="0.875rem" strokeWidth={2} />
@@ -173,7 +178,13 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 							{#if procedure.preconditions.length > 0}
 								<p class="proc__pre">
 									<span class="proc__label">before you start</span>
-									{procedure.preconditions.join(' · ')}
+									<MessageText
+										text={procedure.preconditions.join(' · ')}
+										onkeys={play}
+										onpoint={point}
+										{cite}
+										inline
+									/>
 								</p>
 							{/if}
 							<ol class="proc__steps">
@@ -185,21 +196,38 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 												<button
 													type="button"
 													class="keys"
-													title="show on the replica"
 													aria-label="show {step.keys} on the replica"
 													onclick={() => play(step.keys)}
+													onfocus={() => point(comboIds(step.keys))}
+													onblur={() => point(null)}
 												>
-													<Kbd combo={comboForDisplay(step.keys)} size="sm" />
+													<KeyCombo keys={step.keys} onpoint={point} />
 												</button>
 											{:else}
-												<Kbd combo={comboForDisplay(step.keys)} size="sm" />
+												<KeyCombo keys={step.keys} onpoint={point} />
 											{/if}
 										</span>
-										{#if step.note}<span class="proc__note">{step.note}</span>{/if}
+										{#if step.note}<span class="proc__note"
+												><MessageText
+													text={step.note}
+													onkeys={play}
+													onpoint={point}
+													{cite}
+													inline
+												/></span
+											>{/if}
 									</li>
 								{/each}
 							</ol>
-							{#if procedure.result}<p class="proc__result">{procedure.result}</p>{/if}
+							{#if procedure.result}<p class="proc__result">
+									<MessageText
+										text={procedure.result}
+										onkeys={play}
+										onpoint={point}
+										{cite}
+										inline
+									/>
+								</p>{/if}
 						</div>
 					{/each}
 				</section>
@@ -214,7 +242,9 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 						{#each unit.facts as fact (fact.id)}
 							{@const from = provenance(fact.confidence, fact.source)}
 							<li class="fact" id={fact.id}>
-								<div class="fact__text"><MessageText text={fact.text} onkeys={play} {cite} /></div>
+								<div class="fact__text">
+									<MessageText text={fact.text} onkeys={play} onpoint={point} {cite} />
+								</div>
 								<a
 									class="badge"
 									href={sourceHref(fact.source)}
@@ -251,7 +281,7 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 											<span class="param__name">{param.name}</span>
 											<span class="param__page">{param.screen}</span>
 										</td>
-										<td><Kbd combo={comboForDisplay(param.keys)} size="sm" /></td>
+										<td><KeyCombo keys={param.keys} size="sm" onpoint={point} /></td>
 										<td class="param__range">
 											{param.range ?? '–'}{param.default ? ` · ${param.default}` : ''}
 										</td>
@@ -320,7 +350,8 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 			<div class="rail__sticky">
 				<div class="rail__replica"><Replica {replica} /></div>
 				<p class="rail__hint">
-					Press <em>show on replica</em>, or any keys in the text, to watch them here.
+					Point at a key in the text to find it here; press it, or <em>show on replica</em>, to
+					watch it played.
 				</p>
 				{#if sections.length > 1}
 					<nav class="toc" aria-label="on this page">
@@ -564,6 +595,11 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 
 	.keys:hover {
 		background-color: var(--xy-hover);
+	}
+
+	.keys :global(.combo),
+	.proc__keys > :global(.combo) {
+		margin-block: 0;
 	}
 
 	.facts {

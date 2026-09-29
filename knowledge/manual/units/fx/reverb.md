@@ -7,7 +7,7 @@ order: 60
 context:
   modes: [auxiliary]
   screens: [M1]
-summary: A reverb for FX I or FX II, from a small room to a cathedral; M1 sets size, modulation, a tone filter and the dry/wet balance.
+summary: A reverb for FX I or FX II, from a small room to a cathedral; `M1` sets size, modulation, a tone filter and the dry/wet balance.
 status: current
 firmware:
   min: '1.0.9'

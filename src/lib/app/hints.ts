@@ -106,13 +106,16 @@ export function controlName(id: ControlId): string {
 	return control.label;
 }
 
-/** A control in key-combo notation for drawing (`M1`, `T3`, `C4`, `encoder 2`); null for knobs. */
-export function comboName(id: ControlId): string | null {
+/**
+ * A control as a term of the key grammar, which the hint draws as the device's keys (`M1`, `T3`,
+ * `key C4`, `[-]`, `turn E2`); an encoder turned, clicked or held down (`click E1`) says how.
+ * Null for the volume knob and the pitch-bend pad.
+ */
+export function comboName(id: ControlId, action: HintAction | 'hold' = 'press'): string | null {
 	const control = getControl(id);
-	if (control.track) return `T${control.track.instrument}`;
-	if (control.kind === 'encoder') return `encoder ${control.index ?? 1}`;
+	if (control.kind === 'encoder') return `${action === 'turn' ? 'turn' : 'click'} ${control.token}`;
 	if (control.kind !== 'key') return null;
-	return controlName(id);
+	return control.token;
 }
 
 /** Capitalises the first letter (sentence case for sentences that start with a name). */
@@ -181,7 +184,7 @@ export function notRemoteHint(
 		kind: 'not-remote',
 		control: id,
 		action,
-		keys: comboName(id),
+		keys: comboName(id, action),
 		...text,
 		guide: guideUrl(control),
 		firmware,
@@ -219,10 +222,10 @@ export function comboHint(
 	const { firmware } = firmwareFacts(osVersion);
 	const names = listOf(held.map(controlName));
 	const pronoun = held.length === 1 ? 'it' : 'them';
-	const keys = [...held, id]
-		.map(comboName)
+	const keys = [...held.map((h) => comboName(h, 'hold')), comboName(id)]
 		.filter((name): name is string => name !== null)
 		.join(' + ');
+	const said = [...held, id].map(controlName).join(' + ');
 	const links = route.kind === 'track' && held.some((h) => getControl(h).track !== undefined);
 	const text = links
 		? words(
@@ -230,7 +233,7 @@ export function comboHint(
 				`Let go of ${pronoun} to ${plainAction(id, route)}.`
 			)
 		: words(
-				`${sentence(keys)} can't be sent remotely on OS ${firmware}.`,
+				`${sentence(said)} can't be sent remotely on OS ${firmware}.`,
 				`Let go of ${names} to ${plainAction(id, route)}.`
 			);
 	return {
@@ -251,7 +254,7 @@ export function offlineHint(id: ControlId, action: HintAction = 'press'): Bridge
 		kind: 'offline',
 		control: id,
 		action,
-		keys: comboName(id),
+		keys: comboName(id, action),
 		...words(
 			'Nothing was sent.',
 			'The replica is a simulation until you connect your OP-XY: its keys move, but they play nothing.'
@@ -274,7 +277,7 @@ export function sendFailedHint(
 		kind: 'send-failed',
 		control: id,
 		action,
-		keys: comboName(id),
+		keys: comboName(id, action),
 		...words(`${sentence(controlSubject(id))} didn't reach the OP-XY.`, `${sentence(reason)}.`),
 		guide: null,
 		firmware: osVersion ?? REFERENCE_FIRMWARE,

@@ -6,7 +6,7 @@ area: arrange
 order: 30
 context:
   modes: [arrange]
-summary: A scene stores which pattern each track plays plus the mix; a project has 99. In arrange, shift and a black key select one, and shift + M1…M4 clone, copy, paste or reset.
+summary: A scene stores which pattern each track plays plus the mix; a project has 99. In arrange, shift and a black key select one, and `shift + M1…M4` clone, copy, paste or reset.
 status: current
 firmware:
   min: '1.0.9'

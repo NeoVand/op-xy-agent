@@ -29,7 +29,7 @@ Facts:
 - When a diagram highlights all four encoders, any of them will do. [#all-encoders] [s1]
 - A diagram that shows the whole keyboard is there for orientation, not as a request to play it. [#whole-keyboard] [s1]
 - The guide's legend labels its hold-and-turn picture as a second sequence press and swaps two captions (all encoders, keyboard). [#guide-errata] (derived) [s2]
-- This manual writes a combo with a plus sign (`shift + M1` = hold shift, press M1) and a sequence with an arrow (`record + play → play` = release, then press play again). [#combos] (derived) [s3]
+- This manual writes a combo with a plus sign (`shift + M1` = hold shift, press `M1`) and a sequence with an arrow (`record + play → play` = release, then press play again). [#combos] (derived) [s3]
 - `hold com` is a long press, `turn E2` and `click E4` move an encoder, and `Tn`, `step n` or `key` stand for any track, step or keyboard key. [#gestures] (derived) [s3]
 
 Related: [hardware.layout], [basics.modules]
@@ -65,7 +65,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: modules, module keys, pages, sub modes, shift layer, extra parameters
 Where: modes instrument, auxiliary, mix; screens M1, M2, M3, M4
 
-In instrument, auxiliary and mix mode the keys M1–M4 under the screen open four pages (modules), and the encoders edit what the open page shows. Arrange has no modules.
+In instrument, auxiliary and mix mode the keys `M1…M4` under the screen open four pages (modules), and the encoders edit what the open page shows. Arrange has no modules.
 
 The mode decides what the pages are about and the track keys which track they edit. Any module-page
 parameter of an instrument or auxiliary track can be parameter-locked per step.
@@ -74,9 +74,9 @@ Facts:
 - Every main mode except arrange splits its controls into four modules, opened with the keys printed 1 to 4 under the screen (`M1`…`M4`). [#what] [s1]
 - On a module page, `E1`…`E4` edit the parameters shown for the selected track. [#encoders] [s1]
 - Pages with more than four parameters show the rest while `shift` is held. [#shift-layer] [s1]
-- On instrument tracks the pages are engine (M1), envelopes (M2), filter (M3) and LFO (M4); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine. [#instrument-pages] [s2]
-- Auxiliary tracks use the pages their own way; on the brain track, M1 sets key and scale and M2 routes tracks into it. [#aux-pages] [s3]
-- In mix mode, M1 holds levels, pans and sends per track, M2 the master EQ, M3 the master saturator and M4 the master section. [#mix-pages] [s4]
+- On instrument tracks the pages are engine (`M1`), envelopes (`M2`), filter (`M3`) and LFO (`M4`); `shift + M3` and `shift + M4` choose the filter type and LFO type, and `shift + M1` brings up the preset browser, where OS 1.1.33 changes the engine. [#instrument-pages] [s2]
+- Auxiliary tracks use the pages their own way; on the brain track, `M1` sets key and scale and `M2` routes tracks into it. [#aux-pages] [s3]
+- In mix mode, `M1` holds levels, pans and sends per track, `M2` the master EQ, `M3` the master saturator and `M4` the master section. [#mix-pages] [s4]
 - On screen, each parameter carries a small dot or cap in its encoder's shade — dark for `E1`, mid grey for `E2`, light grey for `E3`, white for `E4` — so a glance tells which knob moves what. [#encoder-marks] (verified 1.1.33) [s5]
 - Brief popups, such as the octave card or the mixer's send display, sit over the page and fade away on their own after a second or two. [#popups] (verified 1.1.33) [s6]
 - On some auxiliary tracks the next page slides in sideways — the brain's routing page from its `M1`, and the external MIDI track's CC pages from `M1` to `M2` to `M3`. [#slide] (verified 1.1.33) [s6]
@@ -100,7 +100,7 @@ while pressing others links tracks instead of switching.
 
 Facts:
 - The OP-XY has sixteen sequencer tracks in two sets of eight, instrument and auxiliary; `T1`…`T8` address the set the current mode shows. [#two-sets] [s1]
-- In auxiliary mode the keys stand for brain (T1), punch-in FX (T2), external MIDI (T3), external CV (T4), external audio (T5), tape (T6), FX I (T7) and FX II (T8). [#aux-order] [s2]
+- In auxiliary mode the keys stand for brain (`T1`), punch-in FX (`T2`), external MIDI (`T3`), external CV (`T4`), external audio (`T5`), tape (`T6`), FX I (`T7`) and FX II (`T8`). [#aux-order] [s2]
 - Notes you play, steps you enter and pages you edit all belong to the active track; pressing another track key makes that track active. [#active] [s3]
 - The active track's key lights white for an instrument track and red for an auxiliary track. [#colours] [s3]
 - `shift + Tn` opens the preset browser for that track; on instrument tracks it also picks a synth engine or sample pack. [#presets] [s4]
@@ -120,7 +120,7 @@ Also called: link tracks, linked tracks, track link, layer sounds, stack tracks,
 
 Hold one track key and press up to three others to link them; whatever you play on the held (primary) track then drives every linked track, which is how you layer sounds.
 
-Linking is the layering tool: hold `T3` and press `T4`, and a bass line played on track 3 also
+Linking is the layering tool: `hold T3` and press `T4`, and a bass line played on track 3 also
 sounds through track 4's synth, each track keeping its own sound and settings.
 
 Facts:
@@ -234,7 +234,7 @@ the module keys `M1`…`M4` under the screen choose a page, the track keys under
 track, and the step keys below them are the sequencer. The right-hand column holds the utility keys
 (`sample`, `com`, `player`, `bar`).
 
-Most editing follows one pattern: pick a mode, pick a track, pick a page, then turn `E1`…`E4`.
+Most editing follows one pattern: pick a mode, pick a track, pick a page, then `turn E1`…`E4`.
 `shift` reaches a second layer of almost every key and page, and the keyboard's white and black keys
 double as step-component and number keys when a page asks for them.
 
@@ -1414,7 +1414,7 @@ Facts:
 - Every instrument track and every auxiliary track can run a player of its own. [#tracks] [s1]
 - The first press of `player` shows the selected track's player page, dimmed under an off box; a second press switches the player on. [#enable] (verified 1.1.33) [s2]
 - `shift + player` opens the player list, headed with the track number and the word player: arpeggio, hold and maestro, the current type boxed. [#types] (verified 1.1.33) [s2]
-- With the list up and shift still held, turning E1 moves the box between arpeggio, hold and maestro; pressing `player` again only switches the player on or off. Letting go of shift opens the chosen player's page. [#list-steps] (verified 1.1.33) [s2]
+- With the list up and shift still held, turning `E1` moves the box between arpeggio, hold and maestro; pressing `player` again only switches the player on or off. Letting go of shift opens the chosen player's page. [#list-steps] (verified 1.1.33) [s2]
 - Player settings cannot be parameter-locked; only module-page parameters can. [#no-locks] [s3]
 - Since OS 1.1.25, a pattern you add to a track starts out with the player type that is selected at that moment. [#new-pattern] (since 1.1.25) [s4]
 
@@ -1425,7 +1425,7 @@ Procedures:
   2. `player` — switches the player on
 - Choose another player type [#change-type] (verified 1.1.33) [s2]
   1. `shift + player` — opens the list with the current type boxed; keep shift held
-  2. `shift + player → + turn E1` — E1 moves the box to arpeggio, hold or maestro; pressing player again would only switch the player on or off
+  2. `shift + player → + turn E1` — `E1` moves the box to arpeggio, hold or maestro; pressing player again would only switch the player on or off
   Result: Letting go of shift opens the chosen player's page.
 
 Related: [players.arpeggio], [players.maestro], [players.hold], [arrange.patterns], [sequencer.parameter-locks]
@@ -1618,7 +1618,7 @@ Procedures:
   3. `turn E1` — highlight an engine; its first preset is highlighted
   4. `turn E2` — optional; another of its presets
   5. `click E2` — loads it
-  Result: The track runs the new engine with that preset's sound, and M1 shows the engine's parameters.
+  Result: The track runs the new engine with that preset's sound, and `M1` shows the engine's parameters.
 
 Related: [instrument.overview], [instrument.engine-axis], [instrument.engine-dissolve], [instrument.engine-epiano], [instrument.engine-hardsync], [instrument.engine-midi], [instrument.engine-organ], [instrument.engine-prism], [instrument.engine-simple], [instrument.engine-wavetable], [instrument.preset-browser], [sampler.overview], [com.midi-track-ccs]
 
@@ -1645,7 +1645,7 @@ Facts:
 - Over MIDI, CC20–23 set the amp envelope and CC24–27 the filter envelope, each in attack, decay, sustain, release order, whichever envelope the page shows. [#midi-ccs] (verified 1.1.33) [s3]
 - The page draws both envelopes at once. The one the encoders edit is bright, with five square handles (start, peak, decay end, release start, end) and thin lines dropping from the inner three; the other is grey, without handles. Each is named, "amp" or "filter", just left of its release handle. [#screen] (verified 1.1.33) [s3]
 - Each encoder slides one handle. Attack moves the peak right along the top, decay moves the decay end right of the peak, sustain raises the level, and release moves the release start right toward the end. [#handles] (verified 1.1.33) [s3]
-- Release is set by where its handle sits, so turning E4 clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade. [#release-direction] (verified 1.1.33) [s3]
+- Release is set by where its handle sits, so turning `E4` clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade. [#release-direction] (verified 1.1.33) [s3]
 - There is no plateau after the attack; the decay starts at the peak. The attack rises steeply and bends into the peak, and decay and release fall steeply and level off. [#shape] (verified 1.1.33) [s3]
 - The filter envelope is always drawn at full height; its real reach is set by envelope amount on `M3`. [#full-height] (verified 1.1.33) [s3]
 - The attack runs from instant at 0 to about 1.4 s at the middle and six minutes at the top, doubling every 6 or so steps; it rises like a charging capacitor, fastest at first, and stops at the peak. [#attack-time] (verified 1.1.33) [s4]
@@ -1654,8 +1654,8 @@ Facts:
 - Sustain is linear in level: a quarter, half and three quarters of the way up give a quarter, half and three quarters of the peak. [#sustain-level] (verified 1.1.33) [s4]
 
 Procedures:
-- Show the other envelope on M2 [#switch] [s1]
-  Needs: instrument mode; M2 is open
+- Show the other envelope on `M2` [#switch] [s1]
+  Needs: instrument mode; `M2` is open
   1. `click E1…E4` — any encoder
 
 Parameters:
@@ -1753,7 +1753,7 @@ Parameters:
 | --- | --- | --- | --- | --- | --- | --- |
 | M3 | `turn E1` | cutoff | – | – | 32 | frequency where the filter acts s1 |
 | M3 | `turn E2` | resonance | – | – | 33 | peak at the cutoff that exaggerates the filter s1 |
-| M3 | `turn E3` | envelope amount | – | – | 34 | how far the M2 filter envelope sweeps the cutoff s1 |
+| M3 | `turn E3` | envelope amount | – | – | 34 | how far the `M2` filter envelope sweeps the cutoff s1 |
 | M3 | `turn E4` | key tracking | – | – | 35 | ties the cutoff to the pitch of each note s1 |
 
 Related: [instrument.envelopes], [instrument.track-sends], [instrument.lfo]
@@ -1987,7 +1987,7 @@ Facts:
 
 Procedures:
 - Sweep a track's filter cutoff in time with the tempo [#sweep] [s1]
-  Needs: instrument mode; M4 shows the value LFO
+  Needs: instrument mode; `M4` shows the value LFO
   1. `turn E3` — choose the filter page
   2. `turn E4` — choose cutoff
   3. `turn E1` — stay in the synced range and pick a rate
@@ -2011,7 +2011,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: axis, axis engine, fm strings, fm synth
 Where: modes instrument; screens M1
 
-An FM engine made for lush strings; its M1 page sets tone, the ratio of one oscillator (detune or fifths), wave shape and a built-in tremolo.
+An FM engine made for lush strings; its `M1` page sets tone, the ratio of one oscillator (detune or fifths), wave shape and a built-in tremolo.
 
 In an FM engine one oscillator modulates another, and the ratio between them sets the timbre. Keep
 axis's ratio in the detune half for chorused, ensemble-like strings; move into the fifths half for
@@ -2041,7 +2041,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: dissolve, dissolve engine, noise synth, tonal noise
 Where: modes instrument; screens M1
 
-A tonal-noise engine for airy ambient pads and bright, gritty leads; its M1 page sets swarm (noise modulation), AM, FM and detune.
+A tonal-noise engine for airy ambient pads and bright, gritty leads; its `M1` page sets swarm (noise modulation), AM, FM and detune.
 
 Dissolve starts from oscillators and lets noise eat into them. Little swarm keeps a clear pitch with
 a breath of air; a lot turns the tone into textured noise that still follows the keys. AM roughens,
@@ -2070,7 +2070,7 @@ outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15 · verif
 Also called: epiano, e-piano, electric piano, epiano engine, keys engine
 Where: modes instrument; screens M1
 
-An electric-piano model that also reaches plucks, strong leads and thick basses; its M1 page sets tone, texture, tine and punch.
+An electric-piano model that also reaches plucks, strong leads and thick basses; its `M1` page sets tone, texture, tine and punch.
 
 Epiano recreates the struck-tine electric piano. Tine sets how much bell-like attack each note has,
 tone the overall brightness, texture adds dirt and punch adds movement. With the tine up and a medium
@@ -2102,7 +2102,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: hardsync, hard sync, hardsync engine, oscillator sync
 Where: modes instrument; screens M1
 
-A hard-sync engine for punchy stabs and firm basses; its M1 page sets freq (a harmonic sweep), sub, noise and low cut.
+A hard-sync engine for punchy stabs and firm basses; its `M1` page sets freq (a harmonic sweep), sub, noise and low cut.
 
 Hard sync restarts one oscillator from another, so sweeping freq produces the tearing, vocal sweep
 sync sounds are known for — try a different freq lock on each step. Sub reinforces the bottom for
@@ -2175,7 +2175,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: organ, organ engine, combo organ, church organ, transistor organ
 Where: modes instrument; screens M1
 
-An organ engine that spans transistor combos to church organs; its M1 page sets organ type, bass, tremolo amount and tremolo speed.
+An organ engine that spans transistor combos to church organs; its `M1` page sets organ type, bass, tremolo amount and tremolo speed.
 
 Organ is a quick route to a whole family of sounds: type swaps the organ model, bass adds weight, and
 the built-in tremolo gives the familiar pulsing movement — slow for gentle swells, fast for a
@@ -2204,22 +2204,22 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: prism, prism engine, prism synth
 Where: modes instrument; screens M1
 
-A general-purpose synth engine for bass lines, leads and most other parts; its M1 page covers waveform, oscillator ratio, detune and stereo width.
+A general-purpose synth engine for bass lines, leads and most other parts; its `M1` page covers waveform, oscillator ratio, detune and stereo width.
 
 Prism runs several oscillators and gives you four controls over how they relate: their waveform,
 their tuning ratio, how far apart they drift in pitch and how wide they spread. Little detune and a
 narrow image keep it tight for bass; more of both makes it broad enough for leads and pads.
 
-Everything else about the sound — how notes start and fade (M2), the filter (M3) and modulation
-(M4) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.
+Everything else about the sound — how notes start and fade (`M2`), the filter (`M3`) and modulation
+(`M4`) — is shared by all engines, so a prism patch is shaped the same way as any other synth patch.
 TE's guide gives no numeric ranges or defaults for prism's parameters; the screen shows them as you
 turn, and the CC numbers are confirmed on the owner's unit.
 
 Facts:
 - Prism is one of the eight built-in synth engines. Each instrument track runs one engine, chosen per track. [#one-of-eight] [s1]
 - Prism is the everyday workhorse among the engines, suited to bass lines, leads and most parts in between. [#character] [s2]
-- Only the M1 page belongs to the engine. Envelopes (M2), filter (M3) and LFO (M4) work the same whichever synth engine a track uses. [#m1-is-engine] [s3]
-- Like every module-page parameter, prism's four M1 settings can be parameter-locked per step. [#lockable] [s4]
+- Only the `M1` page belongs to the engine. Envelopes (`M2`), filter (`M3`) and LFO (`M4`) work the same whichever synth engine a track uses. [#m1-is-engine] [s3]
+- Like every module-page parameter, prism's four `M1` settings can be parameter-locked per step. [#lockable] [s4]
 - Over MIDI, CC12, CC13, CC14 and CC15 on the track's channel move shape, ratio, detune and stereo. [#midi-ccs] (verified 1.1.33) [s5]
 - Prism's picture is a row of four optics — a triangle, a convex lens, a concave lens and a wedge — with light rays passing through the lenses on every note. [#picture] (verified 1.1.33) [s6]
 - Shape grows the triangle, ratio thickens the convex lens, detune slides the concave lens and stereo opens the wedge into an arrowhead. [#drawn] (verified 1.1.33) [s6]
@@ -2231,7 +2231,7 @@ Procedures:
   1. `shift + M1` — opens the preset browser by engine (OS 1.1.33)
   2. `turn E1` — scroll to prism; its first preset is highlighted
   3. `click E2` — loads it, the whole sound with it
-  Result: The track now plays through prism and M1 shows its four parameters.
+  Result: The track now plays through prism and `M1` shows its four parameters.
 
 Parameters:
 
@@ -2251,7 +2251,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: simple, simple engine, basic synth, pulse width, subtractive synth
 Where: modes instrument; screens M1
 
-A basic engine for building leads and plucks quickly; its M1 page sets waveform shape, pulse width, noise and stereo spread.
+A basic engine for building leads and plucks quickly; its `M1` page sets waveform shape, pulse width, noise and stereo spread.
 
 Simple is the plain starting point: pick a waveform, narrow the pulse width for a hollow, nasal tone,
 add noise for breath or buzz, and widen the stereo image. With the filter and envelopes doing most of
@@ -2279,7 +2279,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: wavetable, wavetable engine, wavetables, morphing oscillator
 Where: modes instrument; screens M1
 
-An engine that morphs through a table of stored waveforms; its M1 page picks one of nine tables and sets position, warp and drift.
+An engine that morphs through a table of stored waveforms; its `M1` page picks one of nine tables and sets position, warp and drift.
 
 Wavetable suits evolving sounds: choose a table, then move the position to travel through its
 waveforms. Position is the parameter to animate — lock it per step or aim the LFO at it — while warp
@@ -2360,7 +2360,7 @@ choice travels with the sound.
 
 Facts:
 - There are 11 user tuning slots, found under settings → tuning in the preset settings. [#slots] [s1]
-- `E3` picks a slot and `M4` opens it; in the editor, play a key to choose the note, then turn `E1` for cents and `E2` for micro-cents. [#edit] [s1]
+- `E3` picks a slot and `M4` opens it; in the editor, play a key to choose the note, then `turn E1` for cents and `E2` for micro-cents. [#edit] [s1]
 - Presets store a user tuning as 12 offsets, one per pitch class, so the same pattern repeats in every octave. [#per-pitch-class] (derived) [s2]
 - OS 1.1.25 fixed user tunings not loading reliably into their user slots. [#load-fix] (since 1.1.25) [s3]
 
@@ -2523,7 +2523,7 @@ Facts:
 Procedures:
 - Overwrite the loaded snapshot with the track's current sound [#save-in-place] (derived) [s2]
   Needs: instrument mode; the track's sound was loaded from a saved snapshot
-  1. `Tn + shift + M4` — hold the track key as for a normal save, add shift, then press M4 — the changelog only says to hold shift, so this order is not yet confirmed on a unit
+  1. `Tn + shift + M4` — hold the track key as for a normal save, add shift, then press `M4` — the changelog only says to hold shift, so this order is not yet confirmed on a unit
   Result: The snapshot is updated in place; no new snapshot appears.
 
 Related: [instrument.engine-prism]
@@ -2570,11 +2570,11 @@ Facts:
 - The synth sampler (sampler among the browser's engines) plays one sample across the keyboard, with loop points for sustained sounds. [#synth-sampler] [s1]
 - The drum sampler (drum among the browser's engines) gives each of the 24 keys its own one-shot sample. [#drum-sampler] [s2]
 - The multisampler lays up to 24 samples of one instrument over zones of the keyboard. [#multisampler] [s3]
-- On sampler tracks M1 edits the sample; M2–M4 work as on any instrument track. [#m1] [s4]
+- On sampler tracks `M1` edits the sample; `M2…M4` work as on any instrument track. [#m1] [s4]
 - In the mix, the drum sampler feeds the percussion group and the synth sampler the melodic group. [#groups] [s5]
 - Drum sampler and synth sampler settings can be parameter-locked. [#p-locks] (since 1.1.0) [s6]
 - A blank project has drum samplers on tracks 1 and 2 and a multisampler on track 8. [#default-tracks] (community-verified) [s7]
-- Over MIDI, M1's encoders answer CC12–15 — start, loop start, loop end, end on the synth sampler and multisampler; tune, start, end, play mode on the drum sampler. [#ccs] (community) [s8]
+- Over MIDI, `M1`'s encoders answer CC12–15 — start, loop start, loop end, end on the synth sampler and multisampler; tune, start, end, play mode on the drum sampler. [#ccs] (community) [s8]
 
 Procedures:
 - Put a sampler engine on the selected track [#choose] [s9]
@@ -2592,7 +2592,7 @@ current · OS ≥ 1.0.9 · changed in 1.0.29 · guide v1.1.15
 Also called: record a sample, sample key, sample mode, sampling threshold
 Where: screens sample
 
-`sample` opens a record page from any screen: pick the input, set gain and threshold, then hold `M1` to capture up to 20 seconds into the current sampler or the sample library.
+`sample` opens a record page from any screen: pick the input, set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.
 
 The recorder waits for the sound, so set the threshold just above the room noise and the take
 starts with the first note. On sampler tracks the page adds key handling: the synth sampler tunes to
@@ -2633,7 +2633,7 @@ current · OS ≥ 1.0.9 · changed in 1.1.0 · guide v1.1.15
 Also called: sampler engine, one shot synth sampler, loop points, loop type
 Where: modes instrument; screens M1
 
-Plays one sample across the keyboard; M1 sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.
+Plays one sample across the keyboard; `M1` sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.
 
 TE's guide calls it the one shot synth sampler. Loop forever suits drones and pads, loop until
 release leaves a natural tail when you let go, and loop off makes the sample a one-shot.
@@ -2674,9 +2674,9 @@ current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15
 Also called: drum engine, drum kit, drum keys, copy drum key
 Where: modes instrument; screens M1, sample
 
-Gives each of the 24 keys its own one-shot sample; record straight onto a chosen key, step between filled keys, and copy, paste or multi-select keys on the M1 page.
+Gives each of the 24 keys its own one-shot sample; record straight onto a chosen key, step between filled keys, and copy, paste or multi-select keys on the `M1` page.
 
-Treat the keyboard as 24 pads: select a key, hold `M1`, make the sound, move on. Takes also land in
+Treat the keyboard as 24 pads: select a key, `hold M1`, make the sound, move on. Takes also land in
 the library, so clearing a key never loses a recording.
 
 Facts:
@@ -2684,7 +2684,7 @@ Facts:
 - Over MIDI the 24 keys are notes 53–76 (F3–E5 with C4 = 60), left to right. [#notes] (community-verified) [s2]
 - Every drum sampler recording is also saved to the samples folder named user. [#saved] [s1]
 - On the record page, `M2` and `M3` jump to the previous or next key holding a sample; `M4` clears the current key but keeps its file. [#step-keys] [s1]
-- On M1, `key + M2` copies that key's sample and `key + M3` pastes the last copy onto the held key. [#copy-paste] [s1]
+- On `M1`, `key + M2` copies that key's sample and `key + M3` pastes the last copy onto the held key. [#copy-paste] [s1]
 - Drum key copy and paste exists since OS 1.0.29. [#copy-since] (since 1.0.29) [s3]
 - `key + M4` selects several keys so one edit changes them all; the guide does not say how more keys join. [#multi-select] [s1]
 - Long samples default to the key play mode (sound only while held) rather than oneshot. [#long-samples] (since 1.0.32) [s4]
@@ -2706,7 +2706,7 @@ current · OS ≥ 1.0.9 · changed in 1.0.45, 1.1.15 · guide v1.1.15
 Also called: drum play mode, mute group, choke, drum pan, sample fade
 Where: modes instrument; screens M1
 
-The drum sampler's M1 page shapes the selected key — tune, start, end and play mode, with direction, pan, fade and gain on the shift layer.
+The drum sampler's `M1` page shapes the selected key — tune, start, end and play mode, with direction, pan, fade and gain on the shift layer.
 
 Trim each hit with start and end, retune it, and pick its behaviour: oneshot for drums, key for
 held sounds, loop for textures, mute group for sounds that should cut each other off.
@@ -2766,7 +2766,7 @@ Facts:
 
 Procedures:
 - Slice a drum loop at its hits [#slice-loop] [s2]
-  Needs: the loop is on a key of a drum sampler track; M1 page
+  Needs: the loop is on a key of a drum sampler track; `M1` page
   1. `key + M1` — hold the key with the loop
   2. `turn E1` — transient
   3. `turn E4` — number of slices
@@ -2780,7 +2780,7 @@ current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
 Also called: multisample, multi sampler, key zones, sampled instrument
 Where: modes instrument; screens M1, sample
 
-Up to 24 samples of one instrument, each on its own zone of the keyboard; a sample also plays the empty keys below it, and M1 edits the selected zone like the synth sampler.
+Up to 24 samples of one instrument, each on its own zone of the keyboard; a sample also plays the empty keys below it, and `M1` edits the selected zone like the synth sampler.
 
 Sample the instrument every few notes and let the zones fill the gaps below each one.
 
@@ -2790,7 +2790,7 @@ Facts:
 - Zones fill downwards — a sample also covers the empty keys below it, pitched down, as far as the next zone. [#fill-down] [s1]
 - Up to 24 zones fit, about three samples per octave. [#max] [s1]
 - The record page works like the drum sampler's — `M1` records, `M2` / `M3` step through filled keys, `M4` unassigns; takes go to the user folder. [#record-keys] [s1]
-- The multisampler's M1 page has the synth sampler's layout, loop type included (`shift + click E3`). [#editing] [s1]
+- The multisampler's `M1` page has the synth sampler's layout, loop type included (`shift + click E3`). [#editing] [s1]
 - The guide titles `shift + turn E2` and `shift + turn E3` pan and sample fade but describes tune and loop crossfade; zones store tune and crossfade, not pan. [#caption-mixup] (derived) [s2]
 - There are no velocity layers or round robins — one sample per zone. [#no-layers] (community) [s3]
 - OS 1.1.25 improved how multisamples follow global transpose. [#transpose] (since 1.1.25) [s4]
@@ -2840,7 +2840,7 @@ Parameters:
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | sample library | `turn E1` | folder | – | – | – | s1 |
-| sample library | `turn E2` | sample | – | – | – | E3 and E4 do the same s1 |
+| sample library | `turn E2` | sample | – | – | – | `E3` and `E4` do the same s1 |
 
 Related: [sampler.sample-files], [sampler.drum-sampler]
 
@@ -2891,7 +2891,7 @@ Facts:
 - Aux tracks vary the built-in sounds or control and feed outside gear. [#purpose] [s1]
 - `T1` brain, `T2` punch-in FX, `T3` external MIDI, `T4` external CV, `T5` external audio, `T6` tape, `T7` FX I, `T8` FX II. [#tracks] [s2]
 - The selected aux track lights its key red; instrument tracks light white. [#red] [s3]
-- External audio, tape and the FX tracks put main controls on M1, routing on M2, a filter on M3 and an LFO on M4; the brain has M1 and routing, external MIDI puts CCs on M2 and M3. [#pages] [s2]
+- External audio, tape and the FX tracks put main controls on `M1`, routing on `M2`, a filter on `M3` and an LFO on `M4`; the brain has `M1` and routing, external MIDI puts CCs on `M2` and `M3`. [#pages] [s2]
 - Aux tracks have their own patterns, notes, parameter locks and step components, like instrument tracks. [#sequenced] (community-verified) [s4]
 - By default the aux tracks answer MIDI channels 9–16 in order, brain on 9 up to FX II on 16. [#channels] (community-verified) [s5]
 - In mix mode, pressing `mix` again switches between instrument and aux tracks. [#mix] [s6]
@@ -2919,7 +2919,7 @@ Facts:
 - On the brain track, the keyboard transposes every routed track. [#keyboard] [s1]
 - Brain notes recorded into its sequence play back as transpositions, so a one-bar idea follows a chord progression. [#sequence] [s2]
 - The brain's manual mode lets you set the key yourself when detection gets it wrong. [#manual] [s1]
-- Tracks left out of the routing on M2 are neither transposed nor used for key detection. [#routing] [s1]
+- Tracks left out of the routing on `M2` are neither transposed nor used for key detection. [#routing] [s1]
 - In a new project tracks 3–8 are routed to the brain and drum tracks 1 and 2 are not. [#default-routing] (community) [s3]
 - The brain has seven scales, shown in this order as major, dorian, phrygian, lydian, mixo (mixolydian), minor and locrian. [#scales] (verified 1.1.33) [s4]
 - Brain settings are stored per pattern. [#per-pattern] (since 1.0.25) [s5]
@@ -3008,7 +3008,7 @@ current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15 · verified on 1.1
 Also called: midi track, ext midi, control a synth, midi cc slots
 Where: modes auxiliary; screens M1, M2, M3, M4
 
-`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; M1 sets channel, bank and program, M2 and M3 hold eight CC slots, and M4 has an LFO.
+`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; `M1` sets channel, bank and program, `M2` and `M3` hold eight CC slots, and `M4` has an LFO.
 
 `T3` is a track whose sound lives in another box: set its channel, pick a sound with bank and
 program, and map the CC slots to the controls you want to move. For more devices at once, use
@@ -3017,8 +3017,8 @@ instrument tracks with the midi engine.
 Facts:
 - The external MIDI track (`T3`) sends its keyboard and sequencer notes to connected MIDI gear. [#track] [s1]
 - Gear connects through the USB-C port, or through the multi-out jack set to midi. [#ports] [s1]
-- M2 and M3 hold four CC slots each; turning sends a slot's value, `shift + turn E1…E4` switches a slot on and picks its CC number, and the values can be sequenced and recorded. [#slots] [s1]
-- The external MIDI track's LFO (M4) modulates the track's own parameters, such as a CC slot. [#lfo] [s1]
+- `M2` and `M3` hold four CC slots each; turning sends a slot's value, `shift + turn E1…E4` switches a slot on and picks its CC number, and the values can be sequenced and recorded. [#slots] [s1]
+- The external MIDI track's LFO (`M4`) modulates the track's own parameters, such as a CC slot. [#lfo] [s1]
 - Program changes can be parameter-locked; OS 1.1.15 fixed such locks not working. [#program-locks] (since 1.1.15) [s2]
 - Community charts put the slot values on CC20–23 and CC32–35 of channel 11 and the slot numbers on CC28–31 and CC36–39. [#ccs] (community) [s3]
 - Over MIDI on channel 11, CC12–14 set channel, bank and program and CC40–43 drive the `M4` LFO; CC15 does nothing. [#midi] (verified 1.1.33) [s4]
@@ -3030,7 +3030,7 @@ Procedures:
 - Play an outside synth from the OP-XY [#setup] [s5]
   Needs: the synth is connected over USB-C or the multi-out
   1. `auxiliary → T3`
-  2. `turn E1` — the synth's MIDI channel, on M1
+  2. `turn E1` — the synth's MIDI channel, on `M1`
   3. `keys`
 
 Parameters:
@@ -3087,9 +3087,9 @@ back through the input. Instrument tracks can also feed the aux output from thei
 
 Facts:
 - The 3.5 mm audio input takes line sources or a microphone, for vocals, horns and the like. [#line-in] [s1]
-- On `T5`, choose the input with `turn E1`, then click `E1` to switch it on. [#activate] [s2]
+- On `T5`, choose the input with `turn E1`, then `click E1` to switch it on. [#activate] [s2]
 - Sending audio out needs the multi-out set to audio. [#out] [s1]
-- M2 sends instrument tracks to the aux output on the multi-out; only routed tracks leave there, each at an amount independent of the main mix. [#routing] [s1]
+- `M2` sends instrument tracks to the aux output on the multi-out; only routed tracks leave there, each at an amount independent of the main mix. [#routing] [s1]
 - For an outboard effect, send tracks out of the multi-out, return the effect into the audio input, and balance the return with drive, level and mix. [#outboard] [s2]
 - Community charts give CC12 on channel 13 as the input select and suggest the level is the track level, CC7. [#ccs] (community) [s3]
 - Over MIDI on channel 13, CC13 sets drive and CC15 mix, and CC32, CC35 and CC40–43 reach the filter and LFO pages; CC12, the input select, was left untried so the microphone could not open. [#midi] (verified 1.1.33) [s4]
@@ -3124,7 +3124,7 @@ played; shorten the loop for stutters, drop the pitch for slow-downs.
 Facts:
 - Tape picks out and rearranges audio playing inside the OP-XY, which makes glitchy effects easy. [#what] [s1]
 - On the tape track (`T6`) the keyboard plays clips of whatever tracks are routed into the tape. [#keyboard] [s1]
-- Only tracks routed on M2 run through the tape, each at its own amount, independent of the main mix. [#routing] [s1]
+- Only tracks routed on `M2` run through the tape, each at its own amount, independent of the main mix. [#routing] [s1]
 - Community charts read tape pitch as a speed multiple, x1 by default. [#values] (community) [s2]
 - The tape page shows a reel icon with the speed as a percentage, a tape strip carrying a mini keyboard and the loop length as a number, and a mix box. [#screen] (verified 1.1.33) [s3]
 - Speed runs from 50 % to 200 %, length from 1 to 16 and mix from 00 to 99. Over MIDI, CC13 at 63 gives 99 % and at 64 gives 101 %, so exactly 100 % cannot be sent. [#ranges] (verified 1.1.33) [s3]
@@ -3158,10 +3158,10 @@ Facts:
 - FX I and FX II are the two send effects; every track that makes sound can send to both, and FX I can send on into FX II. [#what] [s1]
 - On an FX track the keyboard plays the last selected instrument track, so you hear the effect on that sound. [#audition] [s1]
 - `shift + T7` or `shift + T8` changes the effect in that slot; the encoders then pick one. [#choose] [s1]
-- On an FX track, M1 shows the loaded effect's parameters. [#m1] [s1]
-- On FX I, `shift + turn E4` on the M3 page sets the send into FX II. [#fx1-to-fx2] [s1]
-- Instrument tracks send from their send page (`shift` held on M3, `E3` for FX I, `E4` for FX II). [#track-sends] [s2]
-- In mix mode, M1 sets each track's FX I send with `turn E1` and FX II send with `turn E2`. [#mix-sends] [s3]
+- On an FX track, `M1` shows the loaded effect's parameters. [#m1] [s1]
+- On FX I, `shift + turn E4` on the `M3` page sets the send into FX II. [#fx1-to-fx2] [s1]
+- Instrument tracks send from their send page (`shift` held on `M3`, `E3` for FX I, `E4` for FX II). [#track-sends] [s2]
+- In mix mode, `M1` sets each track's FX I send with `turn E1` and FX II send with `turn E2`. [#mix-sends] [s3]
 - The guide's FX routing card repeats a CV sentence and its filter card names the tape track — copy slips. [#guide-slips] (derived) [s1]
 - The FX I page is headed with a boxed FX I and the effect's name, then four columns with labels above and values below, each a bar split by a marker at the value's height. [#screen] (verified 1.1.33) [s4]
 - On FX I, `shift + T7` lists the effects — chorus, delay, dist, lofi, phaser and reverb. [#type-list] (verified 1.1.33) [s4]
@@ -3176,15 +3176,15 @@ current · OS ≥ 1.0.9 · changed in 1.1.32 · guide v1.1.15
 Also called: aux routing, aux filter, aux lfo, aux sends
 Where: modes auxiliary; screens M2, M3, M4
 
-Pages shared by several aux tracks — M2 routes instrument tracks in, M3 is a high-pass and low-pass filter with sends on its shift layer, and M4 is an LFO aimed at one of the track's own parameters.
+Pages shared by several aux tracks — `M2` routes instrument tracks in, `M3` is a high-pass and low-pass filter with sends on its shift layer, and `M4` is an LFO aimed at one of the track's own parameters.
 
 These pages behave alike on every aux track that has them. The filter trims the lows and highs of
 what the track outputs, keeping a reverb return clean; the LFO moves one of the track's own settings.
 
 Facts:
-- The brain, external audio, tape and both FX tracks have a routing page on M2. [#routing-where] [s1]
+- The brain, external audio, tape and both FX tracks have a routing page on `M2`. [#routing-where] [s1]
 - On a routing page, an encoder click toggles the page between tracks 1–4 and tracks 5–8; turning a track's encoder adds or removes it, and on tape and external audio sets how much goes in. [#routing-use] [s2]
-- External audio, tape and both FX tracks have the filter on M3; those four plus external MIDI have the LFO on M4. [#which-tracks] [s1]
+- External audio, tape and both FX tracks have the filter on `M3`; those four plus external MIDI have the LFO on `M4`. [#which-tracks] [s1]
 - OS 1.1.32 fixed aux track LFOs failing to affect the page parameters. [#lfo-fix] (since 1.1.32) [s3]
 - Community charts put the aux sends on CC37–39 of the track's channel. [#ccs] (community) [s4]
 - Over MIDI, CC32 and CC35 move the external audio track's high-pass and low-pass and CC40–43 its LFO; the external MIDI track's LFO answers CC40–43 too. [#midi] (verified 1.1.33) [s5]
@@ -3217,7 +3217,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: fx, send fx, fx types, change fx, effect list, FX I, FX II
 Where: modes auxiliary; screens M1
 
-Six built-in send effects — chorus, delay, distortion, lofi, phaser and reverb — can be loaded on the two FX tracks, FX I (T7) and FX II (T8); M1 of an FX track shows the effect's four controls.
+Six built-in send effects — chorus, delay, distortion, lofi, phaser and reverb — can be loaded on the two FX tracks, FX I (`T7`) and FX II (`T8`); `M1` of an FX track shows the effect's four controls.
 
 Send effects work like the return channels of a mixing desk: tracks send a share of their signal to
 FX I or FX II, and the FX track plays the processed result back into the mix, so one reverb can serve
@@ -3250,7 +3250,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: chorus, chorus fx, ensemble, widening
 Where: modes auxiliary; screens M1
 
-A chorus for FX I or FX II that layers pitch-wobbled copies over the sound to widen it; M1 sets rate, depth, feedback and stereo width.
+A chorus for FX I or FX II that layers pitch-wobbled copies over the sound to widen it; `M1` sets rate, depth, feedback and stereo width.
 
 A chorus makes one voice sound like several by adding detuned, slightly late copies. Keep rate and
 depth low for a subtle widening of pads and keys; raise them for seasick vibrato. Feedback adds
@@ -3280,7 +3280,7 @@ current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15 · verified on 1.1
 Also called: delay, echo, delay fx, delay time, repeats
 Where: modes auxiliary; screens M1
 
-An echo for FX I or FX II; M1 sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.
+An echo for FX I or FX II; `M1` sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.
 
 Set the rough echo distance with size, then fine-tune it and choose how long the echoes keep coming
 back. For a classic send, keep dry at 0 so the FX track returns only the echoes. TE's guide calls the
@@ -3313,7 +3313,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: distortion, overdrive, drive, clipping, dirt
 Where: modes auxiliary; screens M1
 
-A clipping distortion for FX I or FX II; M1 sets the drive into it, the clipping amount and low and high cuts that shape what enters it.
+A clipping distortion for FX I or FX II; `M1` sets the drive into it, the clipping amount and low and high cuts that shape what enters it.
 
 Drive sets how hot the signal hits the distortion, clip how hard it is clipped. Because the two
 cuts sit in front of the clipping, trimming the lows keeps bass from turning to mud, and trimming
@@ -3343,7 +3343,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: lofi, lo-fi, bitcrusher, bit crusher, sample rate reduction, decimator
 Where: modes auxiliary; screens M1
 
-A bitcrusher for FX I or FX II; M1 sets the sample rate, bit depth, a quality control and drift, which spreads the result in stereo.
+A bitcrusher for FX I or FX II; `M1` sets the sample rate, bit depth, a quality control and drift, which spreads the result in stereo.
 
 Lofi degrades audio the digital way: fewer samples per second and fewer bits per sample. Small
 amounts add a dusty edge to drums and keys; extreme settings turn anything into crunchy, aliased
@@ -3372,7 +3372,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: phaser, phase shifter, phasing, sweep
 Where: modes auxiliary; screens M1
 
-A 12-pole phaser for FX I or FX II; M1 sets the centre frequency of the sweep, its depth, its rate and the feedback.
+A 12-pole phaser for FX I or FX II; `M1` sets the centre frequency of the sweep, its depth, its rate and the feedback.
 
 A phaser gives a sound a slow, swirling motion. Frequency places the sweep, depth sets how far it
 travels and rate how fast. With feedback low the effect is gentle; turned up it becomes a pronounced,
@@ -3402,7 +3402,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: reverb, reverberation, room, hall, space
 Where: modes auxiliary; screens M1
 
-A reverb for FX I or FX II, from a small room to a cathedral; M1 sets size, modulation, a tone filter and the dry/wet balance.
+A reverb for FX I or FX II, from a small room to a cathedral; `M1` sets size, modulation, a tone filter and the dry/wet balance.
 
 The reverb is the classic send: one instance on an FX track, with each track sending as much as it
 needs. Size sets the space, modulation moves the tail and the tone control darkens or brightens it.
@@ -3437,7 +3437,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: arrange, arranger, arrangement, pattern view, switch patterns, pattern navigation
 Where: modes arrange
 
-Arrange mode manages each track's patterns and combines them into scenes and songs; E4 moves between the selected track's patterns and a click on it mutes the track.
+Arrange mode manages each track's patterns and combines them into scenes and songs; `E4` moves between the selected track's patterns and a click on it mutes the track.
 
 Arrange is the bird's-eye view of a project. Pick a track and `E4` walks through its patterns while
 the step keys show what each one holds; press `arrange` again for the auxiliary tracks. Patterns are
@@ -3474,7 +3474,7 @@ outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.15, 1.1.25 · guide v1.1.15
 Also called: new pattern, add pattern, copy pattern, paste pattern, delete pattern, clear pattern, pattern limit
 Where: modes arrange
 
-In arrange, M1 adds a pattern to the selected track, M2 copies the current pattern with its whole sound, M3 pastes it and M4 removes a pattern; a track holds up to 16.
+In arrange, `M1` adds a pattern to the selected track, `M2` copies the current pattern with its whole sound, `M3` pastes it and `M4` removes a pattern; a track holds up to 16.
 
 The four module keys are the pattern toolbox of arrange: new, copy, paste and remove, always acting on
 the selected track. A copy carries the full sound, so paste within a track for variations, or onto
@@ -3547,7 +3547,7 @@ current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.45, 1.1.0 · guide v1.1.15
 Also called: scene, select scene, scene 10-99, clone scene, copy scene, paste scene, reset scene
 Where: modes arrange
 
-A scene stores which pattern each track plays plus the mix; a project has 99. In arrange, shift and a black key select one, and shift + M1…M4 clone, copy, paste or reset.
+A scene stores which pattern each track plays plus the mix; a project has 99. In arrange, shift and a black key select one, and `shift + M1…M4` clone, copy, paste or reset.
 
 A scene is a snapshot of the arrangement — one pattern choice per track plus the mix — so switching
 scenes changes the whole project at once. Because an empty scene starts as a copy of the current one,
@@ -3624,7 +3624,7 @@ current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.45, 1.1.0 · guide v1.1.15
 Also called: song, song order, chain scenes, song arrangement, loop song, song editor
 Where: modes arrange; screens song
 
-Song mode chains scenes into a song order of up to 96 slots — dialled in with shift and the black keys, edited with a cursor, and set to loop or not with E1.
+Song mode chains scenes into a song order of up to 96 slots — dialled in with shift and the black keys, edited with a cursor, and set to loop or not with `E1`.
 
 Song mode turns scenes into a finished structure — intro, verse, chorus — each scene playing for its
 own length before the next. A cursor edits the list, and removing a scene from the song never
@@ -3676,7 +3676,7 @@ current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15
 Also called: select song, copy song, paste song, 14 songs, cue scene, jump in song
 Where: modes arrange; screens song
 
-A project holds up to 14 songs, one per white key. In song mode shift and a white key select a song, M2 and M3 copy and paste it, and shift with minus or plus cues other scenes during playback.
+A project holds up to 14 songs, one per white key. In song mode shift and a white key select a song, `M2` and `M3` copy and paste it, and shift with minus or plus cues other scenes during playback.
 
 Each white key holds a song, so one project can carry several arrangements of the same material — a
 short and an extended version, or a whole set. Copying a song is the quickest start for a variant.
@@ -3714,7 +3714,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: mix, mixer, mixing, mixer mode, signal flow, master bus, master chain
 Where: modes mix; screens M1, M2, M3, M4
 
-Mix mode sets each track's level, pan and FX sends on M1 and runs the master chain — EQ on M2, saturator on M3, group levels, compressor and output level on M4.
+Mix mode sets each track's level, pan and FX sends on `M1` and runs the master chain — EQ on `M2`, saturator on `M3`, group levels, compressor and output level on `M4`.
 
 Mix mode has four pages: `M1` is the channel strip of the selected track, and `M2`…`M4` work on the
 master — EQ, saturator, then group levels, compressor and output. Tracks reach the mixer directly and
@@ -3746,7 +3746,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: track level, track volume, volume, pan, panning, fx send, send level, channel strip
 Where: modes mix; screens M1
 
-On mix M1 the four encoders set the selected track's FX I send, FX II send, pan and level; clicking E3 centres the pan and clicking E4 mutes the track.
+On mix `M1` the four encoders set the selected track's FX I send, FX II send, pan and level; clicking `E3` centres the pan and clicking `E4` mutes the track.
 
 The `M1` page is a channel strip for the selected track: two send amounts, pan and level. The sends
 decide how much of the track reaches the two FX tracks, so one reverb can serve the whole project.
@@ -3766,7 +3766,7 @@ Procedures:
   2. `Tn` — select the track
   3. `turn E4`
 - Put a track back in the centre of the stereo field [#centre-pan] [s1]
-  Needs: mix mode; M1; the track is selected
+  Needs: mix mode; `M1`; the track is selected
   1. `click E3`
 
 Parameters:
@@ -3824,7 +3824,7 @@ current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
 Also called: eq, equalizer, equaliser, master equalizer, low mid high, eq blend
 Where: modes mix; screens M2
 
-Mix M2 is a three-band EQ on the master — low, mid, high — plus a blend that fades from flat to the set curve; clicking an encoder resets its band, and E4's click resets the whole EQ.
+Mix `M2` is a three-band EQ on the master — low, mid, high — plus a blend that fades from flat to the set curve; clicking an encoder resets its band, and `E4`'s click resets the whole EQ.
 
 The blend control is the trick: set low, mid and high to an extreme curve — lows cut away for a
 breakdown, say — keep blend at zero, and bring it up when the moment comes. At low blend values the
@@ -3845,7 +3845,7 @@ Procedures:
 - Open the master EQ [#open] [s1]
   1. `mix → M2`
 - Flatten the EQ [#reset-all] (since 1.1.15) [s1]
-  Needs: mix mode; M2
+  Needs: mix mode; `M2`
   1. `click E4`
 
 Parameters:
@@ -3867,7 +3867,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: saturator, saturation, master saturation, clip, master drive, warmth
 Where: modes mix; screens M3
 
-Mix M3 is a saturator on the master bus; gain drives it, clip shaves off loud peaks, tone filters highs or lows and mix sets how much of it you hear.
+Mix `M3` is a saturator on the master bus; gain drives it, clip shaves off loud peaks, tone filters highs or lows and mix sets how much of it you hear.
 
 The saturator adds density and warmth to the finished mix. Gain drives it, clip keeps peaks in check
 and tone tilts the result darker or brighter; mix blends it with the clean signal, so heavy settings
@@ -3902,7 +3902,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: master, master level, output level, compressor, master compressor, percussion group, melodic group, limiter
 Where: modes mix; screens M4
 
-Mix M4 sets the levels of the percussion and melodic groups, how much the master bus is compressed and the master level that feeds the output limiter.
+Mix `M4` sets the levels of the percussion and melodic groups, how much the master bus is compressed and the master level that feeds the output limiter.
 
 The master page is the last stop before the output. The two group levels balance drums against
 everything else without touching single tracks; the compressor glues the mix or flattens it for a
@@ -3941,7 +3941,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: project page, new project, create project, save project, save as, rename project, project name
 Where: screens project
 
-The project key opens the project view, where you create a new project (hold M1), save (M2), save as (shift + M2), rename (M3) and open the project settings (M4).
+The project key opens the project view, where you create a new project (`hold M1`), save (`M2`), save as (`shift + M2`), rename (`M3`) and open the project settings (`M4`).
 
 The project view is the home of the current project: its name, the save keys and the way into its
 settings. Other projects are opened from the projects folder (`shift + project`), not from here.
@@ -4015,7 +4015,7 @@ Facts:
 - `M2` shows the history of the selected project. [#history] [s1]
 - Duplicate copies a whole project with its patterns, scenes and tracks; the guide's text gives it `M2` like history, but its drawing puts duplicate on the third key, so it is most likely `M3`. [#duplicate] (derived) [s2]
 - `hold M4` deletes the selected project. [#delete] [s1]
-- The guide's drawing of this screen labels the keys delete, history, duplicate, load from left to right, the reverse of the text for M1 and M4; check the labels on your screen. [#label-order] (conflicting) [s2]
+- The guide's drawing of this screen labels the keys delete, history, duplicate, load from left to right, the reverse of the text for `M1` and `M4`; check the labels on your screen. [#label-order] (conflicting) [s2]
 - Subfolders made over MTP appear with their names in square brackets; clicking any encoder opens one. [#subfolders] [s1]
 - Since OS 1.1.25 a duplicate includes changes that were not saved yet. [#unsaved] (since 1.1.25) [s3]
 - Over MTP your projects live in projects/user. [#mtp-path] (verified 1.1.33) [s4]
@@ -4089,7 +4089,7 @@ current · OS ≥ 1.0.9 · changed in 1.1.0, 1.1.3 · guide v1.1.15
 Also called: project config, configure project, time signature, voices, polyphony, voice allocation, scene length
 Where: screens project
 
-M4 in the project view opens the project's own settings — general (transpose), tempo (time signature, groove type), voices and midi — edited with E1 page, E2 setting, E3 value.
+`M4` in the project view opens the project's own settings — general (transpose), tempo (time signature, groove type), voices and midi — edited with `E1` page, `E2` setting, `E3` value.
 
 Anything stored here travels with the project, unlike the system settings in `com → M1`, which
 apply to the whole unit. The general and midi pages have their own units.
@@ -4180,10 +4180,10 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: bpm, tempo, tap tempo, metronome, click, speed, change tempo
 Where: screens tempo
 
-The tempo key opens the tempo screen from anywhere; tap it to set the tempo by ear. E1 sets BPM, E2 and E3 the groove, E4 the metronome level (click to switch the metronome on or off).
+The tempo key opens the tempo screen from anywhere; tap it to set the tempo by ear. `E1` sets BPM, `E2` and `E3` the groove, `E4` the metronome level (click to switch the metronome on or off).
 
 Tempo and groove are saved with each project, so every project keeps its own speed and feel. The
-groove settings on E2 and E3 are explained under grooves.
+groove settings on `E2` and `E3` are explained under grooves.
 
 Facts:
 - `tempo` opens the tempo screen from any screen. [#open] [s1]
@@ -4223,7 +4223,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: groove, swing, shuffle, groove type, groove amount, humanize, feel, half shuffle, bombora, gaussian, island nod, danish, disfunk, roll over, prophetic
 Where: screens tempo, bar
 
-A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of eleven types with E2 on the tempo screen and dial swing or shuffle with E3; the bar menu can override the amount per track.
+A groove shifts the timing and velocity of sequenced notes to change the feel. Pick one of eleven types with `E2` on the tempo screen and dial swing or shuffle with `E3`; the bar menu can override the amount per track.
 
 Start with shuffle and a little swing, then try the other types on the same pattern; give a single
 track its own amount in the bar menu.
@@ -4378,7 +4378,7 @@ Parameters:
 | system settings | `turn E1` | section | – | – | – | system, keyboard, midi, clock, pitchbend, battery, monitor s1 |
 | system settings | `turn E2` | setting | – | – | – | the setting within the section s1 |
 | system settings | `turn E3` | value | – | – | – | s1 |
-| system settings | `turn E4` | value | – | – | – | same as E3 s1 |
+| system settings | `turn E4` | value | – | – | – | same as `E3` s1 |
 
 Related: [com.midi-monitor], [com.devices], [com.midi-cc-reference], [hardware.layout]
 
@@ -4642,7 +4642,7 @@ Sources: s1 guide:midi-references · s2 note 20 · s3 changelog:1.1.0 · s4 note
 unverified · OS ≥ 1.0.9 · guide v1.1.15
 Also called: cc lanes, lane model, parameter ccs, encoder ccs, filter cutoff cc, envelope cc, drum notes
 
-Community charts and our lane model give each module page four consecutive CCs on the track's channel, one per encoder — M1 on CC12–15 up to the LFO on CC40–43 — and put the 24 drum keys on notes 53–76.
+Community charts and our lane model give each module page four consecutive CCs on the track's channel, one per encoder — `M1` on CC12–15 up to the LFO on CC40–43 — and put the 24 drum keys on notes 53–76.
 
 The pattern — page by page, four CCs per page, left to right — comes from community charts and
 stored project data, not from TE, so treat it as a strong prediction. Filter cutoff on track 3 is
@@ -4650,10 +4650,10 @@ CC32 on channel 3; CCs outside the listed ranges (such as CC16–19) are unconfi
 
 Facts:
 - Each module page answers four consecutive CCs on the track's channel, in encoder order `E1`…`E4`. [#lanes] (derived) [s1]
-- The M1 (engine) page uses CC12–15, whatever engine the track runs. [#m1] (community-verified) [s2]
-- M2 uses CC20–23 for the amp envelope (attack, decay, sustain, release), CC24–27 for the filter envelope and CC28–31 for its shift layer: play mode, portamento, bend range and preset volume. [#m2] (community-verified) [s1]
-- M3 uses CC32–35 for the filter (cutoff, resonance, envelope amount, key tracking) and CC36–39 for its shift layer, the sends to aux out, tape, FX I and FX II. [#m3] (community-verified) [s1]
-- M4 (the LFO) most likely uses CC40–43; community charts label these four CCs inconsistently. [#m4] (derived) [s3]
+- The `M1` (engine) page uses CC12–15, whatever engine the track runs. [#m1] (community-verified) [s2]
+- `M2` uses CC20–23 for the amp envelope (attack, decay, sustain, release), CC24–27 for the filter envelope and CC28–31 for its shift layer: play mode, portamento, bend range and preset volume. [#m2] (community-verified) [s1]
+- `M3` uses CC32–35 for the filter (cutoff, resonance, envelope amount, key tracking) and CC36–39 for its shift layer, the sends to aux out, tape, FX I and FX II. [#m3] (community-verified) [s1]
+- `M4` (the LFO) most likely uses CC40–43; community charts label these four CCs inconsistently. [#m4] (derived) [s3]
 - The mixer controls sit outside the lanes, on CC7 (level), CC9 (mute) and CC10 (pan). [#mixer] [s4]
 - On drum tracks the 24 keys play MIDI notes 53–76 from left to right (F3–E5 when middle C is 60). [#drum-notes] (community-verified) [s5]
 - Which sound sits on which note depends on the loaded kit, so check the kit rather than assuming a General MIDI layout. [#drum-kits] (community-verified) [s5]
@@ -4981,7 +4981,7 @@ in between: its routing decides what goes out, independently of each track's lev
 
 Facts:
 - With the multi-out set to audio, one cable runs from it to the effect's input (adapt 3.5 mm to 6.35 mm for pedals) and a second from the effect's output to the OP-XY's audio input. [#cables] [s1]
-- On the external audio track's `M1` page, turn `E1` to the audio input (the jack icon) and click `E1` to switch it on. [#input] [s1]
+- On the external audio track's `M1` page, `turn E1` to the audio input (the jack icon) and `click E1` to switch it on. [#input] [s1]
 - The external audio track's `M2` page sends instrument tracks to the aux output — turn an encoder per track, click to swap between tracks 1–4 and 5–8. [#routing] [s1]
 - A single track can also be sent from instrument mode with its aux send, `shift + turn E1` on its `M3` page. [#track-send] [s1]
 - Drive (`E2`), level (`E3`) and mix (`E4`) on the external audio track's `M1` balance the returning signal; drive only affects analog inputs. [#balance] [s2]
@@ -5050,7 +5050,7 @@ Facts:
 - With a multichannel interface the OP-XY uses inputs 1 and 2 unless you choose others. [#channels] [s1]
 - On the `sample` page, `E1` sets the source to usb and `shift + turn E1` picks the input channel. [#pick-channel] [s2]
 - TE's audio-interface how-to picks the channel with `turn E2` instead; which gesture OS 1.1.33 uses is not confirmed on a unit. [#channel-conflict] (conflicting) [s1]
-- To hear the interface's inputs live, set the external audio track's input to usb audio with `E1` and click `E1` to activate it. [#live-input] [s1]
+- To hear the interface's inputs live, set the external audio track's input to usb audio with `E1` and `click E1` to activate it. [#live-input] [s1]
 - OS 1.1.25 fixed audio-only interfaces being reported as disconnected. [#audio-only-fix] (since 1.1.25) [s3]
 
 Procedures:
@@ -5194,10 +5194,10 @@ Procedures:
   3. `record + play`
   4. `keys` — play the progression within the shown scale
   Result: The bass and the chord follow the progression; drums stay where they are.
-- Keep the lead on T5 out of the brain's transposition [#exclude] [s1]
+- Keep the lead on `T5` out of the brain's transposition [#exclude] [s1]
   1. `M2` — the brain's routing, tracks 1–4 on the encoders
   2. `click E1` — tracks 5–8 on the encoders
-  3. `turn E1` — counter-clockwise, T5 out {set track 5 = out (area auxiliary, track 9, page 2)}
+  3. `turn E1` — counter-clockwise, `T5` out {set track 5 = out (area auxiliary, track 9, page 2)}
   Result: The lead keeps its notes while everything routed moves.
 - Set the brain to A minor by hand [#key-by-hand] [s2]
   1. `M1`
@@ -5323,7 +5323,7 @@ Facts:
 - Hold on `E3` keeps the level down for a moment and release on `E4` sets how it recovers; keep both short for a tight pump on a fast beat, and lengthen the release for slow swells. [#time] (derived) [s1]
 
 Procedures:
-- Make the bass on T3 pump with the drums on T1 [#set-up] (derived) [s1]
+- Make the bass on `T3` pump with the drums on `T1` [#set-up] (derived) [s1]
   Needs: instrument mode
   1. `T3 → M4` — the track that should make room
   2. `shift + M4` — the LFO types
@@ -5362,7 +5362,7 @@ Facts:
 - A new project's two plucks show the shape in numbers. Beach bum on `T4` (epiano) and dielectric on `T6` (hardsync) start at attack 0, decay by 20 and 30 and release at 69 and 60; dielectric closes its ladder filter with an envelope amount of 48 and a filter decay of 14. [#factory] (verified 1.1.33) [s4]
 
 Procedures:
-- Make the notes on T3 pluck [#amp] (derived) [s1]
+- Make the notes on `T3` pluck [#amp] (derived) [s1]
   Needs: instrument mode
   1. `T3 → M2` — the amp envelope; click an encoder if the filter envelope is in front
   2. `turn E1` — attack 0 {set amp attack = 0}
@@ -5405,7 +5405,7 @@ Facts:
 - Any sound can become a pad; in a new project `T5`, the legato lead, shows every step at work, since the strings on `T7` already swell. [#from-a-lead] (derived) [s4]
 
 Procedures:
-- Make the chords on T5 swell in and fade out [#swell] (derived) [s1]
+- Make the chords on `T5` swell in and fade out [#swell] (derived) [s1]
   Needs: instrument mode
   1. `T5 → M2` — the amp envelope; click an encoder if the filter envelope is in front
   2. `shift + turn E1` — play mode poly {set play mode = poly}
@@ -5444,7 +5444,7 @@ Facts:
 - A moderate cutoff with some resonance on `M3` makes the sweep easy to hear; with the cutoff fully open there is little left to move. [#audible] (derived) [s2]
 
 Procedures:
-- Make the filter on T3 wobble in time [#set-up] (derived) [s1]
+- Make the filter on `T3` wobble in time [#set-up] (derived) [s1]
   Needs: instrument mode
   1. `T3 → M4`
   2. `shift + M4` — the LFO types
@@ -5482,7 +5482,7 @@ Facts:
 - Parameter locks on the cutoff or the envelope amount for single steps give the line its accents. [#accents] (derived) [s4]
 
 Procedures:
-- Give the bass on T3 a squelchy filter [#filter] (derived) [s2]
+- Give the bass on `T3` a squelchy filter [#filter] (derived) [s2]
   Needs: instrument mode
   1. `T3 → shift + M3` — the filter types
   2. `turn E1` — highlight ladder

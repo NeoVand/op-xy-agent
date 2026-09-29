@@ -7,7 +7,7 @@ order: 30
 context:
   modes: [auxiliary]
   screens: [M1, M2, M3, M4]
-summary: '`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; M1 sets channel, bank and program, M2 and M3 hold eight CC slots, and M4 has an LFO.'
+summary: '`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; `M1` sets channel, bank and program, `M2` and `M3` hold eight CC slots, and `M4` has an LFO.'
 status: current
 firmware:
   min: '1.0.9'
@@ -22,10 +22,10 @@ facts:
     text: Gear connects through the USB-C port, or through the multi-out jack set to midi.
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-midi
   - id: slots
-    text: M2 and M3 hold four CC slots each; turning sends a slot's value, `shift + turn E1…E4` switches a slot on and picks its CC number, and the values can be sequenced and recorded.
+    text: "`M2` and `M3` hold four CC slots each; turning sends a slot's value, `shift + turn E1…E4` switches a slot on and picks its CC number, and the values can be sequenced and recorded."
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-midi
   - id: lfo
-    text: The external MIDI track's LFO (M4) modulates the track's own parameters, such as a CC slot.
+    text: The external MIDI track's LFO (`M4`) modulates the track's own parameters, such as a CC slot.
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-midi
   - id: program-locks
     text: Program changes can be parameter-locked; OS 1.1.15 fixed such locks not working.
@@ -62,7 +62,7 @@ procedures:
     steps:
       - keys: auxiliary → T3
       - keys: turn E1
-        note: the synth's MIDI channel, on M1
+        note: the synth's MIDI channel, on `M1`
       - keys: keys
     source: https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi
 parameters:

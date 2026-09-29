@@ -18,7 +18,7 @@ facts:
     text: With the multi-out set to audio, one cable runs from it to the effect's input (adapt 3.5 mm to 6.35 mm for pedals) and a second from the effect's output to the OP-XY's audio input.
     source: https://teenage.engineering/guides/op-xy/how-to#send-audio-to-and-from-an-external-effect
   - id: input
-    text: On the external audio track's `M1` page, turn `E1` to the audio input (the jack icon) and click `E1` to switch it on.
+    text: On the external audio track's `M1` page, `turn E1` to the audio input (the jack icon) and `click E1` to switch it on.
     source: https://teenage.engineering/guides/op-xy/how-to#send-audio-to-and-from-an-external-effect
   - id: routing
     text: The external audio track's `M2` page sends instrument tracks to the aux output — turn an encoder per track, click to swap between tracks 1–4 and 5–8.

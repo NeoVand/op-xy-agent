@@ -163,6 +163,6 @@ the module keys `M1`…`M4` under the screen choose a page, the track keys under
 track, and the step keys below them are the sequencer. The right-hand column holds the utility keys
 (`sample`, `com`, `player`, `bar`).
 
-Most editing follows one pattern: pick a mode, pick a track, pick a page, then turn `E1`…`E4`.
+Most editing follows one pattern: pick a mode, pick a track, pick a page, then `turn E1`…`E4`.
 `shift` reaches a second layer of almost every key and page, and the keyboard's white and black keys
 double as step-component and number keys when a page asks for them.

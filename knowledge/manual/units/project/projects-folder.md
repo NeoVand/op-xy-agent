@@ -40,7 +40,7 @@ facts:
     text: '`hold M4` deletes the selected project.'
     source: https://teenage.engineering/guides/op-xy/project#project-folder
   - id: label-order
-    text: The guide's drawing of this screen labels the keys delete, history, duplicate, load from left to right, the reverse of the text for M1 and M4; check the labels on your screen.
+    text: The guide's drawing of this screen labels the keys delete, history, duplicate, load from left to right, the reverse of the text for `M1` and `M4`; check the labels on your screen.
     source: docs/research/50-hardware-ui.md#33-page-catalogue
     confidence: conflicting
   - id: subfolders

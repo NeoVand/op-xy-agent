@@ -16,11 +16,11 @@ describe('names', () => {
 		const cases: [ControlId, string, string, string | null][] = [
 			['key.m1', 'M1', 'the M1 key', 'M1'],
 			['key.project', 'project', 'the project key', 'project'],
-			['key.minus', 'minus', 'the minus key', 'minus'],
+			['key.minus', 'minus', 'the minus key', '[-]'],
 			['track.3', 'track 3', 'the track 3 key', 'T3'],
 			['step.5', 'step 5', 'step 5', 'step 5'],
-			['keyboard.fs3', 'F#3', 'the F#3 key', 'F#3'],
-			['encoder.2', 'mid gray encoder', 'the mid gray encoder', 'encoder 2'],
+			['keyboard.fs3', 'F#3', 'the F#3 key', 'key F#3'],
+			['encoder.2', 'mid gray encoder', 'the mid gray encoder', 'click E2'],
 			['knob.volume', 'volume', 'the volume knob', null],
 			['strip.pitchbend', 'pitchbend', 'the pitch-bend pad', null]
 		];
@@ -105,7 +105,7 @@ describe('comboHint', () => {
 			"Record + step 3 + C4 can't be sent remotely on OS 1.1.33. Let go of record and step 3 to play notes."
 		);
 		expect(comboHint(['encoder.1'], 'key.stop', { kind: 'stop' }, null).keys).toBe(
-			'encoder 1 + stop'
+			'click E1 + stop'
 		);
 	});
 
@@ -122,7 +122,7 @@ describe('offline and send failures', () => {
 	it('says the replica is a simulation', () => {
 		expect(offlineHint('keyboard.c4')).toMatchObject({
 			kind: 'offline',
-			keys: 'C4',
+			keys: 'key C4',
 			key: 'offline',
 			title: 'Nothing was sent.',
 			detail:

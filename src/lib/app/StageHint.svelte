@@ -20,7 +20,7 @@ always in the page, so screen readers announce each new hint (and nothing when i
 	import type { ClassValue } from 'svelte/elements';
 	import { on } from 'svelte/events';
 	import Icon from '$lib/ui/Icon.svelte';
-	import Kbd from '$lib/ui/Kbd.svelte';
+	import KeyCombo from '$lib/replica/glyphs/KeyCombo.svelte';
 	import type { HintCaption } from './caption.svelte';
 
 	interface Props {
@@ -76,7 +76,7 @@ always in the page, so screen readers announce each new hint (and nothing when i
 					{@attach engage}
 				>
 					{#if hint.keys}
-						<Kbd combo={hint.keys} size="sm" class="card__keys" />
+						<KeyCombo keys={hint.keys} size="sm" class="card__keys" />
 					{/if}
 					<p class="card__title">{hint.title}</p>
 					{#if hint.detail}

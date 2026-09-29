@@ -5,7 +5,8 @@
  * writes can inject markup or script.
  *
  * Inline code that parses as a key combo in the manual's key grammar (`shift + M1`) becomes a
- * `keys` node, which the chat draws as keycaps that animate the replica when clicked. Citations of
+ * `keys` node, which the chat draws as the device's own keys (`KeyCombo`) that animate the replica
+ * when clicked. Citations of
  * our manual's units (`[sequencer.parameter-locks]`, `[sequencer.parameter-locks#rotate]`, several
  * separated by commas) become `cite` nodes, which the chat links to the unit's source.
  */
@@ -341,8 +342,8 @@ export function inlineText(nodes: readonly Inline[]): string {
 }
 
 /**
- * The spelling the `Kbd` component draws best: encoders as knobs (`E2` → `encoder 2`), the minus
- * and plus keys as their glyphs.
+ * A combo as it is said out loud (voice): encoders by number (`E2` → `encoder 2`), the minus and
+ * plus keys by name.
  */
 export function comboForDisplay(keys: string): string {
 	return keys

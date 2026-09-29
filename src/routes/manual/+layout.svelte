@@ -11,6 +11,7 @@ app.html); on narrow ones it is a drawer behind the contents button.
 	import { HugeIcon } from '$lib/ui';
 	import ManualSidebar from '$lib/ui/manual/ManualSidebar.svelte';
 	import { unitSections } from '$lib/ui/manual/areas';
+	import { KEYS_PAGE } from '$lib/ui/manual/keys';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
@@ -18,7 +19,8 @@ app.html); on narrow ones it is a drawer behind the contents button.
 	/** Must match the key app.html reads before the first paint. */
 	const FOLD_KEY = 'opxy:manual-sidebar';
 
-	const current = $derived(page.params.id ?? null);
+	/** The unit being read; the keys page marks its own entry. */
+	const current = $derived(page.params.id ?? (page.route.id === '/manual/keys' ? KEYS_PAGE : null));
 	const unit = $derived(page.data.unit as Parameters<typeof unitSections>[0] | undefined);
 	const sections = $derived(unit ? unitSections(unit) : []);
 

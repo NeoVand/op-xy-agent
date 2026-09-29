@@ -6,7 +6,6 @@
 		EncoderDot,
 		Icon,
 		IconButton,
-		Kbd,
 		Led,
 		Legend,
 		Panel,
@@ -17,6 +16,7 @@
 		tooltip,
 		type IconName
 	} from '$lib/ui';
+	import { KeyCombo } from '$lib/replica';
 	import Section from './Section.svelte';
 	import Swatch from './Swatch.svelte';
 
@@ -176,11 +176,13 @@
 
 	const combos = [
 		'shift + M1',
-		'hold record + play',
-		'shift → step 5 → natural F',
-		'bar + +',
-		'shift + turn mid encoder',
-		'hold stop'
+		'record + play → play',
+		'shift + steps → + natural 3',
+		'T3 + M3',
+		'step n + turn E1…E4',
+		'hold com',
+		'[-]/[+]',
+		'key F#3'
 	];
 
 	const legendTones = [
@@ -619,7 +621,7 @@
 		<Section
 			id="text"
 			title="legends and combos"
-			intro="Legend is the small text of the device. Kbd draws key combos the way the guide does: little keys joined by + (hold, then press) or → (then)."
+			intro="Legend is the small text of the device. KeyCombo draws a key combo in the manual's grammar as the device's own keys, from the replica's art: + (hold, then press), → (then), and a name on hover."
 		>
 			<div class="demo-grid">
 				<div class="demo">
@@ -637,14 +639,15 @@
 					<Legend as="h3" size="xs" tone="subtle">combos</Legend>
 					<ul class="combos">
 						{#each combos as c (c)}
-							<li><Kbd combo={c} /><code>{c}</code></li>
+							<li><KeyCombo keys={c} /><code>{c}</code></li>
 						{/each}
 					</ul>
 				</div>
 			</div>
 			<p class="prose-sample">
-				Press <Kbd combo="shift + M1" /> to choose an engine, then turn <Kbd combo="dark encoder" /> to
-				scroll the list.
+				Press <KeyCombo keys="shift + M1" /> to open the preset browser, then turn <KeyCombo
+					keys="E1"
+				/> to scroll the list.
 			</p>
 		</Section>
 

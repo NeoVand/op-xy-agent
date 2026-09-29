@@ -13,6 +13,7 @@ the full answer.
 	import type { LedState } from '$lib/ui/types';
 	import { inputSummary, lastLine, subagentLabel } from '../activity';
 	import type { ChatEntry } from '../chat';
+	import type { ControlId } from '$lib/core/opxy';
 	import MessageText from './MessageText.svelte';
 	import Self from './ToolChip.svelte';
 
@@ -23,9 +24,11 @@ the full answer.
 		/** Entries of a subagent running under this call (the `task` tool). */
 		nested?: readonly ChatEntry[];
 		onkeys?: (keys: string) => void;
+		/** The controls of the keys pointed at in its text (null when none): ring them. */
+		onpoint?: (ids: readonly ControlId[] | null) => void;
 	}
 
-	let { entry, nested = [], onkeys }: Props = $props();
+	let { entry, nested = [], onkeys, onpoint }: Props = $props();
 
 	const running = $derived(entry.status === 'pending' || entry.status === 'running');
 	const writes = $derived(entry.toolKind === 'mutate');
@@ -95,7 +98,7 @@ the full answer.
 			{#if nestedTools.length > 0}
 				<div class="chip__nested" aria-label="{subagent} steps">
 					{#each nestedTools as child (child.id)}
-						{#if child.kind === 'tool'}<Self entry={child} {onkeys} />{/if}
+						{#if child.kind === 'tool'}<Self entry={child} {onkeys} {onpoint} />{/if}
 					{/each}
 				</div>
 			{/if}
@@ -112,14 +115,14 @@ the full answer.
 			{#if nestedTools.length > 0}
 				<div class="chip__nested" aria-label="{subagent} steps">
 					{#each nestedTools as child (child.id)}
-						{#if child.kind === 'tool'}<Self entry={child} {onkeys} />{/if}
+						{#if child.kind === 'tool'}<Self entry={child} {onkeys} {onpoint} />{/if}
 					{/each}
 				</div>
 			{/if}
 			{#if nestedText}
 				<div class="chip__answer">
 					<span class="chip__who">{subagent}</span>
-					<MessageText text={nestedText} {onkeys} />
+					<MessageText text={nestedText} {onkeys} {onpoint} />
 				</div>
 			{/if}
 		{/if}

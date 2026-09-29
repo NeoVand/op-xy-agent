@@ -7,7 +7,7 @@ order: 60
 context:
   modes: [arrange]
   screens: [song]
-summary: A project holds up to 14 songs, one per white key. In song mode shift and a white key select a song, M2 and M3 copy and paste it, and shift with minus or plus cues other scenes during playback.
+summary: A project holds up to 14 songs, one per white key. In song mode shift and a white key select a song, `M2` and `M3` copy and paste it, and shift with minus or plus cues other scenes during playback.
 status: current
 firmware:
   min: '1.0.9'

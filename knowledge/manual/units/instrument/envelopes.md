@@ -41,7 +41,7 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: release-direction
-    text: Release is set by where its handle sits, so turning E4 clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade.
+    text: Release is set by where its handle sits, so turning `E4` clockwise (a higher value) gives a shorter release; fully clockwise the handle sits on the end and the note stops at once. Turn it counter-clockwise for a long fade.
     source: docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2
     confidence: verified
     verified_on: '1.1.33'
@@ -77,8 +77,8 @@ facts:
     verified_on: '1.1.33'
 procedures:
   - id: switch
-    goal: Show the other envelope on M2
-    preconditions: [instrument mode, M2 is open]
+    goal: Show the other envelope on `M2`
+    preconditions: [instrument mode, '`M2` is open']
     steps:
       - keys: click E1…E4
         note: any encoder

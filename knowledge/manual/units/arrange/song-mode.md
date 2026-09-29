@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [arrange]
   screens: [song]
-summary: Song mode chains scenes into a song order of up to 96 slots — dialled in with shift and the black keys, edited with a cursor, and set to loop or not with E1.
+summary: Song mode chains scenes into a song order of up to 96 slots — dialled in with shift and the black keys, edited with a cursor, and set to loop or not with `E1`.
 status: current
 firmware:
   min: '1.0.9'

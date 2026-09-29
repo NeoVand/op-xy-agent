@@ -7,7 +7,7 @@ order: 80
 context:
   modes: [auxiliary]
   screens: [M2, M3, M4]
-summary: Pages shared by several aux tracks — M2 routes instrument tracks in, M3 is a high-pass and low-pass filter with sends on its shift layer, and M4 is an LFO aimed at one of the track's own parameters.
+summary: Pages shared by several aux tracks — `M2` routes instrument tracks in, `M3` is a high-pass and low-pass filter with sends on its shift layer, and `M4` is an LFO aimed at one of the track's own parameters.
 status: current
 firmware:
   min: '1.0.9'
@@ -16,13 +16,13 @@ firmware:
   verified_on: null
 facts:
   - id: routing-where
-    text: The brain, external audio, tape and both FX tracks have a routing page on M2.
+    text: The brain, external audio, tape and both FX tracks have a routing page on `M2`.
     source: https://teenage.engineering/guides/op-xy/auxiliary
   - id: routing-use
     text: On a routing page, an encoder click toggles the page between tracks 1–4 and tracks 5–8; turning a track's encoder adds or removes it, and on tape and external audio sets how much goes in.
     source: https://teenage.engineering/guides/op-xy/auxiliary#tape
   - id: which-tracks
-    text: External audio, tape and both FX tracks have the filter on M3; those four plus external MIDI have the LFO on M4.
+    text: External audio, tape and both FX tracks have the filter on `M3`; those four plus external MIDI have the LFO on `M4`.
     source: https://teenage.engineering/guides/op-xy/auxiliary
   - id: lfo-fix
     text: OS 1.1.32 fixed aux track LFOs failing to affect the page parameters.

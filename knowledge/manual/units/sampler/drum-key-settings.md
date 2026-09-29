@@ -7,7 +7,7 @@ order: 35
 context:
   modes: [instrument]
   screens: [M1]
-summary: The drum sampler's M1 page shapes the selected key — tune, start, end and play mode, with direction, pan, fade and gain on the shift layer.
+summary: The drum sampler's `M1` page shapes the selected key — tune, start, end and play mode, with direction, pan, fade and gain on the shift layer.
 status: current
 firmware:
   min: '1.0.9'

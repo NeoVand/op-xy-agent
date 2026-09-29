@@ -1,7 +1,8 @@
 <!--
 @component
 An agent answer in markdown-lite, rendered with components (never `{@html}`). Key combos written in
-backticks become keycaps; clicking one plays it on the replica. Citations of manual units
+backticks are drawn as the OP-XY's own keys (`KeyCombo`); clicking one plays it on the replica, and
+pointing at one (`onpoint`) lets the page ring its keys there. Citations of manual units
 (`[sequencer.parameter-locks]`) become small links to the unit's source, and citations the model
 attached through search results are listed underneath. While the answer is still being written
 (`streaming`), a caret blinks at its end.
@@ -18,10 +19,11 @@ attached through search results are listed underneath. While the answer is still
 </script>
 
 <script lang="ts">
-	import { tryParseKeys } from '$lib/core/opxy';
-	import Kbd from '$lib/ui/Kbd.svelte';
+	import type { ControlId } from '$lib/core/opxy';
+	import KeyCombo from '$lib/replica/glyphs/KeyCombo.svelte';
+	import { comboIds, parseCombo } from '$lib/replica/glyphs/art';
 	import type { Citation } from '../types';
-	import { comboForDisplay, parseMarkdown, type Inline } from './markdown';
+	import { parseMarkdown, type Inline } from './markdown';
 
 	interface Props {
 		/** The answer text (may still be streaming). */
@@ -30,16 +32,37 @@ attached through search results are listed underneath. While the answer is still
 		citations?: readonly Citation[];
 		/** Plays a key combo on the replica. */
 		onkeys?: (keys: string) => void;
+		/** The controls of the keys being pointed at or focused (null when none): ring them. */
+		onpoint?: (ids: readonly ControlId[] | null) => void;
 		/** Resolves a manual citation (`unit-id` or `unit-id#fact-id`); null when unknown. */
 		cite?: (ref: string) => CitationTarget | null;
 		/** The answer is still streaming: show a caret at its end. */
 		streaming?: boolean;
+		/** One line inside other text (a note, a caption): no paragraphs, the page's own type. */
+		inline?: boolean;
 	}
 
-	let { text, citations = [], onkeys, cite, streaming = false }: Props = $props();
+	let {
+		text,
+		citations = [],
+		onkeys,
+		onpoint,
+		cite,
+		streaming = false,
+		inline = false
+	}: Props = $props();
 
-	const isKeys = (code: string) => code.length <= 80 && tryParseKeys(code).ok;
+	const isKeys = (code: string) => code.length <= 80 && parseCombo(code) !== null;
+	/** What the replica plays for a combo: a knob named on its own turns. */
+	const playable = (code: string) => (parseCombo(code)?.mention ? `turn ${code}` : code);
 	const blocks = $derived(parseMarkdown(text, { isKeys }));
+	/** In `inline` mode: the text's paragraphs run together on one line. */
+	const inlineNodes = $derived(
+		blocks.flatMap((block, i): Inline[] => {
+			if (block.t !== 'p' && block.t !== 'h' && block.t !== 'quote') return [];
+			return i > 0 ? [{ t: 'text', v: ' ' }, ...block.c] : [...block.c];
+		})
+	);
 </script>
 
 <!-- Links are external (model-cited https URLs, already checked by the parser); resolve() is for app routes. -->
@@ -56,7 +79,9 @@ attached through search results are listed underneath. While the answer is still
 				aria-label="show {node.v} on the replica"
 				title="show on the replica"
 				disabled={!onkeys}
-				onclick={() => onkeys?.(node.v)}><Kbd combo={comboForDisplay(node.v)} size="sm" /></button
+				onclick={() => onkeys?.(playable(node.v))}
+				onfocus={() => onpoint?.(comboIds(node.v))}
+				onblur={() => onpoint?.(null)}><KeyCombo keys={node.v} {onpoint} /></button
 			>{:else if node.t === 'link'}<a href={node.href} target="_blank" rel="noopener noreferrer"
 				>{@render inlines(node.c)}</a
 			>{:else if node.t === 'cite'}{@const target =
@@ -78,73 +103,79 @@ attached through search results are listed underneath. While the answer is still
 {#snippet caret(last: boolean)}{#if streaming && last}<span class="caret" aria-hidden="true"
 		></span>{/if}{/snippet}
 
-<div class="md">
-	{#each blocks as block, i (i)}
-		{@const last = i === blocks.length - 1}
-		{#if block.t === 'p'}
-			<p>{@render inlines(block.c)}{@render caret(last)}</p>
-		{:else if block.t === 'h'}
-			<p class="md__h md__h--{block.level}">{@render inlines(block.c)}{@render caret(last)}</p>
-		{:else if block.t === 'list'}
-			{#if block.ordered}
-				<ol start={block.start}>
-					{#each block.items as item, j (j)}
-						<li class={[item.depth > 0 && 'md__sub']}>
-							{@render inlines(item.c)}{@render caret(last && j === block.items.length - 1)}
-						</li>
-					{/each}
-				</ol>
-			{:else}
-				<ul>
-					{#each block.items as item, j (j)}
-						<li class={[item.depth > 0 && 'md__sub']}>
-							{@render inlines(item.c)}{@render caret(last && j === block.items.length - 1)}
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		{:else if block.t === 'code'}
-			<pre><code>{block.v}{@render caret(last)}</code></pre>
-		{:else if block.t === 'quote'}
-			<blockquote>{@render inlines(block.c)}{@render caret(last)}</blockquote>
-		{:else if block.t === 'table'}
-			<div class="md__table">
-				<table>
-					<thead>
-						<tr>
-							{#each block.head as cell, j (j)}<th>{@render inlines(cell)}</th>{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each block.rows as row, r (r)}
-							<tr>
-								{#each row as cell, j (j)}<td>{@render inlines(cell)}</td>{/each}
-							</tr>
+{#if inline}
+	<span class="md-inline">{@render inlines(inlineNodes)}</span>
+{:else}
+	<div class="md">
+		{#each blocks as block, i (i)}
+			{@const last = i === blocks.length - 1}
+			{#if block.t === 'p'}
+				<p>{@render inlines(block.c)}{@render caret(last)}</p>
+			{:else if block.t === 'h'}
+				<p class="md__h md__h--{block.level}">{@render inlines(block.c)}{@render caret(last)}</p>
+			{:else if block.t === 'list'}
+				{#if block.ordered}
+					<ol start={block.start}>
+						{#each block.items as item, j (j)}
+							<li class={[item.depth > 0 && 'md__sub']}>
+								{@render inlines(item.c)}{@render caret(last && j === block.items.length - 1)}
+							</li>
 						{/each}
-					</tbody>
-				</table>
-			</div>
-		{:else if block.t === 'hr'}
-			<hr />
+					</ol>
+				{:else}
+					<ul>
+						{#each block.items as item, j (j)}
+							<li class={[item.depth > 0 && 'md__sub']}>
+								{@render inlines(item.c)}{@render caret(last && j === block.items.length - 1)}
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			{:else if block.t === 'code'}
+				<pre><code>{block.v}{@render caret(last)}</code></pre>
+			{:else if block.t === 'quote'}
+				<blockquote>{@render inlines(block.c)}{@render caret(last)}</blockquote>
+			{:else if block.t === 'table'}
+				<div class="md__table">
+					<table>
+						<thead>
+							<tr>
+								{#each block.head as cell, j (j)}<th>{@render inlines(cell)}</th>{/each}
+							</tr>
+						</thead>
+						<tbody>
+							{#each block.rows as row, r (r)}
+								<tr>
+									{#each row as cell, j (j)}<td>{@render inlines(cell)}</td>{/each}
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{:else if block.t === 'hr'}
+				<hr />
+			{/if}
+		{/each}
+		{#if streaming && (blocks.length === 0 || ['table', 'hr'].includes(blocks[blocks.length - 1].t))}
+			<p>{@render caret(true)}</p>
 		{/if}
-	{/each}
-	{#if streaming && (blocks.length === 0 || ['table', 'hr'].includes(blocks[blocks.length - 1].t))}
-		<p>{@render caret(true)}</p>
-	{/if}
-	{#if citations.length > 0}
-		<ul class="md__sources" aria-label="sources">
-			{#each citations as citation (citation.source)}
-				<li>
-					{#if /^https?:\/\//.test(citation.source)}
-						<a href={citation.source} target="_blank" rel="noopener noreferrer">{citation.title}</a>
-					{:else}
-						{citation.title}
-					{/if}
-				</li>
-			{/each}
-		</ul>
-	{/if}
-</div>
+		{#if citations.length > 0}
+			<ul class="md__sources" aria-label="sources">
+				{#each citations as citation (citation.source)}
+					<li>
+						{#if /^https?:\/\//.test(citation.source)}
+							<a href={citation.source} target="_blank" rel="noopener noreferrer"
+								>{citation.title}</a
+							>
+						{:else}
+							{citation.title}
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
+{/if}
 
 <!-- eslint-enable svelte/no-navigation-without-resolve -->
 
@@ -253,7 +284,8 @@ attached through search results are listed underneath. While the answer is still
 
 	.keys {
 		display: inline-flex;
-		margin: 0 0.0625rem;
+		/* the keys stand a little taller than the line: they do not push the lines apart */
+		margin: -0.3em 0.0625rem;
 		padding: 0.0625rem;
 		border: 0;
 		border-radius: var(--xy-radius-tile);
@@ -262,6 +294,10 @@ attached through search results are listed underneath. While the answer is still
 		font: inherit;
 		vertical-align: middle;
 		cursor: pointer;
+	}
+
+	.keys :global(.combo) {
+		margin-block: 0;
 	}
 
 	.keys:disabled {

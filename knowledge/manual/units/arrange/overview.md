@@ -6,7 +6,7 @@ area: arrange
 order: 0
 context:
   modes: [arrange]
-summary: Arrange mode manages each track's patterns and combines them into scenes and songs; E4 moves between the selected track's patterns and a click on it mutes the track.
+summary: Arrange mode manages each track's patterns and combines them into scenes and songs; `E4` moves between the selected track's patterns and a click on it mutes the track.
 status: current
 firmware:
   min: '1.0.9'

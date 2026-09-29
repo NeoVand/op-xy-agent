@@ -17,7 +17,7 @@ order: 50
 context:
   modes: [mix]
   screens: [M4]
-summary: Mix M4 sets the levels of the percussion and melodic groups, how much the master bus is compressed and the master level that feeds the output limiter.
+summary: Mix `M4` sets the levels of the percussion and melodic groups, how much the master bus is compressed and the master level that feeds the output limiter.
 status: current
 firmware:
   min: '1.0.9'

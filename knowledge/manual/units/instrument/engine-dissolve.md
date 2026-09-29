@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [instrument]
   screens: [M1]
-summary: A tonal-noise engine for airy ambient pads and bright, gritty leads; its M1 page sets swarm (noise modulation), AM, FM and detune.
+summary: A tonal-noise engine for airy ambient pads and bright, gritty leads; its `M1` page sets swarm (noise modulation), AM, FM and detune.
 status: current
 firmware:
   min: '1.0.9'

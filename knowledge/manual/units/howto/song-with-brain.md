@@ -80,14 +80,14 @@ procedures:
     result: The bass and the chord follow the progression; drums stay where they are.
     source: https://teenage.engineering/guides/op-xy/how-to#write-a-song-fast-with-brain
   - id: exclude
-    goal: Keep the lead on T5 out of the brain's transposition
+    goal: Keep the lead on `T5` out of the brain's transposition
     steps:
       - keys: M2
         note: the brain's routing, tracks 1–4 on the encoders
       - keys: click E1
         note: tracks 5–8 on the encoders
       - keys: turn E1
-        note: counter-clockwise, T5 out
+        note: counter-clockwise, `T5` out
         set: { param: track 5, value: out, area: auxiliary, track: 9, page: 2 }
     result: The lead keeps its notes while everything routed moves.
     source: https://teenage.engineering/guides/op-xy/how-to#write-a-song-fast-with-brain

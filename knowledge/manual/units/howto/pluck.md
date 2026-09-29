@@ -45,7 +45,7 @@ facts:
     verified_on: '1.1.33'
 procedures:
   - id: amp
-    goal: Make the notes on T3 pluck
+    goal: Make the notes on `T3` pluck
     preconditions: [instrument mode]
     steps:
       - keys: T3 → M2

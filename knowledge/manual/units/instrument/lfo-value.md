@@ -42,7 +42,7 @@ facts:
 procedures:
   - id: sweep
     goal: Sweep a track's filter cutoff in time with the tempo
-    preconditions: [instrument mode, M4 shows the value LFO]
+    preconditions: [instrument mode, '`M4` shows the value LFO']
     steps:
       - keys: turn E3
         note: choose the filter page

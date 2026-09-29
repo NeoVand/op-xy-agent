@@ -63,7 +63,7 @@ parameters:
     encoder: E2
     layer: base
     name: sample
-    note: E3 and E4 do the same
+    note: '`E3` and `E4` do the same'
     source: https://teenage.engineering/guides/op-xy/sample#sample-folder
 related: [sampler.sample-files, sampler.drum-sampler]
 ---

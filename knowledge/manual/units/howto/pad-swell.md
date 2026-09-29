@@ -50,7 +50,7 @@ facts:
     confidence: derived
 procedures:
   - id: swell
-    goal: Make the chords on T5 swell in and fade out
+    goal: Make the chords on `T5` swell in and fade out
     preconditions: [instrument mode]
     steps:
       - keys: T5 → M2

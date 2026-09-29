@@ -6,7 +6,7 @@ area: sampler
 order: 10
 context:
   screens: [sample]
-summary: '`sample` opens a record page from any screen: pick the input, set gain and threshold, then hold `M1` to capture up to 20 seconds into the current sampler or the sample library.'
+summary: '`sample` opens a record page from any screen: pick the input, set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.'
 status: current
 firmware:
   min: '1.0.9'

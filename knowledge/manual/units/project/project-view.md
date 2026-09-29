@@ -7,7 +7,7 @@ area: project
 order: 0
 context:
   screens: [project]
-summary: The project key opens the project view, where you create a new project (hold M1), save (M2), save as (shift + M2), rename (M3) and open the project settings (M4).
+summary: The project key opens the project view, where you create a new project (`hold M1`), save (`M2`), save as (`shift + M2`), rename (`M3`) and open the project settings (`M4`).
 status: current
 firmware:
   min: '1.0.9'

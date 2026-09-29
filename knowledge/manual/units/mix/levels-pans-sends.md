@@ -7,7 +7,7 @@ order: 10
 context:
   modes: [mix]
   screens: [M1]
-summary: On mix M1 the four encoders set the selected track's FX I send, FX II send, pan and level; clicking E3 centres the pan and clicking E4 mutes the track.
+summary: On mix `M1` the four encoders set the selected track's FX I send, FX II send, pan and level; clicking `E3` centres the pan and clicking `E4` mutes the track.
 status: current
 firmware:
   min: '1.0.9'
@@ -56,7 +56,7 @@ procedures:
     source: https://teenage.engineering/guides/op-xy/mix#levels-pans-and-sends
   - id: centre-pan
     goal: Put a track back in the centre of the stereo field
-    preconditions: [mix mode, M1, the track is selected]
+    preconditions: [mix mode, '`M1`', the track is selected]
     steps:
       - keys: click E3
     source: https://teenage.engineering/guides/op-xy/mix#levels-pans-and-sends

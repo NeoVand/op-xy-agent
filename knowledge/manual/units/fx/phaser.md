@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [auxiliary]
   screens: [M1]
-summary: A 12-pole phaser for FX I or FX II; M1 sets the centre frequency of the sweep, its depth, its rate and the feedback.
+summary: A 12-pole phaser for FX I or FX II; `M1` sets the centre frequency of the sweep, its depth, its rate and the feedback.
 status: current
 firmware:
   min: '1.0.9'
