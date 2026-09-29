@@ -36,6 +36,8 @@ Pick a run and a case: its checks, lints and the judge's scores sit above the ch
 		readonly entries: readonly ChatEntry[];
 		readonly seconds: number;
 		readonly usd: number;
+		/** What the replica played when the agent was done. */
+		readonly heard?: { readonly text: string; readonly flags: readonly string[] } | null;
 	}
 	interface Saved {
 		readonly model: string;
@@ -110,6 +112,12 @@ Pick a run and a case: its checks, lints and the judge's scores sit above the ch
 					{#each result.rubric?.scores?.issues ?? [] as issue, i (i)}
 						<p class="viewer__issue">~ {issue}</p>
 					{/each}
+					{#if result.heard}
+						<details class="viewer__heard">
+							<summary>what the replica played at the end</summary>
+							<pre>{result.heard.text}</pre>
+						</details>
+					{/if}
 				</div>
 				<Conversation entries={result.entries} {onkeys} {onpoint} {cite} />
 			{/if}
@@ -181,6 +189,12 @@ Pick a run and a case: its checks, lints and the judge's scores sit above the ch
 
 	.viewer__issue {
 		color: var(--xy-fg-faint);
+	}
+
+	.viewer__heard pre {
+		margin: 0.2rem 0 0;
+		white-space: pre-wrap;
+		font-size: var(--xy-text-2xs);
 	}
 
 	.viewer__note {

@@ -38,6 +38,8 @@ import { buildFrame } from '$lib/sim/frames';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { describeFrame } from '$lib/sim/screen/render';
 import type { SampleData } from '$lib/sound/samples';
+import { analyzeAudio, summarize } from '$lib/core/listen';
+import type { ListenHost } from '$lib/agent/listen-host';
 import { QUALITY_CASES, type Draft, type Outcome, type QualityCase } from './cases/quality';
 import { judgeAnswer, type Judgement } from './judge';
 import { anthropicKey } from './key';
@@ -125,6 +127,8 @@ export interface CaseResult {
 	readonly seconds: number;
 	readonly calls: number;
 	readonly error: string | null;
+	/** What the replica played when the agent was done (4 s through the eval's ears), if playing. */
+	readonly heard: { readonly text: string; readonly flags: readonly string[] } | null;
 }
 
 // ─── the environment ────────────────────────────────────────────────────────────────────────────
@@ -134,6 +138,8 @@ interface Env {
 	readonly replica: ReplicaState;
 	readonly conductor: Conductor;
 	readonly store: ThreadStore;
+	/** The eval's ears on this environment's replica, when the eval has them. */
+	readonly listen: ListenHost | null;
 	readonly outcome: () => Omit<Outcome, 'answers' | 'trace'>;
 }
 
@@ -186,6 +192,7 @@ async function environment(
 	const guided: string[] = [];
 	const drafts: Draft[] = [];
 	const store = createMemoryThreadStore();
+	const listen = ears?.host(sim, files) ?? null;
 	const conductor = await Conductor.create({
 		client: createAnthropicClient({ apiKey }),
 		device: null,
@@ -194,7 +201,7 @@ async function environment(
 		virtual,
 		guide: { start: (goal) => void guided.push(goal), stop: () => {} },
 		presets: { put: (draft) => drafts.push(draft), href: '/presets' },
-		listen: ears?.host(sim, files) ?? null,
+		listen,
 		manual,
 		store,
 		autoApprove: true,
@@ -206,6 +213,7 @@ async function environment(
 		replica,
 		conductor,
 		store,
+		listen,
 		outcome: () => ({ state: sim.state, sim, virtual, guided, drafts, heard })
 	};
 }
@@ -391,7 +399,8 @@ function renderForJudge(
 	c: QualityCase,
 	answers: readonly string[],
 	trace: readonly TraceCall[],
-	fails: readonly string[]
+	fails: readonly string[],
+	heard: CaseResult['heard'] = null
 ): string {
 	const parts: string[] = [];
 	c.turns.forEach((turn, i) => {
@@ -417,6 +426,10 @@ function renderForJudge(
 	if (c.intent) parts.push(`What the case expects: ${c.intent}`);
 	if (fails.length)
 		parts.push(`Automatic checks that failed:\n${fails.map((f) => `- ${f}`).join('\n')}`);
+	if (heard)
+		parts.push(
+			`What the replica played when the agent was done (measured by the app's listening, 4 s; the metronome's click counts among the hits when it is on):\n${heard.text}`
+		);
 	return parts.join('\n\n');
 }
 
@@ -427,7 +440,8 @@ async function rubric(
 	c: QualityCase,
 	answers: readonly string[],
 	trace: readonly TraceCall[],
-	fails: readonly string[]
+	fails: readonly string[],
+	heard: CaseResult['heard'] = null
 ): Promise<RubricResult> {
 	try {
 		const response = await client.messages.parse({
@@ -441,7 +455,7 @@ async function rubric(
 					cache_control: { type: 'ephemeral', ttl: '1h' }
 				}
 			],
-			messages: [{ role: 'user', content: renderForJudge(c, answers, trace, fails) }],
+			messages: [{ role: 'user', content: renderForJudge(c, answers, trace, fails, heard) }],
 			output_config: { format: zodOutputFormat(Rubric) }
 		});
 		const u = response.usage;
@@ -529,6 +543,10 @@ async function runCase(
 		(conductor.lastError ? `${conductor.lastError.code}: ${conductor.lastError.message}` : null);
 	const outcome: Outcome = { ...env.outcome(), answers, trace };
 	const fails = [...(c.check?.(outcome) ?? []), ...toolExpectations(c, trace)];
+	// what the user would hear now: silence or a tempo that is not the set one means it did not work
+	const heard = await hearEnd(env);
+	if (heard?.flags.includes('silent')) fails.push('the replica plays silence');
+	if (heard?.flags.includes('off-tempo')) fails.push('what plays is off the set tempo');
 	const judgeClient = new Anthropic({ apiKey: opts.apiKey });
 	const facts = c.facts?.length
 		? await judgeAnswer(judgeClient, [opts.judge, 'claude-sonnet-5-5'], {
@@ -549,7 +567,16 @@ async function runCase(
 		for (const x of facts.contradictions) fails.push(`contradicts: ${x}`);
 	}
 	const lints = lint(c, answers, trace, opts.units, agentError);
-	const judged = await rubric(judgeClient, opts.judge, opts.bundle, c, answers, trace, fails);
+	const judged = await rubric(
+		judgeClient,
+		opts.judge,
+		opts.bundle,
+		c,
+		answers,
+		trace,
+		fails,
+		heard
+	);
 	const low = judged.scores ? AXES.filter((a) => judged.scores![a].score <= 2) : [];
 	const pass =
 		fails.length === 0 &&
@@ -574,10 +601,29 @@ async function runCase(
 		judgeUsd: judged.usd + (facts?.usd ?? 0),
 		seconds,
 		calls: conductor.usage.calls,
-		error: agentError
+		error: agentError,
+		heard
 	};
 	conductor.dispose();
 	return result;
+}
+
+/** Four seconds of what the replica plays once the agent is done, while the transport runs. */
+async function hearEnd(env: Env): Promise<CaseResult['heard']> {
+	if (!env.listen || !env.sim.state.transport.playing) return null;
+	try {
+		const recording = await env.listen.record('replica', 4, new AbortController().signal);
+		const analysis = analyzeAudio(recording.channels, recording.sampleRate, {
+			expectedBpm: env.sim.state.tempo.bpm
+		});
+		const summary = summarize(analysis, { source: 'the replica' });
+		return { text: summary.text, flags: summary.flags };
+	} catch (error) {
+		return {
+			text: `could not listen: ${error instanceof Error ? error.message : error}`,
+			flags: []
+		};
+	}
 }
 
 /** Fills in each call's result from the saved thread (tool_result blocks by tool_use id). */
@@ -673,6 +719,12 @@ function scorecard(results: readonly CaseResult[], model: string, judge: string)
 		for (const l of r.lints)
 			lines.push(`     ${l.severity === 'error' ? '!' : '·'} ${l.code}: ${l.detail}`);
 		for (const issue of s?.issues.slice(0, 3) ?? []) lines.push(`     ~ ${issue}`);
+		// the level, rhythm and harmony lines of what the replica played at the end
+		const played = r.heard?.text
+			.split('\n')
+			.filter((l) => /^(level|rhythm|harmony):/.test(l))
+			.map((l) => l.replace(/^(\w+): /, '').split(/[;,] /)[0]);
+		if (played?.length) lines.push(`     ♪ ${played.join(' · ')}`);
 	}
 	const total = results.reduce((n, r) => n + r.usd, 0);
 	const judging = results.reduce((n, r) => n + r.judgeUsd, 0);
