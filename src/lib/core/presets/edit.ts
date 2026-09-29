@@ -64,7 +64,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 const whole = (v: number, lo: number, hi: number) => Math.round(clamp(v, lo, hi));
 
 /**
- * The first and last frame louder than −60 dBFS, or than 45 dB under the peak when that is
+ * The first and last frame louder than −60 dBFS, or than 50 dB under the peak when that is
  * higher (a microphone's hiss is not the sound), plus a 2 ms lead-in; the whole sound when it is
  * all quieter. Where the editor first puts `start` and `end`, so silence is trimmed without
  * cutting anything off.
@@ -74,7 +74,7 @@ export function audibleSpan(audio: PcmAudio): { start: number; end: number } {
 	let peak = 0;
 	for (const c of audio.channels)
 		for (let i = 0; i < c.length; i++) peak = Math.max(peak, Math.abs(c[i]));
-	const threshold = Math.max(10 ** (-60 / 20), peak * 10 ** (-45 / 20));
+	const threshold = Math.max(10 ** (-60 / 20), peak * 10 ** (-50 / 20));
 	const loud = (i: number) => audio.channels.some((c) => Math.abs(c[i]) > threshold);
 	let first = 0;
 	while (first < frames && !loud(first)) first++;

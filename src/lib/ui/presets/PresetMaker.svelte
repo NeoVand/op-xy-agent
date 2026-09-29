@@ -47,7 +47,8 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		type Melody,
 		type PcmAudio,
 		type SoundEdit,
-		type VoiceParam
+		type VoiceParam,
+		type VoiceType
 	} from '$lib/core/presets';
 	import { getPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import { getAppSimulator, getAppSound, getSimPersistence } from '$lib/app';
@@ -132,6 +133,26 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		if (current) bench.edit(current.id, patch);
 	}
 
+	/** The voice numbers each generated type listens to (generate.ts); the others do nothing. */
+	const VOICE_USES: Readonly<Record<VoiceType, readonly VoiceParam[]>> = {
+		kick: ['pitch', 'decay', 'sweep', 'snap'],
+		snare: ['pitch', 'decay', 'snap', 'tone'],
+		clap: ['decay', 'tone'],
+		rim: ['decay'],
+		'closed hat': ['decay', 'tone'],
+		'open hat': ['decay', 'tone'],
+		cymbal: ['decay', 'tone'],
+		tom: ['pitch', 'decay', 'sweep'],
+		conga: ['pitch', 'decay', 'sweep'],
+		cowbell: ['decay', 'tone'],
+		clave: ['decay'],
+		shaker: ['decay', 'tone'],
+		tambourine: ['decay', 'tone'],
+		triangle: ['decay'],
+		guiro: ['decay', 'tone'],
+		zap: ['decay', 'sweep']
+	};
+
 	function voiceKnob(sound: BenchSound, param: VoiceParam, label: string): Knob {
 		const voice = sound.voice;
 		const range =
@@ -141,20 +162,29 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 					: { min: 40, max: 1200 }
 				: VOICE_RANGES[param];
 		const value = voice ? voiceValue(voice, param) : 0;
-		const step = param === 'pitch' ? 1 : param === 'decay' ? 0.01 : 0.01;
+		const step = param === 'pitch' ? 1 : 0.01;
+		// drive, crush and level shape every voice; the rest only the types that use them
+		const used =
+			!voice ||
+			['drive', 'crush', 'level'].includes(param) ||
+			VOICE_USES[voice.type].includes(param);
 		return {
 			label,
 			value,
 			min: range.min,
 			max: range.max,
 			step,
-			display:
-				param === 'pitch'
+			display: !used
+				? '—'
+				: param === 'pitch'
 					? `${Math.round(value)} hz`
 					: param === 'decay'
 						? `${value.toFixed(2)} s`
 						: `${Math.round(value * 100)}`,
-			field: `generated ${voice?.type ?? ''} voice (rendered into the wav)`,
+			field: used
+				? `the generated ${voice?.type ?? ''}'s ${param} (rendered into the wav)`
+				: `a ${voice?.type ?? ''} has no ${param}`,
+			disabled: !used,
 			set: (v) => bench.setVoice(sound.id, param, v)
 		};
 	}
@@ -583,6 +613,8 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 	// ------------------------------------------------------------------ files
 
 	let receiving = $state(false);
+	/** The file being read, while a drop is read. */
+	let reading = $state('');
 	let depth = 0;
 
 	async function addFiles(files: readonly File[], key?: number) {
@@ -592,7 +624,8 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		const decoded: { name: string; audio: PcmAudio }[] = [];
 		const skipped: string[] = [];
 		try {
-			for (const file of files) {
+			for (const [i, file] of files.entries()) {
+				reading = files.length > 1 ? `${i + 1} of ${files.length}: ${file.name}` : file.name;
 				try {
 					decoded.push({ name: file.name, audio: await decodeAudioFile(file) });
 				} catch {
@@ -1079,6 +1112,11 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 				{#snippet empty()}
 					<div class="welcome">
 						<p class="welcome__title">drop sounds anywhere</p>
+						{#if bench.busy}
+							<p class="welcome__reading">
+								<Led state="white" blink="breathe" size="sm" /> reading {reading}
+							</p>
+						{/if}
 						<p class="welcome__text">
 							A folder of hits becomes a kit laid out the way TE lays out theirs, a loop is sliced
 							onto the keys, the notes of an instrument become a multisample, a SoundFont or a
@@ -1680,6 +1718,15 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		color: var(--xy-scr-muted);
 		font-size: var(--xy-text-sm);
 		line-height: var(--xy-leading-sm);
+	}
+
+	.welcome__reading {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0;
+		color: var(--xy-scr-fg);
+		font-size: var(--xy-text-sm);
 	}
 
 	.welcome__keys {
