@@ -28,11 +28,10 @@ import {
 	zoneFor,
 	zonesFor,
 	type PcmAudio,
-	type SamplerRegion,
-	type DrumRegion,
 	type DrumKind
 } from './index';
 import type { SoundEdit } from './edit';
+import type { DrumRegion, SamplerRegion } from './patch';
 
 const SR = 44100;
 const audio = (...channels: Float32Array[]): PcmAudio => ({ sampleRate: SR, channels });
@@ -92,7 +91,9 @@ describe('edits', () => {
 		expect([e.gain, e.pan, e.transpose, e.tune]).toEqual([20, -100, 48, -99]);
 		expect(e.loop.start).toBeGreaterThanOrEqual(e.start);
 		expect(e.loop.end).toBeLessThanOrEqual(e.end);
-		expect(e.loop.crossfade).toBeLessThanOrEqual(Math.min(e.loop.end - e.loop.start, e.loop.start));
+		expect(e.loop.crossfade).toBeLessThanOrEqual(
+			Math.min(e.loop.end - e.loop.start, e.loop.start - e.start)
+		);
 	});
 
 	it('are rendered with fades written in, cropped, and reversed for a preview', () => {

@@ -121,7 +121,7 @@ export function defaultEdit(
 /**
  * An edit made valid for a sound of `frames` frames: whole numbers in the device's ranges,
  * 0 ≤ start < end ≤ frames, fades inside the region, start ≤ loop.start < loop.end ≤ end and a
- * crossfade no longer than the loop or what precedes it (note 30 §2.7).
+ * crossfade no longer than the loop or the region before it (note 30 §2.7).
  */
 export function clampEdit(edit: SoundEdit, frames: number): SoundEdit {
 	const span = Math.min(MIN_SPAN, Math.max(1, frames));
@@ -132,7 +132,8 @@ export function clampEdit(edit: SoundEdit, frames: number): SoundEdit {
 	const fadeOut = whole(edit.fadeOut, 0, length - fadeIn);
 	const loopStart = whole(edit.loop.start, start, Math.max(start, end - span));
 	const loopEnd = whole(edit.loop.end, loopStart + Math.min(span, end - loopStart), end);
-	const crossfade = whole(edit.loop.crossfade, 0, Math.min(loopEnd - loopStart, loopStart));
+	// the crossfade reads the frames before the loop's start, and only the region's are written
+	const crossfade = whole(edit.loop.crossfade, 0, Math.min(loopEnd - loopStart, loopStart - start));
 	return {
 		start,
 		end,

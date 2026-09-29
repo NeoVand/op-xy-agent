@@ -483,6 +483,22 @@ export interface Placeable {
 	readonly kind: DrumKind;
 	/** The sound's pitch in Hz, when known: lower toms and congas go on lower keys. */
 	readonly pitch?: number;
+	/** A slot of TE's layout (0–23) its name asks for ("tom hi" → the high tom), tried first. */
+	readonly prefer?: number;
+}
+
+/**
+ * The slot a name asks for among its kind's keys: "floor tom" or "tom lo" the low tom, "mid" the
+ * middle one, "hi" the high one; a low or high conga. Undefined when the name says no height.
+ */
+export function slotFromName(fileName: string, kind: DrumKind): number | undefined {
+	const words = nameWords(fileName);
+	const low = /\b(lo|low|floor|lt|ft)\b/.test(words);
+	const mid = /\b(mid|md|mt)\b/.test(words);
+	const high = /\b(hi|high|ht)\b/.test(words);
+	if (kind === 'tom') return low ? 12 : mid ? 14 : high ? 16 : undefined;
+	if (kind === 'conga') return low ? 18 : high ? 19 : undefined;
+	return undefined;
 }
 
 /**
@@ -508,8 +524,9 @@ export function placeDrums(
 	const keys: (number | null)[] = sounds.map(() => null);
 	for (const { s, i } of order) {
 		const own = TE_LAYOUT.flatMap((kind, slot) => (kind === s.kind ? [slot] : []));
+		const first = s.prefer !== undefined && s.prefer >= 0 && s.prefer < DRUM_KEYS ? [s.prefer] : [];
 		const slot =
-			[...own, ...FAMILY[s.kind]].find((k) => !used.has(k)) ??
+			[...first, ...own, ...FAMILY[s.kind]].find((k) => !used.has(k)) ??
 			Array.from({ length: DRUM_KEYS }, (_, k) => k).find((k) => !used.has(k));
 		if (slot === undefined) continue;
 		used.add(slot);
