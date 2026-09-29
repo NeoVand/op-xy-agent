@@ -1,293 +1,315 @@
 <!--
-Our OP-XY manual: every unit by area, and a search over all of them. The units are our own
-rewording of TE's guide, checked against a unit (knowledge/manual/units); the agent answers from
-the same text and cites these pages.
+The manual's landing page: what it is, a search over everything, where to start, the areas as cards
+and every recipe. Our own rewording of TE's guide, checked against a unit (knowledge/manual/units);
+the agent answers from the same text and cites these pages.
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import type { ManualSearchResult } from '$lib/manual';
-	import { Search01Icon } from '@hugeicons/core-free-icons';
-	import { HugeIcon, Legend } from '$lib/ui';
+	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+	import type { AreaId } from '$lib/manual';
+	import { HugeIcon } from '$lib/ui';
+	import ManualSearch from '$lib/ui/manual/ManualSearch.svelte';
+	import { AREA_ICONS, areaName } from '$lib/ui/manual/areas';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
-	const STATUS: Record<string, string> = {
-		'outdated-in-guide': 'newer than TE’s guide',
-		'changelog-only': 'from the changelog',
-		unverified: 'unverified'
-	};
-
-	let query = $state('');
-	let results = $state<ManualSearchResult[]>([]);
-	let searching: Promise<typeof import('$lib/manual')> | null = null;
-	/** Answers only the latest query, however the searches finish. */
-	let asked = 0;
-
-	async function search(text: string): Promise<void> {
-		const ticket = ++asked;
-		if (text.trim().length < 2) {
-			results = [];
-			return;
-		}
-		// the manual and its index load on the first search, not with the page
-		searching ??= import('$lib/manual');
-		const manual = await searching;
-		if (ticket === asked) results = manual.searchManual(text, { limit: 12 });
-	}
+	const areas = $derived(data.areas.filter((area) => area.id !== 'howto'));
+	const recipesText = $derived(data.areas.find((area) => area.id === 'howto')?.description);
 </script>
 
 <svelte:head>
 	<title>OP-XY manual · OP-XY Agent</title>
 	<meta
 		name="description"
-		content="Our own OP-XY manual: every page, key and parameter, reworded from TE's guide and checked on a unit."
+		content="The OP-XY in short units: every page, key and parameter, reworded from TE's guide and checked on a unit."
 	/>
 </svelte:head>
 
-<div class="manual">
-	<header class="manual__head">
-		<h1 class="manual__title">manual</h1>
-		<Legend as="p" size="sm" tone="subtle">
-			The OP-XY in {data.stats.units} short units: {data.stats.facts} facts, {data.stats.verified} of
-			them checked on a unit running OS {data.firmware}. Reworded from TE’s guide ({data.guide}) and
-			the changelog; the agent answers from the same text.
-		</Legend>
+<div class="landing">
+	<header class="hero">
+		<p class="hero__eyebrow">for os {data.firmware}</p>
+		<h1 class="hero__title">The OP-XY manual</h1>
+		<p class="hero__lead">
+			Every page, key and parameter in {data.stats.units} short units, reworded from TE’s guide and checked
+			on a real unit. The agent answers from the same text.
+		</p>
+		<div class="hero__search"><ManualSearch size="lg" /></div>
+		<p class="hero__stats">
+			{data.stats.facts} facts · {data.stats.verified} checked on a unit · TE’s guide {data.guide}
+		</p>
 	</header>
 
-	<search class="find">
-		<label class="sr-only" for="manual-search">search the manual</label>
-		<div class="find__box">
-			<HugeIcon icon={Search01Icon} class="find__icon" />
-			<input
-				id="manual-search"
-				class="find__field"
-				type="search"
-				placeholder="search: parameter locks, song mode, tape, midi clock…"
-				autocomplete="off"
-				bind:value={query}
-				oninput={() => void search(query)}
-			/>
-		</div>
-		{#if query.trim().length >= 2}
-			{#if results.length === 0}
-				<p class="find__none">nothing found for “{query.trim()}”</p>
-			{:else}
-				<!-- each link is resolved, then its fact's anchor added -->
-				<!-- eslint-disable svelte/no-navigation-without-resolve -->
-				<ol class="find__results">
-					{#each results as result (result.id)}
-						<li>
-							<a
-								class="hit"
-								href={resolve('/manual/[id]', { id: result.id }) +
-									(result.fact ? `#${result.fact}` : '')}
-							>
-								<span class="hit__title">{result.title}</span>
-								<span class="hit__area">{result.area}</span>
-								<span class="hit__snippet">{result.snippet.replaceAll('`', '')}</span>
-							</a>
-						</li>
-					{/each}
-				</ol>
-				<!-- eslint-enable svelte/no-navigation-without-resolve -->
-			{/if}
-		{/if}
-	</search>
+	{#if data.start.length > 0}
+		<section class="block" aria-labelledby="start">
+			<h2 class="block__title" id="start">start here</h2>
+			<ol class="steps">
+				{#each data.start as recipe, i (recipe.id)}
+					<li>
+						<a class="step" href={resolve('/manual/[id]', { id: recipe.id })}>
+							<span class="step__n">{i + 1}</span>
+							<span class="step__title">{recipe.title}</span>
+							<span class="step__go"><HugeIcon icon={ArrowRight01Icon} size="1rem" /></span>
+						</a>
+					</li>
+				{/each}
+			</ol>
+		</section>
+	{/if}
 
-	<div class="areas">
-		{#each data.areas as area (area.id)}
-			<section class="area" aria-labelledby="area-{area.id}">
-				<h2 class="area__title" id="area-{area.id}">{area.title.toLowerCase()}</h2>
-				<p class="area__text">{area.description}</p>
-				<ul class="area__units">
-					{#each area.units as unit (unit.id)}
-						<li>
-							<a class="unit" href={resolve('/manual/[id]', { id: unit.id })}>
-								<span class="unit__title">{unit.title}</span>
-								{#if STATUS[unit.status]}<span class="unit__status">{STATUS[unit.status]}</span
-									>{/if}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			</section>
-		{/each}
-	</div>
+	<section class="block" aria-labelledby="areas">
+		<h2 class="block__title" id="areas">the instrument, area by area</h2>
+		<div class="cards">
+			{#each areas as area (area.id)}
+				{#if area.first}
+					<a class="card" href={resolve('/manual/[id]', { id: area.first })}>
+						<span class="card__icon">
+							<HugeIcon icon={AREA_ICONS[area.id as AreaId]} size="1.25rem" strokeWidth={1.6} />
+						</span>
+						<span class="card__body">
+							<span class="card__name">{areaName(area.id as AreaId, area.title)}</span>
+							<span class="card__text">{area.description}</span>
+							<span class="card__count">{area.count} units</span>
+						</span>
+					</a>
+				{/if}
+			{/each}
+		</div>
+	</section>
+
+	{#if data.recipes.length > 0}
+		<section class="block" aria-labelledby="recipes">
+			<div class="block__head">
+				<h2 class="block__title" id="recipes">recipes</h2>
+				{#if recipesText}<p class="block__text">{recipesText}</p>{/if}
+			</div>
+			<ul class="recipes">
+				{#each data.recipes as recipe (recipe.id)}
+					<li>
+						<a class="recipe" href={resolve('/manual/[id]', { id: recipe.id })}>{recipe.title}</a>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
 </div>
 
 <style>
-	.manual {
+	.landing {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
-		width: 100%;
-		max-width: 72rem;
-		margin: 0 auto;
-		padding: 1.5rem 1rem 3rem;
+		gap: 3.5rem;
+		max-width: 64rem;
+		padding: 3.5rem 2.5rem 5rem;
 	}
 
-	.manual__title {
-		margin: 0 0 0.25rem;
-		font-size: var(--xy-text-2xl);
-		font-weight: var(--xy-weight-light);
-		line-height: var(--xy-leading-2xl);
-	}
-
-	.manual__head :global(p) {
-		max-width: 46rem;
-	}
-
-	.find {
+	.hero {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 1rem;
+		max-width: 42rem;
 	}
 
-	.find__box {
-		position: relative;
-		max-width: 46rem;
-		color: var(--xy-scr-muted);
-	}
-
-	.find__box :global(.find__icon) {
-		position: absolute;
-		top: 50%;
-		left: 1rem;
-		transform: translateY(-50%);
-		pointer-events: none;
-	}
-
-	.find__field {
-		width: 100%;
-		padding: 0.75rem 1rem 0.75rem 2.75rem;
-		border: 0;
-		border-radius: var(--xy-radius-tile);
-		background-color: var(--xy-scr-bg);
-		color: var(--xy-scr-fg);
-		font: inherit;
-		font-size: var(--xy-text-base);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
-	}
-
-	.find__field::placeholder {
-		color: var(--xy-scr-muted);
-	}
-
-	.find__field:focus-visible {
-		outline: 2px solid var(--xy-focus);
-		outline-offset: 2px;
-	}
-
-	.find__none {
+	.hero__eyebrow {
 		margin: 0;
-		color: var(--xy-fg-muted);
-		font-size: var(--xy-text-sm);
-	}
-
-	.find__results {
-		display: flex;
-		flex-direction: column;
-		max-width: 46rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.hit {
-		display: grid;
-		grid-template-columns: 1fr auto;
-		gap: 0.125rem 1rem;
-		padding: 0.625rem 0.75rem;
-		border-radius: var(--xy-radius-tile);
-		color: var(--xy-fg);
-		text-decoration: none;
-	}
-
-	.hit:hover,
-	.hit:focus-visible {
-		background-color: var(--xy-hover);
-	}
-
-	.hit__title {
-		font-size: var(--xy-text-sm);
-		font-weight: var(--xy-weight-medium, 500);
-	}
-
-	.hit__area {
 		color: var(--xy-fg-subtle);
-		font-size: var(--xy-text-2xs);
+		font-size: var(--xy-text-xs);
 		letter-spacing: var(--xy-tracking-label);
 	}
 
-	.hit__snippet {
-		grid-column: 1 / -1;
-		color: var(--xy-fg-muted);
-		font-size: var(--xy-text-xs);
-		line-height: var(--xy-leading-xs);
+	.hero__title {
+		margin: 0;
+		font-size: clamp(2rem, 4vw, 2.75rem);
+		font-weight: var(--xy-weight-light);
+		line-height: 1.1;
+		letter-spacing: -0.01em;
 	}
 
-	.areas {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+	.hero__lead {
+		margin: 0;
+		color: var(--xy-fg-muted);
+		font-size: var(--xy-text-base);
+		line-height: var(--xy-leading-base);
+	}
+
+	.hero__search {
+		margin-top: 0.75rem;
+	}
+
+	.hero__stats {
+		margin: 0;
+		color: var(--xy-fg-faint);
+		font-size: var(--xy-text-xs);
+	}
+
+	.block {
+		display: flex;
+		flex-direction: column;
 		gap: 1rem;
 	}
 
-	.area {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		padding: 1rem;
-		border-radius: var(--xy-radius-tile);
-		background-color: var(--xy-surface);
-		box-shadow: var(--xy-shadow-plate);
-	}
-
-	.area__title {
+	.block__title {
 		margin: 0;
-		font-size: var(--xy-text-lg);
-		font-weight: var(--xy-weight-regular);
-		line-height: var(--xy-leading-lg);
-	}
-
-	.area__text {
-		margin: 0;
-		color: var(--xy-fg-muted);
+		color: var(--xy-fg-subtle);
 		font-size: var(--xy-text-xs);
-		line-height: var(--xy-leading-xs);
+		font-weight: var(--xy-weight-regular);
+		letter-spacing: var(--xy-tracking-label);
 	}
 
-	.area__units {
-		display: flex;
-		flex-direction: column;
-		margin: 0.25rem 0 0;
+	.steps {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+		gap: 0.5rem;
+		margin: 0;
 		padding: 0;
 		list-style: none;
 	}
 
-	.unit {
+	.step {
 		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 0.75rem;
-		padding: 0.3125rem 0.5rem;
-		margin-inline: -0.5rem;
-		border-radius: var(--xy-radius-sm, 4px);
+		align-items: center;
+		gap: 0.875rem;
+		height: 100%;
+		padding: 0.875rem 1rem;
+		border: 1px solid var(--xy-line);
+		border-radius: 0.75rem;
 		color: var(--xy-fg);
-		font-size: var(--xy-text-sm);
-		line-height: var(--xy-leading-sm);
 		text-decoration: none;
+		transition:
+			border-color var(--xy-dur-quick, 120ms) ease,
+			background-color var(--xy-dur-quick, 120ms) ease;
 	}
 
-	.unit:hover,
-	.unit:focus-visible {
+	.step:hover {
+		border-color: var(--xy-line-control);
 		background-color: var(--xy-hover);
 	}
 
-	.unit__status {
+	.step__n {
+		display: inline-grid;
+		place-items: center;
 		flex: none;
+		width: 1.5rem;
+		height: 1.5rem;
+		border-radius: 50%;
+		background-color: var(--xy-surface-raised);
+		color: var(--xy-fg-muted);
+		font-size: var(--xy-text-2xs);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.step__title {
+		flex: 1;
+		min-width: 0;
+		font-size: var(--xy-text-sm);
+	}
+
+	.step__go {
+		display: inline-flex;
+		color: var(--xy-fg-faint);
+	}
+
+	.cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+		gap: 0.75rem;
+	}
+
+	.card {
+		display: flex;
+		gap: 0.875rem;
+		padding: 1.125rem;
+		border: 1px solid var(--xy-line);
+		border-radius: 0.875rem;
+		background-color: var(--xy-surface);
+		color: var(--xy-fg);
+		text-decoration: none;
+		transition: border-color var(--xy-dur-quick, 120ms) ease;
+	}
+
+	.card:hover {
+		border-color: var(--xy-line-control);
+	}
+
+	.card__icon {
+		display: inline-grid;
+		flex: none;
+		place-items: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: 0.625rem;
+		background-color: var(--xy-surface-raised);
+		color: var(--xy-fg);
+	}
+
+	.card__body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
+		min-width: 0;
+	}
+
+	.card__name {
+		font-size: var(--xy-text-base);
+		line-height: 2.25rem;
+		margin-bottom: -0.375rem;
+	}
+
+	.card__text {
 		color: var(--xy-fg-subtle);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+	}
+
+	.card__count {
+		color: var(--xy-fg-faint);
 		font-size: var(--xy-text-2xs);
 		letter-spacing: var(--xy-tracking-label);
+	}
+
+	.block__head {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
+	}
+
+	.block__text {
+		max-width: 42rem;
+		margin: 0;
+		color: var(--xy-fg-faint);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+	}
+
+	.recipes {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		columns: 3 16rem;
+		column-gap: 2rem;
+	}
+
+	.recipes li {
+		break-inside: avoid;
+	}
+
+	.recipe {
+		display: block;
+		padding: 0.5625rem 0.125rem;
+		border-bottom: 1px solid var(--xy-line);
+		color: var(--xy-fg-muted);
+		font-size: var(--xy-text-sm);
+		text-decoration: none;
+		transition: color var(--xy-dur-quick, 120ms) ease;
+	}
+
+	.recipe:hover {
+		color: var(--xy-fg);
+	}
+
+	@media (max-width: 40rem) {
+		.landing {
+			padding: 2rem 1rem 4rem;
+		}
 	}
 </style>

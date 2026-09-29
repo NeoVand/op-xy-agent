@@ -58,7 +58,7 @@ test.describe('the home page', () => {
 		);
 	});
 
-	test('draws the chat composer as a deck of keys', async ({ page }) => {
+	test('shows the chat composer: a field, attach and send', async ({ page }) => {
 		await expect(page.getByRole('button', { name: 'attach files' })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'send' })).toBeVisible();
 		await expect(page.getByLabel('message to the agent')).toBeVisible();

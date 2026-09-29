@@ -53,7 +53,8 @@ never on the published site.
 			<a
 				class={['nav__link', current && 'is-current']}
 				href={resolve(link.id)}
-				aria-current={current ? 'page' : undefined}><HugeIcon icon={link.icon} />{link.label}</a
+				aria-current={current ? 'page' : undefined}
+				><HugeIcon icon={link.icon} /><span class="nav__label">{link.label}</span></a
 			>
 		{/each}
 		<ThemeToggle />
@@ -137,6 +138,7 @@ never on the published site.
 		color: var(--xy-fg-subtle);
 		font-size: var(--xy-text-sm);
 		line-height: 1;
+		white-space: nowrap;
 		text-decoration: none;
 		transition: color var(--xy-dur-quick) var(--xy-ease-standard);
 	}
@@ -144,5 +146,17 @@ never on the published site.
 	.nav__link:hover,
 	.nav__link.is-current {
 		color: var(--xy-fg);
+	}
+
+	/* a phone's width: the icons alone, the names kept for screen readers */
+	@media (max-width: 40rem) {
+		.nav__label {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
 	}
 </style>

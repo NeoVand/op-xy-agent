@@ -54,6 +54,7 @@ export type {
 export type { ManualSearchResult, SearchUnitsOptions } from './search';
 export { AREA_IDS, AREA_INFO, UNIT_STATUSES } from './schema';
 export { ManualDataError, ManualError } from './errors';
+export { unitTitle } from './titles';
 
 interface Loaded {
 	readonly manual: Manual;
