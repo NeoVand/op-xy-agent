@@ -138,12 +138,12 @@ export class ProjectTransfer {
 		return out;
 	}
 
-	/** Loads the project the OP-XY has open, over USB. Call from a click: the browser asks first. */
+	/** Loads the project the OP-XY has open, over USB. Call from a click: the browser asks the first time. */
 	async loadFromDevice(): Promise<void> {
 		const usb = this.#usb;
 		if (!usb) return;
 		await this.#run(async () => {
-			const connection = await MtpConnection.request(usb);
+			const connection = (await MtpConnection.granted(usb)) ?? (await MtpConnection.request(usb));
 			try {
 				const { session } = connection;
 				await session.open();
