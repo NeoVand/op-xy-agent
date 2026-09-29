@@ -4,16 +4,21 @@ import { concat } from './bytes';
 import { decodeXy, encodeXy } from './container';
 import { XyFormatError } from './errors';
 import { PATTERN, laneCounts, walkProject } from './layout';
+import { withSamples } from '../../../../test/fakes/xy-samples';
 import {
+	LOOP_BITS,
+	REGION_END,
 	XY_EFFECTS,
 	XY_ENGINES,
 	XY_FILTERS,
 	XY_LFOS,
 	XY_STEP_COMPONENTS,
 	playModeOf,
+	sampleHome,
 	type XyPattern
 } from './model';
 import { readProject } from './read';
+import { writeProject } from './write';
 import expected from './fixtures/expected.json';
 
 const fixture = (name: string) =>
@@ -255,5 +260,70 @@ describe('readProject', () => {
 		const file = encodeXy(older, concat([image.subarray(0, 3433), image.subarray(3449)]));
 		expect(() => readProject(file)).toThrow(XyFormatError);
 		expect(() => readProject(file)).toThrow(/only its track base is known/);
+	});
+});
+
+describe('sample regions (§3.5 ★)', () => {
+	it('reads the blank project’s kits and pad: path, key, root, length and mode per region', () => {
+		const project = readProject(fixture('blank-1.1.4.xy'));
+		const kit = project.tracks[0].patterns[0].sound.samples;
+		expect(kit.map((r) => r.index)).toEqual(Array.from({ length: 24 }, (_, i) => i));
+		// a factory kit's keys play F3…E5
+		expect(kit.map((r) => r.key)).toEqual(Array.from({ length: 24 }, (_, i) => 53 + i));
+		expect(kit[0]).toMatchObject({
+			path: 'content/samples/kick/kick boop a.wav',
+			frames: 7469,
+			start: 0,
+			end: REGION_END,
+			root: 60,
+			mode: 1,
+			gain: 0,
+			reverse: false
+		});
+		// the closed hats choke each other (group), trimmed
+		expect(kit[8]).toMatchObject({
+			path: 'content/samples/hihat/ch boop a.wav',
+			mode: 2,
+			gain: -13
+		});
+		const pad = project.tracks[7].patterns[0].sound.samples;
+		expect(pad.map((r) => [r.key, r.root])).toEqual([
+			[60, 60],
+			[72, 72],
+			[84, 84],
+			[96, 96],
+			[108, 108]
+		]);
+		expect(pad[0]).toMatchObject({
+			path: 'content/samples/bandpasser/1.wav',
+			frames: 248655,
+			mode: LOOP_BITS.forever
+		});
+		// synth engines name no samples
+		expect(project.tracks[2].patterns[0].sound.samples).toEqual([]);
+		expect(sampleHome(kit[0].path)).toBe('factory');
+	});
+
+	it('reads the paths a device writes (UTF-8 names too) and skips empty regions', () => {
+		const file = withSamples(fixture('blank-1.1.4.xy'), [
+			{
+				t: 0,
+				clear: true,
+				regions: {
+					2: { path: '/fat32/presets/drum/nt-aeroplane.preset/241204-1 2-c3-18.wav', key: 55 },
+					5: { path: '/fat32/samples/user/prise d’été.wav', key: 58, frames: 88200, gain: -9 }
+				}
+			}
+		]);
+		const kit = readProject(file).tracks[0].patterns[0].sound.samples;
+		expect(kit.map((r) => [r.index, r.key, r.path])).toEqual([
+			[2, 55, '/fat32/presets/drum/nt-aeroplane.preset/241204-1 2-c3-18.wav'],
+			[5, 58, '/fat32/samples/user/prise d’été.wav']
+		]);
+		expect(kit[1]).toMatchObject({ frames: 88200, gain: -9 });
+		expect(kit.map((r) => sampleHome(r.path))).toEqual(['drive', 'drive']);
+		expect(sampleHome('samples/elsewhere.wav')).toBe('unknown');
+		// read-only: the writer keeps the regions as the template holds them
+		expect(writeProject(readProject(file), file)).toEqual(file);
 	});
 });

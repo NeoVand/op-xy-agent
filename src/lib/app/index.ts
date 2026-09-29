@@ -3,7 +3,8 @@
  * simulator is the replica's virtual OP-XY (screen, LEDs, transport) and the sound its voice when no
  * device makes one, and persistence keeps its work across reloads; the bridge maps replica input to MIDI (through the transport) and mirrors the
  * device back onto the replica; hints explain what cannot be done remotely; the caption shows them,
- * rate-limited; the guide walks the user through the agent's steps on the replica.
+ * rate-limited; the guide walks the user through the agent's steps on the replica; the device
+ * samples are the audio of the samples a project names on the OP-XY's drive, read over USB and kept.
  */
 export { BridgeError, ReplicaBridge, type ReplicaBridgeOptions } from './bridge.svelte';
 export { HINT_REPEAT_MS, HintCaption, type HintCaptionOptions } from './caption.svelte';
@@ -55,6 +56,22 @@ export {
 	type SimPersistenceOptions,
 	type SimStore
 } from './persistence';
+export {
+	DeviceSamples,
+	getDeviceSamples,
+	setDeviceSamples,
+	type DeviceSamplesOptions
+} from './device-samples.svelte';
+export {
+	createIdbSampleCache,
+	createMemorySampleCache,
+	describeSamples,
+	heldSamples,
+	mtpPathOf,
+	type SampleCache,
+	type SampleReport,
+	type SampleSink
+} from './device-samples';
 export { default as StageHint } from './StageHint.svelte';
 export {
 	GUIDE_DONE_MS,

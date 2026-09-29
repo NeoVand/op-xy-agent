@@ -233,6 +233,29 @@ export const readPatternTool = defineTool({
 	}
 });
 
+// ─── read_sound ─────────────────────────────────────────────────────────────────────────────────
+
+export const readSoundTool = defineTool({
+	name: 'read_sound',
+	label: 'read sound',
+	kind: 'read',
+	description:
+		'Read an instrument track\'s whole sound on the replica, each page as its screen shows it: the engine and the preset it came from, the engine\'s four M1 values by name (a drum track: its selected key, plus the sound on every key), the amp and filter envelopes, the play mode, the filter (type, cutoff, resonance, envelope amount, key tracking), the sends, the LFO, the player, and the mix level and pan. Use it before you explain, judge or change a sound ("why does my pad sound dull?", "what makes this bass pluck?"), so you speak from its real values. With an OP-XY connected, the replica holds the device\'s sounds only after its project was loaded (the project key); otherwise these are the replica\'s own. Changes nothing.',
+	input: z.object({
+		track: z.int().min(1).max(8).describe('Instrument track 1–8')
+	}),
+	async run(input, ctx) {
+		const virtual = virtualOf(ctx.env);
+		if (!virtual) return errorResult(NO_VIRTUAL, 'no virtual op-xy');
+		try {
+			const sound = virtual.readSound(input.track);
+			return jsonResult(sound, `track ${sound.track}: ${sound.preset ?? sound.engine}`);
+		} catch (error) {
+			return errorResult(error instanceof Error ? error.message : String(error), 'not read');
+		}
+	}
+});
+
 // ─── write_arrangement ──────────────────────────────────────────────────────────────────────────
 
 /** The input that writes `before` back over the scenes `touched` and the song. */
@@ -343,4 +366,9 @@ export const writeArrangementTool = defineTool({
 	}
 });
 
-export const VIRTUAL_TOOLS = [writePatternTool, readPatternTool, writeArrangementTool];
+export const VIRTUAL_TOOLS = [
+	writePatternTool,
+	readPatternTool,
+	readSoundTool,
+	writeArrangementTool
+];

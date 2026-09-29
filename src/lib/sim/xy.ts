@@ -15,6 +15,19 @@ import { captureScene, copy, lengthSettings } from '$lib/sim/areas/arrange/model
 import { SCENES as SIM_SCENES, type PatternSound } from '$lib/sim/areas/arrange/state';
 import { octaveKey } from '$lib/sim/areas/sequencer/model';
 import { FX_TYPES, type FxSlot } from '$lib/sim/areas/auxiliary/state';
+import {
+	FIRST_NOTE,
+	KEYS,
+	KIT,
+	defaultRegion,
+	defaultSamplerTrack,
+	placeZone,
+	projectSampleFile,
+	type Region,
+	type SampleFile,
+	type SamplerTrack,
+	type Zone
+} from '$lib/sim/areas/sample/state';
 import { SCENE_LENGTH_MODES, SIGNATURES } from '$lib/sim/areas/system/catalogue';
 import { loadEngineSound, loadPreset, presetKey } from '$lib/sim/areas/system/presets';
 import {
@@ -28,6 +41,8 @@ import {
 	FILTER_TYPES,
 	LFO_SYNC_STEPS,
 	LFO_TYPES,
+	SAMPLER_TUNE_RANGE,
+	clamp,
 	defaultState,
 	defaultTrack,
 	type SimState,
@@ -43,6 +58,8 @@ import {
 import { hex2 } from '$lib/core/xy/bytes';
 import { SCENES, TICKS_PER_STEP, TRACKS } from '$lib/core/xy/layout';
 import {
+	LOOP_BITS,
+	REGION_END,
 	XY_EFFECTS,
 	XY_ENGINES,
 	XY_FILTERS,
@@ -54,6 +71,7 @@ import {
 	playModeOf,
 	quantizeByte,
 	quantizePercent,
+	sampleHome,
 	timeSignatureOf,
 	scaleByte,
 	trackGrooveByte,
@@ -62,6 +80,7 @@ import {
 	type XyNote,
 	type XyPattern,
 	type XyProject,
+	type XySampleRegion,
 	type XySoundState,
 	type XyStepComponent
 } from '$lib/core/xy/model';
@@ -532,9 +551,11 @@ const LOCK_IDS: Readonly<Record<number, string>> = Object.fromEntries(
  * (a new project by default) and takes the file's settings, every track's patterns with their
  * notes, step components and locks, the scenes, the songs, each instrument track's sound (the
  * preset its playing pattern names, with that pattern's stored settings over it; the other
- * patterns' sounds load when they play) and FX I and FX II. What the file names but the replica
- * lacks (TE's samples, a type byte we cannot name) is said in `skipped`. The mixer takes each
- * track's level and pan from its playing pattern and its mute from the scene.
+ * patterns' sounds load when they play), the samples its drum keys, sampler and zones name (by
+ * path: the file holds no audio, so stand-ins play until `app/device-samples` hands it over) and
+ * FX I and FX II. What the file names but the replica lacks (TE's factory samples, a type byte we
+ * cannot name) is said in `skipped`. The mixer takes each track's level and pan from its playing
+ * pattern and its mute from the scene.
  * @throws XyFormatError when the bytes are not a project we can read.
  */
 export function xyToSim(file: Uint8Array | XyProject, base?: SimState): XyToSimResult {
@@ -553,6 +574,8 @@ export function xyToSim(file: Uint8Array | XyProject, base?: SimState): XyToSimR
 		sequence.page = 0;
 		if (t < 8) {
 			state.areas.arrange.sounds[t] = patterns.map(() => null);
+			// the file's samples replace the replica's: what it does not name starts as a new project's
+			state.areas.sample.tracks[t] = defaultSamplerTrack(t);
 			readSound(project, state, t, sequence.current, skipped);
 		}
 		const sound = patterns[sequence.current].sound;
@@ -702,8 +725,16 @@ function readSound(
 	const stored = storedOf(sound.state, engine, track, name, skipped);
 	Object.assign(track, pick(soundFrom(stored, track), LANE_KEYS));
 	system.presetSettings[t] = presetSettingsOf(stored, system.presetSettings[t]);
-	// a new project's kits and pad play the replica's stand-ins, as they do in a new project
-	if (SAMPLE_ENGINES.has(engine) && !known?.sound && !NEW_PROJECT_PRESETS.includes(sound.preset)) {
+	readSamples(project, state, t, current, skipped);
+	// TE's factory samples are not in the replica (nor on the device's drive): its stand-ins play,
+	// as they do in a new project, whose kits and pad say nothing
+	const own = sound.samples.some((r) => sampleHome(r.path) !== 'factory');
+	if (
+		SAMPLE_ENGINES.has(engine) &&
+		!own &&
+		!known?.sound &&
+		!NEW_PROJECT_PRESETS.includes(sound.preset)
+	) {
 		skipped.push(
 			`${name}: ${sound.preset && sound.preset !== '/' ? sound.preset : engine}'s samples are TE's and not in the replica, so its own ${engine === 'drum' ? 'kit' : 'tone'} plays`
 		);
@@ -747,6 +778,132 @@ function readEffects(project: XyProject, state: SimState, skipped: string[]): vo
 
 /** Engines that play samples, which a project file names but does not hold. */
 const SAMPLE_ENGINES: ReadonlySet<EngineId> = new Set(['drum', 'sampler', 'multisampler']);
+
+/** The device's sample rate: a region's frame count over it is the sample's length. */
+const DEVICE_RATE = 44_100;
+
+/**
+ * The samples a track's patterns name, into the sample area: each sample engine's part (the drum
+ * keys, the sampler's sample, the zones) from the first pattern that runs that engine, the playing
+ * one first. Files keep their path as their id: a project names its samples but holds no audio, so
+ * until the audio arrives (read from the device, `app/device-samples`) the stand-ins play. The area
+ * keeps one set per engine, so a pattern naming other samples than that one is noted.
+ */
+function readSamples(
+	project: XyProject,
+	state: SimState,
+	t: number,
+	current: number,
+	skipped: string[]
+): void {
+	const patterns = project.tracks[t].patterns;
+	const held = state.areas.sample.tracks[t];
+	const taken = new Map<EngineId, { pattern: number; samples: string }>();
+	const order = [current, ...patterns.keys()].filter((i, k, all) => all.indexOf(i) === k);
+	for (const i of order) {
+		const sound = patterns[i].sound;
+		const engine = XY_ENGINES[sound.engine] as EngineId | undefined;
+		if (!engine || !SAMPLE_ENGINES.has(engine)) continue;
+		const samples = sound.samples.map((r) => `${r.key} ${r.path}`).join('\n');
+		const first = taken.get(engine);
+		if (first) {
+			if (first.samples !== samples) {
+				skipped.push(
+					`T${t + 1} pattern ${i + 1}: its own samples (the replica keeps one set per engine, pattern ${first.pattern + 1}'s)`
+				);
+			}
+			continue;
+		}
+		taken.set(engine, { pattern: i, samples });
+		if (engine === 'drum') held.keys = drumKeysOf(sound.samples);
+		else if (engine === 'sampler') held.synth = synthOf(sound.samples);
+		else held.zones = zonesOf(sound.samples);
+		held.selection = [];
+	}
+}
+
+/** A region's sample length in seconds, or `fallback` while the device has not measured it. */
+const secondsOf = (r: XySampleRegion, fallback: number) =>
+	r.frames > 0 ? r.frames / DEVICE_RATE : fallback;
+
+/**
+ * The drum keys a kit's regions fill: each on the key its key byte names (53–76; a region naming
+ * another key keeps its own place), the others empty.
+ */
+function drumKeysOf(regions: readonly XySampleRegion[]): (SampleFile | null)[] {
+	const keys: (SampleFile | null)[] = Array.from({ length: KEYS }, () => null);
+	for (const r of regions) {
+		const note = r.key - FIRST_NOTE;
+		const index = note >= 0 && note < KEYS ? note : r.index;
+		if (keys[index]) continue;
+		keys[index] = projectSampleFile(r.path, secondsOf(r, KIT[index][1]));
+	}
+	return keys;
+}
+
+/** A root note byte, or 60 (neutral) where the byte is not a note. */
+const rootOf = (r: XySampleRegion) => (r.root > 0 && r.root < 128 ? r.root : 60);
+
+/** The synth sampler's sample: region 0 (or the first that holds one), its root and region. */
+function synthOf(regions: readonly XySampleRegion[]): SamplerTrack['synth'] {
+	const r = regions.find((region) => region.index === 0) ?? regions[0];
+	if (!r) return { file: null, root: 60, region: defaultRegion() };
+	const root = rootOf(r);
+	return { file: projectSampleFile(r.path, secondsOf(r, 2), root), root, region: regionOf(r) };
+}
+
+/**
+ * The multisampler's zones, by the top key each region names. The replica plays a zone unpitched
+ * on its top key, so a sample rooted elsewhere is tuned by the difference.
+ */
+function zonesOf(regions: readonly XySampleRegion[]): Zone[] {
+	let zones: Zone[] = [];
+	for (const r of regions) {
+		const region = regionOf(r);
+		const root = r.root > 0 && r.root < 128 ? r.root : r.key;
+		const tune = clamp(region.tune + r.key - root, -SAMPLER_TUNE_RANGE, SAMPLER_TUNE_RANGE);
+		zones = placeZone(zones, {
+			note: r.key,
+			file: projectSampleFile(r.path, secondsOf(r, 2), root),
+			region: { ...region, tune }
+		});
+	}
+	return zones;
+}
+
+/**
+ * A sampler region as the sample area keeps it: points as parts of the sample (the defaults while
+ * the device has not measured it), the loop type from the mode's bits, the crossfade (the device
+ * stops at 75 %, stored as 0x60000000), fine tune, gain and direction. Points that would leave
+ * nothing to play (an end at or before the start) play the whole sample instead.
+ */
+function regionOf(r: XySampleRegion): Region {
+	const base = defaultRegion();
+	const frames = r.frames;
+	const part = (v: number, fallback: number) =>
+		frames > 0 && v !== REGION_END ? clamp(v / frames, 0, 1) : fallback;
+	// the end is the last frame played: a whole sample ends on its last frame (or one past it)
+	const played = frames > 0 && r.end !== REGION_END && r.end > r.start;
+	const end = played ? clamp((r.end + 1) / frames, 0, 1) : 1;
+	const start = played ? part(r.start, 0) : 0;
+	const loopStart = clamp(part(r.loopStart, base.loopStart), start, end);
+	const loopEnd = clamp(
+		r.loopEnd === REGION_END ? end : part(r.loopEnd, base.loopEnd),
+		loopStart,
+		end
+	);
+	return {
+		start,
+		loopStart,
+		loopEnd,
+		end,
+		loop: r.mode & LOOP_BITS.forever ? 'forever' : r.mode & LOOP_BITS.off ? 'off' : 'release',
+		crossfade: clamp(Math.round((r.crossfade / 2 ** 31) * 100), 0, 75),
+		tune: r.fine / 100,
+		gain: clamp(r.gain, -30, 20),
+		reverse: r.reverse
+	};
+}
 
 /** The scenes the file uses: the pattern each track plays and its mute; the mix is the tracks'. */
 function readScenes(project: XyProject, state: SimState): void {

@@ -1227,6 +1227,17 @@ rewritten whatever their length (A.7), notes sorted by tick (§3.7), family 0x14
 the sound block, drum regions or presets yet (milestones 2–3 of §7.3). The legacy raw-space modules
 (`xy/container.py`, `structs.py`, `plocks.py`, `step_components.py`) are not ported (Appendix E).
 
+**Sample regions, read (2026-09-29).** For the sample engines (sampler 0x02, drum 0x03,
+multisampler 0x1E), `readPattern` reads the 24 records of §3.5's ★ model into `sound.samples`
+(read-only, like the rest of `sound`): path (UTF-8), frames, points, crossfade, root, key, mode,
+fine, gain, pan, direction. The blank project and the owner's local captures bear the model out:
+factory kit records hold keys 53–76 and play modes 1 (hats 2, a choke group); the bandpasser pad's
+five zones hold top key = root (60, 72, … 108) and mode 0x80; the factory synth-sampler presets hold
+region 0 only, with roots 72/77/79 against keys 60/100 and loop bits 0x80 or 0; `on tape`'s
+crossfade word is 0x60000000 (the device's 75 %), `fm organ`'s 0xFD70F748 (below zero as a signed
+word: the replica loads it as none). `xyToSim` puts the paths on the sample area;
+`app/device-samples.ts` reads the `/fat32/` ones over MTP (note 30 §4.2).
+
 **Verification.**
 
 | Check                                                                       | Result                                                                                                                                                                                                                |

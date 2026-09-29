@@ -402,6 +402,16 @@ to `kmorrill/xy-format`.
       project to `projects/user` written over the device's open project (its sounds stay), after a
       confirming click; loads can be undone (`app/project-transfer.svelte.ts`). Tried on an emulated
       unit only (`QUESTIONS.md` 13).
+- [x] The unit's own samples (2026-09-29): `readProject` reads each sample engine's 24 regions
+      (note 10 §3.5) and `xyToSim` puts them on the drum keys, the sampler and the zones with the
+      path as the file id. A project loaded from the OP-XY brings the samples on its drive in the
+      same MTP session (lists and reads only, each folder listed once), decoded and handed to the
+      replica's sound (`app/device-samples.ts`); TE's factory library (`content/samples/…`) is not
+      on the drive, so those sounds stay stand-ins. A file that is missing, not WAV/AIFF or bigger
+      than 20 s of 96 kHz float stereo is listed and skipped; a broken connection ends the reading.
+      Read files are kept in IndexedDB by path and come back on reload, undo or a `.xy` from disk.
+      Left: drum-key settings from the regions (gain, pan, play mode, tune), per-pattern kits, and
+      a try on the owner's unit.
 - [ ] CC86 load; agent tools for load and save (they need the device's USB permission already
       granted, since only a click may ask for it).
 

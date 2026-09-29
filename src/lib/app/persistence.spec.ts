@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ReplicaState } from '$lib/replica';
+import { projectSampleFile } from '$lib/sim/areas/sample/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { DEFAULT_LEVEL, GROOVES } from '$lib/sim/params';
 import { ARP_SPEEDS, currentPattern } from '$lib/sim/sequencer';
@@ -43,6 +44,23 @@ describe('saving the virtual OP-XY’s work', () => {
 		expect(sim.state.tempo.bpm).toBe(128);
 		expect(sim.state.areas.mixer.eq.low).toBe(70);
 		expect(sim.leds['step.1']).toBe('white');
+	});
+
+	it('brings a device kit back as it was: its files’ paths, and its empty keys empty', () => {
+		const work = new OpxySim({ now: () => 0 });
+		const keys = work.state.areas.sample.tracks[0].keys;
+		keys.fill(null);
+		keys[0] = projectSampleFile('/fat32/presets/drum/test.preset/kick.wav', 0.5);
+		const sim = new OpxySim({ now: () => 0 });
+		expect(applySaved(sim.state, captureSim(work.state))).toBe(true);
+		const back = sim.state.areas.sample.tracks[0].keys;
+		expect(back[0]).toMatchObject({
+			id: '/fat32/presets/drum/test.preset/kick.wav',
+			path: '/fat32/presets/drum/test.preset/kick.wav'
+		});
+		// an emptied key stays silent: it does not come back as a new project's kit sound
+		expect(back.slice(1).every((k) => k === null)).toBe(true);
+		expect(mergeDefaults([null, { x: 1 }], [{ x: 0, y: 0 }])).toEqual([null, { x: 1, y: 0 }]);
 	});
 
 	it('keeps the projects folder and the preset library, which outlive projects', () => {

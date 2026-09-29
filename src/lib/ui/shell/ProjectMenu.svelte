@@ -2,33 +2,39 @@
 @component
 The replica's project as the device's own `.xy` file (M6, `app/project-transfer`): a small
 "project" key on the caption line opens a card to start a new project with the default sounds,
-open a `.xy` from disk, download the project as one, load the project the OP-XY has open over USB,
-or add the replica's project to the OP-XY. The last one writes to the device, so it says what it
-will add and waits for a second click.
+open a `.xy` from disk, download the project as one, load the project the OP-XY has open over USB
+(with the samples its tracks use, `app/device-samples`), or add the replica's project to the
+OP-XY. The last one writes to the device, so it says what it will add and waits for a second click.
 -->
 <script lang="ts">
 	import { Folder01Icon } from '@hugeicons/core-free-icons';
 	import { Button, IconButton, Legend, ToolButton } from '$lib/ui';
-	import { getAppSimulator, getSimPersistence } from '$lib/app';
+	import { getAppSimulator, getDeviceSamples, getSimPersistence } from '$lib/app';
 	import { PROJECT_NAME, ProjectTransfer } from '$lib/app/project-transfer.svelte';
 	import { browserUsb } from '$lib/device';
 	import blankUrl from '$lib/core/xy/fixtures/blank-1.1.4.xy?url';
 
-	const simulator = getAppSimulator();
-	/** Saves the replica's work soon after a project change (absent outside the app). */
-	const persistence = (() => {
+	/** A context the app sets, or null outside it. */
+	function optional<T>(get: () => T): T | null {
 		try {
-			return getSimPersistence();
+			return get();
 		} catch {
 			return null;
 		}
-	})();
+	}
+
+	const simulator = getAppSimulator();
+	/** Saves the replica's work soon after a project change (absent outside the app). */
+	const persistence = optional(getSimPersistence);
+	/** The samples a project uses, read from the device with it (absent outside the app). */
+	const samples = optional(getDeviceSamples);
 	const transfer = simulator
 		? new ProjectTransfer({
 				sim: simulator.sim,
 				usb: browserUsb(),
 				blank: async () => new Uint8Array(await (await fetch(blankUrl)).arrayBuffer()),
-				changed: () => persistence?.markDirty()
+				changed: () => persistence?.markDirty(),
+				samples
 			})
 		: null;
 
@@ -135,7 +141,12 @@ will add and waits for a second click.
 					<div class="project__row">
 						<Legend size="2xs" tone="fg">{transfer.message}</Legend>
 						{#if transfer.canUndo}
-							<Button size="sm" variant="ghost" onclick={() => transfer.undo()}>undo</Button>
+							<Button
+								size="sm"
+								variant="ghost"
+								disabled={transfer.busy}
+								onclick={() => transfer.undo()}>undo</Button
+							>
 						{/if}
 					</div>
 				{/if}

@@ -16,6 +16,10 @@ import {
 	NOTE_SIZE,
 	PATTERN,
 	PRESET_PATH_SIZE,
+	REGION,
+	REGION_SIZE,
+	SAMPLE_PATH_SIZE,
+	SAMPLE_REGIONS,
 	SCENE_SIZE,
 	SCENE_SLOTS,
 	SOUND,
@@ -26,6 +30,7 @@ import {
 	type XyLayout
 } from './layout';
 import {
+	SAMPLE_ENGINE_BYTES,
 	XY_STEP_COMPONENTS,
 	lockBit,
 	type XyLock,
@@ -33,6 +38,7 @@ import {
 	type XyPattern,
 	type XyProject,
 	type XyScene,
+	type XySampleRegion,
 	type XySettings,
 	type XySong,
 	type XySoundState,
@@ -114,6 +120,7 @@ export function readSongs(image: Uint8Array, layout: XyLayout): XySong[] {
 /** The pattern whose struct `span` locates (§3.4, §3.7–§3.9). */
 export function readPattern(image: Uint8Array, span: PatternSpan): XyPattern {
 	const base = span.base;
+	const engine = image[base + PATTERN.engine];
 	return {
 		steps: image[base + PATTERN.steps],
 		noteLength: u16(image, base + PATTERN.noteLength),
@@ -127,8 +134,9 @@ export function readPattern(image: Uint8Array, span: PatternSpan): XyPattern {
 		locks: readLocks(image, base),
 		lanes: image.slice(span.lanes, span.lanes + span.lanesSize),
 		sound: {
-			engine: image[base + PATTERN.engine],
+			engine,
 			preset: latin1(image, base + PATTERN.presetPath, PRESET_PATH_SIZE),
+			samples: SAMPLE_ENGINE_BYTES.has(engine) ? readSampleRegions(image, base) : [],
 			volume: u32(image, base + PATTERN.volume),
 			pan: u32(image, base + PATTERN.pan),
 			state: readSoundState(image, base)
@@ -222,6 +230,49 @@ function readLocks(image: Uint8Array, base: number): XyLock[] {
 		}
 	}
 	return locks;
+}
+
+/**
+ * The sample regions of the pattern at `base` that name a sample (§3.5 ★): the drum keys, the
+ * sampler's sample or the multisampler's zones, in record order.
+ */
+export function readSampleRegions(image: Uint8Array, base: number): XySampleRegion[] {
+	const regions: XySampleRegion[] = [];
+	for (let index = 0; index < SAMPLE_REGIONS; index++) {
+		const at = base + PATTERN.regions + index * REGION_SIZE;
+		const path = samplePath(image, at + REGION.path);
+		if (!path) continue;
+		regions.push({
+			index,
+			path,
+			frames: u32(image, at + REGION.frames),
+			start: u32(image, at + REGION.start),
+			end: u32(image, at + REGION.end),
+			loopStart: u32(image, at + REGION.loopStart),
+			loopEnd: u32(image, at + REGION.loopEnd),
+			crossfade: i32(image, at + REGION.crossfade),
+			root: image[at + REGION.root],
+			key: image[at + REGION.key],
+			mode: image[at + REGION.mode],
+			fine: image[at + REGION.fine],
+			gain: i8(image, at + REGION.gain),
+			pan: i8(image, at + REGION.pan),
+			reverse: image[at + REGION.direction] !== 0
+		});
+	}
+	return regions;
+}
+
+/**
+ * A region's sample path (UTF-8, NUL-padded: file names may be UTF-8 since OS 1.1.15), or "" for a
+ * region without one; bytes that cannot be a path (control characters) count as none.
+ */
+function samplePath(image: Uint8Array, at: number): string {
+	const field = image.subarray(at, at + SAMPLE_PATH_SIZE);
+	const end = field.indexOf(0);
+	const bytes = end < 0 ? field : field.subarray(0, end);
+	if (bytes.length === 0 || bytes.some((b) => b < 0x20 || b === 0x7f)) return '';
+	return new TextDecoder().decode(bytes);
 }
 
 /** A NUL-padded latin-1 string field. */

@@ -57,6 +57,12 @@ export interface SampleFile {
 	peaks: Peaks | null;
 	/** Root note (MIDI) from the file's metadata or name, when it has one. */
 	root: number | null;
+	/**
+	 * Where the file lives, as a project file names it (a loaded `.xy`): `/fat32/presets/…` or
+	 * `/fat32/samples/…` on the OP-XY's drive, `content/samples/…` in its factory library. The id is
+	 * this path, so the audio read from the device (`app/device-samples`) finds every copy.
+	 */
+	path?: string;
 }
 
 /**
@@ -198,6 +204,21 @@ export function sampleFile(
 	root: number | null = null
 ): SampleFile {
 	return { id: `${folder}/${name}`, name, folder, seconds, seed, peaks: null, root };
+}
+
+/**
+ * A sample a project file names by path (a drum key's, the sampler's, a zone's): shown by its file
+ * name, with the path as its id, so every key and zone holding that file shares one recording.
+ */
+export function projectSampleFile(
+	path: string,
+	seconds: number,
+	root: number | null = null
+): SampleFile {
+	const slash = path.lastIndexOf('/');
+	const name = path.slice(slash + 1) || path;
+	const folder = slash > 0 ? path.slice(0, slash) : '';
+	return { ...sampleFile(name, folder, seconds, hashSeed(path), root), id: path, path };
 }
 
 /**

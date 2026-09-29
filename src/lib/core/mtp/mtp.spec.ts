@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { FAKE_MTP_STORAGE, FakeMtpOpxy } from '../../../../test/fakes/fake-mtp';
+import { FAKE_MTP_STORAGE, FAKE_MTP_TREE, FakeMtpOpxy } from '../../../../test/fakes/fake-mtp';
 import {
 	CONTAINER,
 	MtpError,
+	MtpPaths,
 	MtpPolicyError,
 	MtpSession,
 	OP,
@@ -157,6 +158,37 @@ describe('an MTP session with the OP-XY', () => {
 		expect(fake.operations).not.toContain(OP.sendObjectInfo);
 		expect(fake.operations).not.toContain(OP.sendObject);
 		expect(fake.find('presets/mine')).toBeUndefined();
+	});
+});
+
+describe('many paths on one storage', () => {
+	it('lists each folder once, compares names without case, and only reads', async () => {
+		const fake = new FakeMtpOpxy({
+			...FAKE_MTP_TREE,
+			'presets/drum/kit.preset/a.wav': 'a',
+			'presets/drum/kit.preset/b.wav': 'bb',
+			'presets/drum/other.preset/c.wav': 'ccc'
+		});
+		const { session } = await openSession(fake);
+		const listings = () => fake.operations.filter((op) => op === OP.getObjectHandles).length;
+		const before = listings();
+		const paths = new MtpPaths(session, FAKE_MTP_STORAGE);
+		expect(await paths.resolve('presets/drum/kit.preset/a.wav')).toMatchObject({
+			name: 'a.wav',
+			folder: false,
+			size: 1
+		});
+		expect(await paths.resolve('Presets/DRUM/kit.preset/B.WAV')).toMatchObject({ size: 2 });
+		expect(await paths.resolve('presets/drum/kit.preset/missing.wav')).toBeNull();
+		// a file is no folder
+		expect(await paths.resolve('presets/drum/kit.preset/a.wav/deeper')).toBeNull();
+		expect(await paths.resolve('/presets/drum/other.preset/c.wav')).toMatchObject({ size: 3 });
+		// the top, presets, drum, kit.preset and other.preset: one listing each for five paths
+		expect(listings() - before).toBe(5);
+		expect(paths.listed).toBe(5);
+		for (const op of [OP.sendObjectInfo, OP.sendObject, OP.deleteObject]) {
+			expect(fake.operations).not.toContain(op);
+		}
 	});
 });
 

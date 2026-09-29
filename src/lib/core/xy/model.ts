@@ -172,12 +172,79 @@ export interface XySoundState {
 	readonly mix: { readonly level: number; readonly pan: number };
 }
 
+/**
+ * A sample region that holds a sample (§3.5 ★, confidence C): a drum key, the sampler's sample
+ * (region 0) or a multisampler zone. Points count the file's frames.
+ */
+export interface XySampleRegion {
+	/** The record, 0–23. */
+	readonly index: number;
+	/**
+	 * Where the sample lives: `/fat32/presets/<folders>/<name>.preset/<file>` (a preset's own),
+	 * `/fat32/samples/…` (the owner's recordings and library) or `content/samples/…` (TE's factory
+	 * library, inside the firmware).
+	 */
+	readonly path: string;
+	/** The sample's length in frames: 0 until the device has read the file. */
+	readonly frames: number;
+	readonly start: number;
+	/** 0xFFFFFFFF: to the end of the sample. */
+	readonly end: number;
+	readonly loopStart: number;
+	/** 0xFFFFFFFF: the end of the sample. */
+	readonly loopEnd: number;
+	/** Signed Q31: the samplers' loop crossfade (0x60000000 is the device's 75 %), a drum key's fade. */
+	readonly crossfade: number;
+	/** 60 is neutral; a zone's root note; the sampler plays note n at n − root semitones (+ fine). */
+	readonly root: number;
+	/** The key that plays it: a drum key's note (53–76 in a factory kit), a zone's top key. */
+	readonly key: number;
+	/** Drum play mode (0 gate, 1 one-shot, 2 group, 3 loop), or the samplers' loop bits {@link LOOP_BITS}. */
+	readonly mode: number;
+	/** The sampler's fine tune, cents 0–99. */
+	readonly fine: number;
+	/** dB, −30…20 on the device. */
+	readonly gain: number;
+	/** −100…100. */
+	readonly pan: number;
+	readonly reverse: boolean;
+}
+
+/** The samplers' loop bits in a region's mode byte (§3.5); neither is "until release". */
+export const LOOP_BITS = { forever: 0x80, off: 0x40 } as const;
+
+/** A region point that means "the end of the sample". */
+export const REGION_END = 0xffffffff;
+
+/** Engine bytes of the engines that play samples: sampler, drum, multisampler. */
+export const SAMPLE_ENGINE_BYTES: ReadonlySet<number> = new Set([0x02, 0x03, 0x1e]);
+
+/**
+ * Where a region's sample lives (note 30 §4): on the OP-XY's drive (`/fat32/…`: presets' own
+ * samples, the preinstalled `nt-*` kits, the owner's recordings), in TE's factory library inside
+ * the firmware (`content/…`, not on the drive), or somewhere no family we know names.
+ */
+export type SampleHome = 'drive' | 'factory' | 'unknown';
+
+/** The family of a region's sample path. */
+export function sampleHome(path: string): SampleHome {
+	if (/^\/fat32\//i.test(path)) return 'drive';
+	if (/^content\//i.test(path)) return 'factory';
+	return 'unknown';
+}
+
 /** What a pattern plays (read-only here: the writer keeps the template's sound). */
 export interface XySound {
 	/** Engine byte ({@link XY_ENGINES}); FX I and FX II keep their effect type here. */
 	readonly engine: number;
 	/** Preset path, `category/name`; "" for none, "/" after an engine change without a preset. */
 	readonly preset: string;
+	/**
+	 * The sample regions that hold a sample, by record (for the engines of
+	 * {@link SAMPLE_ENGINE_BYTES}; empty for the others). A project names its samples; it does not
+	 * hold their audio.
+	 */
+	readonly samples: readonly XySampleRegion[];
 	/** Track volume, Q31 (0x7FFFFFFF full; a new project 0x60000000). Kept per pattern (★ §3.6). */
 	readonly volume: number;
 	/** Track pan, Q31 (0x40000000 centre). */

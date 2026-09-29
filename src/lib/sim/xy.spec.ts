@@ -23,6 +23,8 @@ import { PATTERN, SOUND, walkProject } from '$lib/core/xy/layout';
 import { XY_STEP_COMPONENTS } from '$lib/core/xy/model';
 import { readProject } from '$lib/core/xy/read';
 import { writeProject } from '$lib/core/xy/write';
+import { withSamples } from '../../../test/fakes/xy-samples';
+import { KIT, kitFiles, projectSampleFile } from './areas/sample/state';
 import { simToXy, xyToSim } from './xy';
 
 const fixture = (name: string) =>
@@ -549,6 +551,149 @@ describe('xyToSim: the sounds a project stores', () => {
 			'T15: effect byte 0x3f is not one we know (delay kept)'
 		]);
 		expect(state.tracks[2].filter.type).toBe('svf');
+	});
+});
+
+describe('xyToSim: the samples a project names', () => {
+	const KICK = '/fat32/presets/drum/test.preset/kick.wav';
+	const TAKE = '/fat32/samples/user/take 1.wav';
+	const SNARE = 'content/samples/snare/snare boop a.wav';
+
+	it('puts a kit’s samples on the keys its key bytes name, each file’s path its id', () => {
+		const file = withSamples(blank, [
+			{
+				t: 0,
+				preset: 'drum/test',
+				clear: true,
+				regions: {
+					0: { path: KICK, key: 53, frames: 22050 },
+					1: { path: TAKE, key: 55, frames: 0 },
+					2: { path: SNARE, key: 54 },
+					// a key byte off the keyboard: the region keeps its own place
+					3: { path: KICK, key: 90 }
+				}
+			}
+		]);
+		const { state, skipped } = xyToSim(file);
+		const keys = state.areas.sample.tracks[0].keys;
+		expect(keys[0]).toEqual(projectSampleFile(KICK, 0.5));
+		expect(keys[0]).toMatchObject({ id: KICK, name: 'kick.wav', path: KICK });
+		// not measured by the device yet: the kit layout's length stands in
+		expect(keys[2]).toMatchObject({ id: TAKE, name: 'take 1.wav', seconds: KIT[2][1] });
+		expect(keys[1]?.path).toBe(SNARE);
+		expect(keys[3]?.id).toBe(KICK);
+		// the kit names no other keys: they are empty, as on the device
+		expect(keys.slice(4).every((k) => k === null)).toBe(true);
+		// the unit's own samples are nothing to excuse; their audio comes over usb
+		expect(skipped).toEqual([]);
+		expect(state.areas.system.trackPresets[0]).toBe('drum/test');
+	});
+
+	it('reads the sampler’s sample and the zones with their points, loop, root and tune', () => {
+		const file = withSamples(blank, [
+			{
+				t: 3,
+				engine: 0x02,
+				preset: 'keys/test',
+				clear: true,
+				regions: {
+					0: {
+						path: '/fat32/samples/user/keys c3.wav',
+						frames: 88200,
+						start: 441,
+						end: 88199,
+						loopStart: 22050,
+						loopEnd: 66150,
+						crossfade: 0x30000000,
+						root: 48,
+						key: 60,
+						mode: 0x80,
+						fine: 25,
+						gain: -6,
+						reverse: true
+					}
+				}
+			},
+			{
+				t: 7,
+				preset: 'pad/test',
+				clear: true,
+				regions: {
+					// device-made: the zone's top key is the note it was sampled on
+					0: { path: '/fat32/presets/pad/test.preset/c4.wav', key: 60, root: 60, frames: 44100 },
+					// a tool-made zone with its root below its top key
+					1: {
+						path: '/fat32/presets/pad/test.preset/e4.wav',
+						key: 66,
+						root: 64,
+						frames: 44100,
+						loopEnd: 0xffffffff,
+						mode: 0x40
+					},
+					// points that would leave nothing to play: the whole sample plays
+					2: {
+						path: '/fat32/presets/pad/test.preset/g4.wav',
+						key: 72,
+						root: 72,
+						frames: 44100,
+						start: 30000,
+						end: 100
+					}
+				}
+			}
+		]);
+		const { state } = xyToSim(file);
+		expect(state.tracks[3].engine).toBe('sampler');
+		const synth = state.areas.sample.tracks[3].synth;
+		expect(synth.file).toMatchObject({
+			id: '/fat32/samples/user/keys c3.wav',
+			seconds: 2,
+			root: 48
+		});
+		expect(synth.root).toBe(48);
+		expect(synth.region).toEqual({
+			start: 441 / 88200,
+			loopStart: 0.25,
+			loopEnd: 0.75,
+			end: 1,
+			loop: 'forever',
+			crossfade: 38,
+			tune: 0.25,
+			gain: -6,
+			reverse: true
+		});
+		const zones = state.areas.sample.tracks[7].zones;
+		expect(zones.map((z) => [z.note, z.file.name, z.region.tune])).toEqual([
+			[60, 'c4.wav', 0],
+			[66, 'e4.wav', 2],
+			[72, 'g4.wav', 0]
+		]);
+		expect(zones[1].region).toMatchObject({ loop: 'off', loopEnd: 1, end: 1 });
+		expect(zones[2].region).toMatchObject({ start: 0, end: 1 });
+	});
+
+	it('replaces the samples an earlier project left, and notes a pattern naming others', () => {
+		const base = defaultState();
+		// an earlier project's kit on T3, which the new file runs a synth on
+		base.areas.sample.tracks[2].keys[0] = projectSampleFile(KICK, 1);
+		const file = withSamples(blank, [
+			{ t: 0, p: 0, preset: 'drum/test', regions: { 0: { path: KICK, key: 53 } } }
+		]);
+		const { state } = xyToSim(file, base);
+		expect(state.areas.sample.tracks[2].keys).toEqual(kitFiles(2));
+		expect(state.areas.sample.tracks[0].keys[0]?.path).toBe(KICK);
+		// a second pattern on T1 with another kit: the replica keeps the playing pattern's
+		const project = readProject(file);
+		const second = structuredClone(project.tracks[0].patterns[0]);
+		project.tracks[0].patterns.push({
+			...second,
+			sound: { ...second.sound, samples: second.sound.samples.slice(1) }
+		});
+		const { state: two, skipped } = xyToSim(project);
+		expect(two.areas.sample.tracks[0].keys[0]?.path).toBe(KICK);
+		expect(skipped).toContain(
+			"T1 pattern 2: its own samples (the replica keeps one set per engine, pattern 1's)"
+		);
 	});
 });
 

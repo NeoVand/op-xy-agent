@@ -60,6 +60,7 @@ import {
 	type AgentTimers,
 	type GuideHost,
 	type PresetInboxHost,
+	type ProjectHost,
 	type ScreenReader,
 	type SubagentResult,
 	type ToolContext,
@@ -98,6 +99,8 @@ export interface ConductorOptions {
 	readonly guide?: GuideHost | null;
 	/** The preset maker's inbox (make_kit); absent when headless. */
 	readonly presets?: PresetInboxHost | null;
+	/** The replica's project to the OP-XY over USB (send_project); absent when headless. */
+	readonly projects?: ProjectHost | null;
 	/** Listening to the OP-XY or the replica (listen, listen_tracks); absent when headless. */
 	readonly listen?: ListenHost | null;
 	readonly manual: ManualSource;
@@ -105,7 +108,7 @@ export interface ConductorOptions {
 	/** Remembers the last thread and the chosen model; memory-only when absent. */
 	readonly preferences?: PreferenceStore;
 	readonly timers?: AgentTimers;
-	/** Conductor model (default: the saved preference, else `claude-opus-5-5`). */
+	/** Conductor model (default: the saved preference, else `claude-sonnet-5-5`). */
 	readonly model?: string;
 	/** Model for every subagent (default: each subagent's own). */
 	readonly subagentModel?: string;
@@ -291,6 +294,7 @@ export class Conductor {
 			virtual: options.virtual ?? null,
 			guide: options.guide ?? null,
 			presets: options.presets ?? null,
+			projects: options.projects ?? null,
 			listen: options.listen ?? null,
 			manual: options.manual,
 			timers: this.#timers,

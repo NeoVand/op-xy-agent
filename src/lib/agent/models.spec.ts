@@ -11,8 +11,14 @@ import {
 } from './models';
 
 describe('profiles', () => {
-	it('defaults the conductor to Opus 5.5 with updates, fallbacks and system messages', () => {
-		expect(DEFAULT_CONDUCTOR_MODEL).toBe('claude-opus-5-5');
+	it('defaults the conductor to Sonnet 5.5 with updates, fallbacks and system messages', () => {
+		expect(DEFAULT_CONDUCTOR_MODEL).toBe('claude-sonnet-5-5');
+		expect(profileFor(DEFAULT_CONDUCTOR_MODEL)).toMatchObject({
+			thinking: 'adaptive',
+			thinkingDisplay: 'updates',
+			midConversationSystem: true,
+			fallbacks: true
+		});
 		expect(profileFor('claude-opus-5-5')).toMatchObject({
 			thinking: 'adaptive',
 			thinkingDisplay: 'updates',

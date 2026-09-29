@@ -47,6 +47,10 @@ above the composer says what voice is doing while it is on.
 		type PreparedAttachment
 	} from '$lib/agent/attachments';
 	import type { Conductor } from '$lib/agent/conductor.svelte';
+	import type { ProjectHost } from '$lib/agent/tools/define';
+	import { ProjectTransfer } from '$lib/app/project-transfer.svelte';
+	import blankUrl from '$lib/core/xy/fixtures/blank-1.1.4.xy?url';
+	import { browserUsb } from '$lib/device';
 	import { KeyStore, type KeyProvider } from '$lib/agent/keys.svelte';
 	import { DEFAULT_CONDUCTOR_MODEL, modelOptions, profileFor } from '$lib/agent/models';
 	import ApprovalSheet from '$lib/agent/ui/ApprovalSheet.svelte';
@@ -100,6 +104,25 @@ above the composer says what voice is doing while it is on.
 	const persistence = fromContext(getSimPersistence);
 	const guide = fromContext(getReplicaGuide);
 	const presets = fromContext(getPresetInbox);
+	/** The replica's project to the OP-XY over USB, for send_project (its own transfer, as the project key has). */
+	const projects = ((): ProjectHost | null => {
+		if (!simulator) return null;
+		const transfer = new ProjectTransfer({
+			sim: simulator.sim,
+			usb: browserUsb(),
+			blank: async () => new Uint8Array(await (await fetch(blankUrl)).arrayBuffer()),
+			changed: () => persistence?.markDirty()
+		});
+		return {
+			usb: transfer.usbAvailable,
+			async saveToDevice(name) {
+				const path = await transfer.saveToDevice(name);
+				return path
+					? { path, skipped: [...transfer.skipped] }
+					: { error: transfer.error ?? 'the OP-XY did not take it' };
+			}
+		};
+	})();
 	const keys = new KeyStore();
 	const uid = $props.id();
 
@@ -204,11 +227,13 @@ above the composer says what voice is doing while it is on.
 									: ''
 	);
 
+	/** A first taste of each thing the agent does: the manual, a walkthrough, a kit, a sound, a groove. */
 	const EXAMPLES = [
 		'what does shift + M1 do?',
 		'walk me through setting the filter cutoff on track 3',
-		'make the bass pump with the kick',
-		'build a little house loop and play it'
+		'make a punchy 909 kit and play a house beat with it',
+		'why does track 3 sound so dark?',
+		'make the bass pump with the kick'
 	];
 
 	onMount(() => {
@@ -267,6 +292,7 @@ above the composer says what voice is doing while it is on.
 				persistence,
 				guide,
 				presets,
+				projects,
 				listen: capture
 			});
 			conductor = next;
