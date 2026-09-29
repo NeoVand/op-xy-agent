@@ -244,7 +244,7 @@ interface Trio {
 
 /**
  * Plays a map path on a simulator (the tests replay every page's path on a new project): the
- * navigator's steps, `shift + player → + player` (shift kept down while player is pressed again)
+ * navigator's steps, `shift + player → + turn E1` (shift kept down while E1 moves the list's box)
  * among them.
  */
 export function playPath(sim: OpxySim, steps: readonly MapStep[]): void {
@@ -1290,7 +1290,7 @@ function fxPage(type: FxType): Spec {
 
 /**
  * A player page on track 3: arpeggio by default, the others moved to in the player list
- * (`shift + player → + player`, shift kept down).
+ * (`shift + player → + turn E1`, shift kept down).
  */
 function playerPage(type: PlayerType): Spec {
 	return {

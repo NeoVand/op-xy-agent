@@ -109,8 +109,8 @@ export function formatScale(scale: number): string {
 // ─────────────────────────────────────────────────────────────────────────── players
 
 /**
- * Player types, in the order the device lists them and `shift + player` steps through them
- * (manual: players/overview; camera, OS 1.1.33).
+ * Player types, in the order the device lists them in `shift + player`'s list, where E1 moves
+ * through them (manual: players/overview; camera and the owner's unit, OS 1.1.33).
  */
 export const PLAYER_TYPES = ['arpeggio', 'hold', 'maestro'] as const;
 export type PlayerType = (typeof PLAYER_TYPES)[number];

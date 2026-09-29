@@ -91,7 +91,7 @@ describe('the device map', () => {
 		}
 		// a page a new project opens on needs no keys; the player list keeps shift held
 		expect(page('instrument.m1.drum').path).toEqual([]);
-		expect(page('player.hold').path.map((s) => s.keys)).toContain('shift + player → + player');
+		expect(page('player.hold').path.map((s) => s.keys)).toContain('shift + player → + turn E1');
 	});
 
 	it('gives every turn a label and its range, and every click what it does', () => {
@@ -146,7 +146,7 @@ describe('the device map', () => {
 	it('reaches the hold and maestro players as the planner does, shift kept down in the list', () => {
 		expect(page('player.maestro').path.map((s) => s.keys)).toEqual([
 			'T3',
-			'shift + player → + player → + player',
+			'shift + player → + turn E1',
 			'player'
 		]);
 		expect(control('auxiliary.brain.m2', 'click E1').does).toBe(

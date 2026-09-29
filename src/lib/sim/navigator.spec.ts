@@ -393,8 +393,8 @@ describe('the navigator: key grammar the plans use', () => {
 	it('holds a chord’s keys, and keeps them down across “→ +”', () => {
 		const sim = boot();
 		playStep(sim, { keys: 'T3' });
-		// shift stays down while player is pressed again: the list moves on to hold, then maestro
-		playStep(sim, { keys: 'shift + player → + player → + player' });
+		// shift stays down while E1 turns: the list's box moves two on, to maestro
+		playStep(sim, { keys: 'shift + player → + turn E1', clicks: 2 });
 		expect(currentPattern(sim.state.tracks[2].sequence).player.type).toBe('maestro');
 		expect(sim.state.shift).toBe(false);
 		// a keyboard key held while M1 is pressed: the drum sampler's slicer on that key
@@ -408,14 +408,14 @@ describe('the navigator: key grammar the plans use', () => {
 		const sim = boot();
 		const maestro = planPlace(sim.state, { area: 'player', track: 3, type: 'maestro' });
 		expect(maestro.reached).toBe(true);
-		expect(keys(maestro)).toEqual(['T3', 'shift + player → + player → + player']);
+		expect(keys(maestro)).toEqual(['T3', 'shift + player → + turn E1 2']);
 		expect(maestro.screen).toMatch(/^maestro player off/);
 		grammatical(maestro);
-		// already on the arpeggio page: one press further on is hold
+		// already on the arpeggio page: one detent of E1 in the list is hold
 		for (const step of planPlace(sim.state, { area: 'player', track: 3 }).steps)
 			playStep(sim, step);
 		const hold = planPlace(sim.state, { area: 'player', track: 3, type: 'hold' });
-		expect(keys(hold)).toEqual(['shift + player → + player']);
+		expect(keys(hold)).toEqual(['shift + player → + turn E1 1']);
 		expect(hold.screen).toBe('hold player off');
 	});
 });

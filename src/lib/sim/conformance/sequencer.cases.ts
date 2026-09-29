@@ -888,24 +888,30 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 	});
 
 	describe('9 players', () => {
-		it('opens with player, turns on with player again; shift + player lists the players and steps through them', async () => {
+		it('opens with player, turns on with player again; shift + player lists the players, E1 picks one', async () => {
 			const d = await start();
 			await synth(d);
 			await d.click('key.player');
 			expect(d.frame).toMatchObject({ page: 'player', type: 'arpeggio', on: false });
 			await d.click('key.player');
 			expect(d.frame).toMatchObject({ page: 'player', on: true });
-			// the list comes up with the player in use boxed; each further press moves on (device, 1.1.33)
+			// the list comes up with the player in use boxed; E1 moves the box, and player again
+			// only switches the player off and on (the owner's unit, 1.1.33)
 			await d.withShift(async () => {
 				await d.click('key.player');
 				expect(d.frame).toMatchObject({ page: 'player', type: 'arpeggio', list: { track: 3 } });
-				await d.click('key.player');
+				await d.turn(1, 1);
 				expect(d.frame).toMatchObject({ page: 'player', type: 'hold' });
-				await d.click('key.player');
+				await d.turn(1, 1);
 				expect(d.frame).toMatchObject({ page: 'player', type: 'maestro' });
+				await d.click('key.player');
+				expect(d.frame).toMatchObject({ page: 'player', type: 'maestro', on: false });
 			});
 			expect(d.frame).toMatchObject({ page: 'player', type: 'maestro', list: null });
-			await d.withShift(() => d.clicks('key.player', 'key.player'));
+			await d.withShift(async () => {
+				await d.click('key.player');
+				await d.turn(1, -2);
+			});
 			expect(d.frame).toMatchObject({ page: 'player', type: 'arpeggio' });
 		});
 
@@ -952,7 +958,10 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 		it('records a maestro chord with shift held; any key then plays it transposed', async () => {
 			const d = await start();
 			await d.click('track.4');
-			await d.withShift(() => d.clicks('key.player', 'key.player', 'key.player'));
+			await d.withShift(async () => {
+				await d.click('key.player'); // the list
+				await d.turn(1, 2); // hold, maestro
+			});
 			await d.click('key.player'); // maestro, on
 			await d.withShift(() => play(d, 'd4', 'f4', 'a4'));
 			await d.down(key('c4'));
@@ -966,7 +975,10 @@ export function sequencerConformance(start: () => Promise<Driver>): void {
 		it('holds what is played until the next note; stop lets go', async () => {
 			const d = await start();
 			await synth(d);
-			await d.withShift(() => d.clicks('key.player', 'key.player')); // the list, then hold
+			await d.withShift(async () => {
+				await d.click('key.player'); // the list
+				await d.turn(1, 1); // hold
+			});
 			await d.click('key.player'); // hold, on
 			await play(d, 'c4');
 			expect(d.lit()).toEqual(['c4']);

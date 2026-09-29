@@ -904,22 +904,27 @@ describe('players (manual: players/*)', () => {
 		expect(page(sim, 'player')).toMatchObject({ type: 'arpeggio', on: false, list: null });
 		sim.press('key.player');
 		expect(page(sim, 'player').on).toBe(true);
-		// shift + player shows the list with the current player boxed; each further press moves on
+		// shift + player shows the list with the current player boxed; E1 moves the box (the owner)
 		down(sim, 'key.shift');
 		sim.press('key.player');
 		expect(page(sim, 'player')).toMatchObject({ type: 'arpeggio', list: { track: 3 } });
-		sim.press('key.player');
+		sim.turn(1, 1);
 		expect(page(sim, 'player').type).toBe('hold');
-		sim.press('key.player');
+		sim.turn(1, 1);
 		expect(page(sim, 'player').type).toBe('maestro');
 		expect(describeFrame(sim.frame)).toBe(
 			'player list for track 3: arpeggio, hold, maestro; maestro chosen'
 		);
+		// pressing player again only switches the player off and on; the box stays
+		sim.press('key.player');
+		expect(page(sim, 'player')).toMatchObject({ type: 'maestro', on: false });
+		sim.press('key.player');
+		expect(page(sim, 'player')).toMatchObject({ type: 'maestro', on: true });
 		up(sim, 'key.shift');
 		expect(page(sim, 'player')).toMatchObject({ type: 'maestro', list: null });
 		down(sim, 'key.shift');
 		sim.press('key.player');
-		sim.press('key.player');
+		sim.turn(1, -5); // stops at the first
 		up(sim, 'key.shift');
 		expect(page(sim, 'player').type).toBe('arpeggio');
 		sim.press('key.m1');
@@ -929,7 +934,7 @@ describe('players (manual: players/*)', () => {
 		expect(pattern(sim).player.on).toBe(false);
 	});
 
-	it('moves the list’s box with any encoder too, leaving the page’s settings alone (ours)', () => {
+	it('moves the list’s box with E1 alone, leaving the page’s settings as they were', () => {
 		const { sim } = rig();
 		sim.press('track.3');
 		sim.press('key.player');
@@ -937,8 +942,10 @@ describe('players (manual: players/*)', () => {
 		down(sim, 'key.shift');
 		sim.press('key.player'); // the list, arpeggio boxed
 		sim.turn(2, 1);
-		expect(page(sim, 'player').type).toBe('hold');
-		sim.turn(4, 5); // stops at the end
+		sim.turn(3, 1);
+		sim.turn(4, 1);
+		expect(page(sim, 'player').type).toBe('arpeggio');
+		sim.turn(1, 5); // stops at the end
 		expect(page(sim, 'player').type).toBe('maestro');
 		sim.click(4); // a click on the list does not flip maestro's hold
 		sim.turn(1, -1);
@@ -1019,7 +1026,7 @@ describe('players (manual: players/*)', () => {
 		sim.press('track.3');
 		down(sim, 'key.shift');
 		sim.press('key.player');
-		sim.press('key.player');
+		sim.turn(1, 1); // the list's box on hold
 		up(sim, 'key.shift');
 		sim.press('key.player'); // hold, on
 		expect(page(sim, 'player')).toMatchObject({ type: 'hold', on: true, cards: [] });
@@ -1043,7 +1050,8 @@ describe('players (manual: players/*)', () => {
 		const { sim } = rig();
 		sim.press('track.4');
 		down(sim, 'key.shift');
-		for (let i = 0; i < 3; i++) sim.press('key.player'); // the list, hold, maestro
+		sim.press('key.player'); // the list
+		sim.turn(1, 2); // hold, maestro
 		up(sim, 'key.shift');
 		sim.press('key.player'); // maestro, on
 		down(sim, 'key.shift');

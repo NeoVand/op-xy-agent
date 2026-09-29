@@ -1,7 +1,7 @@
 /**
  * The navigator (Phase F4): exact steps from where the simulator is to a page, or to a parameter
  * set to a value, as key combos in the manual's key grammar (`T3`, `shift + M3`, `turn E2`,
- * `shift + player → + player`) with the number of detents for turns. Every plan is run on a copy
+ * `shift + player → + turn E1`) with the number of detents for turns. Every plan is run on a copy
  * of the simulator before it is returned, so the steps are the ones that work, not a guess; the
  * agent shows them on the replica or reads them out, and the screen after each step tells the user
  * what to look for.
@@ -467,7 +467,7 @@ const parsed = new Map<string, KeySequence>();
 /**
  * Plays a key combo on the simulator as the replica animates it: every key of a chord but the last
  * is held while the last is pressed, turned (`clicks` detents) or clicked, and the held keys come
- * up after the chord unless the next one keeps them (`shift + player → + player`).
+ * up after the chord unless the next one keeps them (`shift + player → + turn E1`).
  */
 function play(sim: OpxySim, keys: string, clicks = 0): void {
 	let sequence = parsed.get(keys);
@@ -608,14 +608,11 @@ function walk(rec: Recorder, place: Place): void {
 				if (s().mode !== 'instrument' || !idle(s())) rec.do('instrument');
 				if (s().track !== place.track - 1) rec.do(`T${place.track}`);
 			}
-			// shift + player shows the list with the track's player boxed; each further press of
-			// player, shift still down, moves on (research 59 §2.7), and letting go opens that page
+			// shift + player shows the list with the track's player boxed; E1, shift still down,
+			// moves the box (the owner's unit), and letting go opens that page
 			const now = playerType(s(), place.track) ?? PLAYER_TYPES[0];
-			const n = PLAYER_TYPES.length;
-			const moves = place.type
-				? (PLAYER_TYPES.indexOf(place.type) - PLAYER_TYPES.indexOf(now) + n) % n
-				: 0;
-			if (moves > 0) rec.do(['shift + player', ...Array(moves).fill('+ player')].join(' → '));
+			const moves = place.type ? PLAYER_TYPES.indexOf(place.type) - PLAYER_TYPES.indexOf(now) : 0;
+			if (moves !== 0) rec.do('shift + player → + turn E1', moves);
 			else if (!open()) rec.do('player');
 			return;
 		}

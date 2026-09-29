@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "290775d8",
+	"bundle_hash": "c2065e00",
 	"stats": {
 		"units": 166,
 		"facts": 1170,
 		"procedures": 205,
 		"parameters": 207,
 		"verified_items": 246,
-		"words": 44030,
+		"words": 44037,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -7866,7 +7866,7 @@
 				},
 				{
 					"id": "list-steps",
-					"text": "The first `shift + player` only opens the list. Each further press of `player`, with shift still held, moves the box to the next type (arpeggio → hold → maestro → arpeggio); letting go of shift opens the chosen player's page.",
+					"text": "With the list up and shift still held, turning E1 moves the box between arpeggio, hold and maestro; pressing `player` again only switches the player on or off. Letting go of shift opens the chosen player's page.",
 					"source": "docs/research/59-screen-profiling.md#27-players",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -7926,8 +7926,8 @@
 							"set": null
 						},
 						{
-							"keys": "shift + player",
-							"note": "each further press of player moves to the next type (arpeggio, hold, maestro)",
+							"keys": "shift + player → + turn E1",
+							"note": "E1 moves the box to arpeggio, hold or maestro; pressing player again would only switch the player on or off",
 							"set": null
 						}
 					],
@@ -7968,7 +7968,8 @@
 			"official_url": "https://teenage.engineering/guides/op-xy/players#players",
 			"controls": [
 				"key.player",
-				"key.shift"
+				"key.shift",
+				"encoder.1"
 			]
 		},
 		{

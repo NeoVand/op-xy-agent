@@ -1,8 +1,9 @@
 /**
  * Players (manual: players/overview, arpeggio, maestro, hold): `player` opens the selected track's
- * player page, pressed there it switches the player on or off, and `shift + player` shows the list
- * of players, each further press (shift still down) moving to the next (the device, research 59
- * §2.7). The page's encoders set the arpeggio (speed, pattern, range, hold; with shift: note length,
+ * player page, and each further press switches the player on or off; `shift + player` shows the
+ * list of players, E1 moves its box while shift is held, and letting go of shift opens the chosen
+ * player's page (the owner's unit, 2026-09-29: pressing player again only switches the player on
+ * and off). The page's encoders set the arpeggio (speed, pattern, range, hold; with shift: note length,
  * style, glide, stereo) and maestro (roll, pattern, hold). On the keyboard, while the player is on:
  * hold keeps the notes played sounding until the next ones; maestro stores a chord entered with
  * shift held and plays it from any key; the arpeggio runs over the held notes, and keeps running on
@@ -39,18 +40,14 @@ export const noteName = (note: number) =>
 	`${NAMES[((note % 12) + 12) % 12]}${Math.floor(note / 12) - 1}`;
 
 /**
- * `player`: opens the page; pressed on the page, switches the player on / off. With shift: shows the
- * list of players, and while it is up (shift still held) moves to the next.
+ * `player`: opens the page; pressed on the page (the list included), switches the player on / off.
+ * The first press with shift shows the list of players instead.
  */
 export function playerPress(s: SimState): void {
 	const player = playerOf(s);
 	const st = seq(s);
 	const open = s.overlay === 'players';
-	if (s.shift) {
-		if (st.playerList) {
-			player.type = PLAYER_TYPES[(PLAYER_TYPES.indexOf(player.type) + 1) % PLAYER_TYPES.length];
-			st.sustained = [];
-		}
+	if (s.shift && !st.playerList) {
 		st.playerList = true;
 	} else if (open) {
 		player.on = !player.on;
@@ -72,11 +69,11 @@ function setHold(s: SimState, target: { hold: boolean }, on: boolean): void {
 }
 
 /**
- * While the list of players is up, any encoder moves its box a type a detent, stopping at either
- * end, as further presses of `player` move it (ours: TE's guide and the camera show only the
- * presses, but every other list takes an encoder); the page's settings stay as they were.
+ * While the list of players is up, E1 moves its box a type a detent (the owner's unit), stopping at
+ * either end (ours); the other encoders do nothing there, and the page's settings stay as they were.
  */
-function listTurn(s: SimState, delta: number): void {
+function listTurn(s: SimState, e: number, delta: number): void {
+	if (e !== 0) return;
 	const player = playerOf(s);
 	const at = clamp(PLAYER_TYPES.indexOf(player.type) + delta, 0, PLAYER_TYPES.length - 1);
 	if (PLAYER_TYPES[at] === player.type) return;
@@ -87,7 +84,7 @@ function listTurn(s: SimState, delta: number): void {
 /** E1–E4 on the player page. */
 export function playerTurn(s: SimState, e: number, delta: number): void {
 	if (seq(s).playerList) {
-		listTurn(s, delta);
+		listTurn(s, e, delta);
 		return;
 	}
 	const player = playerOf(s);

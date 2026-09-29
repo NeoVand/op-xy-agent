@@ -7881,7 +7881,8 @@
 					"keys": "T3"
 				},
 				{
-					"keys": "shift + player → + player"
+					"keys": "shift + player → + turn E1",
+					"clicks": 1
 				},
 				{
 					"keys": "player"
@@ -7906,7 +7907,8 @@
 					"keys": "T3"
 				},
 				{
-					"keys": "shift + player → + player → + player"
+					"keys": "shift + player → + turn E1",
+					"clicks": 2
 				},
 				{
 					"keys": "player"

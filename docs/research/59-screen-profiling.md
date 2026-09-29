@@ -378,11 +378,12 @@ are design px (capture rows × 220/222).
 - **Switching on:** the first press of `player` shows the page at about 40 % brightness, with "off"
   (30 px, bold) in a black box, 60 × 40 at (210.5, 90.5), outlined white. The second press switches
   the player on.
-- **Selection:** the first `shift + player` shows the list with the current player boxed. Each
-  further press of `player` (shift still down) moves the box on, and letting go of shift opens that
-  player's page. Layout: the track number and "player" at x 4 (baselines 25.3 and 45.3), the list at
-  x 111 with baselines 20 px apart, in the order arpeggio, hold, maestro. The box is a 1.5 px outline,
-  125 × 21 at x 105.25. All text on these pages is in the heavier weight.
+- **Selection:** the first `shift + player` shows the list with the current player boxed. **E1**
+  (shift still down) moves the box, and letting go of shift opens that player's page. (Corrected
+  2026-09-29 by the owner: further presses of `player` only switch the player on and off; these
+  notes first had the presses moving the box.) Layout: the track number and "player" at x 4
+  (baselines 25.3 and 45.3), the list at x 111 with baselines 20 px apart, in the order arpeggio,
+  hold, maestro. The box is a 1.5 px outline, 125 × 21 at x 105.25. All text on these pages is in the heavier weight.
 - **Cards:** four 50 × 50 cards (radius about 3) at y 20, in the encoders' greys: dark, mid, light,
   white. White pictograms sit on the first two, ink on the other two, and pale blue marks what is
   off or not reached. The arpeggio's cards are at x 135 + 53·i; maestro's are wider apart, at

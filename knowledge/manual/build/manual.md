@@ -1414,7 +1414,7 @@ Facts:
 - Every instrument track and every auxiliary track can run a player of its own. [#tracks] [s1]
 - The first press of `player` shows the selected track's player page, dimmed under an off box; a second press switches the player on. [#enable] (verified 1.1.33) [s2]
 - `shift + player` opens the player list, headed with the track number and the word player: arpeggio, hold and maestro, the current type boxed. [#types] (verified 1.1.33) [s2]
-- The first `shift + player` only opens the list. Each further press of `player`, with shift still held, moves the box to the next type (arpeggio → hold → maestro → arpeggio); letting go of shift opens the chosen player's page. [#list-steps] (verified 1.1.33) [s2]
+- With the list up and shift still held, turning E1 moves the box between arpeggio, hold and maestro; pressing `player` again only switches the player on or off. Letting go of shift opens the chosen player's page. [#list-steps] (verified 1.1.33) [s2]
 - Player settings cannot be parameter-locked; only module-page parameters can. [#no-locks] [s3]
 - Since OS 1.1.25, a pattern you add to a track starts out with the player type that is selected at that moment. [#new-pattern] (since 1.1.25) [s4]
 
@@ -1425,7 +1425,7 @@ Procedures:
   2. `player` — switches the player on
 - Choose another player type [#change-type] (verified 1.1.33) [s2]
   1. `shift + player` — opens the list with the current type boxed; keep shift held
-  2. `shift + player` — each further press of player moves to the next type (arpeggio, hold, maestro)
+  2. `shift + player → + turn E1` — E1 moves the box to arpeggio, hold or maestro; pressing player again would only switch the player on or off
   Result: Letting go of shift opens the chosen player's page.
 
 Related: [players.arpeggio], [players.maestro], [players.hold], [arrange.patterns], [sequencer.parameter-locks]

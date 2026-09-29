@@ -191,7 +191,7 @@
 		"question": "how do i turn on the arpeggiator for a track and change its pattern and speed?",
 		"facts": [
 			"On an instrument or auxiliary track, tap player to open it, then tap it again to turn it on.",
-			"Pressing player while holding shift switches the player style, e.g. to arpeggio.",
+			"Holding shift and pressing player brings up the player styles; E1 picks one, e.g. arpeggio.",
 			"Turn E2 (mid grey) to change the arp pattern, such as up, down, up/down or random.",
 			"Turn E1 (dark grey) to set the arpeggio speed."
 		],
