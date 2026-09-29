@@ -14,11 +14,11 @@ it there. The notation's rules follow, each drawn and written out.
 		controlGlyph,
 		getReplicaState,
 		KeyCombo,
-		Replica,
 		replicaPointer
 	} from '$lib/replica';
 	import { HugeIcon } from '$lib/ui';
 	import { tooltip } from '$lib/ui/tooltip';
+	import ManualRail from '$lib/ui/manual/ManualRail.svelte';
 	import { KEY_GROUPS, NOTATION, type KeyEntry } from '$lib/ui/manual/keys';
 
 	const replica = getReplicaState();
@@ -168,24 +168,11 @@ it there. The notation's rules follow, each drawn and written out.
 			</section>
 		</article>
 
-		<aside class="rail" aria-label="replica">
-			<div class="rail__sticky">
-				<div class="rail__replica"><Replica {replica} /></div>
-				<p class="rail__hint">Point at a key to find it here; press it to watch it pressed.</p>
-				<nav class="toc" aria-label="on this page">
-					<p class="toc__title">on this page</p>
-					<div class="toc__links">
-						{#each sections as section (section.id)}
-							<a
-								class="toc__link"
-								href="#{section.id}"
-								aria-current={section.id === reading ? 'location' : undefined}>{section.title}</a
-							>
-						{/each}
-					</div>
-				</nav>
-			</div>
-		</aside>
+		<ManualRail {replica} {sections} {reading}>
+			{#snippet hint()}
+				Point at a key to find it here; press it to watch it pressed.
+			{/snippet}
+		</ManualRail>
 	</div>
 </div>
 
@@ -196,8 +183,10 @@ it there. The notation's rules follow, each drawn and written out.
 
 	.page {
 		display: grid;
-		grid-template-columns: minmax(0, 44rem) minmax(20rem, 26rem);
-		gap: 3.5rem;
+		/* the rail (screen and replica) takes the larger share; the text keeps a reading width,
+		   giving way down to 28rem before the replica does */
+		grid-template-columns: minmax(28rem, 1fr) minmax(22rem, 1.15fr);
+		gap: 3rem;
 		padding: 2.5rem 2.5rem 5rem;
 	}
 
@@ -206,6 +195,7 @@ it there. The notation's rules follow, each drawn and written out.
 		flex-direction: column;
 		gap: 2.25rem;
 		min-width: 0;
+		max-width: 40rem;
 	}
 
 	.crumb {
@@ -443,81 +433,12 @@ it there. The notation's rules follow, each drawn and written out.
 		line-height: 1.6;
 	}
 
-	.rail__sticky {
-		position: sticky;
-		top: calc(var(--xy-header-h) + 1.5rem);
-		display: flex;
-		flex-direction: column;
-		gap: 0.875rem;
-	}
-
-	.rail__hint {
-		margin: 0;
-		color: var(--xy-fg-faint, var(--xy-fg-subtle));
-		font-size: var(--xy-text-2xs);
-		line-height: var(--xy-leading-2xs);
-	}
-
-	.toc {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		margin-top: 0.75rem;
-		padding-top: 0.875rem;
-		border-top: 1px solid var(--xy-line);
-	}
-
-	.toc__title {
-		margin: 0 0 0.25rem;
-		color: var(--xy-fg-faint);
-		font-size: var(--xy-text-2xs);
-		letter-spacing: var(--xy-tracking-label);
-	}
-
-	.toc__links {
-		display: flex;
-		flex-direction: column;
-		border-left: 1px solid var(--xy-line);
-	}
-
-	.toc__link {
-		margin-left: -1px;
-		padding: 0.25rem 0 0.25rem 0.75rem;
-		border-left: 1px solid transparent;
-		color: var(--xy-fg-subtle);
-		font-size: var(--xy-text-xs);
-		text-decoration: none;
-		transition:
-			color var(--xy-dur-quick, 120ms) ease,
-			border-color var(--xy-dur-quick, 120ms) ease;
-	}
-
-	.toc__link:hover {
-		color: var(--xy-fg);
-	}
-
-	.toc__link[aria-current='location'] {
-		border-left-color: var(--xy-fg);
-		color: var(--xy-fg);
-	}
-
-	@container (max-width: 64rem) {
+	/* narrower than two columns fit (28 + 22 + gap + padding): one column, the rail above the text
+	   (ManualRail) */
+	@container (max-width: 58rem) {
 		.page {
 			grid-template-columns: minmax(0, 44rem);
 			gap: 2rem;
-		}
-
-		.rail {
-			order: -1;
-			max-width: 34rem;
-		}
-
-		.rail__sticky {
-			position: static;
-		}
-
-		.toc {
-			display: none;
 		}
 	}
 
