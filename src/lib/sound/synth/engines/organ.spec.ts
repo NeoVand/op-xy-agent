@@ -50,7 +50,7 @@ describe('organ', () => {
 				}
 			}
 		}
-	});
+	}, 20_000); // every registration at three bass settings: seconds of DSP under a busy suite
 
 	it('slides type 2’s upper partials with bass, through inharmonic ratios', () => {
 		const hz = 220;

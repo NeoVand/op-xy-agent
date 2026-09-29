@@ -141,9 +141,10 @@ A surface. Panels differ by material, not by decoration:
 		--xy-hover: rgb(255 255 255 / 0.05);
 		--xy-surface: var(--xy-mat-tile);
 		--xy-surface-raised: var(--xy-mat-tile);
-		--xy-surface-sunken: var(--xy-mat-gap);
+		/* its wells (the composer, your messages, fields) are the app's background, not black */
+		--xy-surface-sunken: var(--xy-bg);
 		border-radius: 1rem;
-		background: linear-gradient(to bottom, #1e1f22, #1a1b1e 45%, #161719);
+		background: linear-gradient(to bottom, #252629, #222326 45%, #1f2023);
 		color: var(--xy-fg);
 		box-shadow:
 			inset 0 1px 0 rgb(255 255 255 / 0.12),

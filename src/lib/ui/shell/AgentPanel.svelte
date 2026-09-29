@@ -940,14 +940,14 @@ above the composer says what voice is doing while it is on.
 		justify-content: flex-end;
 	}
 
-	/* One rounded box of the device's black glass: typed into, its keys inside it. */
+	/* One rounded well in the panel, the app's background colour: typed into, its keys inside it. */
 	.composer {
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
 		padding: 0.5rem 0.5rem 0.4375rem;
 		border-radius: 1.25rem;
-		background-color: var(--xy-scr-bg);
+		background-color: var(--xy-surface-sunken);
 		color: var(--xy-scr-fg);
 		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
 		transition: box-shadow var(--xy-dur-quick, 120ms) ease;

@@ -52,7 +52,7 @@ model without a known price shows its dollars as a lower bound.
 		gap: 1px;
 		overflow: hidden;
 		border-radius: var(--xy-radius-card);
-		background-color: var(--xy-scr-bg);
+		background-color: var(--xy-surface-sunken);
 		box-shadow: 0 0 0 1px rgb(255 255 255 / 0.07);
 		font-variant-numeric: tabular-nums;
 	}
@@ -62,7 +62,7 @@ model without a known price shows its dollars as a lower bound.
 		align-items: baseline;
 		gap: 0.375rem;
 		padding: 0.1875rem 0.5rem;
-		background-color: var(--xy-scr-bg);
+		background-color: var(--xy-surface-sunken);
 	}
 
 	.meter__cell + .meter__cell {
