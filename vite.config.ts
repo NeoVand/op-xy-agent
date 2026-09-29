@@ -33,6 +33,8 @@ export default defineConfig({
 				extends: './vite.config.ts',
 				test: {
 					name: 'client',
+					// the browser tests cannot read the environment: tell them when they run on CI
+					provide: { ci: Boolean(process.env.CI) },
 					browser: {
 						enabled: true,
 						provider: playwright(),
