@@ -577,6 +577,42 @@ const DEMO: readonly QualityCase[] = [
 		}
 	},
 	{
+		id: 'demo-groove-pump',
+		category: 'demo',
+		turns: [
+			'make a punchy 909 kit and play a house beat with it',
+			'add a bassline on track 3',
+			'make the bass pump with the kick'
+		],
+		intent:
+			'A kit and a house beat playing; a bassline on track 3 that fits it; then a duck on track 3 triggered by the kick track, all still playing.',
+		check(o) {
+			const fails = playing(o);
+			if (notes(o, 3).length < 4) fails.push(`only ${notes(o, 3).length} bass notes on track 3`);
+			const bass = o.state.tracks[2];
+			if (!(bass.lfo.on && bass.lfo.type === 'duck')) fails.push('track 3 has no duck LFO');
+			return fails;
+		}
+	},
+	{
+		id: 'demo-dark-walk',
+		category: 'demo',
+		turns: ['why does track 3 sound so dark?', 'walk me through opening it up'],
+		intent:
+			'Reads the sound and names the closed cutoff; then starts a lit walkthrough on the replica to raise track 3’s cutoff.',
+		tools: { must: ['read_sound'] },
+		check(o) {
+			const walked = o.trace.some(
+				(t) =>
+					!t.nested &&
+					t.turn === 1 &&
+					t.name === 'plan_steps' &&
+					(t.input as { guide?: boolean }).guide === true
+			);
+			return walked ? [] : ['started no walkthrough after "walk me through opening it up"'];
+		}
+	},
+	{
 		id: 'demo-send',
 		category: 'demo',
 		turns: [
