@@ -4,13 +4,15 @@
 // unit's recording. Runs only when asked, since it reads a local capture and writes files:
 //
 //   VITE_RENDER_PROJECT=research/device/captures/mtp/projects__workspace-2026-09-28.xy \
-//   VITE_RENDER_TRACKS=3,4,5,8 VITE_RENDER_TAG=agent \
+//   VITE_RENDER_TRACKS=3,4,5,8 VITE_RENDER_TAG=agent VITE_RENDER_SCENE=7 \
 //   npx vitest run --project client src/lib/sound/compare.svelte.spec.ts
 //
 // Writes research/device/captures/presets/<tag>-replica-T<n>.wav, one per track, each starting its
-// phrase one second in, as the capture does for its first track.
+// phrase one second in, as the capture does for its first track. VITE_RENDER_SCENE picks the scene
+// (patterns carry their own sounds, so it must be the one the unit is on).
 import { describe, expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
+import { selectScene } from '$lib/sim/areas/arrange/model';
 import { xyToSim } from '$lib/sim/xy';
 import { SoundEngine } from './engine';
 import { SynthHost } from './synth/host';
@@ -21,6 +23,9 @@ const PROJECT: string | undefined = import.meta.env.VITE_RENDER_PROJECT;
 const TRACKS: string = import.meta.env.VITE_RENDER_TRACKS ?? '';
 const TAG: string = import.meta.env.VITE_RENDER_TAG ?? 'render';
 const ROOT = Number(import.meta.env.VITE_RENDER_ROOT ?? 36);
+const SCENE: number | null = import.meta.env.VITE_RENDER_SCENE
+	? Number(import.meta.env.VITE_RENDER_SCENE)
+	: null;
 
 /** preset_capture.py's phrase: (start s, length s, notes), from the track's first note. */
 export function phrase(root: number): [number, number, number[]][] {
@@ -75,6 +80,7 @@ describe.skipIf(!PROJECT)('a project’s tracks rendered for comparison with the
 	it('renders the capture phrase on each track asked for', async () => {
 		const file = await commands.readFile(PROJECT ?? '', 'base64');
 		const { state } = xyToSim(Uint8Array.from(atob(file), (c) => c.charCodeAt(0)));
+		if (SCENE !== null) selectScene(state, SCENE - 1);
 		const tracks = TRACKS.split(',').filter(Boolean).map(Number);
 		expect(tracks.length).toBeGreaterThan(0);
 		for (const number of tracks) {
