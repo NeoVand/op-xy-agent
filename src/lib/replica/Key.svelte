@@ -13,23 +13,16 @@ does the rest, so a key press never re-renders the legend paths.
 
 <script lang="ts" module>
 	/**
-	 * An unlit LED window is frosted, translucent plastic flush with the cap: it reads as a faint
-	 * tint of the cap itself, a hair darker on dark caps and a hair lighter on pale ones, never as a
-	 * hole. Mixes the cap colour toward black or white.
+	 * An unlit LED window is a small black hole in the cap, on the pale step keys as on the dark
+	 * ones (TE's top-down photo: #1c1e21–#252221 unlit, #fcfeff lit), so a lit one, pure white,
+	 * stands out from every cap.
 	 */
-	function frostedWindow(cap: string, pale: boolean): string {
-		const [target, amount] = pale ? [255, 0.22] : [0, 0.16];
-		const mixed = [1, 3, 5].map((i) => {
-			const channel = parseInt(cap.slice(i, i + 2), 16);
-			return Math.round(channel + (target - channel) * amount);
-		});
-		return `#${mixed.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
-	}
+	const UNLIT_WINDOW = '#1d1f22';
 </script>
 
 <script lang="ts">
 	import type { KeyId } from '$lib/core/opxy';
-	import { luminance, type KeyPart } from './geometry';
+	import type { KeyPart } from './geometry';
 	import { capturePointer } from './input';
 	import type { ReplicaState } from './state.svelte';
 
@@ -68,7 +61,6 @@ does the rest, so a key press never re-renders the legend paths.
 	const capR = $derived(part.art.capRadius);
 	const ledArt = $derived(part.art.led);
 	/** The unlit window's colour; the lit core fades back to it. Pale = the light half of the step ramp. */
-	const ledWindow = $derived(frostedWindow(part.colors.cap, luminance(part.colors.cap) > 0.3));
 
 	/** Pointer that pressed the key (so another finger's release does not lift it). */
 	let pointer: number | null = null;
@@ -181,12 +173,21 @@ does the rest, so a key press never re-renders the legend paths.
 		<path d={art.d} fill={part.colors.legend} fill-rule={art.rule} />
 	{/each}
 
+	<!-- the cap stands 2 mm proud: the tile's collar catching light behind it, a short hard shadow
+	     in front and a crisp dark edge all round where it leaves the tile (TE's top-down photo) -->
+	<circle
+		r={capR + 0.55}
+		fill="none"
+		stroke={part.light ? 'url(#rx-collar-light)' : 'url(#rx-collar)'}
+		stroke-width="0.4"
+	/>
 	<circle
 		class="key__shadow"
-		cy="0.6"
-		r={capR + 1.25}
+		cy="0.3"
+		r={capR + 0.6}
 		fill={part.light ? 'url(#rx-cap-shadow-light)' : 'url(#rx-cap-shadow)'}
 	/>
+	<circle cy="0.06" r={capR + 0.15} fill="#000000" fill-opacity={part.light ? 0.38 : 0.6} />
 	<g class="key__cap">
 		<circle r={capR} fill={part.colors.cap} />
 		<circle r={capR} fill={part.light ? 'url(#rx-cap-shade-light)' : 'url(#rx-cap-shade)'} />
@@ -209,7 +210,7 @@ does the rest, so a key press never re-renders the legend paths.
 		{#if ledArt}
 			<!-- the window's lower rim catching the light, barely -->
 			<circle cx={ledArt.x} cy={ledArt.y + 0.06} r={ledArt.r} fill="#ffffff" fill-opacity="0.07" />
-			<circle class="key__led" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} fill={ledWindow} />
+			<circle class="key__led" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} fill={UNLIT_WINDOW} />
 			<!-- one core per colour, each with a fixed fill, so a light decays in its own colour -->
 			<circle class="key__core key__core--white" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} />
 			<circle class="key__core key__core--red" cx={ledArt.x} cy={ledArt.y} r={ledArt.r} />
@@ -217,8 +218,8 @@ does the rest, so a key press never re-renders the legend paths.
 		<circle class="key__state" r={capR} />
 	</g>
 	{#if ledArt}
-		<circle class="key__glow key__glow--white" cx={ledArt.x} cy={ledArt.y} r={ledArt.r * 3.4} />
-		<circle class="key__glow key__glow--red" cx={ledArt.x} cy={ledArt.y} r={ledArt.r * 3.4} />
+		<circle class="key__glow key__glow--white" cx={ledArt.x} cy={ledArt.y} r={ledArt.r * 2.6} />
+		<circle class="key__glow key__glow--red" cx={ledArt.x} cy={ledArt.y} r={ledArt.r * 2.6} />
 	{/if}
 
 	{#if hint}
@@ -298,8 +299,8 @@ does the rest, so a key press never re-renders the legend paths.
 	}
 
 	.key[data-pressed] .key__shadow {
-		opacity: 0.5;
-		transform: translateY(-0.45px) scale(0.93);
+		opacity: 0.55;
+		transform: translateY(-0.2px) scale(0.96);
 		transition-duration: var(--rx-press, 50ms);
 	}
 
@@ -331,9 +332,9 @@ does the rest, so a key press never re-renders the legend paths.
 		opacity: 0.12;
 	}
 
-	/* LED window: frosted plastic tinted like its cap (its fill is set per key). A lit core snaps on
-	 * over it and decays back to it in its own colour; each colour has its own core and glow with a
-	 * fixed fill, so nothing ever falls back to SVG's default black while fading. */
+	/* LED window: a black hole in the cap when off. A lit core snaps on over it and decays back to
+	 * it in its own colour; each colour has its own core and glow with a fixed fill, so nothing ever
+	 * falls back to SVG's default black while fading. */
 	.key__core,
 	.key__glow {
 		opacity: 0;

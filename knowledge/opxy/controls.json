@@ -129,8 +129,8 @@
 	},
 	"colors": {
 		"body": {
-			"hex": "#26282c",
-			"role": "anodized body",
+			"hex": "#222326",
+			"role": "anodized body: the same black as the tiles and caps (TE-TOPDOWN reads about #26282c under studio light; drawn a little darker, like the owner’s unit)",
 			"confidence": "measured",
 			"source": ["TE-TOPDOWN", "HW-NOTE"]
 		},
@@ -147,14 +147,14 @@
 			"source": ["TE-TOPDOWN", "HW-NOTE"]
 		},
 		"tile": {
-			"hex": "#2e2f32",
-			"role": "standard tile",
+			"hex": "#222326",
+			"role": "standard tile, the body’s colour (TE-TOPDOWN: #292b2e on the lower rows)",
 			"confidence": "measured",
 			"source": ["TE-TOPDOWN", "HW-NOTE"]
 		},
 		"keycap": {
-			"hex": "#2b2c2f",
-			"role": "standard keycap (a hair darker than its tile)",
+			"hex": "#212225",
+			"role": "standard keycap, a hair darker than its tile (TE-TOPDOWN: #27292d)",
 			"confidence": "measured",
 			"source": ["TE-TOPDOWN", "HW-NOTE"]
 		},
