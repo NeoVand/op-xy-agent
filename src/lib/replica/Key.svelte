@@ -52,6 +52,12 @@ does the rest, so a key press never re-renders the legend paths.
 	const blinking = $derived(part.art.led !== null && replica.isBlinking(part.id));
 	const highlight = $derived(replica.highlight(part.id));
 
+	/** The computer key shown on the tile while the pointer is over the keyboard (its first key). */
+	const hint = $derived.by(() => {
+		const first = shortcut?.split(' ')[0];
+		return first === 'Space' ? '␣' : (first ?? null);
+	});
+
 	const label = $derived(
 		part.control.track
 			? `${part.control.label} (${part.control.track.auxiliary.name})`
@@ -141,6 +147,7 @@ does the rest, so a key press never re-renders the legend paths.
 	tabindex={tabbable ? 0 : -1}
 	aria-label={label}
 	aria-keyshortcuts={shortcut}
+	data-hint={hint ? '' : undefined}
 	aria-pressed={pressed}
 	{onpointerdown}
 	onpointerup={lift}
@@ -214,6 +221,17 @@ does the rest, so a key press never re-renders the legend paths.
 		<circle class="key__glow key__glow--red" cx={ledArt.x} cy={ledArt.y} r={ledArt.r * 3.4} />
 	{/if}
 
+	{#if hint}
+		<text
+			class="key__hint"
+			x={tile.x + tile.w - 0.7}
+			y={tile.y + tile.h - 0.7}
+			text-anchor="end"
+			fill={part.colors.legend}
+			aria-hidden="true">{hint}</text
+		>
+	{/if}
+
 	{#if highlight === 'hold' || highlight === 'press'}
 		<rect
 			class="key__halo"
@@ -236,6 +254,20 @@ does the rest, so a key press never re-renders the legend paths.
 </g>
 
 <style>
+	/* the computer's key, faint on each tile while the pointer is over any key it plays */
+	.key__hint {
+		font-family: var(--xy-font-mono, ui-monospace, monospace);
+		font-size: 2.5px;
+		font-weight: 600;
+		opacity: 0;
+		transition: opacity 220ms var(--rx-ease-decay, ease-out);
+		pointer-events: none;
+	}
+
+	:global(.replica:has(.key[data-hint]:hover)) .key__hint {
+		opacity: 0.7;
+	}
+
 	.key {
 		cursor: pointer;
 		outline: none;
