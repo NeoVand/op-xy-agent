@@ -187,7 +187,13 @@ describe('recording the OP-XY', () => {
 		const media = fakeMedia();
 		const ears = capture({ media });
 		const done = await ears.record('device', 0.5, new AbortController().signal);
-		expect(done).toMatchObject({ source: 'device', label: 'OP-XY', sampleRate: 48000 });
+		expect(done).toMatchObject({ source: 'device', label: 'OP-XY' });
+		// the recording keeps the input's own rate (the fake OP-XY runs at the browser's default:
+		// 48 kHz on a Mac, 44.1 kHz on CI's Linux)
+		const input = media.opened[1]?.getAudioTracks()[0]?.getSettings().sampleRate;
+		const fallback = new AudioContext();
+		contexts.push(fallback);
+		expect(done.sampleRate).toBe(input ?? fallback.sampleRate);
 		expect(frequencyOf(done.channels[0], done.sampleRate)).toBeCloseTo(220, -1);
 		// first the unlock (whatever input the user allows), stopped unheard; then the OP-XY itself
 		expect(media.calls).toHaveLength(2);

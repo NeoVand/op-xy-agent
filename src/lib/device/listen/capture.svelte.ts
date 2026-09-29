@@ -245,6 +245,8 @@ export class AudioCapture {
 			await context.audioWorklet.addModule(this.#options.workletUrl);
 			this.#loaded.add(context);
 		}
+		// stopped while the recorder loaded: its abort event has come and gone
+		if (signal.aborted) throw new ListenAbortedError('stopped');
 		const frames = Math.max(1, Math.round(seconds * context.sampleRate));
 		const node = new AudioWorkletNode(context, RECORDER, {
 			numberOfInputs: 1,
@@ -280,6 +282,10 @@ export class AudioCapture {
 					else resolve();
 				};
 				signal.addEventListener('abort', onAbort, { once: true });
+				if (signal.aborted) {
+					onAbort();
+					return;
+				}
 				node.port.onmessage = (event: MessageEvent<RecorderReply>) => {
 					const reply = event.data;
 					if (reply.type === 'chunk') {
