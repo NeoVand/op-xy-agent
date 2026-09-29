@@ -151,6 +151,55 @@ export function sliceAudio(audio: PcmAudio, starts: readonly number[]): PcmAudio
 	});
 }
 
+/** A loop's tempo as the loop's own length tells it, checked against its hits. */
+export interface LoopTempo {
+	/** Beats per minute, to a tenth. */
+	readonly bpm: number;
+	/** How many beats the loop holds (4 is a bar of 4/4). */
+	readonly beats: number;
+	/** 0–1: how well the hits sit on that tempo's sixteenths. */
+	readonly confidence: number;
+}
+
+/**
+ * The tempo of a loop cut to length (a bar, two, four): a whole number of beats between 70 and
+ * 180 BPM, the one whose sixteenths the loop's hits (`onsets`, frames) sit on best, with bars of
+ * 4, 8, 16 or 32 beats preferred and tempos near 115. Null for a sound under half a second.
+ */
+export function loopTempo(audio: PcmAudio, onsets: readonly number[]): LoopTempo | null {
+	const sr = audio.sampleRate;
+	const seconds = (audio.channels[0]?.length ?? 0) / sr;
+	if (seconds < 0.5) return null;
+	const times = onsets.map((f) => f / sr);
+	let best: (LoopTempo & { score: number }) | null = null;
+	for (let beats = 1; beats <= 64; beats++) {
+		const bpm = (60 * beats) / seconds;
+		if (bpm < 70 || bpm > 180) continue;
+		const step = 60 / bpm / 4;
+		// how close each hit is to a sixteenth, forgiving ±12 ms
+		const fit =
+			times.length === 0
+				? 0.5
+				: times.reduce((sum, t) => {
+						const off = Math.abs(t - Math.round(t / step) * step);
+						return sum + Math.exp(-((off / 0.012) ** 2));
+					}, 0) / times.length;
+		const bar = [4, 8, 16, 32, 64].includes(beats)
+			? 1
+			: beats % 4 === 0
+				? 0.85
+				: beats % 2 === 0
+					? 0.7
+					: 0.5;
+		const comfort = 1 - 0.25 * Math.abs(Math.log2(bpm / 115));
+		const score = fit * bar * comfort;
+		if (!best || score > best.score)
+			best = { bpm: Math.round(bpm * 10) / 10, beats, confidence: fit, score };
+	}
+	if (!best) return null;
+	return { bpm: best.bpm, beats: best.beats, confidence: best.confidence };
+}
+
 /** The first frame louder than −50 dBFS, or −1 for silence. */
 function firstSound(x: Float32Array): number {
 	const floor = 10 ** (-50 / 20);

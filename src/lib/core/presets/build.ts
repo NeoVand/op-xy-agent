@@ -13,13 +13,18 @@
  * forever (the device's default), until release, or off.
  */
 import {
+	MAX_SECONDS,
+	PRESET_RATE,
 	detectNote,
 	findLoop,
 	noteFromName,
 	noteName,
 	prepare,
+	resample,
 	type PrepareOptions
 } from './audio';
+import { clampEdit, renderEdit, type RenderedSound, type SoundEdit } from './edit';
+import type { Voice } from './generate';
 import {
 	DRUM_FIRST_KEY,
 	DRUM_KEYS,
@@ -43,6 +48,13 @@ export interface SampleInput {
 	readonly root?: number;
 	/** A drum key (53–76) chosen by the user, over the automatic layout. */
 	readonly key?: number;
+	/**
+	 * The preset maker's edit (region, fades, gain, pitch, play mode, loop; `edit.ts`), in frames
+	 * of `audio`. With one, the sound is written as edited and `trim` does not apply to it.
+	 */
+	readonly edit?: SoundEdit;
+	/** The generated voice it was rendered from (`generate.ts`), so it can be turned and mutated. */
+	readonly voice?: Voice;
 }
 
 export interface PresetOptions extends PrepareOptions {
@@ -53,7 +65,66 @@ export interface PresetOptions extends PrepareOptions {
 	readonly loop?: LoopMode;
 	/** Drum kits: the keys choke each other (the kit's mute group), as the device's slicer sets them. */
 	readonly choke?: boolean;
+	/**
+	 * Edited samples: write only their region (default true, smaller files), or the whole file
+	 * with the region in `sample.start` and `sample.end`.
+	 */
+	readonly crop?: boolean;
 }
+
+/**
+ * An edited sample at the preset rate and within the device's 20 s (its edit moved along), then
+ * rendered: fades written in, cropped unless told not to, normalised when asked.
+ */
+function renderInput(
+	s: SampleInput & { edit: SoundEdit },
+	options: PresetOptions,
+	warnings: string[]
+): RenderedSound & { edit: SoundEdit } {
+	const from = s.audio.sampleRate;
+	let channels = resample(s.audio.channels.slice(0, 2), from, PRESET_RATE);
+	const scale = PRESET_RATE / from;
+	const at = (frame: number) => Math.round(frame * scale);
+	const max = MAX_SECONDS * PRESET_RATE;
+	if (channels[0].length > max) {
+		warnings.push(`"${s.name}" is longer than ${MAX_SECONDS} s: cut at ${MAX_SECONDS} s`);
+		channels = channels.map((c) => c.slice(0, max));
+	}
+	const frames = channels[0].length;
+	const e = s.edit;
+	const edit = clampEdit(
+		{
+			...e,
+			start: at(e.start),
+			end: at(e.end),
+			fadeIn: at(e.fadeIn),
+			fadeOut: at(e.fadeOut),
+			loop: {
+				...e.loop,
+				start: at(e.loop.start),
+				end: at(e.loop.end),
+				crossfade: at(e.loop.crossfade)
+			}
+		},
+		frames
+	);
+	const rendered = renderEdit({ sampleRate: PRESET_RATE, channels }, edit, {
+		crop: options.crop !== false
+	});
+	if (options.normalize) {
+		let peak = 0;
+		for (const c of rendered.audio.channels) {
+			for (let i = rendered.start; i < rendered.end; i++) peak = Math.max(peak, Math.abs(c[i]));
+		}
+		if (peak > 0) {
+			const gain = 10 ** (-1 / 20) / peak;
+			for (const c of rendered.audio.channels) for (let i = 0; i < c.length; i++) c[i] *= gain;
+		}
+	}
+	return { ...rendered, edit };
+}
+
+const edited = (s: SampleInput): s is SampleInput & { edit: SoundEdit } => s.edit !== undefined;
 
 /** A built preset: its folder, its patch and the files inside, and what was noticed on the way. */
 export interface BuiltPreset {
@@ -193,10 +264,27 @@ export function buildPreset(samples: readonly SampleInput[], options: PresetOpti
 		const keys = drumKeys(kept);
 		regions = kept
 			.map((s, i) => {
-				const audio = prepare(s.audio, options);
 				const file = unique(safeStem(s.name, stemMax));
-				files.push({ path: `${folder}/${file}`, bytes: encodeWav({ ...audio, root: 60 }) });
 				const mode = options.choke ? 'group' : 'oneshot';
+				if (edited(s)) {
+					const r = renderInput(s, options, warnings);
+					files.push({ path: `${folder}/${file}`, bytes: encodeWav({ ...r.audio, root: 60 }) });
+					const region = drumRegion(
+						keys[i] as number,
+						file,
+						r.audio.channels[0].length,
+						s.edit.playmode
+					);
+					if (r.start > 0) region['sample.start'] = r.start;
+					region['sample.end'] = r.end;
+					region.gain = r.edit.gain;
+					region.pan = r.edit.pan;
+					region.transpose = r.edit.transpose;
+					region.reverse = r.edit.reverse;
+					return region;
+				}
+				const audio = prepare(s.audio, options);
+				files.push({ path: `${folder}/${file}`, bytes: encodeWav({ ...audio, root: 60 }) });
 				return drumRegion(keys[i] as number, file, audio.channels[0].length, mode);
 			})
 			.sort((a, b) => a.hikey - b.hikey);
@@ -205,11 +293,18 @@ export function buildPreset(samples: readonly SampleInput[], options: PresetOpti
 		if (options.kind === 'sampler' && samples.length > 1) {
 			warnings.push('a synth sampler plays one sample: the first is used');
 		}
+		type Zone = {
+			s: SampleInput;
+			audio: PcmAudio;
+			root: number;
+			r: ReturnType<typeof renderInput> | null;
+		};
 		const zones = kept
 			.map((s) => {
-				const audio = prepare(s.audio, options);
+				const r = edited(s) ? renderInput(s, options, warnings) : null;
+				const audio = r ? r.audio : prepare(s.audio, options);
 				const root = s.root ?? s.audio.root ?? noteFromName(s.name) ?? detectNote(audio);
-				return { s, audio, root };
+				return { s, audio, root, r };
 			})
 			.filter((z) => {
 				if (z.root === null || z.root === undefined) {
@@ -217,7 +312,7 @@ export function buildPreset(samples: readonly SampleInput[], options: PresetOpti
 					return false;
 				}
 				return true;
-			}) as { s: SampleInput; audio: PcmAudio; root: number }[];
+			}) as Zone[];
 		zones.sort((a, b) => a.root - b.root);
 		const distinct = zones.filter((z, i) => {
 			if (i > 0 && zones[i - 1].root === z.root) {
@@ -237,17 +332,21 @@ export function buildPreset(samples: readonly SampleInput[], options: PresetOpti
 			);
 			const frames = z.audio.channels[0].length;
 			files.push({ path: `${folder}/${file}`, bytes: encodeWav({ ...z.audio, root: z.root }) });
+			const top = options.kind === 'sampler' ? z.root : hikey;
+			if (z.r) {
+				const { edit } = z.r;
+				const region = samplerRegion(file, frames, z.root, top, z.r.loop.mode, z.r.loop);
+				if (z.r.start > 0) region['sample.start'] = z.r.start;
+				region['sample.end'] = z.r.end;
+				region.tune = edit.tune;
+				region.reverse = edit.reverse;
+				if (edit.gain !== 0) region.gain = edit.gain;
+				return region;
+			}
 			const points = loop === 'off' ? null : findLoop(z.audio);
 			if (loop !== 'off' && !points)
 				warnings.push(`"${z.s.name}" is too short to loop: it plays once`);
-			return samplerRegion(
-				file,
-				frames,
-				z.root,
-				options.kind === 'sampler' ? z.root : hikey,
-				points ? loop : 'off',
-				points
-			);
+			return samplerRegion(file, frames, z.root, top, points ? loop : 'off', points);
 		});
 	}
 	if (regions.length === 0) warnings.push('no samples made it into the preset');

@@ -384,6 +384,79 @@ export function generateKit(style: KitStyle, seed = 1): SampleInput[] {
 			type,
 			seed: seed * 101 + i
 		};
-		return { name: `${style} ${slot.kind}`, audio: renderVoice(voice), key: 53 + i };
+		return { name: `${style} ${slot.kind}`, audio: renderVoice(voice), key: 53 + i, voice };
+	});
+}
+
+/** The sensible span of each voice number, for knobs, randomising and mutating. */
+export const VOICE_RANGES = {
+	pitch: { min: 20, max: 2000 },
+	decay: { min: 0.01, max: MAX_DECAY },
+	sweep: { min: 0, max: 1 },
+	snap: { min: 0, max: 1 },
+	tone: { min: 0, max: 1 },
+	drive: { min: 0, max: 1 },
+	crush: { min: 0, max: 1 },
+	level: { min: 0, max: 1 }
+} as const;
+
+/** A voice number the knobs turn. */
+export type VoiceParam = keyof typeof VOICE_RANGES;
+
+/** The pitch each type sits at when a voice does not say (Hz), for knobs that start somewhere. */
+export const DEFAULT_PITCH: Readonly<Partial<Record<VoiceType, number>>> = {
+	kick: 50,
+	snare: 185,
+	tom: 120,
+	conga: 260
+};
+
+/** A voice's number as it plays: its own, else the type's default. */
+export function voiceValue(voice: Voice, param: VoiceParam): number {
+	if (param === 'decay') return voice.decay ?? DEFAULT_DECAY[voice.type];
+	if (param === 'pitch') return voice.pitch ?? DEFAULT_PITCH[voice.type] ?? 200;
+	if (param === 'level') return voice.level ?? 0.9;
+	const fallback = param === 'drive' || param === 'crush' ? 0 : 0.5;
+	return voice[param] ?? fallback;
+}
+
+/** A seeded random source in [0, 1). */
+function uniform(seed: number): () => number {
+	const next = noise(seed);
+	return () => (next() + 1) / 2;
+}
+
+/**
+ * The voice nudged at random: every number moves by up to `amount` of its span (pitch and decay
+ * by up to that share of themselves, so a kick stays a kick), and it gets a new seed.
+ */
+export function mutateVoice(voice: Voice, amount = 0.2, seed = 1): Voice {
+	const rand = uniform(seed * 7919 + 13);
+	const out: Record<string, unknown> = { ...voice };
+	for (const param of Object.keys(VOICE_RANGES) as VoiceParam[]) {
+		if (param === 'level') continue;
+		const { min, max } = VOICE_RANGES[param];
+		const value = voiceValue(voice, param);
+		const step = (rand() * 2 - 1) * amount;
+		const moved =
+			param === 'pitch' || param === 'decay'
+				? value * 2 ** (step * 1.5)
+				: value + step * (max - min) * (param === 'drive' || param === 'crush' ? 0.5 : 1);
+		out[param] = Math.min(max, Math.max(min, moved));
+	}
+	out.seed = Math.floor(rand() * 1e6) + 1;
+	return out as unknown as Voice;
+}
+
+/**
+ * A kit nobody has heard before: a style picked at random, every voice mutated a good deal, each
+ * still on its key of TE's layout.
+ */
+export function randomKit(seed: number): SampleInput[] {
+	const rand = uniform(seed);
+	const style = KIT_STYLES[Math.floor(rand() * KIT_STYLES.length)];
+	return generateKit(style, seed).map((sample, i) => {
+		const voice = mutateVoice(sample.voice as Voice, 0.45, seed * 31 + i);
+		return { ...sample, name: sample.name.replace(style, 'rnd'), audio: renderVoice(voice), voice };
 	});
 }

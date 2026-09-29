@@ -31,6 +31,7 @@ export interface DrumRegion {
 	reverse: boolean;
 	sample: string;
 	'sample.end': number;
+	'sample.start'?: number;
 	transpose: number;
 	tune: number;
 }
@@ -49,6 +50,7 @@ export interface SamplerRegion {
 	reverse: boolean;
 	sample: string;
 	'sample.end': number;
+	'sample.start'?: number;
 	tune: number;
 }
 
