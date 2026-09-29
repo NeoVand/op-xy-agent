@@ -147,6 +147,24 @@ export interface VirtualKitLoad {
 	readonly audible: boolean;
 }
 
+/** An instrument track's sound on the replica, each page as its screen reads. */
+export interface VirtualTrackSound {
+	readonly track: number;
+	readonly engine: string;
+	/** The preset it was loaded from ("pluck/beach bum"), or null for an engine without one. */
+	readonly preset: string | null;
+	/**
+	 * Each page as its screen reads ("prism: shape 15, ratio 2:1, detune 05, stereo 22"): the engine
+	 * (M1; a drum track's selected key), both envelopes (M2), the play mode (shift M2), the filter
+	 * (M3, with its envelope amount and key tracking), the sends (shift M3), the LFO (M4), the player.
+	 */
+	readonly pages: Readonly<Record<string, string>>;
+	/** The mixer's level (0–99) and pan (−100 … 100) for the track, and whether it is muted. */
+	readonly mix: { readonly level: number; readonly pan: number; readonly muted: boolean };
+	/** On a drum track, the sound on each key ("F3": "kick 1"). */
+	readonly kit?: Readonly<Record<string, string>>;
+}
+
 /** The virtual OP-XY. */
 export interface VirtualOpxy {
 	status(): VirtualStatus;
@@ -162,6 +180,8 @@ export interface VirtualOpxy {
 	/** Writes a pattern and makes it the one the track plays. */
 	writePattern(track: number, write: PatternWrite): VirtualPattern;
 	readArrangement(): VirtualArrangement;
+	/** An instrument track's whole sound (1–8), as its pages show it. */
+	readSound(track: number): VirtualTrackSound;
 	writeArrangement(write: ArrangementWrite): VirtualArrangement;
 	/**
 	 * Puts a drum kit on an instrument track (1–8): the track becomes a drum sampler (keeping its key

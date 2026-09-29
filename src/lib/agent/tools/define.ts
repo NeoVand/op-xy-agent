@@ -57,6 +57,8 @@ export interface AgentEnvironment {
 	readonly guide?: GuideHost | null;
 	/** The preset maker's inbox, where make_kit leaves a kit; absent when headless. */
 	readonly presets?: PresetInboxHost | null;
+	/** The replica's project going to the OP-XY over USB (send_project); absent when headless. */
+	readonly projects?: ProjectHost | null;
 	/** Records what the OP-XY or the replica plays and hears it (`listen`); absent when headless. */
 	readonly listen?: ListenHost | null;
 	readonly manual: ManualSource;
@@ -80,6 +82,21 @@ export interface PresetInboxHost {
 	put(draft: { readonly name: string; readonly samples: readonly SampleInput[] }): void;
 	/** The preset maker's address, for the answer's link. */
 	readonly href: string;
+}
+
+/** The app's project transfer (`$lib/app/project-transfer.svelte.ts`) as send_project sees it. */
+export interface ProjectHost {
+	/** Whether this browser can reach USB devices (WebUSB). */
+	readonly usb: boolean;
+	/**
+	 * Adds the replica's project to the OP-XY as `projects/user/<name>.xy` over MTP (the OP-XY in
+	 * MTP mode); never replaces a file. What the device file could not carry comes back in skipped.
+	 */
+	saveToDevice(
+		name: string
+	): Promise<
+		{ readonly path: string; readonly skipped: readonly string[] } | { readonly error: string }
+	>;
 }
 
 /** The app's walkthrough (`$lib/app/guide.svelte.ts`) as the tools see it. */

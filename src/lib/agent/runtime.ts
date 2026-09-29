@@ -13,7 +13,7 @@ import { Conductor, type PreferenceStore } from './conductor.svelte';
 import { loadManualSource } from './manual-source';
 import type { ListenHost } from './listen-host';
 import { createIdbThreadStore } from './threads';
-import type { GuideHost, PresetInboxHost, ScreenReader } from './tools';
+import type { GuideHost, PresetInboxHost, ProjectHost, ScreenReader } from './tools';
 
 // listening's browser side (worklet and worker included) loads with this chunk, not with the page
 export { createBrowserCapture } from '$lib/device/listen/browser';
@@ -34,6 +34,8 @@ export interface BrowserConductorOptions {
 	readonly guide?: GuideHost | null;
 	/** The preset maker's inbox, where make_kit leaves a kit. */
 	readonly presets?: PresetInboxHost | null;
+	/** The replica's project to the OP-XY over USB (send_project). */
+	readonly projects?: ProjectHost | null;
 	/** Listening (from `createBrowserCapture`, below): the OP-XY's USB audio or the replica's sound. */
 	readonly listen?: ListenHost | null;
 }
@@ -107,6 +109,7 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 			: null,
 		guide: options.guide ?? null,
 		presets: options.presets ?? null,
+		projects: options.projects ?? null,
 		listen: options.listen ?? null,
 		manual,
 		store: createIdbThreadStore(),

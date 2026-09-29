@@ -54,10 +54,14 @@ export interface ModelProfile {
 	readonly role: string;
 }
 
-/** The conductor's default: best quality for teaching and programming (research §5). */
-export const DEFAULT_CONDUCTOR_MODEL = 'claude-opus-5-5';
-/** The manual expert's default: half the price of Opus, fast, excellent with citations. */
-export const DEFAULT_SUBAGENT_MODEL = 'claude-sonnet-5';
+/**
+ * The conductor's default: Sonnet 5.5, the model the agent evals were run and tuned on
+ * (evals/agent: quality 34/34, how-to 25/25, manual 40/42, device 18/18), fast (about 5 s an
+ * answer) and half the price of Opus.
+ */
+export const DEFAULT_CONDUCTOR_MODEL = 'claude-sonnet-5-5';
+/** The manual expert's default: the same model, excellent with citations. */
+export const DEFAULT_SUBAGENT_MODEL = 'claude-sonnet-5-5';
 
 /** Beta header for `thinking.display: 'updates'`. */
 export const BETA_THINKING_UPDATES = 'thinking-display-updates-2026-08-18';
@@ -86,7 +90,7 @@ export const MODEL_MATRIX: readonly ModelProfile[] = [
 		midConversationSystem: true,
 		fallbacks: true,
 		cacheMinTokens: 512,
-		role: 'conductor (default)'
+		role: 'deepest conductor'
 	},
 	{
 		// probed on 2026-09-29: adaptive thinking with the updates display, effort, mid-conversation
@@ -102,7 +106,7 @@ export const MODEL_MATRIX: readonly ModelProfile[] = [
 		midConversationSystem: true,
 		fallbacks: true,
 		cacheMinTokens: 512,
-		role: 'fast conductor, manual expert'
+		role: 'conductor (default), manual expert'
 	},
 	{
 		id: 'claude-sonnet-5',

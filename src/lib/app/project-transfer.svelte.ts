@@ -148,7 +148,8 @@ export class ProjectTransfer {
 		}
 		let path: string | null = null;
 		await this.#run(async () => {
-			const connection = await MtpConnection.request(usb);
+			// an OP-XY this browser may already open needs no chooser
+			const connection = (await MtpConnection.granted(usb)) ?? (await MtpConnection.request(usb));
 			try {
 				const { session } = connection;
 				await session.open();

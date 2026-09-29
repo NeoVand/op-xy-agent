@@ -191,6 +191,8 @@ async function environment(
 	};
 	const guided: string[] = [];
 	const drafts: Draft[] = [];
+	// the OP-XY over USB, as far as send_project can tell: it takes every project it is sent
+	const sent: string[] = [];
 	const store = createMemoryThreadStore();
 	const listen = ears?.host(sim, files) ?? null;
 	const conductor = await Conductor.create({
@@ -201,6 +203,13 @@ async function environment(
 		virtual,
 		guide: { start: (goal) => void guided.push(goal), stop: () => {} },
 		presets: { put: (draft) => drafts.push(draft), href: '/presets' },
+		projects: {
+			usb: true,
+			async saveToDevice(name) {
+				sent.push(name);
+				return { path: `projects/user/${name}.xy`, skipped: [] };
+			}
+		},
 		listen,
 		manual,
 		store,
@@ -214,7 +223,7 @@ async function environment(
 		conductor,
 		store,
 		listen,
-		outcome: () => ({ state: sim.state, sim, virtual, guided, drafts, heard })
+		outcome: () => ({ state: sim.state, sim, virtual, guided, drafts, heard, sent })
 	};
 }
 
@@ -238,6 +247,7 @@ const PREAMBLE =
 	/^(great|good|nice) (question|idea)|^(sure|certainly|absolutely|of course)\b|^i'?d be (happy|glad)|^happy to\b|^okay[,!]|^alright[,!]/i;
 
 const LENGTH: Record<string, number> = {
+	demo: 1500,
 	docs: 1800,
 	show: 1300,
 	compose: 1500,

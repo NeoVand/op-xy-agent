@@ -35,9 +35,11 @@ export interface Outcome {
 	readonly drafts: readonly Draft[];
 	/** Notes the browser sounded live (play_notes on the virtual OP-XY), track 1–16. */
 	readonly heard: readonly { track: number; note: number; velocity: number; seconds: number }[];
+	/** Project names send_project put on the (stand-in) OP-XY. */
+	readonly sent: readonly string[];
 }
 
-export type Category = 'docs' | 'show' | 'compose' | 'kit' | 'multi' | 'edge';
+export type Category = 'docs' | 'show' | 'compose' | 'kit' | 'multi' | 'edge' | 'demo';
 
 export interface QualityCase {
 	readonly id: string;
@@ -502,11 +504,104 @@ const EDGE: readonly QualityCase[] = [
 	}
 ];
 
+/** The demo video's moments, as said on camera: rehearsed with --category demo --repeat n. */
+const DEMO: readonly QualityCase[] = [
+	{
+		id: 'demo-shift-m1',
+		category: 'demo',
+		turns: ['what does shift + M1 do?'],
+		facts: [
+			'On OS 1.1.33 shift + M1 opens the preset browser for the selected track.',
+			'Loading a preset (or an engine, which loads as one of its presets) replaces the track’s whole sound.'
+		],
+		intent: 'A short, exact answer with the key combo, from the manual.'
+	},
+	{
+		id: 'demo-chord',
+		category: 'demo',
+		turns: ['can the op-xy play a whole chord from one key?'],
+		facts: [
+			'Yes, with the maestro player: shift + player opens the player list, where maestro is picked.',
+			'A chord is stored by holding shift and playing its notes; then each single key plays that chord.'
+		],
+		intent: 'A firm yes, the maestro player and the keys to set it up.'
+	},
+	{
+		id: 'demo-walkthrough',
+		category: 'demo',
+		turns: ['walk me through setting the filter cutoff on track 3'],
+		intent:
+			'Starts a lit walkthrough on the replica (T3, M3, turn E1) and tells the user to follow the lit keys.',
+		check(o) {
+			return o.guided.length > 0 ? [] : ['started no walkthrough on the replica'];
+		}
+	},
+	{
+		id: 'demo-kit',
+		category: 'demo',
+		turns: ['make a punchy 909 kit and play a house beat with it'],
+		intent: 'Makes the kit, puts it on a drum track of the replica, a house beat there, playing.',
+		tools: { must: ['make_kit', 'write_pattern'] },
+		check(o) {
+			const fails = playing(o);
+			const kit = o.drafts.at(-1);
+			if (!kit) return [...fails, 'no kit made'];
+			const on = kitTracks(o, kit.name);
+			if (on.length === 0) return [...fails, 'the kit is on no drum track of the replica'];
+			for (const step of [1, 5, 9, 13])
+				if (!hitsOn(o, on[0], step, KICKS)) fails.push(`no kick on step ${step}`);
+			return fails;
+		}
+	},
+	{
+		id: 'demo-dark',
+		category: 'demo',
+		turns: ['why does track 3 sound so dark?'],
+		facts: [
+			'Track 3’s filter is on with its cutoff all the way down (00), which lets only the lowest part of the sound through.',
+			'Turning the cutoff up on the filter page (T3, M3, turn E1) opens it up.'
+		],
+		intent:
+			'Reads the track’s sound and explains the darkness from its real settings, with the keys to fix it.',
+		tools: { must: ['read_sound'] }
+	},
+	{
+		id: 'demo-pump',
+		category: 'demo',
+		turns: ['make the bass pump with the kick'],
+		intent:
+			'Sets up a duck on the bass track (the LFO as duck, triggered by the kick track) on the replica, and says what it did.',
+		check(o) {
+			const bass = o.state.tracks[2];
+			return bass.lfo.on && bass.lfo.type === 'duck' ? [] : ['track 3 has no duck LFO'];
+		}
+	},
+	{
+		id: 'demo-send',
+		category: 'demo',
+		turns: [
+			'build a little house loop and play it',
+			'love it. put it on my op-xy',
+			'ok, it is in mtp mode now'
+		],
+		intent:
+			'Builds and plays a house loop; asked to put it on the OP-XY, first asks for MTP mode (com → M4); once the user says it is, sends it as a new project and says how to open it on the device.',
+		check(o) {
+			const fails = playing(o);
+			const early = o.trace.filter((t) => !t.nested && t.name === 'send_project' && t.turn < 2);
+			if (early.length) fails.push('sent the project before the OP-XY was in MTP mode');
+			if (o.sent.length !== 1) fails.push(`${o.sent.length} projects sent, not 1`);
+			return fails;
+		}
+	}
+];
+
 export const QUALITY_CASES: readonly QualityCase[] = [
 	...DOCS,
 	...SHOW,
 	...COMPOSE,
 	...KIT,
 	...MULTI,
-	...EDGE
+	...EDGE,
+	...DEMO
 ];

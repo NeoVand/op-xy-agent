@@ -134,7 +134,7 @@ describe('conductor: requests and streaming', () => {
 		expect(request.headers['anthropic-beta']).toContain('server-side-fallback-2026-07-01');
 
 		const body = request.body;
-		expect(body.model).toBe('claude-opus-5-5');
+		expect(body.model).toBe('claude-sonnet-5-5');
 		expect(body.stream).toBe(true);
 		expect(body.thinking).toEqual({ type: 'adaptive', display: 'updates' });
 		expect(body.output_config).toEqual({ effort: 'medium' });
@@ -174,7 +174,7 @@ describe('conductor: requests and streaming', () => {
 		);
 		expect(events.filter((e) => e.type === 'text').length).toBeGreaterThan(1);
 		expect(conductor.usage.calls).toBe(1);
-		expect(conductor.usage.usd).toBeCloseTo((50 * 4 + 2000 * 5 + 30 * 20) / 1e6, 9);
+		expect(conductor.usage.usd).toBeCloseTo((50 * 2 + 2000 * 2.5 + 30 * 10) / 1e6, 9);
 		expect(conductor.status).toBe('idle');
 	});
 
@@ -576,7 +576,7 @@ describe('conductor: subagents', () => {
 			system: { text: string }[];
 			messages: unknown[];
 		};
-		expect(sub.model).toBe('claude-sonnet-5');
+		expect(sub.model).toBe('claude-sonnet-5-5');
 		expect(sub.tools.map((t) => t.name)).toEqual(['read_manual_unit', 'search_manual']);
 		expect(sub.system[0].text).toMatch(/manual expert/);
 		expect(sub.messages).toHaveLength(1);

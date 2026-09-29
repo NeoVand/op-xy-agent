@@ -16,7 +16,7 @@ import {
 	setTempoTool,
 	transportTool
 } from './device';
-import { readPatternTool, writeArrangementTool, writePatternTool } from './virtual';
+import { readPatternTool, readSoundTool, writeArrangementTool, writePatternTool } from './virtual';
 
 function setup(options: { sound?: boolean } = {}) {
 	const time = new FakeTime();
@@ -312,5 +312,32 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		expect(status.summary).toBe('no op-xy connected: the replica plays');
 		expect(json(status).virtual).toMatchObject({ bpm: 120, playing: false, sound: 'unavailable' });
 		expect(json(status).virtual.tracks[2]).toMatchObject({ track: 3, engine: 'prism', notes: 1 });
+	});
+});
+
+describe('read_sound', () => {
+	it("reads a track's whole sound as its pages show it", async () => {
+		const { run } = setup();
+		const sound = json(await run(readSoundTool, { track: 3 }));
+		expect(sound).toMatchObject({ track: 3, engine: 'prism', preset: 'bass/shoulder' });
+		expect(sound.pages['M1 engine']).toMatch(/^prism: shape \d+/);
+		expect(sound.pages['M2 amp envelope']).toMatch(/^amp envelope: attack/);
+		expect(sound.pages['M2 filter envelope']).toMatch(/^filter envelope: attack/);
+		expect(sound.pages['shift M2 play mode']).toMatch(/play mode/);
+		expect(sound.pages['M3 filter']).toMatch(/cutoff .*resonance .*env/);
+		expect(sound.pages['shift M3 sends']).toMatch(/^sends:/);
+		expect(sound.pages['M4 lfo']).toMatch(/lfo/);
+		expect(sound.pages.player).toMatch(/player/);
+		expect(sound.mix).toEqual({ level: 74, pan: 0, muted: false });
+		expect(sound.kit).toBeUndefined();
+	});
+
+	it('lists the sound on every key of a drum track, and moves nothing', async () => {
+		const { sim, run } = setup();
+		const before = JSON.stringify(sim.state);
+		const kit = json(await run(readSoundTool, { track: 1 }));
+		expect(kit.kit).toMatchObject({ F3: 'kick 1', 'F#3': 'kick 2', G3: 'snare 1', E5: 'chi 1' });
+		expect(Object.keys(kit.kit)).toHaveLength(24);
+		expect(JSON.stringify(sim.state)).toBe(before);
 	});
 });

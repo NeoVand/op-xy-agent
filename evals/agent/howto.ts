@@ -511,7 +511,7 @@ export async function main(argv: readonly string[]): Promise<void> {
 		return i >= 0 ? argv[i + 1] : undefined;
 	};
 	const ids = flag('--ids')?.split(',');
-	const model = flag('--model') ?? 'claude-opus-5-5';
+	const model = flag('--model') ?? 'claude-sonnet-5-5';
 	const apiKey = anthropicKey();
 	const cases = CASES.filter((c) => !ids || ids.includes(c.id));
 	let passed = 0;

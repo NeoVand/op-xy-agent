@@ -10,8 +10,13 @@ import type {
 	VirtualKitLoad,
 	VirtualOpxy,
 	VirtualPattern,
-	VirtualStatus
+	VirtualStatus,
+	VirtualTrackSound
 } from '$lib/agent/virtual-opxy';
+import { KEYBOARD_NOTE_NAMES } from '$lib/core/opxy';
+import { lockParam } from '$lib/sim/areas/sequencer/locks';
+import { buildFrame } from '$lib/sim/frames';
+import { describeFrame } from '$lib/sim/screen/render';
 import { FIRST_NOTE, KEYS, sampleFile } from '$lib/sim/areas/sample/state';
 import { loadEngineSound } from '$lib/sim/areas/system/presets';
 import {
@@ -19,11 +24,13 @@ import {
 	planParam,
 	planPlace,
 	planSettings,
+	playStep,
+	type Place,
 	planToSetting
 } from '$lib/sim/navigator';
 import { captureScene, playPattern, startSong, trackSequence } from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
-import type { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { AUX_NAMES, type SimState } from '$lib/sim/params';
 import {
 	MAX_BARS,
@@ -125,6 +132,68 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		};
 	}
 
+	/** What the screen reads at `place` (on a copy; the replica does not move), shift held or not. */
+	function screenAt(place: Place, shift = false): string {
+		const plan = planPlace(s, place);
+		const copy = new OpxySim({
+			state: JSON.parse(JSON.stringify(s)) as SimState,
+			now: () => 0
+		});
+		for (const step of plan.steps) playStep(copy, step);
+		if (shift) copy.input({ type: 'press', id: 'key.shift' });
+		return describeFrame(buildFrame(copy.state));
+	}
+
+	function readSound(track: number): VirtualTrackSound {
+		if (!Number.isInteger(track) || track < 1 || track > 8) {
+			throw new VirtualOpxyError(`there is no instrument track ${track} (1–8)`);
+		}
+		const t = s.tracks[track - 1];
+		const at = (page: 1 | 2 | 3 | 4, extra: Partial<Place> = {}) =>
+			({ area: 'instrument', track, page, ...extra }) as Place;
+		// the filter page draws cutoff and resonance; its envelope amount and key tracking too
+		const shown = (id: string) => {
+			const p = lockParam(id);
+			return p ? `${p.label} ${p.format(p.get(t))}` : null;
+		};
+		const filterMore = ['filter.envAmount', 'filter.keyTracking']
+			.map(shown)
+			.filter((x): x is string => x !== null);
+		const preset = s.areas.system.trackPresets[track - 1] ?? null;
+		const keys = t.engine === 'drum' ? s.areas.sample.tracks[track - 1].keys : null;
+		return {
+			track,
+			engine: t.engine,
+			preset: preset && preset !== '/' ? preset : null,
+			pages: {
+				'M1 engine': screenAt(at(1)),
+				'M2 amp envelope': screenAt(at(2, { envelope: 'amp' })),
+				'M2 filter envelope': screenAt(at(2, { envelope: 'filter' })),
+				'shift M2 play mode': screenAt(at(2), true),
+				'M3 filter': [screenAt(at(3)), ...filterMore].join(', '),
+				'shift M3 sends': screenAt(at(3), true),
+				'M4 lfo': screenAt(at(4)),
+				player: screenAt({ area: 'player', track })
+			},
+			mix: {
+				level: Math.round(t.mix.level),
+				pan: Math.round(t.mix.pan),
+				muted: t.mix.muted
+			},
+			...(keys
+				? {
+						kit: Object.fromEntries(
+							keys.flatMap((file, i) =>
+								file
+									? [[KEYBOARD_NOTE_NAMES[i].toUpperCase().replace('S', '#'), soundName(file.name)]]
+									: []
+							)
+						)
+					}
+				: {})
+		};
+	}
+
 	function readArrangement(): VirtualArrangement {
 		const a = s.areas.arrange;
 		const scenes = a.scenes.flatMap((scene, i) => {
@@ -209,6 +278,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		},
 
 		readPattern,
+		readSound,
 
 		loadKit(track, kit): VirtualKitLoad {
 			const t = trackIndex(track);
