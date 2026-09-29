@@ -1,8 +1,9 @@
 <!--
 @component
-The analog volume pot in the left half of its 2 × 1 tile: a tall knurled knob with a pointer
-dimple, sized and placed from TE's drawing. It starts in the middle, its dimple straight up, and
-sets the app's output level (AppSound; `volumeGain`). Its travel (300°) is unverified on hardware.
+The analog volume pot in the left half of its 2 × 1 tile: a knob with a pointer dimple, standing
+in a round hole, sized and placed from TE's drawing and shaded as TE's top-down photo shows it. It
+starts in the middle, its dimple straight up, and sets the app's output level (AppSound;
+`volumeGain`). Its travel (300°) is unverified on hardware.
 
 Input: a drag turns it the way it would turn under a finger (as the encoders: `clockwisePx`), the
 wheel, arrow keys / Page Up/Down / Home / End.
@@ -12,7 +13,6 @@ wheel, arrow keys / Page Up/Down / Home / End.
 <script lang="ts">
 	import { VOLUME_PART } from './geometry';
 	import { capturePointer, clockwisePx, wheel, wheelSteps } from './input';
-	import { knurlPath } from './shapes';
 	import { VOLUME_TRAVEL, type ReplicaState } from './state.svelte';
 
 	interface Props {
@@ -24,7 +24,10 @@ wheel, arrow keys / Page Up/Down / Home / End.
 	const { art, tile, colors } = VOLUME_PART;
 	/** Distance of the dimple from the knob centre, as drawn. */
 	const reach = Math.hypot(art.dimple.x, art.dimple.y);
-	const knurl = knurlPath(art.top + 0.25, art.outer - 0.06, 48);
+	/** The knob inside its hole, and its flat top (TE's top-down photo; the drawing's outer circle
+	 * is the hole). */
+	const KNOB_R = art.outer - 0.4;
+	const TOP_R = 3.85;
 	/** Drag distance (px) for the whole travel. */
 	const DRAG_RANGE = 160;
 	const STEP = 0.02;
@@ -133,24 +136,23 @@ wheel, arrow keys / Page Up/Down / Home / End.
 		stroke-width="0.14"
 	/>
 
-	<!-- as the encoders' knobs in TE's top-down photo: a shadow pooling toward the front, the side
-	     lit at the back and dark at the front with the knurl just showing, a flat black top -->
-	<circle cx="0.15" cy="0.8" r={art.outer + 1.3} fill="url(#rx-enc-shadow)" />
-	<circle r={art.outer} fill={colors.body} />
-	<g class="vol__turning" style:transform="rotate({angle}deg)">
-		<path d={knurl} stroke="#ffffff" stroke-opacity="0.035" stroke-width="0.12" />
-	</g>
-	<circle r={art.outer} fill="url(#rx-enc-side)" />
-	<circle
-		r={art.outer - 0.06}
-		fill="none"
-		stroke="#000000"
-		stroke-opacity="0.55"
-		stroke-width="0.12"
-	/>
-	<circle r={art.top} fill={colors.body} />
-	<circle r={art.top} fill="url(#rx-enc-face)" />
-	<circle r={art.top - 0.07} fill="none" stroke="url(#rx-enc-bevel)" stroke-width="0.14" />
+	<!-- TE's top-down photo, measured through the centre: the knob (about 10.2 mm, the encoders'
+	     size) stands in a round hole whose black rim shows all round it (the drawing's 11 mm is the
+	     hole), and its shadow falls onto the tile in front. The knob is the body's own grey (only
+	     the photo's lights make its side look bright): a rounded shoulder catching a little light
+	     at the back and dark at the front, a thin dark step, and the flat top, its edge rounded -->
+	<circle cx="0.1" cy="0.9" r={art.outer + 1.1} fill="url(#rx-enc-shadow)" />
+	<circle r={art.outer + 0.15} fill="#000000" fill-opacity="0.72" />
+	<circle r={KNOB_R} fill={colors.tile} />
+	<circle r={KNOB_R} fill="url(#rx-vol-side)" />
+	<circle r={KNOB_R} fill="url(#rx-roll)" mask="url(#rx-back)" />
+	<circle r={KNOB_R - 0.05} fill="none" stroke="#000000" stroke-opacity="0.5" stroke-width="0.1" />
+	<circle r={TOP_R + 0.1} fill="#000000" fill-opacity="0.45" />
+	<circle r={TOP_R} fill={colors.body} />
+	<circle r={TOP_R} fill="url(#rx-enc-face)" />
+	<circle r={TOP_R} fill="url(#rx-fillet-edge)" />
+	<circle r={TOP_R} fill="url(#rx-fillet-dark)" mask="url(#rx-front)" />
+	<circle r={TOP_R} fill="url(#rx-fillet-light)" mask="url(#rx-back)" />
 	<g class="vol__turning" style:transform="rotate({angle}deg)">
 		<circle r={art.outer} fill="none" />
 		<circle cy={-reach + 0.06} r={art.dimple.r} fill="#ffffff" fill-opacity="0.14" />

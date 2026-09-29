@@ -34,6 +34,7 @@ the octave, Space for play and stop).
 	import Screen from './Screen.svelte';
 	import VolumeKnob from './VolumeKnob.svelte';
 	import { BODY_RADIUS, ENCODER_PARTS, KEY_PARTS, PANEL_H, PANEL_W, SCREEN_PART } from './geometry';
+	import { GRAIN_TILE, grainTile } from './grain';
 	import { COMPUTER_KEYS, ComputerKeys } from './keyboard';
 	import { ComputerShift, isTyping } from './modifiers';
 	import type { ReplicaState } from './state.svelte';
@@ -42,7 +43,7 @@ the octave, Space for play and stop).
 		replica: ReplicaState;
 		/** Accessible name of the instrument. */
 		label?: string;
-		/** A barely perceptible satin grain over the body (off = perfectly smooth). */
+		/** The anodised finish's fine grain over the body (off = perfectly smooth). */
 		grain?: boolean;
 		/** The computer keyboard plays the replica's keys (one replica on the page should). */
 		keys?: boolean;
@@ -108,6 +109,22 @@ the octave, Space for play and stop).
 		radius: `${pct(active.r, active.w)} / ${pct(active.r, active.h)}`
 	};
 	const bodyRadius = `${pct(BODY_RADIUS, PANEL_W)} / ${pct(BODY_RADIUS, PANEL_H)}`;
+
+	/** The grain tile, laid one texel to a device pixel (again whenever the pixel ratio changes). */
+	const grainLayer: Attachment<HTMLDivElement> = (element) => {
+		const url = grainTile();
+		if (!url) return;
+		element.style.backgroundImage = `url(${url})`;
+		let query: MediaQueryList | null = null;
+		const fit = () => {
+			query?.removeEventListener('change', fit);
+			element.style.backgroundSize = `${GRAIN_TILE / devicePixelRatio}px`;
+			query = matchMedia(`(resolution: ${devicePixelRatio}dppx)`);
+			query.addEventListener('change', fit);
+		};
+		fit();
+		return () => query?.removeEventListener('change', fit);
+	};
 
 	const keepSvg: Attachment<SVGSVGElement> = (element) => {
 		svg = element;
@@ -176,16 +193,17 @@ the octave, Space for play and stop).
 		</g>
 		<LevelMeter level={replica.meter} />
 		<PitchStrip {replica} />
-		{#if grain}
-			<rect
-				class="replica__grain"
-				width={PANEL_W}
-				height={PANEL_H}
-				rx={BODY_RADIUS}
-				fill="url(#rx-grain)"
-			/>
-		{/if}
+		<rect
+			class="replica__sheen"
+			width={PANEL_W}
+			height={PANEL_H}
+			rx={BODY_RADIUS}
+			fill="url(#rx-sheen)"
+		/>
 	</svg>
+	{#if grain}
+		<div class="replica__grain" aria-hidden="true" {@attach grainLayer}></div>
+	{/if}
 	<div
 		class="replica__screen"
 		style:left={screenBox.left}
@@ -243,9 +261,20 @@ the octave, Space for play and stop).
 		overflow: visible;
 	}
 
-	/* barely perceptible at normal zoom: the anodised satin finish, not a texture */
+	.replica__sheen {
+		mix-blend-mode: soft-light;
+		pointer-events: none;
+	}
+
+	/* the anodised finish's grain (grain.ts): in an overlay blend a texel of mid-grey changes
+	   nothing, lighter and darker ones lift and sink the surface under them by a few percent */
 	.replica__grain {
-		opacity: 0.1;
+		position: absolute;
+		inset: 0;
+		border-radius: var(--rx-body-radius);
+		mix-blend-mode: overlay;
+		opacity: 0.35;
+		image-rendering: pixelated;
 		pointer-events: none;
 	}
 

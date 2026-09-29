@@ -220,9 +220,9 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 		stroke-width="0.3"
 	/>
 
-	<!-- the knob: its shadow pooling on the floor toward the front; its chamfered side lit at the
+	<!-- the knob: its shadow pooling on the floor toward the front; its rounded shoulder lit at the
 	     back and dark at the front, with the knurl just showing (it turns with the knob); the
-	     coloured cap a flat disc over its whole top, a dark seam round it and a bevel at its edge -->
+	     coloured cap a flat disc over its whole top, a dark seam round it, its edge rounded -->
 	<circle cx="0.2" cy="0.95" r="6.5" fill="url(#rx-enc-shadow)" />
 	<g class="enc__knob">
 		<circle r="5" fill={part.colors.body} />
@@ -230,11 +230,14 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 			<path d={knurl} stroke="#ffffff" stroke-opacity="0.035" stroke-width="0.11" />
 		</g>
 		<circle r="5" fill="url(#rx-enc-side)" />
+		<circle r="5" fill="url(#rx-roll)" mask="url(#rx-back)" />
 		<circle r="4.94" fill="none" stroke="#000000" stroke-opacity="0.55" stroke-width="0.12" />
 		<circle r={art.top + 0.1} fill="#000000" fill-opacity="0.55" />
 		<circle r={art.top} fill={part.colors.cap} />
 		<circle r={art.top} fill="url(#rx-enc-face)" />
-		<circle r={art.top - 0.08} fill="none" stroke="url(#rx-enc-bevel)" stroke-width="0.16" />
+		<circle r={art.top} fill="url(#rx-fillet-edge)" />
+		<circle r={art.top} fill="url(#rx-fillet-dark)" mask="url(#rx-front)" />
+		<circle r={art.top} fill="url(#rx-fillet-light)" mask="url(#rx-back)" />
 	</g>
 
 	<!-- the turn trail: it rides round with the knob; each turn lights it again (two identical
