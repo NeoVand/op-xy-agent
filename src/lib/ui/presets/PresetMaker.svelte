@@ -34,7 +34,10 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		slicePattern,
 		voiceValue,
 		parseSoundFont,
+		parseSfz,
 		readPreset,
+		safeName,
+		sfzSamples,
 		unzip,
 		zipPreset,
 		type Inflate,
@@ -692,6 +695,17 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 			}
 			return;
 		}
+		// an SFZ instrument: its text, and the samples beside it in the dropped folder
+		const sfz = entries.find((e) => /\.sfz$/i.test(e.path));
+		if (sfz) {
+			try {
+				player.unlock();
+				await openSfz(sfz, entries);
+			} catch (error) {
+				bench.say(error instanceof Error ? error.message : String(error));
+			}
+			return;
+		}
 		const zip = entries.find((e) => /\.zip$/i.test(e.path));
 		const hasPatch = entries.some((e) => /(^|\/)patch\.json$/i.test(e.path));
 		if (zip || hasPatch) {
@@ -734,6 +748,57 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 
 	const stem = (name: string) => name.replace(/\.[a-z0-9]+$/i, '');
 
+	/** A path with its `.` and `..` segments walked, forward slashes, no leading slash. */
+	function normal(path: string): string {
+		const out: string[] = [];
+		for (const part of path.replace(/\\/g, '/').split('/')) {
+			if (part === '..') out.pop();
+			else if (part && part !== '.') out.push(part);
+		}
+		return out.join('/');
+	}
+
+	/** Opens an SFZ instrument as a multisample, its samples found beside it in the drop. */
+	async function openSfz(sfz: DroppedFile, entries: readonly DroppedFile[]) {
+		const regions = parseSfz(await sfz.file.text());
+		const folder = sfz.path.includes('/') ? sfz.path.slice(0, sfz.path.lastIndexOf('/') + 1) : '';
+		const byPath = new Map(entries.map((e) => [normal(e.path).toLowerCase(), e]));
+		const byName = new Map(entries.map((e) => [e.file.name.toLowerCase(), e]));
+		const find = (sample: string) =>
+			byPath.get(normal(folder + sample).toLowerCase()) ??
+			byName.get((sample.split('/').pop() ?? sample).toLowerCase());
+		// bookkeeping for this one import, never drawn
+		const decoded: Record<string, PcmAudio> = {};
+		bench.busy = true;
+		try {
+			for (const sample of new Set(regions.map((r) => r.sample))) {
+				const entry = find(sample);
+				if (!entry) continue;
+				reading = entry.file.name;
+				try {
+					decoded[sample] = await decodeAudioFile(entry.file);
+				} catch {
+					// a file the browser cannot read counts as missing
+				}
+			}
+		} finally {
+			bench.busy = false;
+		}
+		const { samples, warnings } = sfzSamples(regions, (path) => decoded[path] ?? null);
+		stopBeat();
+		bench.openPreset({
+			kind: 'multisampler',
+			name: safeName(stem(sfz.file.name), 24),
+			samples,
+			patch: {},
+			warnings
+		});
+		const noted = warnings.length > 0 ? `: ${warnings[0]}` : '';
+		bench.say(`${sfz.file.name}: ${samples.length} zones${noted}`);
+		page = 'loop';
+		chase();
+	}
+
 	async function onDrop(event: DragEvent) {
 		event.preventDefault();
 		receiving = false;
@@ -756,7 +821,7 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 	function choose() {
 		const picker = document.createElement('input');
 		picker.type = 'file';
-		picker.accept = 'audio/*,.wav,.aif,.aiff,.flac,.mp3,.ogg,.m4a,.zip,.sf2';
+		picker.accept = 'audio/*,.wav,.aif,.aiff,.flac,.mp3,.ogg,.m4a,.zip,.sf2,.sfz';
 		picker.multiple = true;
 		picker.onchange = () => {
 			if (picker.files?.length) {
@@ -1119,8 +1184,8 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 						{/if}
 						<p class="welcome__text">
 							A folder of hits becomes a kit laid out the way TE lays out theirs, a loop is sliced
-							onto the keys, the notes of an instrument become a multisample, a SoundFont or a
-							.preset opens as it is. Or drop straight onto a key.
+							onto the keys, the notes of an instrument become a multisample, a SoundFont, an SFZ or
+							a .preset opens as it is. Or drop straight onto a key.
 						</p>
 						<p class="welcome__keys">
 							your keyboard plays the keys: <kbd>z</kbd>–<kbd>m</kbd> the lower twelve,

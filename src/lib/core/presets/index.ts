@@ -69,6 +69,8 @@ export { EDIT_RANGES, MIN_SPAN, audibleSpan, clampEdit, defaultEdit, renderEdit 
 export { PresetReadError, readPreset, unzip } from './read';
 export type { ImportedPreset, Inflate, PresetFile } from './read';
 export { Sf2Error, parseSoundFont, soundFontSamples } from './sf2';
+export { SfzError, parseSfz, sfzNote, sfzSamples } from './sfz';
+export type { SfzImport, SfzRegion } from './sfz';
 export type {
 	SoundFont,
 	SoundFontImport,
