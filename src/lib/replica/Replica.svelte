@@ -243,9 +243,9 @@ the octave, Space for play and stop).
 		overflow: visible;
 	}
 
-	/* barely perceptible at normal zoom: a satin finish, not a texture */
+	/* barely perceptible at normal zoom: the anodised satin finish, not a texture */
 	.replica__grain {
-		opacity: 0.07;
+		opacity: 0.1;
 		pointer-events: none;
 	}
 

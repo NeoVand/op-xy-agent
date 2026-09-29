@@ -17,8 +17,8 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 	</linearGradient>
 	<!-- chamfered rim: bright along the back, a faint catch-light along the front -->
 	<linearGradient id="rx-rim" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.11" />
-		<stop offset="0.1" stop-color="#ffffff" stop-opacity="0.03" />
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.14" />
+		<stop offset="0.1" stop-color="#ffffff" stop-opacity="0.035" />
 		<stop offset="0.9" stop-color="#ffffff" stop-opacity="0.015" />
 		<stop offset="1" stop-color="#ffffff" stop-opacity="0.08" />
 	</linearGradient>
@@ -28,15 +28,16 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 		<stop offset="0.02" stop-color="#000000" stop-opacity="0" />
 	</linearGradient>
 
-	<!-- tiles: flat, a hair of shade toward the front, a thin catch-light on the back edge -->
-	<linearGradient id="rx-tile-shade" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.01" />
-		<stop offset="0.3" stop-color="#ffffff" stop-opacity="0" />
+	<!-- tiles: anodised satin, a soft sheen toward the lit back and shade toward the front, the
+	     chamfer catching the light along the back edge -->
+	<linearGradient id="rx-tile-shade" x1="0" y1="0" x2="0.35" y2="1">
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.035" />
+		<stop offset="0.4" stop-color="#ffffff" stop-opacity="0" />
 		<stop offset="0.7" stop-color="#000000" stop-opacity="0" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.14" />
+		<stop offset="1" stop-color="#000000" stop-opacity="0.18" />
 	</linearGradient>
 	<linearGradient id="rx-tile-rim" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.08" />
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.13" />
 		<stop offset="0.06" stop-color="#ffffff" stop-opacity="0.02" />
 		<stop offset="0.94" stop-color="#000000" stop-opacity="0.1" />
 		<stop offset="1" stop-color="#000000" stop-opacity="0.5" />
@@ -63,17 +64,20 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 		<stop offset="0" stop-color="#ffffff" stop-opacity="0.2" />
 		<stop offset="0.36" stop-color="#ffffff" stop-opacity="0" />
 	</linearGradient>
-	<!-- the cap's face: flat and matte, the same colour as its tile, shade only toward the front -->
-	<linearGradient id="rx-cap-shade" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.025" />
-		<stop offset="0.5" stop-color="#ffffff" stop-opacity="0" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.12" />
-	</linearGradient>
-	<linearGradient id="rx-cap-shade-light" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.06" />
-		<stop offset="0.5" stop-color="#ffffff" stop-opacity="0" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.08" />
-	</linearGradient>
+	<!-- the cap's face: the tile's anodised satin, a soft sheen from the lit back side and a little
+	     shade at its front edge; flat, so it never reads as a soft pillow -->
+	<radialGradient id="rx-cap-shade" cx="0.42" cy="0.3" r="0.78">
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.07" />
+		<stop offset="0.55" stop-color="#ffffff" stop-opacity="0.012" />
+		<stop offset="0.85" stop-color="#000000" stop-opacity="0.06" />
+		<stop offset="1" stop-color="#000000" stop-opacity="0.16" />
+	</radialGradient>
+	<radialGradient id="rx-cap-shade-light" cx="0.42" cy="0.3" r="0.78">
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.12" />
+		<stop offset="0.55" stop-color="#ffffff" stop-opacity="0.02" />
+		<stop offset="0.85" stop-color="#000000" stop-opacity="0.04" />
+		<stop offset="1" stop-color="#000000" stop-opacity="0.1" />
+	</radialGradient>
 	<linearGradient id="rx-cap-rim" x1="0" y1="0" x2="0" y2="1">
 		<stop offset="0" stop-color="#ffffff" stop-opacity="0.26" />
 		<stop offset="0.2" stop-color="#ffffff" stop-opacity="0.05" />
