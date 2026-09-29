@@ -8,12 +8,12 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 <svelte:options namespace="svg" />
 
 <defs>
-	<!-- anodised slab, lit from the back edge: the same black as the tiles and caps (TE's top-down
-	     photo shows one material; drawn a little darker than its studio light, like the owner's unit) -->
+	<!-- anodised slab, lit from the back edge: the tiles' and caps' black (TE's top-down photo shows
+	     one material), the outer body a shade darker than the tiles (the owner) -->
 	<linearGradient id="rx-body" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#252629" />
-		<stop offset="0.45" stop-color="#222326" />
-		<stop offset="1" stop-color="#1f2023" />
+		<stop offset="0" stop-color="#212225" />
+		<stop offset="0.45" stop-color="#1e1f22" />
+		<stop offset="1" stop-color="#1b1c1f" />
 	</linearGradient>
 	<!-- chamfered rim: bright along the back, a faint catch-light along the front -->
 	<linearGradient id="rx-rim" x1="0" y1="0" x2="0" y2="1">

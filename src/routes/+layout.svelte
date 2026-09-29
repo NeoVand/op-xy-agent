@@ -116,7 +116,12 @@
 		const stopSimulator = simulator.start();
 		// after the simulator: the sound reads what the simulator made of each replica event
 		const stopSound = sound.start();
-		const saving = persistence.start();
+		// once saved work is back, the replica opens on track 3, a synth, so the keyboard plays notes
+		// rather than drums (the owner); a new project on the device itself starts on track 1
+		const saving = persistence.start().then((stop) => {
+			simulator.sim.state.track = 2;
+			return stop;
+		});
 		return () => {
 			void saving.then((stop) => stop());
 			stopSound();

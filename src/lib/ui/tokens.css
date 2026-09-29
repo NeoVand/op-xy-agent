@@ -42,7 +42,7 @@
 	 * Tones of the physical object, for the replica and anything that depicts hardware.
 	 * Sampled from studio renders; they do not change with the theme (the device stays black).
 	 */
-	--xy-mat-body: #222326; /* black anodised aluminium, tiles and caps alike */
+	--xy-mat-body: #1e1f22; /* black anodised aluminium, a shade darker than its tiles */
 	--xy-mat-rim: #45484f; /* specular highlight on the chamfered rim */
 	--xy-mat-gap: #08090b; /* the dark recess between tiles */
 	--xy-mat-tile: #222326;

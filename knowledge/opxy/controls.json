@@ -129,8 +129,8 @@
 	},
 	"colors": {
 		"body": {
-			"hex": "#222326",
-			"role": "anodized body: the same black as the tiles and caps (TE-TOPDOWN reads about #26282c under studio light; drawn a little darker, like the owner’s unit)",
+			"hex": "#1e1f22",
+			"role": "anodized body: the tiles’ and caps’ black, the outer body a shade darker than the tiles (TE-TOPDOWN reads about #26282c under studio light; drawn darker, like the owner’s unit)",
 			"confidence": "measured",
 			"source": ["TE-TOPDOWN", "HW-NOTE"]
 		},

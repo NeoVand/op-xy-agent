@@ -6,6 +6,11 @@ test.describe('the home page', () => {
 		await expect(page.getByRole('group', { name: 'OP-XY replica' })).toBeVisible();
 	});
 
+	test('opens on track 3, a synth', async ({ page }) => {
+		await expect(page.locator('[data-id="track.3"]')).toHaveAttribute('data-led', 'white');
+		await expect(page.locator('[data-id="track.1"]')).not.toHaveAttribute('data-led', 'white');
+	});
+
 	test('plays the replica from the computer keyboard, chords included', async ({ page }) => {
 		const key = (id: string) => page.locator(`[data-id="${id}"]`);
 		await page.keyboard.down('b'); // C4

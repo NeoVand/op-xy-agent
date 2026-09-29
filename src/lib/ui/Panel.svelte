@@ -144,7 +144,7 @@ A surface. Panels differ by material, not by decoration:
 		/* its wells (the composer, your messages, fields) are the app's background, not black */
 		--xy-surface-sunken: var(--xy-bg);
 		border-radius: 1rem;
-		background: linear-gradient(to bottom, #252629, #222326 45%, #1f2023);
+		background: linear-gradient(to bottom, #212225, #1e1f22 45%, #1b1c1f);
 		color: var(--xy-fg);
 		box-shadow:
 			inset 0 1px 0 rgb(255 255 255 / 0.12),
