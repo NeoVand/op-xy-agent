@@ -176,18 +176,18 @@ does the rest, so a key press never re-renders the legend paths.
 	<!-- the cap stands 2 mm proud: the tile's collar catching light behind it, a short hard shadow
 	     in front and a crisp dark edge all round where it leaves the tile (TE's top-down photo) -->
 	<circle
-		r={capR + 0.55}
-		fill="none"
-		stroke={part.light ? 'url(#rx-collar-light)' : 'url(#rx-collar)'}
-		stroke-width="0.4"
+		r={capR + 2.4}
+		fill={part.light ? 'url(#rx-collar-light)' : 'url(#rx-collar)'}
+		mask="url(#rx-back)"
 	/>
 	<circle
 		class="key__shadow"
-		cy="0.3"
-		r={capR + 0.6}
+		cx="0.15"
+		cy="0.7"
+		r={capR + 1.3}
 		fill={part.light ? 'url(#rx-cap-shadow-light)' : 'url(#rx-cap-shadow)'}
 	/>
-	<circle cy="0.06" r={capR + 0.15} fill="#000000" fill-opacity={part.light ? 0.38 : 0.6} />
+	<circle cy="0.05" r={capR + 0.18} fill="#000000" fill-opacity={part.light ? 0.36 : 0.56} />
 	<g class="key__cap">
 		<circle r={capR} fill={part.colors.cap} />
 		<circle r={capR} fill={part.light ? 'url(#rx-cap-shade-light)' : 'url(#rx-cap-shade)'} />

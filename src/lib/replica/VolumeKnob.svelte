@@ -133,21 +133,24 @@ wheel, arrow keys / Page Up/Down / Home / End.
 		stroke-width="0.14"
 	/>
 
-	<circle cy="1.35" r={art.outer + 1.4} fill="url(#rx-knob-shadow)" />
+	<!-- as the encoders' knobs in TE's top-down photo: a shadow pooling toward the front, the side
+	     lit at the back and dark at the front with the knurl just showing, a flat black top -->
+	<circle cx="0.15" cy="0.8" r={art.outer + 1.3} fill="url(#rx-enc-shadow)" />
 	<circle r={art.outer} fill={colors.body} />
 	<g class="vol__turning" style:transform="rotate({angle}deg)">
-		<path d={knurl} stroke="#ffffff" stroke-opacity="0.12" stroke-width="0.12" />
+		<path d={knurl} stroke="#ffffff" stroke-opacity="0.035" stroke-width="0.12" />
 	</g>
-	<circle r={art.outer} fill="url(#rx-knob-shade)" />
+	<circle r={art.outer} fill="url(#rx-enc-side)" />
 	<circle
 		r={art.outer - 0.06}
 		fill="none"
 		stroke="#000000"
-		stroke-opacity="0.5"
+		stroke-opacity="0.55"
 		stroke-width="0.12"
 	/>
-	<circle r={art.top} fill="url(#rx-knob-top)" />
-	<circle r={art.top - 0.07} fill="none" stroke="url(#rx-knob-rim)" stroke-width="0.16" />
+	<circle r={art.top} fill={colors.body} />
+	<circle r={art.top} fill="url(#rx-enc-face)" />
+	<circle r={art.top - 0.07} fill="none" stroke="url(#rx-enc-bevel)" stroke-width="0.14" />
 	<g class="vol__turning" style:transform="rotate({angle}deg)">
 		<circle r={art.outer} fill="none" />
 		<circle cy={-reach + 0.06} r={art.dimple.r} fill="#ffffff" fill-opacity="0.14" />

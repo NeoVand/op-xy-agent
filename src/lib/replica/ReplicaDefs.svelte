@@ -43,27 +43,46 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 		<stop offset="1" stop-color="#000000" stop-opacity="0.5" />
 	</linearGradient>
 
-	<!-- keycaps: a flat disc standing 2 mm proud of its tile (TE's top-down photo). Under it a short,
-	     hard shadow (the circle is r + 0.6 mm; the cap covers the inner 0.887), not a soft halo -->
+	<!-- keycaps: a flat disc standing 2 mm proud of its tile. TE's top-down photo: the shadow drops
+	     sharply at the cap's edge (to a quarter of the tile's light below a black cap) and fades out
+	     about 2 mm in front, 1.5 mm at the sides, hardly at all behind. The circle is r + 1.3 mm,
+	     set 0.7 mm toward the front; the cap covers its inner 0.78 -->
 	<radialGradient id="rx-cap-shadow" cx="0.5" cy="0.5" r="0.5">
-		<stop offset="0.86" stop-color="#000000" stop-opacity="0.62" />
-		<stop offset="0.93" stop-color="#000000" stop-opacity="0.24" />
+		<stop offset="0.78" stop-color="#000000" stop-opacity="0.8" />
+		<stop offset="0.86" stop-color="#000000" stop-opacity="0.5" />
+		<stop offset="0.93" stop-color="#000000" stop-opacity="0.2" />
 		<stop offset="1" stop-color="#000000" stop-opacity="0" />
 	</radialGradient>
 	<radialGradient id="rx-cap-shadow-light" cx="0.5" cy="0.5" r="0.5">
+		<stop offset="0.78" stop-color="#000000" stop-opacity="0.55" />
 		<stop offset="0.86" stop-color="#000000" stop-opacity="0.34" />
 		<stop offset="0.93" stop-color="#000000" stop-opacity="0.12" />
 		<stop offset="1" stop-color="#000000" stop-opacity="0" />
 	</radialGradient>
-	<!-- the tile's collar round the cap, catching the light on its back side -->
-	<linearGradient id="rx-collar" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.08" />
-		<stop offset="0.36" stop-color="#ffffff" stop-opacity="0" />
+	<!-- the tile's collar round the cap, bright behind it (photo, above a black cap: dark just past
+	     its edge, twice the tile's light at 6.4 mm, back to the tile's at its edge). One band on a
+	     circle of r + 2.4 mm, kept to the back by a mask that fades it out a third of the way down -->
+	<radialGradient id="rx-collar" cx="0.5" cy="0.5" r="0.5">
+		<stop offset="0.8" stop-color="#ffffff" stop-opacity="0" />
+		<stop offset="0.87" stop-color="#ffffff" stop-opacity="0.07" />
+		<stop offset="0.92" stop-color="#ffffff" stop-opacity="0.13" />
+		<stop offset="0.96" stop-color="#ffffff" stop-opacity="0.09" />
+		<stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+	</radialGradient>
+	<radialGradient id="rx-collar-light" cx="0.5" cy="0.5" r="0.5">
+		<stop offset="0.8" stop-color="#ffffff" stop-opacity="0" />
+		<stop offset="0.87" stop-color="#ffffff" stop-opacity="0.14" />
+		<stop offset="0.92" stop-color="#ffffff" stop-opacity="0.24" />
+		<stop offset="0.96" stop-color="#ffffff" stop-opacity="0.16" />
+		<stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+	</radialGradient>
+	<linearGradient id="rx-back-fade" x1="0" y1="0" x2="0" y2="1">
+		<stop offset="0" stop-color="#ffffff" />
+		<stop offset="0.38" stop-color="#000000" />
 	</linearGradient>
-	<linearGradient id="rx-collar-light" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.2" />
-		<stop offset="0.36" stop-color="#ffffff" stop-opacity="0" />
-	</linearGradient>
+	<mask id="rx-back" maskContentUnits="objectBoundingBox">
+		<rect width="1" height="1" fill="url(#rx-back-fade)" />
+	</mask>
 	<!-- the cap's face: the tile's anodised satin, a soft sheen from the lit back side and a little
 	     shade at its front edge; flat, so it never reads as a soft pillow -->
 	<radialGradient id="rx-cap-shade" cx="0.42" cy="0.3" r="0.78">
@@ -105,46 +124,37 @@ tile, not per element) keep repaints of a pressed key cheap. Ids are prefixed `r
 		<stop offset="1" stop-color="#ff4d00" stop-opacity="0" />
 	</radialGradient>
 
-	<!-- encoders and the volume pot -->
-	<radialGradient id="rx-dish" cx="0.5" cy="0.6" r="0.55">
-		<stop offset="0" stop-color="#000000" stop-opacity="0" />
-		<stop offset="0.9" stop-color="#000000" stop-opacity="0.08" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.3" />
-	</radialGradient>
-	<linearGradient id="rx-dish-lip" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#000000" stop-opacity="0.75" />
-		<stop offset="0.5" stop-color="#000000" stop-opacity="0.5" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.35" />
+	<!-- encoders, as TE's top-down photo shows them: a flat dish floor with a crisp groove, the knob's
+	     shadow pooling toward the front, its chamfered side lit at the back and dark at the front
+	     (photo: 128 at the back, 33 at the front, against a floor of 63), and the coloured cap a flat
+	     disc over its whole top -->
+	<linearGradient id="rx-enc-catch" x1="0" y1="0" x2="0" y2="1">
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.07" />
+		<stop offset="0.4" stop-color="#ffffff" stop-opacity="0" />
 	</linearGradient>
-	<linearGradient id="rx-dish-catch" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0" />
-		<stop offset="0.6" stop-color="#ffffff" stop-opacity="0.02" />
-		<stop offset="1" stop-color="#ffffff" stop-opacity="0.2" />
-	</linearGradient>
-	<radialGradient id="rx-knob-shadow" cx="0.5" cy="0.5" r="0.5">
-		<stop offset="0.62" stop-color="#000000" stop-opacity="0.8" />
-		<stop offset="0.8" stop-color="#000000" stop-opacity="0.3" />
+	<radialGradient id="rx-enc-shadow" cx="0.5" cy="0.5" r="0.5">
+		<stop offset="0.76" stop-color="#000000" stop-opacity="0.72" />
+		<stop offset="0.86" stop-color="#000000" stop-opacity="0.42" />
+		<stop offset="0.95" stop-color="#000000" stop-opacity="0.12" />
 		<stop offset="1" stop-color="#000000" stop-opacity="0" />
 	</radialGradient>
-	<radialGradient id="rx-knob-shade" cx="0.5" cy="0.3" r="0.72">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.08" />
-		<stop offset="0.6" stop-color="#ffffff" stop-opacity="0" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.45" />
-	</radialGradient>
-	<radialGradient id="rx-knob-top" cx="0.5" cy="0.3" r="0.75">
-		<stop offset="0" stop-color="#3b3d42" />
-		<stop offset="1" stop-color="#1b1c1f" />
-	</radialGradient>
-	<linearGradient id="rx-knob-rim" x1="0" y1="0" x2="0" y2="1">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.28" />
-		<stop offset="0.35" stop-color="#ffffff" stop-opacity="0.04" />
+	<linearGradient id="rx-enc-side" x1="0" y1="0" x2="0" y2="1">
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.38" />
+		<stop offset="0.3" stop-color="#ffffff" stop-opacity="0.06" />
+		<stop offset="0.6" stop-color="#000000" stop-opacity="0.1" />
+		<stop offset="1" stop-color="#000000" stop-opacity="0.42" />
+	</linearGradient>
+	<linearGradient id="rx-enc-face" x1="0" y1="0" x2="0" y2="1">
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.05" />
+		<stop offset="0.55" stop-color="#ffffff" stop-opacity="0" />
+		<stop offset="1" stop-color="#000000" stop-opacity="0.1" />
+	</linearGradient>
+	<linearGradient id="rx-enc-bevel" x1="0" y1="0" x2="0" y2="1">
+		<stop offset="0" stop-color="#ffffff" stop-opacity="0.45" />
+		<stop offset="0.25" stop-color="#ffffff" stop-opacity="0.08" />
+		<stop offset="0.6" stop-color="#000000" stop-opacity="0.12" />
 		<stop offset="1" stop-color="#000000" stop-opacity="0.4" />
 	</linearGradient>
-	<radialGradient id="rx-enc-cap-shade" cx="0.45" cy="0.32" r="0.7">
-		<stop offset="0" stop-color="#ffffff" stop-opacity="0.22" />
-		<stop offset="0.55" stop-color="#ffffff" stop-opacity="0" />
-		<stop offset="1" stop-color="#000000" stop-opacity="0.26" />
-	</radialGradient>
 
 	<!-- screen glass: black, with a soft diagonal sheen -->
 	<linearGradient id="rx-glass" x1="0" y1="0" x2="0.7" y2="1">

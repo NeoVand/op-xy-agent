@@ -1,11 +1,12 @@
 <!--
 @component
-One of the four endless encoders: a tall knurled knob with a coloured cap (dark, mid, light grey,
-white) in a recessed round dish, sized from TE's drawing. The real knob has no pointer, so the
-replica shows rotation with the knurled edge when you turn it: 56 ridges against 24 detents a
-turn, so each detent reads as a small step forward (with 40 ridges the 15° step aliased into a step
-backwards). A faint trail of light in the dish, just round the knob, follows each turn with its
-bright head leading the way it turns and fades soon after the knob stops. An arrow over the knob
+One of the four endless encoders: a knob with a coloured cap (dark, mid, light grey, white) in a
+recessed round dish, sized from TE's drawing and shaded as TE's top-down photo shows it: a flat
+dish floor with a crisp groove, the knob's chamfered side lit at the back and dark at the front,
+and the cap a flat disc over the knob's whole top. The real knob has no pointer; its knurl barely
+shows from above (56 ridges against 24 detents a turn, so a detent reads as a step forward), and a
+faint trail of light in the dish, just round the knob, follows each turn with its bright head
+leading the way it turns and fades soon after the knob stops. An arrow over the knob
 appears only when a teaching animation asks for a turn, pointing the way to turn.
 
 Input: a drag turns it the way the knob would turn under a finger (grabbed on its right half,
@@ -207,24 +208,33 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 		stroke-width="0.14"
 	/>
 
-	<!-- the recessed dish: a crisp groove at its edge, light caught on its front wall -->
-	<circle r={art.dish} fill="url(#rx-dish)" />
-	<circle r={art.dish - 0.45} fill="none" stroke="url(#rx-dish-catch)" stroke-width="0.6" />
-	<circle r={art.dish - 0.1} fill="none" stroke="url(#rx-dish-lip)" stroke-width="0.24" />
+	<!-- the recessed dish (TE's top-down photo): a flat floor a shade under the tile, a crisp dark
+	     groove at its rim with a little light on the wall inside it at the back -->
+	<circle r={art.dish} fill="#000000" fill-opacity="0.08" />
+	<circle r={art.dish - 0.5} fill="none" stroke="url(#rx-enc-catch)" stroke-width="0.5" />
+	<circle
+		r={art.dish - 0.16}
+		fill="none"
+		stroke="#000000"
+		stroke-opacity="0.72"
+		stroke-width="0.3"
+	/>
 
-	<!-- the knob: a tall knurled body casting a soft shadow, a darker top face, the coloured cap -->
-	<circle cy="1.2" r="7" fill="url(#rx-knob-shadow)" />
+	<!-- the knob: its shadow pooling on the floor toward the front; its chamfered side lit at the
+	     back and dark at the front, with the knurl just showing (it turns with the knob); the
+	     coloured cap a flat disc over its whole top, a dark seam round it and a bevel at its edge -->
+	<circle cx="0.2" cy="0.95" r="6.5" fill="url(#rx-enc-shadow)" />
 	<g class="enc__knob">
 		<circle r="5" fill={part.colors.body} />
 		<g class="enc__knurl" style:transform="rotate({angle}deg)">
-			<path d={knurl} stroke="#ffffff" stroke-opacity="0.13" stroke-width="0.11" />
+			<path d={knurl} stroke="#ffffff" stroke-opacity="0.035" stroke-width="0.11" />
 		</g>
-		<circle r="5" fill="url(#rx-knob-shade)" />
-		<circle r={art.top} fill="url(#rx-knob-top)" />
-		<circle r={art.top - 0.07} fill="none" stroke="url(#rx-knob-rim)" stroke-width="0.14" />
-		<circle r={art.cap} fill={part.colors.cap} />
-		<circle r={art.cap} fill="url(#rx-enc-cap-shade)" />
-		<circle r={art.cap - 0.06} fill="none" stroke="url(#rx-cap-rim)" stroke-width="0.12" />
+		<circle r="5" fill="url(#rx-enc-side)" />
+		<circle r="4.94" fill="none" stroke="#000000" stroke-opacity="0.55" stroke-width="0.12" />
+		<circle r={art.top + 0.1} fill="#000000" fill-opacity="0.55" />
+		<circle r={art.top} fill={part.colors.cap} />
+		<circle r={art.top} fill="url(#rx-enc-face)" />
+		<circle r={art.top - 0.08} fill="none" stroke="url(#rx-enc-bevel)" stroke-width="0.16" />
 	</g>
 
 	<!-- the turn trail: it rides round with the knob; each turn lights it again (two identical
