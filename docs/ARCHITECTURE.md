@@ -19,8 +19,11 @@ src/lib/
                RLE, project model, reader, template writer (sim/xy.ts compiles the simulator's
                project into one)
     presets/   (M7) sample presets: WAV/AIFF in and out, resampling, pitch and loop finding,
-               patch.json, the drum/multisample/sampler builder, slicer, generated drum voices and
-               kits, zip (the page is /presets)
+               patch.json, the drum/multisample/sampler builder, slicer and loop tempo, generated
+               drum voices and kits, drum sounds told apart by name and by ear (classify), every
+               editor control as the patch field it writes (edit), grooves (beat), device limits,
+               reading .preset zips and folders (read), SoundFonts (sf2), zip (the page is
+               /presets; its workbench is ui/presets)
     mtp/       MTP with the OP-XY in MTP mode: containers, datasets, a session over any byte pipe,
                the write policy (reads; new files only after approval; never delete/move), installPreset
     dsp/       shared signal processing (the FFT)

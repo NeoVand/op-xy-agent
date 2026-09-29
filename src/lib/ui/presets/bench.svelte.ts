@@ -150,10 +150,14 @@ const sameFamily = (a: DrumKind, b: DrumKind) =>
 
 /** Audio at the preset rate, at most 20 s (a longer one is cut, and says so). */
 function atPresetRate(audio: PcmAudio): { audio: PcmAudio; cut: boolean } {
-	let channels = resample(audio.channels.slice(0, 2), audio.sampleRate, PRESET_RATE);
+	// cut first, at the file's own rate: resampling five minutes to keep twenty seconds would stall
+	const keep = Math.ceil(MAX_SECONDS * audio.sampleRate) + 64;
+	const long = (audio.channels[0]?.length ?? 0) > keep;
+	const source = audio.channels.slice(0, 2).map((c) => (long ? c.subarray(0, keep) : c));
+	let channels = resample(source, audio.sampleRate, PRESET_RATE);
 	const max = MAX_SECONDS * PRESET_RATE;
-	const cut = channels[0].length > max;
-	if (cut) channels = channels.map((c) => c.slice(0, max));
+	const cut = long || channels[0].length > max;
+	if (channels[0].length > max) channels = channels.map((c) => c.slice(0, max));
 	return { audio: { sampleRate: PRESET_RATE, channels, root: audio.root }, cut };
 }
 
@@ -412,15 +416,20 @@ export class Workbench {
 		return true;
 	}
 
+	/** The user picked the mode: a drop fills it rather than choosing one of its own. */
+	#chosen = false;
+
 	/** Switches what is being made (each mode keeps its own sounds). */
 	setMode(mode: BenchMode): void {
+		this.#chosen = true;
 		this.mode = mode;
 		this.selected = this.sounds[0]?.id ?? null;
 	}
 
 	/**
-	 * Adds decoded files: into the current mode, or when the workbench is empty into the mode they
-	 * want to be (a loop is sliced, several notes a multisample). `key` drops them on one key.
+	 * Adds decoded files: into the current mode, or when the workbench is empty (and no mode was
+	 * picked) into the mode they want to be (a loop is sliced, several notes a multisample). `key`
+	 * drops them on one key.
 	 */
 	add(dropped: readonly { name: string; audio: PcmAudio }[], key?: number): void {
 		this.#save('add', false);
@@ -431,7 +440,7 @@ export class Workbench {
 			if (long) cut.push(d.name);
 			return { name: d.name, audio };
 		});
-		if (this.empty && key === undefined) {
+		if (this.empty && key === undefined && !this.#chosen) {
 			const guess = guessMode(sounds);
 			this.mode = guess.mode;
 			this.say(guess.reason);

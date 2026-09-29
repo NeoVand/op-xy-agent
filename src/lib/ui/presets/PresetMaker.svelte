@@ -827,10 +827,9 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 			press(key);
 			return;
 		}
+		// space plays and stops, as on a sequencer, even with a key focused: pressing a focused
+		// "randomize" or "clear" again by accident would lose the kit (keys still take Enter)
 		if (event.code === 'Space') {
-			const el = document.activeElement as HTMLElement | null;
-			const free = !el || el === document.body || !el.closest('button, [role="slider"], a, input');
-			if (!free) return;
 			event.preventDefault();
 			if (!event.repeat) toggleBeat();
 			return;
