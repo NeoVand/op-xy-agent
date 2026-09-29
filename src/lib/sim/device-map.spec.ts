@@ -46,9 +46,10 @@ describe('the device map', () => {
 			.controls.filter((c) => c.layer === layer)
 			.map((c) => c.label);
 
+	// about 9 s on its own, but past a minute on CI's two cores beside the rest of the suite
 	it('matches the committed map (run node scripts/build-device-map.mjs after changing the simulator)', () => {
 		expect(formatDeviceMap(buildDeviceMap())).toBe(committed);
-	}, 60_000);
+	}, 180_000);
 
 	it('covers every engine, LFO type and auxiliary track, the mixer, tempo, the players, project and COM', () => {
 		const ids = map.pages.map((p) => p.id);
