@@ -1,9 +1,12 @@
 /**
  * The virtual OP-XY's project as the device's own `.xy` file (M6): open one from disk or from a
  * connected OP-XY over USB (MTP, `com → M4`), download the replica's project as one, or add it to
- * the OP-XY's `projects/user` folder.
+ * the OP-XY's `projects/user` folder; or start again from a new project.
  *
  * - **Loading** replaces the replica's project (`sim/xy` xyToSim) and can be undone once.
+ * - **A new project** is the device's hold M1 on the project page: the open project is autosaved to
+ *   the projects folder (autosave permitting) and a new one starts with the default sounds; it can
+ *   be undone once too.
  * - **Saving to the device** only adds a new file, after the owner's click, and never replaces one
  *   (`core/mtp` policy). It is written over the project open on the device, so the device's sounds
  *   and everything the file map has not decoded stay as they are (`sim/xy` simToXy).
@@ -14,7 +17,7 @@
  */
 import { MtpPolicyError } from '$lib/core/mtp';
 import { MtpConnection, type UsbLike } from '$lib/device/mtp';
-import { restore, snapshot } from '$lib/sim/areas/system/projects';
+import { newProject, restore, snapshot } from '$lib/sim/areas/system/projects';
 import type { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import type { SimState } from '$lib/sim/params';
 import { simToXy, xyToSim } from '$lib/sim/xy';
@@ -32,6 +35,8 @@ export interface ProjectTransferOptions {
 	readonly usb: UsbLike | null;
 	/** The blank project a device saved (the writer's template when no other file is at hand). */
 	readonly blank: () => Promise<Uint8Array>;
+	/** The replica's project was replaced (loaded, new, undone): the app saves it soon. */
+	readonly changed?: () => void;
 }
 
 export class ProjectTransfer {
@@ -46,6 +51,7 @@ export class ProjectTransfer {
 	readonly #sim: OpxySim;
 	readonly #usb: UsbLike | null;
 	readonly #blank: () => Promise<Uint8Array>;
+	readonly #changed: () => void;
 	#undo: { json: string; name: string } | null = null;
 	/** The last project file read: what a download is written over, so its sounds stay. */
 	#template: Uint8Array | null = null;
@@ -54,6 +60,7 @@ export class ProjectTransfer {
 		this.#sim = options.sim;
 		this.#usb = options.usb;
 		this.#blank = options.blank;
+		this.#changed = options.changed ?? (() => {});
 	}
 
 	get usbAvailable(): boolean {
@@ -71,6 +78,21 @@ export class ProjectTransfer {
 		this.canUndo = true;
 		this.message = `loaded ${name}`;
 		this.error = null;
+		this.#changed();
+	}
+
+	/** Starts a new project with the default sounds, keeping what it replaced for one undo. */
+	newProject(): void {
+		const state = this.#sim.state;
+		this.#undo = { json: snapshot(state), name: state.project.name };
+		newProject(state);
+		// a download starts from the blank project again, not from the last file read
+		this.#template = null;
+		this.skipped = [];
+		this.canUndo = true;
+		this.message = `new project: ${state.project.name}, the default sounds`;
+		this.error = null;
+		this.#changed();
 	}
 
 	/** Opens a `.xy` file from disk. */
@@ -159,6 +181,7 @@ export class ProjectTransfer {
 		this.canUndo = false;
 		this.skipped = [];
 		this.message = 'the replica’s project is back';
+		this.#changed();
 	}
 
 	async #run(task: () => Promise<void>): Promise<void> {

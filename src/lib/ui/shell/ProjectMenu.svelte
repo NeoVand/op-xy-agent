@@ -1,24 +1,34 @@
 <!--
 @component
 The replica's project as the device's own `.xy` file (M6, `app/project-transfer`): a small
-"project" key on the caption line opens a card to open a `.xy` from disk, download the project as
-one, load the project the OP-XY has open over USB, or add the replica's project to the OP-XY. The
-last one writes to the device, so it says what it will add and waits for a second click.
+"project" key on the caption line opens a card to start a new project with the default sounds,
+open a `.xy` from disk, download the project as one, load the project the OP-XY has open over USB,
+or add the replica's project to the OP-XY. The last one writes to the device, so it says what it
+will add and waits for a second click.
 -->
 <script lang="ts">
 	import { Folder01Icon } from '@hugeicons/core-free-icons';
 	import { Button, IconButton, Legend, ToolButton } from '$lib/ui';
-	import { getAppSimulator } from '$lib/app';
+	import { getAppSimulator, getSimPersistence } from '$lib/app';
 	import { PROJECT_NAME, ProjectTransfer } from '$lib/app/project-transfer.svelte';
 	import { browserUsb } from '$lib/device';
 	import blankUrl from '$lib/core/xy/fixtures/blank-1.1.4.xy?url';
 
 	const simulator = getAppSimulator();
+	/** Saves the replica's work soon after a project change (absent outside the app). */
+	const persistence = (() => {
+		try {
+			return getSimPersistence();
+		} catch {
+			return null;
+		}
+	})();
 	const transfer = simulator
 		? new ProjectTransfer({
 				sim: simulator.sim,
 				usb: browserUsb(),
-				blank: async () => new Uint8Array(await (await fetch(blankUrl)).arrayBuffer())
+				blank: async () => new Uint8Array(await (await fetch(blankUrl)).arrayBuffer()),
+				changed: () => persistence?.markDirty()
 			})
 		: null;
 
@@ -69,7 +79,7 @@ last one writes to the device, so it says what it will add and waits for a secon
 		<ToolButton
 			icon={Folder01Icon}
 			label="project file"
-			tip="project file: open, download, load from or save to the op-xy"
+			tip="project: new, open, download, load from or save to the op-xy"
 			aria-expanded={open}
 			aria-controls="project-card"
 			onclick={() => (open = !open)}
@@ -87,6 +97,9 @@ last one writes to the device, so it says what it will add and waits for a secon
 					/>
 				</div>
 				<div class="project__row">
+					<Button size="sm" disabled={transfer.busy} onclick={() => transfer.newProject()}
+						>new project</Button
+					>
 					<Button size="sm" busy={transfer.busy} onclick={openFile}>open .xy…</Button>
 					<Button size="sm" disabled={transfer.busy} onclick={download}>download .xy</Button>
 				</div>

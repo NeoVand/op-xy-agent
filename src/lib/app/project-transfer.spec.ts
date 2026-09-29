@@ -5,6 +5,7 @@ import { OP } from '$lib/core/mtp';
 import { readProject } from '$lib/core/xy/read';
 import type { UsbLike } from '$lib/device/mtp';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { defaultState } from '$lib/sim/params';
 import { simToXy, xyToSim } from '$lib/sim/xy';
 import { ProjectTransfer } from './project-transfer.svelte';
 
@@ -114,5 +115,39 @@ describe('the replica’s project as a .xy file', () => {
 		await transfer.openFile(new File([new Uint8Array(20)], 'broken.xy'));
 		expect(transfer.error).not.toBeNull();
 		expect(sim.state.project.name).toBe(name);
+	});
+
+	it('starts a new project with the default sounds after a load, keeping the loaded one', async () => {
+		const { sim, transfer } = setup();
+		let changes = 0;
+		const saving = new ProjectTransfer({
+			sim,
+			usb: null,
+			blank: async () => blank,
+			changed: () => changes++
+		});
+		const fresh = defaultState();
+		await transfer.loadFromDevice();
+		const loaded = sim.state.tracks.map((t) => t.engine);
+		const loadedBpm = sim.state.tempo.bpm;
+		sim.state.tracks[3].engine = 'organ';
+
+		saving.newProject();
+		expect(changes).toBe(1);
+		expect(sim.state.tracks.map((t) => t.engine)).toEqual(fresh.tracks.map((t) => t.engine));
+		expect(sim.state.tracks[3].engine).toBe('epiano');
+		expect(sim.state.tempo.bpm).toBe(fresh.tempo.bpm);
+		expect(sim.state.project.name).toMatch(/^project \d+$/);
+		expect(saving.message).toContain('the default sounds');
+		// the device's hold M1: the open project was autosaved to the folder first
+		const kept = sim.state.areas.system.projects.user.find((p) => p.name === 'op-xy project');
+		expect(kept?.snapshot).toBeTruthy();
+
+		saving.undo();
+		expect(changes).toBe(2);
+		expect(sim.state.project.name).toBe('op-xy project');
+		expect(sim.state.tempo.bpm).toBe(loadedBpm);
+		expect(sim.state.tracks[3].engine).toBe('organ');
+		expect(sim.state.tracks.slice(4).map((t) => t.engine)).toEqual(loaded.slice(4));
 	});
 });
