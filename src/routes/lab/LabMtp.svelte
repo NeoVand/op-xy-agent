@@ -205,7 +205,7 @@ by itself (docs/research/90-device-probe.md, session 1).
 	}
 
 	.mtp__link:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 2px;
 	}
 

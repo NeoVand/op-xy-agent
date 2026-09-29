@@ -137,7 +137,7 @@ displays serial numbers.
 	}
 
 	.monitor__search input:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 2px;
 	}
 
@@ -219,7 +219,7 @@ displays serial numbers.
 	}
 
 	.monitor__label:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 2px;
 	}
 

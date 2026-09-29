@@ -151,7 +151,7 @@ on OS 1.1.33 the root holds `drum/` and `synth/`). Nothing here writes to the de
 
 	.files__crumb:focus-visible,
 	.files__dir:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 2px;
 	}
 
