@@ -147,7 +147,7 @@ function ladder(ctx: ScreenCtx, range: number): void {
 
 /** The hand on the fourth card: pale while hold is off, filled in ink when it is on. */
 function hand(ctx: ScreenCtx, layout: Layout, hold: boolean): void {
-	pictogram(ctx, 'player.hand', cardX(layout, 3), hold ? COLORS.ink : COLORS.blue);
+	pictogram(ctx, 'player.hand', cardX(layout, 3), hold ? COLORS.ink : COLORS.pale);
 }
 
 /**
@@ -171,7 +171,7 @@ function prism(ctx: ScreenCtx, x: number, top: number, fill: string): void {
 		ctx.closePath();
 		ctx.fillStyle = fill;
 		ctx.fill();
-		ctx.strokeStyle = COLORS.blueEdge;
+		ctx.strokeStyle = COLORS.paleEdge;
 		ctx.lineWidth = 1;
 		ctx.lineJoin = 'round';
 		ctx.stroke();
@@ -186,7 +186,7 @@ function runBars(ctx: ScreenCtx, run: readonly number[], at: number | null): voi
 	for (let i = 0; i < 14; i++) {
 		const note = i % run.length;
 		const top = BARS.top - rank * run[note];
-		prism(ctx, BARS.x + BARS.pitch * i, top, at === note ? COLORS.white : COLORS.blue);
+		prism(ctx, BARS.x + BARS.pitch * i, top, at === note ? COLORS.white : COLORS.pale);
 	}
 }
 
@@ -242,7 +242,7 @@ function arpShiftCards(ctx: ScreenCtx, frame: PlayerFrame): void {
 		ctx.quadraticCurveTo(x0 + 25, 61.3, x0 + 33.5, 58);
 		ctx.stroke();
 	};
-	tie(COLORS.blue);
+	tie(COLORS.pale);
 	ctx.save();
 	ctx.beginPath();
 	ctx.rect(x0 + 15.5, 50, 19 * (a.length / 99), 15);
@@ -262,14 +262,14 @@ function arpShiftCards(ctx: ScreenCtx, frame: PlayerFrame): void {
 	}
 
 	// glide: the squiggle, inked from the left as far as the glide goes
-	pictogram(ctx, 'player.glide', x2, COLORS.blue);
+	pictogram(ctx, 'player.glide', x2, COLORS.pale);
 	const reach = 38 * (a.glide / 99);
 	if (reach > 0) pictogram(ctx, 'player.glide', x2, CARD_INK[2], { x: x2 + 6, w: reach });
 
 	// stereo: the pale ring moves right, the inked one left
 	const cx = x3 + 25;
 	const spread = 8 * (a.stereo / 99);
-	ring(ctx, cx + spread, 45.2, 13.2, COLORS.blue, 2);
+	ring(ctx, cx + spread, 45.2, 13.2, COLORS.pale, 2);
 	ring(ctx, cx - spread, 45.2, 13.2, CARD_INK[3], 2);
 }
 
@@ -303,9 +303,9 @@ function slab(ctx: ScreenCtx, x: number, y: number, h: number): void {
 		ctx.moveTo(f[0], f[1]);
 		for (let i = 2; i < f.length; i += 2) ctx.lineTo(f[i], f[i + 1]);
 		ctx.closePath();
-		ctx.fillStyle = COLORS.blue;
+		ctx.fillStyle = COLORS.pale;
 		ctx.fill();
-		ctx.strokeStyle = COLORS.blueEdge;
+		ctx.strokeStyle = COLORS.paleEdge;
 		ctx.lineWidth = 1;
 		ctx.lineJoin = 'round';
 		ctx.stroke();
@@ -410,13 +410,13 @@ function drawRibbon(ctx: ScreenCtx): void {
 	const [leftStart, leftEnd] = [Math.PI / 4, (Math.PI * 7) / 4];
 	const [rightStart, rightEnd] = [(Math.PI * 5) / 4, (Math.PI * 3) / 4];
 	// the loops (three quarters of a ring each) and the rising band, in one fill so no seams show
-	ctx.fillStyle = COLORS.blue;
+	ctx.fillStyle = COLORS.pale;
 	ctx.beginPath();
 	sector(left, leftStart, leftEnd);
 	sector(right, rightStart, rightEnd);
 	band(rising);
 	ctx.fill();
-	ctx.strokeStyle = COLORS.blueEdge;
+	ctx.strokeStyle = COLORS.paleEdge;
 	ctx.lineWidth = 1;
 	ctx.beginPath();
 	arcs(left, leftStart, leftEnd);

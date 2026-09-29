@@ -8,7 +8,7 @@
  *   style (the filter and LFO type lists, `screen/pages/misc.ts`): 20 px in the heavier weight on
  *   rows 20 px apart from baseline 25.3, the chosen engine or category boxed.
  * - The presets start 144.9 px right of the middle column's text; the highlighted one sits on a
- *   pale blue bar (the players' blue) in ink.
+ *   pale grey bar (the players' grey) in ink.
  * - A list that overflows its nine rows has a scroll bar: a 1 px track and a thumb as long as the
  *   share of the list in view (b1-1500: 9 of 11 engines).
  * - A click of E1 brings up two cards over the page dimmed to 40 %: the chosen view's card white
@@ -125,7 +125,7 @@ function drawPresets(ctx: ScreenCtx, column: SystemListColumn): void {
 		const lit = i === column.selected;
 		if (lit) {
 			const y = ROW.first + ROW.pitch * i + bar.top;
-			fillBox(ctx, bar.x, y, bar.w, bar.h, COLORS.blue, bar.r);
+			fillBox(ctx, bar.x, y, bar.w, bar.h, COLORS.pale, bar.r);
 		}
 		const ink = lit ? COLORS.ink : column.dim?.includes(i) ? COLORS.dim : COLORS.white;
 		rowText(ctx, fitName(item, PRESETS.right - PRESETS.x, lit), PRESETS.x, i, ink);

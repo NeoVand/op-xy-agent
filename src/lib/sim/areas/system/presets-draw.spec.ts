@@ -74,7 +74,7 @@ describe('the preset browser page (device, OS 1.1.33: research 59 §2.6)', () =>
 		expect(box?.y0).toBeCloseTo(25.3 + 140 - 16.85, 1);
 		expect(box?.y1).toBeCloseTo(25.3 + 140 + 4.05, 1);
 		// shoulder on the bottom row: the bar from 18.55 above the baseline to 4.6 below
-		const [bar] = ctx.fillsOf(COLORS.blue);
+		const [bar] = ctx.fillsOf(COLORS.pale);
 		expect(bar.x0).toBeCloseTo(249.1, 1);
 		expect(bar.x1).toBeCloseTo(460.35, 1);
 		expect(bar.y0).toBeCloseTo(185.3 - 18.55, 1);

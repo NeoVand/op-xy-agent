@@ -5,7 +5,7 @@
  * sample-113) has the same two lanes; on the device:
  *
  * - The sample runs across both lanes (left and right channel) in white one-pixel columns, the
- *   parts it skips (before the start, after the end, and the lanes' margins) in a pale blue. A
+ *   parts it skips (before the start, after the end, and the lanes' margins) in a pale grey. A
  *   white L / R badge sits at each lane's top left, over everything.
  * - Each point is a black line through both lanes with a small handle in each gap, the handle in
  *   the shade of the encoder that moves it (dark, mid grey, light grey, white for E1…E4).
@@ -15,7 +15,8 @@
  *   whole sample, the multisampler's keyboard with the played zone lit. Shift swaps it for four
  *   pictograms: direction, pan (drum) or tune, fade (drum) or crossfade with its loop type, gain.
  *
- * Colours are TE's palette tones picked by the captures' brightness (the camera adds a cyan cast).
+ * Colours are TE's palette tones picked by the captures' brightness (the camera adds a cyan cast;
+ * the display itself has no blue).
  * The header pictograms are traced off the device (`research/device/icontrace.py`,
  * knowledge/opxy/device-icons/sampler.json). Coordinates are design px, the captures' rows scaled
  * by 220/222, placed as the best aligned frames put them (the synth sampler's from b1-2665 and the
@@ -58,14 +59,14 @@ export function sampleX(p: number): number {
 }
 
 /**
- * The skipped parts' colour: TE's pale blue half over the lane grey. The camera puts them at the
- * brightness of TE's third grey with the hue of the player pictures' blue, bluer than any of TE's
- * greys at that brightness (research 59 §2.5).
+ * The skipped parts' colour: the camera puts them at the brightness of TE's third grey, with the
+ * cyan cast it gives the player pictures (research 59 §2.5); the display has no blue (the owner),
+ * so it is that grey.
  */
-export const TINT = '#687d8b';
+export const TINT = '#7a7a82';
 
-/** The multisampler's unlit black keys: the pale blue at a fifth over the dark grey (camera). */
-const TINT_DARK = '#464e59';
+/** The multisampler's unlit black keys: the pale grey at a fifth over the dark grey (camera). */
+const TINT_DARK = '#4d4d55';
 
 /**
  * The drawn wave: a column is the centre line's pixel and as many whole pixels above and below it

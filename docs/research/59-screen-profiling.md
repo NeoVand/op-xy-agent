@@ -91,6 +91,11 @@ anything above 20 is a real change (a digit ticking over is enough).
 
 ## 2. What the screens show
 
+> **Colour (2026-09-29):** the phone camera's white balance casts the display's greys blue. Every
+> "pale blue" and "blue" below (the players' pictures, the preset list's highlight, the sampler's
+> skipped parts) is a neutral grey on the device (the owner: the display shows no blue at all), and
+> the replica draws each at the camera's brightness without the cast.
+
 Positions are panel pixels (480 × 222) unless noted. "E1…E4" are the encoders, dark to white; the
 screen marks each parameter with a dot or cap in its encoder's shade (E1 dark or hollow, E2 mid grey,
 E3 light grey, E4 white).
