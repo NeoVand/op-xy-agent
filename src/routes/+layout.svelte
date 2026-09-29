@@ -10,11 +10,14 @@
 	import {
 		AppSimulator,
 		AppSound,
+		DeviceSamples,
 		ReplicaGuide,
 		SimPersistence,
+		createIdbSampleCache,
 		createIdbSimStore,
 		setAppSimulator,
 		setAppSound,
+		setDeviceSamples,
 		setReplicaGuide,
 		setSimPersistence
 	} from '$lib/app';
@@ -72,6 +75,15 @@
 	const sound = new AppSound({ simulator, replica, stack: device });
 	setAppSound(sound);
 
+	// The samples a project names on the OP-XY's drive: read over USB with a project loaded from
+	// the device, kept on this computer, and put back whenever a project names them again.
+	const deviceSamples = new DeviceSamples({
+		sim: simulator.sim,
+		samples: sound.samples,
+		cache: createIdbSampleCache()
+	});
+	setDeviceSamples(deviceSamples);
+
 	// Its work survives reloads, as a device's survives power cycles: put back from IndexedDB on
 	// mount, saved a moment after each change.
 	const persistence = new SimPersistence({
@@ -116,6 +128,8 @@
 		const stopSimulator = simulator.start();
 		// after the simulator: the sound reads what the simulator made of each replica event
 		const stopSound = sound.start();
+		// kept samples come back as soon as the restored project (or any later one) names them
+		const stopSamples = deviceSamples.start();
 		// once saved work is back, the replica opens on track 3, a synth, so the keyboard plays notes
 		// rather than drums (the owner); a new project on the device itself starts on track 1
 		const saving = persistence.start().then((stop) => {
@@ -124,6 +138,7 @@
 		});
 		return () => {
 			void saving.then((stop) => stop());
+			stopSamples();
 			stopSound();
 			stopSimulator();
 			stop();

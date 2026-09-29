@@ -3,7 +3,10 @@
  * connected OP-XY over USB (MTP, `com → M4`), download the replica's project as one, or add it to
  * the OP-XY's `projects/user` folder; or start again from a new project.
  *
- * - **Loading** replaces the replica's project (`sim/xy` xyToSim) and can be undone once.
+ * - **Loading** replaces the replica's project (`sim/xy` xyToSim) and can be undone once. From the
+ *   device, the samples the project's tracks use are read too, in the same session, so the replica
+ *   plays the unit's own sounds (`device-samples`: TE's factory library is not on the drive, so its
+ *   sounds stay stand-ins); from disk, samples read from the device before are put back.
  * - **A new project** is the device's hold M1 on the project page: the open project is autosaved to
  *   the projects folder (autosave permitting) and a new one starts with the default sounds; it can
  *   be undone once too.
@@ -15,12 +18,13 @@
  *
  * What a file holds that the other side cannot take is listed in `skipped`, one line each.
  */
-import { MtpPolicyError } from '$lib/core/mtp';
+import { MtpPolicyError, type MtpSession } from '$lib/core/mtp';
 import { MtpConnection, type UsbLike } from '$lib/device/mtp';
 import { newProject, restore, snapshot } from '$lib/sim/areas/system/projects';
 import type { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import type { SimState } from '$lib/sim/params';
 import { simToXy, xyToSim } from '$lib/sim/xy';
+import { describeSamples, type SampleReport } from './device-samples';
 
 /** The project the OP-XY has open, as MTP shows it (docs/research/90-device-probe.md). */
 export const DEVICE_WORKSPACE = 'projects/workspace.xy';
@@ -28,6 +32,20 @@ export const DEVICE_WORKSPACE = 'projects/workspace.xy';
 export const DEVICE_PROJECTS = 'projects/user';
 /** A project name the device takes: lowercase letters, digits, spaces and `#()-_`, at most 24. */
 export const PROJECT_NAME = /^[a-z0-9][a-z0-9 #()_-]{0,23}$/;
+
+/** What a transfer needs of the app's samples (`DeviceSamples`). */
+export interface ProjectSamples {
+	/** Reads the drive samples the replica's project holds over an open session (reads only). */
+	read(
+		session: Pick<MtpSession, 'list' | 'read'>,
+		storage: number,
+		progress?: (done: number, total: number) => void
+	): Promise<SampleReport>;
+	/** Puts back audio kept from earlier loads for the project's samples that have none. */
+	restore(): Promise<number>;
+	/** Which of the project's samples play the unit's audio. */
+	status(): SampleReport;
+}
 
 export interface ProjectTransferOptions {
 	readonly sim: OpxySim;
@@ -37,6 +55,8 @@ export interface ProjectTransferOptions {
 	readonly blank: () => Promise<Uint8Array>;
 	/** The replica's project was replaced (loaded, new, undone): the app saves it soon. */
 	readonly changed?: () => void;
+	/** The samples a project uses: read from the device with it, put back from disk loads (none: stand-ins). */
+	readonly samples?: ProjectSamples | null;
 }
 
 export class ProjectTransfer {
@@ -52,6 +72,7 @@ export class ProjectTransfer {
 	readonly #usb: UsbLike | null;
 	readonly #blank: () => Promise<Uint8Array>;
 	readonly #changed: () => void;
+	readonly #samples: ProjectSamples | null;
 	#undo: { json: string; name: string } | null = null;
 	/** The last project file read: what a download is written over, so its sounds stay. */
 	#template: Uint8Array | null = null;
@@ -61,6 +82,7 @@ export class ProjectTransfer {
 		this.#usb = options.usb;
 		this.#blank = options.blank;
 		this.#changed = options.changed ?? (() => {});
+		this.#samples = options.samples ?? null;
 	}
 
 	get usbAvailable(): boolean {
@@ -95,10 +117,11 @@ export class ProjectTransfer {
 		this.#changed();
 	}
 
-	/** Opens a `.xy` file from disk. */
+	/** Opens a `.xy` file from disk; samples read from the device before play again. */
 	async openFile(file: File): Promise<void> {
 		await this.#run(async () => {
 			this.load(new Uint8Array(await file.arrayBuffer()), file.name.replace(/\.xy$/i, ''));
+			await this.#keptSamples();
 		});
 	}
 
@@ -129,6 +152,7 @@ export class ProjectTransfer {
 				if (!workspace || workspace.folder) throw new Error('the op-xy shows no open project');
 				const bytes = await session.read(workspace.handle);
 				this.load(bytes, 'op-xy project');
+				await this.#deviceSamples(session, storage);
 			} finally {
 				await connection.close();
 			}
@@ -183,6 +207,37 @@ export class ProjectTransfer {
 		this.skipped = [];
 		this.message = 'the replica’s project is back';
 		this.#changed();
+	}
+
+	/**
+	 * Reads the loaded project's samples from the device, in the session it came over, saying how
+	 * far it got. The project is loaded whatever happens here: a failure is noted, not thrown.
+	 */
+	async #deviceSamples(session: MtpSession, storage: number): Promise<void> {
+		const samples = this.#samples;
+		if (!samples) return;
+		const loaded = this.message ?? 'loaded';
+		try {
+			const report = await samples.read(session, storage, (done, total) => {
+				if (total > 0 && done < total) {
+					this.message = `${loaded} · reading its samples from the op-xy: ${done + 1} of ${total}`;
+				}
+			});
+			this.message = [loaded, describeSamples(report, 'device')].filter(Boolean).join(' · ');
+			this.skipped = [...this.skipped, ...report.skipped];
+		} catch (e) {
+			this.message = `${loaded} · its samples could not be read`;
+			this.skipped = [...this.skipped, `samples: ${e instanceof Error ? e.message : String(e)}`];
+		}
+	}
+
+	/** After a load from disk: puts back the samples kept from the device, and says so. */
+	async #keptSamples(): Promise<void> {
+		const samples = this.#samples;
+		if (!samples) return;
+		await samples.restore().catch(() => 0);
+		const said = describeSamples(samples.status(), 'file');
+		if (said) this.message = `${this.message ?? 'loaded'} · ${said}`;
 	}
 
 	async #run(task: () => Promise<void>): Promise<void> {

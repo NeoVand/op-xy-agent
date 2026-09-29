@@ -7,4 +7,5 @@ export * from './codes';
 export * from './datasets';
 export * from './policy';
 export * from './session';
+export { MtpPaths } from './paths';
 export { installPreset, PRESET_FOLDER, type InstallProgress, type PresetFiles } from './install';

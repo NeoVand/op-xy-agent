@@ -88,6 +88,8 @@ export const PATTERN = {
 	/** Q31 words of the sound block (§3.6). */
 	pan: 0x38f7,
 	volume: 0x38fb,
+	/** The 24 sample regions of a sample engine, {@link REGION_SIZE} bytes each (§3.5 ★). */
+	regions: 0x393f,
 	/** 48 bytes, latin-1, NUL-padded. */
 	presetPath: 0x453f,
 	noteCount: 0x456f,
@@ -155,6 +157,44 @@ export const LOCK_COLUMNS = 42;
 export const COMPONENT_ROW_SIZE = 16;
 /** Bytes of the preset path. */
 export const PRESET_PATH_SIZE = 48;
+/** Sample regions per pattern: drum keys, the sampler's sample (region 0), multisampler zones. */
+export const SAMPLE_REGIONS = 24;
+/** Bytes per sample region: 24 of them end exactly where the preset path starts (§3.5 ★). */
+export const REGION_SIZE = 128;
+/** Bytes of a region's sample path. */
+export const SAMPLE_PATH_SIZE = 96;
+
+/**
+ * Offsets inside a sample region, from its start (§3.5 ★, confidence C: the corrected model, which
+ * the blank project's kits and pad and the owner's captures bear out).
+ */
+export const REGION = {
+	/** u32: the sample's length in frames, 0 until the device has read the file. */
+	frames: 0x00,
+	start: 0x04,
+	/** u32: 0xFFFFFFFF plays to the end. */
+	end: 0x08,
+	loopStart: 0x0c,
+	loopEnd: 0x10,
+	/** Q31: the loop crossfade (samplers) or the fade (drum keys). */
+	crossfade: 0x14,
+	/** 60 is neutral; a zone's root note. */
+	root: 0x18,
+	/** The key that plays it: a drum key's note, a zone's top key. */
+	key: 0x1a,
+	/** Drum play mode, or the samplers' loop bits (0x80 forever, 0x40 off, 0 until release). */
+	mode: 0x1b,
+	/** The sampler's fine tune, cents. */
+	fine: 0x1c,
+	/** i8, dB. */
+	gain: 0x1d,
+	/** i8, −100…100. */
+	pan: 0x1e,
+	/** 0 forward, 1 reverse. */
+	direction: 0x1f,
+	/** {@link SAMPLE_PATH_SIZE} bytes, NUL-padded. */
+	path: 0x20
+} as const;
 /** Performance lanes after the notes: pitch bend, mod wheel, aftertouch (A.1). */
 export const LANES = 3;
 
