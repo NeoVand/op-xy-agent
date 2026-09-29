@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import { ReplicaState } from '$lib/replica';
+import { DEFAULT_VOLUME, ReplicaState } from '$lib/replica';
 import { sampleFile } from '$lib/sim/areas/sample/state';
 import { currentPattern } from '$lib/sim/sequencer';
 import type { NoteRequest } from '$lib/sound/engine';
@@ -14,9 +14,25 @@ class FakeContext extends EventTarget {
 	currentTime = 0;
 	resumes = 0;
 	readonly destination = {};
-	/** The master the engine plays into (where listening taps the sound). */
+	/** Every gain made, in order: the master the engine plays into, then the volume pot's. */
+	readonly gains: { gain: { value: number } }[] = [];
+	/** The master the engine plays into (where listening taps the sound), and the volume stage. */
 	createGain() {
-		return { gain: { value: 1 }, connect: (node: unknown) => node, disconnect() {} };
+		const gain = {
+			value: 1,
+			cancelScheduledValues() {},
+			// eases at once in the fake: the value is where it was headed
+			setTargetAtTime(target: number) {
+				gain.value = target;
+			}
+		};
+		const node = { gain, connect: (next: unknown) => next, disconnect() {} };
+		this.gains.push(node);
+		return node;
+	}
+	/** The guard after the volume pot. */
+	createWaveShaper() {
+		return { curve: null, oversample: 'none', connect: (next: unknown) => next, disconnect() {} };
 	}
 	async resume() {
 		this.resumes++;
@@ -238,6 +254,24 @@ describe('AppSound: the replica sounds while simulated', () => {
 		sound.enabled = false;
 		await settle();
 		expect(sound.listenTap()).toBeNull();
+	});
+
+	it('turns its output with the replica’s volume pot: the middle plays as made, the top 6 dB more', async () => {
+		const { press, replica, settle, contexts } = setup();
+		expect(replica.volume).toBe(DEFAULT_VOLUME);
+		press('keyboard.c4');
+		await settle();
+		// the master (the listening tap) stays at unity; the pot's gain comes after it
+		const [master, volume] = contexts[0].gains;
+		expect(master.gain.value).toBe(1);
+		expect(volume.gain.value).toBeCloseTo(1, 6);
+		replica.setVolume(1, 'pointer');
+		flushSync();
+		expect(20 * Math.log10(volume.gain.value)).toBeCloseTo(6, 6);
+		replica.setVolume(0, 'pointer');
+		flushSync();
+		expect(volume.gain.value).toBe(0);
+		expect(master.gain.value).toBe(1);
 	});
 
 	it('lights the replica level meter with the output', async () => {

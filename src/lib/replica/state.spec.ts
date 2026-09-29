@@ -138,7 +138,7 @@ describe('ReplicaState.subscribe', () => {
 		state.turn('encoder.3', -1, { source: 'keyboard' });
 		state.click('encoder.3', 'keyboard');
 		state.setBend(0.25, 'pointer');
-		state.setVolume(0.5, 'program');
+		state.setVolume(0.8, 'program');
 		expect(all).toEqual([
 			'press keyboard.c4 pointer',
 			'release keyboard.c4 pointer',

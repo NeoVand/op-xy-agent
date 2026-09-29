@@ -26,7 +26,6 @@ import {
 	type PickControl,
 	type PlanStep
 } from './animation';
-import { VOLUME_ART } from './art.generated';
 
 /**
  * Where a change came from. Outbound events are emitted for `pointer`, `keyboard` and `program`
@@ -162,11 +161,11 @@ const DEMO_VOLUME_STEP = 0.06;
 /** Travel of the volume pot in degrees (unverified; 300° is typical). */
 export const VOLUME_TRAVEL = 300;
 
-/** The volume position that puts the pointer dimple where TE's drawing shows it. */
-export const DRAWN_VOLUME = Math.min(
-	1,
-	Math.max(0, (VOLUME_ART.dimpleAngle + VOLUME_TRAVEL / 2) / VOLUME_TRAVEL)
-);
+/**
+ * Where the volume pot starts: the middle, its pointer straight up, the level the app plays at by
+ * default (TE's drawing has it near the bottom of its travel, at the dimple's drawn angle).
+ */
+export const DEFAULT_VOLUME = 0.5;
 
 /** Removes one occurrence of `item` from `list`, if present. */
 function removeFrom<T>(list: T[], item: T): void {
@@ -190,7 +189,7 @@ export class ReplicaState {
 	readonly #highlights = new SvelteMap<ControlId, HighlightKind>();
 	readonly #hints = new SvelteMap<TurnableId, 1 | -1>();
 	readonly #lastTurn = new SvelteMap<TurnableId, LastTurn>();
-	#volume = $state(DRAWN_VOLUME);
+	#volume = $state(DEFAULT_VOLUME);
 	#bend = $state(0);
 	#meter = $state(0);
 	// black until the simulator's first frame (a placeholder page would flash while it loads)

@@ -6,7 +6,7 @@
  */
 export { default as Replica } from './Replica.svelte';
 export {
-	DRAWN_VOLUME,
+	DEFAULT_VOLUME,
 	ReplicaError,
 	ReplicaState,
 	VOLUME_TRAVEL,

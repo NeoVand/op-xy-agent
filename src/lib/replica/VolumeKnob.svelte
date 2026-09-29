@@ -1,16 +1,17 @@
 <!--
 @component
 The analog volume pot in the left half of its 2 × 1 tile: a tall knurled knob with a pointer
-dimple, sized and placed from TE's drawing. At rest the dimple sits where TE draws it. Its
-travel (300°) is unverified on hardware.
+dimple, sized and placed from TE's drawing. It starts in the middle, its dimple straight up, and
+sets the app's output level (AppSound; `volumeGain`). Its travel (300°) is unverified on hardware.
 
-Input: vertical drag, the wheel, arrow keys / Page Up/Down / Home / End.
+Input: a drag turns it the way it would turn under a finger (as the encoders: `clockwisePx`), the
+wheel, arrow keys / Page Up/Down / Home / End.
 -->
 <svelte:options namespace="svg" />
 
 <script lang="ts">
 	import { VOLUME_PART } from './geometry';
-	import { capturePointer, wheel, wheelSteps } from './input';
+	import { capturePointer, clockwisePx, wheel, wheelSteps } from './input';
 	import { knurlPath } from './shapes';
 	import { VOLUME_TRAVEL, type ReplicaState } from './state.svelte';
 
@@ -33,7 +34,7 @@ Input: vertical drag, the wheel, arrow keys / Page Up/Down / Home / End.
 	const highlight = $derived(replica.highlight('knob.volume'));
 	const hint = $derived(replica.turnHint('knob.volume'));
 
-	let drag: { pointer: number; lastY: number } | null = null;
+	let drag: { pointer: number; lastX: number; lastY: number; ux: number; uy: number } | null = null;
 	const wheelAcc = { value: 0 };
 
 	const set = (value: number, source: 'pointer' | 'keyboard') =>
@@ -43,14 +44,33 @@ Input: vertical drag, the wheel, arrow keys / Page Up/Down / Home / End.
 		if (event.button !== 0) return;
 		event.preventDefault();
 		capturePointer(event);
-		drag = { pointer: event.pointerId, lastY: event.clientY };
+		// where on the knob it was grabbed (its centre is this group's origin), for the turn's sense
+		const m = (event.currentTarget as SVGGElement).getScreenCTM();
+		let ux = 0;
+		let uy = 0;
+		if (m) {
+			const rx = event.clientX - m.e;
+			const ry = event.clientY - m.f;
+			const r = Math.hypot(rx, ry);
+			if (r > 0.35 * art.outer * Math.hypot(m.a, m.b)) {
+				ux = rx / r;
+				uy = ry / r;
+			}
+		}
+		drag = { pointer: event.pointerId, lastX: event.clientX, lastY: event.clientY, ux, uy };
 	}
 
 	function onpointermove(event: PointerEvent) {
 		if (!drag || event.pointerId !== drag.pointer) return;
-		const dy = drag.lastY - event.clientY;
+		const px = clockwisePx(
+			event.clientX - drag.lastX,
+			event.clientY - drag.lastY,
+			drag.ux,
+			drag.uy
+		);
+		drag.lastX = event.clientX;
 		drag.lastY = event.clientY;
-		if (dy !== 0) set(replica.volume + dy / DRAG_RANGE, 'pointer');
+		if (px !== 0) set(replica.volume + px / DRAG_RANGE, 'pointer');
 	}
 
 	function end(event: PointerEvent) {
@@ -143,7 +163,7 @@ Input: vertical drag, the wheel, arrow keys / Page Up/Down / Home / End.
 
 <style>
 	.vol {
-		cursor: ns-resize;
+		cursor: grab;
 		outline: none;
 		touch-action: none;
 		-webkit-tap-highlight-color: transparent;

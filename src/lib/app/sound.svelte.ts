@@ -32,6 +32,7 @@ import {
 } from '$lib/device';
 import type { ReplicaEvent, ReplicaState } from '$lib/replica';
 import { METER_SEGMENTS } from '$lib/replica/geometry';
+import { guardCurve, volumeGain } from '$lib/sound/volume';
 import { attachPeaks, samplesInUse } from '$lib/sim/areas/sample/hook';
 import { peaksFromChannels } from '$lib/sim/areas/sample/wave';
 import {
@@ -145,6 +146,9 @@ export class AppSound {
 	#context: AudioContext | null = null;
 	/** Everything the engine plays on its way out, where listening taps it (`listenTap`). */
 	#master: GainNode | null = null;
+	/** The replica's volume pot, after the listening tap, and the guard after it. */
+	#volume: GainNode | null = null;
+	#guard: AudioNode[] = [];
 	#loading: Promise<SoundRuntime | null> | null = null;
 	#engine: Engine | null = null;
 	#scheduler: Scheduler | null = null;
@@ -301,6 +305,17 @@ export class AppSound {
 					untrack(() => (on ? this.#activate() : this.#deactivate()));
 				});
 				$effect(() => {
+					// the volume pot: eased, so a turn never clicks
+					const position = this.#replica.volume;
+					untrack(() => {
+						const node = this.#volume;
+						const context = this.#context;
+						if (!node || !context) return;
+						node.gain.cancelScheduledValues(context.currentTime);
+						node.gain.setTargetAtTime(volumeGain(position), context.currentTime, 0.02);
+					});
+				});
+				$effect(() => {
 					// the transport started without a key (the agent, a device): wake the sound up
 					if (this.enabled && this.#simulator.sim.state.transport.playing) {
 						untrack(() => this.#unlock());
@@ -449,8 +464,20 @@ export class AppSound {
 		if (!runtime || !context || this.#engine || !this.#stop) return;
 		const simulator = this.#simulator;
 		const master = context.createGain();
-		master.connect(context.destination);
+		// the volume pot comes after the tap the listening tools read, as the device's USB audio comes
+		// before its analog pot; a guard (the signal halved into a ±2 curve) keeps a turned-up pot from
+		// clipping
+		const volume = context.createGain();
+		volume.gain.value = volumeGain(this.#replica.volume);
+		const scale = context.createGain();
+		scale.gain.value = 0.5;
+		const guard = context.createWaveShaper();
+		guard.curve = guardCurve();
+		guard.oversample = '2x';
+		master.connect(volume).connect(scale).connect(guard).connect(context.destination);
 		this.#master = master;
+		this.#volume = volume;
+		this.#guard = [scale, guard];
 		const engine = new runtime.SoundEngine({ context, samples: this.samples, destination: master });
 		this.#engine = engine;
 		this.#tickMs = runtime.TICK_MS;
@@ -520,6 +547,10 @@ export class AppSound {
 		this.#engine = null;
 		this.#master?.disconnect();
 		this.#master = null;
+		this.#volume?.disconnect();
+		this.#volume = null;
+		for (const node of this.#guard) node.disconnect();
+		this.#guard = [];
 		this.#synth = null;
 		this.#synthReady = false;
 		this.#scheduler = null;
