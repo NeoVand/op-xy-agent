@@ -71,8 +71,10 @@ export const makeKitTool = defineTool({
 		const byKey = new Map<number, SampleInput>();
 		for (const sample of style ? generateKit(style) : []) byKey.set(sample.key as number, sample);
 		for (const [i, v] of voices.entries()) {
-			const audio = renderVoice({ ...v, seed: i + 1 });
-			byKey.set(v.key, { name: v.type, audio, key: v.key });
+			// the voice travels with its sound, so the preset maker's knobs can turn it
+			const { key, ...rest } = v;
+			const voice = { ...rest, seed: i + 1 };
+			byKey.set(key, { name: v.type, audio: renderVoice(voice), key, voice });
 		}
 		const samples = [...byKey.values()].sort((a, b) => (a.key as number) - (b.key as number));
 		inbox?.put({ name, samples });

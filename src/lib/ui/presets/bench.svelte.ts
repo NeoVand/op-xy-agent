@@ -51,6 +51,7 @@ import {
 	type SoundEdit,
 	type Voice,
 	type VoiceParam,
+	type VoiceType,
 	type Zone
 } from '$lib/core/presets';
 
@@ -98,6 +99,32 @@ const stem = (file: string) => file.replace(/\.[a-z0-9]{2,5}$/i, '');
 const frames = (s: BenchSound) => s.edit.end - s.edit.start;
 
 let nextId = 1;
+
+/** The drum kind each generated voice type is. */
+const VOICE_KIND: Readonly<Record<VoiceType, DrumKind>> = {
+	kick: 'kick',
+	snare: 'snare',
+	clap: 'clap',
+	rim: 'rim',
+	'closed hat': 'closed hat',
+	'open hat': 'open hat',
+	cymbal: 'crash',
+	tom: 'tom',
+	conga: 'conga',
+	cowbell: 'cowbell',
+	clave: 'clave',
+	shaker: 'shaker',
+	tambourine: 'tambourine',
+	triangle: 'triangle',
+	guiro: 'guiro',
+	zap: 'fx'
+};
+
+/** Kinds one voice can stand for on TE's keys (a cymbal on the ride key is the ride). */
+const sameFamily = (a: DrumKind, b: DrumKind) =>
+	a === b ||
+	(['crash', 'ride'].includes(a) && ['crash', 'ride'].includes(b)) ||
+	(['cowbell', 'metal'].includes(a) && ['cowbell', 'metal'].includes(b));
 
 /** Audio at the preset rate, at most 20 s (a longer one is cut, and says so). */
 function atPresetRate(audio: PcmAudio): { audio: PcmAudio; cut: boolean } {
@@ -674,11 +701,17 @@ export class Workbench {
 
 	#fromInput(s: SampleInput, slot: number): BenchSound {
 		const { audio } = atPresetRate(s.audio);
-		const kind = slot >= 0 && s.voice ? TE_LAYOUT[slot] : classifyDrum(s.name, audio).kind;
+		// a generated sound is what its voice is (on its own key, TE's name for that key)
+		const voiced = s.voice ? VOICE_KIND[s.voice.type] : null;
+		const guess = voiced ? null : classifyDrum(s.name, audio);
+		const kind =
+			voiced && slot >= 0 && sameFamily(voiced, TE_LAYOUT[slot])
+				? TE_LAYOUT[slot]
+				: (voiced ?? guess?.kind ?? 'perc');
 		return makeSound(s.name, audio, 'drum', {
 			kind,
-			kindFrom: s.voice ? 'generated' : 'name',
-			reason: s.voice ? `a generated ${s.voice.type}` : '',
+			kindFrom: s.voice ? 'generated' : (guess?.from ?? 'name'),
+			reason: s.voice ? `a generated ${s.voice.type}` : (guess?.reason ?? ''),
 			voice: s.voice ?? null,
 			pitch: s.voice?.pitch ?? null
 		});

@@ -43,6 +43,9 @@ describe('make_kit', () => {
 		expect(draft.samples[0].name).toBe('kick');
 		expect(draft.samples[0].audio.channels[0].length).toBe(Math.ceil(1.21 * 44100));
 		expect(draft.samples[1].name).toBe('909 kick');
+		// each sound carries its voice, for the preset maker's knobs
+		expect(draft.samples[0].voice).toMatchObject({ type: 'kick', pitch: 42, decay: 1.2 });
+		expect(draft.samples[1].voice?.type).toBe('kick');
 	});
 
 	it('makes a kit of the given voices alone', async () => {

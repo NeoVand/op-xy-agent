@@ -811,21 +811,26 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		bench.say(`${built.folder}: ${built.files.length - 1} samples and patch.json, zipped`);
 	}
 
+	/** A context of the app shell, or null where there is none (a test, another shell). */
+	function optional<T>(get: () => T): T | null {
+		try {
+			return get() ?? null;
+		} catch {
+			return null;
+		}
+	}
+	// the replica's virtual OP-XY, its sound and its saving, so a kit can go on a track
+	const simulator = optional(getAppSimulator);
+	const appSound = optional(getAppSound);
+	const persistence = optional(getSimPersistence);
+
 	/** Puts the kit on track 1 of the replica and goes to it. */
 	function toReplica() {
 		try {
-			const simulator = getAppSimulator();
-			const sound = getAppSound();
 			if (!simulator) return;
-			let persistence: { markDirty(): void } | null = null;
-			try {
-				persistence = getSimPersistence();
-			} catch {
-				persistence = null;
-			}
 			const virtual = createVirtualOpxy({
 				sim: simulator.sim,
-				sound,
+				sound: appSound,
 				changed: () => persistence?.markDirty()
 			});
 			virtual.loadKit(1, { name: bench.presetName || 'kit', sounds: bench.kitForReplica() });
@@ -1012,6 +1017,15 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 				{#each pages as p (p)}
 					<Button size="sm" pressed={shown === p} onclick={() => (page = p)}>{p}</Button>
 				{/each}
+				{#if current}
+					<span {@attach tooltip('reverse: plays from its end to its start')}>
+						<Button
+							size="sm"
+							pressed={current.edit.reverse}
+							onclick={() => current && change({ reverse: !current.edit.reverse })}>reverse</Button
+						>
+					</span>
+				{/if}
 				{#if current && bench.mode !== 'slices'}
 					<Button size="sm" variant="ghost" onclick={() => current && bench.remove(current.id)}
 						>remove</Button
