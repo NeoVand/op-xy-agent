@@ -434,8 +434,8 @@ export function lengthIn(s: SimState, mode: SceneLengthMode, signature: TimeSign
  * (docs/research/90-device-probe.md, 2026-09-28: `shift` + black key 7 in bar 5 of "agent"'s
  * song, then sixteen bars of scene 7), and choosing the scene that is already playing holds it the
  * same way (the owner's account of how to loop one scene). Picked while stopped, it is what play
- * starts with, round and round too (test A: play gave scene 7, not the song's first entry, for the
- * eight bars recorded; that it goes on repeating rather than joining the song is ours).
+ * starts with, round and round too (test A: play gave scene 7, not the song's first entry, for
+ * twenty bars, where the song would have moved on to scene 6 after eight).
  */
 export function chooseScene(
 	s: SimState,

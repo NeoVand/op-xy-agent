@@ -34,7 +34,7 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: pick-before-play
-    text: Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and the unit repeated it for the eight bars recorded.
+    text: Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6.
     source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
     confidence: verified
     verified_on: '1.1.33'

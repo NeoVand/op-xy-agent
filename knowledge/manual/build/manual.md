@@ -3565,7 +3565,7 @@ Facts:
 - Over MIDI, on any channel, CC85 selects a scene at once and CC83 and CC84 step to the previous and the next scene. [#midi] [s3]
 - CC85 counts from zero, so value 0 selects scene 1 and value 98 scene 99. [#midi-zero] (community-verified) [s4]
 - Selected while the song plays (`shift` and a black key, in arrange), a scene takes over at once, mid-bar, its patterns carrying on from the song's place in the bar; from then on the unit plays that scene over and over and the song stops moving on. This is how to loop one scene. [#select-while-song] (verified 1.1.33) [s5]
-- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and the unit repeated it for the eight bars recorded. [#select-before-play] (verified 1.1.33) [s5]
+- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6. [#select-before-play] (verified 1.1.33) [s5]
 - `shift` and the black keys pick scenes only in arrange mode. [#select-arrange-only] (verified 1.1.33) [s5]
 - With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions. [#footer] (verified 1.1.33) [s6]
 
@@ -5270,7 +5270,7 @@ scene for good, until scenes are keyed back into song mode.
 Facts:
 - Play runs the current song from its first scene even outside song mode, and after a stop it starts from the first scene again. [#play-runs-song] (verified 1.1.33) [s1]
 - While the song plays, `shift` and a black key in arrange switch to that scene at once, mid-bar, and from then on the unit repeats it; the song stops moving on. [#pick-while-playing] (verified 1.1.33) [s1]
-- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and the unit repeated it for the eight bars recorded. [#pick-before-play] (verified 1.1.33) [s1]
+- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6. [#pick-before-play] (verified 1.1.33) [s1]
 - `shift` and the black keys choose scenes only in arrange mode. [#arrange-only] (verified 1.1.33) [s1]
 - `shift + M1` in song mode empties the song order without deleting any scene, taking every scene out of the song's playback. [#clear-song] [s2]
 - With the song order empty, play has no song to run, so the scene on screen keeps playing. [#empty-song-plays-scene] (derived) [s2]

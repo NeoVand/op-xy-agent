@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "4ec91fe8",
+	"bundle_hash": "290775d8",
 	"stats": {
 		"units": 166,
 		"facts": 1170,
 		"procedures": 205,
 		"parameters": 207,
 		"verified_items": 246,
-		"words": 44006,
+		"words": 44030,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -19808,7 +19808,7 @@
 				},
 				{
 					"id": "select-before-play",
-					"text": "Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and the unit repeated it for the eight bars recorded.",
+					"text": "Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6.",
 					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -28679,7 +28679,7 @@
 				},
 				{
 					"id": "pick-before-play",
-					"text": "Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and the unit repeated it for the eight bars recorded.",
+					"text": "Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and it repeats — twenty bars of scene 7 on the owner's unit, where the song would have moved on to scene 6.",
 					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
 					"firmware_min": null,
 					"verified_on": "1.1.33",

@@ -9,7 +9,8 @@
 - **Tonight (2026-09-28, night), all on main:** songs and scenes measured on the owner's unit (probe
   log, passive recordings): plain play runs the song from its first scene, outside song mode too; a
   scene selected while the song plays takes over at once and repeats, and one picked while stopped
-  is what play starts with (Test A); the replica does both, and plain play runs the song. Project
+  is what play starts with and repeats (Test A, a 20-bar take); the replica does both, and plain
+  play runs the song. Project
   files now load each pattern's real sound (`readSoundState`, xy-format's lanes) and FX I/II. The
   site: the computer keyboard plays the replica (with hover hints), an encoder turn trail, the
   black composer deck, the metallic connect key, Hugeicons, a `/manual` site (a page per unit with a

@@ -422,9 +422,14 @@ in `captures/song/` (git-ignored).
    bar**, not the song's first entry. Tracks 3 and 8, which scenes 1–4 mute, played from bar 1, and
    the take's second four bars match test B's scene-7 loops note for note per track and bar
    (T2 4 4 4 4, T3 1 2 0 0, T6 18 24 18 18, T7 13 14 12 12, T8 4 1 0 0). Two rounds of scene 7
-   in 7.3 bars: whether it goes on repeating or joins the song after it is **not settled**, because
-   the song also plays scene 7 twice in a row (entries 13–14); a take of 20 bars or more would tell.
-   The replica holds a picked scene (`held`) until song mode is opened again (that part is ours).
+   in 7.3 bars could not tell looping from joining the song, which plays scene 7 twice in a row
+   (entries 13–14). The replica holds a picked scene (`held`) until song mode is opened again (that
+   release is ours).
+7. **Test A, long take** (`scene7-stopped-long`, 47.7 s, same steps, 39.4 s of play ≈ 20 bars):
+   **scene 7 five times over**, T8 4 1 0 0 and T3 1 2 0 0 every round, T2 and T7 unchanged at
+   4 4 4 4 and 13 14 12 12 to the end. Scene 6, which the song plays after its two scene-7 entries,
+   has T2 at 10 9 9 9 and T7 at 18 20 17 17 (the `full-song` lap, bars 57–64), so the unit did not
+   join the song: **a scene picked while stopped plays round and round**, as the replica has it.
 
 ## Session 1 runbook (owner present, ≈20–30 min)
 
