@@ -5,6 +5,9 @@ A surface. Panels differ by material, not by decoration:
 - `screen`: black glass with warm-white type, like the device display (same in both themes).
 - `card`: the screen's white card, for the one thing that needs attention (an approval, a result).
 - `sunken`: a recess, for inputs, logs and wells.
+- `device`: the replica's own anodised aluminium (its gradient, rim catch-light and dark outline),
+  for a panel that sits beside the replica as part of the instrument. Dark in both themes, like the
+  device; its text is the legend print.
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -49,6 +52,7 @@ A surface. Panels differ by material, not by decoration:
 <svelte:element
 	this={as}
 	class={['panel', `panel--${variant}`, className]}
+	data-theme={variant === 'device' ? 'dark' : undefined}
 	aria-labelledby={title && !rest['aria-label'] ? titleId : undefined}
 	{...rest}
 >
@@ -124,6 +128,34 @@ A surface. Panels differ by material, not by decoration:
 		box-shadow:
 			0 0 0 1px var(--xy-ink),
 			0 2px 8px rgb(15 14 18 / 0.08);
+	}
+
+	/* The chassis of the replica (see ReplicaDefs' rx-body and rx-rim): lit along the back edge, a
+	 * faint catch-light along the front, a dark outline where it meets the desk. */
+	.panel--device {
+		--xy-fg: var(--xy-mat-legend);
+		--xy-fg-muted: #b9b8b5;
+		--xy-fg-subtle: #909195;
+		--xy-fg-faint: #6c6e73;
+		--xy-line: rgb(0 0 0 / 0.5);
+		--xy-hover: rgb(255 255 255 / 0.05);
+		--xy-surface: var(--xy-mat-tile);
+		--xy-surface-raised: var(--xy-mat-tile);
+		--xy-surface-sunken: var(--xy-mat-gap);
+		border-radius: 1rem;
+		background: linear-gradient(to bottom, #1e1f22, #1a1b1e 45%, #161719);
+		color: var(--xy-fg);
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / 0.12),
+			inset 0 -1px 0 rgb(255 255 255 / 0.05),
+			0 0 0 1px #0b0c0e,
+			0 1.5rem 3rem -1.5rem rgb(0 0 0 / 0.6);
+	}
+
+	/* the header sits on a groove, like the gap between the replica's tiles */
+	.panel--device .panel__head {
+		border-bottom-color: rgb(0 0 0 / 0.55);
+		box-shadow: 0 1px 0 rgb(255 255 255 / 0.035);
 	}
 
 	.panel--sunken {

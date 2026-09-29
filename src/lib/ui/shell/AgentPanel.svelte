@@ -195,7 +195,7 @@ above the composer says what voice is doing while it is on.
 								? 'waiting for you'
 								: status === 'error'
 									? 'error'
-									: 'ready'
+									: ''
 	);
 
 	const EXAMPLES = [
@@ -460,10 +460,11 @@ above the composer says what voice is doing while it is on.
 	ondrop={onDrop}
 />
 
-<Panel as="section" variant="plate" padding="none" class={['agent', className]} aria-label="agent">
+<Panel as="section" variant="device" padding="none" class={['agent', className]} aria-label="agent">
 	{#snippet header()}
 		<div class="agent__id">
-			<Led state={led} blink={ledBlink} size="sm" />
+			<!-- lit only while something happens: idle, the header stays quiet -->
+			{#if ledBlink || led === 'red'}<Led state={led} blink={ledBlink} size="sm" />{/if}
 			<h2 class="agent__title">agent</h2>
 			<!-- The literal DEV check lets production builds drop this branch entirely. -->
 			{#if import.meta.env.DEV && demo}
@@ -524,17 +525,13 @@ above the composer says what voice is doing while it is on.
 				<div class="agent__scroll empty">
 					<h3 class="empty__title">ask about your <span class="whitespace-nowrap">op-xy</span></h3>
 					<p class="empty__text">
-						It answers from the manual, shows you which keys to press on the replica, and can
-						program the device for you. Changes to the device wait for your approval. Give it a
-						photo of sheet music, a PDF score or a MIDI file and it can play it for you.
+						Answers from the manual, shows the keys on the replica, and programs your device when
+						you say so. Sheet music and MIDI files work too.
 					</p>
 					{#if keys.loaded && !hasKey}
 						<div class="empty__cta">
 							<Button variant="secondary" onclick={openSettings}>add your anthropic key</Button>
-							<p class="empty__note">
-								The agent runs in this browser with your own key. It is kept on this device and sent
-								only to Anthropic.
-							</p>
+							<p class="empty__note">Your key stays in this browser and goes only to Anthropic.</p>
 						</div>
 					{:else if booting}
 						<p class="empty__status">
@@ -566,13 +563,9 @@ above the composer says what voice is doing while it is on.
 					</ul>
 					{#if conductor}
 						<p class="empty__meta">
-							<span
-								><Led state={connected ? 'white' : 'off'} size="sm" />
-								{connected
-									? `op-xy connected${firmware ? `, os ${firmware}` : ''}`
-									: 'no op-xy connected: answers only until you connect it'}</span
-							>
-							<span>manual: {conductor.manualLabel}</span>
+							{connected
+								? `op-xy connected${firmware ? ` · os ${firmware}` : ''}`
+								: 'no op-xy connected'}
 						</p>
 					{/if}
 				</div>
@@ -639,7 +632,7 @@ above the composer says what voice is doing while it is on.
 						? 'Working… (esc to stop)'
 						: files.length > 0
 							? 'Say what to do with it, or just send'
-							: 'Ask about your OP-XY'}
+							: 'Ask anything'}
 					disabled={!conductor || settingsOpen}
 					bind:value={draft}
 					{@attach trackComposer}
@@ -881,21 +874,12 @@ above the composer says what voice is doing while it is on.
 	}
 
 	.empty__meta {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
 		margin: 1rem 0 0;
 		color: var(--xy-fg-subtle);
 		font-size: var(--xy-text-2xs);
 		line-height: var(--xy-leading-2xs);
 		font-weight: 450;
 		letter-spacing: var(--xy-tracking-label);
-	}
-
-	.empty__meta span {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
 	}
 
 	/* Files waiting to go, in a row above the composer (it wraps; it never scrolls). */

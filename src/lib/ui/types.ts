@@ -17,4 +17,4 @@ export type KeyVariant = 'key' | 'secondary' | 'primary' | 'ghost';
 export type KeySize = 'sm' | 'md' | 'lg';
 
 /** Surfaces a panel can be made of. */
-export type PanelVariant = 'plate' | 'screen' | 'card' | 'sunken';
+export type PanelVariant = 'plate' | 'screen' | 'card' | 'sunken' | 'device';
