@@ -18,8 +18,10 @@
  *   clears, `turn E1` loops, `shift + natural` picks one of 14 songs, `shift + natural + M2 / M3`
  *   copies and pastes songs, and `shift + [-] / [+]` cue entries while the song plays
  *   [arrange/songs]. `arrange` (or `shift + arrange`) goes back (ours).
- * - `play` in song mode plays the song from its first scene (ours: when a song starts is not
- *   documented); `stop` stops it where it is, the ring staying on that entry (the device).
+ * - `play` runs the song from its first scene, in any mode, and starts it over when pressed while it
+ *   plays (the owner's unit); `stop` stops it where it is, the ring staying on that entry (the
+ *   device). A scene picked in arrange mode takes over and repeats, picked while the song plays
+ *   (test B) or before play (test A); opening song mode goes back to the song (ours).
  */
 import type { SimArea } from '../types';
 import {
@@ -47,8 +49,7 @@ import {
 	selectedTrack,
 	setLink,
 	setLinkSource,
-	startSong,
-	stopSong
+	startSong
 } from './model';
 import { PATTERN_KEYS, SCENES, type PatternAction } from './state';
 import { arrangeLeds, heldSong, patternsFrame, songFrame } from './view';
@@ -142,11 +143,13 @@ export const arrange: SimArea = {
 			a.armed = true;
 			return true;
 		}
-		// play in song mode starts the song; pressed again while it plays, anywhere, it starts
-		// over; any other play plays the current scene
-		if (owns(s) && a.view === 'song') startSong(s);
-		else if (a.playing && s.transport.playing) startSong(s);
-		else if (a.playing) stopSong(a);
+		// play runs the current song from its first scene, from any mode, and pressed again while
+		// it plays starts it over (the owner's unit: plain play outside song mode walked song 1 from
+		// its first entry, again after a stop mid-song); a scene picked in arrange mode holds
+		// instead and plays round and round (tests A and B) until song mode is opened again; a
+		// song emptied of scenes leaves the scene on screen playing (the guide's way to keep to one)
+		if (a.held && !(owns(s) && a.view === 'song')) return false;
+		startSong(s);
 		return false;
 	},
 
@@ -165,6 +168,8 @@ export const arrange: SimArea = {
 		if (id === 'key.arrange') {
 			if (s.shift) {
 				a.view = a.view === 'song' ? 'patterns' : 'song';
+				// back with the song: a scene picked before no longer holds play (ours)
+				if (a.view === 'song') a.held = false;
 				return true;
 			}
 			if (a.view === 'song') {

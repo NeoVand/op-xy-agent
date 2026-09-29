@@ -140,6 +140,12 @@ export interface ArrangeState {
 	position: number;
 	/** An entry cued with shift + [-] / [+], taken at the next scene end, or null. */
 	cue: number | null;
+	/**
+	 * A scene was picked (shift + its black key in arrange mode, at once or queued): play plays it
+	 * round and round instead of the song (the owner's unit, tests A and B, 2026-09-28), until song
+	 * mode is opened again (ours).
+	 */
+	held: boolean;
 }
 
 /** The arrange area's state in a new project. */
@@ -160,6 +166,7 @@ export function initialArrange(): ArrangeState {
 		scroll: 0,
 		playing: false,
 		position: 0,
-		cue: null
+		cue: null,
+		held: false
 	};
 }

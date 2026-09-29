@@ -15,7 +15,7 @@ area: howto
 order: 34
 context:
   modes: [arrange]
-summary: Play runs the song, scene after scene. To hear one scene over and over, pick it while playing — in arrange, `shift` and its black key switch to it at once and it repeats — or empty the song order in song mode so play keeps to the current scene.
+summary: Play runs the song, scene after scene. To hear one scene over and over, pick it — in arrange, `shift` and its black key, before play or while playing — and it repeats; or empty the song order in song mode so play keeps to the current scene.
 status: current
 firmware:
   min: '1.0.9'
@@ -30,6 +30,11 @@ facts:
     verified_on: '1.1.33'
   - id: pick-while-playing
     text: While the song plays, `shift` and a black key in arrange switch to that scene at once, mid-bar, and from then on the unit repeats it; the song stops moving on.
+    source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: pick-before-play
+    text: Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and the unit repeated it for the eight bars recorded.
     source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
     confidence: verified
     verified_on: '1.1.33'
@@ -55,6 +60,18 @@ procedures:
       - keys: arrange
       - keys: shift + accidental
         note: the black key of the scene to keep; it takes over at once and repeats
+    result: The chosen scene plays over and over until stop.
+    source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: before-play
+    goal: Start on one scene and keep it
+    preconditions: [arrange mode, stopped]
+    steps:
+      - keys: shift + accidental
+        note: the black key of the scene to keep
+      - keys: play
+        note: that scene plays, not the song's first one, and repeats
     result: The chosen scene plays over and over until stop.
     source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
     confidence: verified

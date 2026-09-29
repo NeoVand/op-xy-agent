@@ -582,6 +582,24 @@ describe.skipIf(!existsSync(OWNER_BLANK))(
 		});
 
 		it.skipIf(!existsSync(OWNER_PROJECT))(
+			'plays "agent"’s song on plain play as the unit did: its order, four bars an entry',
+			() => {
+				const { state } = xyToSim(new Uint8Array(readFileSync(OWNER_PROJECT)));
+				const sim = new OpxySim({ now: () => 0 });
+				sim.reset(state);
+				sim.press('key.play'); // plain play, in instrument mode
+				const stepMs = 60000 / sim.state.tempo.bpm / 4;
+				const order: number[] = [];
+				for (let entry = 0; entry < 17; entry++) {
+					order.push(sim.state.areas.arrange.scene + 1);
+					for (let i = 0; i < 64 * 5; i++) sim.advance(stepMs / 5);
+				}
+				// research/device/captures/song/full-song: the unit's lap, then back to the top
+				expect(order).toEqual([1, 2, 2, 3, 3, 4, 4, 5, 5, 8, 9, 9, 7, 7, 6, 6, 1]);
+			}
+		);
+
+		it.skipIf(!existsSync(OWNER_PROJECT))(
 			'loads the project the owner had open (read over MTP from the browser) and writes it back byte for byte',
 			() => {
 				const file = new Uint8Array(readFileSync(OWNER_PROJECT));

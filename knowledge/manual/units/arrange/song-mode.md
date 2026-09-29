@@ -43,7 +43,7 @@ facts:
     source: https://teenage.engineering/downloads/op-xy#1.0.45
     firmware_min: '1.0.45'
   - id: plain-play
-    text: Play runs the current song from its first scene even outside song mode, and after a stop play starts it from the first scene again.
+    text: Play runs the current song from its first scene even outside song mode, and after a stop play starts it from the first scene again, unless a scene was picked in arrange first, which then plays instead.
     source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
     confidence: verified
     verified_on: '1.1.33'

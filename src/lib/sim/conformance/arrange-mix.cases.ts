@@ -1317,15 +1317,38 @@ export function arrangeMixConformance(start: () => Promise<Driver>): void {
 			expect(d.screen()).toBe('song 1, looping: 2 scenes, cursor at 3');
 		});
 
-		it('plays one scene round and round when play is pressed outside song mode (ours)', async () => {
+		it('runs the song from its first scene when play is pressed outside song mode (the owner’s unit)', async () => {
 			const d = await start();
 			await threeScenes(d);
 			await emptySong(d);
 			await d.withShift(() => d.clicks(accidental(2), accidental(3)));
 			await d.click('key.arrange'); // back to the tracks: scene 1
 			await d.click('key.play');
+			expect(page(d, 'arrange').scene).toBe('2');
+			await playTo(d, 16.5);
+			expect(page(d, 'arrange').scene).toBe('3');
+			await d.click('key.stop');
+		});
+
+		it('plays a scene picked while stopped, round and round, instead of the song (the owner’s unit)', async () => {
+			const d = await start();
+			await threeScenes(d);
+			await emptySong(d);
+			await d.withShift(() => d.clicks(accidental(2), accidental(3)));
+			await d.click('key.arrange'); // back to the tracks
+			await scene(d, 1); // picked while stopped (test A: shift + 7 in arrange, then play)
+			await d.click('key.play');
+			expect(page(d, 'arrange').scene).toBe('1');
 			await playTo(d, 16.5);
 			expect(page(d, 'arrange').scene).toBe('1');
+			await d.click('key.stop');
+			await d.click('key.play'); // still held after a stop (ours)
+			expect(page(d, 'arrange').scene).toBe('1');
+			await d.click('key.stop');
+			await d.withShift(() => d.click('key.arrange')); // song mode: back with the song (ours)
+			await d.click('key.arrange');
+			await d.click('key.play');
+			expect(page(d, 'arrange').scene).toBe('2');
 			await d.click('key.stop');
 		});
 

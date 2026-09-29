@@ -417,6 +417,14 @@ in `captures/song/` (git-ignored).
    and over** (four 4-bar loops) until stop: the song stopped following its order. This is how to
    loop one scene. The replica does the same since this session (`chooseScene`); a queued scene
    (`shift` + tap play, then a scene) is taken to do likewise once it starts (ours).
+6. **Test A, proper: a scene picked while stopped** (`scene7-stopped`, 22.5 s, "agent"; the owner in
+   arrange mode, stopped, `shift` + black key 7, then play for 14.4 s): **scene 7 from the first
+   bar**, not the song's first entry. Tracks 3 and 8, which scenes 1–4 mute, played from bar 1, and
+   the take's second four bars match test B's scene-7 loops note for note per track and bar
+   (T2 4 4 4 4, T3 1 2 0 0, T6 18 24 18 18, T7 13 14 12 12, T8 4 1 0 0). Two rounds of scene 7
+   in 7.3 bars: whether it goes on repeating or joins the song after it is **not settled**, because
+   the song also plays scene 7 twice in a row (entries 13–14); a take of 20 bars or more would tell.
+   The replica holds a picked scene (`held`) until song mode is opened again (that part is ours).
 
 ## Session 1 runbook (owner present, ≈20–30 min)
 

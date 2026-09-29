@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1168 facts, 204 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1170 facts, 205 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -3565,6 +3565,7 @@ Facts:
 - Over MIDI, on any channel, CC85 selects a scene at once and CC83 and CC84 step to the previous and the next scene. [#midi] [s3]
 - CC85 counts from zero, so value 0 selects scene 1 and value 98 scene 99. [#midi-zero] (community-verified) [s4]
 - Selected while the song plays (`shift` and a black key, in arrange), a scene takes over at once, mid-bar, its patterns carrying on from the song's place in the bar; from then on the unit plays that scene over and over and the song stops moving on. This is how to loop one scene. [#select-while-song] (verified 1.1.33) [s5]
+- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and the unit repeated it for the eight bars recorded. [#select-before-play] (verified 1.1.33) [s5]
 - `shift` and the black keys pick scenes only in arrange mode. [#select-arrange-only] (verified 1.1.33) [s5]
 - With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions. [#footer] (verified 1.1.33) [s6]
 
@@ -3639,7 +3640,7 @@ Facts:
 - `shift + M4` takes the scene at the cursor out of the song; the scene itself stays in the project. [#delete] [s1]
 - `shift + M1` empties the whole song order without deleting any scene. [#clear] [s1]
 - OS 1.0.45 added the option of stopping playback when the song reaches its end. [#stop-at-end] (since 1.0.45) [s3]
-- Play runs the current song from its first scene even outside song mode, and after a stop play starts it from the first scene again. [#plain-play] (verified 1.1.33) [s4]
+- Play runs the current song from its first scene even outside song mode, and after a stop play starts it from the first scene again, unless a scene was picked in arrange first, which then plays instead. [#plain-play] (verified 1.1.33) [s4]
 - The song page is headed song 1 with a loop icon and shows a grid of 32 slots, eight across in four rows marked 1, 9, 17 and 25; scenes appear as numbered circles, a white line marks where the next scene goes, and a ring walks along the order during playback. [#screen] (verified 1.1.33) [s5]
 - The box beside count at the top right shows how many scenes the song holds. [#count] (verified 1.1.33) [s5]
 - The white cursor line shows only while `shift` is held, together with the lit footer. [#cursor-with-shift] (verified 1.1.33) [s5]
@@ -5259,7 +5260,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33
 Also called: loop one scene, loop a scene, repeat a scene, hold a scene, stay on a scene, stop the song advancing, play only one scene
 Where: modes arrange
 
-Play runs the song, scene after scene. To hear one scene over and over, pick it while playing — in arrange, `shift` and its black key switch to it at once and it repeats — or empty the song order in song mode so play keeps to the current scene.
+Play runs the song, scene after scene. To hear one scene over and over, pick it — in arrange, `shift` and its black key, before play or while playing — and it repeats; or empty the song order in song mode so play keeps to the current scene.
 
 The OP-XY treats play as "play the song": a new project's song holds scene 1, and a project with a
 longer song walks through it from the top on every play. Picking a scene while it plays is the quick
@@ -5269,6 +5270,7 @@ scene for good, until scenes are keyed back into song mode.
 Facts:
 - Play runs the current song from its first scene even outside song mode, and after a stop it starts from the first scene again. [#play-runs-song] (verified 1.1.33) [s1]
 - While the song plays, `shift` and a black key in arrange switch to that scene at once, mid-bar, and from then on the unit repeats it; the song stops moving on. [#pick-while-playing] (verified 1.1.33) [s1]
+- Picked while stopped (`shift` and its black key, in arrange), a scene is what play starts with instead of the song's first scene, and the unit repeated it for the eight bars recorded. [#pick-before-play] (verified 1.1.33) [s1]
 - `shift` and the black keys choose scenes only in arrange mode. [#arrange-only] (verified 1.1.33) [s1]
 - `shift + M1` in song mode empties the song order without deleting any scene, taking every scene out of the song's playback. [#clear-song] [s2]
 - With the song order empty, play has no song to run, so the scene on screen keeps playing. [#empty-song-plays-scene] (derived) [s2]
@@ -5279,6 +5281,11 @@ Procedures:
   1. `play` — the song starts from its first scene
   2. `arrange`
   3. `shift + accidental` — the black key of the scene to keep; it takes over at once and repeats
+  Result: The chosen scene plays over and over until stop.
+- Start on one scene and keep it [#before-play] (verified 1.1.33) [s1]
+  Needs: arrange mode; stopped
+  1. `shift + accidental` — the black key of the scene to keep
+  2. `play` — that scene plays, not the song's first one, and repeats
   Result: The chosen scene plays over and over until stop.
 - Make play keep to the current scene [#for-good] (derived) [s2]
   Needs: arrange mode

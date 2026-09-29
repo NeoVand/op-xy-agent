@@ -433,7 +433,9 @@ export function lengthIn(s: SimState, mode: SceneLengthMode, signature: TimeSign
  * plays over and over: the song stops following its order. The owner's unit did so on OS 1.1.33
  * (docs/research/90-device-probe.md, 2026-09-28: `shift` + black key 7 in bar 5 of "agent"'s
  * song, then sixteen bars of scene 7), and choosing the scene that is already playing holds it the
- * same way (the owner's account of how to loop one scene).
+ * same way (the owner's account of how to loop one scene). Picked while stopped, it is what play
+ * starts with, round and round too (test A: play gave scene 7, not the song's first entry, for the
+ * eight bars recorded; that it goes on repeating rather than joining the song is ours).
  */
 export function chooseScene(
 	s: SimState,
@@ -446,6 +448,7 @@ export function chooseScene(
 	else if (purpose === 'queue' && s.transport.playing) a.queued = index;
 	else {
 		selectScene(s, index);
+		a.held = true;
 		if (a.playing) haltSong(a);
 	}
 }
@@ -554,12 +557,13 @@ export function cueSong(s: SimState, by: number): void {
 	a.cue = clamp((a.cue ?? a.position) + by, 0, order.length - 1);
 }
 
-/** Play in song mode: the song starts from its first scene (ours: play always starts from the top). */
+/** The song starts from its first scene (the owner's unit: play always starts from the top). */
 export function startSong(s: SimState): void {
 	const a = s.areas.arrange;
 	const order = a.songs[a.song].order;
 	a.queued = null;
 	a.cue = null;
+	a.held = false;
 	if (order.length === 0) {
 		a.playing = false;
 		a.position = 0;
@@ -601,6 +605,7 @@ function sceneEnded(s: SimState): 'next' | 'again' | 'stop' {
 		selectScene(s, next);
 		// a queued scene is a selected one that waited: the song lets go of the order as it does
 		// for a scene selected at once (ours, by analogy with chooseScene)
+		a.held = true;
 		if (a.playing) haltSong(a);
 		return 'next';
 	}
