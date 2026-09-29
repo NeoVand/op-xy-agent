@@ -427,6 +427,11 @@ generated sources; install via FILE PUT if the spike confirms it, otherwise expo
 OpenAI realtime (WebRTC) as the voice front-end delegating to the Claude conductor via
 `ask_claude`; push-to-talk and hands-free; barge-in; spoken confirmations for approvals.
 
+- [ ] **Move to GPT-Live-1** (`gpt-live-1`, generally available since 2026-09-10; the owner asked,
+      parked until voice comes back): full duplex, better tool calling, built to sit in front of
+      a backend agent (ours: the conductor). It runs on its own endpoint (`v1/live/sessions`),
+      not the Realtime API, so it needs a new session and transport layer; $0.05 a minute.
+
 - [x] **Protocol** (`src/lib/core/voice`, 2026-09-28): the session the app mints (instructions,
       turn taking, `gpt-live-transcribe` with the device's words, three tools), the realtime
       events, and a pure state machine for push-to-talk, hands-free, barge-in, tool outputs and

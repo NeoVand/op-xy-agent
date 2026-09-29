@@ -193,7 +193,8 @@ export class ReplicaState {
 	#volume = $state(DRAWN_VOLUME);
 	#bend = $state(0);
 	#meter = $state(0);
-	#screen = $state.raw<ScreenContent>({ lines: ['tempo', '120.0'] });
+	// black until the simulator's first frame (a placeholder page would flash while it loads)
+	#screen = $state.raw<ScreenContent>({ lines: [] });
 	#animating = $state(false);
 
 	/** Outbound listeners by event name (plain arrays: listeners are not reactive state). */

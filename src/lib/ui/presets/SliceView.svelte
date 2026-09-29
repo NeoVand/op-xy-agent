@@ -130,7 +130,7 @@ a key plays it.
 	}
 
 	.slices__hit:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: -2px;
 	}
 </style>

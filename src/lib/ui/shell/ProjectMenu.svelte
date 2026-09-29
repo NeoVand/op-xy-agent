@@ -7,7 +7,7 @@ last one writes to the device, so it says what it will add and waits for a secon
 -->
 <script lang="ts">
 	import { Folder01Icon } from '@hugeicons/core-free-icons';
-	import { Button, HugeIcon, IconButton, Led, Legend } from '$lib/ui';
+	import { Button, IconButton, Legend, ToolButton } from '$lib/ui';
 	import { getAppSimulator } from '$lib/app';
 	import { PROJECT_NAME, ProjectTransfer } from '$lib/app/project-transfer.svelte';
 	import { browserUsb } from '$lib/device';
@@ -66,17 +66,14 @@ last one writes to the device, so it says what it will add and waits for a secon
 
 {#if transfer}
 	<div class="project">
-		<button
-			type="button"
-			class="project__key"
+		<ToolButton
+			icon={Folder01Icon}
+			label="project file"
+			tip="project file: open, download, load from or save to the op-xy"
 			aria-expanded={open}
 			aria-controls="project-card"
 			onclick={() => (open = !open)}
-		>
-			<Led state={open ? 'white' : 'off'} size="sm" />
-			<HugeIcon icon={Folder01Icon} />
-			project
-		</button>
+		/>
 		{#if open}
 			<div class="project__card" id="project-card" role="group" aria-label="project file">
 				<div class="project__head">
@@ -155,32 +152,6 @@ last one writes to the device, so it says what it will add and waits for a secon
 		position: relative;
 	}
 
-	.project__key {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.375rem;
-		margin: -0.125rem -0.25rem;
-		padding: 0.125rem 0.25rem;
-		border: 0;
-		border-radius: var(--xy-radius-tile);
-		background: none;
-		color: inherit;
-		font: inherit;
-		letter-spacing: inherit;
-		cursor: pointer;
-	}
-
-	.project__key:hover,
-	.project__key:focus-visible,
-	.project__key[aria-expanded='true'] {
-		color: var(--xy-fg);
-	}
-
-	.project__key:focus-visible {
-		outline: 2px solid var(--xy-focus);
-		outline-offset: 1px;
-	}
-
 	.project__card {
 		position: absolute;
 		right: 0;
@@ -228,8 +199,8 @@ last one writes to the device, so it says what it will add and waits for a secon
 	}
 
 	.project__input:focus-visible {
-		outline: 2px solid var(--xy-focus);
-		outline-offset: 1px;
+		outline: none;
+		border-color: var(--xy-fg-subtle);
 	}
 
 	.project__skipped {

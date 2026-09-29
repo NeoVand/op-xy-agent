@@ -278,11 +278,8 @@ export class AppSound {
 	start(): () => void {
 		if (this.#stop) return this.#stop;
 		this.#simulated = this.#recall();
-		try {
-			this.#newEngines = this.#storage()?.getItem(ENGINES_STORAGE_KEY) !== 'first';
-		} catch {
-			// blocked storage: the default holds
-		}
+		// the rebuilt engines always play now: a choice of the first ones stored by an older version
+		// is not read (they remain the fallback when the synth core cannot start)
 		const stops: (() => void)[] = [
 			this.#replica.observe((event) => this.#onReplica(event)),
 			this.samples.onChange((id) => this.#measure(id))

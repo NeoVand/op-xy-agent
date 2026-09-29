@@ -196,7 +196,7 @@ Set `pressed` (optionally with `toggle`) for a latching key; its LED lights whil
 	}
 
 	.key:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 2px;
 	}
 

@@ -161,10 +161,19 @@
 		color: var(--xy-fg);
 	}
 
-	/* One focus style everywhere: a warm-white (ink on paper) ring, never red, never blue. */
+	/* Focus stays quiet: a thin grey ring on keys and links reached from the keyboard, never red,
+	 * never blue. A text field is focused whenever it is typed in, so it shows focus by its own
+	 * edge instead of a ring. */
 	:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 2px;
+	}
+
+	input:not([type='checkbox'], [type='radio'], [type='range']):focus-visible,
+	textarea:focus-visible,
+	select:focus-visible {
+		outline: 1px solid var(--xy-line-strong);
+		outline-offset: 0;
 	}
 
 	code,

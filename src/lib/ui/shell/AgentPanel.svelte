@@ -23,7 +23,13 @@ above the composer says what voice is doing while it is on.
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { Settings02Icon } from '@hugeicons/core-free-icons';
+	import {
+		ArrowUp02Icon,
+		PencilEdit02Icon,
+		PlusSignIcon,
+		Settings02Icon,
+		StopIcon
+	} from '@hugeicons/core-free-icons';
 	import { getReplicaGuide } from '$lib/app/guide.svelte';
 	import { getPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import { getSimPersistence } from '$lib/app/persistence';
@@ -61,7 +67,8 @@ above the composer says what voice is doing while it is on.
 	import VoiceStrip from '$lib/voice/ui/VoiceStrip.svelte';
 	import Button from '../Button.svelte';
 	import HugeIcon from '../HugeIcon.svelte';
-	import IconButton from '../IconButton.svelte';
+	import ToolButton from '../ToolButton.svelte';
+	import { tooltip } from '../tooltip';
 	import Kbd from '../Kbd.svelte';
 	import Led from '../Led.svelte';
 	import Panel from '../Panel.svelte';
@@ -177,7 +184,7 @@ above the composer says what voice is doing while it is on.
 		!keys.loaded
 			? ''
 			: !hasKey
-				? 'needs a key'
+				? ''
 				: booting
 					? 'starting'
 					: bootError
@@ -470,18 +477,19 @@ above the composer says what voice is doing while it is on.
 				<ListenLight activity={capture.active} level={capture.level} />
 			{:else if stateText}<span class="agent__state" aria-live="polite">{stateText}</span>{/if}
 			{#if conductor && conductor.entries.length > 0 && !settingsOpen}
-				<Button size="sm" variant="ghost" onclick={() => void conductor?.newThread()}>new</Button>
+				<ToolButton
+					icon={PencilEdit02Icon}
+					label="new conversation"
+					onclick={() => void conductor?.newThread()}
+				/>
 			{/if}
-			<Button
-				size="sm"
-				variant="ghost"
+			<ToolButton
+				icon={Settings02Icon}
+				label="settings"
 				aria-expanded={settingsOpen}
 				aria-controls="{uid}-body"
 				onclick={() => (settingsOpen ? closeSettings() : openSettings())}
-			>
-				{#snippet icon()}<HugeIcon icon={Settings02Icon} />{/snippet}
-				settings
-			</Button>
+			/>
 		</div>
 	{/snippet}
 
@@ -497,7 +505,6 @@ above the composer says what voice is doing while it is on.
 						onclose={closeSettings}
 						onchange={onKeyChange}
 						{keyStatus}
-						manualLabel={conductor ? `${conductor.manualLabel}` : null}
 						voiceModels={voice.models}
 						voiceModel={voice.model}
 						onvoicemodel={(id) => voice.setModel(id)}
@@ -628,48 +635,42 @@ above the composer says what voice is doing while it is on.
 					id="{uid}-message"
 					class="composer__field"
 					rows="1"
-					placeholder={!keys.loaded
-						? 'ask about a key, a page or a workflow'
-						: !hasKey
-							? 'add your anthropic key in settings to start'
-							: busy
-								? 'working… (escape to stop)'
-								: files.length > 0
-									? 'say what to do with it, or just send'
-									: 'ask about a key, a page or a workflow'}
+					placeholder={busy
+						? 'Working… (esc to stop)'
+						: files.length > 0
+							? 'Say what to do with it, or just send'
+							: 'Ask about your OP-XY'}
 					disabled={!conductor || settingsOpen}
 					bind:value={draft}
 					{@attach trackComposer}
 					onkeydown={onKeyDown}
 					onpaste={onPaste}></textarea>
-				<div class="composer__keys">
-					<IconButton
+				<div class="composer__bar">
+					<button
 						type="button"
-						label="attach files"
-						icon="plus"
+						class="round"
+						aria-label="attach files"
 						disabled={!canAttach}
 						onclick={() => picker?.click()}
-					/>
-					<p class="composer__note">
-						{#if !hasKey}
-							Runs in your browser with your own Anthropic key.
-						{:else if !connected}
-							No OP-XY connected: device tools will ask you to connect it.
-						{:else}
-							Changes to your device always wait for your approval.
-						{/if}
-					</p>
-					<VoiceKey {voice} size="md" disabled={!conductor || settingsOpen} />
+						{@attach tooltip('attach a photo, a PDF or a MIDI file')}
+					>
+						<HugeIcon icon={PlusSignIcon} size="1.125rem" strokeWidth={1.7} />
+					</button>
+					<span class="composer__gap"></span>
+					<VoiceKey {voice} variant="round" disabled={!conductor || settingsOpen} />
 					{#if busy}
-						<IconButton type="button" label="stop" icon="stop" onclick={() => conductor?.stop()} />
+						<button
+							type="button"
+							class="round round--solid"
+							aria-label="stop"
+							onclick={() => conductor?.stop()}
+						>
+							<HugeIcon icon={StopIcon} size="1rem" strokeWidth={2} />
+						</button>
 					{:else}
-						<IconButton
-							type="submit"
-							label="send"
-							icon="arrow-up"
-							variant={canSend ? 'primary' : 'key'}
-							disabled={!canSend}
-						/>
+						<button type="submit" class="round round--solid" aria-label="send" disabled={!canSend}>
+							<HugeIcon icon={ArrowUp02Icon} size="1.125rem" strokeWidth={2} />
+						</button>
 					{/if}
 				</div>
 				<input
@@ -937,61 +938,60 @@ above the composer says what voice is doing while it is on.
 		align-self: center;
 	}
 
-	/* The deck: black glass to the panel's edges, the device's screen language in both themes. */
+	/* The foot of the panel: attachments, the voice strip and the composer. */
 	.deck {
 		display: flex;
 		flex: none;
 		flex-direction: column;
 		gap: 0.5rem;
-		padding: 0.75rem 0.75rem 0.875rem;
-		border-radius: 0 0 var(--xy-radius-tile) var(--xy-radius-tile);
-		background-color: var(--xy-scr-bg);
-		color: var(--xy-scr-fg);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+		padding: 0.5rem 0.75rem 0.75rem;
 	}
 
 	.deck .files {
 		margin: 0;
 	}
 
-	.deck .files__note {
-		color: var(--xy-scr-muted);
-	}
-
 	.deck__cost {
 		display: flex;
 		justify-content: flex-end;
-		color: var(--xy-scr-muted);
 	}
 
+	/* One rounded box of the device's black glass: typed into, its keys inside it. */
 	.composer {
 		display: flex;
 		flex-direction: column;
-		gap: 0.625rem;
+		gap: 0.25rem;
+		padding: 0.5rem 0.5rem 0.4375rem;
+		border-radius: 1.25rem;
+		background-color: var(--xy-scr-bg);
+		color: var(--xy-scr-fg);
+		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+		transition: box-shadow var(--xy-dur-quick, 120ms) ease;
+	}
+
+	.composer:focus-within {
+		box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
 	}
 
 	.composer__field {
 		width: 100%;
-		min-height: 2.75rem;
+		min-height: 2.25rem;
 		max-height: 12rem;
-		padding: 0.5rem 0.375rem;
+		padding: 0.375rem 0.5rem;
 		border: 0;
 		background: none;
 		color: var(--xy-scr-fg);
 		font: inherit;
-		font-size: var(--xy-text-base);
-		line-height: var(--xy-leading-base);
+		font-size: var(--xy-text-sm);
+		line-height: var(--xy-leading-sm);
 		resize: none;
 		field-sizing: content;
 		caret-color: var(--xy-scr-fg);
 	}
 
-	.composer__field:focus {
-		outline: none;
-	}
-
+	.composer__field:focus,
 	.composer__field:focus-visible {
-		box-shadow: inset 0 -1px 0 var(--xy-scr-muted);
+		outline: none;
 	}
 
 	.composer__field::placeholder {
@@ -1002,20 +1002,55 @@ above the composer says what voice is doing while it is on.
 		cursor: not-allowed;
 	}
 
-	.composer__keys {
+	.composer__bar {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.25rem;
 	}
 
-	.composer__note {
+	.composer__gap {
 		flex: 1;
-		min-width: 0;
-		margin: 0 0.25rem;
+	}
+
+	.round {
+		display: inline-grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: none;
 		color: var(--xy-scr-muted);
-		font-size: var(--xy-text-2xs);
-		line-height: var(--xy-leading-2xs);
-		font-weight: 450;
-		letter-spacing: var(--xy-tracking-label);
+		cursor: pointer;
+		transition:
+			color var(--xy-dur-quick, 120ms) ease,
+			background-color var(--xy-dur-quick, 120ms) ease;
+	}
+
+	.round:hover:not(:disabled) {
+		background-color: rgb(255 255 255 / 0.08);
+		color: var(--xy-scr-fg);
+	}
+
+	/* send and stop: the one solid key, warm white on the black */
+	.round--solid {
+		background-color: var(--xy-scr-fg);
+		color: var(--xy-scr-bg);
+	}
+
+	.round--solid:hover:not(:disabled) {
+		background-color: #ffffff;
+		color: var(--xy-scr-bg);
+	}
+
+	.round:focus-visible {
+		outline: 1.5px solid var(--xy-scr-muted);
+		outline-offset: 1px;
+	}
+
+	.round:disabled {
+		cursor: not-allowed;
+		opacity: 0.35;
 	}
 </style>

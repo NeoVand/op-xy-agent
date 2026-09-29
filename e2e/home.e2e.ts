@@ -23,7 +23,7 @@ test.describe('the home page', () => {
 	});
 
 	test('leaves the keys alone once switched off', async ({ page }) => {
-		const keys = page.getByRole('button', { name: 'keys' });
+		const keys = page.getByRole('button', { name: 'computer keyboard' });
 		await expect(keys).toHaveAttribute('aria-pressed', 'true');
 		await keys.click();
 		await expect(keys).toHaveAttribute('aria-pressed', 'false');

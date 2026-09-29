@@ -8,6 +8,8 @@ Hands-free, a press mutes or opens the mic instead. The first press starts the c
 Keyboard: hold space or enter on the key, or hold the ` key anywhere you are not typing.
 -->
 <script lang="ts">
+	import { Mic01Icon } from '@hugeicons/core-free-icons';
+	import HugeIcon from '$lib/ui/HugeIcon.svelte';
 	import IconButton from '$lib/ui/IconButton.svelte';
 	import { tooltip } from '$lib/ui/tooltip';
 	import type { KeySize, LedState } from '$lib/ui/types';
@@ -18,9 +20,14 @@ Keyboard: hold space or enter on the key, or hold the ` key anywhere you are not
 		disabled?: boolean;
 		/** Tile size, as `IconButton`'s. */
 		size?: KeySize;
+		/**
+		 * `key`: an OP-XY key with its LED; `round`: a plain round icon button for a chat composer,
+		 * its state shown by the icon's colour (red while the mic is live).
+		 */
+		variant?: 'key' | 'round';
 	}
 
-	let { voice, disabled = false, size = 'sm' }: Props = $props();
+	let { voice, disabled = false, size = 'sm', variant = 'key' }: Props = $props();
 
 	const handsFree = $derived(voice.mode === 'hands-free');
 	const micLive = $derived(
@@ -110,31 +117,94 @@ Keyboard: hold space or enter on the key, or hold the ` key anywhere you are not
 
 <svelte:window onkeydown={onWindowKeyDown} onkeyup={onWindowKeyUp} onblur={() => voice.release()} />
 
-<IconButton
-	{label}
-	icon="mic"
-	{size}
-	{led}
-	ledBlink={blink}
-	pressed={handsFree ? voice.active && !voice.muted : voice.keyDown}
-	{disabled}
-	showTooltip={false}
-	aria-keyshortcuts="`"
-	class="voice-key"
-	onpointerdown={onPointerDown}
-	onpointerup={() => voice.release()}
-	onpointercancel={() => voice.release()}
-	onlostpointercapture={() => voice.release()}
-	onclick={onClick}
-	onkeydown={onKeyDown}
-	onkeyup={onKeyUp}
-	oncontextmenu={(event) => event.preventDefault()}
-	{@attach tooltip(tip, { describe: false })}
-/>
+{#if variant === 'round'}
+	<button
+		type="button"
+		class="voice-key voice-round"
+		data-led={led}
+		aria-label={label}
+		aria-pressed={handsFree ? voice.active && !voice.muted : voice.keyDown}
+		aria-keyshortcuts="`"
+		{disabled}
+		onpointerdown={onPointerDown}
+		onpointerup={() => voice.release()}
+		onpointercancel={() => voice.release()}
+		onlostpointercapture={() => voice.release()}
+		onclick={onClick}
+		onkeydown={onKeyDown}
+		onkeyup={onKeyUp}
+		oncontextmenu={(event) => event.preventDefault()}
+		{@attach tooltip(tip, { describe: false })}
+	>
+		<HugeIcon icon={Mic01Icon} size="1.125rem" strokeWidth={1.7} />
+	</button>
+{:else}
+	<IconButton
+		{label}
+		icon="mic"
+		{size}
+		{led}
+		ledBlink={blink}
+		pressed={handsFree ? voice.active && !voice.muted : voice.keyDown}
+		{disabled}
+		showTooltip={false}
+		aria-keyshortcuts="`"
+		class="voice-key"
+		onpointerdown={onPointerDown}
+		onpointerup={() => voice.release()}
+		onpointercancel={() => voice.release()}
+		onlostpointercapture={() => voice.release()}
+		onclick={onClick}
+		onkeydown={onKeyDown}
+		onkeyup={onKeyUp}
+		oncontextmenu={(event) => event.preventDefault()}
+		{@attach tooltip(tip, { describe: false })}
+	/>
+{/if}
 
 <style>
 	/* A long press on a touch screen must hold the key, not select text or open a menu. */
 	:global(.voice-key) {
 		-webkit-touch-callout: none;
+	}
+
+	.voice-round {
+		display: inline-grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: none;
+		color: var(--xy-scr-muted);
+		cursor: pointer;
+		transition:
+			color var(--xy-dur-quick, 120ms) ease,
+			background-color var(--xy-dur-quick, 120ms) ease;
+	}
+
+	.voice-round:hover:not(:disabled) {
+		background-color: rgb(255 255 255 / 0.08);
+		color: var(--xy-scr-fg);
+	}
+
+	.voice-round[data-led='white'],
+	.voice-round[data-led='dim'] {
+		color: var(--xy-scr-fg);
+	}
+
+	.voice-round[data-led='red'] {
+		color: var(--xy-red, #ff4d00);
+	}
+
+	.voice-round:focus-visible {
+		outline: 1.5px solid var(--xy-scr-muted);
+		outline-offset: 1px;
+	}
+
+	.voice-round:disabled {
+		cursor: not-allowed;
+		opacity: 0.4;
 	}
 </style>

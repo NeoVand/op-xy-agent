@@ -92,7 +92,7 @@ the tab slides across and uncovers a lit LED. The whole row (switch and label) i
 	}
 
 	.switch:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 1px;
 	}
 

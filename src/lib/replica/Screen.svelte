@@ -73,10 +73,12 @@ Place it over the replica's active screen area (Replica does this with a positio
 			if (canvas.width !== backing.w) canvas.width = backing.w;
 			if (canvas.height !== backing.h) canvas.height = backing.h;
 			ctx.setTransform(backing.w / width, 0, 0, backing.h / height, 0, 0);
-			if (shown && renderer) {
+			if (shown) {
 				// TE drew the pages 220 rows tall; the panel has 222, a blank row above and below
 				ctx.fillStyle = '#000000';
 				ctx.fillRect(0, 0, width, height);
+				// the page renderer is still loading: stay black rather than flash the text lines
+				if (!renderer) return;
 				ctx.translate(0, renderer.SCREEN_OFFSET_Y);
 				renderer.renderFrame(ctx, shown, { tick: step });
 			} else {

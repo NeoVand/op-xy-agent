@@ -501,7 +501,7 @@ device's `presets/` folder over MTP, or install it on a connected OP-XY after th
 
 	.field__input:focus-visible,
 	.row__select:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 1px;
 	}
 

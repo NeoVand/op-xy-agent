@@ -150,7 +150,7 @@ OP-XY back to MIDI by itself.
 	}
 
 	.field__input:focus-visible {
-		outline: 2px solid var(--xy-focus);
+		outline: 1.5px solid var(--xy-focus);
 		outline-offset: 1px;
 	}
 

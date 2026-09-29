@@ -209,7 +209,7 @@
 	--xy-accent: var(--xy-red);
 	--xy-accent-text: var(--xy-red);
 	--xy-accent-fg: var(--xy-ink);
-	--xy-focus: var(--xy-ramp-7);
+	--xy-focus: var(--xy-ramp-5);
 	--xy-selection: var(--xy-ramp-2);
 	--xy-led-white: #ffffff;
 	--xy-led-dim: #5d5d66;
@@ -288,7 +288,7 @@
 	--xy-accent: var(--xy-red);
 	--xy-accent-text: var(--xy-red-text-on-paper);
 	--xy-accent-fg: var(--xy-ink);
-	--xy-focus: var(--xy-ink);
+	--xy-focus: var(--xy-ramp-4);
 	--xy-selection: #d9d7d7;
 	/* On paper, LEDs follow the guide's drawing convention: lit = ink dot, dim = grey, off = hollow. */
 	--xy-led-white: var(--xy-ink);

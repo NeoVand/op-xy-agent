@@ -13,13 +13,8 @@
 	} from '$lib/app';
 	import { browserClock, browserTimers, getDeviceStack, type SessionPhase } from '$lib/device';
 	import { getReplicaState, Replica } from '$lib/replica';
-	import {
-		KeyboardIcon,
-		SparklesIcon,
-		VolumeHighIcon,
-		VolumeOffIcon
-	} from '@hugeicons/core-free-icons';
-	import { Button, HugeIcon, Led, Readout, tooltip } from '$lib/ui';
+	import { KeyboardIcon, VolumeHighIcon, VolumeOffIcon } from '@hugeicons/core-free-icons';
+	import { Button, Led, Readout, ToolButton } from '$lib/ui';
 	import AgentPanel from '$lib/ui/shell/AgentPanel.svelte';
 	import DeviceStage from '$lib/ui/shell/DeviceStage.svelte';
 	import ProjectMenu from '$lib/ui/shell/ProjectMenu.svelte';
@@ -55,14 +50,19 @@
 		}
 	}
 
-	const keysTip =
-		'your keyboard plays the keys: z to m the lower twelve (black keys s d f h j), q to u the upper twelve (2 3 4 6 7); - and = the octave, space play and stop; with shift, 1–9 and 0 are the numbered black keys';
+	const keysTip = $derived(
+		computerKeys
+			? 'your keyboard plays the replica: the z and q rows, - and = for the octave, space to play and stop'
+			: 'your keyboard does not play the replica'
+	);
 	const soundTip = $derived(
 		!sound.available
 			? 'this browser cannot make sound'
-			: sound.connected
-				? 'the op-xy makes the sound; switch on to hear the replica here as well'
-				: 'the replica’s sound, synthesized in the browser'
+			: sound.enabled
+				? 'sound on'
+				: sound.connected
+					? 'the op-xy makes the sound; switch on to hear the replica here too'
+					: 'sound off'
 	);
 
 	// Replica ⇄ device: while connected the replica's keys play the OP-XY, and what the device sends
@@ -241,7 +241,22 @@
 			{/if}
 		</div>
 		<!-- beside the line, not in it: a hint taking the line must not close the project card -->
-		<div class="hints__project">
+		<div class="hints__tools">
+			<ToolButton
+				icon={KeyboardIcon}
+				label="computer keyboard"
+				tip={keysTip}
+				pressed={computerKeys}
+				onclick={toggleKeys}
+			/>
+			<ToolButton
+				icon={sound.enabled && sound.available ? VolumeHighIcon : VolumeOffIcon}
+				label="sound"
+				tip={soundTip}
+				pressed={sound.enabled && sound.available}
+				disabled={!sound.available}
+				onclick={() => sound.toggle()}
+			/>
 			<ProjectMenu />
 		</div>
 	</div>
@@ -252,53 +267,11 @@
 		{#snippet idle()}
 			<p class="line">
 				{#if bridge.live}
-					<Led state="white" size="sm" />
 					<span class="line__state">live</span>
 					<span>the keyboard, play, stop and track keys play the op-xy</span>
 				{:else}
-					<Led state="dim" size="sm" />
 					<span class="line__state">simulated</span>
 					<span>the replica works like an op-xy; nothing is sent</span>
-				{/if}
-				<button
-					type="button"
-					class="sound"
-					aria-pressed={computerKeys}
-					onclick={toggleKeys}
-					{@attach tooltip(keysTip)}
-				>
-					<Led state={computerKeys ? 'white' : 'off'} size="sm" />
-					<HugeIcon icon={KeyboardIcon} />
-					keys
-				</button>
-				<button
-					type="button"
-					class="sound"
-					aria-pressed={sound.enabled}
-					disabled={!sound.available}
-					onclick={() => sound.toggle()}
-					{@attach tooltip(soundTip)}
-				>
-					<Led state={sound.enabled && sound.available ? 'white' : 'off'} size="sm" />
-					<HugeIcon icon={sound.enabled && sound.available ? VolumeHighIcon : VolumeOffIcon} />
-					{sound.connected ? 'sound on this computer' : 'sound'}
-				</button>
-				{#if sound.synthReady}
-					<button
-						type="button"
-						class="sound"
-						aria-pressed={sound.newEngines}
-						onclick={() => (sound.newEngines = !sound.newEngines)}
-						{@attach tooltip(
-							sound.newEngines
-								? 'the rebuilt synth engines; switch off to hear the first versions'
-								: 'the first synth engines; switch on to hear the rebuilt ones'
-						)}
-					>
-						<Led state={sound.newEngines ? 'white' : 'off'} size="sm" />
-						<HugeIcon icon={SparklesIcon} />
-						new engines
-					</button>
 				{/if}
 			</p>
 		{/snippet}
@@ -342,12 +315,12 @@
 		min-width: 0;
 	}
 
-	.hints__project {
-		color: var(--xy-fg-subtle);
-		font-size: var(--xy-text-xs);
-		line-height: var(--xy-leading-xs);
-		font-weight: 450;
-		letter-spacing: var(--xy-tracking-label);
+	.hints__tools {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 0.125rem;
+		margin-block: -0.375rem;
 	}
 
 	.line {
@@ -365,41 +338,6 @@
 
 	.line__state {
 		color: var(--xy-fg-muted);
-	}
-
-	/* The speaker switch: the line's own type and an LED, pushed to the end of the line. */
-	.sound {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.375rem;
-		margin: -0.125rem -0.25rem -0.125rem auto;
-		padding: 0.125rem 0.25rem;
-		border: 0;
-		border-radius: var(--xy-radius-tile);
-		background: none;
-		color: inherit;
-		font: inherit;
-		letter-spacing: inherit;
-		cursor: pointer;
-	}
-
-	.sound[aria-pressed='true'] {
-		color: var(--xy-fg-muted);
-	}
-
-	.sound:hover,
-	.sound:focus-visible {
-		color: var(--xy-fg);
-	}
-
-	.sound:focus-visible {
-		outline: 2px solid var(--xy-focus);
-		outline-offset: 1px;
-	}
-
-	.sound:disabled {
-		cursor: not-allowed;
-		color: var(--xy-fg-faint);
 	}
 
 	.conn {

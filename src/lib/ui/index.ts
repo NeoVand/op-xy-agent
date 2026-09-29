@@ -14,6 +14,7 @@ export { default as Legend } from './Legend.svelte';
 export { default as Panel } from './Panel.svelte';
 export { default as Readout } from './Readout.svelte';
 export { default as Switch } from './Switch.svelte';
+export { default as ToolButton } from './ToolButton.svelte';
 
 export { icons, type IconName, type IconShape } from './icons';
 export { parseCombo, type ComboPart, type KeyGlyph } from './kbd';
