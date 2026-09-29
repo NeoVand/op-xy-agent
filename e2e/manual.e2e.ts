@@ -32,6 +32,20 @@ test.describe('the manual', () => {
 		await nav.getByRole('button', { name: 'sequencer' }).click();
 		await nav.getByRole('link', { name: 'Parameter locks', exact: true }).click();
 		await expect(page.getByRole('heading', { name: 'Details' })).toBeVisible();
-		await expect(nav.locator('[aria-current="page"]')).toHaveText('Parameter locks');
+		await expect(nav.locator('[aria-current="page"]')).toContainText('Parameter locks');
+	});
+
+	test('folds the sidebar to icons, shows an area beside it, and remembers the fold', async ({
+		page
+	}) => {
+		await page.goto('/manual/arrange.song-mode');
+		const nav = page.getByRole('complementary', { name: 'manual contents' });
+		await nav.getByRole('button', { name: 'collapse contents' }).click();
+		await expect(nav.getByRole('button', { name: 'expand contents' })).toBeVisible();
+		await nav.getByRole('button', { name: 'sequencer' }).hover();
+		const flyout = page.getByRole('navigation', { name: 'sequencer units' });
+		await expect(flyout.getByRole('link', { name: 'Parameter locks', exact: true })).toBeVisible();
+		await page.reload();
+		await expect(nav.getByRole('button', { name: 'expand contents' })).toBeVisible();
 	});
 });

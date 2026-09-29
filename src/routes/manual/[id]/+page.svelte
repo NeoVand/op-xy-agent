@@ -25,7 +25,7 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 	import { getReplicaState, Replica } from '$lib/replica';
 	import { HugeIcon } from '$lib/ui';
 	import Kbd from '$lib/ui/Kbd.svelte';
-	import { AREA_ICONS, areaName } from '$lib/ui/manual/areas';
+	import { AREA_ICONS, areaName, unitSections } from '$lib/ui/manual/areas';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -122,19 +122,12 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 		return () => observer.disconnect();
 	}
 
-	const sections = $derived(
-		[
-			unit.procedures.length > 0 && { id: 'how-to', title: 'How to' },
-			unit.facts.length > 0 && { id: 'details', title: 'Details' },
-			unit.parameters.length > 0 && { id: 'parameters', title: 'Parameters' },
-			unit.related.length > 0 && { id: 'related', title: 'Related' }
-		].filter((section): section is { id: string; title: string } => Boolean(section))
-	);
+	const sections = $derived(unitSections(unit));
 </script>
 
 <svelte:head>
 	<title>{data.title} · OP-XY manual</title>
-	<meta name="description" content={unit.summary} />
+	<meta name="description" content={unit.summary.replaceAll('`', '')} />
 </svelte:head>
 
 <div class="frame">
@@ -148,7 +141,7 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 			{/if}
 			<header class="doc__head">
 				<h1 class="doc__title">{data.title}</h1>
-				<p class="doc__lead">{unit.summary}</p>
+				<div class="doc__lead"><MessageText text={unit.summary} onkeys={play} {cite} /></div>
 				{#if STATUS[unit.status]}
 					<p class="notice">
 						<HugeIcon icon={InformationCircleIcon} size="1rem" />
@@ -393,10 +386,20 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 	}
 
 	.doc__lead {
-		margin: 0;
 		color: var(--xy-fg-muted);
 		font-size: var(--xy-text-base);
 		line-height: 1.65;
+	}
+
+	/* the lead keeps its own size and colour; the renderer only draws its keys */
+	.doc__lead :global(.md) {
+		color: inherit;
+		font-size: inherit;
+		line-height: inherit;
+	}
+
+	.doc__lead :global(.md p) {
+		margin: 0;
 	}
 
 	.notice {
@@ -748,7 +751,7 @@ parameters with their gestures and CCs, and the units around it. The agent cites
 
 	.rail__sticky {
 		position: sticky;
-		top: 1.5rem;
+		top: calc(var(--xy-header-h) + 1.5rem);
 		display: flex;
 		flex-direction: column;
 		gap: 0.875rem;

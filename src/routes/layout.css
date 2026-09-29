@@ -147,6 +147,8 @@
 		text-rendering: optimizeLegibility;
 		-webkit-tap-highlight-color: transparent;
 		scrollbar-color: var(--xy-line-strong) transparent;
+		/* anchors land below the sticky header, not under it */
+		scroll-padding-top: var(--xy-header-h);
 	}
 
 	body {

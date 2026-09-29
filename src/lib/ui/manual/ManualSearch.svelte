@@ -2,8 +2,8 @@
 @component
 Search over the manual: type, and the best units appear under the field with the passage that
 matched; arrow keys move through them, enter opens one, escape closes. The manual and its index load
-the first time the field is used, not with the page. `/` focuses the field from anywhere on the page
-that is not a text field.
+the first time the field is used, not with the page. `/` or ⌘K (ctrl K) focuses the field from
+anywhere on the page that is not a text field, unless `shortcuts` is off.
 -->
 <script lang="ts">
 	import { goto } from '$app/navigation';
@@ -17,9 +17,11 @@ that is not a text field.
 	interface Props {
 		/** `sm` for the sidebar, `lg` for the landing page. */
 		size?: 'sm' | 'lg';
+		/** Whether `/` and ⌘K focus this field (one search on a page takes them). */
+		shortcuts?: boolean;
 	}
 
-	let { size = 'sm' }: Props = $props();
+	let { size = 'sm', shortcuts = true }: Props = $props();
 
 	const uid = $props.id();
 	let field: HTMLInputElement | null = null;
@@ -77,13 +79,17 @@ that is not a text field.
 		}
 	}
 
-	/** `/` anywhere but a text field focuses the search. */
+	/** `/` anywhere but a text field, or ⌘K / ctrl K anywhere, focuses the search. */
 	function onWindowKeydown(event: KeyboardEvent): void {
-		if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
+		if (!shortcuts) return;
+		const command = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
+		const slash = event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey;
+		if (!command && !slash) return;
 		const target = event.target as HTMLElement | null;
-		if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+		if (slash && target?.closest('input, textarea, select, [contenteditable="true"]')) return;
 		event.preventDefault();
 		field?.focus();
+		field?.select();
 	}
 
 	const snippetOf = (result: ManualSearchResult) => result.snippet.replaceAll('`', '');
@@ -122,7 +128,7 @@ that is not a text field.
 		}}
 		{onkeydown}
 	/>
-	<kbd class="search__kbd" aria-hidden="true">/</kbd>
+	{#if shortcuts}<kbd class="search__kbd" aria-hidden="true">/</kbd>{/if}
 	{#if open && query.trim().length >= 2}
 		<div class="search__panel">
 			{#if results.length === 0}
@@ -223,6 +229,22 @@ that is not a text field.
 
 	.search__field:focus ~ .search__kbd {
 		visibility: hidden;
+	}
+
+	/* in the sidebar the magnifier sits in the icon column, so it stays put when the rail folds */
+	.search--sm .search__icon {
+		left: 0;
+		justify-content: center;
+		width: 3rem;
+		font-size: 1.125rem;
+	}
+
+	.search--sm .search__field {
+		padding-left: 3rem;
+	}
+
+	.search--sm .search__panel {
+		min-width: 0;
 	}
 
 	.search--lg .search__icon {

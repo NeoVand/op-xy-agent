@@ -17,6 +17,10 @@
 						document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f5f5');
 					}
 				}
+				// The manual's sidebar, folded to icons or not (key: FOLD_KEY in routes/manual/+layout).
+				if (localStorage.getItem('opxy:manual-sidebar') === 'collapsed') {
+					document.documentElement.dataset.manualSidebar = 'collapsed';
+				}
 			} catch (e) {
 				// Storage blocked: stay on the default (dark) theme.
 			}

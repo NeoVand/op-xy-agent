@@ -62,8 +62,10 @@ never on the published site.
 </header>
 
 <style>
+	/* it stays at the top while a long page scrolls (the manual's sidebar sits right under it) */
 	.header {
-		position: relative;
+		position: sticky;
+		top: 0;
 		z-index: var(--xy-z-header);
 		display: flex;
 		align-items: center;
