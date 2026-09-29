@@ -392,6 +392,32 @@ GetStorageInfo, GetObjectHandles/GetObjectInfo for the top level and `projects/`
    scene, with the same four step keys lit (the owner: "it worked fully"). Notes written by the
    replica (`simToXy` over the device's own project) load and play on OS 1.1.33.
 
+## 2026-09-28 (night) — Songs and scenes on the unit (owner present, TE's "agent", OS 1.1.33)
+
+Passive: `research/device/song_capture.py` records the unit's MIDI output and USB audio on one
+timeline and **sends nothing**. Set up by the owner by hand: com → system settings → midi → clock
+"both", and on the project's midi page T1–T8 → channels 1–8 (in the open project only). Captures
+in `captures/song/` (git-ignored).
+
+1. **Plain play runs the song, outside song mode** (`short-test`, 67 s, on "test 2", the replica's
+   save of "agent" with an organ hit per beat): song 1's order exactly, 4 bars an entry.
+2. **A full lap** (`full-song`, 130.7 s, "test 2"): [1, 2, 2, 3, 3, 4, 4, 5, 5, 8, 9, 9, 7, 7, 6, 6],
+   every entry matched by its tracks' notes per bar, then back to scene 1 (loop on). Play after a
+   stop in mid-song started again from the first entry, with MIDI Start (`FA`), not Continue.
+   Tempo: 123.05 BPM against the unit's own audio frames; the host's clock reads ~1 % slower while
+   the unit plays, which is the USB timing, not the song.
+3. **Test A, first try** (9 s): scene 1 for four bars, then scene 2, as in 2. The owner's
+   `shift` + black key 7 beforehand was probably outside arrange mode, where it selects nothing (the
+   owner: shift and the black keys pick scenes only in arrange mode). Repeated below.
+4. A 94 s take of another project (120 BPM, no track sending notes): not matched.
+5. **Test B: a scene selected while the song plays** (`scene-while-playing`, 41 s, "agent" itself,
+   which has no organ part): scene 1 for four bars, scene 2 from bar 5; the owner pressed
+   `shift` + 7 in arrange mode and scene 7's notes started at bar 5.67, mid-bar, with its patterns at
+   the song's place in the bar (its busiest bar landed on bars 6, 10, 14, 18). Then **scene 7 over
+   and over** (four 4-bar loops) until stop: the song stopped following its order. This is how to
+   loop one scene. The replica does the same since this session (`chooseScene`); a queued scene
+   (`shift` + tap play, then a scene) is taken to do likewise once it starts (ours).
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers

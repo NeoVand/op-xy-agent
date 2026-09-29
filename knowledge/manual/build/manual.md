@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 165 units, 1160 facts, 201 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 165 units, 1163 facts, 202 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -3564,9 +3564,14 @@ Facts:
 - `shift + M2` copies a scene and `shift + M3` pastes it into another. [#copy-paste] (since 1.0.45) [s1]
 - Over MIDI, on any channel, CC85 selects a scene at once and CC83 and CC84 step to the previous and the next scene. [#midi] [s3]
 - CC85 counts from zero, so value 0 selects scene 1 and value 98 scene 99. [#midi-zero] (community-verified) [s4]
-- With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions. [#footer] (verified 1.1.33) [s5]
+- Selected while the song plays (`shift` and a black key, in arrange), a scene takes over at once, mid-bar, its patterns carrying on from the song's place in the bar; from then on the unit plays that scene over and over and the song stops moving on. This is how to loop one scene. [#select-while-song] (verified 1.1.33) [s5]
+- `shift` and the black keys pick scenes only in arrange mode. [#select-arrange-only] (verified 1.1.33) [s5]
+- With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions. [#footer] (verified 1.1.33) [s6]
 
 Procedures:
+- Loop one scene while the song plays [#loop-one] (verified 1.1.33) [s5]
+  Needs: arrange mode; playing
+  1. `shift + accidental` — the scene to keep; it starts at once and then repeats, and the song stops moving on
 - Select scene 1–9 [#select] [s1]
   Needs: arrange mode
   1. `shift + accidental` — the black key with the scene's digit
@@ -3581,7 +3586,7 @@ Procedures:
 
 Related: [arrange.scene-queue], [arrange.song-mode], [arrange.patterns], [mix.overview], [project.settings]
 
-Sources: s1 guide:arrange#scenes · s2 note 10 · s3 guide:midi-references · s4 note 20 · s5 note 59
+Sources: s1 guide:arrange#scenes · s2 note 10 · s3 guide:midi-references · s4 note 20 · s5 note 90 · s6 note 59
 
 ### Queued scene switching [arrange.scene-queue]
 current · OS ≥ 1.1.0 · guide v1.1.15
@@ -3634,11 +3639,12 @@ Facts:
 - `shift + M4` takes the scene at the cursor out of the song; the scene itself stays in the project. [#delete] [s1]
 - `shift + M1` empties the whole song order without deleting any scene. [#clear] [s1]
 - OS 1.0.45 added the option of stopping playback when the song reaches its end. [#stop-at-end] (since 1.0.45) [s3]
-- The song page is headed song 1 with a loop icon and shows a grid of 32 slots, eight across in four rows marked 1, 9, 17 and 25; scenes appear as numbered circles, a white line marks where the next scene goes, and a ring walks along the order during playback. [#screen] (verified 1.1.33) [s4]
-- The box beside count at the top right shows how many scenes the song holds. [#count] (verified 1.1.33) [s4]
-- The white cursor line shows only while `shift` is held, together with the lit footer. [#cursor-with-shift] (verified 1.1.33) [s4]
-- During playback the playing scene wears a white ring with a small notch that goes round once while the scene plays; after stop the ring stays on the scene that was playing. [#ring] (verified 1.1.33) [s4]
-- Holding `shift` lights the footer with clear all, ←, → and delete over `M1`…`M4`, the song editing keys. [#footer] (verified 1.1.33) [s4]
+- Play runs the current song from its first scene even outside song mode, and after a stop play starts it from the first scene again. [#plain-play] (verified 1.1.33) [s4]
+- The song page is headed song 1 with a loop icon and shows a grid of 32 slots, eight across in four rows marked 1, 9, 17 and 25; scenes appear as numbered circles, a white line marks where the next scene goes, and a ring walks along the order during playback. [#screen] (verified 1.1.33) [s5]
+- The box beside count at the top right shows how many scenes the song holds. [#count] (verified 1.1.33) [s5]
+- The white cursor line shows only while `shift` is held, together with the lit footer. [#cursor-with-shift] (verified 1.1.33) [s5]
+- During playback the playing scene wears a white ring with a small notch that goes round once while the scene plays; after stop the ring stays on the scene that was playing. [#ring] (verified 1.1.33) [s5]
+- Holding `shift` lights the footer with clear all, ←, → and delete over `M1`…`M4`, the song editing keys. [#footer] (verified 1.1.33) [s5]
 
 Procedures:
 - Build a song from scenes [#build] [s1]
@@ -3662,7 +3668,7 @@ Parameters:
 
 Related: [arrange.songs], [arrange.scenes], [arrange.scene-queue]
 
-Sources: s1 guide:arrange#song-mode · s2 changelog:1.1.0 · s3 changelog:1.0.45 · s4 note 59
+Sources: s1 guide:arrange#song-mode · s2 changelog:1.1.0 · s3 changelog:1.0.45 · s4 note 90 · s5 note 59
 
 ### Multiple songs and cueing [arrange.songs]
 current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15

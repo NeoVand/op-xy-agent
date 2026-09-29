@@ -288,6 +288,50 @@ describe('song playback', () => {
 		expect(scene(sim)).toBe(2);
 	});
 
+	it('lets a scene selected while the song plays take over at once and loop (the owner’s unit)', () => {
+		const sim = threeScenes();
+		sim.press('key.play'); // the song: scenes 1, 2, 3
+		sim.press('key.arrange'); // back to the patterns, where shift + a black key selects
+		play(sim, 20);
+		expect(scene(sim)).toBe(2);
+		withShift(sim, accidentalKey(3));
+		// at once, the playhead keeping its place in the scene
+		expect([scene(sim), t1(sim)]).toEqual([3, 2]);
+		expect(sim.state.transport.position).toBeCloseTo(4, 5);
+		expect(sim.state.areas.arrange.playing).toBe(false);
+		// the song no longer moves on: scene 3 over and over
+		play(sim, 16 * 3);
+		expect(scene(sim)).toBe(3);
+		expect(sim.state.transport.playing).toBe(true);
+	});
+
+	it('holds the scene that is playing when it is selected again', () => {
+		const sim = threeScenes();
+		sim.press('key.play');
+		sim.press('key.arrange');
+		play(sim, 18);
+		withShift(sim, accidentalKey(2));
+		expect(sim.state.areas.arrange.playing).toBe(false);
+		play(sim, 16 * 2);
+		expect(scene(sim)).toBe(2);
+	});
+
+	it('lets a queued scene take over at the scene end and loop, as a selected one does', () => {
+		const sim = threeScenes();
+		sim.press('key.play');
+		sim.press('key.arrange');
+		play(sim, 4);
+		sim.input({ type: 'press', id: 'key.shift' });
+		sim.press('key.play'); // shift + tap play: the next scene chosen waits
+		sim.press(accidentalKey(3));
+		sim.input({ type: 'release', id: 'key.shift' });
+		expect(scene(sim)).toBe(1);
+		play(sim, 12.2);
+		expect(scene(sim)).toBe(3);
+		play(sim, 16 * 2);
+		expect(scene(sim)).toBe(3);
+	});
+
 	it('starts a newly chosen song from its first scene at the next scene end', () => {
 		const sim = threeScenes();
 		withShift(sim, naturalKey(2), 'key.m1', accidentalKey(3));

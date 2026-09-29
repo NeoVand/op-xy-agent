@@ -50,12 +50,31 @@ facts:
     text: CC85 counts from zero, so value 0 selects scene 1 and value 98 scene 99.
     source: docs/research/20-midi-control.md#31-global-ccs
     confidence: community-verified
+  - id: select-while-song
+    text: Selected while the song plays (`shift` and a black key, in arrange), a scene takes over at once, mid-bar, its patterns carrying on from the song's place in the bar; from then on the unit plays that scene over and over and the song stops moving on. This is how to loop one scene.
+    source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: select-arrange-only
+    text: '`shift` and the black keys pick scenes only in arrange mode.'
+    source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
+    confidence: verified
+    verified_on: '1.1.33'
   - id: footer
     text: With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions.
     source: docs/research/59-screen-profiling.md#29-arrange-and-song-mode
     confidence: verified
     verified_on: '1.1.33'
 procedures:
+  - id: loop-one
+    goal: Loop one scene while the song plays
+    preconditions: [arrange mode, playing]
+    steps:
+      - keys: shift + accidental
+        note: the scene to keep; it starts at once and then repeats, and the song stops moving on
+    source: docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133
+    confidence: verified
+    verified_on: '1.1.33'
   - id: select
     goal: Select scene 1–9
     preconditions: [arrange mode]

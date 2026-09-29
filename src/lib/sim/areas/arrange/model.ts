@@ -428,6 +428,12 @@ export function lengthIn(s: SimState, mode: SceneLengthMode, signature: TimeSign
 /**
  * Chooses scene `index` for `purpose`: select it now, queue it (while playing; stopped, there is
  * nothing to wait for, so it switches at once), or add it to the song at the cursor.
+ *
+ * A scene selected while the song plays takes over at once, keeping the playhead's place, and then
+ * plays over and over: the song stops following its order. The owner's unit did so on OS 1.1.33
+ * (docs/research/90-device-probe.md, 2026-09-28: `shift` + black key 7 in bar 5 of "agent"'s
+ * song, then sixteen bars of scene 7), and choosing the scene that is already playing holds it the
+ * same way (the owner's account of how to loop one scene).
  */
 export function chooseScene(
 	s: SimState,
@@ -438,7 +444,10 @@ export function chooseScene(
 	if (index < 0 || index >= SCENES) return;
 	if (purpose === 'song') insertInSong(s, index);
 	else if (purpose === 'queue' && s.transport.playing) a.queued = index;
-	else selectScene(s, index);
+	else {
+		selectScene(s, index);
+		if (a.playing) haltSong(a);
+	}
 }
 
 // ───────────────────────────────────────────────────────────────── songs
@@ -590,6 +599,9 @@ function sceneEnded(s: SimState): 'next' | 'again' | 'stop' {
 		const next = a.queued;
 		a.queued = null;
 		selectScene(s, next);
+		// a queued scene is a selected one that waited: the song lets go of the order as it does
+		// for a scene selected at once (ours, by analogy with chooseScene)
+		if (a.playing) haltSong(a);
 		return 'next';
 	}
 	if (!a.playing) return 'again';

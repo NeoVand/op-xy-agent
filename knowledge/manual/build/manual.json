@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "3e9aa8ac",
+	"bundle_hash": "9a5613f4",
 	"stats": {
 		"units": 165,
-		"facts": 1160,
-		"procedures": 201,
+		"facts": 1163,
+		"procedures": 202,
 		"parameters": 207,
-		"verified_items": 235,
-		"words": 43432,
+		"verified_items": 239,
+		"words": 43549,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -19798,6 +19798,22 @@
 					"confidence": "community-verified"
 				},
 				{
+					"id": "select-while-song",
+					"text": "Selected while the song plays (`shift` and a black key, in arrange), a scene takes over at once, mid-bar, its patterns carrying on from the song's place in the bar; from then on the unit plays that scene over and over and the song stops moving on. This is how to loop one scene.",
+					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "select-arrange-only",
+					"text": "`shift` and the black keys pick scenes only in arrange mode.",
+					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "footer",
 					"text": "With `shift` held in arrange, the footer names `M1`…`M4` clone, copy, paste and reset, the scene actions.",
 					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
@@ -19807,6 +19823,26 @@
 				}
 			],
 			"procedures": [
+				{
+					"id": "loop-one",
+					"goal": "Loop one scene while the song plays",
+					"preconditions": [
+						"arrange mode",
+						"playing"
+					],
+					"steps": [
+						{
+							"keys": "shift + accidental",
+							"note": "the scene to keep; it starts at once and then repeats, and the song stops moving on",
+							"set": null
+						}
+					],
+					"result": null,
+					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
 				{
 					"id": "select",
 					"goal": "Select scene 1–9",
@@ -19900,6 +19936,10 @@
 				},
 				{
 					"url": "docs/research/20-midi-control.md#31-global-ccs",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
 					"kind": "research"
 				},
 				{
@@ -20162,6 +20202,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "plain-play",
+					"text": "Play runs the current song from its first scene even outside song mode, and after a stop play starts it from the first scene again.",
+					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "screen",
 					"text": "The song page is headed song 1 with a loop icon and shows a grid of 32 slots, eight across in four rows marked 1, 9, 17 and 25; scenes appear as numbered circles, a white line marks where the next scene goes, and a ring walks along the order during playback.",
 					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
@@ -20313,6 +20361,10 @@
 				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.0.45",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"kind": "research"
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
