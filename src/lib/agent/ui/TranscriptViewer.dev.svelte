@@ -1,13 +1,15 @@
 <!--
 @component
 DEVELOPMENT ONLY: replays saved agent evals (`evals/agent/quality.mjs` writes them to
-`evals/agent/out/`) in the real chat, beside the live replica, so an answer can be read the way the
-user reads it. Open `/?transcripts=1` under `vite dev`. The agent panel imports this component only
-inside an `import.meta.env.DEV` branch, so production builds drop it and the runs it lists.
+`evals/agent/out/`, with an `index.json` of the runs) in the real chat, beside the live replica, so
+an answer can be read the way the user reads it. Open `/?transcripts=1` under `vite dev`; the list
+is fetched each time, so a run saved meanwhile shows up. The agent panel imports this component
+only inside an `import.meta.env.DEV` branch, so production builds drop it.
 
 Pick a run and a case: its checks, lints and the judge's scores sit above the chat it produced.
 -->
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { ControlId } from '$lib/core/opxy';
 	import type { ChatEntry } from '../chat';
 	import Conversation from './Conversation.svelte';
@@ -44,45 +46,70 @@ Pick a run and a case: its checks, lints and the judge's scores sit above the ch
 		readonly judge: string;
 		readonly results: readonly Result[];
 	}
+	/** A saved run, as `index.json` lists it (newest first). */
+	interface RunEntry {
+		readonly file: string;
+		readonly model: string;
+		readonly stamp: string;
+		readonly runs: number;
+		readonly passed: number;
+	}
 
 	const AXES = ['correct', 'helpful', 'clear', 'concise', 'tone', 'tools'];
-	const files = import.meta.glob<Saved>('/evals/agent/out/*.json', { import: 'default' });
-	const names = Object.keys(files).sort().reverse();
+	const BASE = '/evals/agent/out/';
 
-	let file = $state(names[0] ?? '');
+	async function fetchJson<T>(name: string): Promise<T | null> {
+		try {
+			const response = await fetch(`${BASE}${name}`, { cache: 'no-store' });
+			return response.ok ? ((await response.json()) as T) : null;
+		} catch {
+			return null;
+		}
+	}
+
+	let runs = $state<readonly RunEntry[] | null>(null);
+	/** The run picked; the newest until one is. */
+	let chosen = $state<string | null>(null);
 	/** The case picked in each run (by file). */
 	let choices = $state<Record<string, number>>({});
 	let failing = $state(false);
 
-	const loading = $derived(files[file] ? files[file]() : Promise.resolve(null));
-	const label = (name: string) => name.replace('/evals/agent/out/', '').replace(/\.json$/, '');
+	const file = $derived(chosen ?? runs?.[0]?.file ?? null);
+	const loading = $derived(file ? fetchJson<Saved>(file) : Promise.resolve(null));
+	const label = (r: RunEntry) => `${r.file.replace(/\.json$/, '')} · ${r.passed}/${r.runs}`;
 	const visible = (saved: Saved | null) =>
 		(saved?.results ?? []).filter((r) => !failing || !r.pass);
+
+	onMount(() => {
+		void fetchJson<RunEntry[]>('index.json').then((list) => (runs = list ?? []));
+	});
 </script>
 
 <div class="viewer">
 	<div class="viewer__bar">
-		<select bind:value={file} aria-label="run">
-			{#each names as name (name)}
-				<option value={name}>{label(name)}</option>
+		<select value={file ?? ''} aria-label="run" onchange={(e) => (chosen = e.currentTarget.value)}>
+			{#each runs ?? [] as r (r.file)}
+				<option value={r.file}>{label(r)}</option>
 			{/each}
 		</select>
 		<label class="viewer__toggle"><input type="checkbox" bind:checked={failing} /> failing</label>
 	</div>
-	{#if names.length === 0}
+	{#if runs === null}
+		<p class="viewer__note">Looking for saved runs…</p>
+	{:else if runs.length === 0}
 		<p class="viewer__note">
 			No saved runs yet: <code>node evals/agent/quality.mjs</code> writes them.
 		</p>
-	{:else}
+	{:else if file}
 		{#await loading then saved}
 			{@const shown = visible(saved)}
-			{@const picked = Math.min(choices[file] ?? 0, Math.max(0, shown.length - 1))}
+			{@const picked = Math.min(choices[file ?? ''] ?? 0, Math.max(0, shown.length - 1))}
 			{@const result = shown[picked] ?? null}
 			<div class="viewer__bar">
 				<select
 					value={picked}
 					aria-label="case"
-					onchange={(e) => (choices[file] = Number(e.currentTarget.value))}
+					onchange={(e) => (choices[file ?? ''] = Number(e.currentTarget.value))}
 				>
 					{#each shown as r, i (`${r.id}#${r.run}`)}
 						<option value={i}

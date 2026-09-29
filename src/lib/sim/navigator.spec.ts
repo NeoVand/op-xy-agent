@@ -8,6 +8,7 @@ import {
 	planParam,
 	planPlace,
 	planSettings,
+	planToSetting,
 	playStep,
 	reads,
 	type NavPlan,
@@ -735,5 +736,43 @@ describe('the navigator: settings as plan_steps and the recipes write them', () 
 			/instrument tracks/
 		);
 		expect(settingGoal({ param: 'speed', value: 4, area: 'player', track: 12 })).toMatch(/1–8/);
+	});
+});
+
+describe('the navigator: to where a setting is made, changing nothing', () => {
+	const to = (
+		sim: OpxySim,
+		param: string,
+		spec: Partial<Parameters<typeof settingGoal>[0]> = {}
+	) => {
+		const goal = settingGoal({ param, value: '', ...spec }, sim.state.track + 1);
+		if (typeof goal === 'string') throw new Error(goal);
+		return planToSetting(sim.state, goal);
+	};
+
+	it('takes the replica to the swing, the cutoff and the filter list without turning anything', () => {
+		const sim = boot();
+		const swing = to(sim, 'swing');
+		expect(swing.reached).toBe(true);
+		expect(keys(swing)).toEqual(['tempo']);
+		const cutoff = to(sim, 'cutoff', { track: 3 });
+		expect(keys(cutoff)).toEqual(['T3', 'M3']);
+		expect(cutoff.note).toBe('E1 turns it');
+		const list = to(sim, 'filter type', { track: 3 });
+		expect(keys(list)).toEqual(['T3', 'M3']);
+		expect(list.note).toMatch(/shift \+ M3/);
+		for (const plan of [swing, cutoff, list]) {
+			grammatical(plan);
+			expect(plan.steps.every((s) => !s.clicks)).toBe(true);
+		}
+	});
+
+	it('finds a value another page shows by its name', () => {
+		const sim = boot();
+		const size = to(sim, 'size', { area: 'auxiliary', track: 16 });
+		expect(size.reached).toBe(true);
+		expect(size.steps.every((s) => !s.clicks)).toBe(true);
+		expect(size.screen).toMatch(/size/);
+		expect(to(sim, 'no such thing', { area: 'mix' }).reached).toBe(false);
 	});
 });

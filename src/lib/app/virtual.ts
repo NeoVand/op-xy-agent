@@ -14,7 +14,13 @@ import type {
 } from '$lib/agent/virtual-opxy';
 import { FIRST_NOTE, KEYS, sampleFile } from '$lib/sim/areas/sample/state';
 import { loadEngineSound } from '$lib/sim/areas/system/presets';
-import { planPageValue, planParam, planPlace, planSettings } from '$lib/sim/navigator';
+import {
+	planPageValue,
+	planParam,
+	planPlace,
+	planSettings,
+	planToSetting
+} from '$lib/sim/navigator';
 import { captureScene, playPattern, startSong, trackSequence } from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import type { OpxySim } from '$lib/sim/opxy-sim.svelte';
@@ -325,6 +331,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		plan(goal) {
 			if ('place' in goal) return planPlace(sim.state, goal.place);
 			if ('settings' in goal) return planSettings(sim.state, goal.settings);
+			if ('to' in goal) return planToSetting(sim.state, goal.to);
 			if ('label' in goal) return planPageValue(sim.state, goal);
 			return planParam(sim.state, goal);
 		}

@@ -20,12 +20,13 @@ import type {
 
 /**
  * Where to take the virtual OP-XY: a page, a parameter set to a value, a value another page shows,
- * or several settings of either kind in a row.
+ * several settings of either kind in a row, or where a setting is made (`to`, changing nothing).
  */
 export type NavGoal =
 	| { readonly place: Place }
 	| ParamGoal
 	| { readonly settings: readonly SettingGoal[] }
+	| { readonly to: SettingGoal }
 	| PageValueGoal;
 
 /** A note on a pattern. */

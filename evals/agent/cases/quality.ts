@@ -220,6 +220,7 @@ const COMPOSE: readonly QualityCase[] = [
 		intent: 'A boom bap groove (kick on 1, snares on 2 and 4, hats), 88 BPM, some swing, playing.',
 		check(o) {
 			const fails = [...bpm(o, 88), ...playing(o)];
+			if (o.state.tempo.swing === 0) fails.push('no swing for "a bit lazy"');
 			if (!hitsOn(o, 1, 1, KICKS)) fails.push('no kick on step 1');
 			for (const step of [5, 13])
 				if (!hitsOn(o, 1, step, SNARES)) fails.push(`no snare on step ${step}`);
@@ -234,9 +235,11 @@ const COMPOSE: readonly QualityCase[] = [
 		turns: [
 			'Give me a driving techno groove: a four-on-the-floor kick on track 1 and a 16th-note bassline in F minor on track 3, one bar each. Play it.'
 		],
-		intent: 'Kick on every beat; a busy F minor bassline on track 3; playing.',
+		intent: 'Kick on every beat; a busy F minor bassline on track 3; a techno tempo; playing.',
 		check(o) {
 			const fails = playing(o);
+			const tempo = o.state.tempo.bpm;
+			if (tempo < 125 || tempo > 140) fails.push(`tempo ${tempo}: not a driving techno tempo`);
 			for (const step of [1, 5, 9, 13])
 				if (!hitsOn(o, 1, step, KICKS)) fails.push(`no kick on step ${step}`);
 			const bass = notes(o, 3);

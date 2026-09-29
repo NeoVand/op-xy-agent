@@ -59,6 +59,7 @@ function patternView(p: VirtualPattern) {
 		});
 		byStep.set(n.step, list);
 	}
+	const grid = drumGrid(p);
 	return {
 		track: p.track,
 		pattern: p.pattern,
@@ -68,8 +69,32 @@ function patternView(p: VirtualPattern) {
 		length: p.length,
 		scale: scaleName(p.scale),
 		noteCount: p.notes.length,
+		...(grid ? { grid } : {}),
 		steps: [...byStep.entries()].map(([step, notes]) => ({ step, notes }))
 	};
+}
+
+/**
+ * A drum pattern as a drummer's grid, one line per sound, a bar per group of sixteen steps (x a
+ * hit, . a rest): "kick 1": "x...x...x...x...", so what plays where reads at a glance.
+ */
+function drumGrid(p: VirtualPattern): Record<string, string> | null {
+	const sounds = new Map<string, { note: number; steps: Set<number> }>();
+	for (const n of p.notes) {
+		if (!n.sound) continue;
+		const entry = sounds.get(n.sound) ?? { note: n.note, steps: new Set<number>() };
+		entry.steps.add(n.step);
+		sounds.set(n.sound, entry);
+	}
+	if (sounds.size === 0) return null;
+	const grid: Record<string, string> = {};
+	for (const [sound, { steps }] of [...sounds].sort((a, b) => a[1].note - b[1].note)) {
+		const bars = Array.from({ length: p.bars }, (_, bar) =>
+			Array.from({ length: 16 }, (_, i) => (steps.has(bar * 16 + i + 1) ? 'x' : '.')).join('')
+		);
+		grid[sound] = bars.join(' ');
+	}
+	return grid;
 }
 
 // ─── write_pattern ──────────────────────────────────────────────────────────────────────────────
@@ -291,12 +316,24 @@ export const writeArrangementTool = defineTool({
 		const virtual = virtualOf(ctx.env);
 		if (!virtual) return errorResult(NO_VIRTUAL, 'no virtual op-xy');
 		try {
+			const before = new Map(virtual.status().tracks.map((t) => [t.track, t.patterns]));
 			const result = virtual.writeArrangement({
 				scenes: input.scenes?.map((s) => ({ scene: s.scene, patterns: s.patterns })),
 				song: input.song ? { order: input.song.scenes, loop: input.song.loop } : undefined
 			});
+			// patterns a scene named that the track did not have yet: added empty
+			const added = virtual.status().tracks.flatMap((t) => {
+				const had = before.get(t.track) ?? t.patterns;
+				if (t.patterns <= had) return [];
+				const numbers = Array.from({ length: t.patterns - had }, (_, i) => had + i + 1);
+				return [`track ${t.track}: pattern ${numbers.join(', ')} (empty)`];
+			});
 			return jsonResult(
-				{ arrangement: result, note: 'On the replica.' },
+				{
+					arrangement: result,
+					...(added.length ? { addedEmpty: added } : {}),
+					note: 'On the replica.'
+				},
 				`${result.scenes.length} scene${result.scenes.length === 1 ? '' : 's'}, song of ${result.song.order.length}`,
 				{ applied: true }
 			);

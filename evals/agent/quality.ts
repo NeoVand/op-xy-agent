@@ -14,15 +14,15 @@
  * Every run is saved whole (the chat entries the app would render, the tool trace, the scores) so a
  * transcript can be read, diffed against another run, or replayed in the chat UI.
  *
- *   node evals/agent/quality.mjs [--model claude-sonnet-5-5] [--judge claude-opus-5-5]
+ *   node evals/agent/quality.mjs [--model claude-sonnet-5-5] [--judge claude-opus-5-5] [--index: only list the saved runs]
  *        [--ids a,b] [--category compose] [--repeat 2] [--concurrency 3] [--out file.json]
  *
  * Real API calls with the owner's key from $ANTHROPIC_API_KEY or .env (never printed).
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import { z } from 'zod';
 import { createAnthropicClient } from '$lib/agent/client';
 import type { ChatEntry } from '$lib/agent/chat';
@@ -760,6 +760,11 @@ export async function main(argv: readonly string[]): Promise<void> {
 		const i = argv.indexOf(name);
 		return i >= 0 ? argv[i + 1] : undefined;
 	};
+	if (argv.includes('--index')) {
+		// only the viewer's list of saved runs, no API calls
+		writeIndex('evals/agent/out');
+		return;
+	}
 	const model = flag('--model') ?? 'claude-sonnet-5-5';
 	const judge = flag('--judge') ?? 'claude-opus-5-5';
 	const ids = flag('--ids')?.split(',');
@@ -803,5 +808,45 @@ export async function main(argv: readonly string[]): Promise<void> {
 	mkdirSync(dirname(out), { recursive: true });
 	writeFileSync(out, JSON.stringify({ model, judge, stamp, results }, null, 1));
 	writeFileSync(out.replace(/\.json$/, '.txt'), card + '\n');
+	writeIndex(dirname(out));
 	console.log(`\nsaved ${out}`);
+}
+
+/** One saved run, as the transcript viewer lists it. */
+export interface RunEntry {
+	readonly file: string;
+	readonly model: string;
+	readonly stamp: string;
+	readonly runs: number;
+	readonly passed: number;
+}
+
+/**
+ * Lists every saved run in `dir/index.json`, newest first, for the transcript viewer (which fetches
+ * it, so a run saved while the dev server runs shows up at once).
+ */
+function writeIndex(dir: string): void {
+	const entries: RunEntry[] = [];
+	for (const name of readdirSync(dir)) {
+		if (!name.endsWith('.json') || name === 'index.json') continue;
+		try {
+			const saved = JSON.parse(readFileSync(join(dir, name), 'utf8')) as {
+				model?: string;
+				stamp?: string;
+				results?: { pass: boolean }[];
+			};
+			if (!Array.isArray(saved.results)) continue;
+			entries.push({
+				file: basename(name),
+				model: saved.model ?? '',
+				stamp: saved.stamp ?? '',
+				runs: saved.results.length,
+				passed: saved.results.filter((r) => r.pass).length
+			});
+		} catch {
+			// not a run
+		}
+	}
+	entries.sort((a, b) => b.stamp.localeCompare(a.stamp));
+	writeFileSync(join(dir, 'index.json'), JSON.stringify(entries, null, 1));
 }

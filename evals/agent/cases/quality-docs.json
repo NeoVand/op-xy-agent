@@ -54,10 +54,10 @@
 		"chapter": "16 arrange",
 		"question": "i want a 3/4 version of my drum pattern for the bridge, same beat but only 12 steps long. how do i copy it into a new pattern and shorten the copy without touching the original?",
 		"facts": [
-			"In arrange mode, with the drum track selected, M2 copies the current pattern (notes and its whole sound) and M3 pastes it.",
-			"M1 adds a new pattern to the track (16 at most) and turn E4 steps through its patterns, so the copy can go into a new pattern while the original stays as it is.",
-			"If the copy is longer than one bar, bar + [-] removes the extra bars.",
-			"Holding bar and pressing step 12 makes the pattern play 12 steps; with several bars only the last bar would be trimmed."
+			"In arrange mode, with the drum track selected, M2 copies the current pattern (notes and its sound) and M3 pastes it.",
+			"M1 adds a new pattern to the track, so the copy goes into a new pattern while the original stays as it is.",
+			"Holding bar and pressing step 12 makes the pattern play 12 steps.",
+			"If the pattern has several bars, only its last bar is trimmed that way (bar + [-] removes the extra bars first)."
 		],
 		"keys": ["arrange → Tn", "M2", "M1", "M3", "bar + step 12"],
 		"source": "arrange.patterns, arrange.overview, sequencer.bars-and-length"
@@ -144,7 +144,7 @@
 		"question": "can i pair bluetooth headphones with the op-xy so i can jam on the train without a cable?",
 		"facts": [
 			"The answer says no: the OP-XY's bluetooth is bluetooth LE MIDI, which carries MIDI only (notes and clock), not audio.",
-			"Headphones need a cable into the 3.5 mm stereo audio out, which also takes headsets with a built-in mic.",
+			"Headphones need a cable into the 3.5 mm stereo audio out.",
 			"The answer does not give steps for pairing headphones or streaming audio over bluetooth."
 		],
 		"keys": [],

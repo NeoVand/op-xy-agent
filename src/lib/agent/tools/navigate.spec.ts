@@ -75,12 +75,32 @@ describe('plan_steps', () => {
 		const { run } = setup();
 		const aux = json(await run(planStepsTool, { show: false, area: 'auxiliary', track: 15 }));
 		expect(aux.steps.map((s: { keys: string }) => s.keys)).toEqual(['auxiliary', 'T7']);
-		expect((await run(planStepsTool, { show: false, param: 'cutoff' })).isError).toBe(true);
 		expect((await run(planStepsTool, { show: false })).isError).toBe(true);
 		const missing = json(
 			await run(planStepsTool, { show: false, param: 'flux capacitor', value: 3 })
 		);
 		expect(missing.reached).toBe(false);
+	});
+});
+
+describe('plan_steps to a parameter without a value', () => {
+	it('plans the way to where it is set and turns nothing', async () => {
+		const { sim, run } = setup();
+		const result = await run(planStepsTool, { show: false, track: 3, param: 'cutoff' });
+		expect(result.isError).toBeFalsy();
+		const plan = json(result);
+		expect(plan).toMatchObject({ reached: true, note: 'E1 turns it' });
+		expect(plan.steps.map((s: { keys: string }) => s.keys)).toEqual(['T3', 'M3']);
+		expect(sim.state.tracks[2].filter.cutoff).toBe(0);
+	});
+
+	it('takes the replica there with show ("take me to the swing")', async () => {
+		const { sim, run, animated } = setup(true);
+		const result = json(await run(planStepsTool, { show: true, param: 'swing' }));
+		expect(result).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(animated).toEqual([{ keys: 'tempo' }]);
+		expect(sim.state.overlay).toBe('tempo');
+		expect(sim.state.tempo.swing).toBe(0);
 	});
 });
 

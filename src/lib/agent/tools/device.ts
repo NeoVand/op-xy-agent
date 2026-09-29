@@ -83,8 +83,16 @@ function virtualTarget(env: AgentEnvironment): VirtualOpxy | null {
 	return stack && stack.session.phase === 'ready' ? null : (env.virtual ?? null);
 }
 
-const ON_VIRTUAL =
-	'No OP-XY is connected, so this happened on the replica next to the chat (it plays in the browser).';
+const ON_VIRTUAL = 'No OP-XY is connected: this acted on the replica next to the chat.';
+
+/** Conversations already told that no OP-XY is connected: the note comes once, not every call. */
+const toldVirtual = new WeakSet<AgentEnvironment>();
+
+function virtualNote(env: AgentEnvironment): { note?: string } {
+	if (toldVirtual.has(env)) return {};
+	toldVirtual.add(env);
+	return { note: ON_VIRTUAL };
+}
 
 /** Sends one message through the transport; a refusal becomes a readable error. */
 function send(stack: DeviceStack, ctx: ToolContext, message: MidiMessage): void {
@@ -214,8 +222,8 @@ export const transportTool = defineTool({
 			virtual.transport(input.action);
 			const playState = virtual.status().playing ? 'playing' : 'stopped';
 			return jsonResult(
-				{ target: 'virtual', playState, note: ON_VIRTUAL },
-				`${playState} on the virtual op-xy`,
+				{ target: 'virtual', playState, ...virtualNote(ctx.env) },
+				`${playState} on the replica`,
 				{ applied: true, after: playState }
 			);
 		}
@@ -319,8 +327,8 @@ export const setTempoTool = defineTool({
 			where.virtual.setTempo(input.bpm);
 			const bpm = where.virtual.status().bpm;
 			return jsonResult(
-				{ target: 'virtual', tempoBpm: bpm, previousBpm: previous, note: ON_VIRTUAL },
-				`tempo ${formatBpm(bpm)} bpm on the virtual op-xy`,
+				{ target: 'virtual', tempoBpm: bpm, previousBpm: previous, ...virtualNote(ctx.env) },
+				`tempo ${formatBpm(bpm)} bpm on the replica`,
 				{ applied: true, after: bpm }
 			);
 		}
@@ -378,8 +386,8 @@ export const selectTrackTool = defineTool({
 			where.virtual.selectTrack(input.track);
 			const track = getTrack(input.track);
 			return jsonResult(
-				{ target: 'virtual', selected: input.track, name: track.name, note: ON_VIRTUAL },
-				`${track.name} selected on the virtual op-xy`
+				{ target: 'virtual', selected: input.track, name: track.name, ...virtualNote(ctx.env) },
+				`${track.name} selected on the replica`
 			);
 		}
 		const stack = where.device;
@@ -457,8 +465,8 @@ export const muteTrackTool = defineTool({
 			where.virtual.setMuted(input.track, input.muted);
 			const name = getTrack(input.track).name;
 			return jsonResult(
-				{ target: 'virtual', track: input.track, muted: input.muted, note: ON_VIRTUAL },
-				`${name} ${input.muted ? 'muted' : 'unmuted'} on the virtual op-xy`,
+				{ target: 'virtual', track: input.track, muted: input.muted, ...virtualNote(ctx.env) },
+				`${name} ${input.muted ? 'muted' : 'unmuted'} on the replica`,
 				{ applied: true, after: input.muted }
 			);
 		}
@@ -722,9 +730,9 @@ export const playNotesTool = defineTool({
 					track: input.track,
 					bpm: Math.round(bpm * 10) / 10,
 					seconds: Math.round(totalMs / 100) / 10,
-					note: ON_VIRTUAL
+					...virtualNote(ctx.env)
 				},
-				`played ${played} step${played === 1 ? '' : 's'} on the virtual op-xy`
+				`played ${played} step${played === 1 ? '' : 's'} on the replica`
 			);
 		}
 		if (!stack) return errorResult(NOT_CONNECTED, 'no op-xy connected');

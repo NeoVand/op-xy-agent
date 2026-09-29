@@ -171,6 +171,26 @@ describe('write_pattern', () => {
 			},
 			{ step: 5, notes: [{ note: 55, sound: 'snare 1', velocity: 100, length: 1 }] }
 		]);
+		// and as a drummer's grid, a line per sound
+		expect(written.written.grid).toEqual({
+			'kick 1': 'x...............',
+			'snare 1': '....x...........',
+			'closed hat 2': 'x...............'
+		});
+	});
+
+	it('draws a grid bar by bar, and none for a melodic track', async () => {
+		const { run } = setup();
+		const two = json(
+			await run(writePatternTool, {
+				track: 1,
+				bars: 2,
+				notes: [1, 5, 9, 13, 17, 21, 25, 29].map((step) => ({ step, note: 53 }))
+			})
+		);
+		expect(two.written.grid).toEqual({ 'kick 1': 'x...x...x...x... x...x...x...x...' });
+		const keys = json(await run(writePatternTool, { track: 4, notes: [{ step: 1, note: 60 }] }));
+		expect(keys.written.grid).toBeUndefined();
 	});
 });
 
@@ -187,12 +207,24 @@ describe('write_arrangement', () => {
 			song: { scenes: [1, 2, 1], loop: false }
 		});
 		expect(json(result).arrangement.song).toEqual({ order: [1, 2, 1], loop: false });
+		expect(json(result).addedEmpty).toBeUndefined();
 		expect(sim.state.tracks[0].sequence.current).toBe(0); // scene 1 is the current one
 		await run(transportTool, { action: 'play' });
 		expect(sim.state.areas.arrange.playing).toBe(true);
 		for (let i = 0; i < 21; i++) sim.advance(100); // a bar at 120 BPM is 2 s
 		expect(sim.state.areas.arrange.scene).toBe(1); // after one bar: scene 2
 		expect(sim.state.tracks[0].sequence.current).toBe(1);
+	});
+
+	it('says which patterns a scene added empty', async () => {
+		const { run } = setup();
+		await run(writePatternTool, { track: 3, notes: [{ step: 1, note: 36 }] });
+		const result = json(
+			await run(writeArrangementTool, {
+				scenes: [{ scene: 1, patterns: [{ track: 3, pattern: 3 }] }]
+			})
+		);
+		expect(result.addedEmpty).toEqual(['track 3: pattern 2, 3 (empty)']);
 	});
 
 	it('undoes to the scenes and song before', async () => {
@@ -220,6 +252,15 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		expect((await run(transportTool, { action: 'play' })).applied).toBe(false);
 		await run(transportTool, { action: 'stop' });
 		expect(sim.state.transport.playing).toBe(false);
+	});
+
+	it('says once per conversation that no OP-XY is connected', async () => {
+		const { run } = setup();
+		const first = json(await run(transportTool, { action: 'play' }));
+		expect(first.note).toMatch(/No OP-XY is connected/);
+		const next = json(await run(setTempoTool, { bpm: 100 }));
+		expect(next).toMatchObject({ target: 'virtual', tempoBpm: 100 });
+		expect(next.note).toBeUndefined();
 	});
 
 	it('sets its tempo to the tenth, selects and mutes its tracks', async () => {

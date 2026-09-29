@@ -108,7 +108,7 @@ export const showOnReplicaTool = defineTool({
 	label: 'show on replica',
 	kind: 'ui',
 	description:
-		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"). Sends nothing to the device.',
+		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"). The keys play from wherever the replica stands and really move it, as a press would: start with the track key when the user names a track, and write the same steps in your answer as you showed. Sends nothing to the device.',
 	input: z.object({
 		keys: z.string().min(1).max(120).describe('One key combo in the key grammar'),
 		caption: z.string().max(160).optional().describe('What the combo does, in a few words')

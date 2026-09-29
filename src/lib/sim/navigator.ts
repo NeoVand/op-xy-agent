@@ -1153,6 +1153,66 @@ export function planSettings(state: SimState, goals: readonly SettingGoal[]): Se
 	};
 }
 
+/**
+ * The steps to where a setting is made, changing nothing: an instrument track's parameter on its
+ * page and layer, a tempo value on the tempo page, a list on the page whose key opens it, a value
+ * another page shows on that page. For "take me to the swing", "where is FX II's size". The goal's
+ * value is not read.
+ */
+export function planToSetting(state: SimState, goal: SettingGoal): NavPlan {
+	const rec = new Recorder(copy(state));
+	if ('label' in goal) {
+		if (specialOf(goal)) {
+			const refused = walkToPage(rec, goal, goal.page ?? 1);
+			return refused ? rec.plan(false, refused) : rec.plan(true);
+		}
+		const found = findPage(state, goal, accessOf(goal));
+		if (found.rec) {
+			return found.rec.plan(
+				true,
+				found.shifted ? `${found.label} is on the shift layer: hold shift` : undefined
+			);
+		}
+		if (found.refused) return rec.plan(false, found.refused);
+		const seen = found.seen.length ? `; these do: ${found.seen.join(', ')}` : '';
+		return rec.plan(false, `no page shows "${goal.label}"${seen}`);
+	}
+	const track = goal.track ?? state.track + 1;
+	const id = findParam(goal.param, state, track);
+	if (!id) {
+		return planToSetting(state, {
+			area: 'instrument',
+			track,
+			...(goal.page ? { page: goal.page } : {}),
+			label: goal.param,
+			value: goal.value
+		});
+	}
+	if (TEMPO_PARAMS[id]) {
+		walk(rec, { area: 'tempo' });
+		return rec.plan(true);
+	}
+	const picker = PICKERS[id];
+	if (picker) {
+		walk(rec, { area: 'instrument', track, page: picker.page });
+		return rec.plan(true, `shift + ${picker.key} opens the list`);
+	}
+	if (id === 'engine' || id === 'preset') {
+		walk(rec, { area: 'instrument', track, page: 1 });
+		return rec.plan(true, 'shift + M1 opens the preset browser');
+	}
+	const place =
+		placeOfParam(id, track) ??
+		(regionParam(id) ? { area: 'instrument' as const, track, page: 1 as const } : null);
+	if (!place) return rec.plan(false, `no page for "${goal.param}"`);
+	walk(rec, place);
+	const at = encoderFor(rec.sim, id);
+	return rec.plan(
+		true,
+		at ? `E${at.e + 1}${at.shift ? ' with shift held' : ''} turns it` : undefined
+	);
+}
+
 // ─────────────────────────────────────────────────────────────────── values on the other pages
 
 /** The parts of the device {@link planPageValue} finds values on by name. */
