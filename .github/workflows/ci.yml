@@ -43,6 +43,9 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: build
+      # after the upload: Playwright's server builds the site again without the base path
+      - name: End-to-end tests
+        run: pnpm exec playwright test --reporter=line
 
   deploy:
     needs: check
