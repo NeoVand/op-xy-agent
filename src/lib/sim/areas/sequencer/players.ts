@@ -71,8 +71,25 @@ function setHold(s: SimState, target: { hold: boolean }, on: boolean): void {
 	if (!on) seq(s).sustained = [];
 }
 
+/**
+ * While the list of players is up, any encoder moves its box a type a detent, stopping at either
+ * end, as further presses of `player` move it (ours: TE's guide and the camera show only the
+ * presses, but every other list takes an encoder); the page's settings stay as they were.
+ */
+function listTurn(s: SimState, delta: number): void {
+	const player = playerOf(s);
+	const at = clamp(PLAYER_TYPES.indexOf(player.type) + delta, 0, PLAYER_TYPES.length - 1);
+	if (PLAYER_TYPES[at] === player.type) return;
+	player.type = PLAYER_TYPES[at];
+	seq(s).sustained = [];
+}
+
 /** E1–E4 on the player page. */
 export function playerTurn(s: SimState, e: number, delta: number): void {
+	if (seq(s).playerList) {
+		listTurn(s, delta);
+		return;
+	}
 	const player = playerOf(s);
 	if (player.type === 'arpeggio') {
 		const a = player.arp;
@@ -95,10 +112,10 @@ export function playerTurn(s: SimState, e: number, delta: number): void {
 	}
 }
 
-/** A click on the player page: E4 flips hold (ours; the guide turns it). */
+/** A click on the player page: E4 flips hold (ours; the guide turns it). Not while the list is up. */
 export function playerClick(s: SimState, e: number): void {
 	const player = playerOf(s);
-	if (e !== 3) return;
+	if (e !== 3 || seq(s).playerList) return;
 	if (player.type === 'arpeggio') setHold(s, player.arp, !player.arp.hold);
 	else if (player.type === 'maestro') setHold(s, player.maestro, !player.maestro.hold);
 }

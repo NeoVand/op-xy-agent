@@ -8,7 +8,9 @@ backwards). A faint trail of light in the dish, just round the knob, follows eac
 bright head leading the way it turns and fades soon after the knob stops. An arrow over the knob
 appears only when a teaching animation asks for a turn, pointing the way to turn.
 
-Input: vertical drag or the wheel turns it (6 px per detent); a tap clicks it; alt-drag turns
+Input: a drag turns it the way the knob would turn under a finger (grabbed on its right half,
+pulling down turns it clockwise; on its left half, back; at the top or the middle, up turns it
+clockwise; see `clockwisePx`), 6 px a detent, and so does the wheel; a tap clicks it; alt-drag turns
 with the click held (fine adjustment); arrow keys and Page Up/Down turn, Enter/Space clicks. With
 the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the replica's shift).
 -->
@@ -16,7 +18,7 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 
 <script lang="ts">
 	import type { EncoderPart } from './geometry';
-	import { capturePointer, dragSteps, wheel, wheelSteps } from './input';
+	import { capturePointer, clockwisePx, dragSteps, wheel, wheelSteps } from './input';
 	import { knurlPath, trailArcs, turnArrowPath } from './shapes';
 	import type { ReplicaState } from './state.svelte';
 
@@ -43,8 +45,13 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 	let pushing = $state(false);
 	let drag: {
 		pointer: number;
+		startX: number;
 		startY: number;
+		lastX: number;
 		lastY: number;
+		/** Where on the knob it was grabbed: a unit vector from its centre, (0, 0) near it. */
+		ux: number;
+		uy: number;
 		moved: boolean;
 		fine: boolean;
 	} | null = null;
@@ -62,10 +69,27 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 		capturePointer(event);
 		// alt-drag is push-turn (fine); Shift is the OP-XY's shift, held by Replica.svelte
 		const fine = event.altKey;
+		// the knob's centre is this group's origin; its body has a radius of 5 drawing units
+		const m = (event.currentTarget as SVGGElement).getScreenCTM();
+		let ux = 0;
+		let uy = 0;
+		if (m) {
+			const rx = event.clientX - m.e;
+			const ry = event.clientY - m.f;
+			const r = Math.hypot(rx, ry);
+			if (r > 0.35 * 5 * Math.hypot(m.a, m.b)) {
+				ux = rx / r;
+				uy = ry / r;
+			}
+		}
 		drag = {
 			pointer: event.pointerId,
+			startX: event.clientX,
 			startY: event.clientY,
+			lastX: event.clientX,
 			lastY: event.clientY,
+			ux,
+			uy,
 			moved: false,
 			fine
 		};
@@ -76,13 +100,15 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 
 	function onpointermove(event: PointerEvent) {
 		if (!drag || event.pointerId !== drag.pointer) return;
-		const dy = drag.lastY - event.clientY;
+		const dx = event.clientX - drag.lastX;
+		const dy = event.clientY - drag.lastY;
+		drag.lastX = event.clientX;
 		drag.lastY = event.clientY;
-		if (Math.abs(event.clientY - drag.startY) > 3) {
+		if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 3) {
 			drag.moved = true;
 			pushing = false;
 		}
-		turnBy(dragSteps(dy, dragAcc), drag.fine);
+		turnBy(dragSteps(clockwisePx(dx, dy, drag.ux, drag.uy), dragAcc), drag.fine);
 	}
 
 	function onpointerup(event: PointerEvent) {
@@ -229,7 +255,7 @@ the computer's Shift down a drag is `shift + turn` (Replica.svelte holds the rep
 
 <style>
 	.enc {
-		cursor: ns-resize;
+		cursor: grab;
 		outline: none;
 		touch-action: none;
 		-webkit-tap-highlight-color: transparent;

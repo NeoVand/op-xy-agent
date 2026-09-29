@@ -929,6 +929,27 @@ describe('players (manual: players/*)', () => {
 		expect(pattern(sim).player.on).toBe(false);
 	});
 
+	it('moves the list’s box with any encoder too, leaving the page’s settings alone (ours)', () => {
+		const { sim } = rig();
+		sim.press('track.3');
+		sim.press('key.player');
+		const before = structuredClone(pattern(sim).player);
+		down(sim, 'key.shift');
+		sim.press('key.player'); // the list, arpeggio boxed
+		sim.turn(2, 1);
+		expect(page(sim, 'player').type).toBe('hold');
+		sim.turn(4, 5); // stops at the end
+		expect(page(sim, 'player').type).toBe('maestro');
+		sim.click(4); // a click on the list does not flip maestro's hold
+		sim.turn(1, -1);
+		expect(page(sim, 'player').type).toBe('hold');
+		up(sim, 'key.shift');
+		expect(page(sim, 'player')).toMatchObject({ type: 'hold', list: null });
+		// neither the arpeggio's shift layer nor maestro's settings moved with the list
+		expect(pattern(sim).player.arp).toEqual(before.arp);
+		expect(pattern(sim).player.maestro).toEqual(before.maestro);
+	});
+
 	it('sets the arpeggio on two layers and pictures its run', () => {
 		const { sim } = rig();
 		sim.press('track.3');
