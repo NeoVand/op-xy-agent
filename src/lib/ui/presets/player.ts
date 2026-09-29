@@ -62,7 +62,14 @@ export class PreviewPlayer {
 				this.#context = this.#create();
 				this.#out = this.#context.createGain();
 				this.#out.gain.value = 0.8;
-				this.#out.connect(this.#context.destination);
+				// a beat stacks voices: a gentle compressor keeps their sum from clipping
+				const glue = this.#context.createDynamicsCompressor();
+				glue.threshold.value = -8;
+				glue.knee.value = 6;
+				glue.ratio.value = 4;
+				glue.attack.value = 0.003;
+				glue.release.value = 0.12;
+				this.#out.connect(glue).connect(this.#context.destination);
 			}
 			// a context that may not resume yet (no gesture, or an offline one) stays as it is
 			if (this.#context.state === 'suspended') this.#context.resume().catch(() => {});
