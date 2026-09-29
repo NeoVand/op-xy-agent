@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "9a5613f4",
+	"bundle_hash": "cf4cd264",
 	"stats": {
-		"units": 165,
-		"facts": 1163,
-		"procedures": 202,
+		"units": 166,
+		"facts": 1168,
+		"procedures": 204,
 		"parameters": 207,
-		"verified_items": 239,
-		"words": 43549,
+		"verified_items": 243,
+		"words": 43893,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -24,10 +24,10 @@
 			"project": 8,
 			"tempo": 2,
 			"com": 12,
-			"howto": 24
+			"howto": 25
 		},
 		"by_status": {
-			"current": 148,
+			"current": 149,
 			"outdated-in-guide": 14,
 			"changelog-only": 2,
 			"unverified": 1
@@ -289,6 +289,7 @@
 				"howto.load-samples",
 				"howto.song-with-brain",
 				"howto.song-from-scenes",
+				"howto.loop-one-scene",
 				"howto.sidechain-duck",
 				"howto.pluck",
 				"howto.pad-swell",
@@ -28620,6 +28621,183 @@
 				"keyboard.fs3",
 				"encoder.1",
 				"key.play"
+			]
+		},
+		{
+			"id": "howto.loop-one-scene",
+			"title": "Recipe — loop one scene",
+			"aliases": [
+				"loop one scene",
+				"loop a scene",
+				"repeat a scene",
+				"hold a scene",
+				"stay on a scene",
+				"stop the song advancing",
+				"play only one scene"
+			],
+			"area": "howto",
+			"order": 34,
+			"path": "knowledge/manual/units/howto/loop-one-scene.md",
+			"context": {
+				"modes": [
+					"arrange"
+				],
+				"screens": []
+			},
+			"summary": "Play runs the song, scene after scene. To hear one scene over and over, pick it while playing — in arrange, `shift` and its black key switch to it at once and it repeats — or empty the song order in song mode so play keeps to the current scene.",
+			"status": "current",
+			"firmware": {
+				"min": "1.0.9",
+				"changed_in": [],
+				"guide_version": "1.1.15",
+				"verified_on": "1.1.33"
+			},
+			"facts": [
+				{
+					"id": "play-runs-song",
+					"text": "Play runs the current song from its first scene even outside song mode, and after a stop it starts from the first scene again.",
+					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "pick-while-playing",
+					"text": "While the song plays, `shift` and a black key in arrange switch to that scene at once, mid-bar, and from then on the unit repeats it; the song stops moving on.",
+					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "arrange-only",
+					"text": "`shift` and the black keys choose scenes only in arrange mode.",
+					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "clear-song",
+					"text": "`shift + M1` in song mode empties the song order without deleting any scene, taking every scene out of the song's playback.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "empty-song-plays-scene",
+					"text": "With the song order empty, play has no song to run, so the scene on screen keeps playing.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"procedures": [
+				{
+					"id": "while-playing",
+					"goal": "Keep one scene playing, from the song",
+					"preconditions": [
+						"a song with several scenes"
+					],
+					"steps": [
+						{
+							"keys": "play",
+							"note": "the song starts from its first scene",
+							"set": null
+						},
+						{
+							"keys": "arrange",
+							"note": null,
+							"set": null
+						},
+						{
+							"keys": "shift + accidental",
+							"note": "the black key of the scene to keep; it takes over at once and repeats",
+							"set": null
+						}
+					],
+					"result": "The chosen scene plays over and over until stop.",
+					"source": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "for-good",
+					"goal": "Make play keep to the current scene",
+					"preconditions": [
+						"arrange mode"
+					],
+					"steps": [
+						{
+							"keys": "shift + accidental",
+							"note": "choose the scene to loop",
+							"set": null
+						},
+						{
+							"keys": "shift + arrange",
+							"note": "song mode",
+							"set": null
+						},
+						{
+							"keys": "shift + M1",
+							"note": "clear the song order; the scenes themselves stay",
+							"set": null
+						},
+						{
+							"keys": "arrange",
+							"note": "back to the patterns",
+							"set": null
+						},
+						{
+							"keys": "play",
+							"note": "the scene plays over and over",
+							"set": null
+						}
+					],
+					"result": "Play loops the chosen scene; key the scenes back into song mode to have a song again.",
+					"source": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				}
+			],
+			"parameters": [],
+			"related": [
+				"arrange.scenes",
+				"arrange.song-mode",
+				"arrange.scene-queue",
+				"howto.song-from-scenes"
+			],
+			"body": "The OP-XY treats play as \"play the song\": a new project's song holds scene 1, and a project with a\nlonger song walks through it from the top on every play. Picking a scene while it plays is the quick\nway to stay somewhere, handy while jamming on one section. Clearing the song order keeps play on one\nscene for good, until scenes are keyed back into song mode.",
+			"sources": [
+				{
+					"url": "docs/research/90-device-probe.md#2026-09-28-night--songs-and-scenes-on-the-unit-owner-present-tes-agent-os-1133",
+					"kind": "research"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+					"kind": "guide"
+				}
+			],
+			"official_url": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
+			"controls": [
+				"key.play",
+				"key.arrange",
+				"key.shift",
+				"keyboard.fs3",
+				"keyboard.gs3",
+				"keyboard.as3",
+				"keyboard.cs4",
+				"keyboard.ds4",
+				"keyboard.fs4",
+				"keyboard.gs4",
+				"keyboard.as4",
+				"keyboard.cs5",
+				"keyboard.ds5",
+				"key.m1"
 			]
 		},
 		{
