@@ -20,6 +20,7 @@ export {
 	MAX_NOTES,
 	MAX_PATTERNS,
 	MAX_SONG_LENGTH,
+	SAMPLE_REGIONS,
 	SCENES,
 	SCENE_SLOTS,
 	SONGS,
@@ -33,5 +34,5 @@ export {
 	type XyLayout
 } from './layout';
 export * from './model';
-export { readProject } from './read';
+export { readProject, readSampleRegions } from './read';
 export { writeProject } from './write';
