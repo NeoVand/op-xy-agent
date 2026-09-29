@@ -535,12 +535,16 @@ units beside it. On narrow screens it is a drawer. Open areas and the fold are r
 		transform: rotate(180deg);
 	}
 
-	.area--current > .area__head {
-		color: var(--xy-fg);
+	/* the area being read: its name and icon lit, nothing boxed; the others' icons a step dimmer */
+	.area__head .glyph {
+		color: var(--xy-fg-subtle);
+		transition: color var(--xy-dur-quick, 120ms) ease;
 	}
 
-	.area--current .glyph {
-		background-color: var(--xy-surface-raised);
+	.area__head:hover .glyph,
+	.area--current > .area__head,
+	.area--current > .area__head .glyph {
+		color: var(--xy-fg);
 	}
 
 	/* opening and closing an area: its height eases, its units fade */
