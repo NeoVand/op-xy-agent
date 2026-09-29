@@ -39,7 +39,7 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: clear-song
-    text: '`shift + M1` in song mode empties the song order without deleting any scene, taking every scene out of the song''s playback.'
+    text: "`shift + M1` in song mode empties the song order without deleting any scene, taking every scene out of the song's playback."
     source: https://teenage.engineering/guides/op-xy/arrange#song-mode
   - id: empty-song-plays-scene
     text: With the song order empty, play has no song to run, so the scene on screen keeps playing.
