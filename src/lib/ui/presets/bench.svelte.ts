@@ -575,7 +575,7 @@ export class Workbench {
 			const fromFile = d.audio.root;
 			const fromName = noteFromName(d.name);
 			const heard = fromFile === undefined && fromName === null ? detectNote(d.audio) : null;
-			let root = key !== undefined ? key + i : (fromFile ?? fromName ?? heard);
+			let root = key !== undefined ? this.noteOf(key) + i : (fromFile ?? fromName ?? heard);
 			const rootFrom: Provenance =
 				key !== undefined
 					? 'you'
@@ -612,7 +612,8 @@ export class Workbench {
 		const fromFile = d.audio.root;
 		const fromName = noteFromName(d.name);
 		const heard = fromFile === undefined && fromName === null ? detectNote(d.audio) : null;
-		const root = key ?? fromFile ?? fromName ?? heard ?? 60;
+		const root =
+			(key !== undefined ? this.noteOf(key) : undefined) ?? fromFile ?? fromName ?? heard ?? 60;
 		const rootFrom: Provenance =
 			key !== undefined
 				? 'you'

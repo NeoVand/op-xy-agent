@@ -62,6 +62,7 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 	import KeyBench from './KeyBench.svelte';
 	import PresetInstall from './PresetInstall.svelte';
 	import { PreviewPlayer } from './player';
+	import { MicRecorder, TAKE_SECONDS } from './recorder';
 	import WaveScreen from './WaveScreen.svelte';
 
 	const bench = new Workbench();
@@ -732,6 +733,72 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		picker.click();
 	}
 
+	// ------------------------------------------------------------------ the microphone
+
+	const mic = new MicRecorder();
+	let recording = $state(false);
+	// how long the take has run, for the live line over the screen
+	let takeSeconds = $state(0);
+	let takeStarted = 0;
+	let takeTimer: ReturnType<typeof setInterval> | null = null;
+
+	/** Where a take goes: the key being edited, else the first empty one (a kit), else the whole preset. */
+	function takeKey(): number | undefined {
+		if (bench.mode === 'drum') {
+			if (bench.key !== null) return bench.key;
+			const free = bench.kit.findIndex((s) => s === null);
+			return free >= 0 ? DRUM_FIRST_KEY + free : undefined;
+		}
+		if (bench.mode === 'multisampler') return bench.key ?? undefined;
+		return undefined;
+	}
+
+	const recordTip = $derived(
+		recording
+			? 'stop the take'
+			: `record from the microphone onto ${
+					bench.mode === 'drum'
+						? `the key being edited (at most ${TAKE_SECONDS} s)`
+						: bench.mode === 'multisampler'
+							? 'the key being edited, as a new zone'
+							: bench.mode === 'slices'
+								? 'the loop, to slice'
+								: 'the synth sampler'
+				}`
+	);
+
+	async function toggleRecord() {
+		if (recording) {
+			mic.stop();
+			return;
+		}
+		player.unlock();
+		stopBeat();
+		const key = takeKey();
+		try {
+			await mic.start((file) => {
+				recording = false;
+				if (takeTimer) clearInterval(takeTimer);
+				void addDropped([{ file, path: file.name }], key);
+			});
+			recording = true;
+			takeStarted = performance.now();
+			takeSeconds = 0;
+			takeTimer = setInterval(() => (takeSeconds = (performance.now() - takeStarted) / 1000), 100);
+			const where = key !== undefined ? ` onto ${noteName(bench.noteOf(key))}` : '';
+			bench.say(`recording${where}: rec again to stop, ${TAKE_SECONDS} s at most`);
+		} catch (error) {
+			recording = false;
+			bench.say(
+				error instanceof Error && error.name === 'NotAllowedError'
+					? 'the microphone is not allowed on this page'
+					: error instanceof Error
+						? error.message
+						: String(error)
+			);
+		}
+	}
+
 	// ------------------------------------------------------------------ the computer's keys
 
 	const held: Record<string, number> = {};
@@ -805,6 +872,8 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		stopBeat();
 		for (const t of Object.values(timers)) clearTimeout(t);
 		player.close();
+		mic.close();
+		if (takeTimer) clearInterval(takeTimer);
 	});
 
 	// ------------------------------------------------------------------ export
@@ -911,8 +980,10 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 
 <svelte:window onkeydown={onKeyDown} onkeyup={onKeyUp} onblur={onBlur} />
 
+<!-- the workbench is the instrument's own material: dark in either theme, as the replica is -->
 <div
 	class={['maker', receiving && 'is-receiving']}
+	data-theme="dark"
 	role="region"
 	aria-label="preset workbench: drop audio files anywhere"
 	ondragenter={onDragEnter}
@@ -980,43 +1051,56 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 	</header>
 
 	<section class="deck" aria-label="the sound being edited">
-		<WaveScreen
-			mode={bench.mode}
-			sound={bench.mode === 'slices' ? bench.loop : current}
-			cuts={bench.cuts}
-			slice={bench.mode === 'slices' && current ? -current.id - 1 : null}
-			{cells}
-			{title}
-			subtitle={bench.mode === 'slices' ? (bench.loop?.name ?? '') : (current?.name ?? '')}
-			{info}
-			{message}
-			playing={bench.mode === 'slices' ? null : playing}
-			onedit={change}
-			onmovecut={(i, f) => bench.moveCut(i, f)}
-			onaddcut={(f) => bench.addCut(f)}
-			onremovecut={(i) => bench.removeCut(i)}
-			onpickslice={(i) => press(DRUM_FIRST_KEY + i)}
-		>
-			{#snippet empty()}
-				<div class="welcome">
-					<p class="welcome__title">drop sounds anywhere</p>
-					<p class="welcome__text">
-						A folder of hits becomes a kit laid out the way TE lays out theirs, a loop is sliced
-						onto the keys, the notes of an instrument become a multisample. Or drop straight onto a
-						key.
-					</p>
-					<div class="welcome__actions">
-						<Button size="sm" onclick={choose}>choose files</Button>
-						<span class="welcome__or">or make a kit from numbers</span>
-						{#each KIT_STYLES as style (style)}
-							<Button size="sm" variant="ghost" onclick={() => (bench.generate(style), chase())}
-								>{style}</Button
-							>
-						{/each}
+		<div class="deck__screen">
+			<WaveScreen
+				mode={bench.mode}
+				sound={bench.mode === 'slices' ? bench.loop : current}
+				cuts={bench.cuts}
+				slice={bench.mode === 'slices' && current ? -current.id - 1 : null}
+				{cells}
+				{title}
+				subtitle={bench.mode === 'slices' ? (bench.loop?.name ?? '') : (current?.name ?? '')}
+				{info}
+				{message}
+				playing={bench.mode === 'slices' ? null : playing}
+				onedit={change}
+				onmovecut={(i, f) => bench.moveCut(i, f)}
+				onaddcut={(f) => bench.addCut(f)}
+				onremovecut={(i) => bench.removeCut(i)}
+				onpickslice={(i) => press(DRUM_FIRST_KEY + i)}
+			>
+				{#snippet empty()}
+					<div class="welcome">
+						<p class="welcome__title">drop sounds anywhere</p>
+						<p class="welcome__text">
+							A folder of hits becomes a kit laid out the way TE lays out theirs, a loop is sliced
+							onto the keys, the notes of an instrument become a multisample, a SoundFont or a
+							.preset opens as it is. Or drop straight onto a key.
+						</p>
+						<p class="welcome__keys">
+							your keyboard plays the keys: <kbd>z</kbd>–<kbd>m</kbd> the lower twelve,
+							<kbd>q</kbd>–<kbd>u</kbd> the upper, black keys on the rows above; <kbd>space</kbd> plays
+							a beat
+						</p>
+						<div class="welcome__actions">
+							<Button size="sm" onclick={choose}>choose files</Button>
+							<span class="welcome__or">or make a kit from numbers</span>
+							{#each KIT_STYLES as style (style)}
+								<Button size="sm" variant="ghost" onclick={() => (bench.generate(style), chase())}
+									>{style}</Button
+								>
+							{/each}
+						</div>
 					</div>
+				{/snippet}
+			</WaveScreen>
+			{#if recording}
+				<div class="live" aria-live="polite">
+					<Led state="red" blink="breathe" size="sm" />
+					recording {takeSeconds.toFixed(1)} s
 				</div>
-			{/snippet}
-		</WaveScreen>
+			{/if}
+		</div>
 
 		<div class="controls">
 			<div class="encoders">
@@ -1242,6 +1326,11 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 			{#if !bench.empty}
 				<Button size="sm" variant="ghost" onclick={() => (stopBeat(), bench.clear())}>clear</Button>
 			{/if}
+			<span {@attach tooltip(recordTip)}>
+				<Button size="sm" led={recording ? 'red' : 'off'} pressed={recording} onclick={toggleRecord}
+					>{recording ? 'stop rec' : 'rec'}</Button
+				>
+			</span>
 			<Button size="sm" variant="ghost" onclick={choose}>add files</Button>
 		</div>
 	</footer>
@@ -1377,6 +1466,35 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		grid-template-columns: minmax(0, 1fr) 19.5rem;
 		gap: 1rem;
 		align-items: stretch;
+	}
+
+	.deck__screen {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	.deck__screen > :global(.screen) {
+		flex: 1;
+	}
+
+	/* a take running: the device's live red, over the glass's corner */
+	.live {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.875rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.1875rem 0.5rem;
+		border-radius: var(--xy-radius-card);
+		background-color: #000000;
+		color: var(--xy-scr-fg);
+		font-size: var(--xy-text-xs);
+		font-variant-numeric: tabular-nums;
+		box-shadow: 0 0 0 1px rgb(255 77 0 / 0.45);
+		animation: rise var(--xy-dur-base) var(--xy-ease-standard);
 	}
 
 	.controls {
@@ -1555,6 +1673,26 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		color: var(--xy-scr-muted);
 		font-size: var(--xy-text-sm);
 		line-height: var(--xy-leading-sm);
+	}
+
+	.welcome__keys {
+		margin: 0;
+		color: var(--xy-ramp-4);
+		font-size: var(--xy-text-xs);
+	}
+
+	.welcome__keys kbd {
+		display: inline-block;
+		min-width: 1.125rem;
+		padding: 0 0.25rem;
+		border-radius: 0.1875rem;
+		background-color: var(--xy-mat-tile);
+		color: var(--xy-mat-legend);
+		font: inherit;
+		text-align: center;
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / 0.08),
+			0 0 0 1px rgb(255 255 255 / 0.06);
 	}
 
 	.welcome__actions {
