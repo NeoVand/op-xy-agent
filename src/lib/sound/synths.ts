@@ -24,6 +24,7 @@ import {
 	pulseSpectrum,
 	sawSpectrum,
 	sineSpectrum,
+	bandSpectrum,
 	softSpectrum,
 	syncSpectrum,
 	triangleSpectrum,
@@ -71,6 +72,26 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 
 /** Cents as a frequency ratio. */
 export const cents = (c: number): number => Math.pow(2, c / 1200);
+
+/** The multisampler's stand-in ({@link band}): its band's centre on C2 and how it climbs. */
+const BAND_ROOT = 65.41;
+const BAND_HZ = 260;
+const BAND_Q = 0.9;
+/** The highs let back up above the band: a shelf (Hz, dB). */
+const BAND_AIR_HZ = 2500;
+const BAND_AIR_DB = 8;
+/** Cents each copy sits off the note. */
+const BAND_DETUNE = 9;
+/** The octave below, against the band's peak (−10 dB). */
+const BAND_SUB = 0.1;
+/** Where the swell starts (−10 dB) and its time constant (s): the unit's pad grows 10 dB in 3 s. */
+const BAND_SWELL = 0.32;
+const BAND_SWELL_SECONDS = 1.9;
+/** Its level on C3, set against the unit's T8 (−37 dBFS in the sustain at velocity 100), and how
+ * much louder it plays an octave up (dB). */
+const BAND_C3 = 130.81;
+const BAND_LEVEL = 0.74;
+const BAND_PER_OCTAVE = 4.6;
 
 /** The oscillator's own waveforms. */
 type BuiltInWave = 'sine' | 'triangle' | 'sawtooth' | 'square';
@@ -568,6 +589,39 @@ function soft(g: Graph): SourceGraph {
 	return g.finish(osc, 0.45);
 }
 
+/**
+ * The multisampler's stand-in, modelled on a new project's pad/bandpasser as the owner's unit plays
+ * it (2026-09-29): a flat harmonic series in two copies detuned apart and panned hard left and
+ * right, through a band that climbs half an octave per octave (260 Hz on C2, 520 Hz on C4) with the
+ * highs let back up past 2.5 kHz; an octave below, 10 dB down and kept to its first harmonics
+ * outside the band; louder up the keyboard, swelling in by 10 dB over its first three seconds. Our
+ * own synthesis, not TE's samples.
+ */
+function band(g: Graph): SourceGraph {
+	const wave = g.resources.wave('band', bandSpectrum);
+	const out = g.gain(1);
+	const swell = g.gain(BAND_SWELL);
+	swell.gain.setTargetAtTime(1, g.start, BAND_SWELL_SECONDS);
+	swell.connect(out);
+	const filter = g.filter('bandpass', 0, BAND_Q);
+	g.follow(filter.frequency, (BAND_HZ / BAND_ROOT) * Math.sqrt(BAND_ROOT / g.hz));
+	const air = g.filter('highshelf', BAND_AIR_HZ, 0);
+	air.gain.value = BAND_AIR_DB;
+	filter.connect(air).connect(swell);
+	for (const side of [-1, 1]) {
+		const osc = g.osc(wave);
+		osc.detune.value = side * BAND_DETUNE;
+		const pan = g.panner(side);
+		osc.connect(pan).connect(filter);
+	}
+	const sub = g.osc(wave, 0.5);
+	const subTone = g.filter('lowpass', 0, 0.7);
+	g.follow(subTone.frequency, 1);
+	const subLevel = g.gain(BAND_SUB);
+	sub.connect(subTone).connect(subLevel).connect(swell);
+	return g.finish(out, BAND_LEVEL * Math.pow(g.hz / BAND_C3, BAND_PER_OCTAVE / 6.02));
+}
+
 /** Builds the sources of a synth voice at `hz`, starting at `start`. */
 export function synthSource(
 	context: BaseAudioContext,
@@ -596,6 +650,8 @@ export function synthSource(
 			return simple(g, controls);
 		case 'soft':
 			return soft(g);
+		case 'band':
+			return band(g);
 	}
 }
 

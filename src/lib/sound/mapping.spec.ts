@@ -24,6 +24,7 @@ import {
 	sendGain,
 	sweep,
 	velocityGain,
+	velocityScale,
 	type AxisControls,
 	type PrismControls
 } from './mapping';
@@ -109,8 +110,21 @@ describe('mapping: envelopes, filter and voice settings', () => {
 		expect(presetGain(99)).toBeCloseTo(Math.pow(10, 6 / 20));
 		expect(sendGain(0)).toBe(0);
 		expect(sendGain(99)).toBe(1);
+	});
+
+	it('plays velocity as the unit does: 1 − s·(1 − v/127), s the preset’s sensitivity', () => {
 		expect(velocityGain(127)).toBe(1);
-		expect(velocityGain(100)).toBeCloseTo(0.7, 1);
+		expect(velocityGain(100)).toBeCloseTo(100 / 127, 6);
+		expect(velocityGain(1, 0)).toBe(1);
+		// the unit's default tracks at velocity 40 against 100 (2026-09-29, research 90)
+		const drop = (s: number) => 20 * Math.log10(velocityGain(40, s) / velocityGain(100, s));
+		expect(drop(99)).toBeCloseTo(-8.0, 1);
+		expect(drop((26541 / 32767) * 99)).toBeCloseTo(-5.4, 1);
+		expect(drop((6879 / 32767) * 99)).toBeCloseTo(-1.0, 1);
+		// an engine plays its measured level at velocity 100 on its calibration preset
+		expect(velocityScale(100, (26541 / 32767) * 99, 'epiano')).toBeCloseTo(1, 6);
+		expect(velocityScale(127, 99, 'axis')).toBeCloseTo(127 / 100, 6);
+		expect(velocityScale(100, 50, 'sampler')).toBe(1);
 	});
 
 	it('reads play mode, portamento and bend range', () => {
@@ -254,7 +268,7 @@ describe('mapping: engine M1 parameters', () => {
 
 	it('lets samplers fall back to the soft tone; drums and midi are not synths', () => {
 		expect(engineControls('sampler', [0, 0, 0, 0])).toEqual({ engine: 'soft' });
-		expect(engineControls('multisampler', [0, 0, 0, 0])).toEqual({ engine: 'soft' });
+		expect(engineControls('multisampler', [0, 0, 0, 0])).toEqual({ engine: 'band' });
 		expect(engineControls('drum', [0, 0, 0, 0])).toBeNull();
 		expect(engineControls('midi', [0, 0, 0, 0])).toBeNull();
 	});

@@ -29,11 +29,14 @@ describe('envelopes', () => {
 		const param = recorder();
 		env.schedule(param, 2);
 		// the attack charges toward twice the peak (research 60 §3) and is pinned at the peak
+		// then falls toward silence and is held where it meets the sustain, ln 2 time constants on
+		const meets = 1.1 + (0.4 / TAUS_PER_TIME) * Math.LN2;
 		expect(param.calls).toEqual([
 			['set', 0, 1],
 			['target', 1.6, 1, 0.1 / Math.LN2],
 			['set', 0.8, 1.1],
-			['target', 0.4, 1.1, 0.4 / TAUS_PER_TIME],
+			['target', 0, 1.1, 0.4 / TAUS_PER_TIME],
+			['set', 0.4, meets],
 			['target', 0, 2, 0.2 / TAUS_PER_TIME]
 		]);
 		expect(env.end).toBeCloseTo(2 + (TAIL_TAUS * 0.2) / TAUS_PER_TIME);
@@ -45,8 +48,11 @@ describe('envelopes', () => {
 		expect(env.valueAt(-1)).toBe(0);
 		expect(env.valueAt(0.05)).toBeCloseTo(charge(0.05, 0.1));
 		expect(env.valueAt(0.1)).toBeCloseTo(1);
-		// four time constants into the decay: 98% of the way to sustain
-		expect(env.valueAt(0.5)).toBeCloseTo(0.5 + 0.5 * Math.exp(-4), 5);
+		// the decay heads for silence: half a time constant in, e^-0.5 of the peak
+		expect(env.valueAt(0.15)).toBeCloseTo(Math.exp(-0.5), 5);
+		// and stops dead at the sustain, not easing into it
+		expect(env.valueAt(0.1 + 0.1 * Math.LN2 + 1e-4)).toBeCloseTo(0.5, 5);
+		expect(env.valueAt(0.5)).toBe(0.5);
 		expect(env.valueAt(3)).toBeCloseTo(0.5, 3);
 		expect(env.valueAt(3.2)).toBeCloseTo(0.5 * Math.exp(-4), 3);
 	});
@@ -83,9 +89,9 @@ describe('envelopes', () => {
 			['target', 0, 0.05, 0.05]
 		]);
 		expect(env.gate).toBe(0.05);
-		// already let go: a second release changes nothing
+		// already let go: a second release changes nothing (the curve took 5 calls, the release 2)
 		env.release(param, 1);
-		expect(param.calls).toHaveLength(6);
+		expect(param.calls).toHaveLength(7);
 	});
 
 	it('falls back to the computed level without cancelAndHoldAtTime', () => {
@@ -111,5 +117,31 @@ describe('envelopes', () => {
 		]);
 		expect(env.gate).toBe(2);
 		expect(env.valueAt(1.5)).toBeCloseTo(0.5, 3);
+	});
+
+	it('holds the sustain again when a legato note carries the voice past where the decay meets it', () => {
+		const env = new Envelope(0, shape, { base: 0, peak: 1, curve: 'linear' });
+		const param = recorder();
+		// let go before the decay meets the sustain (0.1 + 0.069 s): the hold was never scheduled
+		env.schedule(param, 0.15);
+		expect(param.calls.filter(([kind, v]) => kind === 'set' && v === 0.5)).toHaveLength(0);
+		env.extend(param, 1);
+		expect(param.calls.slice(-3)).toEqual([
+			['cancel', 0.15],
+			['set', 0.5, 0.1 + 0.1 * Math.LN2],
+			['target', 0, 1, 0.05]
+		]);
+	});
+
+	it('goes straight to a sustain at the top, and never stops a decay to 0', () => {
+		const full = new Envelope(0, { ...shape, sustain: 1 }, { base: 0, peak: 1, curve: 'linear' });
+		const a = recorder();
+		full.schedule(a, 1);
+		expect(a.calls[3]).toEqual(['set', 1, 0.1]);
+		const none = new Envelope(0, { ...shape, sustain: 0 }, { base: 0, peak: 1, curve: 'linear' });
+		const b = recorder();
+		none.schedule(b, 1);
+		expect(b.calls[3]).toEqual(['target', 0, 0.1, 0.1]);
+		expect(b.calls[4]).toEqual(['target', 0, 1, 0.05]);
 	});
 });

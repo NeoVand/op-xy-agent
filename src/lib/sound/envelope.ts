@@ -5,7 +5,9 @@
  * from wherever the curve is: through `cancelAndHoldAtTime` where the browser has it, else by
  * setting the level the maths says the curve has reached. The attack in level (amplitude) is an RC
  * charge toward twice the peak that stops at the peak, as the owner's unit measured it
- * (docs/research/60-sound-session.md §3); in ratio (frequency) it ramps evenly.
+ * (docs/research/60-sound-session.md §3); in ratio (frequency) it ramps evenly. The decay falls
+ * toward the base, as if heading for silence, and stops where it meets the sustain (the unit's
+ * saw at sustain 32, 64 and 96 follows that within 0.1 dB, research 60 §3).
  */
 import type { Adsr } from './mapping';
 import { ATTACK_TARGET } from './synth/laws';
@@ -88,12 +90,32 @@ export class Envelope {
 			if (curve === 'exponential') return base * Math.pow(peak / base, t / attack);
 			return base + (peak - base) * ATTACK_TARGET * (1 - Math.exp((-t * Math.LN2) / attack));
 		}
-		const sustain = this.sustainLevel;
-		return sustain + (peak - sustain) * Math.exp(-(t - attack) / this.#decayTau);
+		if (t >= attack + this.#decayLength) return this.sustainLevel;
+		return base + (peak - base) * Math.exp(-(t - attack) / this.#decayTau);
 	}
 
 	get #decayTau(): number {
 		return this.shape.decay / TAUS_PER_TIME;
+	}
+
+	/** How long the decay falls before it meets the sustain (Infinity at sustain 0). */
+	get #decayLength(): number {
+		const { base, peak } = this.range;
+		const over = (this.sustainLevel - base) / (peak - base);
+		if (over >= 1) return 0;
+		if (over <= 0) return Infinity;
+		return -this.#decayTau * Math.log(over);
+	}
+
+	/** The decay from the top of the attack: toward the base, held at the sustain where it meets it. */
+	#decay(param: ParamLike, top: number): void {
+		const meets = top + this.#decayLength;
+		if (meets <= top) {
+			param.setValueAtTime(this.sustainLevel, top);
+			return;
+		}
+		param.setTargetAtTime(this.range.base, top, this.#decayTau);
+		if (Number.isFinite(meets) && meets < this.gate) param.setValueAtTime(this.sustainLevel, meets);
 	}
 
 	/** The attack from the start up to `until` (the peak, or a gate that cuts it short). */
@@ -124,7 +146,7 @@ export class Envelope {
 			return;
 		}
 		this.#attack(param, top);
-		param.setTargetAtTime(this.sustainLevel, top, this.#decayTau);
+		this.#decay(param, top);
 		if (Number.isFinite(this.gate)) param.setTargetAtTime(base, this.gate, this.#releaseTau);
 	}
 
@@ -156,6 +178,11 @@ export class Envelope {
 			return;
 		}
 		param.cancelScheduledValues(this.gate);
+		// the decay may have been due to meet the sustain after the old release: hold it there again
+		const meets = this.start + this.shape.attack + this.#decayLength;
+		if (Number.isFinite(meets) && meets >= this.gate && meets < gate) {
+			param.setValueAtTime(this.sustainLevel, meets);
+		}
 		this.gate = gate;
 		if (Number.isFinite(gate)) param.setTargetAtTime(this.range.base, gate, this.#releaseTau);
 	}

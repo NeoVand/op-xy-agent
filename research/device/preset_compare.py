@@ -19,11 +19,36 @@ import sys
 import numpy as np
 from scipy.io import wavfile
 
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from take_timing import note_ons, placed  # noqa: E402
+
 CAPTURES = pathlib.Path(__file__).parent / "captures" / "presets"
 BANDS = [63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
-# the phrase of preset_capture.py (root C2): (name, start s, length s)
-PARTS = [("C2", 0.0, 1.4), ("C3", 2.6, 1.4), ("C4", 5.2, 1.4), ("triad", 7.8, 1.8)]
-SHORTS = (11.0, 0.1, 0.25, 8)  # first start, length, spacing, count
+NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+
+def parts(summary: dict) -> list[tuple[str, float, float]]:
+    """preset_capture.py's phrase as (name, start s, length s): the held notes, the triad, then
+    every fourth short note, with the take's own root, hold and gap."""
+    root, hold, gap = summary.get("root", 36), summary.get("hold", 1.4), summary.get("gap", 1.2)
+    rows = []
+    t = 0.0
+    for octave in range(3):
+        note = root + 12 * octave
+        rows.append((f"{NAMES[note % 12]}{note // 12 - 1}", t, hold))
+        t += hold + gap
+    rows.append(("triad", t, 1.8))
+    t += 1.8 + 1.4
+    for i in range(8):
+        if i % 4 == 0:
+            rows.append((f"short {i + 1}", t, 0.1))
+        t += 0.25
+    return rows
+
+
+def drum_parts() -> list[tuple[str, float, float]]:
+    """The drum phrase: each key (53-76) once, 0.7 s apart, measured over 0.6 s."""
+    return [(f"key {53 + i}", i * 0.7, 0.6) for i in range(24)]
 
 
 def mono(path: pathlib.Path) -> tuple[int, np.ndarray]:
@@ -84,8 +109,11 @@ def main() -> None:
     args = parser.parse_args()
     take = json.loads((CAPTURES / f"{args.tag}.json").read_text())
     rate, unit = mono(CAPTURES / f"{args.tag}.wav")
-    channels = take["summary"]["channels"]
-    for channel in channels:
+    stamps, latency = placed(take, unit, rate)
+    print(f"unit latency {latency / rate * 1000:.1f} ms after each message's send time")
+    summary = take["summary"]
+    drums = summary.get("drums", [])
+    for channel in summary["channels"] + drums:
         replica_path = CAPTURES / f"{args.tag}-replica-T{channel}.wav"
         if not replica_path.exists():
             print(f"T{channel}: no replica render ({replica_path.name})")
@@ -93,15 +121,15 @@ def main() -> None:
         r_rate, replica = mono(replica_path)
         if r_rate != rate:
             sys.exit(f"rates differ: unit {rate}, replica {r_rate}")
-        ons = [s["frame"] for s in take["stamps"] if s["bytes"][0] == 0x90 | (channel - 1)]
+        ons = [s["at"] for s in note_ons(stamps, channel)]
         if not ons:
             print(f"T{channel}: no notes in the take")
             continue
-        # the unit's phrase starts at its first note on; the replica's one second in
+        # the unit's phrase starts where its first note sounds; the replica's one second in
         offset = ons[0] / rate - 1.0
-        unit_track = unit[max(0, int(offset * rate)) :]
+        unit_track = unit[max(0, int(round(offset * rate))) :]
         print(f"\nT{channel}  (unit | replica | replica − unit)")
-        rows = PARTS + [(f"short {i + 1}", SHORTS[0] + i * SHORTS[2], SHORTS[1]) for i in range(0, SHORTS[3], 4)]
+        rows = drum_parts() if channel in drums else parts(summary)
         spectra = []
         for name, start, length in rows:
             u = measure(unit_track, rate, 1.0 + start, length)

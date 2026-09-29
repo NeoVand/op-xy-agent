@@ -266,9 +266,41 @@ export const EQ_BANDS = { low: 150, mid: 1000, high: 6000 } as const;
 /** A send level (0–99), squared so low values stay subtle. */
 export const sendGain = (v: number): number => unit(v) ** 2;
 
-/** Note velocity (1–127) as a gain; the replica keyboard's 100 sits about 3 dB down. */
-export const velocityGain = (velocity: number): number =>
-	Math.pow(clamp(velocity, 1, 127) / 127, 1.5);
+/**
+ * Note velocity (1–127) as a gain at a preset's velocity sensitivity (0–99, shift + M2): the
+ * owner's unit scales the level by 1 − s·(1 − v/127), s the sensitivity. Its eight default tracks
+ * at velocity 40, 100 and 127 (sensitivities 21 to 100 %) follow it within 0.2 dB
+ * (docs/research/90-device-probe.md, 2026-09-29). Full sensitivity is linear in velocity; at 0 every
+ * note plays alike.
+ */
+export const velocityGain = (velocity: number, sensitivity = 99): number =>
+	1 - unit(sensitivity) * (1 - clamp(velocity, 1, 127) / 127);
+
+/**
+ * The velocity sensitivity each engine's level was measured at: the calibration session's presets
+ * (as {@link PRESET_VOLUME_MEASURED}), at velocity 100. Simple, organ and wavetable took over T1's,
+ * T2's and T8's tracks and, picked without a preset, kept their sensitivity.
+ */
+const SENSITIVITY_MEASURED: Partial<Record<EngineId, number>> = {
+	prism: q99(6879),
+	epiano: q99(26541),
+	dissolve: q99(10240),
+	hardsync: 99,
+	axis: 99,
+	simple: q99(19660),
+	organ: q99(19660),
+	wavetable: q99(26540)
+};
+
+/**
+ * A note's velocity as a gain for `engine`'s voice, 1 where its level was measured (velocity 100 at
+ * the calibration preset's sensitivity), so the engine plays the device's level there and follows
+ * the device's velocity law elsewhere.
+ */
+export function velocityScale(velocity: number, sensitivity: number, engine: EngineId): number {
+	const measured = SENSITIVITY_MEASURED[engine] ?? sensitivity;
+	return velocityGain(velocity, sensitivity) / velocityGain(100, measured);
+}
 
 /** Pitch bend (−1…1) over the bend range (semitones, 0 = off), in cents. */
 export const bendCents = (value: number, range: number): number =>
@@ -643,9 +675,17 @@ export interface SimpleControls {
 	readonly spread: number;
 }
 
-/** The sampler engines without a sample: a soft, rounded sine. */
+/** The synth sampler without a sample: a soft, rounded sine. */
 export interface SoftControls {
 	readonly engine: 'soft';
+}
+
+/**
+ * The multisampler without its samples (TE's, which the app cannot ship): a banded pad after a new
+ * project's pad/bandpasser (2026-09-29), so a new project's T8 plays a pad and not a sine.
+ */
+export interface BandControls {
+	readonly engine: 'band';
 }
 
 /** What a synth voice is built from. */
@@ -658,7 +698,8 @@ export type EngineControls =
 	| DissolveControls
 	| HardsyncControls
 	| SimpleControls
-	| SoftControls;
+	| SoftControls
+	| BandControls;
 
 /** Synth engines by their controls' name. */
 export type SynthEngine = EngineControls['engine'];
@@ -678,7 +719,8 @@ const AXIS_STEPS = [7, 12, 19, 24] as const;
 
 /**
  * Four M1 values (0–99) as the controls of a synth engine's voice. Samplers without a sample play
- * the soft tone; the drum sampler and the midi engine are not synths (null).
+ * a stand-in (the synth sampler a soft tone, the multisampler a banded pad); the drum sampler and
+ * the midi engine are not synths (null).
  */
 export function engineControls(
 	engine: EngineId,
@@ -753,8 +795,9 @@ export function engineControls(
 		case 'simple':
 			return { engine, shape: a * 3, duty: 0.5 - 0.46 * b, noise: 0.5 * c * c, spread: d };
 		case 'sampler':
-		case 'multisampler':
 			return { engine: 'soft' };
+		case 'multisampler':
+			return { engine: 'band' };
 		default:
 			return null;
 	}

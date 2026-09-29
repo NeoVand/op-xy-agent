@@ -49,9 +49,9 @@ z hipass only to Q ≈ 4. Resonance lowers the svf's frequency but not the other
 | stage   | shape                                                                               | length                                                                                 |
 | ------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | attack  | an RC charge toward twice the peak, stopping at the peak (t10/t50/t90 = 0.18/1/2.1) | T = 5.16 ms · (e^(0.0878 c) − 1): 77 ms at 32, 1.42 s at 64, 5.8 s at 80, 6 min at 127 |
-| decay   | exponential toward the sustain; a decay to 0 cuts at about −41 dB                   | half-life h(c), the table below                                                        |
+| decay   | exponential toward silence, held where it meets the sustain; to 0 it cuts at −41 dB | half-life h(c), the table below                                                        |
 | release | exponential to silence                                                              | h(127 − c): the lane is the handle's position, higher is shorter                       |
-| sustain | linear in amplitude (32, 64, 96 → 0.26, 0.52, 0.75)                                 |                                                                                        |
+| sustain | linear in amplitude (32, 64, 96, 127 → 0.26, 0.51, 0.77, 0.975)                     |                                                                                        |
 
 Half-life h (ms) against the decay CC (release: 127 − CC):
 
@@ -59,7 +59,10 @@ Half-life h (ms) against the decay CC (release: 127 − CC):
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---- | ---- | ---- | ---- |
 | h   | 4.5 | 64  | 128 | 197 | 281 | 339 | 421 | 547 | 758 | 1129 | 1802 | 3046 | 4993 |
 
-Release measured at 15 CCs agrees with the decay at the same position within 5 %. The community's
+The decay's way to a sustain (read again on 2026-09-29, note 62): at decay CC 32 and sustain 32, 64
+and 96 the saw falls exactly as a decay to 0 would (−2.4, −4.7, −7.0 dB at 50, 100, 150 ms) and
+stops dead at the sustain (0.1 dB), where an exponential toward the sustain would still be 3.5 dB
+above it. Release measured at 15 CCs agrees with the decay at the same position within 5 %. The community's
 law (op-forums) matches the attack's top (six minutes) but runs 1.5–2× slower in between, and our
 old model gave decay and release the attack's law: a CC 80 decay took 7.7 s instead of 2.8 s.
 

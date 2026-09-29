@@ -51,10 +51,12 @@ import {
 	sampleRegion,
 	tuneRate,
 	velocityGain,
+	velocityScale,
 	type Adsr,
 	type PlayMode
 } from './mapping';
 import { Resources } from './resources';
+import { DEVICE_GAIN_DB } from './synth/engines/device';
 import type { SampleRegistry, SampleSource } from './samples';
 import { lockedSettings, type ClickEvent, type SchedulerSink } from './scheduler';
 import {
@@ -113,17 +115,23 @@ export interface SoundEngineOptions {
 	readonly voices?: number;
 }
 
-/** Levels: synth voices before velocity, drums, samples, the master bus. */
-const VOICE_GAIN = 0.45;
-/**
- * The synth core's voices before velocity: its engines come out about as loud as each other
- * (RMS ≈ 0.28); this brings them level with the Web Audio voices on average (measured in
- * `synth/host.svelte.spec.ts`; the device session will set each engine's own).
- */
-const CORE_GAIN = 0.5;
-const DRUM_GAIN = 0.6;
-const SAMPLE_GAIN = 0.6;
+/** The master bus's headroom before the limiter. */
 const MASTER_GAIN = 0.85;
+/**
+ * The synth core's voices: its engines play the device's measured levels {@link DEVICE_GAIN_DB}
+ * louder (simple's saw is the reference), so this takes that back off, and the bus's headroom
+ * with it: at a new project's mixer, master and preset volume a core voice leaves the replica as
+ * loud as the owner's unit plays it over USB (2026-09-29: every default track within 0.5 dB).
+ */
+const CORE_GAIN = Math.pow(10, -DEVICE_GAIN_DB / 20) / MASTER_GAIN;
+/**
+ * The Web Audio voices (and the samplers' stand-in tone), drums and samples, at velocity 100 on a
+ * new project's presets: as loud as they were under the old velocity law (100 played 0.7), which
+ * the ear set them to.
+ */
+const VOICE_GAIN = 0.45 * 0.7;
+const DRUM_GAIN = (0.6 * 0.7) / velocityGain(100, 59.4);
+const SAMPLE_GAIN = 0.6 * 0.7;
 /**
  * A recording's attack at 0: instant (a couple of hundred microseconds), since its transient is the
  * sound. Synth voices keep 1.5 ms so an oscillator never starts with a click.
@@ -190,6 +198,8 @@ export class SoundEngine {
 	readonly #settings: (TrackState | null)[];
 	/** Each track's settings as the mixer strip has them (without a step's locks). */
 	readonly #base: (TrackState | null)[];
+	/** Each track's preset velocity sensitivity (0–99, shift + M2), as last seen. */
+	readonly #sensitivity: number[];
 	/** What was last applied to sounding voices, per track. */
 	readonly #shown: { filter: string; m1: string }[];
 	/** The settings each voice started with (its step's locks applied): what automation returns to. */
@@ -263,6 +273,7 @@ export class SoundEngine {
 		this.#last = this.#channels.map(() => null);
 		this.#settings = this.#channels.map(() => null);
 		this.#base = this.#channels.map(() => null);
+		this.#sensitivity = this.#channels.map(() => 99);
 		this.#shown = this.#channels.map(() => ({ filter: '', m1: '' }));
 		this.sink = {
 			note: (event, settings) =>
@@ -433,6 +444,7 @@ export class SoundEngine {
 			if (!channel) return;
 			this.#settings[k] = track;
 			this.#base[k] = track;
+			this.#sensitivity[k] = state.areas?.system?.presetSettings?.[k]?.velocity ?? 99;
 			const group = mixer
 				? groupGain(track.engine === 'drum' ? mixer.master.percussion : mixer.master.melodic)
 				: 1;
@@ -688,7 +700,7 @@ export class SoundEngine {
 			glide,
 			amp: softened(source.amp ?? envelopeSeconds(settings.amp), request.soft),
 			peak:
-				velocityGain(request.velocity) *
+				velocityScale(request.velocity, this.#sensitivity[track] ?? 99, settings.engine) *
 				source.graph.level *
 				source.gain *
 				this.#lockedVolume(track, settings),
@@ -730,7 +742,10 @@ export class SoundEngine {
 				from,
 				glide,
 				amp: softened(envelopeSeconds(settings.amp), request.soft),
-				peak: velocityGain(request.velocity) * CORE_GAIN * this.#lockedVolume(track, settings),
+				peak:
+					velocityScale(request.velocity, this.#sensitivity[track] ?? 99, settings.engine) *
+					CORE_GAIN *
+					this.#lockedVolume(track, settings),
 				filter: {
 					type: settings.filter.type,
 					on: settings.filter.on,
@@ -901,7 +916,10 @@ export class SoundEngine {
 			from: hz,
 			glide: 0,
 			amp: held ? amp : oneshotAmp(amp),
-			peak: velocityGain(request.velocity) * DRUM_GAIN * this.#lockedVolume(track, settings),
+			peak:
+				velocityGain(request.velocity, this.#sensitivity[track] ?? 99) *
+				DRUM_GAIN *
+				this.#lockedVolume(track, settings),
 			filter: this.#filter(settings, request.note),
 			bend: this.#channels[track].bend,
 			curve: request.bend,

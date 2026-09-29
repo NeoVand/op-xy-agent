@@ -5,7 +5,7 @@ import { describe, expect, inject, it } from 'vitest';
 import type { EngineId } from '$lib/core/opxy';
 import { defaultState, defaultTrack, type TrackState } from '$lib/sim/params';
 import { SoundEngine } from '../engine';
-import { presetGain } from '../mapping';
+import { presetGain, velocityScale } from '../mapping';
 import { rms as levelOf } from './analysis';
 import { throughCore } from './engines/audition';
 import { SynthHost } from './host';
@@ -151,8 +151,8 @@ describe('the synth core in its worklet', () => {
 
 	it('scales every engine alike on its way out, so each keeps its measured level', async () => {
 		// each engine's own output is fitted to the device's (its spec, in dBFS); what follows it
-		// (velocity, level, the strip, the worklet) must scale them all alike, and the preset volume
-		// is unity at the volume each engine was measured at
+		// (velocity, level, the strip, the worklet) must scale them all alike, once the preset volume
+		// and the velocity are taken back to what each engine was measured at
 		const engines = [...CORE_ENGINES];
 		const gains = new Map<EngineId, number>();
 		for (const id of engines) {
@@ -168,7 +168,14 @@ describe('the synth core in its worklet', () => {
 				new Set([id])
 			);
 			const alone = levelOf(throughCore(id, settings.m1, 1.2).subarray(0.25 * SR, 0.95 * SR));
-			gains.set(id, rms(played.buffer, 0.3, 1) / alone / presetGain(settings.playMode.volume, id));
+			const sensitivity = state.areas.system.presetSettings[2].velocity;
+			gains.set(
+				id,
+				rms(played.buffer, 0.3, 1) /
+					alone /
+					presetGain(settings.playMode.volume, id) /
+					velocityScale(100, sensitivity, id)
+			);
 		}
 		const db = (id: EngineId) => 20 * Math.log10(gains.get(id)! / gains.get('prism')!);
 		console.log(

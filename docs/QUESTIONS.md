@@ -96,13 +96,14 @@ answer and date (and into `DECISIONS.md` when they shape the project).
     otherwise voice would only announce and wait for a tap), `gpt-realtime-2.1` or mini as the
     default, and whether the strip names the right microphone with the OP-XY plugged in (the app
     skips the OP-XY's own input; note 71).
-15. **Sound comparison, track by track** (plays notes on the unit, nothing else). With a project open
-    on the unit and its tracks given MIDI channels, `research/device/preset_capture.py` plays a
-    fixed phrase into each chosen track (three held notes, a chord, short notes) and records the
-    USB audio; `src/lib/sound/compare.svelte.spec.ts` renders the same phrase from the same project
-    in the replica, and `research/device/preset_compare.py` compares level, brightness, spectrum,
-    attack and tail part by part. First target: "agent"'s synth tracks T3, T4, T5 and T8 (about
-    80 s). Needs your go-ahead, since the unit plays out loud.
+15. **Sound comparison, track by track** (plays notes on the unit, nothing else). Done for a new
+    project on 2026-09-29 (note 62): velocity, the decay, every engine's level, epiano's tine and
+    the multisampler's pad now follow the unit. Next, the same for "agent" and each preset we load.
+    What the takes could not settle needs a short **sound session** in a throwaway project (CCs on
+    its tracks, as on 2026-09-28): the preset highpass (shift + M2) on a saw at a few values; the
+    filter envelope's sustain on the ladder and svf (cutoff 0, amount 48, sustain 0 / 39 / 100 %);
+    axis with its LFO on and off (is its top the element LFO's or the engine's?); and the master
+    compressor at 0, 10 and 80 on a loud chord (the owner turns mix M4).
 16. **A factory preset harvest** (one saved project, nothing else changes). A project stores each
     pattern's whole sound, and 100 of the factory presets are synth presets whose sound is nothing
     but those settings (the other 56 play TE's samples, which a project only names). We write a

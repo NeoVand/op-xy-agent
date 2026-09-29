@@ -14,13 +14,18 @@ the transport stopped. Log the session in docs/research/90-device-probe.md.
 The phrase, per track: three held notes an octave apart (C2, C3, C4 by default, 1.4 s each), a
 C major triad (1.8 s), then eight short notes (a sixteenth each at 120 BPM) on C3, each followed
 by room for its release. Drum tracks (--drum) get each of their 24 keys (53-76) once instead.
-Every message is stamped with the audio frame it was sent at, so takes cut out exactly.
+Every message is stamped with its send time and the audio delivered by then; PortAudio delivers in
+blocks of 4096 frames, so take_timing.py places each message from its send time (to 1-2 ms).
 
 Writes captures/presets/<tag>.wav (stereo, 44.1 kHz, 16-bit) and <tag>.json (the plan, the
 stamps and the channels).
 
+--velocity sets every note's velocity (100 by default), --hold the held notes' length (1.4 s) and
+--gap the silence after each (1.2 s), for takes of a sound's dynamics, its decay and its tail.
+
 Usage: uv run --with python-rtmidi --with sounddevice --with numpy --with scipy python \
-       research/device/preset_capture.py TAG --channels 3,4 [--drum 2] [--root 36] [--send]
+       research/device/preset_capture.py TAG --channels 3,4 [--drum 2] [--root 36] \
+       [--velocity 100] [--hold 1.4] [--gap 1.2] [--send]
 """
 
 import argparse
@@ -36,13 +41,13 @@ VELOCITY = 100
 DRUM_KEYS = range(53, 77)
 
 
-def phrase(root: int) -> list[tuple[float, float, list[int]]]:
+def phrase(root: int, hold: float = 1.4, gap: float = 1.2) -> list[tuple[float, float, list[int]]]:
     """(start s, length s, notes) for a synth track, from its first note."""
     events: list[tuple[float, float, list[int]]] = []
     t = 0.0
     for octave in range(3):
-        events.append((t, 1.4, [root + 12 * octave]))
-        t += 1.4 + 1.2
+        events.append((t, hold, [root + 12 * octave]))
+        t += hold + gap
     events.append((t, 1.8, [root + 24, root + 28, root + 31]))
     t += 1.8 + 1.4
     sixteenth = 60 / 120 / 4
@@ -56,15 +61,22 @@ def drum_phrase() -> list[tuple[float, float, list[int]]]:
     return [(i * 0.7, 0.1, [key]) for i, key in enumerate(DRUM_KEYS)]
 
 
-def plan(channels: list[int], drums: list[int], root: int) -> list[dict]:
+def plan(
+    channels: list[int],
+    drums: list[int],
+    root: int,
+    velocity: int = VELOCITY,
+    hold: float = 1.4,
+    gap: float = 1.2,
+) -> list[dict]:
     """Every message with its time, track after track, 2 s apart."""
     messages: list[dict] = []
     t0 = 1.0
     for channel in channels + drums:
-        notes = drum_phrase() if channel in drums else phrase(root)
+        notes = drum_phrase() if channel in drums else phrase(root, hold, gap)
         for start, length, keys in notes:
             for key in keys:
-                messages.append({"t": t0 + start, "bytes": [0x90 | (channel - 1), key, VELOCITY]})
+                messages.append({"t": t0 + start, "bytes": [0x90 | (channel - 1), key, velocity]})
                 messages.append({"t": t0 + start + length, "bytes": [0x80 | (channel - 1), key, 0]})
         end = max(start + length for start, length, _ in notes)
         # all notes off on the channel once its tails are over
@@ -84,6 +96,9 @@ def main() -> None:
     parser.add_argument("--channels", default="", help="synth tracks' channels, e.g. 3,4")
     parser.add_argument("--drum", default="", help="drum tracks' channels, e.g. 2")
     parser.add_argument("--root", type=int, default=36, help="the lowest held note (C2 = 36)")
+    parser.add_argument("--velocity", type=int, default=VELOCITY, help="every note's velocity, 1-127")
+    parser.add_argument("--hold", type=float, default=1.4, help="the held notes' length, seconds")
+    parser.add_argument("--gap", type=float, default=1.2, help="the silence after each, seconds")
     parser.add_argument("--send", action="store_true", help="play it (the owner has agreed)")
     args = parser.parse_args()
     channels = [int(c) for c in args.channels.split(",") if c]
@@ -92,7 +107,9 @@ def main() -> None:
         sys.exit("give --channels and/or --drum")
     if any(not 1 <= c <= 16 for c in channels + drums):
         sys.exit("channels are 1-16")
-    messages = plan(channels, drums, args.root)
+    if not 1 <= args.velocity <= 127 or not 0.1 <= args.hold <= 10 or not 0.1 <= args.gap <= 10:
+        sys.exit("velocity is 1-127, hold and gap 0.1-10 s")
+    messages = plan(channels, drums, args.root, args.velocity, args.hold, args.gap)
     assert all(allowed(m["bytes"]) for m in messages)
     length = messages[-1]["t"] + 1.0
     print(f"{len(messages)} messages over {length:.1f} s on channels {channels + drums}")
@@ -157,6 +174,9 @@ def main() -> None:
         "channels": channels,
         "drums": drums,
         "root": args.root,
+        "velocity": args.velocity,
+        "hold": args.hold,
+        "gap": args.gap,
         "seconds": round(len(audio) / RATE, 2),
         "peak": int(np.abs(audio).max()) if len(audio) else 0,
     }

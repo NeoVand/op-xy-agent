@@ -15,9 +15,14 @@
  *   of it, then slower to nothing, both rates rising with punch ({@link PUNCH}): at punch 127 the index
  *   is gone in 0.8 s, at 64 it takes 2 s;
  * - tine adds a modulator at 4 × the note (sidebands 3 and 5, then 7 and 9, in equal pairs), its
- *   index 1.7 · tine^2.95 on A2 ({@link TINE_INDEX}, {@link TINE_CURVE}), less up the keyboard,
- *   rising over its first 40 ms and then decaying on its own even at punch 0 (to 0.57 of it after a
- *   second: {@link TINE_DECAY});
+ *   index 1.7 · tine^2.95 on A2 ({@link TINE_INDEX}, {@link TINE_CURVE}), less up the keyboard; at
+ *   punch 0 rising over its first 40 ms and then decaying on its own (to 0.57 of it after a second:
+ *   {@link TINE_DECAY});
+ * - punch takes tine down too, much faster than the 1:1 index: a straight line from the full index
+ *   at the onset to nothing, {@link TINE_PUNCH} times punch's fast rate (a new project's
+ *   pluck/beach bum, punch 54: gone in 85 ms on C2, C3 and C4, 2026-09-29), with no rise;
+ * - velocity moves only the level (the track's velocity law), not the sidebands: beach bum at
+ *   velocity 40, 100 and 127 has the same tine index to 1 % throughout the note;
  * - texture blends a soft clipper into the carrier at an unchanged level: 0.63 of atan(g · sine)
  *   (peak-normalized) with 0.37 of the sine (fitted within 0.3–0.8 dB), the clipped share rising
  *   to all of it at the very top on A2 ({@link DRIVE}); its drive g falls steeply up the keyboard
@@ -27,8 +32,9 @@
  *
  * Our model plays the carrier from a band-limited table of clipper shapes (indexed by drive), read
  * at the modulated phase with a band limit that follows the phase's speed; the index also shrinks
- * where the FM spectrum would pass Nyquist. [I] Velocity scales both indexes, 0.5 at the softest,
- * 1 at 100 (where the device was measured); punch's decay applies to tine's modulator too.
+ * where the FM spectrum would pass Nyquist. [I] tone's index ignores velocity as tine's does;
+ * tine's line starts after punch's hold, and its rise shortens to none by punch 13 (the first
+ * measured step); punch's rate for tine keeps its measured ratio to the 1:1 rate at every punch.
  */
 import { DcBlocker } from '../filters';
 import { sin2pi } from '../sine';
@@ -71,6 +77,8 @@ export const TINE_CURVE = 2.95;
 export const TINE_PER_OCTAVE = 0.857;
 export const TINE_RISE = 0.04;
 export const TINE_DECAY = 1.9;
+/** punch's straight line on tine, per second of the start, against its fast rate on the 1:1 index. */
+export const TINE_PUNCH = 4.66;
 /**
  * texture's clipper on A2 and A4 at CC 0, 13 … 127: its drive (read in log between the notes) and
  * its share against the sine (read linearly).
@@ -84,8 +92,8 @@ export const DRIVE = {
 } as const;
 
 // Design constants.
-/** Velocity's share of the indexes at the softest (1 at velocity 100). */
-const VELOCITY_FLOOR = 0.5;
+/** punch where tine's rise is gone: the first measured step (CC 13). */
+const RISE_GONE = STEPS[1];
 /** Smoothing of every continuous parameter (seconds). */
 const SMOOTH_SECONDS = 0.005;
 /**
@@ -191,10 +199,9 @@ export class EpianoVoice implements EngineVoice {
 	readonly #smooth: number;
 	#dt = 0;
 	#phase = 0;
-	/** The note's level (its key scaling, and tone's top) and its target; velocity's share of the indexes. */
+	/** The note's level (its key scaling, and tone's top) and its target. */
 	#level = LEVEL;
 	#levelTarget = LEVEL;
-	#velocity = 1;
 	/** The 1:1 index (cycles of phase per unit of modulator), before punch's envelope; its target. */
 	#index = 0;
 	#indexTarget = 0;
@@ -203,7 +210,7 @@ export class EpianoVoice implements EngineVoice {
 	#tineTarget = 0;
 	#rise = 0;
 	#fall = 1;
-	readonly #riseStep: number;
+	#riseStep = 1;
 	readonly #fallStep: number;
 	/** The shape table's frame, the clipped share and the blend's gain, and their targets. */
 	#frame = 0;
@@ -212,9 +219,10 @@ export class EpianoVoice implements EngineVoice {
 	#wetTarget = 0;
 	#gain = 1;
 	#gainTarget = 1;
-	/** punch's envelope: seconds into the note, where it is, and its settings. */
+	/** punch's envelope: seconds into the note, where it is (and tine's line), and its settings. */
 	#time = 0;
 	#env = 1;
+	#tineEnv = 1;
 	#hold = 0;
 	#fast = 0;
 	#slow = 0;
@@ -224,16 +232,15 @@ export class EpianoVoice implements EngineVoice {
 		this.#shapes = shapes();
 		this.#dc = new DcBlocker(sampleRate);
 		this.#smooth = 1 - Math.exp(-1 / (SMOOTH_SECONDS * sampleRate));
-		this.#riseStep = 1 / (TINE_RISE * sampleRate);
 		this.#fallStep = Math.exp(-1 / (TINE_DECAY * sampleRate));
 	}
 
-	start(hz: number, velocity: number, params: Float32Array): void {
-		const v = Math.min(Math.max(velocity, 1), 127);
-		this.#velocity = VELOCITY_FLOOR + ((1 - VELOCITY_FLOOR) * (v - 1)) / 99;
+	// velocity only sets the level, which the voice's gain carries (the track's velocity law)
+	start(hz: number, _velocity: number, params: Float32Array): void {
 		this.#phase = 0;
 		this.#time = 0;
 		this.#env = 1;
+		this.#tineEnv = 1;
 		this.#rise = 0;
 		this.#fall = 1;
 		this.#dc.reset();
@@ -258,12 +265,8 @@ export class EpianoVoice implements EngineVoice {
 		const texture = clamp01(params[1]);
 		const tine = clamp01(params[2]);
 		const punch = clamp01(params[3]);
-		const toneIndex = Math.min(
-			TONE_INDEX * tone * Math.pow(TONE_PER_OCTAVE, octaves) * this.#velocity,
-			INDEX_MAX
-		);
-		const tineIndex =
-			TINE_INDEX * Math.pow(tine, TINE_CURVE) * Math.pow(TINE_PER_OCTAVE, octaves) * this.#velocity;
+		const toneIndex = Math.min(TONE_INDEX * tone * Math.pow(TONE_PER_OCTAVE, octaves), INDEX_MAX);
+		const tineIndex = TINE_INDEX * Math.pow(tine, TINE_CURVE) * Math.pow(TINE_PER_OCTAVE, octaves);
 		// the FM spectrum stays below Nyquist: the 1:1 modulation's reach first (its sidebands a
 		// harmonic apart), then tine's in what is left (four harmonics apart, and a tail of
 		// sidebands past its index that small indexes still reach)
@@ -285,6 +288,9 @@ export class EpianoVoice implements EngineVoice {
 		this.#hold = read(PUNCH.at, PUNCH.hold, punch);
 		this.#fast = read(PUNCH.at, PUNCH.fast, punch);
 		this.#slow = read(PUNCH.at, PUNCH.slow, punch);
+		// tine rises over its 40 ms at punch 0 only, less as punch comes up
+		const rise = TINE_RISE * Math.max(0, 1 - punch / RISE_GONE);
+		this.#riseStep = rise > 0 ? 1 / (rise * this.#sr) : 1;
 	}
 
 	/**
@@ -296,6 +302,7 @@ export class EpianoVoice implements EngineVoice {
 		this.#time += seconds;
 		let remaining = Math.min(seconds, this.#time - this.#hold);
 		if (remaining <= 0 || start + seconds <= this.#hold) return;
+		this.#tineEnv = Math.max(0, this.#tineEnv - TINE_PUNCH * this.#fast * remaining);
 		let env = this.#env;
 		if (env > PUNCH_BREAK && this.#fast > 0) {
 			const d = Math.min(remaining, (env - PUNCH_BREAK) / this.#fast);
@@ -311,11 +318,14 @@ export class EpianoVoice implements EngineVoice {
 		const dc = this.#dc;
 		const k = this.#smooth;
 		const dt = this.#dt;
-		// the envelope moves in a straight line across each block
+		// the envelopes move in straight lines across each block
 		const e0 = this.#env;
+		const t0 = this.#tineEnv;
 		this.#advance(n / this.#sr);
 		const de = (this.#env - e0) / n;
+		const dte = (this.#tineEnv - t0) / n;
 		let env = e0;
+		let tineEnv = t0;
 		let phase = this.#phase;
 		let index = this.#index;
 		let tine = this.#tine;
@@ -341,10 +351,11 @@ export class EpianoVoice implements EngineVoice {
 			gain += (gainTarget - gain) * k;
 			level += (levelTarget - level) * k;
 			env += de;
+			tineEnv += dte;
 			if (rise < 1) rise = Math.min(1, rise + riseStep);
 			fall *= fallStep;
 			const a = index * env;
-			const b = tine * env * rise * fall;
+			const b = tine * tineEnv * rise * fall;
 			const pm = a * sin2pi(phase) + b * sin2pi(TINE_RATIO * phase);
 			// the table's band limit follows how fast the modulated phase can run
 			const at = phase + pm;

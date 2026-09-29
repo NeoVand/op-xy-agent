@@ -431,6 +431,43 @@ in `captures/song/` (git-ignored).
    has T2 at 10 9 9 9 and T7 at 18 20 17 17 (the `full-song` lap, bars 57–64), so the unit did not
    join the song: **a scene picked while stopped plays round and round**, as the replica has it.
 
+## 2026-09-29 — The default sounds (owner present, new project, OS 1.1.33)
+
+Approved by the owner in chat ("Okay, it is ready", after the steps we gave): a **new project**
+with its default sounds untouched, T1–T8 on MIDI channels 1–8 (the project's midi page), the
+transport stopped, USB mode (not MTP). The goal: the replica's default project sounding like the
+unit's, track by track, then every other preset.
+
+What we send (`research/device/preset_capture.py … --send`, allow-listed in the script): note on /
+note off on channels 1–8 and a final all-notes-off (CC123) on each. No other CC, program change,
+SysEx, transport or project load; the project and its settings stay as they are. The synth tracks
+(T3–T8) each get three held notes C2, C3, C4, a C major triad and eight short C3s; the drum tracks
+(T1, T2) each of their 24 keys (53–76) once. The script records the unit's USB audio (44.1 kHz
+stereo) into git-ignored `research/device/captures/presets/<tag>.wav`, each message stamped with
+its recording frame.
+
+Runs (appended as they happen):
+
+1. 13:58 `defaults-v100` (272 messages, 127 s): the phrase at velocity 100 on T3–T8, then the 24
+   drum keys on T1 and T2. Every track sounded; peaks −6 to −15 dBFS; T8 far wider in stereo than
+   the rest (side/mid 1.1 against 0.1–0.3).
+2. 14:00 `defaults-v40` and 14:02 `defaults-v127` (174 messages each, 91 s): the synth tracks only,
+   at velocity 40 and 127. Level against velocity differs by track: T4 −35.0 / −29.8 / −27.4 dB
+   RMS at 40 / 100 / 127, T6 −44.7 / −36.7 / −35.3, T7 −38.7 / −30.8 / −28.7, T3 barely
+   (−26.3 / −25.3 / −24.9).
+3. 14:03 `defaults-long` (174 messages, 170 s): the synth tracks, held notes 4 s with 3 s after
+   each, for decays and tails.
+4. 14:06 `defaults-drums-v40` (98 messages, 38 s): the drum keys at velocity 40 on T1 and T2 (about
+   3.5 dB under velocity 100).
+5. 14:08 **MTP, read-only** (the owner put the unit in MTP mode, `com → M4`): OpenSession,
+   GetStorageIDs, GetObjectHandles/GetObjectInfo of the top level and `projects/` (`user/`,
+   `workspace.xy` 9530 bytes, `templates/`), GetObject of `projects/workspace.xy` into
+   `captures/mtp/projects__workspace-2026-09-29.xy`, CloseSession; the unit left MTP mode by itself.
+   Nothing was written. The project is the blank project of 2026-09-26 but for the owner's MIDI
+   channels, T1's keyboard octave, one header byte and one sample slot in T1's kit.
+
+Nothing else was sent. What the takes showed, and what changed in the replica, is note 62.
+
 ## Session 1 runbook (owner present, ≈20–30 min)
 
 Tool: `research/device/spike.py` (refuses TE SysEx and CC86; transcript in `captures/`). Test numbers

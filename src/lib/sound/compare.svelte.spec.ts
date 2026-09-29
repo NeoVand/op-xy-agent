@@ -3,9 +3,13 @@
 // core in its worklet, the channel strips, FX I and II), rendered offline and written next to the
 // unit's recording. Runs only when asked, since it reads a local capture and writes files:
 //
-//   VITE_RENDER_PROJECT=research/device/captures/mtp/projects__workspace-2026-09-28.xy \
-//   VITE_RENDER_TRACKS=3,4,5,8 VITE_RENDER_TAG=agent VITE_RENDER_SCENE=7 \
-//   npx vitest run --project client src/lib/sound/compare.svelte.spec.ts
+//   VITE_RENDER_PROJECT=research/device/captures/mtp/projects__workspace-2026-09-29.xy \
+//   VITE_RENDER_TAG=defaults-v100 npx vitest run --project client src/lib/sound/compare.svelte.spec.ts
+//
+// The take's own record (captures/presets/<tag>.json) says what was played: which channels (track
+// n on channel n, as the capture asks the unit to be set up), which of them are drum tracks, the
+// root, the velocity and the held notes' length and gap. VITE_RENDER_TRACKS narrows the tracks;
+// without the record (an older take) VITE_RENDER_TRACKS and VITE_RENDER_ROOT say it all.
 //
 // Writes research/device/captures/presets/<tag>-replica-T<n>.wav, one per track, each starting its
 // phrase one second in, as the capture does for its first track. VITE_RENDER_SCENE picks the scene
@@ -26,14 +30,33 @@ const ROOT = Number(import.meta.env.VITE_RENDER_ROOT ?? 36);
 const SCENE: number | null = import.meta.env.VITE_RENDER_SCENE
 	? Number(import.meta.env.VITE_RENDER_SCENE)
 	: null;
+/** Renders with every filter switched off (files `<tag>-replica-open-T<n>.wav`), to read the unit's
+ * filter as the unit's take over this render. */
+const OPEN = !!import.meta.env.VITE_RENDER_OPEN;
+/** Tracks to render with their filter switched on whatever the file says (`-replica-on-T<n>`), to
+ * test whether the unit plays a filter the file has off. */
+const FORCE_ON: number[] = (import.meta.env.VITE_RENDER_FILTER_ON ?? '')
+	.split(',')
+	.filter(Boolean)
+	.map(Number);
+
+/** What preset_capture.py played, from its record's summary. */
+interface Take {
+	channels: number[];
+	drums: number[];
+	root: number;
+	velocity: number;
+	hold: number;
+	gap: number;
+}
 
 /** preset_capture.py's phrase: (start s, length s, notes), from the track's first note. */
-export function phrase(root: number): [number, number, number[]][] {
+export function phrase(root: number, hold = 1.4, gap = 1.2): [number, number, number[]][] {
 	const events: [number, number, number[]][] = [];
 	let t = 0;
 	for (let octave = 0; octave < 3; octave++) {
-		events.push([t, 1.4, [root + 12 * octave]]);
-		t += 1.4 + 1.2;
+		events.push([t, hold, [root + 12 * octave]]);
+		t += hold + gap;
 	}
 	events.push([t, 1.8, [root + 24, root + 28, root + 31]]);
 	t += 1.8 + 1.4;
@@ -43,6 +66,31 @@ export function phrase(root: number): [number, number, number[]][] {
 		t += sixteenth * 2;
 	}
 	return events;
+}
+
+/** preset_capture.py's drum phrase: each drum key (53–76) once, 0.7 s apart. */
+export function drumPhrase(): [number, number, number[]][] {
+	return Array.from({ length: 24 }, (_, i) => [i * 0.7, 0.1, [53 + i]]);
+}
+
+/** The take's record, or one made of the environment for a take without one. */
+async function takeOf(): Promise<Take> {
+	const fallback: Take = {
+		channels: TRACKS.split(',').filter(Boolean).map(Number),
+		drums: [],
+		root: ROOT,
+		velocity: 100,
+		hold: 1.4,
+		gap: 1.2
+	};
+	try {
+		const record = JSON.parse(
+			await commands.readFile(`research/device/captures/presets/${TAG}.json`)
+		) as { summary: Partial<Take> };
+		return { ...fallback, ...record.summary };
+	} catch {
+		return fallback;
+	}
 }
 
 /** A buffer as a 16-bit stereo WAV, base64. */
@@ -81,11 +129,19 @@ describe.skipIf(!PROJECT)('a project’s tracks rendered for comparison with the
 		const file = await commands.readFile(PROJECT ?? '', 'base64');
 		const { state } = xyToSim(Uint8Array.from(atob(file), (c) => c.charCodeAt(0)));
 		if (SCENE !== null) selectScene(state, SCENE - 1);
-		const tracks = TRACKS.split(',').filter(Boolean).map(Number);
+		if (OPEN) for (const track of state.tracks) track.filter.on = false;
+		for (const n of FORCE_ON) state.tracks[n - 1].filter.on = true;
+		const take = await takeOf();
+		const only = TRACKS.split(',').filter(Boolean).map(Number);
+		const tracks = [...take.channels, ...take.drums].filter(
+			(n) => only.length === 0 || only.includes(n)
+		);
 		expect(tracks.length).toBeGreaterThan(0);
 		for (const number of tracks) {
 			const t = number - 1;
-			const events = phrase(ROOT);
+			const events = take.drums.includes(number)
+				? drumPhrase()
+				: phrase(take.root, take.hold, take.gap);
 			const [lastStart, lastLength] = events[events.length - 1];
 			const seconds = 1 + lastStart + lastLength + 3;
 			const context = new OfflineAudioContext(2, Math.round(SR * seconds), SR);
@@ -99,7 +155,7 @@ describe.skipIf(!PROJECT)('a project’s tracks rendered for comparison with the
 						track: t,
 						settings: state.tracks[t],
 						note,
-						velocity: 100,
+						velocity: take.velocity,
 						time: 1 + start,
 						duration: length
 					});
@@ -108,9 +164,9 @@ describe.skipIf(!PROJECT)('a project’s tracks rendered for comparison with the
 			// an offline context renders faster than the worklet's port delivers
 			await new Promise((resolve) => setTimeout(resolve, 100));
 			const buffer = await context.startRendering();
-			const path = `research/device/captures/presets/${TAG}-replica-T${number}.wav`;
+			const path = `research/device/captures/presets/${TAG}-replica-${OPEN ? 'open-' : FORCE_ON.includes(number) ? 'on-' : ''}T${number}.wav`;
 			await commands.writeFile(path, wavBase64(buffer), 'base64');
 			expect(buffer.length).toBe(Math.round(SR * seconds));
 		}
-	}, 120_000);
+	}, 300_000);
 });

@@ -123,8 +123,12 @@ describe('envelope', () => {
 		// half way through the attack the charge stands at 2·(1 − 2^−0.5) of the peak
 		expect(levels[Math.round(0.005 * SR)]).toBeCloseTo(2 * (1 - Math.SQRT1_2), 2);
 		expect(levels[Math.round(0.01 * SR)]).toBeCloseTo(1, 2);
-		// four time constants per decay time: 98% of the way to the sustain
-		expect(levels[Math.round(0.11 * SR)]).toBeCloseTo(0.5 + 0.5 * Math.exp(-4), 2);
+		// the decay heads for silence (four time constants per decay time) and stops at the sustain,
+		// as the owner's unit does: half a time constant in it stands at e^-0.5 of the peak
+		expect(levels[Math.round(0.0225 * SR)]).toBeCloseTo(Math.exp(-0.5), 2);
+		const meets = 0.01 + (0.1 / 4) * Math.LN2;
+		expect(levels[Math.round((meets + 0.001) * SR)]).toBe(0.5);
+		expect(levels[Math.round(0.11 * SR)]).toBe(0.5);
 		expect(env.stage).toBe('sustain');
 		env.gateOff();
 		for (let i = 0; i < SR; i++) env.next();
@@ -226,7 +230,8 @@ describe('the synth core', () => {
 			core.post({
 				t: 'start',
 				voice: voice({
-					amp: settings(0.002, 0.2, 0.25),
+					// a decay long enough that the first window stays well above the sustain
+					amp: settings(0.002, 0.6, 0.25),
 					filter: filter as VoiceStart['filter'],
 					element
 				})

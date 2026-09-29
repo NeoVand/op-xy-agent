@@ -2,8 +2,10 @@
  * The amp and filter envelopes, one sample at a time: the same curve as the Web Audio voices'
  * (`../envelope.ts`), as the owner's unit measured it (docs/research/60-sound-session.md §3): the
  * attack an RC charge toward twice the peak that stops at the peak, then decay and release falling
- * exponentially over four time constants per "time", a decay to 0 cutting out at about −41 dB. A
- * restarted envelope attacks from where it is, so nothing clicks.
+ * exponentially over four time constants per "time", a decay to 0 cutting out at about −41 dB. The
+ * decay falls as if toward silence and stops where it meets the sustain, not easing into it (the
+ * unit's saw at sustain 32, 64 and 96 within 0.1 dB). A restarted envelope attacks from where it is,
+ * so nothing clicks.
  *
  * Times arrive in seconds, on the measured laws (`envelopeSeconds` in `../mapping.ts`).
  */
@@ -78,11 +80,17 @@ export class Adsr {
 				}
 				break;
 			case 'decay':
-				this.value += (this.#sustain - this.value) * this.#decayCoef;
-				if (
-					Math.abs(this.value - this.#sustain) < 1e-5 ||
-					(this.#sustain === 0 && this.value < DECAY_CUT)
-				) {
+				if (this.value <= this.#sustain) {
+					// a sustain raised above the decay: the sustain stage glides up to it
+					this.stage = 'sustain';
+					break;
+				}
+				// toward silence, held where it meets the sustain
+				this.value -= this.value * this.#decayCoef;
+				if (this.#sustain === 0 && this.value < DECAY_CUT) {
+					this.value = 0;
+					this.stage = 'sustain';
+				} else if (this.value <= this.#sustain) {
 					this.value = this.#sustain;
 					this.stage = 'sustain';
 				}

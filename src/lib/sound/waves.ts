@@ -89,6 +89,24 @@ export const syncSpectrum = (ratio: number): Spectrum =>
 /** The samplers' stand-in tone: a sine with a whisper of second and third harmonic. */
 export const softSpectrum = (): Spectrum => sines((n) => [0, 1, 0.12, 0.04][n] ?? 0);
 
+/**
+ * The multisampler's stand-in source: every harmonic nearly as loud as the next (a new project's
+ * pad/bandpasser, past its filter, falls like a flat series through the preset's z lowpass), in
+ * fixed scattered phases so the wave stays smooth rather than a click train.
+ */
+export function bandSpectrum(): Spectrum {
+	const next = random(seedOf(11));
+	const real = new Float32Array(HARMONICS + 1);
+	const imag = new Float32Array(HARMONICS + 1);
+	for (let n = 1; n <= HARMONICS; n++) {
+		const amplitude = Math.pow(n, -0.15);
+		const phase = 2 * Math.PI * next();
+		real[n] = amplitude * Math.sin(phase);
+		imag[n] = amplitude * Math.cos(phase);
+	}
+	return { real, imag };
+}
+
 /** The random LFO: sixteen held random levels, one after another (the wave runs at rate ÷ 16). */
 export const RANDOM_STEPS = 16;
 export function randomStepsSpectrum(seed = 3): Spectrum {

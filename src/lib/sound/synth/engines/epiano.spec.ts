@@ -116,6 +116,40 @@ describe('epiano', () => {
 		expect(TINE_DECAY).toBeGreaterThan(1);
 	});
 
+	it('lets punch take tine down in a straight line, as a new project’s beach bum on the unit', () => {
+		// pluck/beach bum: tone 0, texture 0, tine 41, punch 54. On C4 the unit's tine index, read
+		// from h5/h1 in 1024-sample windows, is 0.095 from the onset, 0.041 from 40 ms and gone by
+		// 85 ms, with no rise (2026-09-29)
+		const params: [number, number, number, number] = [0, 0, 13435 / 32767, 17694 / 32767];
+		const hz = 261.63;
+		const index = (x: Float32Array, from: number) => {
+			const at = Math.round(from * SR);
+			const [h1, , , , h5] = harmonicLevels(x.subarray(at, at + 1024), SR, hz, 5);
+			return 2 * (h5 / h1);
+		};
+		const { left } = playNote(epiano(), { hz, seconds: 0.3, params });
+		expect(index(left, 0)).toBeCloseTo(0.09, 1);
+		expect(index(left, 0.04)).toBeCloseTo(0.041, 1);
+		expect(index(left, 0.04) / index(left, 0)).toBeLessThan(0.55);
+		expect(index(left, 0.12)).toBeLessThan(0.005);
+		// at punch 0 tine rises over its first 40 ms instead, and stays
+		const still = playNote(epiano(), { hz, seconds: 0.3, params: [0, 0, params[2], 0] }).left;
+		expect(index(still, 0.08)).toBeGreaterThan(1.3 * index(still, 0));
+		expect(index(still, 0.2)).toBeGreaterThan(0.08);
+	});
+
+	it('leaves the sidebands alone at any velocity: velocity is only the track’s level', () => {
+		const params: [number, number, number, number] = [0.3, 0, 0.6, 0.2];
+		const sidebands = (velocity: number) => {
+			const { left } = playNote(epiano(), { hz: 220, seconds: 0.3, params, velocity });
+			const [h1, h2, h3] = harmonicLevels(left.subarray(4800, 4800 + 4096), SR, 220, 3);
+			return [h2 / h1, h3 / h1];
+		};
+		const [soft, hard] = [sidebands(40), sidebands(127)];
+		expect(soft[0]).toBeCloseTo(hard[0], 4);
+		expect(soft[1]).toBeCloseTo(hard[1], 4);
+	});
+
 	it('blends texture’s clipper into the sine at an unchanged level, with less drive up high', () => {
 		const note = (hz: number, texture: number) =>
 			playNote(epiano(), { hz, seconds: 0.6, params: [0, texture, 0, 0] }).left.subarray(4800);

@@ -347,13 +347,22 @@ Measured on the owner's device (2026-09-27, `2026-09-27-132638-epiano`, velocity
   13 … 89 on A2, the clipped share rising to all of it at the top (where h3 grows past a square's,
   a hint of folding). **The drive falls steeply up the keyboard**: 0.6 … 4.4 on A4.
 
-Model: the above (`epiano.ts`): a phase-modulated carrier read from a band-limited table of clipper
-shapes, the indexes shrinking where the spectrum would pass Nyquist. [I] Velocity scales both
-indexes (0.5 at the softest, 1 at 100); punch's envelope applies to tine too. Against the capture:
-tone and tine partials within 0.1–1 dB, texture within 0.3–0.6 dB (1–1.5 dB at its top on A2),
-levels within ±0.4 dB except mid tone on A2 (1 dB).
+Measured on a new project's pluck/beach bum (2026-09-29, note 62; tone 0, tine 41, punch 54):
 
-Open: velocity; punch's effect on tine; texture's top (folding?); a slow index drift at punch 0.
+- **punch takes tine down in a straight line**, from the full index at the onset (0.127 on C3) to
+  nothing in 85 ms: 11.5–12.0 times its start per second on C2–C4, 4.66 times punch's fast rate on
+  the 1:1 index there, and no 40 ms rise;
+- **velocity leaves both the sidebands alone**: the tine index is the same to 1 % at velocity 40,
+  100 and 127; velocity is only the track's level (1 − s·(1 − v/127), note 62).
+
+Model: the above (`epiano.ts`): a phase-modulated carrier read from a band-limited table of clipper
+shapes, the indexes shrinking where the spectrum would pass Nyquist. [I] tone's index ignores
+velocity as tine's does; tine's line keeps its ratio to punch's fast rate at every punch and starts
+after punch's hold; its rise shortens to none by punch 13. Against the capture: tone and tine
+partials within 0.1–1 dB, texture within 0.3–0.6 dB (1–1.5 dB at its top on A2), levels within
+±0.4 dB except mid tone on A2 (1 dB); beach bum's tine within 0.7 dB at the onset.
+
+Open: punch on tine at other settings; texture's top (folding?); a slow index drift at punch 0.
 
 ### organ — type, bass, tremolo amount, tremolo speed
 
