@@ -1,0 +1,107 @@
+/**
+ * A check of the eval's ears without the model: programs a beat on the replica with the agent's own
+ * tools (a made kit on T1, drums, a bass line, chords), plays it, and prints what `listen` and
+ * `listen_tracks` hand the agent, as the quality eval's agent would read it. No API calls.
+ *
+ *   node evals/agent/ears.mjs [--stand-ins]   (--stand-ins: the replica's own kit, no made kit)
+ */
+import { createVirtualOpxy } from '$lib/app/virtual';
+import { NO_MANUAL } from '$lib/agent/manual-source';
+import type { AgentEnvironment, AnyTool, ToolResult } from '$lib/agent/tools/define';
+import { listenTool, listenTracksTool } from '$lib/agent/tools/listen';
+import { makeKitTool } from '$lib/agent/tools/presets';
+import { writePatternTool } from '$lib/agent/tools/virtual';
+import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import type { SampleData } from '$lib/sound/samples';
+import { openEars } from './render';
+
+const realTimers = {
+	now: () => Date.now(),
+	setTimeout: (fn: () => void, ms: number) => setTimeout(fn, ms),
+	clearTimeout: (id: unknown) => clearTimeout(id as ReturnType<typeof setTimeout>)
+};
+
+export async function main(argv: readonly string[]): Promise<void> {
+	const url = process.env.EVAL_EARS_URL;
+	if (!url) throw new Error('run it with node evals/agent/ears.mjs');
+	const ears = await openEars(url);
+	try {
+		const sim = new OpxySim();
+		const files = new Map<string, SampleData>();
+		const virtual = createVirtualOpxy({
+			sim,
+			sound: {
+				available: true,
+				enabled: true,
+				preview: () => true,
+				samples: { setFile: (id, audio) => void files.set(id, audio) }
+			}
+		});
+		const env = {
+			device: null,
+			replica: null,
+			virtual,
+			listen: ears.host(sim, files),
+			manual: NO_MANUAL,
+			timers: realTimers,
+			confirmWindowMs: 0,
+			plan: { get: () => [], set: () => {} },
+			abortDeviceWork: () => {}
+		} as unknown as AgentEnvironment;
+		const run = (tool: AnyTool, input: unknown): Promise<ToolResult> =>
+			tool.run(tool.input.parse(input), {
+				toolCallId: `toolu_${tool.name}`,
+				agent: 'conductor',
+				signal: new AbortController().signal,
+				env
+			});
+		const say = (label: string, result: ToolResult) =>
+			console.log(`\n── ${label} (${result.summary})\n${String(result.content).slice(0, 2400)}`);
+
+		if (!argv.includes('--stand-ins')) {
+			say('make_kit', await run(makeKitTool, { name: 'ears', style: '909', track: 1, voices: [] }));
+		}
+		const four = [1, 5, 9, 13];
+		say(
+			'write_pattern T1',
+			await run(writePatternTool, {
+				track: 1,
+				pattern: 1,
+				bars: 1,
+				notes: [
+					...four.map((step) => ({ step, note: 53, velocity: 110 })),
+					...[5, 13].map((step) => ({ step, note: 55, velocity: 100 })),
+					...[3, 7, 11, 15].map((step) => ({ step, note: 61, velocity: 80 }))
+				]
+			})
+		);
+		say(
+			'write_pattern T3',
+			await run(writePatternTool, {
+				track: 3,
+				pattern: 1,
+				bars: 1,
+				notes: [1, 4, 7, 11, 13].map((step, i) => ({
+					step,
+					note: [41, 41, 44, 39, 41][i],
+					length: 2
+				}))
+			})
+		);
+		say(
+			'write_pattern T7',
+			await run(writePatternTool, {
+				track: 7,
+				pattern: 1,
+				bars: 1,
+				notes: [65, 68, 72].map((note) => ({ step: 1, note, length: 16, velocity: 80 }))
+			})
+		);
+		virtual.setTempo(124);
+		virtual.transport('play');
+		say('listen', await run(listenTool, { seconds: 4 }));
+		say('listen_tracks', await run(listenTracksTool, {}));
+	} finally {
+		await ears.close();
+	}
+}

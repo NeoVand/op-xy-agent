@@ -69,7 +69,7 @@ function targetOf(
 	const host = env.listen;
 	if (!host) {
 		return errorResult(
-			'Listening is not available here (this setting has no audio).',
+			'Listening is not available here (this setting has no audio). Carry on without it: read_pattern shows what a pattern holds. Mention it only if the user asked you to listen.',
 			'no listening here'
 		);
 	}
@@ -77,14 +77,14 @@ function targetOf(
 	if (want === 'device') {
 		if (!env.device || !deviceReady(env)) {
 			return errorResult(
-				'No OP-XY is connected, so there is nothing to hear over USB. Listen to the virtual OP-XY (from: virtual), or ask the user to connect the OP-XY.',
+				'No OP-XY is connected, so there is nothing to hear over USB. Listen to the replica (from: virtual), or ask the user to connect the OP-XY.',
 				'no op-xy connected'
 			);
 		}
 		return { kind: 'device', stack: env.device, host };
 	}
 	if (!env.virtual) {
-		return errorResult('There is no virtual OP-XY here to listen to.', 'no virtual op-xy');
+		return errorResult('There is no replica here to listen to.', 'no virtual op-xy');
 	}
 	return { kind: 'virtual', virtual: env.virtual, host };
 }
@@ -95,21 +95,21 @@ function notReady(target: Target, env: AgentEnvironment): ToolResult | null {
 		const status = target.virtual.status();
 		if (status.sound === 'unavailable') {
 			return errorResult(
-				"This browser cannot make the virtual OP-XY's sound, so there is nothing to hear.",
+				"This browser cannot make the replica's sound, so there is nothing to hear. Carry on without listening (read_pattern shows what a pattern holds); mention it only if the user asked you to listen.",
 				'no sound here'
 			);
 		}
 		if (status.sound === 'off') {
 			return errorResult(
 				deviceReady(env)
-					? 'The OP-XY is connected, so the app plays no sound itself. To hear the virtual OP-XY, ask the user to switch on "sound on this computer" under the replica, then listen again.'
-					: "The app's sound is off: ask the user to switch sound on under the replica, then listen again.",
+					? 'The OP-XY is connected, so the app plays no sound itself. To hear the replica, ask the user to switch on "sound on this computer" under it, then listen again.'
+					: "The app's sound is off, so the user hears nothing either: tell them once to switch sound on under the replica. Meanwhile read_pattern shows what a pattern holds.",
 				'sound is off'
 			);
 		}
 		if (!status.playing) {
 			return errorResult(
-				'The virtual OP-XY is stopped, so there is nothing to hear. Start it with transport play (or ask the user to press play), then listen again.',
+				'The replica is stopped, so there is nothing to hear. Start it with transport play (or ask the user to press play), then listen again.',
 				'stopped: press play'
 			);
 		}
@@ -133,7 +133,7 @@ function setTempo(target: Target): number | null {
 }
 
 const sourceText = (target: Target) =>
-	target.kind === 'device' ? 'the OP-XY’s USB audio' : 'the virtual OP-XY';
+	target.kind === 'device' ? 'the OP-XY’s USB audio' : 'the replica';
 
 const recordFrom = (target: Target): ListenFrom =>
 	target.kind === 'device' ? 'device' : 'replica';
@@ -146,9 +146,7 @@ function notesFor(target: Target, analysis: ListenAnalysis): string[] {
 	if (target.kind === 'virtual') {
 		const status = target.virtual.status();
 		if (status.metronome) {
-			notes.push(
-				"The virtual OP-XY's metronome is on: its click is in what you heard, on every beat."
-			);
+			notes.push("The replica's metronome is on: its click is in what you heard, on every beat.");
 		}
 		if (!status.playing) notes.push('The transport stopped while listening.');
 	} else {
@@ -183,7 +181,7 @@ export const listenTool = defineTool({
 	kind: 'read',
 	strict: false,
 	description:
-		'Listen to what is playing for a few seconds and get back what it sounds like: loudness (LUFS), peaks and clipping, tone against pink noise, stereo width and a mono low end, tempo compared with the set tempo, timing and swing, where the low, mid and high hits sit in the beat, a key and rough chords, silence and dropouts, and flags worth acting on. Hears the connected OP-XY over its USB audio, else the virtual OP-XY in the browser (from chooses). The transport must be playing: if it is stopped this says so, and nothing is recorded. Changes nothing. Use it to check your own work, then revise and listen again.',
+		'Listen to what is playing for a few seconds and get back what it sounds like: loudness (LUFS), peaks and clipping, tone against pink noise, stereo width and a mono low end, tempo compared with the set tempo, timing and swing, where the low, mid and high hits sit in the beat, a key and rough chords, silence and dropouts, and flags worth acting on. Hears the connected OP-XY over its USB audio, else the replica in the browser (from chooses). The transport must be playing: if it is stopped this says so, and nothing is recorded. Changes nothing. Use it to check your own work, then revise and listen again.',
 	input: z.object({
 		seconds: z
 			.number()
@@ -201,7 +199,7 @@ export const listenTool = defineTool({
 			.enum(['device', 'virtual'])
 			.optional()
 			.describe(
-				'device: the connected OP-XY; virtual: the virtual OP-XY in the browser (default: the device when connected)'
+				'device: the connected OP-XY; virtual: the replica in the browser (default: the device when connected)'
 			)
 	}),
 	async run(input, ctx) {
@@ -303,7 +301,7 @@ export const listenTracksTool = defineTool({
 			.max(8)
 			.optional()
 			.describe(
-				'Instrument tracks to hear alone, 1–8 (default: those with notes on the virtual OP-XY; all eight on a device)'
+				'Instrument tracks to hear alone, 1–8 (default: those with notes on the replica; all eight on a device)'
 			),
 		seconds: z
 			.number()
@@ -367,7 +365,8 @@ export const listenTracksTool = defineTool({
 				await sleep(SETTLE_MS, ctx.env.timers, ctx.signal);
 				const recording = await target.host.record(recordFrom(target), seconds, ctx.signal);
 				const analysis = await target.host.analyze(recording, { expectedBpm });
-				takes.push({ track, name: trackName(target, track), analysis });
+				const name = trackName(target, track);
+				takes.push({ track, name, percussive: name === 'drum', analysis });
 			}
 		} catch (error) {
 			failure = error;
@@ -390,6 +389,10 @@ export const listenTracksTool = defineTool({
 			);
 		}
 		const summary = summarizeTracks(takes, { source: sourceText(target) });
+		const click =
+			target.kind === 'virtual' && target.virtual.status().metronome
+				? "The replica's metronome is on: its click is in every take, on every beat."
+				: null;
 		const numbers = summary.tracks.map((t) => ({
 			track: t.track,
 			flags: t.flags,
@@ -402,7 +405,12 @@ export const listenTracksTool = defineTool({
 			}
 		}));
 		return {
-			content: [summary.text, putBack, `numbers: ${JSON.stringify(numbers)}`].join('\n'),
+			content: [
+				summary.text,
+				...(click ? [click] : []),
+				putBack,
+				`numbers: ${JSON.stringify(numbers)}`
+			].join('\n'),
 			summary: restored
 				? 'heard the tracks; mutes not put back'
 				: `heard ${takes.length} track${takes.length === 1 ? '' : 's'} alone`,

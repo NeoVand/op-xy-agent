@@ -38,6 +38,8 @@ export interface VirtualNote {
 	readonly velocity: number;
 	/** In steps (1 = a sixteenth at track scale 1). */
 	readonly length: number;
+	/** On a drum track, the sound on the note's key ("kick 1", "closed hat 2"), when reading. */
+	readonly sound?: string;
 }
 
 /** A track's pattern as it stands. */

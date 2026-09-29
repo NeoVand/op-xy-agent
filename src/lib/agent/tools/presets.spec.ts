@@ -5,6 +5,8 @@ import type { SampleInput } from '$lib/core/presets';
 import { createConductorRegistry } from './index';
 import type { PresetInboxHost, ToolContext, ToolResult } from './define';
 import { makeKitTool } from './presets';
+import { createVirtualOpxy } from '$lib/app/virtual';
+import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 
 function inbox() {
 	const drafts: { name: string; samples: readonly SampleInput[] }[] = [];
@@ -50,6 +52,61 @@ describe('make_kit', () => {
 			[53, 'kick'],
 			[61, 'closed hat']
 		]);
+	});
+
+	it('also puts the kit on a track of the replica, which then plays its sounds', async () => {
+		const { host, drafts } = inbox();
+		const sim = new OpxySim();
+		const files = new Map<string, number>();
+		const virtual = createVirtualOpxy({
+			sim,
+			sound: {
+				available: true,
+				enabled: true,
+				preview: () => true,
+				samples: { setFile: (id, audio) => void files.set(id, audio.channels[0].length) }
+			}
+		});
+		const result = await makeKitTool.run(
+			makeKitTool.input.parse({ name: 'punch', style: '909', voices: [], track: 3 }),
+			{
+				toolCallId: 'toolu_k',
+				agent: 'conductor',
+				env: { presets: host, virtual }
+			} as unknown as ToolContext
+		);
+		expect(result.isError).toBeFalsy();
+		expect(JSON.parse(String(result.content))).toMatchObject({
+			kit: 'punch',
+			on_replica: { track: 3, keys: 24, engine_changed: true, audible: true }
+		});
+		// track 3 (prism in a new project) is a drum sampler now, its keys holding the kit
+		expect(sim.state.tracks[2].engine).toBe('drum');
+		const keys = sim.state.areas.sample.tracks[2].keys;
+		expect(keys.every((k) => k?.id.startsWith('kits/punch/'))).toBe(true);
+		expect(keys[0]?.name).toBe('53 909 kick.wav');
+		// a beat on it reads back as the kit's sounds
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 1, note: 53, velocity: 100, length: 1 }]
+		});
+		expect(virtual.readPattern(3).notes[0].sound).toBe('909 kick');
+		// and the browser has every sound's audio under its file's id
+		expect(files.size).toBe(24);
+		expect(files.get(keys[0]!.id)).toBe(drafts[0].samples[0].audio.channels[0].length);
+		// a drum track keeps its own key settings: only the sounds change
+		sim.state.tracks[0].drumKeys[0].tune = 5;
+		await makeKitTool.run(
+			makeKitTool.input.parse({ name: 'dust', style: 'lo-fi', voices: [], track: 1 }),
+			{
+				toolCallId: 'toolu_l',
+				agent: 'conductor',
+				env: { presets: host, virtual }
+			} as unknown as ToolContext
+		);
+		expect(sim.state.tracks[0].drumKeys[0].tune).toBe(5);
+		expect(sim.state.areas.sample.tracks[0].keys[0]?.id).toContain('kits/dust/');
 	});
 
 	it('says so when there is nothing to make or nowhere to leave it', async () => {

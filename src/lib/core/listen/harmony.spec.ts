@@ -7,7 +7,9 @@ import {
 	chordHints,
 	chromagram,
 	estimateKey,
+	keySpelling,
 	nameChord,
+	respellChord,
 	type ChordSpan
 } from './harmony';
 import { chord, noise, progression } from './signals';
@@ -106,6 +108,24 @@ describe('estimateKey', () => {
 		expect(k.runnerUp).not.toBe('C major');
 	});
 
+	it('spells a key as its signature does', () => {
+		const db = progression(
+			[
+				['Db3', 'F3', 'Ab3'],
+				['Gb3', 'Bb3', 'Db4'],
+				['Ab3', 'C4', 'Eb4'],
+				['Db3', 'F3', 'Ab3']
+			],
+			1,
+			SR
+		);
+		expect(estimateKey(chromagram([db], SR).total)).toMatchObject({
+			key: 'Db major',
+			tonic: 'Db',
+			pitchClass: 1
+		});
+	});
+
 	it('names no key for noise or silence', () => {
 		const n = estimateKey(chromagram([noise('pink', 4, SR, { seed: 9 })], SR).total);
 		expect(n === null || !n.clear).toBe(true);
@@ -160,5 +180,25 @@ describe('chords', () => {
 		expect(spans[0].start).toBe(0);
 		expect(chordHints(chromagram([new Float32Array(10)], SR), 0.5)).toEqual([]);
 		expect(nameChord(new Float64Array(12))).toEqual({ chord: 'N', score: 0 });
+	});
+});
+
+describe('spelling', () => {
+	it('writes sharps in sharp keys, flats in flat keys, the usual names in C and A minor', () => {
+		expect(keySpelling(4, 'major')[8]).toBe('G#'); // E major
+		expect(keySpelling(1, 'minor')[3]).toBe('D#'); // C# minor
+		expect(keySpelling(5, 'minor')[1]).toBe('Db'); // F minor
+		expect(keySpelling(3, 'major')[8]).toBe('Ab'); // Eb major
+		expect(keySpelling(0, 'major')).toBe(PITCH_CLASSES);
+		expect(keySpelling(9, 'minor')).toBe(PITCH_CLASSES);
+	});
+
+	it('respells the root of a chord and keeps its quality', () => {
+		const fMinor = keySpelling(5, 'minor');
+		expect(respellChord('C#', fMinor)).toBe('Db');
+		expect(respellChord('G#m7', fMinor)).toBe('Abm7');
+		expect(respellChord('Fm', fMinor)).toBe('Fm');
+		expect(respellChord('Ebsus4', keySpelling(4, 'major'))).toBe('D#sus4');
+		expect(respellChord('N', fMinor)).toBe('N');
 	});
 });

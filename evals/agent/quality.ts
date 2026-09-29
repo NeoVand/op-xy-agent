@@ -37,9 +37,11 @@ import { targetIds, tryParseKeys, type KeySequence } from '$lib/core/opxy';
 import { buildFrame } from '$lib/sim/frames';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { describeFrame } from '$lib/sim/screen/render';
+import type { SampleData } from '$lib/sound/samples';
 import { QUALITY_CASES, type Draft, type Outcome, type QualityCase } from './cases/quality';
 import { judgeAnswer, type Judgement } from './judge';
 import { anthropicKey } from './key';
+import { openEars, type Ears } from './render';
 
 // ─── results ────────────────────────────────────────────────────────────────────────────────────
 
@@ -139,15 +141,18 @@ async function environment(
 	c: QualityCase,
 	model: string,
 	apiKey: string,
-	manual: ManualSource
+	manual: ManualSource,
+	ears: Ears | null
 ): Promise<Env> {
 	const sim = new OpxySim();
 	c.setup?.(sim);
 	// the app's wiring: every replica event, the agent's animations included, reaches the simulator
 	const replica = new ReplicaState();
 	replica.observe((event) => sim.input(event));
-	// the browser's sound, as far as the agent can tell: on, and every preview is written down
+	// the browser's sound, as far as the agent can tell: on, every preview written down, and a made
+	// kit's audio taken in (as AppSound's sample store does), for the ears to play
 	const heard: { track: number; note: number; velocity: number; seconds: number }[] = [];
+	const files = new Map<string, SampleData>();
 	const virtual = createVirtualOpxy({
 		sim,
 		sound: {
@@ -156,7 +161,8 @@ async function environment(
 			preview(track, note, velocity, seconds) {
 				heard.push({ track: track + 1, note, velocity, seconds });
 				return true;
-			}
+			},
+			samples: { setFile: (id, audio) => void files.set(id, audio) }
 		}
 	});
 	const screen: ScreenReader = {
@@ -188,6 +194,7 @@ async function environment(
 		virtual,
 		guide: { start: (goal) => void guided.push(goal), stop: () => {} },
 		presets: { put: (draft) => drafts.push(draft), href: '/presets' },
+		listen: ears?.host(sim, files) ?? null,
 		manual,
 		store,
 		autoApprove: true,
@@ -469,9 +476,10 @@ async function runCase(
 		manual: ManualSource;
 		bundle: string;
 		units: ReadonlySet<string>;
+		ears: Ears | null;
 	}
 ): Promise<CaseResult> {
-	const env = await environment(c, opts.model, opts.apiKey, opts.manual);
+	const env = await environment(c, opts.model, opts.apiKey, opts.manual, opts.ears);
 	const { conductor } = env;
 	const trace: TraceCall[] = [];
 	const open = new Map<string, number>();
@@ -716,6 +724,9 @@ export async function main(argv: readonly string[]): Promise<void> {
 		(c) => (!ids || ids.includes(c.id)) && (!category || c.category === category)
 	);
 	const jobs = cases.flatMap((c) => Array.from({ length: repeat }, (_, run) => ({ c, run })));
+	// the replica's sound for listen (quality.mjs serves the page); without it listening fails
+	const earsUrl = argv.includes('--no-ears') ? undefined : process.env.EVAL_EARS_URL;
+	const ears = earsUrl ? await openEars(earsUrl) : null;
 	await warmJudge(new Anthropic({ apiKey }), judge, bundle);
 	console.log(`${jobs.length} runs of ${cases.length} cases, conductor ${model}, judge ${judge}`);
 	// the first run alone writes the agent's cached prompt (tools, role, manual); the rest read it
@@ -728,11 +739,12 @@ export async function main(argv: readonly string[]): Promise<void> {
 		return r;
 	};
 	const warmed = await pool(first, 1, async ({ c, run }) =>
-		report(await runCase(c, run, { model, judge, apiKey, manual, bundle, units }))
+		report(await runCase(c, run, { model, judge, apiKey, manual, bundle, units, ears }))
 	);
 	const rest = await pool(jobs.slice(first.length), concurrency, async ({ c, run }) => {
-		return report(await runCase(c, run, { model, judge, apiKey, manual, bundle, units }));
+		return report(await runCase(c, run, { model, judge, apiKey, manual, bundle, units, ears }));
 	});
+	await ears?.close();
 	const results = [...warmed, ...rest];
 	const card = scorecard(results, model, judge);
 	console.log('\n' + card);

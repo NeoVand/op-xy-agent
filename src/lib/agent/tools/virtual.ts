@@ -16,8 +16,7 @@ import {
 	type ToolResult
 } from './define';
 
-const NO_VIRTUAL =
-	'The virtual OP-XY is not available here (no replica in this session), so nothing was written.';
+const NO_VIRTUAL = 'There is no replica in this session, so nothing was written.';
 
 /** Track scales the OP-XY offers (bar + a black key). */
 const SCALES = ['1', '2', '3', '4', '5', '6', '7', '8', '16', '1/2'] as const;
@@ -46,10 +45,18 @@ function virtualOf(env: AgentEnvironment) {
 
 /** A pattern as the model reads it: compact, notes grouped by step. */
 function patternView(p: VirtualPattern) {
-	const byStep = new Map<number, { note: number; velocity: number; length: number }[]>();
+	const byStep = new Map<
+		number,
+		{ note: number; sound?: string; velocity: number; length: number }[]
+	>();
 	for (const n of p.notes) {
 		const list = byStep.get(n.step) ?? [];
-		list.push({ note: n.note, velocity: n.velocity, length: n.length });
+		list.push({
+			note: n.note,
+			...(n.sound ? { sound: n.sound } : {}),
+			velocity: n.velocity,
+			length: n.length
+		});
 		byStep.set(n.step, list);
 	}
 	return {
@@ -73,7 +80,7 @@ export const writePatternTool = defineTool({
 	kind: 'mutate',
 	approval: 'auto',
 	description:
-		'Program one pattern of one track on the virtual OP-XY (the replica on screen, which plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held and makes it the pattern the track plays. Up to 120 notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76 (53 kick, 54–55 snares, …). The real OP-XY cannot receive patterns over MIDI, so this always writes to the virtual one, even with a device connected. Undo restores the previous pattern. Use write_arrangement for scenes and the song, transport to hear it.',
+		'Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held and makes it the pattern the track plays. Up to 120 notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. Undo restores the previous pattern. Use write_arrangement for scenes and the song, transport to hear it.',
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16 (1–8 instrument, 9–16 auxiliary)'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default 1)'),
@@ -164,7 +171,7 @@ export const writePatternTool = defineTool({
 				notes
 			});
 			return jsonResult(
-				{ written: patternView(written), note: 'On the virtual OP-XY (the replica on screen).' },
+				{ written: patternView(written), note: 'On the replica.' },
 				`track ${input.track} pattern ${written.pattern}: ${written.notes.length} notes`,
 				{ applied: true, after: written.notes.length }
 			);
@@ -181,7 +188,7 @@ export const readPatternTool = defineTool({
 	label: 'read pattern',
 	kind: 'read',
 	description:
-		'Read one pattern of one track on the virtual OP-XY (the replica on screen): bars, length, track scale and every note by step. Default: the pattern the track plays now. Changes nothing.',
+		'Read one pattern of one track on the replica: bars, length, track scale and every note by step. Default: the pattern the track plays now. Changes nothing.',
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default: the one playing)')
@@ -223,7 +230,7 @@ export const writeArrangementTool = defineTool({
 	kind: 'mutate',
 	approval: 'auto',
 	description:
-		'Set scenes and the song on the virtual OP-XY (the replica on screen). A scene says which pattern each track plays (tracks left out play pattern 1; patterns missing on a track are added empty); the song is the order scenes play in (up to 96 entries) and whether it loops. transport play then plays the song from its first scene when it has more than one entry. Write the patterns first with write_pattern. Undo restores the previous scenes and song.',
+		'Set scenes and the song on the replica. A scene says which pattern each track plays (tracks left out play pattern 1; patterns missing on a track are added empty); the song is the order scenes play in (up to 96 entries) and whether it loops. transport play then plays the song from its first scene when it has more than one entry. Write the patterns first with write_pattern. Undo restores the previous scenes and song.',
 	input: z.object({
 		scenes: z
 			.array(
@@ -289,7 +296,7 @@ export const writeArrangementTool = defineTool({
 				song: input.song ? { order: input.song.scenes, loop: input.song.loop } : undefined
 			});
 			return jsonResult(
-				{ arrangement: result, note: 'On the virtual OP-XY (the replica on screen).' },
+				{ arrangement: result, note: 'On the replica.' },
 				`${result.scenes.length} scene${result.scenes.length === 1 ? '' : 's'}, song of ${result.song.order.length}`,
 				{ applied: true }
 			);

@@ -84,7 +84,7 @@ function virtualTarget(env: AgentEnvironment): VirtualOpxy | null {
 }
 
 const ON_VIRTUAL =
-	'No OP-XY is connected, so this happened on the virtual OP-XY on screen (the browser plays it).';
+	'No OP-XY is connected, so this happened on the replica next to the chat (it plays in the browser).';
 
 /** Sends one message through the transport; a refusal becomes a readable error. */
 function send(stack: DeviceStack, ctx: ToolContext, message: MidiMessage): void {
@@ -120,7 +120,7 @@ export const deviceStatusTool = defineTool({
 	label: 'device status',
 	kind: 'read',
 	description:
-		'Read what the app knows about the OP-XY right now: whether it is connected, firmware, play state and who reported it, whether the device sends clock (and the measured tempo), and the sent-state cache (tempo, selected track and mutes as this app last sent them; the user may have changed them by hand). Also the virtual OP-XY on screen: tempo, transport, tracks (engine, patterns, notes, mutes), scenes and song, and whether the browser sound is on. Sends nothing.',
+		'Read what the app knows about the OP-XY right now: whether it is connected, firmware, play state and who reported it, whether the device sends clock (and the measured tempo), and the sent-state cache (tempo, selected track and mutes as this app last sent them; the user may have changed them by hand). Also the replica on screen: tempo, transport, tracks (engine, patterns, notes, mutes), scenes and song, and whether the browser sound is on. Sends nothing.',
 	input: z.object({}),
 	async run(_input, ctx) {
 		const s = deviceSnapshot(ctx.env.device);
@@ -149,7 +149,7 @@ export const deviceStatusTool = defineTool({
 		const summary = s.connected
 			? `connected, os ${s.firmware ?? 'unknown'}, ${s.playState}`
 			: ctx.env.virtual
-				? 'no op-xy connected: the virtual one plays'
+				? 'no op-xy connected: the replica plays'
 				: 'no op-xy connected';
 		return jsonResult(data, summary);
 	}
@@ -169,7 +169,7 @@ export const transportTool = defineTool({
 	approval: 'auto',
 	device: true,
 	description:
-		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the virtual OP-XY on screen (its song from the first scene, when the song has more than one entry).',
+		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the replica on screen (its song from the first scene, when the song has more than one entry).',
 	input: z.object({
 		action: z.enum(['play', 'stop']).describe('play starts the sequencer, stop stops it')
 	}),
@@ -272,7 +272,7 @@ export const setTempoTool = defineTool({
 	kind: 'mutate',
 	device: true,
 	description:
-		'Set the project tempo on the OP-XY (CC80). Changes the project (autosave keeps it), so the user approves it in the app. The device steps in 2 BPM: odd tempos round to the nearest even BPM, and the result says which tempo was sent. With no OP-XY connected it sets the virtual OP-XY on screen, to the tenth of a BPM.',
+		'Set the project tempo on the OP-XY (CC80). Changes the project (autosave keeps it), so the user approves it in the app. The device steps in 2 BPM: odd tempos round to the nearest even BPM, and the result says which tempo was sent. With no OP-XY connected it sets the replica on screen, to the tenth of a BPM.',
 	input: z.object({
 		bpm: z.number().min(CC80_TEMPO_RANGE.min).max(CC80_TEMPO_RANGE.max).describe('Tempo in BPM')
 	}),
@@ -369,7 +369,7 @@ export const selectTrackTool = defineTool({
 	kind: 'ui',
 	device: true,
 	description:
-		'Select a track on the OP-XY (CC102), the way pressing its track key does: 1–8 instrument tracks, 9–16 auxiliary tracks. Changes what the device shows, not the project. The device does not report selections made by hand. With no OP-XY connected it selects the track on the virtual OP-XY on screen.',
+		'Select a track on the OP-XY (CC102), the way pressing its track key does: 1–8 instrument tracks, 9–16 auxiliary tracks. Changes what the device shows, not the project. The device does not report selections made by hand. With no OP-XY connected it selects the track on the replica on screen.',
 	input: z.object({ track: z.int().min(1).max(16).describe('Track number') }),
 	async run(input, ctx) {
 		const where = whereTo(ctx.env);
@@ -420,7 +420,7 @@ export const muteTrackTool = defineTool({
 	kind: 'mutate',
 	device: true,
 	description:
-		"Mute or unmute one track on the OP-XY (CC9 on the track's channel). Changes the project, so the user approves it in the app. Mutes stop new notes; tails keep ringing. The device never reports mutes made by hand, so the previous state is known only if this app set it. With no OP-XY connected it mutes the track on the virtual OP-XY on screen.",
+		"Mute or unmute one track on the OP-XY (CC9 on the track's channel). Changes the project, so the user approves it in the app. Mutes stop new notes; tails keep ringing. The device never reports mutes made by hand, so the previous state is known only if this app set it. With no OP-XY connected it mutes the track on the replica on screen.",
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track number'),
 		muted: z.boolean().describe('true mutes, false unmutes')
@@ -553,7 +553,7 @@ export const setSoundTool = defineTool({
 	kind: 'mutate',
 	device: true,
 	description:
-		"Set one sound parameter of an instrument track on the connected OP-XY over MIDI (its CC on the track's channel): engine p1–p4 (the four M1 values; synth engines only, the samplers ignore them), the amp and filter envelopes, cutoff, resonance, env amount, key tracking, the FX I send, the track's mix level and pan. Values as the screen shows them, 0–99 (pan −100 left … 100 right). Changes the project's sound, so the user approves it. The device never reports parameter values: what it had before is known only if this app set it. Only for a connected OP-XY; for the virtual OP-XY use plan_steps with show, which also shows the keys.",
+		"Set one sound parameter of an instrument track on the connected OP-XY over MIDI (its CC on the track's channel): engine p1–p4 (the four M1 values; synth engines only, the samplers ignore them), the amp and filter envelopes, cutoff, resonance, env amount, key tracking, the FX I send, the track's mix level and pan. Values as the screen shows them, 0–99 (pan −100 left … 100 right). Changes the project's sound, so the user approves it. The device never reports parameter values: what it had before is known only if this app set it. Only for a connected OP-XY; for the replica use plan_steps with show, which also shows the keys.",
 	input: z.object({
 		track: z.int().min(1).max(8).describe('Instrument track 1–8'),
 		param: z.enum(SOUND_PARAM_NAMES).describe('Which parameter'),
@@ -584,7 +584,7 @@ export const setSoundTool = defineTool({
 		const stack = ctx.env.device;
 		if (!stack || stack.session.phase !== 'ready') {
 			return errorResult(
-				'No OP-XY is connected, so nothing was sent. To set it on the virtual OP-XY, use plan_steps with show.',
+				'No OP-XY is connected, so nothing was sent. To set it on the replica, use plan_steps with show.',
 				'no op-xy connected'
 			);
 		}
@@ -659,7 +659,7 @@ export const playNotesTool = defineTool({
 	// room in the API's grammar size limit for the strict tools (evals/agent/grammar.mjs): a preview
 	// that fails zod is retried at little cost
 	strict: false,
-	description: `Play a short preview on one instrument track of the OP-XY: a note, a chord or a little melody, paced in real time and always ending with note-offs. At most ${MAX_PREVIEW_SECONDS} seconds and 64 steps. On drum tracks (1 and 2 in a fresh project) the drum sounds sit on notes 53–76. Audible only: it records nothing unless the user is recording. With no OP-XY connected the browser plays it with the virtual OP-XY's sound for that track (the app's sound switch must be on).`,
+	description: `Play a short preview on one instrument track of the OP-XY: a note, a chord or a little melody, paced in real time and always ending with note-offs. At most ${MAX_PREVIEW_SECONDS} seconds and 64 steps. On drum tracks (1 and 2 in a fresh project) the drum sounds sit on notes 53–76. Audible only: it records nothing unless the user is recording. With no OP-XY connected the browser plays it with the replica's sound for that track (the app's sound switch must be on).`,
 	input: z.object({
 		track: z.int().min(1).max(8).describe('Instrument track 1–8 (plays on its MIDI channel)'),
 		bpm: z

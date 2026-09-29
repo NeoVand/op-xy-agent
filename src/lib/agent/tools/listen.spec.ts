@@ -148,7 +148,7 @@ describe('listen on the virtual OP-XY', () => {
 			{ source: 'replica', seconds: LISTEN_SECONDS, audible: [1, 3, 5] }
 		]);
 		const text = String(result.content);
-		expect(text).toMatch(/^heard 8 s of the virtual OP-XY \(16 kHz stereo\)/);
+		expect(text).toMatch(/^heard 8 s of the replica \(16 kHz stereo\)/);
 		expect(text).toMatch(/matches the set 120/);
 		expect(text).toMatch(/^numbers: \{/m);
 		expect(result.summary).toMatch(/^heard 8 s: /);
@@ -214,7 +214,7 @@ describe('listen_tracks on the virtual OP-XY', () => {
 		expect(host.records.map((r) => r.audible)).toEqual([[1], [3], [5]]);
 		expect(muted(virtual)).toEqual(before);
 		const text = String(result.content);
-		expect(text).toMatch(/^heard 3 tracks alone, one at a time, from the virtual OP-XY/);
+		expect(text).toMatch(/^heard 3 tracks alone, one at a time, from the replica/);
 		expect(text).toMatch(/^T1 \(drum\): /m);
 		expect(text).toMatch(/Every mute was put back as it was\./);
 		expect(result.summary).toBe('heard 3 tracks alone');

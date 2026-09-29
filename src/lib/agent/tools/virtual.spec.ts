@@ -148,6 +148,30 @@ describe('write_pattern', () => {
 			{ step: 3, notes: [{ note: 67, velocity: 100, length: 1 }] }
 		]);
 	});
+
+	it('names the sound on each drum key it reads back', async () => {
+		const { run } = setup();
+		const written = json(
+			await run(writePatternTool, {
+				track: 1,
+				notes: [
+					{ step: 1, note: 53 },
+					{ step: 1, note: 62 },
+					{ step: 5, note: 55 }
+				]
+			})
+		);
+		expect(written.written.steps).toEqual([
+			{
+				step: 1,
+				notes: [
+					{ note: 53, sound: 'kick 1', velocity: 100, length: 1 },
+					{ note: 62, sound: 'closed hat 2', velocity: 100, length: 1 }
+				]
+			},
+			{ step: 5, notes: [{ note: 55, sound: 'snare 1', velocity: 100, length: 1 }] }
+		]);
+	});
 });
 
 describe('write_arrangement', () => {
@@ -244,7 +268,7 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		const { run } = setup();
 		await run(writePatternTool, { track: 3, notes: [{ step: 1, note: 60 }] });
 		const status = await run(deviceStatusTool, {});
-		expect(status.summary).toBe('no op-xy connected: the virtual one plays');
+		expect(status.summary).toBe('no op-xy connected: the replica plays');
 		expect(json(status).virtual).toMatchObject({ bpm: 120, playing: false, sound: 'unavailable' });
 		expect(json(status).virtual.tracks[2]).toMatchObject({ track: 3, engine: 'prism', notes: 1 });
 	});

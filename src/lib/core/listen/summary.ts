@@ -497,6 +497,8 @@ export interface TrackTake {
 	readonly track: number;
 	/** The track's engine or name ("drum", "prism"). */
 	readonly name: string;
+	/** A drum track: no key or chords for it (what it "plays" is noise to the chord finder). */
+	readonly percussive?: boolean;
 	readonly analysis: ListenAnalysis;
 }
 
@@ -548,8 +550,9 @@ export function summarizeTracks(
 					`${a.rhythm.onsets} onsets${g ? `, grid ${r1(g.tightnessMs)} ms rms` : ''}${g?.swing !== null && g?.swing !== undefined && Math.abs(g.swing - 50) >= 2 ? `, swing ${r1(g.swing)} %` : ''}`
 				);
 			}
-			const chords = a.harmony?.chords.filter((c) => c.chord !== 'N') ?? [];
-			if (a.harmony?.key?.clear) parts.push(`key ${a.harmony.key.key}`);
+			const harmony = take.percussive ? null : a.harmony;
+			const chords = harmony?.chords.filter((c) => c.chord !== 'N') ?? [];
+			if (harmony?.key?.clear) parts.push(`key ${harmony.key.key}`);
 			if (chords.length > 0)
 				parts.push(
 					`chords ${chords

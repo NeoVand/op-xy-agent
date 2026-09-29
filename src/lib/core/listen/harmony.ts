@@ -39,6 +39,32 @@ export const PITCH_CLASSES = [
 /** A pitch class's name. */
 export type PitchClass = (typeof PITCH_CLASSES)[number];
 
+const SHARP_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
+const FLAT_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
+/** Tonics (pitch classes) whose key signature has sharps; the other keys but C major and A minor have flats. */
+const SHARP_KEYS = { major: new Set([7, 2, 9, 4, 11, 6]), minor: new Set([4, 11, 6, 1, 8]) };
+const PLAIN_KEYS = { major: 0, minor: 9 };
+
+/**
+ * The names a key spells the twelve pitch classes with, as its key signature does: sharps in G,
+ * D, A, E, B and F# major (E, B, F#, C# and G# minor), flats in F, Bb, Eb, Ab and Db major (D, G,
+ * C, F, Bb and Eb minor), the usual names in C major and A minor. So F minor's chords are Db and
+ * Ab, not C# and G#.
+ */
+export function keySpelling(tonic: number, mode: 'major' | 'minor'): readonly string[] {
+	if (tonic === PLAIN_KEYS[mode]) return PITCH_CLASSES;
+	return SHARP_KEYS[mode].has(tonic) ? SHARP_NAMES : FLAT_NAMES;
+}
+
+/** A chord's name ("C#m7") with its root spelled from `names` ("Dbm7"); "N" stays. */
+export function respellChord(chord: string, names: readonly string[]): string {
+	const m = /^([A-G])([#b]?)(.*)$/.exec(chord);
+	if (!m) return chord;
+	const natural = PITCH_CLASSES.indexOf(m[1] as PitchClass);
+	const pc = (natural + (m[2] === '#' ? 1 : m[2] === 'b' ? 11 : 0)) % 12;
+	return `${names[pc]}${m[3]}`;
+}
+
 /** The range spectral peaks are taken from, hertz. */
 const LOW_HZ = 50;
 const HIGH_HZ = 5000;
@@ -167,9 +193,11 @@ function correlation(x: ArrayLike<number>, y: ArrayLike<number>): number {
 
 /** A key hint. */
 export interface KeyEstimate {
-	/** "A minor", "Eb major". */
+	/** "A minor", "Eb major", spelled as the key signature does ("Db major", not "C# major"). */
 	readonly key: string;
-	readonly tonic: PitchClass;
+	/** The tonic's name ("Db") and pitch class (1). */
+	readonly tonic: string;
+	readonly pitchClass: number;
 	readonly mode: 'major' | 'minor';
 	/** How well its profile fits (Pearson r, −1…1). */
 	readonly correlation: number;
@@ -198,11 +226,13 @@ export function estimateKey(chroma: ArrayLike<number>): KeyEstimate | null {
 	fits.sort((a, b) => b.r - a.r);
 	const [best, next] = fits;
 	if (best.r < MIN_KEY_CORRELATION) return null;
-	const name = (f: (typeof fits)[number]) => `${PITCH_CLASSES[f.tonic]} ${f.mode}`;
+	const tonic = (f: (typeof fits)[number]) => keySpelling(f.tonic, f.mode)[f.tonic];
+	const name = (f: (typeof fits)[number]) => `${tonic(f)} ${f.mode}`;
 	const margin = best.r - next.r;
 	return {
 		key: name(best),
-		tonic: PITCH_CLASSES[best.tonic],
+		tonic: tonic(best),
+		pitchClass: best.tonic,
 		mode: best.mode,
 		correlation: best.r,
 		runnerUp: name(next),

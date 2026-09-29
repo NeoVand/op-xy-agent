@@ -25,7 +25,7 @@ const goalInput = z.object({
 	show: z
 		.boolean()
 		.describe(
-			'true: also animate the steps on the replica, which leaves the virtual OP-XY there (when the user wants to be shown, or asks you to set it up); false: only plan'
+			'true: also animate the steps on the replica, which leaves it there (when the user wants to be shown, or asks you to set it up); false: only plan'
 		),
 	guide: z
 		.boolean()
@@ -210,7 +210,7 @@ export const planStepsTool = defineTool({
 	// its optional goal fields would push the strict grammar over the API's size limit
 	strict: false,
 	description:
-		'The exact steps from where the replica stands now to a page ("the filter page of track 3", "mix M2", "the tempo page", "track 4\'s player") or to a parameter set to a value ("track 3 cutoff 40", "tempo 128", "amp release 60"), tried on a copy of the simulator first so they are known to work. Each step is a key combo in the key grammar; turns carry the number of detents and the direction; each step says what the screen shows after it. Use it for every "how do I get to / set …" question instead of working the keys out yourself. With show, it also animates the steps on the replica (the virtual OP-XY ends up there, as if the user had pressed the keys); nothing is sent to a connected device.',
+		'The exact steps from where the replica stands now to a page ("the filter page of track 3", "mix M2", "the tempo page", "track 4\'s player") or to a parameter set to a value ("track 3 cutoff 40", "tempo 128", "amp release 60"), tried on a copy of the simulator first so they are known to work. Each step is a key combo in the key grammar; turns carry the number of detents and the direction; each step says what the screen shows after it. Use it for every "how do I get to / set …" question instead of working the keys out yourself. With show, it also animates the steps on the replica (it ends up there, as if the user had pressed the keys); nothing is sent to a connected device.',
 	input: goalInput,
 	async run(input, ctx) {
 		const virtual = ctx.env.virtual;

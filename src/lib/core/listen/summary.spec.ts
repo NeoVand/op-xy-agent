@@ -193,4 +193,14 @@ describe('summarizeTracks', () => {
 		expect(s.tracks.map((t) => t.track)).toEqual([1, 3, 5, 6]);
 		expect(s.tracks[3].flags).toEqual(['silent']);
 	});
+
+	it('names no key or chords for a drum track', () => {
+		const pad = progression([['A3', 'C4', 'E4']], 4, SR, { amplitude: 0.1 });
+		const analysis = analyzeAudio([pad], SR);
+		expect(analysis.harmony?.chords.some((c) => c.chord !== 'N')).toBe(true);
+		const tonal = summarizeTracks([{ track: 1, name: 'axis', analysis }]);
+		const drum = summarizeTracks([{ track: 1, name: 'drum', percussive: true, analysis }]);
+		expect(tonal.text).toMatch(/chords Am/);
+		expect(drum.text).not.toMatch(/chords|key/);
+	});
 });

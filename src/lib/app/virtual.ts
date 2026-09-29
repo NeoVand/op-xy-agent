@@ -59,6 +59,9 @@ export class VirtualOpxyError extends Error {
 
 const clampInt = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(v)));
 
+/** A drum key's sound from its file's name: "kick 1.wav" → "kick 1", a made kit's "53 kick.wav" → "kick". */
+const soundName = (file: string) => file.replace(/\.(wav|aiff?)$/i, '').replace(/^\d+\s+/, '');
+
 /** Track 1–16 → the simulator's index 0–15 (0–7 instrument, 8–15 auxiliary). */
 function trackIndex(track: number): number {
 	if (!Number.isInteger(track) || track < 1 || track > 16) {
@@ -90,13 +93,19 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			throw new VirtualOpxyError(`there is no pattern ${pattern} (1–16)`);
 		}
 		const p = seq.patterns[index] ?? emptyPattern();
+		// a drum track's keys each hold a sound: say which, so a beat reads as kicks and hats
+		const keys = t < 8 && s.tracks[t].engine === 'drum' ? s.areas.sample.tracks[t].keys : null;
 		const notes = p.steps.flatMap((step, i) =>
-			step.notes.map((n) => ({
-				step: i + 1,
-				note: n.note,
-				velocity: n.velocity,
-				length: n.length
-			}))
+			step.notes.map((n) => {
+				const file = keys?.[n.note - FIRST_NOTE];
+				return {
+					step: i + 1,
+					note: n.note,
+					velocity: n.velocity,
+					length: n.length,
+					...(file ? { sound: soundName(file.name) } : {})
+				};
+			})
 		);
 		return {
 			track,

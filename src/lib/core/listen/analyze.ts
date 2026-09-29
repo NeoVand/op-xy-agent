@@ -5,7 +5,15 @@
  * so it crosses a worker's `postMessage` and goes into the agent's JSON as it is.
  */
 import { ListenError } from './errors';
-import { chordHints, chromagram, estimateKey, type ChordSpan, type KeyEstimate } from './harmony';
+import {
+	chordHints,
+	chromagram,
+	estimateKey,
+	keySpelling,
+	respellChord,
+	type ChordSpan,
+	type KeyEstimate
+} from './harmony';
 import { levelStats, type LevelStats } from './level';
 import { detectOnsets, type OnsetBand } from './onsets';
 import { silenceStats, type SilenceStats } from './silence';
@@ -120,6 +128,12 @@ export function analyzeAudio(
 		? chordHints(chroma, 60 / grid.bpm, grid.phase)
 		: chordHints(chroma, CHORD_SECONDS);
 
+	// chords spelled the way the key is written (F minor's Db, not C#)
+	const key = estimateKey(chroma.total);
+	const names = key ? keySpelling(key.pitchClass, key.mode) : null;
+	const spelled = names
+		? chords.map((c) => ({ ...c, chord: respellChord(c.chord, names) }))
+		: chords;
 	return {
 		...base,
 		spectrum: spectrumStats(channels, sampleRate),
@@ -131,6 +145,6 @@ export function analyzeAudio(
 			grid,
 			drums
 		},
-		harmony: { key: estimateKey(chroma.total), chords }
+		harmony: { key, chords: spelled }
 	};
 }
