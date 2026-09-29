@@ -139,6 +139,15 @@ describe('the computer keyboard as the OP-XY’s keys', () => {
 		expect(replica.isPressed('keyboard.fs4')).toBe(true);
 	});
 
+	it('lets a key typed into a field go to the field, shift or not', () => {
+		const { replica, keys } = setup();
+		replica.press('key.shift', 'keyboard');
+		expect(keys.keydown(down('Digit3', { typing: true }))).toBe(false);
+		expect(keys.keydown(down('KeyB', { typing: true }))).toBe(false);
+		expect(keys.keyup({ code: 'Digit3' })).toBe(false);
+		expect(replica.pressed).toEqual(['key.shift']);
+	});
+
 	it('names each key’s computer keys for aria-keyshortcuts and hints', () => {
 		expect(COMPUTER_KEYS['keyboard.f3']).toBe('Z');
 		expect(COMPUTER_KEYS['keyboard.fs3']).toBe('S Shift+1');
