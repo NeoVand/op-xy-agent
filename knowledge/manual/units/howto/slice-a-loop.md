@@ -81,6 +81,8 @@ procedures:
   - id: slice
     goal: Cut the loop into sixteen even slices
     steps:
+      - keys: sample
+        note: leave the record page for the drum page first; on the record page the next combo records again
       - keys: key E5 + M1
         note: hold the loop's key; the slicer opens on it
       - keys: turn E1

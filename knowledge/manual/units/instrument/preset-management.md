@@ -52,6 +52,8 @@ procedures:
         note: highlight the preset
       - keys: M1
         note: cut
+      - keys: click E1
+        note: the category view, whose entries are the folders (on OS 1.1.33 the browser opens by engine)
       - keys: turn E1
         note: go to the target folder; the guide does not say how nested folders are entered
       - keys: M2

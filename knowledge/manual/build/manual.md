@@ -640,7 +640,7 @@ current · OS ≥ 1.0.9 · changed in 1.0.38 · guide v1.1.15
 Also called: live record, real-time recording, overdub, latch recording, count-in
 Where: modes instrument, auxiliary
 
-`record + play` arms recording, which begins with your first note; during playback, hold `record` to overdub or press `record + play` to latch recording. `record + play → play` adds a count-in.
+`record + play` arms recording, which begins with your first note; during playback, hold `record` to overdub or press `record + play` to latch recording. Holding `record` and pressing `play` twice (`record + play → + play`) adds a count-in.
 
 Arming means nothing runs until your first note, so a take starts exactly on the downbeat. Once a
 pattern loops, holding `record` layers new notes on each pass. Live takes are pulled onto the grid by
@@ -653,7 +653,7 @@ Facts:
 - While a pattern plays, holding `record` records into it until you let go. [#overdub] [s1]
 - Pressing `record + play` during playback latches recording on without holding `record`. [#latch] [s1]
 - Encoder moves made while recording are stored per step, like parameter locks; `bar + turn E4` smooths them. [#automation] [s1]
-- `record + play → play` plays a count-in before recording starts. [#count-in] (since 1.0.38) [s1]
+- Holding `record`, pressing `play`, then `play` again (`record + play → + play`) plays a count-in before recording starts; `record` stays down throughout. [#count-in] (since 1.0.38) [s1]
 - A take longer than the pattern wraps round and plays over itself, so lengthen the pattern first. [#too-long] [s2]
 - Notes arriving over MIDI while recording is armed land in the pattern too, according to community test tools. [#midi-in] (community) [s3]
 
@@ -666,7 +666,7 @@ Procedures:
   Needs: the pattern is playing
   1. `record + keys`
 - Record with a count-in [#count-in] (since 1.0.38) [s1]
-  1. `record + play → play`
+  1. `record + play → + play` — keep record down while you press play the second time
 
 Related: [sequencer.bar-menu], [sequencer.parameter-locks], [sequencer.bars-and-length]
 
@@ -2454,8 +2454,9 @@ Procedures:
   Needs: the preset browser is open
   1. `turn E2` — highlight the preset
   2. `M1` — cut
-  3. `turn E1` — go to the target folder; the guide does not say how nested folders are entered
-  4. `M2` — paste
+  3. `click E1` — the category view, whose entries are the folders (on OS 1.1.33 the browser opens by engine)
+  4. `turn E1` — go to the target folder; the guide does not say how nested folders are entered
+  5. `M2` — paste
 - Create a preset folder [#new-folder] (since 1.1.15) [s1]
   Needs: the preset browser is open
   1. `shift + M1`
@@ -2490,7 +2491,7 @@ Procedures:
   1. `Tn + M4`
 - Duplicate one track's sound onto another track [#copy] [s1]
   1. `Tn + M2` — hold the source track's key
-  2. `Tn + M3` — hold the destination track's key
+  2. `Tm + M3` — hold the destination track's key
 
 Related: [instrument.save-to-same-snapshot], [instrument.preset-browser], [instrument.preset-management]
 
@@ -4054,9 +4055,12 @@ Facts:
 - Presumably new projects then start from the default template; the changelog gives no details. [#default-meaning] (since 1.1.17) (derived) [s4]
 
 Procedures:
-- Start from a template [#load] [s1]
+- Start from a template [#load] (derived) [s1]
   1. `shift + project` — the templates folder sits next to the factory and user projects
-  2. `M1` — loads the selected template
+  2. `turn E1…E4` — select the templates folder
+  3. `click E1` — a folder opens with a click of any encoder
+  4. `turn E1…E4` — select the template
+  5. `M1` — loads the selected template
 
 Related: [project.projects-folder], [project.project-view]
 
@@ -4369,6 +4373,7 @@ Procedures:
   4. `turn E3` — both
   Result: `play` and `stop` now send start and stop, and clock ticks run continuously.
 - Leave the system settings [#leave] [s1]
+  Needs: the system settings are open
   1. `M1`
   Result: Back on the com page.
 
@@ -4494,6 +4499,7 @@ Procedures:
   1. `com → M2`
   2. `shift + turn E1` — the channel your software listens on
 - Leave controller mode [#exit] [s1]
+  Needs: controller mode is on
   1. `shift + com`
 
 Parameters:
@@ -5537,10 +5543,11 @@ Procedures:
   5. `hold M1` — start the loop playing, and let go once it has played through
   Result: E5 holds the loop; `M2` plays the take back.
 - Cut the loop into sixteen even slices [#slice] (derived) [s1]
-  1. `key E5 + M1` — hold the loop's key; the slicer opens on it
-  2. `turn E1` — even
-  3. `turn E4` — sixteen slices
-  4. `M4` — done (on the replica; press the key your screen labels done) {set even slices = 16 (area sample, track 1, key E5)}
+  1. `sample` — leave the record page for the drum page first; on the record page the next combo records again
+  2. `key E5 + M1` — hold the loop's key; the slicer opens on it
+  3. `turn E1` — even
+  4. `turn E4` — sixteen slices
+  5. `M4` — done (on the replica; press the key your screen labels done) {set even slices = 16 (area sample, track 1, key E5)}
   Result: Sixteen keys play the loop's sixteenths in order, each cutting off the one before; E5 still plays the whole loop.
 
 Related: [sampler.slicing], [sampler.sampling], [sampler.drum-sampler], [howto.load-samples]

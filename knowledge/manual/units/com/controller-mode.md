@@ -45,6 +45,7 @@ procedures:
     source: https://teenage.engineering/guides/op-xy/com#midi-controller-moder
   - id: exit
     goal: Leave controller mode
+    preconditions: [controller mode is on]
     steps:
       - keys: shift + com
     source: https://teenage.engineering/guides/op-xy/com#midi-controller-moder

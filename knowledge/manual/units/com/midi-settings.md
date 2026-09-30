@@ -117,6 +117,7 @@ procedures:
     verified_on: '1.1.33'
   - id: leave
     goal: Leave the system settings
+    preconditions: [the system settings are open]
     steps:
       - keys: M1
     result: Back on the com page.

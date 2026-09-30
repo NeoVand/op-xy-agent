@@ -954,6 +954,20 @@ export const PRECONDITIONS: readonly PreconditionRule[] = [
 		holds: (b) => !/sampler|drum/.test(b.state.tracks[b.state.track].engine)
 	},
 	{
+		match: /^the system settings are open$/,
+		kind: 'set-up',
+		how: '`com`, then `M1`',
+		setup: (b) => b.play('com → M1'),
+		holds: (b) => b.state.sub === 'system settings'
+	},
+	{
+		match: /^controller mode is on$/,
+		kind: 'set-up',
+		how: '`com`, then `M2`',
+		setup: (b) => b.play('com → M2'),
+		holds: (b) => b.state.sub === 'controller mode'
+	},
+	{
 		match: /^the midi section is open$/,
 		kind: 'set-up',
 		how: '`com`, `M1`, then `turn E1` to the midi section',

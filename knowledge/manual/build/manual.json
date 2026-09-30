@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "4e32fe47",
+	"bundle_hash": "50fbdfe2",
 	"stats": {
 		"units": 166,
 		"facts": 1171,
 		"procedures": 205,
 		"parameters": 207,
 		"verified_items": 247,
-		"words": 44061,
+		"words": 44147,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -3763,7 +3763,7 @@
 				],
 				"screens": []
 			},
-			"summary": "`record + play` arms recording, which begins with your first note; during playback, hold `record` to overdub or press `record + play` to latch recording. `record + play → play` adds a count-in.",
+			"summary": "`record + play` arms recording, which begins with your first note; during playback, hold `record` to overdub or press `record + play` to latch recording. Holding `record` and pressing `play` twice (`record + play → + play`) adds a count-in.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -3824,7 +3824,7 @@
 				},
 				{
 					"id": "count-in",
-					"text": "`record + play → play` plays a count-in before recording starts.",
+					"text": "Holding `record`, pressing `play`, then `play` again (`record + play → + play`) plays a count-in before recording starts; `record` stays down throughout.",
 					"source": "https://teenage.engineering/guides/op-xy/sequencer#live-recording",
 					"firmware_min": "1.0.38",
 					"verified_on": null,
@@ -3900,8 +3900,8 @@
 					"preconditions": [],
 					"steps": [
 						{
-							"keys": "record + play → play",
-							"note": null,
+							"keys": "record + play → + play",
+							"note": "keep record down while you press play the second time",
 							"set": null
 						}
 					],
@@ -13598,6 +13598,11 @@
 							"set": null
 						},
 						{
+							"keys": "click E1",
+							"note": "the category view, whose entries are the folders (on OS 1.1.33 the browser opens by engine)",
+							"set": null
+						},
+						{
 							"keys": "turn E1",
 							"note": "go to the target folder; the guide does not say how nested folders are entered",
 							"set": null
@@ -13782,7 +13787,7 @@
 							"set": null
 						},
 						{
-							"keys": "Tn + M3",
+							"keys": "Tm + M3",
 							"note": "hold the destination track's key",
 							"set": null
 						}
@@ -22490,6 +22495,21 @@
 							"set": null
 						},
 						{
+							"keys": "turn E1…E4",
+							"note": "select the templates folder",
+							"set": null
+						},
+						{
+							"keys": "click E1",
+							"note": "a folder opens with a click of any encoder",
+							"set": null
+						},
+						{
+							"keys": "turn E1…E4",
+							"note": "select the template",
+							"set": null
+						},
+						{
 							"keys": "M1",
 							"note": "loads the selected template",
 							"set": null
@@ -22499,7 +22519,7 @@
 					"source": "https://teenage.engineering/guides/op-xy/project#project-folder",
 					"firmware_min": null,
 					"verified_on": null,
-					"confidence": "official"
+					"confidence": "derived"
 				}
 			],
 			"parameters": [],
@@ -22530,6 +22550,10 @@
 			"controls": [
 				"key.shift",
 				"key.project",
+				"encoder.1",
+				"encoder.2",
+				"encoder.3",
+				"encoder.4",
 				"key.m1"
 			]
 		},
@@ -24064,7 +24088,9 @@
 				{
 					"id": "leave",
 					"goal": "Leave the system settings",
-					"preconditions": [],
+					"preconditions": [
+						"the system settings are open"
+					],
 					"steps": [
 						{
 							"keys": "M1",
@@ -24714,7 +24740,9 @@
 				{
 					"id": "exit",
 					"goal": "Leave controller mode",
-					"preconditions": [],
+					"preconditions": [
+						"controller mode is on"
+					],
 					"steps": [
 						{
 							"keys": "shift + com",
@@ -30118,6 +30146,11 @@
 					"goal": "Cut the loop into sixteen even slices",
 					"preconditions": [],
 					"steps": [
+						{
+							"keys": "sample",
+							"note": "leave the record page for the drum page first; on the record page the next combo records again",
+							"set": null
+						},
 						{
 							"keys": "key E5 + M1",
 							"note": "hold the loop's key; the slicer opens on it",

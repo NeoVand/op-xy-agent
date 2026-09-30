@@ -46,9 +46,16 @@ procedures:
     steps:
       - keys: shift + project
         note: the templates folder sits next to the factory and user projects
+      - keys: turn E1…E4
+        note: select the templates folder
+      - keys: click E1
+        note: a folder opens with a click of any encoder
+      - keys: turn E1…E4
+        note: select the template
       - keys: M1
         note: loads the selected template
     source: https://teenage.engineering/guides/op-xy/project#project-folder
+    confidence: derived
 related: [project.projects-folder, project.project-view]
 ---
 

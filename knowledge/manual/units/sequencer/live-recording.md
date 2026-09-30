@@ -6,7 +6,7 @@ area: sequencer
 order: 14
 context:
   modes: [instrument, auxiliary]
-summary: '`record + play` arms recording, which begins with your first note; during playback, hold `record` to overdub or press `record + play` to latch recording. `record + play → play` adds a count-in.'
+summary: '`record + play` arms recording, which begins with your first note; during playback, hold `record` to overdub or press `record + play` to latch recording. Holding `record` and pressing `play` twice (`record + play → + play`) adds a count-in.'
 status: current
 firmware:
   min: '1.0.9'
@@ -33,7 +33,7 @@ facts:
     text: Encoder moves made while recording are stored per step, like parameter locks; `bar + turn E4` smooths them.
     source: https://teenage.engineering/guides/op-xy/sequencer#live-recording
   - id: count-in
-    text: '`record + play → play` plays a count-in before recording starts.'
+    text: 'Holding `record`, pressing `play`, then `play` again (`record + play → + play`) plays a count-in before recording starts; `record` stays down throughout.'
     source: https://teenage.engineering/guides/op-xy/sequencer#live-recording
     firmware_min: '1.0.38'
   - id: too-long
@@ -61,7 +61,8 @@ procedures:
   - id: count-in
     goal: Record with a count-in
     steps:
-      - keys: record + play → play
+      - keys: record + play → + play
+        note: keep record down while you press play the second time
     source: https://teenage.engineering/guides/op-xy/sequencer#live-recording
     firmware_min: '1.0.38'
 related: [sequencer.bar-menu, sequencer.parameter-locks, sequencer.bars-and-length]

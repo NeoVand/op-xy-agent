@@ -51,7 +51,7 @@ procedures:
     steps:
       - keys: Tn + M2
         note: hold the source track's key
-      - keys: Tn + M3
+      - keys: Tm + M3
         note: hold the destination track's key
     source: https://teenage.engineering/guides/op-xy/instrument#view-and-create-preset
 related: [instrument.save-to-same-snapshot, instrument.preset-browser, instrument.preset-management]
