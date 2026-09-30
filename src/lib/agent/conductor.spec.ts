@@ -108,6 +108,7 @@ describe('conductor: requests and streaming', () => {
 		'listen_tracks',
 		'make_kit',
 		'play_notes',
+		'memory',
 		'plan_steps',
 		'skill'
 	];
@@ -165,11 +166,6 @@ describe('conductor: requests and streaming', () => {
 		expect(names).toContain('set_tempo');
 		expect(names).not.toContain('load_project');
 		for (const tool of body.tools) {
-			// the memory tool is the API's own type: declared by type, with no schema of ours
-			if (tool.name === 'memory') {
-				expect(tool).toEqual({ type: 'memory_20250818', name: 'memory' });
-				continue;
-			}
 			// all but the ones kept out of the API's grammar size limit (evals/agent/grammar.mjs)
 			expect(tool.strict).toBe(!LOOSE_TOOLS.includes(tool.name));
 			expect(tool.input_schema.additionalProperties).toBe(false);

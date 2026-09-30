@@ -1,8 +1,10 @@
 /**
- * `memory`: the API's memory tool (`memory_20250818`), which the model is trained to use, over the
- * app's memory store (`../memory.ts`). The request declares it by type; its commands are validated
- * here and run on files under /memories: view (a directory or a file with line numbers), create,
- * str_replace, insert, delete, rename.
+ * `memory`: the agent's memory tool over the app's memory store (`../memory.ts`), with the commands
+ * of the API's memory tool (view a directory or a file with line numbers, create, str_replace,
+ * insert, delete, rename) on files under /memories. It is our own tool rather than the API's
+ * `memory_20250818` type: that one comes with a protocol to view memory before anything else, a
+ * round trip on every conversation's first message, while the conductor already hands the model
+ * what it remembers with that message.
  */
 import { z } from 'zod';
 import {
@@ -15,30 +17,46 @@ import {
 } from '../memory';
 import { defineTool, errorResult, type ToolResult } from './define';
 
-const command = z.discriminatedUnion('command', [
-	z.object({
-		command: z.literal('view'),
-		path: z.string(),
-		view_range: z.array(z.int()).length(2).optional()
-	}),
-	z.object({ command: z.literal('create'), path: z.string(), file_text: z.string() }),
-	z.object({
-		command: z.literal('str_replace'),
-		path: z.string(),
-		old_str: z.string(),
-		new_str: z.string()
-	}),
-	z.object({
-		command: z.literal('insert'),
-		path: z.string(),
-		insert_line: z.int().min(0),
-		insert_text: z.string()
-	}),
-	z.object({ command: z.literal('delete'), path: z.string() }),
-	z.object({ command: z.literal('rename'), old_path: z.string(), new_path: z.string() })
-]);
+/** What each command needs besides its name. */
+const NEEDS: Record<string, readonly string[]> = {
+	view: ['path'],
+	create: ['path', 'file_text'],
+	str_replace: ['path', 'old_str', 'new_str'],
+	insert: ['path', 'insert_line', 'insert_text'],
+	delete: ['path'],
+	rename: ['old_path', 'new_path']
+};
+
+// one flat object, as the API's own memory tool takes it (a tool's schema must be an object)
+const command = z
+	.object({
+		command: z.enum(['view', 'create', 'str_replace', 'insert', 'delete', 'rename']),
+		path: z.string().optional().describe('A file or directory under /memories'),
+		view_range: z
+			.array(z.int())
+			.length(2)
+			.optional()
+			.describe('view: first and last line to show (-1: to the end)'),
+		file_text: z.string().optional().describe("create: the file's text"),
+		old_str: z.string().optional().describe('str_replace: text that appears exactly once'),
+		new_str: z.string().optional().describe('str_replace: what replaces it'),
+		insert_line: z.int().min(0).optional().describe('insert: the line to insert after (0: top)'),
+		insert_text: z.string().optional().describe('insert: the text'),
+		old_path: z.string().optional().describe('rename: from'),
+		new_path: z.string().optional().describe('rename: to')
+	})
+	.superRefine((input, ctx) => {
+		for (const field of NEEDS[input.command]) {
+			if ((input as Record<string, unknown>)[field] === undefined) {
+				ctx.addIssue({ code: 'custom', path: [field], message: `${input.command} needs ${field}` });
+			}
+		}
+	});
 
 type Command = z.infer<typeof command>;
+
+/** A field the command's refinement guaranteed. */
+const need = <T>(value: T | undefined): T => value as T;
 
 const ok = (content: string, summary: string): ToolResult => ({ content, summary });
 
@@ -59,7 +77,7 @@ async function run(store: MemoryStore, input: Command): Promise<ToolResult> {
 	const under = (dir: string) => files.filter((f) => f.path.startsWith(`${dir}/`));
 	switch (input.command) {
 		case 'view': {
-			const path = memoryPath(input.path);
+			const path = memoryPath(need(input.path));
 			const file = files.find((f) => f.path === path);
 			if (file) return ok(numbered(file.text, input.view_range), `read ${path}`);
 			const inside = path === MEMORY_ROOT ? files : under(path);
@@ -73,57 +91,59 @@ async function run(store: MemoryStore, input: Command): Promise<ToolResult> {
 			);
 		}
 		case 'create': {
-			const path = memoryPath(input.path);
-			checkMemoryText(input.file_text);
+			const path = memoryPath(need(input.path));
+			checkMemoryText(need(input.file_text));
 			const others = files.filter((f) => f.path !== path);
 			if (others.length >= MEMORY_LIMITS.files) {
 				throw new MemoryError(
 					`Memory holds at most ${MEMORY_LIMITS.files} files; merge or delete some.`
 				);
 			}
-			const total = others.reduce((sum, f) => sum + f.text.length, 0) + input.file_text.length;
+			const total =
+				others.reduce((sum, f) => sum + f.text.length, 0) + need(input.file_text).length;
 			if (total > MEMORY_LIMITS.totalChars) {
 				throw new MemoryError(
 					`Memory holds at most ${MEMORY_LIMITS.totalChars} characters in all; shorten it.`
 				);
 			}
-			await store.write(path, input.file_text);
+			await store.write(path, need(input.file_text));
 			return ok(`File created successfully at ${path}`, `noted ${path}`);
 		}
 		case 'str_replace': {
-			const path = memoryPath(input.path);
+			const path = memoryPath(need(input.path));
 			const file = files.find((f) => f.path === path);
 			if (!file) throw new MemoryError(`The file ${path} does not exist.`);
-			const count = file.text.split(input.old_str).length - 1;
+			const count = file.text.split(need(input.old_str)).length - 1;
 			if (count === 0) throw new MemoryError(`The text to replace is not in ${path}.`);
 			if (count > 1) {
 				throw new MemoryError(
 					`The text to replace appears ${count} times in ${path}; give more context.`
 				);
 			}
-			const text = file.text.replace(input.old_str, () => input.new_str);
+			const text = file.text.replace(need(input.old_str), () => need(input.new_str));
 			checkMemoryText(text);
 			await store.write(path, text);
 			return ok(`The file ${path} has been edited.`, `updated ${path}`);
 		}
 		case 'insert': {
-			const path = memoryPath(input.path);
+			const path = memoryPath(need(input.path));
 			const file = files.find((f) => f.path === path);
 			if (!file) throw new MemoryError(`The file ${path} does not exist.`);
 			const lines = file.text.split('\n');
-			if (input.insert_line > lines.length) {
+			const at = need(input.insert_line);
+			if (at > lines.length) {
 				throw new MemoryError(
-					`${path} has ${lines.length} lines; insert_line ${input.insert_line} is past its end.`
+					`${path} has ${lines.length} lines; insert_line ${at} is past its end.`
 				);
 			}
-			lines.splice(input.insert_line, 0, ...input.insert_text.replace(/\n$/, '').split('\n'));
+			lines.splice(at, 0, ...need(input.insert_text).replace(/\n$/, '').split('\n'));
 			const text = lines.join('\n');
 			checkMemoryText(text);
 			await store.write(path, text);
 			return ok(`The text was inserted into ${path}.`, `updated ${path}`);
 		}
 		case 'delete': {
-			const path = memoryPath(input.path);
+			const path = memoryPath(need(input.path));
 			if (path === MEMORY_ROOT)
 				throw new MemoryError('The memory directory itself cannot be deleted.');
 			const gone = files.filter((f) => f.path === path || f.path.startsWith(`${path}/`));
@@ -132,8 +152,8 @@ async function run(store: MemoryStore, input: Command): Promise<ToolResult> {
 			return ok(`Deleted ${path}.`, `forgot ${path}`);
 		}
 		case 'rename': {
-			const from = memoryPath(input.old_path);
-			const to = memoryPath(input.new_path);
+			const from = memoryPath(need(input.old_path));
+			const to = memoryPath(need(input.new_path));
 			const moving = files.filter((f) => f.path === from || f.path.startsWith(`${from}/`));
 			if (moving.length === 0) throw new MemoryError(`The path ${from} does not exist.`);
 			if (files.some((f) => f.path === to || f.path.startsWith(`${to}/`))) {
@@ -155,9 +175,8 @@ export const memoryTool = defineTool({
 	// notes in this browser, about the conversation: nothing on the device to approve or undo
 	approval: 'auto',
 	strict: false,
-	native: { type: 'memory_20250818' },
 	description:
-		'Your memory across conversations: files under /memories in this browser (the user profile in /memories/user.md, lessons, notes about their projects).',
+		'Your memory across conversations: small text files under /memories, kept in this browser. /memories/user.md is the user profile (their level, gear, OS, styles they like, how they like to learn), which comes with the first message of every conversation; /memories/lessons/ holds what you learned from being corrected; other notes as you need them. Commands: view (a directory, or a file with line numbers), create (a new file, or replacing one), str_replace (edit text that appears exactly once), insert (after a line number, 0 for the top), delete, rename. Keep notes short and factual; never store keys, passwords or anything the user would not expect you to keep.',
 	input: command,
 	async run(input, ctx) {
 		const store = ctx.env.memory;
