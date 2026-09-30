@@ -56,6 +56,48 @@ describe('describeMidiFile', () => {
 		);
 	});
 
+	it('says where each track plays, single notes or chords, what it doubles and who takes turns', () => {
+		const bar = (n: number) => (n - 1) * 4 * PPQ;
+		// a verse line in bars 1–4 and a chorus line in bars 9–12; chords under both; the verse doubled
+		const verse = [1, 2, 3, 4].flatMap((b) => [
+			...note(bar(b), 60, 1),
+			...note(bar(b) + PPQ, 69, 1)
+		]);
+		const chorus = [9, 10, 11, 12].flatMap((b) => [
+			...note(bar(b), 67, 2),
+			...note(bar(b) + 2 * PPQ, 72, 2)
+		]);
+		const accent = [5, 7, 9].flatMap((b, i) => note(bar(b), i === 1 ? 74 : 72, 4));
+		const chords = [1, 5, 9].flatMap((b) => [48, 52, 55].flatMap((p) => note(bar(b), p, 4)));
+		const bytes = writeMidiFile(
+			[
+				{ name: 'Verse', events: verse },
+				{ name: 'Chorus', events: chorus },
+				{ name: 'Keys', events: chords },
+				{ name: 'Double', events: verse.map((e) => ({ ...e })) },
+				{ name: 'Accent', events: accent }
+			],
+			{ bpm: 120 }
+		);
+		const { text } = describeMidiFile(bytes, 'song.mid');
+		expect(text).toContain(
+			'“Verse”: channel 1, 8 notes, C4–A4, plays in bars 1–4, a melody line, one note at a time, takes turns with the melody line of track 3 (one melody between them, likely)'
+		);
+		expect(text).toContain(
+			'“Chorus”: channel 1, 8 notes, G4–C5, plays in bars 9–12, a melody line, one note at a time, takes turns with the melody lines of tracks 2, 5 (one melody between them, likely)'
+		);
+		// two notes that only repeat are an accent, not a melody
+		expect(text).toContain(
+			'“Accent”: channel 1, 3 notes, C5–D5, plays in bars 5–9, one note at a time'
+		);
+		expect(text).toContain(
+			'“Keys”: channel 1, 9 notes, C3–G3, plays in bars 1, 5, 9, chords of up to 3 notes'
+		);
+		expect(text).toContain(
+			'“Double”: channel 1, 8 notes, C4–A4, plays in bars 1–4, a melody line, one note at a time, doubles track 2 note for note'
+		);
+	});
+
 	it('shares a note budget between tracks and says what it left out', () => {
 		const melody = Array.from({ length: 30 }, (_, i) => note(i * PPQ, 60 + (i % 12), 1)).flat();
 		const bass = Array.from({ length: 30 }, (_, i) =>

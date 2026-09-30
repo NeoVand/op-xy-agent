@@ -325,6 +325,9 @@ describe('read_sound', () => {
 		expect(sound.pages['M2 filter envelope']).toMatch(/^filter envelope: attack/);
 		expect(sound.pages['shift M2 play mode']).toMatch(/play mode/);
 		expect(sound.pages['M3 filter']).toMatch(/cutoff .*resonance .*env/);
+		// on or off, said either way: track 3's filter is on, its LFO off
+		expect(sound.pages['M3 filter']).toMatch(/^svf filter on: cutoff 00/);
+		expect(sound.pages['M4 lfo']).toMatch(/^tremolo lfo off:/);
 		expect(sound.pages['shift M3 sends']).toMatch(/^sends:/);
 		expect(sound.pages['M4 lfo']).toMatch(/lfo/);
 		expect(sound.pages.player).toMatch(/player/);

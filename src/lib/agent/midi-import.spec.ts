@@ -1,7 +1,8 @@
 // A MIDI file arranged for the OP-XY: made-up files (drums on channel 10, a bass with two phrases)
 // fold repeated bars into one pattern each, a scene every 4 bars and the song through them, GM
-// drums on the kit's layout, notes onto the sixteenths; a part that changes more often than 16
-// patterns hold is approximated by the patterns that stand best for the rest.
+// drums on the kit's layout, notes onto the sixteenths; a silent start is left out, two file
+// tracks can share an OP-XY track, and a part that changes more often than 16 patterns hold plays
+// the patterns that stand best for the rest, keeping the harmony where it can.
 import { describe, expect, it } from 'vitest';
 import { encodeMidiFile, tempoMeta, type FileInput } from '$lib/core/midi/smf';
 import { midiFileNotes } from '$lib/core/music/midifile';
@@ -115,14 +116,49 @@ describe('planMidiImport', () => {
 	});
 
 	it('keeps the 16 patterns that stand best for a part that changes all the time', () => {
-		// 20 different 4-bar blocks: a rising root each time
+		// 20 different 4-bar blocks: a rising root each time, 30 to 49
 		const bass = Array.from({ length: 20 }, (_, i) => phrase(i * 4, 30 + i)).flat();
 		const read = midiFileNotes(file(100, bass));
 		const plan = planMidiImport(read, { tracks: [{ midi: 2, to: 3 }] });
 		expect(plan.patterns).toHaveLength(16);
-		expect(plan.tracks[0]).toMatchObject({ patterns: 16, folded: 4 });
 		expect(plan.song).toHaveLength(20);
-		expect(Math.max(...plan.song)).toBeLessThanOrEqual(20);
+		// the 4 left over play the kept phrase an octave away: no note as written, the harmony kept
+		expect(plan.tracks[0]).toMatchObject({ patterns: 16, folded: 4, asWritten: 0.8, offBars: 0 });
+		const rootOf = (block: number) => {
+			const scene = plan.scenes[plan.song[block] - 1];
+			const pattern = plan.patterns.find((p) => p.pattern === scene.patterns[0].pattern);
+			return pattern?.notes[0].note;
+		};
+		expect([16, 17, 18, 19].map(rootOf)).toEqual([34, 35, 36, 37]);
+	});
+
+	it('starts where the music does, unless told a bar', () => {
+		// two silent bars, then the phrase
+		const read = midiFileNotes(file(120, phrase(2, 33)));
+		const plan = planMidiImport(read, { tracks: [{ midi: 2, to: 3 }] });
+		expect(plan).toMatchObject({ fromBar: 3, toBar: 6, silentStart: 2, blocks: 1, song: [1] });
+		expect(plan.patterns[0].notes[0]).toMatchObject({ step: 1, note: 33 });
+		const asked = planMidiImport(read, { tracks: [{ midi: 2, to: 3 }], fromBar: 1 });
+		expect(asked).toMatchObject({ fromBar: 1, toBar: 6, silentStart: 0, blocks: 2 });
+	});
+
+	it('puts two file tracks that take turns on one OP-XY track', () => {
+		// a verse melody in bars 1–4, a chorus melody in bars 5–8, on their own file tracks
+		const read = midiFileNotes(file(120, phrase(0, 60), phrase(4, 67)));
+		const plan = planMidiImport(read, {
+			tracks: [
+				{ midi: 2, to: 5 },
+				{ midi: 3, to: 5 }
+			]
+		});
+		expect(plan.tracks).toHaveLength(1);
+		expect(plan.tracks[0]).toMatchObject({ to: 5, notes: 24, patterns: 2, folded: 0 });
+		expect(plan.tracks[0].parts.map((p) => p.midi)).toEqual([2, 3]);
+		expect(plan.patterns.map((p) => [p.track, p.pattern, p.notes[0].note])).toEqual([
+			[5, 1, 60],
+			[5, 2, 67]
+		]);
+		expect(plan.song).toEqual([1, 2]);
 	});
 
 	it('moves notes off the grid onto the sixteenths, and says so', () => {
@@ -132,7 +168,7 @@ describe('planMidiImport', () => {
 		expect(plan.notes.join(' ')).toMatch(/1 note between the sixteenths/);
 	});
 
-	it('refuses a track the file does not have, a track past 8, and two parts on one track', () => {
+	it('refuses a track the file does not have, a track past 8, and a file track picked twice', () => {
 		const read = midiFileNotes(file(120, drums(1)));
 		expect(() => planMidiImport(read, { tracks: [{ midi: 5, to: 1 }] })).toThrow(MidiImportError);
 		expect(() => planMidiImport(read, { tracks: [{ midi: 2, to: 9 }] })).toThrow(/1–8/);
@@ -140,9 +176,9 @@ describe('planMidiImport', () => {
 			planMidiImport(read, {
 				tracks: [
 					{ midi: 2, to: 1 },
-					{ midi: 1, to: 1 }
+					{ midi: 2, to: 2 }
 				]
 			})
-		).toThrow(/two file tracks/);
+		).toThrow(/picked twice/);
 	});
 });

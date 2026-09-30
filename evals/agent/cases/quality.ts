@@ -622,7 +622,7 @@ const DEMO: readonly QualityCase[] = [
 		],
 		attach: ['/Users/neo/Downloads/Modern Talking - Brother Louie.mid'],
 		intent:
-			'Imports the file onto the replica with import_midi (drums, bass, the lead and the chords on fitting tracks), plays the song, and says briefly which part went where and what was approximated; never retypes the notes.',
+			'Imports the file onto the replica with import_midi (drums, bass, chords and the melody on fitting tracks; the melody is split between file tracks 1, the chorus, and 7, the verse, which take turns, so both belong on the lead track), plays the song, adds a touch or two it actually sets on the replica, and says briefly which part went where and what was approximated; never retypes the notes. The app can send the project to the OP-XY as a new project over USB once the unit is in MTP mode (com → M4), so offering that is right.',
 		tools: { must: ['import_midi'], not: ['write_pattern'] },
 		check(o) {
 			const fails = playing(o);
@@ -631,6 +631,18 @@ const DEMO: readonly QualityCase[] = [
 			const busy = [1, 2, 3, 4, 5, 6, 7, 8].filter((t) => notes(o, t).length > 0);
 			if (busy.length < 4) fails.push(`only ${busy.length} tracks with notes`);
 			if (Math.abs(o.state.tempo.bpm - 107) > 1) fails.push(`tempo ${o.state.tempo.bpm}, not 107`);
+			type ImportInput = { preview?: boolean; tracks?: { midi: number; to: number }[] };
+			const imported = o.trace
+				.filter((t) => !t.nested && t.name === 'import_midi' && t.status === 'ok')
+				.map((t) => t.input as ImportInput)
+				.filter((input) => !input.preview);
+			const picked = imported.at(-1)?.tracks ?? [];
+			const melody = [1, 7].filter((m) => !picked.some((p) => p.midi === m));
+			if (melody.length) fails.push(`the melody's file track ${melody.join(' and ')} left out`);
+			const [chorus, verse] = [1, 7].map((m) => picked.find((p) => p.midi === m)?.to);
+			if (!melody.length && chorus !== verse) {
+				fails.push(`the melody split: chorus on track ${chorus}, verse on track ${verse}`);
+			}
 			return fails;
 		}
 	},

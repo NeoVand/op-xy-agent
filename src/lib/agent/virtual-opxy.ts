@@ -171,6 +171,8 @@ export interface VirtualOpxy {
 	/** Starts (the song, when it has more than one entry) or stops the transport. */
 	transport(action: 'play' | 'stop'): void;
 	setTempo(bpm: number): void;
+	/** Switches the metronome's click on or off (the tempo page's `click E4`). */
+	setMetronome(on: boolean): void;
 	selectTrack(track: number): void;
 	setMuted(track: number, muted: boolean): void;
 	/** Sounds a note now in the browser; false when sound is off or unavailable. */

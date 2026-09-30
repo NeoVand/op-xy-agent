@@ -144,6 +144,9 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		return describeFrame(buildFrame(copy.state));
 	}
 
+	/** A filter or LFO page's reading with its state said either way ("svf filter on: …"). */
+	const stated = (reading: string) => reading.replace(/^([^:]*? (?:filter|lfo)):/, '$1 on:');
+
 	function readSound(track: number): VirtualTrackSound {
 		if (!Number.isInteger(track) || track < 1 || track > 8) {
 			throw new VirtualOpxyError(`there is no instrument track ${track} (1–8)`);
@@ -170,9 +173,9 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				'M2 amp envelope': screenAt(at(2, { envelope: 'amp' })),
 				'M2 filter envelope': screenAt(at(2, { envelope: 'filter' })),
 				'shift M2 play mode': screenAt(at(2), true),
-				'M3 filter': [screenAt(at(3)), ...filterMore].join(', '),
+				'M3 filter': [stated(screenAt(at(3))), ...filterMore].join(', '),
 				'shift M3 sends': screenAt(at(3), true),
-				'M4 lfo': screenAt(at(4)),
+				'M4 lfo': stated(screenAt(at(4))),
 				player: screenAt({ area: 'player', track })
 			},
 			mix: {
@@ -255,6 +258,11 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 
 		setTempo(bpm) {
 			sim.setTempo(bpm);
+			changed();
+		},
+
+		setMetronome(on) {
+			s.tempo.metronome.on = on;
 			changed();
 		},
 

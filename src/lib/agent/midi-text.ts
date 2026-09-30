@@ -47,6 +47,107 @@ function quote(name: string | null): string {
 	return name ? ` “${name.trim()}”` : '';
 }
 
+/** "3–11, 23–51" for the bars a track plays in, a gap of one bar bridged; the first 10 runs. */
+function barRuns(bars: readonly number[]): string {
+	const sorted = [...new Set(bars)].sort((a, b) => a - b);
+	const runs: [number, number][] = [];
+	for (const bar of sorted) {
+		const last = runs.at(-1);
+		if (last && bar - last[1] <= 2) last[1] = bar;
+		else runs.push([bar, bar]);
+	}
+	const shown = runs.slice(0, 10).map(([a, b]) => (a === b ? `${a}` : `${a}–${b}`));
+	return `${runs.length === 1 && runs[0][0] === runs[0][1] ? 'bar' : 'bars'} ${shown.join(', ')}${runs.length > 10 ? ` and ${runs.length - 10} more stretches` : ''}`;
+}
+
+/** The most notes that start together on a sixteenth (a chord); 1 for a single-note line. */
+function chordSize(notes: readonly FileNote[]): number {
+	const starts = new Map<number, number>();
+	for (const n of notes) {
+		const step = Math.round(n.start * 4);
+		starts.set(step, (starts.get(step) ?? 0) + 1);
+	}
+	return Math.max(0, ...starts.values());
+}
+
+/** A note's place on the sixteenth grid and its pitch, for telling doubled parts. */
+const gridKey = (n: FileNote, pitchClass: boolean) =>
+	`${Math.round(n.start * 4)}:${pitchClass ? n.note % 12 : n.note}`;
+
+/**
+ * What each track plays, beyond its range: the bars, a melody line (one note at a time, over five
+ * semitones or more, two notes a bar or more where it plays), other single notes or chords, a
+ * track it doubles (nine in ten of its notes also in an earlier track, same grid step and pitch or
+ * pitch class), and the melody lines it takes turns with (under a tenth of their bars shared), which
+ * are often one melody split between a verse track and a chorus track.
+ */
+function trackShapes(read: MidiFileNotes): Map<number, string[]> {
+	const byTrack = read.tracks.map((t) => read.notes.filter((n) => n.track === t.index));
+	const barsOf = byTrack.map((notes) => notes.map((n) => barPosition(n.start, read.meters).bar));
+	const drums = read.tracks.map(
+		(t) => t.channels.length > 0 && t.channels.every((c) => c === DRUM_CHANNEL)
+	);
+	const voices = byTrack.map((notes) => (notes.length ? chordSize(notes) : 0));
+	const melody = read.tracks.map((t, i) => {
+		const bars = new Set(barsOf[i]).size;
+		return (
+			!drums[i] &&
+			voices[i] === 1 &&
+			t.lowest !== null &&
+			t.highest !== null &&
+			t.highest - t.lowest >= 5 &&
+			byTrack[i].length >= 2 * bars
+		);
+	});
+	const shapes = new Map<number, string[]>();
+	byTrack.forEach((notes, i) => {
+		if (notes.length === 0) return;
+		const parts = [`plays in ${barRuns(barsOf[i])}`];
+		if (!drums[i]) {
+			parts.push(
+				melody[i]
+					? 'a melody line, one note at a time'
+					: voices[i] <= 1
+						? 'one note at a time'
+						: `chords of up to ${voices[i]} notes`
+			);
+		}
+		for (let j = 0; j < i && !drums[i]; j++) {
+			if (drums[j] || byTrack[j].length === 0) continue;
+			for (const pitchClass of [false, true]) {
+				const theirs = new Set(byTrack[j].map((n) => gridKey(n, pitchClass)));
+				const shared = notes.filter((n) => theirs.has(gridKey(n, pitchClass))).length;
+				if (shared >= 0.9 * notes.length) {
+					parts.push(
+						`doubles track ${j + 1}${pitchClass ? ' in another octave' : ' note for note'}`
+					);
+					j = i;
+					break;
+				}
+			}
+		}
+		if (melody[i]) {
+			const mine = new Set(barsOf[i]);
+			const turns = byTrack
+				.map((_, j) => j)
+				.filter((j) => {
+					if (j === i || !melody[j]) return false;
+					const theirs = new Set(barsOf[j]);
+					let both = 0;
+					for (const bar of mine) if (theirs.has(bar)) both++;
+					return both < 0.1 * Math.min(mine.size, theirs.size);
+				});
+			if (turns.length) {
+				parts.push(
+					`takes turns with the melody line${turns.length === 1 ? '' : 's'} of track${turns.length === 1 ? '' : 's'} ${turns.map((j) => j + 1).join(', ')} (one melody between them, likely)`
+				);
+			}
+		}
+		shapes.set(i, parts);
+	});
+	return shapes;
+}
+
 /** What the file holds, for the header and the chat. */
 function header(read: MidiFileNotes, name: string, bars: number): string[] {
 	const lines: string[] = [];
@@ -72,6 +173,7 @@ function header(read: MidiFileNotes, name: string, bars: number): string[] {
 		`Time signature ${meter.numerator}/${meter.denominator}${meterChanges.length > 0 ? `; changes: ${meterChanges.map((m) => `${at(m.beat)} → ${m.numerator}/${m.denominator}`).join(', ')}` : ''}.${keyName ? ` Key signature ${keyName}${read.keys.length > 1 ? ' (it changes later)' : ''}.` : ''}`
 	);
 	lines.push('Tracks:');
+	const shapes = trackShapes(read);
 	for (const track of read.tracks) {
 		const parts: string[] = [];
 		if (track.channels.length > 0) {
@@ -91,6 +193,7 @@ function header(read: MidiFileNotes, name: string, bars: number): string[] {
 				? 'no notes'
 				: `${track.noteCount} note${track.noteCount === 1 ? '' : 's'}, ${range(track.lowest, track.highest, drums)}`
 		);
+		parts.push(...(shapes.get(track.index) ?? []));
 		lines.push(`- track ${track.index + 1}${quote(track.name)}: ${parts.join(', ')}`);
 	}
 	return lines;

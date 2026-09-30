@@ -406,16 +406,38 @@ Score each axis 1–5 (5 = nothing to improve, 4 = small nit, 3 = noticeable pro
 
 Correctness: check claims against the manual below, the required facts and the tool results (shown in full after each call). Mark a claim wrong only when one of those shows it wrong; a claim you cannot verify is an issue to list, not a correctness failure. The tool results are the truth about what happened on the replica.`;
 
+/** How much of an attached file the judge reads: its header, track list and first notes. */
+const ATTACHED_FOR_JUDGE = 5_000;
+
+/** The text the model received for each attachment (a document block's, or a text block's). */
+function attachedText(attached: readonly PreparedAttachment[]): string[] {
+	return attached.flatMap((a) =>
+		a.blocks.flatMap((b) => {
+			if (b.type === 'text') return [b.text];
+			if (b.type === 'document' && b.source.type === 'text') return [b.source.data];
+			return [];
+		})
+	);
+}
+
 function renderForJudge(
 	c: QualityCase,
 	answers: readonly string[],
 	trace: readonly TraceCall[],
 	fails: readonly string[],
-	heard: CaseResult['heard'] = null
+	heard: CaseResult['heard'] = null,
+	attached: readonly string[] = []
 ): string {
 	const parts: string[] = [];
 	c.turns.forEach((turn, i) => {
 		parts.push(`USER (turn ${i + 1}): ${turn}`);
+		if (i === 0) {
+			for (const text of attached) {
+				parts.push(
+					`ATTACHED (what the agent received; the first ${ATTACHED_FOR_JUDGE} characters of ${text.length}):\n${text.slice(0, ATTACHED_FOR_JUDGE)}`
+				);
+			}
+		}
 		const calls = trace.filter((t) => t.turn === i && !t.nested);
 		if (calls.length) {
 			parts.push(
@@ -423,7 +445,7 @@ function renderForJudge(
 					calls
 						.map(
 							(t) =>
-								`${t.name}(${JSON.stringify(t.input).slice(0, 600)}) → ${t.status}: ${(t.result ?? t.summary).slice(0, 1500)}`
+								`${t.name}(${JSON.stringify(t.input).slice(0, 600)}) → ${t.status}: ${(t.result ?? t.summary).slice(0, 4000)}`
 						)
 						.join('\n       ')
 			);
@@ -452,7 +474,8 @@ async function rubric(
 	answers: readonly string[],
 	trace: readonly TraceCall[],
 	fails: readonly string[],
-	heard: CaseResult['heard'] = null
+	heard: CaseResult['heard'] = null,
+	attached: readonly string[] = []
 ): Promise<RubricResult> {
 	try {
 		const response = await client.messages.parse({
@@ -466,7 +489,9 @@ async function rubric(
 					cache_control: { type: 'ephemeral', ttl: '1h' }
 				}
 			],
-			messages: [{ role: 'user', content: renderForJudge(c, answers, trace, fails, heard) }],
+			messages: [
+				{ role: 'user', content: renderForJudge(c, answers, trace, fails, heard, attached) }
+			],
 			output_config: { format: zodOutputFormat(Rubric) }
 		});
 		const u = response.usage;
@@ -594,7 +619,8 @@ async function runCase(
 		answers,
 		trace,
 		fails,
-		heard
+		heard,
+		attachedText(attached)
 	);
 	const low = judged.scores ? AXES.filter((a) => judged.scores![a].score <= 2) : [];
 	const pass =

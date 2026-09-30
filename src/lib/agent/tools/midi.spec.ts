@@ -1,6 +1,7 @@
 // import_midi on the replica: a made-up file (drums, a bass) previewed without a change, then
-// written as patterns, scenes and a song that plays; a name the conversation does not hold, and a
-// file track that is not there, are refused with the reason.
+// written as patterns, scenes and a song that plays, while a track it leaves out rests (or keeps
+// playing, when asked); a name the conversation does not hold, and a file track that is not there,
+// are refused with the reason.
 import { describe, expect, it } from 'vitest';
 import { createVirtualOpxy } from '$lib/app/virtual';
 import { encodeMidiFile, tempoMeta } from '$lib/core/midi/smf';
@@ -83,6 +84,7 @@ describe('import_midi', () => {
 		});
 		expect(virtual.readPattern(1).notes).toHaveLength(0);
 		expect(virtual.status().bpm).toBe(120);
+		expect(virtual.status().metronome).toBe(true);
 	});
 
 	it('writes the patterns, scenes, song and tempo, and the song plays', async () => {
@@ -91,6 +93,8 @@ describe('import_midi', () => {
 		expect(result.isError).toBeFalsy();
 		expect(result.summary).toBe('2 tracks, 2 scenes, a song of 2');
 		expect(virtual.status().bpm).toBe(107);
+		expect(virtual.status().metronome).toBe(false);
+		expect(json(result).metronome).toMatch(/switched off/);
 		expect(virtual.readPattern(1, 1).notes.every((n) => n.note === 53)).toBe(true);
 		expect(virtual.readPattern(1, 1).notes).toHaveLength(16);
 		expect(virtual.readPattern(3, 1).notes[0].note).toBe(33);
@@ -99,6 +103,25 @@ describe('import_midi', () => {
 		expect(arrangement.song).toEqual({ order: [1, 2], loop: true });
 		virtual.transport('play');
 		expect(sim.state.transport.playing).toBe(true);
+	});
+
+	it('rests a track it leaves out, unless asked to keep it playing', async () => {
+		const { virtual, run } = setup();
+		const beat = [1, 5, 9, 13].map((step) => ({ step, note: 60, velocity: 100, length: 1 }));
+		virtual.writePattern(4, { pattern: 1, bars: 1, notes: beat });
+		const result = await run({ file: 'louie.mid', tracks });
+		expect(json(result).resting).toMatch(/track 4 rest/);
+		const scenes = virtual.readArrangement().scenes;
+		expect(scenes.map((s) => s.patterns[3])).toEqual([2, 2]);
+		expect(virtual.readPattern(4, 2).notes).toHaveLength(0);
+		expect(virtual.readPattern(4, 1).notes).toHaveLength(4);
+		expect(virtual.readPattern(1, 1).scale).toBe(1);
+
+		const kept = setup();
+		kept.virtual.writePattern(4, { pattern: 1, bars: 1, notes: beat });
+		const keeping = await kept.run({ file: 'louie.mid', tracks, keep_others: true });
+		expect(json(keeping).resting).toBeUndefined();
+		expect(kept.virtual.readArrangement().scenes.map((s) => s.patterns[3])).toEqual([1, 1]);
 	});
 
 	it('says which files it has, and which file tracks exist', async () => {

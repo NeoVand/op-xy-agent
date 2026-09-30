@@ -1,10 +1,13 @@
 /**
- * A MIDI file arranged for the OP-XY (`import_midi`): the file's tracks the agent picks, each cut
- * into 4-bar blocks of sixteenths (the OP-XY's longest pattern), identical blocks folded into one
- * pattern (16 per track at most; when a part changes more often, its rarest blocks fold into the
- * nearest kept one), each block's patterns a scene (99 at most) and the blocks in order the song
- * (96 entries at most). GM drums land on the layout TE's kits share (keys 53–76). Deterministic:
- * the model picks tracks and targets, the notes come from the file.
+ * A MIDI file arranged for the OP-XY (`import_midi`): the file's tracks the agent picks (several may
+ * share an OP-XY track, such as a melody split between a verse and a chorus track), from the first
+ * bar they play to the last, cut into 4-bar blocks of sixteenths (the OP-XY's longest pattern);
+ * identical blocks share a pattern (16 per track at most; when a part changes more often, the
+ * patterns that stand best for the rest are kept, and each other block plays the closest one, by
+ * its notes and, for pitched parts, its harmony bar by bar), each block's patterns are a scene (99
+ * at most) and the blocks in order the song (96 entries at most). GM drums land on the layout TE's
+ * kits share (keys 53–76). Deterministic: the model picks tracks and targets, the notes come from
+ * the file.
  */
 import type { MidiFileNotes } from '$lib/core/music/midifile';
 
@@ -61,7 +64,7 @@ export const GM_TO_KIT: Readonly<Record<number, number>> = {
 	81: 70 // open triangle
 };
 
-/** A file track and where it goes. */
+/** A file track and where it goes (several file tracks may go to one OP-XY track). */
 export interface ImportTrack {
 	/** The file's track, 1-based (as the attachment lists them). */
 	readonly midi: number;
@@ -75,7 +78,7 @@ export interface ImportTrack {
 
 export interface ImportOptions {
 	readonly tracks: readonly ImportTrack[];
-	/** The first and last bar to take (default: the whole file). */
+	/** The first and last bar to take (default: from the first bar the picked tracks play to their last). */
 	readonly fromBar?: number;
 	readonly toBar?: number;
 }
@@ -95,20 +98,32 @@ export interface PlannedPattern {
 	readonly notes: readonly PlannedNote[];
 }
 
-/** What one file track became. */
-export interface TrackReport {
+/** One file track of an OP-XY track. */
+export interface PartReport {
 	readonly midi: number;
 	readonly name: string | null;
-	readonly to: number;
 	readonly drums: boolean;
-	/** Notes in the range, and notes written. */
+	/** Its notes in the range. */
 	readonly notes: number;
-	readonly kept: number;
+	/** Drum notes with no place on the kit. */
+	readonly unmapped: number;
+}
+
+/** What an OP-XY track became. */
+export interface TrackReport {
+	readonly to: number;
+	readonly parts: readonly PartReport[];
+	/** Every part is drums. */
+	readonly drums: boolean;
+	/** Notes in the range. */
+	readonly notes: number;
 	readonly patterns: number;
-	/** Blocks played by a near pattern because the track changes more often than 16 patterns hold. */
+	/** Blocks played by the closest pattern because the track changes more often than 16 patterns hold. */
 	readonly folded: number;
-	/** How alike those blocks are to the patterns that play them, 0–1 on average (null: none). */
-	readonly foldedAlike: number | null;
+	/** The share of its notes that play at their step and pitch, 0–1 (quantized to the sixteenths). */
+	readonly asWritten: number;
+	/** Bars whose pitches differ from the file's (pitched tracks; the folded blocks). */
+	readonly offBars: number;
 	/** Notes over a pattern's 120, the quietest left out. */
 	readonly overflow: number;
 	/** Drum notes with no place on the kit. */
@@ -119,6 +134,8 @@ export interface ImportPlan {
 	readonly bpm: number;
 	readonly fromBar: number;
 	readonly toBar: number;
+	/** Silent bars before the first one the picked tracks play, left out (0 when fromBar was given). */
+	readonly silentStart: number;
 	/** Blocks (4 bars in 4/4, as many as fit 64 steps otherwise), one song entry each. */
 	readonly blocks: number;
 	readonly barsPerBlock: number;
@@ -155,14 +172,46 @@ const blockKey = (hits: readonly Hit[]) =>
 		.sort()
 		.join(' ');
 
-/** How alike two blocks are: shared (step, note) pairs over all of them. */
-function likeness(a: readonly Hit[], b: readonly Hit[]): number {
-	const as = new Set(a.map((h) => `${h.step}:${h.note}`));
-	const bs = new Set(b.map((h) => `${h.step}:${h.note}`));
+/** Shared members over all of them (1 when both are empty). */
+function jaccard(a: ReadonlySet<string | number>, b: ReadonlySet<string | number>): number {
 	let shared = 0;
-	for (const x of as) if (bs.has(x)) shared++;
-	const all = as.size + bs.size - shared;
+	for (const x of a) if (b.has(x)) shared++;
+	const all = a.size + b.size - shared;
 	return all === 0 ? 1 : shared / all;
+}
+
+/** A block as the likeness measures see it: its (step, note) pairs and each bar's pitch classes. */
+interface Profile {
+	readonly exact: ReadonlySet<string>;
+	readonly bars: readonly ReadonlySet<number>[];
+}
+
+function profileOf(hits: readonly Hit[], bars: number, stepsPerBar: number): Profile {
+	const pitches = Array.from({ length: bars }, () => new Set<number>());
+	for (const h of hits)
+		pitches[Math.min(bars - 1, Math.floor((h.step - 1) / stepsPerBar))].add(h.note % 12);
+	return { exact: new Set(hits.map((h) => `${h.step}:${h.note}`)), bars: pitches };
+}
+
+/** Bars of `b` whose pitch classes differ from `a`'s (under half shared). */
+function barsDiffering(a: Profile, b: Profile): number {
+	let differ = 0;
+	a.bars.forEach((bar, i) => {
+		if (jaccard(bar, b.bars[i]) < 0.5) differ++;
+	});
+	return differ;
+}
+
+/**
+ * How alike two blocks are, 0–1: their shared (step, note) pairs; for a pitched part, half of it is
+ * the harmony bar by bar (shared pitch classes), so a stand-in keeps the chords where it can.
+ */
+function likeness(a: Profile, b: Profile, pitched: boolean): number {
+	const exact = jaccard(a.exact, b.exact);
+	if (!pitched) return exact;
+	let harmony = 0;
+	a.bars.forEach((bar, i) => (harmony += jaccard(bar, b.bars[i])));
+	return 0.5 * exact + (0.5 * harmony) / Math.max(1, a.bars.length);
 }
 
 /**
@@ -172,14 +221,12 @@ function likeness(a: readonly Hit[], b: readonly Hit[]): number {
 function representatives(
 	uniques: readonly string[],
 	counts: ReadonlyMap<string, number>,
-	examples: ReadonlyMap<string, readonly Hit[]>,
+	alikeness: (a: string, b: string) => number,
 	room: number
 ): string[] {
 	if (uniques.length <= room) return [...uniques];
 	const n = uniques.length;
-	const alike = uniques.map((a) =>
-		uniques.map((b) => likeness(examples.get(a) ?? [], examples.get(b) ?? []))
-	);
+	const alike = uniques.map((a) => uniques.map((b) => alikeness(a, b)));
 	const weight = uniques.map((k) => counts.get(k) ?? 1);
 	const best = new Array<number>(n).fill(0);
 	const kept: number[] = [];
@@ -204,7 +251,7 @@ function representatives(
 /** Plans the import of `read` (see the module note). */
 export function planMidiImport(read: MidiFileNotes, options: ImportOptions): ImportPlan {
 	if (options.tracks.length === 0) throw new MidiImportError('pick at least one track to import');
-	const targets = new Set<number>();
+	const picked = new Set<number>();
 	for (const t of options.tracks) {
 		if (!read.tracks[t.midi - 1]) {
 			throw new MidiImportError(`the file has no track ${t.midi} (it has ${read.tracks.length})`);
@@ -212,9 +259,11 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 		if (!Number.isInteger(t.to) || t.to < 1 || t.to > 8) {
 			throw new MidiImportError(`OP-XY instrument tracks are 1–8, not ${t.to}`);
 		}
-		if (targets.has(t.to)) throw new MidiImportError(`two file tracks go to track ${t.to}`);
-		targets.add(t.to);
+		if (picked.has(t.midi)) throw new MidiImportError(`file track ${t.midi} is picked twice`);
+		picked.add(t.midi);
 	}
+	/** The OP-XY tracks, in the order first given. */
+	const targets = [...new Set(options.tracks.map((t) => t.to))];
 	const notes: string[] = [];
 	const meter = read.meters[0];
 	const beatsPerBar = (meter.numerator * 4) / meter.denominator;
@@ -227,9 +276,20 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 	const barsPerBlock = Math.max(1, Math.floor(IMPORT_LIMITS.stepsPerPattern / stepsPerBar));
 	const blockSteps = barsPerBlock * stepsPerBar;
 	const lastBar = Math.max(1, Math.ceil(read.beats / beatsPerBar - 1e-6));
-	const fromBar = Math.max(1, Math.floor(options.fromBar ?? 1));
-	const toBar = Math.min(lastBar, Math.floor(options.toBar ?? lastBar));
+	// the bars the picked tracks play, on the grid: a silent start or end is left out
+	let firstPlayed = Infinity;
+	let lastPlayed = 1;
+	for (const n of read.notes) {
+		if (!picked.has(n.track + 1)) continue;
+		const bar = Math.floor(Math.round(n.start * 4) / stepsPerBar) + 1;
+		firstPlayed = Math.min(firstPlayed, bar);
+		lastPlayed = Math.max(lastPlayed, bar);
+	}
+	if (firstPlayed === Infinity) firstPlayed = 1;
+	const fromBar = Math.max(1, Math.floor(options.fromBar ?? firstPlayed));
+	const toBar = Math.min(lastBar, Math.floor(options.toBar ?? Math.max(fromBar, lastPlayed)));
 	if (toBar < fromBar) throw new MidiImportError(`bars ${fromBar}–${toBar} hold nothing`);
+	const silentStart = options.fromBar === undefined ? fromBar - 1 : 0;
 	const startBeat = (fromBar - 1) * beatsPerBar;
 	const totalSteps = (toBar - fromBar + 1) * stepsPerBar;
 	const blocks = Math.ceil(totalSteps / blockSteps);
@@ -252,47 +312,54 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 	/** Each OP-XY track's pattern for each block. */
 	const byBlock = new Map<number, number[]>();
 	let offGrid = 0;
+	const lastStep = Math.min(totalSteps, songBlocks * blockSteps);
 
-	for (const t of options.tracks) {
-		const digest = read.tracks[t.midi - 1];
-		const drums =
-			t.drums ?? (digest.channels.length > 0 && digest.channels.every((c) => c === DRUM_CHANNEL));
+	for (const to of targets) {
 		const hitsByBlock: Hit[][] = Array.from({ length: songBlocks }, () => []);
-		let inRange = 0;
-		let unmapped = 0;
-		for (const n of read.notes) {
-			if (n.track !== t.midi - 1) continue;
-			const exact = (n.start - startBeat) * 4;
-			const step = Math.round(exact);
-			if (step < 0 || step >= Math.min(totalSteps, songBlocks * blockSteps)) continue;
-			inRange++;
-			if (Math.abs(exact - step) > 0.2) offGrid++;
-			let note = n.note;
-			if (drums) {
-				const key = GM_TO_KIT[n.note];
-				if (key === undefined) {
-					unmapped++;
-					continue;
+		const parts: PartReport[] = [];
+		for (const t of options.tracks) {
+			if (t.to !== to) continue;
+			const digest = read.tracks[t.midi - 1];
+			const drums =
+				t.drums ?? (digest.channels.length > 0 && digest.channels.every((c) => c === DRUM_CHANNEL));
+			let inRange = 0;
+			let unmapped = 0;
+			for (const n of read.notes) {
+				if (n.track !== t.midi - 1) continue;
+				const exact = (n.start - startBeat) * 4;
+				const step = Math.round(exact);
+				if (step < 0 || step >= lastStep) continue;
+				inRange++;
+				if (Math.abs(exact - step) > 0.2) offGrid++;
+				let note = n.note;
+				if (drums) {
+					const key = GM_TO_KIT[n.note];
+					if (key === undefined) {
+						unmapped++;
+						continue;
+					}
+					note = key;
+				} else {
+					note += Math.round(t.transpose ?? 0);
+					while (note < 0) note += 12;
+					while (note > 127) note -= 12;
 				}
-				note = key;
-			} else {
-				note += Math.round(t.transpose ?? 0);
-				while (note < 0) note += 12;
-				while (note > 127) note -= 12;
+				const block = Math.floor(step / blockSteps);
+				const length = drums
+					? 1
+					: Math.max(1, Math.min(IMPORT_LIMITS.noteSteps, Math.round(n.duration * 4)));
+				const hits = hitsByBlock[block];
+				const inBlock = (step % blockSteps) + 1;
+				const same = hits.find((h) => h.step === inBlock && h.note === note);
+				const velocity = Math.max(1, Math.min(127, Math.round(n.velocity)));
+				if (same) {
+					same.velocity = Math.max(same.velocity, velocity);
+					same.length = Math.max(same.length, length);
+				} else hits.push({ step: inBlock, note, velocity, length });
 			}
-			const block = Math.floor(step / blockSteps);
-			const length = drums
-				? 1
-				: Math.max(1, Math.min(IMPORT_LIMITS.noteSteps, Math.round(n.duration * 4)));
-			const hits = hitsByBlock[block];
-			const inBlock = (step % blockSteps) + 1;
-			const same = hits.find((h) => h.step === inBlock && h.note === note);
-			const velocity = Math.max(1, Math.min(127, Math.round(n.velocity)));
-			if (same) {
-				same.velocity = Math.max(same.velocity, velocity);
-				same.length = Math.max(same.length, length);
-			} else hits.push({ step: inBlock, note, velocity, length });
+			parts.push({ midi: t.midi, name: digest.name, drums, notes: inRange, unmapped });
 		}
+		const drums = parts.every((p) => p.drums);
 
 		// identical blocks share a pattern; an empty block plays an empty one
 		const keys = hitsByBlock.map(blockKey);
@@ -304,34 +371,19 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 		keys.forEach((k, i) => {
 			if (k && !example.has(k)) example.set(k, hitsByBlock[i]);
 		});
-		const kept = representatives([...counts.keys()], counts, example, room);
+		const profiles = new Map<string, Profile>();
+		for (const [k, hits] of example) profiles.set(k, profileOf(hits, barsPerBlock, stepsPerBar));
+		const profile = (k: string) => profiles.get(k) ?? profileOf([], barsPerBlock, stepsPerBar);
+		const alike = (a: string, b: string) => likeness(profile(a), profile(b), !drums);
+		const kept = representatives([...counts.keys()], counts, alike, room);
 		// patterns numbered in the order the song first plays them
 		const order = kept.slice().sort((a, b) => keys.indexOf(a) - keys.indexOf(b));
 		const numberOf = new Map(order.map((k, i) => [k, i + 1]));
 		const emptyPattern = needsEmpty ? order.length + 1 : 0;
-		let folded = 0;
-		let closeness = 0;
-		const blockPatterns = keys.map((k, i) => {
-			if (!k) return emptyPattern;
-			const n = numberOf.get(k);
-			if (n !== undefined) return n;
-			folded++;
-			let best = order[0];
-			let score = -1;
-			for (const candidate of order) {
-				const s = likeness(hitsByBlock[i], example.get(candidate) ?? []);
-				if (s > score) {
-					score = s;
-					best = candidate;
-				}
-			}
-			closeness += Math.max(0, score);
-			return numberOf.get(best) ?? 1;
-		});
-		byBlock.set(t.to, blockPatterns);
 
+		// each kept block's notes as its pattern plays them: the 120 loudest
 		let overflow = 0;
-		let written = 0;
+		const plays = new Map<string, Hit[]>();
 		for (const k of order) {
 			const hits = [...(example.get(k) ?? [])];
 			let chosen = hits;
@@ -340,12 +392,12 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 					.slice()
 					.sort((a, b) => b.velocity - a.velocity || a.step - b.step)
 					.slice(0, IMPORT_LIMITS.notesPerPattern);
-				overflow += hits.length - chosen.length;
+				overflow += (hits.length - chosen.length) * (counts.get(k) ?? 0);
 			}
 			chosen.sort((a, b) => a.step - b.step || a.note - b.note);
-			written += chosen.length * (counts.get(k) ?? 0);
+			plays.set(k, chosen);
 			patterns.push({
-				track: t.to,
+				track: to,
 				pattern: numberOf.get(k) ?? 1,
 				bars: Math.ceil(blockSteps / 16),
 				length: blockSteps,
@@ -359,25 +411,53 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 		}
 		if (needsEmpty) {
 			patterns.push({
-				track: t.to,
+				track: to,
 				pattern: emptyPattern,
 				bars: Math.ceil(blockSteps / 16),
 				length: blockSteps,
 				notes: []
 			});
 		}
+
+		// each block's pattern: its own, or the closest kept one; and how much plays as written
+		let folded = 0;
+		let total = 0;
+		let written = 0;
+		let offBars = 0;
+		const blockPatterns = keys.map((k, i) => {
+			const hits = hitsByBlock[i];
+			total += hits.length;
+			if (!k) return emptyPattern;
+			let stand = k;
+			if (!numberOf.has(k)) {
+				folded++;
+				let score = -1;
+				for (const candidate of order) {
+					const s = alike(k, candidate);
+					if (s > score) {
+						score = s;
+						stand = candidate;
+					}
+				}
+				if (!drums) offBars += barsDiffering(profile(k), profile(stand));
+			}
+			const played = new Set((plays.get(stand) ?? []).map((h) => `${h.step}:${h.note}`));
+			for (const h of hits) if (played.has(`${h.step}:${h.note}`)) written++;
+			return numberOf.get(stand) ?? 1;
+		});
+		byBlock.set(to, blockPatterns);
+
 		reports.push({
-			midi: t.midi,
-			name: digest.name,
-			to: t.to,
+			to,
+			parts,
 			drums,
-			notes: inRange,
-			kept: written,
+			notes: parts.reduce((sum, p) => sum + p.notes, 0),
 			patterns: order.length + (needsEmpty ? 1 : 0),
 			folded,
-			foldedAlike: folded > 0 ? Math.round((closeness / folded) * 100) / 100 : null,
+			asWritten: total === 0 ? 1 : written / total,
+			offBars,
 			overflow,
-			unmapped
+			unmapped: parts.reduce((sum, p) => sum + p.unmapped, 0)
 		});
 	}
 
@@ -386,7 +466,7 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 	const scenes: ImportPlan['scenes'][number][] = [];
 	const song: number[] = [];
 	for (let b = 0; b < songBlocks; b++) {
-		const set = options.tracks.map((t) => ({ track: t.to, pattern: byBlock.get(t.to)?.[b] ?? 1 }));
+		const set = targets.map((to) => ({ track: to, pattern: byBlock.get(to)?.[b] ?? 1 }));
 		const key = set.map((p) => `${p.track}:${p.pattern}`).join(' ');
 		let scene = sceneOf.get(key);
 		if (scene === undefined) {
@@ -409,6 +489,7 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 		bpm,
 		fromBar,
 		toBar,
+		silentStart,
 		blocks: songBlocks,
 		barsPerBlock,
 		patterns,

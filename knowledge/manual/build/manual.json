@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "20a0f854",
+	"bundle_hash": "4e32fe47",
 	"stats": {
 		"units": 166,
-		"facts": 1170,
+		"facts": 1171,
 		"procedures": 205,
 		"parameters": 207,
-		"verified_items": 246,
-		"words": 44040,
+		"verified_items": 247,
+		"words": 44061,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -18149,6 +18149,14 @@
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "new-project",
+					"text": "A new project starts with a delay on FX I, set to a dotted eighth, and a reverb on FX II.",
+					"source": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -18217,6 +18225,10 @@
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
 					"kind": "research"
 				}
 			],

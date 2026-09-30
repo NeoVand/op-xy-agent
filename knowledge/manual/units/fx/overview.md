@@ -33,6 +33,11 @@ facts:
     source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
     confidence: verified
     verified_on: '1.1.33'
+  - id: new-project
+    text: A new project starts with a delay on FX I, set to a dotted eighth, and a reverb on FX II.
+    source: docs/research/30-presets-samples.md#11-a-new-projects-sounds
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: change
     goal: Load a different effect on FX I or FX II

@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1170 facts, 205 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1171 facts, 205 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -3231,6 +3231,7 @@ Facts:
 - The loaded effect's four parameters sit on the FX track's `M1` page. [#m1] [s2]
 - No MIDI CC is known that changes the effect type; choose it on the unit. [#no-type-cc] (community) [s3]
 - The effect list on the unit spells them chorus, delay, dist, lofi, phaser and reverb. [#list-names] (verified 1.1.33) [s4]
+- A new project starts with a delay on FX I, set to a dotted eighth, and a reverb on FX II. [#new-project] (verified 1.1.33) [s5]
 
 Procedures:
 - Load a different effect on FX I or FX II [#change] [s1]
@@ -3243,7 +3244,7 @@ Procedures:
 
 Related: [fx.chorus], [fx.delay], [fx.distortion], [fx.lofi], [fx.phaser], [fx.reverb], [auxiliary.fx-sends], [mix.levels-pans-sends]
 
-Sources: s1 guide:fx#fx · s2 guide:auxiliary#fx-i-and-fx-ii · s3 note 20 · s4 note 59
+Sources: s1 guide:fx#fx · s2 guide:auxiliary#fx-i-and-fx-ii · s3 note 20 · s4 note 59 · s5 note 30
 
 ### Chorus effect [fx.chorus]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33

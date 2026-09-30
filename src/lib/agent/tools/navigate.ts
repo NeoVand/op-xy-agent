@@ -252,7 +252,22 @@ export const planStepsTool = defineTool({
 				`guiding: ${summaryOf(plan)}`
 			);
 		}
-		if (!input.show) return jsonResult(planView(plan), summaryOf(plan));
+		if (!input.show) {
+			// a plan with values changes nothing: said in the result, so no answer claims it was set
+			const setsValues = input.settings !== undefined || input.value !== undefined;
+			return jsonResult(
+				{
+					...planView(plan),
+					...(setsValues
+						? {
+								changed: false,
+								planned: 'Only planned: the replica is unchanged. show true sets it on the replica.'
+							}
+						: {})
+				},
+				summaryOf(plan)
+			);
+		}
 		const replica = ctx.env.replica;
 		// several settings show the ones that work; a single goal only when it is reachable
 		const showable = 'settings' in goal ? plan.steps.length > 0 : plan.reached;
