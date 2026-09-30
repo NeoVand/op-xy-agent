@@ -587,7 +587,7 @@ const DEMO: readonly QualityCase[] = [
 			'make the bass pump with the kick'
 		],
 		intent:
-			'A kit and a house beat playing; a bassline on track 3 that fits it; then a duck on track 3 triggered by the kick track, all still playing.',
+			'A kit and a house beat playing; a bassline on track 3 that fits it; then a duck on track 3 that pumps with the kick, all still playing: the kick track as source, or the metronome when the kick is on every beat and the hats share its track (the manual’s advice), saying why.',
 		check(o) {
 			const fails = playing(o);
 			if (notes(o, 3).length < 4) fails.push(`only ${notes(o, 3).length} bass notes on track 3`);

@@ -248,7 +248,9 @@ export const importMidiTool = defineTool({
 								'switched off, so the song plays without the click (the tempo page’s click E4 brings it back; a duck with the metronome as source still pumps on the beat)'
 						}
 					: {}),
-				note: 'On the replica. transport play runs the song from its first scene.'
+				note: 'On the replica. transport play runs the song from its first scene.',
+				answer:
+					'Once it plays, answer in a few short paragraphs, no bullet lists: what plays (bars, tempo); where each part went, in one sentence, on the tracks’ own sounds, and what was left out and why; what is approximated, in a sentence; your touch; one next step that keeps the song’s feel (the file sets its own timing: no swing); how to move it to the OP-XY when the user means to. Nothing about listening unless you listened.'
 			},
 			summary,
 			{ applied: true }
