@@ -55,6 +55,8 @@ export async function createDemoConductor(
 // ─── the script ─────────────────────────────────────────────────────────────────────────────────
 
 let run = 0;
+/** The model the request asked for, answered as (the live API names the model that answered). */
+let model = 'claude-sonnet-5-5';
 
 /** A little deterministic unevenness, so deltas do not tick like a metronome. */
 function jitter(base: number): (index: number) => number {
@@ -62,6 +64,7 @@ function jitter(base: number): (index: number) => number {
 }
 
 interface RequestBody {
+	readonly model?: string;
 	readonly tools?: readonly { readonly name: string }[];
 	readonly messages: readonly { readonly role: string; readonly content: unknown }[];
 }
@@ -103,6 +106,7 @@ function lastUserText(body: RequestBody): string {
 
 function respond(request: CapturedRequest): PacedTurn {
 	const body = request.body as RequestBody;
+	model = body.model ?? model;
 	const conductor = body.tools?.some((t) => t.name === 'task') ?? false;
 	const results = resultIds(body);
 	if (conductor && results.some((id) => id.includes('_beat_'))) return beatAnswer();
@@ -124,7 +128,7 @@ function respond(request: CapturedRequest): PacedTurn {
 
 /** The conductor, first call: a long cold read of the cached prompt, a note, two tool calls. */
 function plan(n: number): PacedTurn {
-	return new PacedTurn('claude-opus-5-5')
+	return new PacedTurn(model)
 		.wait(700)
 		.start({ input: 60, cacheRead: 131_000 })
 		.wait(1600)
@@ -155,7 +159,7 @@ function plan(n: number): PacedTurn {
 
 /** The manual expert, first call: reads its prompt, then searches. */
 function search(): PacedTurn {
-	return new PacedTurn('claude-sonnet-5')
+	return new PacedTurn(model)
 		.wait(600)
 		.start({ input: 40, cacheRead: 128_000 })
 		.wait(900)
@@ -172,7 +176,7 @@ function search(): PacedTurn {
 
 /** The manual expert, second call: reads the best unit in full. */
 function readUnit(id: string): PacedTurn {
-	return new PacedTurn('claude-sonnet-5')
+	return new PacedTurn(model)
 		.wait(500)
 		.start({ input: 900, cacheRead: 128_000 })
 		.wait(500)
@@ -184,7 +188,7 @@ function readUnit(id: string): PacedTurn {
 
 /** The manual expert's report, streamed. */
 function expertAnswer(): PacedTurn {
-	return new PacedTurn('claude-sonnet-5')
+	return new PacedTurn(model)
 		.wait(600)
 		.start({ input: 2400, cacheRead: 128_000 })
 		.wait(400)
@@ -200,7 +204,7 @@ function expertAnswer(): PacedTurn {
 
 /** The conductor's answer, streamed word by word. */
 function answer(): PacedTurn {
-	return new PacedTurn('claude-opus-5-5')
+	return new PacedTurn(model)
 		.wait(600)
 		.start({ input: 700, cacheRead: 131_200 })
 		.wait(300)
@@ -224,7 +228,7 @@ function beat(n: number): PacedTurn {
 	const clap = [5, 13].map((step) => ({ step, note: 58, velocity: 100 }));
 	const hats = [3, 7, 11, 15].map((step) => ({ step, note: 63, velocity: 84 }));
 	const ghost = [8, 16].map((step) => ({ step, note: 61, velocity: 52 }));
-	return new PacedTurn('claude-opus-5-5')
+	return new PacedTurn(model)
 		.wait(700)
 		.start({ input: 60, cacheRead: 131_000 })
 		.wait(500)
@@ -244,7 +248,7 @@ function beat(n: number): PacedTurn {
 
 /** The beat's answer, streamed, ending on an offer. */
 function beatAnswer(): PacedTurn {
-	return new PacedTurn('claude-opus-5-5')
+	return new PacedTurn(model)
 		.wait(500)
 		.start({ input: 900, cacheRead: 131_200 })
 		.wait(300)
@@ -275,7 +279,7 @@ function part(n: number, kind: 'bass' | 'chords'): PacedTurn {
 				].flatMap((chord, i) =>
 					chord.map((note) => ({ step: i * 4 + 1, note, velocity: 90, length: 3 }))
 				);
-	return new PacedTurn('claude-opus-5-5')
+	return new PacedTurn(model)
 		.wait(600)
 		.start({ input: 60, cacheRead: 131_000 })
 		.wait(400)
@@ -298,7 +302,7 @@ function part(n: number, kind: 'bass' | 'chords'): PacedTurn {
 }
 
 function partAnswer(kind: 'bass' | 'chords'): PacedTurn {
-	return new PacedTurn('claude-opus-5-5')
+	return new PacedTurn(model)
 		.wait(400)
 		.start({ input: 900, cacheRead: 131_200 })
 		.wait(300)
@@ -326,7 +330,7 @@ function takes(n: number): PacedTurn {
 		'}',
 		'return Object.keys(takes);'
 	].join('\n');
-	return new PacedTurn('claude-opus-5-5')
+	return new PacedTurn(model)
 		.wait(600)
 		.start({ input: 60, cacheRead: 131_000 })
 		.wait(400)
@@ -347,7 +351,7 @@ function takes(n: number): PacedTurn {
 }
 
 function takesAnswer(): PacedTurn {
-	return new PacedTurn('claude-opus-5-5')
+	return new PacedTurn(model)
 		.wait(400)
 		.start({ input: 900, cacheRead: 131_200 })
 		.wait(300)

@@ -78,6 +78,7 @@ above the composer says what voice is doing while it is on.
 	import { ChangeGlow } from '$lib/replica/change-glow';
 	import exampleList from '$lib/agent/examples/list.json';
 	import type { ExamplePlayer } from '$lib/agent/examples/replay';
+	import type { AgentPaletteState } from '$lib/app/commands';
 	import { setAside } from '$lib/app/set-aside';
 	import { createVirtualOpxy } from '$lib/app/virtual';
 	import { replicaPointer } from '$lib/replica/glyphs/pointing';
@@ -544,7 +545,7 @@ above the composer says what voice is doing while it is on.
 		}
 	}
 
-	function openSettings(): void {
+	export function openSettings(): void {
 		settingsOpen = true;
 	}
 
@@ -577,7 +578,7 @@ above the composer says what voice is doing while it is on.
 	}
 
 	/** Back from an example: it stops, and the user's project comes back as it was. */
-	function leaveExample(): void {
+	export function leaveExample(): void {
 		const was = example;
 		if (!was) return;
 		example = null;
@@ -591,6 +592,60 @@ above the composer says what voice is doing while it is on.
 	function closeSettings(): void {
 		settingsOpen = false;
 		queueMicrotask(() => composer?.focus());
+	}
+
+	/** The last answer's changes note that can be taken back or put back. */
+	function lastChanges() {
+		const entry = conductor?.entries.findLast((e) => e.kind === 'changes' && e.undo);
+		return entry?.kind === 'changes' && entry.undo ? { ...entry, undo: entry.undo } : null;
+	}
+
+	// What the page's command palette reads and asks of the agent (`bind:this`).
+
+	/** The agent as the palette sees it. */
+	export function paletteState(): AgentPaletteState {
+		const last = lastChanges();
+		return {
+			ready: conductor !== null && !busy && !example,
+			busy,
+			example: example?.player.example.title ?? null,
+			examples: keys.loaded && !hasKey && simulator && replica && !example ? exampleList : [],
+			hasKey,
+			conversation: (conductor?.entries.length ?? 0) > 0,
+			lastChanges: last ? { lines: last.lines, undo: last.undo } : null
+		};
+	}
+
+	/** Sends a question; while it cannot go yet it waits in the composer (the settings open first without a key). */
+	export function ask(text: string): void {
+		const question = text.trim();
+		if (!question) return;
+		if (conductor && !busy && !example) {
+			settingsOpen = false;
+			void conductor.send(question);
+			return;
+		}
+		draft = question;
+		if (!hasKey || example) openSettings();
+		else queueMicrotask(() => composer?.focus());
+	}
+
+	export function stopAgent(): void {
+		conductor?.stop();
+	}
+
+	/** Takes back what the last answer changed on the replica, or puts it back. */
+	export function toggleLastChanges(): void {
+		const last = lastChanges();
+		if (last) void conductor?.undoTurn(last.id);
+	}
+
+	export function newConversation(): void {
+		void conductor?.newThread();
+	}
+
+	export function watchExample(id: string): void {
+		void playExample(id);
 	}
 </script>
 

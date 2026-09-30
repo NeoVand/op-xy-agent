@@ -16,6 +16,8 @@
 		StageHint,
 		sweepSteps
 	} from '$lib/app';
+	import { homeCommands, type AgentPalette, type ReplicaPalette } from '$lib/app/commands';
+	import { fileName, saveFile, songMidi } from '$lib/app/export';
 	import { browserClock, browserTimers, getDeviceStack, type SessionPhase } from '$lib/device';
 	import { getReplicaState, Replica } from '$lib/replica';
 	import { isTyping } from '$lib/replica/modifiers';
@@ -24,6 +26,7 @@
 	import AgentPanel from '$lib/ui/shell/AgentPanel.svelte';
 	import DeviceStage from '$lib/ui/shell/DeviceStage.svelte';
 	import ProjectMenu from '$lib/ui/shell/ProjectMenu.svelte';
+	import { getPaletteState } from '$lib/ui/shell/palette-state.svelte';
 	import ScaleMenu from '$lib/ui/shell/ScaleMenu.svelte';
 	import { isDrumTrack } from '$lib/sim/areas/sequencer/model';
 	import { getShellStatus } from '$lib/ui/shell/status.svelte';
@@ -128,6 +131,60 @@
 		: null;
 	const drumTrack = $derived(simulator ? isDrumTrack(simulator.sim.state) : false);
 
+	// The command palette (⌘K, root layout): this page adds the replica's commands and the agent's.
+	const palette = getPaletteState();
+	let panel = $state<ReturnType<typeof AgentPanel>>();
+
+	function pressKey(id: 'key.play' | 'key.stop'): void {
+		replica.press(id, 'pointer');
+		replica.release(id, 'pointer');
+	}
+
+	function replicaPalette(): ReplicaPalette {
+		const s = simulator?.sim.state;
+		return {
+			playing: s?.transport.playing ?? false,
+			live: bridge.live,
+			bpm: s?.tempo.bpm ?? 120,
+			metronome: s?.tempo.metronome.on ?? false,
+			keys: computerKeys,
+			large: largeScreen,
+			sound: { available: sound.available, on: sound.enabled && sound.available },
+			scale: scale ? { root: scale.root, lit: scale.label } : null,
+			play: () => pressKey(s?.transport.playing ? 'key.stop' : 'key.play'),
+			setTempo: (bpm) => {
+				simulator?.sim.setTempo(bpm);
+				persistence.markDirty();
+			},
+			setMetronome: (on) => {
+				if (s) s.tempo.metronome.on = on;
+				persistence.markDirty();
+			},
+			lightScale: (root, lit) => scale?.set(root, lit),
+			showLarge,
+			toggleSound: () => sound.toggle(),
+			toggleKeys,
+			downloadSong: () => {
+				if (s) saveFile(songMidi(s), fileName(s, 'song', 'mid'), 'audio/midi');
+			}
+		};
+	}
+
+	function agentPalette(): AgentPalette | null {
+		const agent = panel;
+		if (!agent) return null;
+		return {
+			state: agent.paletteState(),
+			ask: agent.ask,
+			stop: agent.stopAgent,
+			toggleLastChanges: agent.toggleLastChanges,
+			newConversation: agent.newConversation,
+			settings: agent.openSettings,
+			watch: agent.watchExample,
+			back: agent.leaveExample
+		};
+	}
+
 	onMount(() => {
 		const stopBridge = bridge.start();
 		const stopScale = scale?.start();
@@ -136,7 +193,12 @@
 		// The page's one orchestrated moment: a playhead sweeps the step row once.
 		const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		const stopSweep = calm || bridge.live ? null : sweepSteps(replica, browserTimers);
+		const stopPalette = palette.add(
+			(query) => homeCommands(query, replicaPalette(), agentPalette()),
+			true
+		);
 		return () => {
+			stopPalette();
 			stopSweep?.();
 			stopHints();
 			stopReadout?.();
@@ -230,7 +292,7 @@
 			/>
 		</DeviceStage>
 	</section>
-	<AgentPanel class="home__agent" />
+	<AgentPanel bind:this={panel} class="home__agent" />
 </div>
 
 {#snippet playing()}

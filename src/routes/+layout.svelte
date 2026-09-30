@@ -5,7 +5,11 @@
 	import '@fontsource-variable/red-hat-mono';
 	import workSansLatin from '@fontsource-variable/work-sans/files/work-sans-latin-wght-normal.woff2?url';
 	import { onMount } from 'svelte';
+	import { dev } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import { asset, resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { siteCommands, type ManualEntry, type SitePage } from '$lib/app/commands';
 	import { PresetInbox, setPresetInbox } from '$lib/app/preset-inbox.svelte';
 	import {
 		AppSimulator,
@@ -33,6 +37,8 @@
 	import { describeFrame } from '$lib/sim/screen/render';
 	import { Theme, setTheme } from '$lib/ui/theme.svelte';
 	import AppHeader from '$lib/ui/shell/AppHeader.svelte';
+	import CommandPalette from '$lib/ui/shell/CommandPalette.svelte';
+	import { PaletteState, setPaletteState } from '$lib/ui/shell/palette-state.svelte';
 	import StatusBar from '$lib/ui/shell/StatusBar.svelte';
 	import { ShellStatus, setShellStatus, type MidiState } from '$lib/ui/shell/status.svelte';
 
@@ -92,6 +98,46 @@
 		store: createIdbSimStore()
 	});
 	setSimPersistence(persistence);
+
+	// The command palette (⌘K): the site's pages, the theme and the manual's pages here; the page
+	// shown adds its own. The manual's titles come from a small prerendered file on first opening.
+	const palette = new PaletteState();
+	setPaletteState(palette);
+	let manualIndex = $state.raw<readonly ManualEntry[] | null>(null);
+	let manualAsked = false;
+	palette.onShow(() => {
+		if (manualAsked) return;
+		manualAsked = true;
+		fetch(resolve('/manual/index.json'))
+			.then((response) => (response.ok ? (response.json() as Promise<ManualEntry[]>) : null))
+			.then(
+				(list) => (manualIndex = list),
+				() => (manualAsked = false)
+			);
+	});
+
+	function openPage(to: SitePage, tab: boolean): void {
+		if (tab) {
+			const href =
+				to.to === '/manual/[id]' ? resolve('/manual/[id]', { id: to.id }) : resolve(to.to);
+			window.open(href, '_blank', 'noopener');
+		} else if (to.to === '/manual/[id]') {
+			void goto(resolve('/manual/[id]', { id: to.id }));
+		} else {
+			void goto(resolve(to.to));
+		}
+	}
+
+	palette.add((query) =>
+		siteCommands(query, {
+			route: page.route.id,
+			dev,
+			manual: manualIndex,
+			theme: theme.current,
+			open: openPage,
+			toggleTheme: () => theme.toggle()
+		})
+	);
 
 	const CONNECTING: readonly SessionPhase[] = [
 		'requesting-access',
@@ -167,6 +213,8 @@
 	</main>
 	<StatusBar {midi} device={deviceName} {firmware} {view} webMidi={status.webMidi} />
 </div>
+
+<CommandPalette {palette} />
 
 <style>
 	.app {

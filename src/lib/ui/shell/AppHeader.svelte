@@ -1,10 +1,11 @@
 <!--
 @component
-The app header: the name in plain text (no logos, see DECISIONS D6), the manual, the preset maker
-and the theme switch. The developer pages (styleguide, replica, lab) are linked only in local development,
-never on the published site.
+The app header: the name in plain text (no logos, see DECISIONS D6), the manual, the preset maker,
+the command palette's key (⌘K) and the theme switch. The developer pages (styleguide, replica, lab)
+are linked only in local development, never on the published site.
 -->
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { dev } from '$app/environment';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
@@ -17,6 +18,8 @@ never on the published site.
 	} from '@hugeicons/core-free-icons';
 	import type { IconSvgElement } from '@hugeicons/svelte';
 	import HugeIcon from '../HugeIcon.svelte';
+	import { tooltip } from '../tooltip';
+	import { getPaletteState } from './palette-state.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 
 	interface NavLink {
@@ -35,6 +38,20 @@ never on the published site.
 		{ id: '/lab', label: 'lab', icon: TestTube01Icon }
 	];
 	const links = dev ? [...LINKS, ...DEV_LINKS] : LINKS;
+
+	/** The command palette (root layout); absent in isolated renders. */
+	const palette = (() => {
+		try {
+			return getPaletteState();
+		} catch {
+			return null;
+		}
+	})();
+	/** The palette's modifier as this computer's keyboard names it. */
+	let mod = $state('⌘');
+	onMount(() => {
+		if (!/mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent)) mod = 'ctrl';
+	});
 </script>
 
 <header class="header">
@@ -57,6 +74,19 @@ never on the published site.
 				><HugeIcon icon={link.icon} /><span class="nav__label">{link.label}</span></a
 			>
 		{/each}
+		{#if palette}
+			<button
+				type="button"
+				class="palette-key"
+				aria-label="commands"
+				aria-keyshortcuts="Meta+K Control+K"
+				aria-expanded={palette.open}
+				onclick={() => palette.toggle()}
+				{@attach tooltip('ask, play, undo, open a manual page', { describe: false })}
+			>
+				<kbd class="palette-key__cap">{mod}</kbd><kbd class="palette-key__cap">K</kbd>
+			</button>
+		{/if}
 		<ThemeToggle />
 	</nav>
 </header>
@@ -148,6 +178,51 @@ never on the published site.
 	.nav__link:hover,
 	.nav__link.is-current {
 		color: var(--xy-fg);
+	}
+
+	/* the command palette's key, as its two keys */
+	.palette-key {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.1875rem;
+		height: 2rem;
+		margin-inline: 0.25rem 0.125rem;
+		padding: 0 0.375rem;
+		border: 0;
+		border-radius: var(--xy-radius-tile);
+		background: none;
+		color: var(--xy-fg-subtle);
+		cursor: pointer;
+		transition: color var(--xy-dur-quick) var(--xy-ease-standard);
+	}
+
+	.palette-key__cap {
+		min-width: 1.25rem;
+		padding: 0.0625rem 0.3125rem;
+		border: 1px solid var(--xy-line-strong);
+		border-radius: 0.25rem;
+		font-family: inherit;
+		font-size: var(--xy-text-2xs);
+		line-height: 1.4;
+		text-align: center;
+		transition: border-color var(--xy-dur-quick) var(--xy-ease-standard);
+	}
+
+	.palette-key:hover,
+	.palette-key[aria-expanded='true'] {
+		color: var(--xy-fg);
+	}
+
+	.palette-key:hover .palette-key__cap,
+	.palette-key[aria-expanded='true'] .palette-key__cap {
+		border-color: var(--xy-line-control);
+	}
+
+	/* no keyboard to press it on */
+	@media (hover: none) {
+		.palette-key {
+			display: none;
+		}
 	}
 
 	/* a phone's width: the icons alone, the names kept for screen readers */
