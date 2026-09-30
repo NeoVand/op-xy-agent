@@ -124,7 +124,9 @@ describe('make_kit', () => {
 		).toThrow();
 		const tool = createConductorRegistry()
 			.apiTools()
-			.find((t) => t.name === 'make_kit')!;
-		expect(JSON.stringify(tool.input_schema)).not.toContain('"required":[]');
+			.find((t) => t.name === 'make_kit');
+		expect(tool && 'input_schema' in tool && JSON.stringify(tool.input_schema)).not.toContain(
+			'"required":[]'
+		);
 	});
 });

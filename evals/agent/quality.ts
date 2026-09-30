@@ -19,6 +19,7 @@
  *
  * Real API calls with the owner's key from $ANTHROPIC_API_KEY or .env (never printed).
  */
+import { createMemoryStore } from '$lib/agent/memory';
 import { evalAgentModes } from './modes';
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
@@ -216,6 +217,7 @@ async function environment(
 		listen,
 		manual,
 		store,
+		memory: createMemoryStore(),
 		autoApprove: true,
 		confirmWindowMs: 0,
 		model

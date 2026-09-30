@@ -8,6 +8,7 @@ import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { createAnthropicClient } from './client';
 import { Conductor } from './conductor.svelte';
 import { createUnitSource } from './manual-index';
+import { createMemoryStore } from './memory';
 import { createMemoryThreadStore } from './threads';
 import { scriptedApi, type ScriptedTurn } from './testing/scripted-api';
 
@@ -120,5 +121,26 @@ describe('the conductor grounds its answer', () => {
 		expect(note.type).toBe('text');
 		expect(note.text).toMatch(/^<replica-changes>\n/);
 		expect(note.text).toContain('- tempo 120 → 100 bpm');
+	});
+});
+
+describe('the conductor remembers', () => {
+	it('adds what it remembers about the user to a conversation’s first message only', async () => {
+		const api = scriptedApi([answer('Hi again.'), answer('Sure.')]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			memory: createMemoryStore([{ path: '/memories/user.md', text: 'Level: beginner' }]),
+			confirmWindowMs: 0,
+			session: 'session-test'
+		});
+		await conductor.send('hello');
+		expect(requestText(api.messageRequests[0].body)).toContain('Level: beginner');
+		await conductor.send('make a beat');
+		const second = api.messageRequests[1].body;
+		expect(requestText(second).split('<memory>')).toHaveLength(2);
 	});
 });

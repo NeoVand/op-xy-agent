@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
+	isStrictSchema,
 	asksForApproval,
 	defineTool,
 	MAX_OPTIONAL_PARAMETERS,
@@ -132,9 +133,7 @@ describe('ToolRegistry', () => {
 describe('the conductor tool set', () => {
 	it('stays within the API’s budget of optional parameters (it refuses more than 24)', () => {
 		// the API compiles only the strict schemas, so only they count
-		const tools = createConductorRegistry()
-			.apiTools()
-			.filter((t) => t.strict);
+		const tools = createConductorRegistry().apiTools().filter(isStrictSchema);
 		const optional = tools.reduce(
 			(n, t) => n + optionalParameters(t.input_schema as Record<string, unknown>),
 			0
@@ -170,7 +169,8 @@ describe('the conductor tool set', () => {
 			listen: 'read',
 			listen_tracks: 'mutate',
 			import_midi: 'mutate',
-			skill: 'read'
+			skill: 'read',
+			memory: 'mutate'
 		});
 	});
 

@@ -3,6 +3,7 @@
  * tools, the manual index and the conductor), so the home page does not pay for it until a key is
  * present.
  */
+import { createIdbMemoryStore } from './memory';
 import type { AppSimulator } from '$lib/app/simulator.svelte';
 import { createVirtualOpxy, type VirtualSound } from '$lib/app/virtual';
 import type { DeviceStack } from '$lib/device';
@@ -113,6 +114,7 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 		listen: options.listen ?? null,
 		manual,
 		store: createIdbThreadStore(),
+		memory: createIdbMemoryStore(),
 		preferences: browserPreferences()
 	});
 }

@@ -53,6 +53,7 @@ import { PolicyGate } from './policy';
 import { CONDUCTOR_ROLE, systemBlocks } from './prompts';
 import { routeSkills } from './skill-router';
 import { loadedSkills, messageTexts, skillIndex, skillNamed, skillText } from './skills';
+import { memoryBriefing, type MemoryStore } from './memory';
 import { DeviceQueue } from './queue';
 import { SUBAGENTS, parentOf, subagentName, type SubagentSpec } from './subagents';
 import { titleFrom, type ThreadRecord, type ThreadStore, type ThreadSummary } from './threads';
@@ -137,6 +138,8 @@ export interface ConductorOptions {
 	readonly manualMode?: 'full' | 'map';
 	/** Add the skills a message clearly needs with it (default true). */
 	readonly routeSkills?: boolean;
+	/** The agent's memory across conversations; none when absent. */
+	readonly memory?: MemoryStore | null;
 }
 
 /** How a message reached the conductor. */
@@ -334,6 +337,7 @@ export class Conductor {
 				midiNames: () => [...this.#files.keys()]
 			},
 			listen: options.listen ?? null,
+			memory: options.memory ?? null,
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,
@@ -711,6 +715,12 @@ export class Conductor {
 	): Promise<string | null> {
 		const parts: string[] = [];
 		const texts = messageTexts(this.#messages);
+		// a conversation's first message brings what the agent remembers about the user
+		const memory = this.#env.memory;
+		if (memory && this.#messages.length === 0) {
+			const briefing = await memoryBriefing(memory).catch(() => null);
+			if (briefing) parts.push(briefing);
+		}
 		if (this.#routeSkills) {
 			const loaded = loadedSkills(texts);
 			const kinds = attachments.map((a) => a.view.kind);

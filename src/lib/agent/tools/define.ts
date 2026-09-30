@@ -13,9 +13,11 @@
  * `mutate` waits for the user's approval unless the tool says `approval: 'auto'`. `device: true`
  * tools run one at a time on the single-flight device queue.
  */
+import type { MemoryStore } from '../memory';
 import type {
 	BetaSearchResultBlockParam,
 	BetaTextBlockParam,
+	BetaMemoryTool20250818,
 	BetaTool
 } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import { z } from 'zod';
@@ -61,6 +63,8 @@ export interface AgentEnvironment {
 	readonly projects?: ProjectHost | null;
 	/** Files the user attached in this conversation that tools read themselves (import_midi). */
 	readonly files?: AttachedFiles | null;
+	/** The agent's memory across conversations (`memory`); absent when there is none. */
+	readonly memory?: MemoryStore | null;
 	/** Records what the OP-XY or the replica plays and hears it (`listen`); absent when headless. */
 	readonly listen?: ListenHost | null;
 	readonly manual: ManualSource;
@@ -192,6 +196,11 @@ export interface ToolDefinition<I = unknown, S = unknown> {
 	 * over. The input is still validated with zod on arrival.
 	 */
 	readonly strict?: boolean;
+	/**
+	 * A tool type the API defines and the model is trained on (the memory tool): the request
+	 * declares `{ type, name }` instead of our schema; the input is still validated with zod.
+	 */
+	readonly native?: { readonly type: 'memory_20250818' };
 	/** Captures the state the call is about to change (before approval and again before running). */
 	snapshot?(input: I, env: AgentEnvironment): S;
 	/** What the change will do, for the approval sheet and the journal. */
@@ -379,10 +388,18 @@ export type ParsedCall =
 	| { readonly ok: false; readonly tool: AnyTool | null; readonly error: string };
 
 /** A fixed, name-sorted set of tools. */
+/** A tool as a request carries it: a schema of ours, or a tool type the API defines. */
+export type ApiTool = BetaTool | BetaMemoryTool20250818;
+
+/** Whether a request's tool is one of our schemas sent strict (the ones the API compiles). */
+export function isStrictSchema(tool: ApiTool): tool is BetaTool {
+	return 'input_schema' in tool && tool.strict === true;
+}
+
 export class ToolRegistry {
 	readonly #tools: readonly AnyTool[];
 	readonly #byName: ReadonlyMap<string, AnyTool>;
-	#api: BetaTool[] | null = null;
+	#api: ApiTool[] | null = null;
 
 	constructor(tools: readonly AnyTool[]) {
 		const byName = new Map<string, AnyTool>();
@@ -432,17 +449,21 @@ export class ToolRegistry {
 	 * The `tools` array for the API: sorted, strict, byte-stable (computed once). Strict schemas
 	 * guarantee the shape; ranges are re-checked by {@link ToolRegistry.parse}.
 	 */
-	apiTools(): BetaTool[] {
+	apiTools(): ApiTool[] {
 		if (!this.#api) {
-			const api = this.#tools.map((tool) => ({
-				name: tool.name,
-				description: tool.description,
-				input_schema: strictJsonSchema(tool.input, tool.name),
-				strict: tool.strict !== false
-			}));
+			const api = this.#tools.map((tool): ApiTool =>
+				tool.native
+					? { type: tool.native.type, name: 'memory' }
+					: {
+							name: tool.name,
+							description: tool.description,
+							input_schema: strictJsonSchema(tool.input, tool.name),
+							strict: tool.strict !== false
+						}
+			);
 			// the budget counts the schemas the API compiles: the strict ones
 			const optional = api
-				.filter((tool) => tool.strict)
+				.filter(isStrictSchema)
 				.reduce((sum, tool) => sum + optionalParameters(tool.input_schema as JsonSchema), 0);
 			if (optional > MAX_OPTIONAL_PARAMETERS) {
 				throw new ToolDefinitionError(
