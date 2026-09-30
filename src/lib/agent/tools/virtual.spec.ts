@@ -173,9 +173,9 @@ describe('write_pattern', () => {
 		]);
 		// and as a drummer's grid, a line per sound
 		expect(written.written.grid).toEqual({
-			'kick 1': 'x...............',
-			'snare 1': '....x...........',
-			'closed hat 2': 'x...............'
+			'kick 1': 'x... .... .... ....',
+			'snare 1': '.... x... .... ....',
+			'closed hat 2': 'x... .... .... ....'
 		});
 	});
 
@@ -188,7 +188,7 @@ describe('write_pattern', () => {
 				notes: [1, 5, 9, 13, 17, 21, 25, 29].map((step) => ({ step, note: 53 }))
 			})
 		);
-		expect(two.written.grid).toEqual({ 'kick 1': 'x...x...x...x... x...x...x...x...' });
+		expect(two.written.grid).toEqual({ 'kick 1': 'x... x... x... x... | x... x... x... x...' });
 		const keys = json(await run(writePatternTool, { track: 4, notes: [{ step: 1, note: 60 }] }));
 		expect(keys.written.grid).toBeUndefined();
 		expect(keys.written.reading.bars).toEqual(['C4 · · · | · · · · | · · · · | · · · ·']);
@@ -202,7 +202,7 @@ describe('write_pattern', () => {
 			velocity: step % 4 === 1 ? 110 : 60
 		}));
 		const written = json(await run(writePatternTool, { track: 1, notes: hats }));
-		expect(written.written.grid).toEqual({ 'closed hat 1': 'X.o.X.o.X.o.X.o.' });
+		expect(written.written.grid).toEqual({ 'closed hat 1': 'X.o. X.o. X.o. X.o.' });
 	});
 });
 
