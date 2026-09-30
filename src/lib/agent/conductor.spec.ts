@@ -108,7 +108,8 @@ describe('conductor: requests and streaming', () => {
 		'listen_tracks',
 		'make_kit',
 		'play_notes',
-		'plan_steps'
+		'plan_steps',
+		'skill'
 	];
 
 	it('sends a cache-friendly, strict request and streams the answer into the chat', async () => {
@@ -144,15 +145,19 @@ describe('conductor: requests and streaming', () => {
 		expect(body.tool_choice).toBeUndefined();
 		expect(body.betas).toBeUndefined();
 
-		// Frozen system prefix: role, device facts, manual; the breakpoint only on the manual.
-		expect(body.system).toHaveLength(3);
+		// Frozen system prefix: role, skill index, device facts, manual; the breakpoint only on the
+		// manual.
+		expect(body.system).toHaveLength(4);
 		expect(body.system.map((b: { cache_control?: unknown }) => b.cache_control ?? null)).toEqual([
+			null,
 			null,
 			null,
 			{ type: 'ephemeral' }
 		]);
-		expect(body.system[2].text).toContain('# Test manual');
-		expect(body.system[1].text).toContain('CC80');
+		expect(body.system[1].text).toMatch(/^# Skills\n/);
+		expect(body.system[1].text).toContain('- midi-to-opxy: ');
+		expect(body.system[3].text).toContain('# Test manual');
+		expect(body.system[2].text).toContain('CC80');
 
 		// Tools: sorted by name, strict, closed objects.
 		const names = body.tools.map((t: { name: string }) => t.name);

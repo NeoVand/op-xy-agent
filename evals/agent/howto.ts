@@ -8,6 +8,7 @@
  *
  *   node evals/agent/howto.mjs [--ids cutoff,tempo] [--model claude-sonnet-5]
  */
+import { evalAgentModes } from './modes';
 import { createAnthropicClient } from '$lib/agent/client';
 import { Conductor } from '$lib/agent/conductor.svelte';
 import { loadManualSource } from '$lib/agent/manual-source';
@@ -463,6 +464,7 @@ async function runCase(c: HowtoCase, model: string, apiKey: string): Promise<Cas
 	};
 	const guided: string[] = [];
 	const conductor = await Conductor.create({
+		...evalAgentModes(),
 		client: createAnthropicClient({ apiKey }),
 		device: null,
 		replica,

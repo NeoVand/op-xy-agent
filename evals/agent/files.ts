@@ -12,6 +12,7 @@
  *   node evals/agent/files.mjs --ids ode-d     some of them
  *   node evals/agent/files.mjs --model claude-sonnet-5
  */
+import { evalAgentModes } from './modes';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseNoteName } from '$lib/core/midi/notes';
@@ -168,6 +169,7 @@ interface CaseResult {
 async function runCase(c: FileCase, model: string, apiKey: string): Promise<CaseResult> {
 	const device = await connectFakeDevice();
 	const conductor = await Conductor.create({
+		...evalAgentModes(),
 		client: createAnthropicClient({ apiKey }),
 		device: device.stack,
 		replica: null,

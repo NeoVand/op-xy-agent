@@ -12,7 +12,7 @@
  *    without the scrape as a second net). TE's text must never ship (D2).
  * 3. Otherwise **no manual**: the agent says so and answers from the device facts only.
  */
-import { createUnitSource, type ManualUnitRecord } from './manual-index';
+import { createUnitSource, renderManualMap, type ManualUnitRecord } from './manual-index';
 
 /** Which manual is active. */
 export type ManualSourceKind = 'manual' | 'dev-guide' | 'combined' | 'none';
@@ -63,6 +63,11 @@ export interface ManualSource {
 	unit(id: string): Promise<ManualUnit | null>;
 	/** Every unit's id, title and origin. */
 	catalog(): Promise<readonly ManualEntry[]>;
+	/**
+	 * The manual's map for the system prompt when units are retrieved per turn instead of sent
+	 * whole (docs/AGENT-V2.md): every unit's id and title, grouped by area. Deterministic.
+	 */
+	map(): Promise<string>;
 }
 
 /** What a manual in record form looks like (a list of units; the adapter indexes them). */
@@ -160,6 +165,9 @@ export function adaptManualApi<U extends ManualApiUnit>(
 				source: cite(u) ?? u.id,
 				origin: 'manual' as const
 			}));
+		},
+		async map() {
+			return renderManualMap(units);
 		}
 	};
 }
@@ -183,6 +191,9 @@ export const NO_MANUAL: ManualSource = {
 	},
 	async catalog() {
 		return [];
+	},
+	async map() {
+		return '# Manual\nNo manual is bundled in this build yet. Answer from the device facts above, say clearly when you are not sure, and point the user to the official guide at https://teenage.engineering/guides/op-xy for details.';
 	}
 };
 
@@ -220,6 +231,10 @@ export function combineSources(primary: ManualSource, supplement: ManualSource):
 		},
 		async catalog() {
 			return [...(await primary.catalog()), ...(await supplement.catalog())];
+		},
+		async map() {
+			const [main, extra] = await Promise.all([primary.map(), supplement.map()]);
+			return `${main.trim()}\n\n${extra.trim()}`;
 		}
 	};
 }

@@ -10,6 +10,7 @@ import { MIDI_TOOLS } from './midi';
 import { NAVIGATE_TOOLS } from './navigate';
 import { PRESET_TOOLS } from './presets';
 import { PROJECT_TOOLS } from './project';
+import { SKILL_TOOLS } from './skills';
 import { VIRTUAL_TOOLS } from './virtual';
 import { ToolRegistry, type AnyTool } from './define';
 
@@ -22,6 +23,7 @@ export * from './midi';
 export * from './navigate';
 export * from './presets';
 export * from './project';
+export * from './skills';
 export * from './virtual';
 
 /** Every tool the conductor may use. */
@@ -34,6 +36,7 @@ export const CONDUCTOR_TOOLS: readonly AnyTool[] = [
 	...NAVIGATE_TOOLS,
 	...PRESET_TOOLS,
 	...PROJECT_TOOLS,
+	...SKILL_TOOLS,
 	...VIRTUAL_TOOLS
 ];
 

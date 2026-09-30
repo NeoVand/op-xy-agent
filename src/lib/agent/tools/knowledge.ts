@@ -108,7 +108,7 @@ export const showOnReplicaTool = defineTool({
 	label: 'show on replica',
 	kind: 'ui',
 	description:
-		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"). The keys play from wherever the replica stands and really move it, as a press would: start with the track key when the user names a track, and write the same steps in your answer as you showed. Sends nothing to the device.',
+		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"). The keys play from wherever the replica stands and really move it, as a press would: start with the track key when the user names a track, and write the same steps in your answer as you showed. Sends nothing to the device. When the user asks how to do something on the device, play the main combination once, before you write the answer, and do not mention that you did.',
 	input: z.object({
 		keys: z.string().min(1).max(120).describe('One key combo in the key grammar'),
 		caption: z.string().max(160).optional().describe('What the combo does, in a few words')
@@ -143,7 +143,7 @@ export const readScreenTool = defineTool({
 	label: 'read screen',
 	kind: 'read',
 	description:
-		"What the replica's screen shows right now: the app's simulation of the OP-XY's interface (it follows the user's presses on the replica and your show_on_replica animations; it cannot see the real device's screen). Gives the page and its values, the mode, the selected track and engine, shift, tempo and the simulated transport. Use it to check where a combo landed or when the user asks about what they see.",
+		"What the replica's screen shows right now: the app's simulation of the OP-XY's interface (it follows the user's presses on the replica and your show_on_replica animations; it cannot see the real device's screen). Gives the page and its values, the mode, the selected track and engine, shift, tempo and the simulated transport. Use it first whenever the user mentions what their screen shows, asks where they are or seems lost, and to check where a combo landed; answer from what it shows.",
 	input: z.object({}),
 	async run(_input, ctx) {
 		const screen = ctx.env.screen;

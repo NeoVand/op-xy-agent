@@ -5,6 +5,7 @@
  *
  *   node evals/agent/virtual.mjs [--ids beat,chords] [--model claude-sonnet-5]
  */
+import { evalAgentModes } from './modes';
 import { createAnthropicClient } from '$lib/agent/client';
 import { Conductor } from '$lib/agent/conductor.svelte';
 import { loadManualSource } from '$lib/agent/manual-source';
@@ -158,6 +159,7 @@ async function runCase(c: VirtualCase, model: string, apiKey: string): Promise<C
 	const virtual = createVirtualOpxy({ sim });
 	const drafts: Draft[] = [];
 	const conductor = await Conductor.create({
+		...evalAgentModes(),
 		client: createAnthropicClient({ apiKey }),
 		device: null,
 		replica: null,

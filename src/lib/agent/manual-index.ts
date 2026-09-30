@@ -70,6 +70,20 @@ export function snippet(text: string, terms: readonly string[], max = SNIPPET_CH
 	return `${start > 0 ? '…' : ''}${piece.trim()}${start + max < clean.length ? '…' : ''}`;
 }
 
+/** The map of a list of units: a line per unit under its area (the id's first part). */
+export function renderManualMap(
+	units: readonly { readonly id: string; readonly title: string }[],
+	header = '# The manual (a map)'
+): string {
+	const areas = new Map<string, string[]>();
+	for (const u of units) {
+		const area = u.id.includes('.') ? u.id.slice(0, u.id.indexOf('.')) : 'other';
+		areas.set(area, [...(areas.get(area) ?? []), `[${u.id}] ${u.title}`]);
+	}
+	const sections = [...areas].map(([area, lines]) => `## ${area}\n${lines.join('\n')}`);
+	return `${header}\nEvery unit of the app's OP-XY manual by id and title. The units most relevant to each message are added to the conversation for you; read any other one in full by its id, or search the manual, before you rely on it.\n\n${sections.join('\n\n')}`;
+}
+
 /** Builds a {@link ManualSource} over a list of units. */
 export function createUnitSource(options: UnitSourceOptions): ManualSource {
 	const units = [...options.units];
@@ -140,6 +154,9 @@ export function createUnitSource(options: UnitSourceOptions): ManualSource {
 		},
 		async catalog() {
 			return units.map((u) => ({ id: u.id, title: u.title, source: u.source, origin }));
+		},
+		async map() {
+			return renderManualMap(units, `# ${options.label} (a map)`);
 		}
 	};
 }

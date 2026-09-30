@@ -51,6 +51,8 @@ import type { ManualEntry, ManualSource, ManualSourceKind } from './manual-sourc
 import { DEFAULT_CONDUCTOR_MODEL, modelOptions, type ModelOption } from './models';
 import { PolicyGate } from './policy';
 import { CONDUCTOR_ROLE, systemBlocks } from './prompts';
+import { routeSkills } from './skill-router';
+import { loadedSkills, messageTexts, skillIndex, skillNamed, skillText } from './skills';
 import { DeviceQueue } from './queue';
 import { SUBAGENTS, parentOf, subagentName, type SubagentSpec } from './subagents';
 import { titleFrom, type ThreadRecord, type ThreadStore, type ThreadSummary } from './threads';
@@ -85,6 +87,11 @@ export interface PreferenceStore {
 	get(key: string): string | null;
 	set(key: string, value: string | null): void;
 }
+
+/** Manual units retrieved into a message in map mode. */
+const RETRIEVED_UNITS = 3;
+/** A retrieved unit's marker, so the same unit is not added twice in a thread. */
+const MANUAL_UNIT = /<manual-unit id="([^"]+)">/g;
 
 /** Everything the conductor depends on. */
 export interface ConductorOptions {
@@ -123,6 +130,13 @@ export interface ConductorOptions {
 	readonly now?: () => number;
 	/** This page session's id (tests). */
 	readonly session?: string;
+	/**
+	 * How the manual reaches the model: the whole bundle in the system prompt (`full`), or its map
+	 * there and the units most relevant to each message retrieved into the turn (`map`).
+	 */
+	readonly manualMode?: 'full' | 'map';
+	/** Add the skills a message clearly needs with it (default true). */
+	readonly routeSkills?: boolean;
 }
 
 /** How a message reached the conductor. */
@@ -249,6 +263,8 @@ export class Conductor {
 	#answered = false;
 	#resolveApproval: ((decision: ApprovalDecision) => void) | null = null;
 	#system: Promise<BetaTextBlockParam[]> | null = null;
+	readonly #manualMode: 'full' | 'map';
+	readonly #routeSkills: boolean;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	readonly #subagentSystems = new Map<string, Promise<BetaTextBlockParam[]>>();
 	#disposed = false;
@@ -269,6 +285,8 @@ export class Conductor {
 		// room for a whole arrangement's calls in one answer (Sonnet 5.5 and Opus 5.5 write 128k)
 		this.#maxTokens = options.maxTokens ?? 64_000;
 		this.#now = options.now ?? (() => Date.now());
+		this.#manualMode = options.manualMode ?? 'full';
+		this.#routeSkills = options.routeSkills ?? true;
 		this.manualKind = options.manual.kind;
 		this.manualLabel = options.manual.label;
 		this.model = options.model ?? this.#preferences.get(PREF_MODEL) ?? DEFAULT_CONDUCTOR_MODEL;
@@ -389,10 +407,16 @@ export class Conductor {
 			...(attachments.length > 0 ? { attachments: attachments.map((a) => a.view) } : {}),
 			...(options.via ? { via: options.via } : {})
 		});
+		// busy from here: the context is worked out before the message joins the thread, so the
+		// thread gets both at once, and a second send cannot slip in while it is
+		this.status = 'running';
+		this.activity = startActivity(this.#now(), !this.#answered);
+		const context = await this.#turnContext(trimmed, attachments);
 		this.#messages.push({ role: 'user', content: userContent(trimmed, attachments) });
 		for (const a of attachments) if (a.midi) this.#files.set(a.view.name, a.midi);
 		if (options.via === 'voice') this.#pendingNotes.push(VOICE_NOTE);
-		const note = this.#deviceUpdate();
+		// one system message: two in a row would reach the model as two user turns
+		const note = [this.#deviceUpdate(), context].filter(Boolean).join('\n\n');
 		if (note) this.#messages.push({ role: 'system', content: note });
 		await this.#run();
 	}
@@ -642,10 +666,39 @@ export class Conductor {
 	}
 
 	async #systemBlocks(): Promise<BetaTextBlockParam[]> {
-		this.#system ??= this.#manual
-			.promptBundle()
-			.then((bundle) => systemBlocks(CONDUCTOR_ROLE, bundle));
+		this.#system ??= (
+			this.#manualMode === 'map' ? this.#manual.map() : this.#manual.promptBundle()
+		).then((manual) => systemBlocks(CONDUCTOR_ROLE, manual, [skillIndex()]));
 		return this.#system;
+	}
+
+	/**
+	 * What the app adds to a message (docs/AGENT-V2.md): the skills it clearly needs that the
+	 * conversation does not hold yet, and in map mode the manual units that best match it.
+	 */
+	async #turnContext(
+		text: string,
+		attachments: readonly PreparedAttachment[]
+	): Promise<string | null> {
+		const parts: string[] = [];
+		const texts = messageTexts(this.#messages);
+		if (this.#routeSkills) {
+			const loaded = loadedSkills(texts);
+			const kinds = attachments.map((a) => a.view.kind);
+			for (const name of routeSkills({ text, attachments: kinds, loaded })) {
+				const skill = skillNamed(name);
+				if (skill) parts.push(skillText(skill));
+			}
+		}
+		if (this.#manualMode === 'map' && text) {
+			const seen = texts.flatMap((t) => [...t.matchAll(MANUAL_UNIT)].map((m) => m[1]));
+			const hits = await this.#manual.search(text, RETRIEVED_UNITS * 2).catch(() => []);
+			for (const hit of hits.filter((h) => !seen.includes(h.id)).slice(0, RETRIEVED_UNITS)) {
+				const unit = await this.#manual.unit(hit.id).catch(() => null);
+				if (unit) parts.push(`<manual-unit id="${unit.id}">\n${unit.text.trim()}\n</manual-unit>`);
+			}
+		}
+		return parts.length > 0 ? `Added by the app for this message:\n\n${parts.join('\n\n')}` : null;
 	}
 
 	async #subagentBlocks(spec: SubagentSpec): Promise<BetaTextBlockParam[]> {

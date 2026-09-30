@@ -5,6 +5,7 @@
  * rate, latency, cost and cache hits. Started by `run.mjs` through Vite's SSR loader, so `$lib`
  * imports, runes and the dev-only guide supplement work.
  */
+import { evalAgentModes } from './modes';
 import Anthropic from '@anthropic-ai/sdk';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -161,6 +162,7 @@ async function runAgent(
 ): Promise<AgentRun> {
 	const manual = recordingManual(env.manual);
 	const conductor = await Conductor.create({
+		...evalAgentModes(),
 		client: env.client,
 		device: env.device?.stack ?? null,
 		replica: env.replica,
