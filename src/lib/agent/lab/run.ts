@@ -7,7 +7,7 @@
  * that stops even inside a loop (Node, `node.ts`).
  */
 import type { Lab } from './api';
-import { LabError, type LabCommit, type LabSession } from './core';
+import { LabError, type LabCommit, type LabSession, type LabTake } from './core';
 
 /** The name the program's code has in stack traces. */
 export const PROGRAM_FILE = 'lab-program.js';
@@ -74,6 +74,8 @@ export interface LabRunResult {
 	readonly error?: LabFailure;
 	/** Its commits, oldest first (they land only when the program finished). */
 	readonly commits: readonly LabCommit[];
+	/** The takes it offered the user (only when it finished without an error). */
+	readonly takes?: readonly LabTake[];
 	/** The project to land on the replica: the commits' result, or null. */
 	readonly project: string | null;
 	readonly forks: number;
@@ -342,6 +344,7 @@ export async function runLabProgram(
 		...outcome,
 		commits: session.commits(),
 		project: 'error' in outcome ? null : session.project(),
+		takes: 'error' in outcome ? [] : session.takes(),
 		...session.counts(),
 		ms: Date.now() - started
 	});

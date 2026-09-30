@@ -7,6 +7,7 @@ import { createVirtualOpxy } from '$lib/app/virtual';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { createAnthropicClient } from './client';
 import { Conductor } from './conductor.svelte';
+import { createNodeLabHost } from './lab/node';
 import { createUnitSource } from './manual-index';
 import { createMemoryStore } from './memory';
 import { createMemoryThreadStore } from './threads';
@@ -130,6 +131,62 @@ describe('the conductor grounds its answer', () => {
 		});
 		// which the replica lights until the next message
 		expect(conductor.litChanges?.changes.map((c) => c.brief)).toEqual(['tempo 120 → 100 bpm']);
+	});
+
+	it('puts a lab run’s takes on the replica one at a time, and keeps the one on as the user goes on', async () => {
+		const offer = [
+			'for (const note of ["A1", "D2"]) {',
+			'  const f = lab.fork();',
+			'  f.writePattern(3, { notes: [{ step: 1, note, length: 4 }] });',
+			'  lab.offer(f, `${note} root`);',
+			'}'
+		].join('\n');
+		const api = scriptedApi([
+			{
+				content: [
+					{
+						type: 'tool_use',
+						id: 'toolu_lab',
+						name: 'run_lab',
+						input: { purpose: 'two basslines', code: offer }
+					}
+				],
+				stop_reason: 'tool_use'
+			},
+			answer('Two basslines wait under the run: tap each to hear it.'),
+			answer('Glad you like it.')
+		]);
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			lab: createNodeLabHost({ sim }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('give me two basslines to choose from');
+		const run = conductor.entries.find((e) => e.kind === 'tool' && e.name === 'run_lab');
+		expect(run?.kind === 'tool' && run.display?.kind).toBe('takes');
+		const offerId = run?.kind === 'tool' && run.display ? run.display.offer : '';
+		expect(conductor.hearTake(run!.id, 0)).toBe(true);
+		expect(virtual.readPattern(3).notes[0].note).toBe(33);
+		expect(conductor.hearTake(run!.id, 1)).toBe(true);
+		expect(virtual.readPattern(3).notes[0].note).toBe(38);
+		expect(conductor.takesOn[offerId]).toBe(1);
+		// the user goes on with take B on: it is kept, and the model hears which
+		await conductor.send('nice');
+		expect(run?.kind === 'tool' && run.display?.kept).toBe(1);
+		expect(conductor.takesOn[offerId]).toBeUndefined();
+		expect(virtual.readPattern(3).notes[0].note).toBe(38);
+		const text = JSON.stringify(api.messageRequests.at(-1)?.body.messages);
+		expect(text).toMatch(/kept “D2 root”/);
+		expect(conductor.hearTake(run!.id, 0)).toBe(false);
 	});
 
 	it('lets a turn be heard as it was while its before key is held, telling the model nothing', async () => {

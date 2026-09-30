@@ -1,6 +1,6 @@
 ---
 name: lab
-description: Use when a request needs computing over many notes (a MIDI file, a whole song), choosing between options by measuring them (two mappings, three filter settings, by ear), or many edits at once; a program tries them on copies of the replica before anything changes.
+description: Use when a request needs computing over many notes (a MIDI file, a whole song), choosing between options by measuring them or by ear (takes the user hears and keeps: three basslines, two kits), or many edits at once; a program tries them on copies of the replica first.
 ---
 
 # The lab
@@ -42,6 +42,7 @@ lab.midi.plan(file, { tracks: [{ midi, to, transpose?, drums? }], fromBar?, toBa
 lab.midi.write(fork, plan, { keepOthers? })
 await lab.listen(fork, { seconds?, tracks?: 'each', scene? })   // offline render, then heard
 lab.commit(fork, label)    // returns { same, changes } for what lands
+lab.offer(fork, label)     // a take for the user to hear and keep (2–3 a run; nothing lands)
 lab.log(...values)         // or console.log
 
 fork.status()  fork.readPattern(track, pattern?)  fork.writePattern(track, { pattern?, bars?,
@@ -73,6 +74,18 @@ notes that play as written (`asWritten`, 0–1). `plan.notes` lists what the OP-
 does: `text` in words, `flags` worth acting on, and `data` with the numbers (`level.lufs`,
 `tone.centroidHz` for brightness, `rhythm.bpm`, `rhythm.swing`, `harmony.key`). With
 `tracks: 'each'` it hears every instrument track that plays, alone.
+
+## Offering takes
+
+When the choice is the user's to make by ear (three basslines, two kits, a pad darker or
+brighter), offer the forks instead of committing one: `lab.offer(fork, label)` for each, two or
+three in a run. Nothing lands. The chat shows the takes under your run as keys: the user taps each
+to put it on the replica and hear it with the loop, and keeps one, or none. Their next message
+tells you which they kept, and "more like B" asks for another round in that direction. Label each
+take by what sets it apart, in a word or three ("walking", "octave bounce"), and make the takes
+differ in one thing the ear catches. In your answer say the takes are waiting to be heard; none is
+on the replica until the user keeps it. A take that changes nothing is refused, as are more than
+four.
 
 ## Examples
 

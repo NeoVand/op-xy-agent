@@ -273,6 +273,16 @@ above the composer says what voice is doing while it is on.
 		untrack(() => (lit ? glow?.show(lit.changes) : glow?.clear()));
 	});
 
+	/** A take put on the replica, heard with the loop: playback starts if it was stopped. */
+	function hearTake(id: string, take: number | null): boolean {
+		const heard = conductor?.hearTake(id, take) ?? false;
+		if (heard && take !== null && replica && simulator && !simulator.sim.state.transport.playing) {
+			replica.press('key.play', 'pointer');
+			replica.release('key.play', 'pointer');
+		}
+		return heard;
+	}
+
 	/** A changes note pointed at: its keys held lit on the replica (none for a taken-back turn). */
 	function pointChanges(id: string | null): void {
 		const entry = id ? conductor?.entries.find((e) => e.kind === 'changes' && e.id === id) : null;
@@ -611,6 +621,9 @@ above the composer says what voice is doing while it is on.
 					onpointchanges={glow ? pointChanges : undefined}
 					onreply={send}
 					{patterns}
+					takesOn={conductor.takesOn}
+					onheartake={hearTake}
+					onkeeptake={(id) => conductor?.keepTake(id) ?? false}
 					onsettings={openSettings}
 				/>
 			{:else}

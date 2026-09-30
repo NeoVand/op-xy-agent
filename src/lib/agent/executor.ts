@@ -174,7 +174,8 @@ export class ToolExecutor {
 				name: call.name,
 				status: outcome.status,
 				summary: outcome.result.summary,
-				parent
+				parent,
+				...(outcome.result.display ? { display: outcome.result.display } : {})
 			});
 			return outcome;
 		};

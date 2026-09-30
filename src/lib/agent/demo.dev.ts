@@ -15,6 +15,7 @@
  */
 import type { AppSimulator } from '$lib/app/simulator.svelte';
 import { createVirtualOpxy } from '$lib/app/virtual';
+import { BrowserLabHost } from './lab/host';
 import type { ReplicaState } from '$lib/replica';
 import { createAnthropicClient } from './client';
 import { Conductor } from './conductor.svelte';
@@ -43,6 +44,7 @@ export async function createDemoConductor(
 		device: null,
 		replica,
 		virtual: simulator ? createVirtualOpxy({ sim: simulator.sim }) : undefined,
+		lab: simulator ? new BrowserLabHost({ sim: simulator.sim }) : null,
 		manual: await loadManualSource(),
 		store: createMemoryThreadStore(),
 		preferences: { get: () => null, set: () => {} },
@@ -104,10 +106,12 @@ function respond(request: CapturedRequest): PacedTurn {
 	const conductor = body.tools?.some((t) => t.name === 'task') ?? false;
 	const results = resultIds(body);
 	if (conductor && results.some((id) => id.includes('_beat_'))) return beatAnswer();
+	if (conductor && results.some((id) => id.includes('_takes_'))) return takesAnswer();
 	if (conductor && results.some((id) => id.includes('_bass_'))) return partAnswer('bass');
 	if (conductor && results.some((id) => id.includes('_chords_'))) return partAnswer('chords');
 	if (conductor && results.length === 0) {
 		const asked = lastUserText(body);
+		if (/\b(choose|pick|options|takes|basslines)\b/i.test(asked)) return takes(++run);
 		if (/\bbass/i.test(asked)) return part(++run, 'bass');
 		if (/\b(chords?|keys|pad)\b/i.test(asked)) return part(++run, 'chords');
 		if (/\b(beat|groove|drums?)\b/i.test(asked)) return beat(++run);
@@ -302,6 +306,53 @@ function partAnswer(kind: 'bass' | 'chords'): PacedTurn {
 			kind === 'bass'
 				? 'A bassline in A minor on T3: the root on the one, a push before the fifth, down to F for the second half. Click the notes in the card to move it around.'
 				: 'Am, F, C and G on T4, a beat each. Click a chord’s name in the card to hear it.\n\nShould I voice them wider, or add a seventh?',
+			{ size: 1, every: jitter(45) }
+		)
+		.stop('end_turn');
+}
+
+/** Asked for options: three basslines offered from the lab as takes, to hear and keep one. */
+function takes(n: number): PacedTurn {
+	const code = [
+		'const takes = {',
+		'  "walking": [[1, 45], [5, 48], [9, 52], [13, 50]],',
+		'  "octave bounce": [[1, 45], [3, 57], [5, 45], [7, 57], [9, 41], [11, 53], [13, 43], [15, 55]],',
+		'  "offbeat": [[3, 45], [7, 45], [11, 41], [15, 43]]',
+		'};',
+		'for (const [label, hits] of Object.entries(takes)) {',
+		'  const f = lab.fork();',
+		'  f.writePattern(3, { pattern: 1, bars: 1, notes: hits.map(([step, note]) => ({ step, note, velocity: 100, length: 2 })) });',
+		'  lab.offer(f, label);',
+		'}',
+		'return Object.keys(takes);'
+	].join('\n');
+	return new PacedTurn('claude-opus-5-5')
+		.wait(600)
+		.start({ input: 60, cacheRead: 131_000 })
+		.wait(400)
+		.thinking(
+			'Three basslines in A minor, each moving differently, for the user to hear against the beat.',
+			{
+				size: 5,
+				every: jitter(100)
+			}
+		)
+		.toolUse(
+			`toolu_demo_takes_${n}`,
+			'run_lab',
+			{ purpose: 'three basslines', code },
+			{ size: 12, every: 50 }
+		)
+		.stop('tool_use');
+}
+
+function takesAnswer(): PacedTurn {
+	return new PacedTurn('claude-opus-5-5')
+		.wait(400)
+		.start({ input: 900, cacheRead: 131_200 })
+		.wait(300)
+		.text(
+			'Three basslines for T3 wait under the run: **walking** climbs through the chord, **octave bounce** jumps between octaves, **offbeat** leaves the beats to the kick. Tap each to hear it with the loop, and keep the one you like.',
 			{ size: 1, every: jitter(45) }
 		)
 		.stop('end_turn');

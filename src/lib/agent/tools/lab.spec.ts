@@ -13,6 +13,7 @@ import { NO_MANUAL } from '../manual-source';
 import { PolicyGate } from '../policy';
 import { DeviceQueue } from '../queue';
 import { files, smallSong } from '../testing/lab';
+import type { AgentEvent } from '../types';
 import type { AgentEnvironment } from './define';
 import { createConductorRegistry } from './index';
 
@@ -21,11 +22,12 @@ function setup(options: { lab?: boolean } = {}) {
 	const replica = createVirtualOpxy({ sim });
 	const registry = createConductorRegistry();
 	const journal = new Journal({ session: 's', threadId: 't' });
+	const events: AgentEvent[] = [];
 	const executor = new ToolExecutor({
 		gate: new PolicyGate({ requestApproval: async () => ({ kind: 'approve' }) }),
 		queue: new DeviceQueue(),
 		journal,
-		emit: () => {},
+		emit: (event) => events.push(event),
 		firmware: () => null
 	});
 	const env: AgentEnvironment = {
@@ -53,7 +55,7 @@ function setup(options: { lab?: boolean } = {}) {
 		const text = typeof block.content === 'string' ? block.content : '';
 		return { block, body: text.startsWith('{') ? JSON.parse(text) : text };
 	};
-	return { replica, registry, journal, executor, env, call };
+	return { replica, registry, journal, executor, env, call, events };
 }
 
 describe('run_lab', () => {
@@ -164,5 +166,30 @@ describe('run_lab', () => {
 		expect((await call({ purpose: 'x', code: 'return 1' })).body).toMatch(/not available here/);
 		const { block } = await setup().call({ purpose: 'x', code: 'return 1', timeout_s: 600 });
 		expect(block.is_error).toBe(true);
+	});
+
+	it('offers takes for the chat instead of landing them', async () => {
+		const { replica, call, events } = setup();
+		const { body, block } = await call({
+			purpose: 'two basslines',
+			code: [
+				'for (const note of ["A1", "D2"]) {',
+				'  const f = lab.fork();',
+				'  f.writePattern(3, { notes: [{ step: 1, note, length: 4 }] });',
+				'  lab.offer(f, `${note} root`);',
+				'}'
+			].join('\n')
+		});
+		expect(block.is_error).toBeUndefined();
+		expect(body.takes.map((t: { label: string }) => t.label)).toEqual(['A1 root', 'D2 root']);
+		expect(body.offered).toMatch(/none is on the replica until they do/);
+		expect(body.replica).toMatch(/^unchanged/);
+		expect(replica.readPattern(3).notes).toHaveLength(0);
+		const end = events.find((e) => e.type === 'tool_end');
+		expect(end?.type === 'tool_end' && end.summary).toBe('two basslines: 2 forks, 2 takes to hear');
+		expect(end?.type === 'tool_end' && end.display).toMatchObject({
+			kind: 'takes',
+			takes: [{ label: 'A1 root' }, { label: 'D2 root' }]
+		});
 	});
 });

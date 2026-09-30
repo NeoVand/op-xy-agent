@@ -57,6 +57,71 @@ export function applyProject(
 	return changed;
 }
 
+/** A take a run offered: its label, and the project change keeping it lands. */
+export interface ShelvedTake {
+	readonly label: string;
+	readonly base: string;
+	readonly project: string;
+}
+
+/**
+ * The takes runs offered (`lab.offer`), each set heard one take at a time on the replica: hearing
+ * one lands it as an undo point (the one heard before goes back first), none puts the replica back,
+ * keeping leaves the take on and closes the set. Only in the page session that made them.
+ */
+export class TakeShelf {
+	readonly #points: UndoPoints;
+	readonly #prefix: string;
+	readonly #offers = new Map<
+		string,
+		{ readonly takes: readonly ShelvedTake[]; on: { index: number; point: string } | null }
+	>();
+	#count = 0;
+
+	constructor(points: UndoPoints, prefix = 'takes') {
+		this.#points = points;
+		this.#prefix = prefix;
+	}
+
+	/** Keeps a run's takes; returns the id the chat names them by. */
+	shelve(takes: readonly ShelvedTake[]): string {
+		const id = `${this.#prefix}-${++this.#count}`;
+		this.#offers.set(id, { takes, on: null });
+		return id;
+	}
+
+	/** The take on the replica now (its index), or null. */
+	on(offer: string): number | null {
+		return this.#offers.get(offer)?.on?.index ?? null;
+	}
+
+	/**
+	 * Puts take `index` on the replica (the one on before goes back first), or none (null). False
+	 * when the set is unknown (kept already, too old, from before a reload).
+	 */
+	hear(state: SimState, offer: string, index: number | null): boolean {
+		const set = this.#offers.get(offer);
+		if (!set || (index !== null && !set.takes[index])) return false;
+		if (set.on) {
+			this.#points.revert(state, set.on.point);
+			set.on = null;
+		}
+		if (index === null) return true;
+		const take = set.takes[index];
+		const landed = this.#points.land(state, take.base, take.project);
+		if (landed) set.on = { index, point: landed.point };
+		return true;
+	}
+
+	/** The take on the replica stays, as one change that can be undone; the set closes. */
+	keep(offer: string): { readonly index: number; readonly landed: Landed } | null {
+		const set = this.#offers.get(offer);
+		if (!set?.on) return null;
+		this.#offers.delete(offer);
+		return { index: set.on.index, landed: { point: set.on.point } };
+	}
+}
+
 /** A commit's project before and after it landed. */
 interface UndoPoint {
 	readonly before: string;

@@ -102,6 +102,19 @@ export interface LabCommit {
 	readonly changes: readonly string[];
 }
 
+/** A fork offered to the user to hear and keep (`lab.offer`). */
+export interface LabTake {
+	readonly label: string;
+	/** What keeping it would change on the replica as the lab left it. */
+	readonly changes: readonly string[];
+	/** The project its line began from, and its own: keeping it merges the one into the other. */
+	readonly base: string;
+	readonly project: string;
+}
+
+/** The most takes a program may offer. */
+export const MAX_TAKES = 4;
+
 /** A lab in use: what the program sees, and what the host reads afterwards. */
 export interface LabSession {
 	readonly lab: Lab;
@@ -109,6 +122,8 @@ export interface LabSession {
 	commits(): readonly LabCommit[];
 	/** The project the commits leave (`snapshot`), or null when nothing was committed. */
 	project(): string | null;
+	/** The takes offered so far, in order. */
+	takes(): readonly LabTake[];
 	/** Forks made and renders heard so far. */
 	counts(): { readonly forks: number; readonly listens: number };
 }
@@ -347,6 +362,7 @@ export function createLab(options: LabOptions): LabSession {
 	const replica = forkState(options.snapshot);
 	let committed = false;
 	const commits: LabCommit[] = [];
+	const takes: LabTake[] = [];
 	let forks = 0;
 	let renders = 0;
 	let rendered = 0;
@@ -706,12 +722,31 @@ export function createLab(options: LabOptions): LabSession {
 			committed = true;
 			return diff;
 		},
+		offer(fork: Fork, label: string): ReplicaDiff {
+			const f = record(fork, 'offer');
+			const text = check(z.string().trim().min(1).max(60), label, 'take label');
+			if (takes.length >= MAX_TAKES) {
+				throw new LabError(`offer: a program offers at most ${MAX_TAKES} takes`);
+			}
+			// what keeping it would do to the replica as the lab has it now
+			const trial = JSON.parse(JSON.stringify(replica)) as SimState;
+			const project = snapshot(f.sim.state);
+			applyProject(trial, f.origin, project);
+			const diff = diffReplica(
+				sideOf(JSON.parse(JSON.stringify(replica)) as SimState),
+				sideOf(trial)
+			);
+			if (diff.same) throw new LabError(`offer: “${text}” changes nothing on the replica`);
+			takes.push({ label: text, changes: diff.changes, base: f.origin, project });
+			return diff;
+		},
 		log: () => {}
 	});
 
 	return {
 		lab,
 		commits: () => [...commits],
+		takes: () => [...takes],
 		project: () => (committed ? snapshot(replica) : null),
 		counts: () => ({ forks, listens: renders })
 	};

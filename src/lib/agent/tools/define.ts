@@ -26,7 +26,7 @@ import type { ReplicaState } from '$lib/replica';
 import type { LabHost } from '../lab/host';
 import type { ListenHost } from '../listen-host';
 import type { ManualSource } from '../manual-source';
-import type { AgentName, InverseCall, Todo, ToolKind, ToolPreview } from '../types';
+import type { AgentName, InverseCall, Todo, ToolKind, ToolPreview, ToolDisplay } from '../types';
 import type { SampleInput } from '$lib/core/presets';
 import type { VirtualOpxy } from '../virtual-opxy';
 
@@ -181,6 +181,8 @@ export interface ToolResult {
 	 * that undoes this one, in place of the tool's `inverse`.
 	 */
 	readonly inverse?: InverseCall | null;
+	/** What the chat shows under the call's chip (the takes a lab run offered). */
+	readonly display?: ToolDisplay;
 }
 
 /** A tool as the registry stores it. `S` is the snapshot type taken before a change. */

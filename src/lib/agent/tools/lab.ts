@@ -48,8 +48,11 @@ function commitsOf(result: LabRunResult) {
 }
 
 /** The result as the model reads it: what was printed and returned, what landed, what failed. */
-function view(result: LabRunResult, landed: boolean) {
+function view(result: LabRunResult, landed: boolean, offered: boolean) {
 	const commits = commitsOf(result);
+	const takes = offered
+		? (result.takes ?? []).map(({ label, changes }) => ({ label, changes }))
+		: [];
 	return {
 		ok: result.ok,
 		...(result.logs ? { logs: result.logs } : {}),
@@ -62,6 +65,13 @@ function view(result: LabRunResult, landed: boolean) {
 				}
 			: {}),
 		...(commits.length ? { commits } : {}),
+		...(takes.length
+			? {
+					takes,
+					offered:
+						'the takes wait in the chat under this run: the user hears each on the replica with the loop and keeps one, or none; none is on the replica until they do, and their next message says which they kept'
+				}
+			: {}),
 		replica: landed
 			? 'changed: the commits are on the replica now, as one change the user can undo'
 			: result.ok
@@ -74,7 +84,7 @@ function view(result: LabRunResult, landed: boolean) {
 }
 
 /** One lowercase line for the chip. */
-function chip(purpose: string, result: LabRunResult, landed: boolean): string {
+function chip(purpose: string, result: LabRunResult, landed: boolean, takes = 0): string {
 	const label = purpose.trim().toLowerCase();
 	if (!result.ok) {
 		const why =
@@ -88,6 +98,7 @@ function chip(purpose: string, result: LabRunResult, landed: boolean): string {
 	const parts = [plural(result.forks, 'fork')];
 	if (result.listens) parts.push(plural(result.listens, 'listen'));
 	if (landed) parts.push('committed');
+	if (takes) parts.push(`${takes} takes to hear`);
 	return `${label}: ${parts.join(', ')}`;
 }
 
@@ -102,7 +113,7 @@ export const runLabTool = defineTool({
 		'Run a short JavaScript program in the lab: a sandbox where forks (copies) of the replica let you compute, try options, measure them and keep the best, in one call instead of many. code is the body of an async function (await works; return a value to read it back); in scope are only lab and console. console.log / lab.log print; what is printed and returned comes back, cut at about 10,000 characters, so print summaries. There is no network, no storage, no DOM, no imports and no connected OP-XY, and the program stops at timeout_s.',
 		'lab.fork() copies the replica as it stands, lab.fork(other) another fork. A fork has the replica’s own calls: status(), readPattern(track, pattern?), writePattern(track, {pattern?, bars?, length?, scale?, notes: [{step, note, velocity?, length?}]}), readArrangement(), writeArrangement({scenes?: [{scene, patterns: [{track, pattern}] | null}], song?: {order, loop}}), readSound(track), setTempo(bpm), setMetronome(on), setMuted(track, muted), selectTrack(track); and set({param, value, track?, area?, page?, key?}) or set([...]) (a setting reached through the keys, as plan_steps takes it; throws when it cannot be reached), plan(setting) (the steps set would play, without playing them), press(keys, clicks?) (the key grammar, a turn with its detents; returns the screen), screen(), diff(other?) (what changed, in words).',
 		'lab.files.names() and lab.files.midi(name) read attached MIDI files (their notes[].track, tracks[].index and channels count from 0); lab.midi.shapes(file) says what each track plays, lab.midi.plan(file, {tracks: [{midi, to, transpose?, drums?}], fromBar?, toBar?}) plans an import as import_midi does (plan.tracks[i].asWritten is the share of notes that play as written) and lab.midi.write(fork, plan, {keepOthers?}) writes it. await lab.listen(fork, {seconds?, tracks?: "each", scene?}) renders a fork offline through the replica’s sound and hears it (the song does not move on while it renders: hear later parts by scene).',
-		'Nothing reaches the replica until lab.commit(fork, label): when the program finishes without an error, what the committed forks changed lands on the replica as one change the user can undo; what they left alone stays. A program that throws or runs out of time changes nothing. Numbers are the device’s: tracks 1–16, patterns 1–16, scenes 1–99, steps 1–64. The lab skill has worked examples.'
+		'Nothing reaches the replica until lab.commit(fork, label): when the program finishes without an error, what the committed forks changed lands on the replica as one change the user can undo; what they left alone stays. Where the user should choose by ear (basslines, kits, a sound two ways), lab.offer(fork, label) offers forks as takes instead, two or three a run: the chat shows them under the run, the user hears each on the replica with the loop and keeps one; nothing lands until they do. A program that throws or runs out of time changes nothing. Numbers are the device’s: tracks 1–16, patterns 1–16, scenes 1–99, steps 1–64. The lab skill has worked examples.'
 	].join(' '),
 	input: z.object({
 		purpose: z
@@ -174,14 +185,24 @@ export const runLabTool = defineTool({
 			throw new Error('stopped');
 		}
 		const { result, landed } = outcome;
-		const summary = chip(input.purpose, result, landed !== null);
-		const content = view(result, landed !== null);
+		const takes = outcome.offer ? (result.takes ?? []) : [];
+		const summary = chip(input.purpose, result, landed !== null, takes.length);
+		const content = view(result, landed !== null, takes.length > 0);
 		if (!result.ok) {
 			return { content: JSON.stringify(content), summary, isError: true, applied: false };
 		}
 		return jsonResult(content, summary, {
 			applied: landed !== null,
-			...(landed ? { inverse: undoOf(input.purpose, landed.point) } : {})
+			...(landed ? { inverse: undoOf(input.purpose, landed.point) } : {}),
+			...(outcome.offer && takes.length > 0
+				? {
+						display: {
+							kind: 'takes' as const,
+							offer: outcome.offer,
+							takes: takes.map(({ label, changes }) => ({ label, changes }))
+						}
+					}
+				: {})
 		});
 	}
 });

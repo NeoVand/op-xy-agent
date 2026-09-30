@@ -74,6 +74,17 @@ const resultSchema = z.object({
 		})
 		.optional(),
 	commits: z.array(z.object({ label: text(200), changes: z.array(text(2_000)).max(200) })).max(100),
+	takes: z
+		.array(
+			z.object({
+				label: text(60),
+				changes: z.array(text(2_000)).max(200),
+				base: text(MAX_PROJECT_CHARS),
+				project: text(MAX_PROJECT_CHARS)
+			})
+		)
+		.max(4)
+		.optional(),
 	project: text(MAX_PROJECT_CHARS).nullable(),
 	forks: z.int().min(0),
 	listens: z.int().min(0),

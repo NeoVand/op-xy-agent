@@ -238,6 +238,8 @@ export class Conductor {
 	 */
 	litChanges: { readonly id: string; readonly changes: readonly ReplicaChange[] } | null =
 		$state.raw(null);
+	/** Which take of each lab run's offer is on the replica now (the offer's id → its index). */
+	takesOn: Record<string, number> = $state({});
 
 	/** Which manual the agent answers from. */
 	readonly manualKind: ManualSourceKind;
@@ -427,6 +429,8 @@ export class Conductor {
 		const trimmed = text.trim();
 		if ((!trimmed && attachments.length === 0) || this.busy || this.#disposed) return;
 		if (this.attachmentProblem(attachments)) return;
+		// a take left on while the user goes on is the one they have: kept, and the model told
+		this.#keepTakesOn();
 		if (this.#messages.length === 0) {
 			this.threadTitle = titleFrom(trimmed || attachments.map((a) => a.view.name).join(', '));
 		}
@@ -786,6 +790,59 @@ export class Conductor {
 		return true;
 	}
 
+	/** The takes a lab run's chip shows, when it offered some and none is kept yet. */
+	#takesOf(entryId: string) {
+		const entry = this.entries.find((e) => e.kind === 'tool' && e.id === entryId);
+		if (entry?.kind !== 'tool' || entry.display?.kind !== 'takes') return null;
+		return { entry, display: entry.display };
+	}
+
+	/**
+	 * Puts take `take` of a lab run's offer (its chip's entry) on the replica to hear it with the
+	 * loop, the one on before going back first, or none (null). The model is not told: nothing is
+	 * decided until one is kept.
+	 */
+	hearTake(entryId: string, take: number | null): boolean {
+		const lab = this.#env.lab;
+		const found = this.#takesOf(entryId);
+		// not while the agent works: what is on the replica then is the turn's to report
+		if (this.busy || !lab?.hear || !found || found.display.kept !== undefined) return false;
+		if (!lab.hear(found.display.offer, take)) return false;
+		if (take === null) delete this.takesOn[found.display.offer];
+		else this.takesOn[found.display.offer] = take;
+		return true;
+	}
+
+	/** The take on the replica stays (one change the user can undo); the model hears which. */
+	keepTake(entryId: string): boolean {
+		const lab = this.#env.lab;
+		const found = this.#takesOf(entryId);
+		if (this.busy || !lab?.keep || !found || found.display.kept !== undefined) return false;
+		const kept = lab.keep(found.display.offer);
+		if (!kept) return false;
+		const { entry, display } = found;
+		display.kept = kept.index;
+		delete this.takesOn[display.offer];
+		const take = display.takes[kept.index];
+		const purpose = (entry.input as { purpose?: unknown } | null)?.purpose;
+		this.#pendingNotes.push(
+			`The user heard the takes of your lab run${typeof purpose === 'string' ? ` “${purpose}”` : ''} and kept “${take?.label ?? kept.index + 1}”: it is on the replica now (${take?.changes.join('; ') ?? 'as offered'}).`
+		);
+		void this.#save();
+		return true;
+	}
+
+	/** Keeps every take left on the replica (the user went on with it playing). */
+	#keepTakesOn(): void {
+		for (const offer of Object.keys(this.takesOn)) {
+			const entry = this.entries.find(
+				(e) => e.kind === 'tool' && e.display?.kind === 'takes' && e.display.offer === offer
+			);
+			if (entry) this.keepTake(entry.id);
+			else delete this.takesOn[offer];
+		}
+	}
+
 	/**
 	 * Compares a turn by ear (its changes note's "before" key): while `holding`, the replica sounds
 	 * as it was before the turn, and on release it comes back exactly as it was. Only while the
@@ -998,6 +1055,7 @@ export class Conductor {
 		this.#messages = [];
 		this.entries = [];
 		this.litChanges = null;
+		this.takesOn = {};
 		this.todos = [];
 		this.usage = emptyUsage();
 		this.lastError = null;
@@ -1019,6 +1077,7 @@ export class Conductor {
 		this.#repairTranscript();
 		this.entries = record.entries;
 		this.litChanges = null;
+		this.takesOn = {};
 		settleEntries(this.entries, { voice: true });
 		// a turn's take-back lives in the page session that made it
 		for (const entry of this.entries) if (entry.kind === 'changes') delete entry.undo;

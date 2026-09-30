@@ -205,6 +205,8 @@ export type AgentEvent =
 			readonly status: 'ok' | 'error' | 'rejected' | 'stopped';
 			readonly summary: string;
 			readonly parent: string | null;
+			/** What the chat shows under the chip, when the result has something to show. */
+			readonly display?: ToolDisplay;
 	  }
 	| { readonly type: 'todos'; readonly items: readonly Todo[] }
 	| { readonly type: 'approval'; readonly request: ApprovalRequest }
@@ -226,3 +228,18 @@ export type AgentEvent =
 
 /** Listener for the event stream. */
 export type AgentListener = (event: AgentEvent) => void;
+
+/**
+ * What a tool's result shows in the chat under its chip, as plain data stored with the thread:
+ * takes a lab run offered (`lab.offer`), to hear on the replica and keep one.
+ */
+export interface TakesDisplay {
+	readonly kind: 'takes';
+	/** The takes' id on the lab host (they can be heard only in the page session that made them). */
+	readonly offer: string;
+	readonly takes: readonly { readonly label: string; readonly changes: readonly string[] }[];
+	/** The take kept (its index), once one is. */
+	kept?: number;
+}
+
+export type ToolDisplay = TakesDisplay;

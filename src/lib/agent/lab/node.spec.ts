@@ -174,4 +174,43 @@ describe('applyProject', () => {
 		expect(points.revert(sim.state, 't-3')).not.toBeNull();
 		expect(sim.state.tempo.bpm).toBe(91);
 	});
+
+	it('offers takes instead of landing them: heard one at a time, then one is kept', async () => {
+		const { replica, host, run } = setup();
+		const bass = (note: string) =>
+			`{ const f = lab.fork(); f.writePattern(3, { notes: [{ step: 1, note: "${note}", length: 4 }] }); lab.offer(f, "${note} bass"); }`;
+		const outcome = await run([bass('A1'), bass('D2'), 'return "offered";'].join('\n'));
+		expect(outcome.result.ok).toBe(true);
+		expect(outcome.landed).toBeNull();
+		expect(outcome.result.takes?.map((t) => t.label)).toEqual(['A1 bass', 'D2 bass']);
+		expect(outcome.result.takes?.[0].changes[0]).toMatch(/^T3 pattern 1/);
+		const offer = outcome.offer!;
+		expect(replica.readPattern(3).notes).toHaveLength(0);
+		// one take on, then the other in its place, then none
+		const lowest = () => replica.readPattern(3).notes[0]?.note ?? null;
+		expect(host.hear!(offer, 0)).toBe(true);
+		expect(lowest()).toBe(33);
+		expect(host.hear!(offer, 1)).toBe(true);
+		expect(lowest()).toBe(38);
+		expect(host.hear!(offer, null)).toBe(true);
+		expect(lowest()).toBeNull();
+		// kept: it stays, and the takes close
+		host.hear!(offer, 0);
+		expect(host.keep!(offer)?.index).toBe(0);
+		expect(lowest()).toBe(33);
+		expect(host.hear!(offer, 1)).toBe(false);
+		expect(host.keep!(offer)).toBeNull();
+	});
+
+	it('refuses a take that changes nothing, and more than four', async () => {
+		const { run } = setup();
+		const same = await run('lab.offer(lab.fork(), "as it is");');
+		expect(same.result.ok).toBe(false);
+		expect(same.result.error?.message).toMatch(/changes nothing/);
+		const many = await run(
+			'for (let i = 0; i < 5; i++) { const f = lab.fork(); f.setTempo(90 + i); lab.offer(f, `tempo ${i}`); }'
+		);
+		expect(many.result.error?.message).toMatch(/at most 4 takes/);
+		expect(many.offer ?? null).toBeNull();
+	});
 });

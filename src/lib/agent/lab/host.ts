@@ -14,7 +14,7 @@
 import { snapshot, type ProjectContent } from '$lib/sim/areas/system/projects';
 import type { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import type { AttachedFiles } from '../tools/define';
-import { UndoPoints, type Landed } from './apply';
+import { TakeShelf, UndoPoints, type Landed } from './apply';
 import { LISTEN_LIMITS, labSnapshot, type LabRenderer } from './core';
 import { readFromWorker, type FromWorker, type RunMessage, type ToWorker } from './protocol';
 import { MAX_LOG_CHARS, timeoutText, type LabFailure, type LabRunResult } from './run';
@@ -33,6 +33,8 @@ export interface LabOutcome {
 	readonly result: LabRunResult;
 	/** Where its commits landed on the replica (the undo point), or null when nothing changed. */
 	readonly landed: Landed | null;
+	/** The takes it offered, shelved for the user to hear (`hear`, `keep`), or null. */
+	readonly offer?: string | null;
 }
 
 /** Runs lab programs against the replica and lands their commits on it. */
@@ -45,6 +47,13 @@ export interface LabHost {
 	 * null when that point is unknown (too old, or from before a reload).
 	 */
 	revert(point: string): Landed | null;
+	/**
+	 * Puts a take a run offered on the replica to hear it (the one on before goes back first), or
+	 * none (null). False when the takes are gone (kept already, or from before a reload).
+	 */
+	hear?(offer: string, take: number | null): boolean;
+	/** The take on the replica stays and the offer closes: its index and undo point, or null. */
+	keep?(offer: string): { readonly index: number; readonly landed: Landed } | null;
 	/** Lets its workers go (the conductor is going away). */
 	dispose?(): void;
 }
@@ -105,6 +114,7 @@ export class BrowserLabHost implements LabHost {
 	readonly #startMs: number;
 	readonly #idleMs: number;
 	readonly #points = new UndoPoints({ prefix: `lab${randomId().slice(0, 4)}` });
+	readonly #takes = new TakeShelf(this.#points);
 	#spare: Promise<Worker> | null = null;
 	#idle: ReturnType<typeof setTimeout> | null = null;
 
@@ -147,6 +157,16 @@ export class BrowserLabHost implements LabHost {
 		const landed = this.#points.revert(this.#sim.state, point);
 		if (landed) this.#changed();
 		return landed;
+	}
+
+	hear(offer: string, take: number | null): boolean {
+		const heard = this.#takes.hear(this.#sim.state, offer, take);
+		if (heard) this.#changed();
+		return heard;
+	}
+
+	keep(offer: string): { readonly index: number; readonly landed: Landed } | null {
+		return this.#takes.keep(offer);
 	}
 
 	/** Terminates the spare worker (the page is going away). */
@@ -317,6 +337,16 @@ export class BrowserLabHost implements LabHost {
 
 	/** Lands a finished program's commits on the replica, as one undo point. */
 	#land(result: LabRunResult & { base?: string }): LabOutcome {
+		const outcome = this.#landCommits(result);
+		const takes = outcome.result.ok ? (outcome.result.takes ?? []) : [];
+		if (takes.length === 0) return outcome;
+		if (!takes.every((t) => isProject(t.base) && isProject(t.project))) {
+			return { ...outcome, offer: null };
+		}
+		return { ...outcome, offer: this.#takes.shelve(takes) };
+	}
+
+	#landCommits(result: LabRunResult & { base?: string }): LabOutcome {
 		const { base, ...rest } = result;
 		if (!rest.ok || !rest.project || !base) return { result: rest, landed: null };
 		if (!isProject(rest.project)) {

@@ -29,7 +29,7 @@ const FACT =
 const MAKE =
 	/\b(make|write|build|program|create|compose|generate|add|put|give me|turn .{1,40} into|transpose|double|halve|vary|remix|extend|change|rewrite|redo|replace|humani[sz]e|quantize|tighten|loosen)\b/i;
 const MUSIC =
-	/\b(beat|beats|drums?|groove|bass ?line|chords?|melody|melodies|riff|pattern|loop|song|scenes?|arrangement|verse|chorus|intro|outro|breakdown|fill|arp|jam|hats|hi-?hats?|velocit(y|ies)|boom ?bap|house|techno|lo-?fi|hip ?hop|trap|drum and bass|dnb|disco|funk|ambient)\b/i;
+	/\b(beat|beats|drums?|groove|bass ?lines?|chords?|melody|melodies|riff|pattern|loop|song|scenes?|arrangement|verse|chorus|intro|outro|breakdown|fill|arp|jam|hats|hi-?hats?|velocit(y|ies)|boom ?bap|house|techno|lo-?fi|hip ?hop|trap|drum and bass|dnb|disco|funk|ambient)\b/i;
 const SOUND =
 	/\b(tone|timbre|filter|cutoff|resonance|envelope|attack|decay|sustain|release|lfo|duck|pump|pumping|sidechain|bright(er)?|dark(er)?|dull|warm(er)?|harsh|thin|fat(ter)?|muddy|plucky|punchy|sounds? (so |too |a bit |more |less )?(better|worse|good|bad|nicer|bigger|fuller|like))\b/i;
 /** Words for how something sounds, which make a question one for the sound skill. */
@@ -53,6 +53,9 @@ const FORM =
 	/\b(song|sections?|intro|verse|chorus|bridge|outro|break(down)?|build ?up|drop|arrange|arrangement|structure)\b/i;
 const LIVE =
 	/\b(live|jam (over|along|with)|jamming|perform|performance|gig|punch-?in|on the fly)\b/i;
+/** Options for the user to choose between by ear: takes offered from the lab. */
+const TAKES =
+	/\b((two|three|four|a few|a couple( of)?|several|\d) (options|versions|takes|variations|variants|alternatives|ideas|bass ?lines?|beats|grooves|kits|melodies|patterns|sounds)|to (choose|pick) (from|between)|(let|help) me (choose|pick)|compare (them|options|versions))\b/i;
 
 /** The skills to add for `input`, most certain first. */
 export function routeSkills(input: RouteInput): string[] {
@@ -78,6 +81,8 @@ export function routeSkills(input: RouteInput): string[] {
 	if (asking) {
 		want('shape-a-sound', TIMBRE.test(text));
 	} else {
+		// options to choose between by ear come from the lab, offered as takes
+		want('lab', TAKES.test(text));
 		want('song-arrangement', FORM.test(text) && (MAKE.test(text) || /\bturn\b/i.test(text)));
 		want('make-music', MAKE.test(text) && MUSIC.test(text));
 		want('kits-and-samples', KITS.test(text));

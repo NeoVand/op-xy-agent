@@ -6,7 +6,7 @@
  */
 import type { AttachmentView } from './attachments';
 import type { TokenCounts } from './models';
-import type { AgentErrorInfo, AgentEvent, Citation, ToolKind } from './types';
+import type { AgentErrorInfo, AgentEvent, Citation, ToolDisplay, ToolKind } from './types';
 import type { ReplicaChange } from './virtual-opxy';
 
 /** Tool chip state. */
@@ -60,6 +60,8 @@ export type ChatEntry =
 			status: ToolStatus;
 			input: unknown;
 			summary: string;
+			/** What its result shows under the chip (a lab run's takes). */
+			display?: ToolDisplay;
 	  }
 	| {
 			readonly kind: 'notice';
@@ -234,6 +236,7 @@ export function applyEvent(
 			if (!existing) return;
 			existing.status = event.status;
 			existing.summary = event.summary;
+			if (event.display) existing.display = event.display;
 			return;
 		}
 		case 'usage': {

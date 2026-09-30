@@ -13,7 +13,7 @@ import { snapshot } from '$lib/sim/areas/system/projects';
 import type { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import type { VirtualOpxy } from '../virtual-opxy';
 import type { Lab } from './api';
-import { UndoPoints } from './apply';
+import { TakeShelf, UndoPoints } from './apply';
 import { createLab, labSnapshot, type LabRenderer } from './core';
 import type { LabHost, LabOutcome, LabRunRequest } from './host';
 import {
@@ -120,6 +120,7 @@ export function createNodeLabHost(options: NodeLabHostOptions): LabHost {
 	const { sim } = options;
 	const virtual = options.virtual ?? ((s: OpxySim) => createVirtualOpxy({ sim: s }));
 	const points = new UndoPoints({ prefix: `lab${Math.random().toString(36).slice(2, 6)}` });
+	const shelf = new TakeShelf(points);
 	return {
 		listens: Boolean(options.render),
 		async run(code: string, request: LabRunRequest): Promise<LabOutcome> {
@@ -138,12 +139,21 @@ export function createNodeLabHost(options: NodeLabHostOptions): LabHost {
 			});
 			const landed = result.project ? points.land(sim.state, base, result.project) : null;
 			if (landed) options.changed?.();
-			return { result, landed };
+			const takes = result.ok ? (result.takes ?? []) : [];
+			return { result, landed, offer: takes.length > 0 ? shelf.shelve(takes) : null };
 		},
 		revert(point: string) {
 			const landed = points.revert(sim.state, point);
 			if (landed) options.changed?.();
 			return landed;
+		},
+		hear(offer, take) {
+			const heard = shelf.hear(sim.state, offer, take);
+			if (heard) options.changed?.();
+			return heard;
+		},
+		keep(offer) {
+			return shelf.keep(offer);
 		}
 	};
 }

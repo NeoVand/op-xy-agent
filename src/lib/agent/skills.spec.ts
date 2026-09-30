@@ -103,6 +103,8 @@ describe('routing', () => {
 		expect(route('walk me through opening it up')).toEqual(['teach-on-the-replica']);
 		expect(route('what does shift + M1 do?')).toEqual(['teach-on-the-replica']);
 		expect(route('build a little house loop and play it')).toEqual(['make-music']);
+		// options to choose between by ear are the lab's takes
+		expect(route('give me three basslines to choose from')).toEqual(['lab', 'make-music']);
 		expect(route('make a punchy 909 kit and play a house beat with it')).toEqual([
 			'make-music',
 			'kits-and-samples'

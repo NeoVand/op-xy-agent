@@ -3,7 +3,8 @@
 The conversation: your messages (with the files you sent), the agent's answers (streamed, with a caret while they are being
 written and keycaps you can click to see a combo on the replica), its tool calls (a subagent's work
 shows live under its chip), approval records and notices. A pattern the agent wrote shows under
-its chip as a card to play with, live on the replica (`patterns`; on its latest write only). Under
+its chip as a card to play with, live on the replica (`patterns`; on its latest write only), and
+the takes a lab run offered as keys to hear each on the replica and keep one. Under
 the last answer, with `onreply`, two or three things to say next, sent with a click
 (`quick-replies.ts`). With voice on, what the mic heard and
 what the voice said are lines of their own, and a request the voice handed to Claude is marked.
@@ -25,6 +26,7 @@ says what it is doing and for how long.
 	import PatternCard from './PatternCard.svelte';
 	import type { PatternHost } from './pattern-card';
 	import QuickReplies from './QuickReplies.svelte';
+	import TakesCard from './TakesCard.svelte';
 	import { quickReplies } from '../quick-replies';
 	import type { ControlId } from '$lib/core/opxy';
 	import MessageText, { type CitationTarget } from './MessageText.svelte';
@@ -53,6 +55,12 @@ says what it is doing and for how long.
 		onreply?: (text: string) => void;
 		/** The replica's patterns, for the cards of the patterns the agent wrote. */
 		patterns?: PatternHost;
+		/** Which take of each offer is on the replica (`Conductor.takesOn`). */
+		takesOn?: Readonly<Record<string, number>>;
+		/** Puts a take of a run's offer (by its chip's entry) on the replica, or none. */
+		onheartake?: (id: string, take: number | null) => boolean;
+		/** Keeps the take that is on. */
+		onkeeptake?: (id: string) => boolean;
 		/** Opens the settings (for key errors). */
 		onsettings?: () => void;
 	}
@@ -70,6 +78,9 @@ says what it is doing and for how long.
 		onpointchanges,
 		onreply,
 		patterns,
+		takesOn = {},
+		onheartake,
+		onkeeptake,
 		onsettings
 	}: Props = $props();
 
@@ -223,6 +234,19 @@ says what it is doing and for how long.
 					{#if patterns && written}
 						<div class="conv__card">
 							<PatternCard host={patterns} track={written.track} pattern={written.pattern} />
+						</div>
+					{/if}
+					{#if entry.display?.kind === 'takes'}
+						{@const takes = entry.display}
+						<div class="conv__card">
+							<TakesCard
+								display={takes}
+								on={takesOn[takes.offer] ?? null}
+								onhear={onheartake ? (take) => onheartake(entry.id, take) : undefined}
+								onkeep={onkeeptake ? () => onkeeptake(entry.id) : undefined}
+								{onreply}
+								busy={running}
+							/>
 						</div>
 					{/if}
 				{:else if entry.kind === 'changes'}

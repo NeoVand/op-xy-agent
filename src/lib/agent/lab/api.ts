@@ -47,6 +47,13 @@ export interface Lab {
 	 * stays as the replica has it. Returns what changes. Later forks start from the committed state.
 	 */
 	commit(fork: Fork, label: string): ReplicaDiff;
+	/**
+	 * Offers a fork to the user as a take instead of committing it: when the program ends without an
+	 * error, the chat shows each take offered (two or three a run, four at most) for the user to hear
+	 * on the replica with the loop and keep one, or none. Nothing lands until they keep it. Returns
+	 * what the take would change.
+	 */
+	offer(fork: Fork, label: string): ReplicaDiff;
 	/** Prints values for you to read in the result (console.log does the same). */
 	log(...values: unknown[]): void;
 }
