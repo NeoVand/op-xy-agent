@@ -127,6 +127,28 @@ describe('routing', () => {
 			'teach-on-the-replica',
 			'perform-live'
 		]);
+		expect(route('The hats sound robotic. Humanize their velocities.')).toEqual(['make-music']);
+		expect(route('can you make a dusty lo-fi kit, put it on track 2, and a boom bap?')).toEqual([
+			'make-music',
+			'kits-and-samples'
+		]);
+	});
+
+	it('gives a question no topic skill, whose extras it did not ask for', () => {
+		const route = (text: string) => routeSkills({ text });
+		expect(
+			route(
+				'i sampled a snare, but every key plays it at a different pitch, not like the default kits. what did i do wrong?'
+			)
+		).toEqual([]);
+		expect(route('how much sample memory does one project get?')).toEqual([]);
+		expect(route('can i press undo a few times, like in a daw?')).toEqual([]);
+		expect(route('can i pair bluetooth headphones so i can jam on the train?')).toEqual([]);
+		expect(route('is there a way to open the filter on every 4th pass only?')).toEqual([
+			'teach-on-the-replica'
+		]);
+		expect(route('why is my bass so dull?')).toEqual(['shape-a-sound']);
+		expect(route('sync the op-xy with ableton')).toEqual(['midi-gear']);
 	});
 
 	it('never adds more than two, nor one the thread holds', () => {
