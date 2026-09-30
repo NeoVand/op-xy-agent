@@ -98,17 +98,17 @@ export interface MidiPlanOptions {
 	readonly toBar?: number;
 }
 
-/** MIDI files onto forks. */
+/** MIDI files onto forks. A file is one `lab.files.midi` read (reshaped, if you like), or its name. */
 export interface LabMidi {
 	/** Each track with notes: its number, channels, range and what it plays. */
-	shapes(file: MidiFileNotes): TrackShape[];
+	shapes(file: MidiFileNotes | string): TrackShape[];
 	/**
 	 * Plans an import without writing anything: 4-bar patterns (16 per track), a scene per block, the
 	 * song. `plan.tracks[i]` says per OP-XY track how many notes it holds (`notes`), how many blocks
 	 * play the closest of its patterns (`folded`) and the share of its notes that play as written
 	 * (`asWritten`, 0–1); `plan.notes` says what the OP-XY cannot carry.
 	 */
-	plan(file: MidiFileNotes, options: MidiPlanOptions): ImportPlan;
+	plan(file: MidiFileNotes | string, options: MidiPlanOptions): ImportPlan;
 	/**
 	 * Writes a plan onto a fork as import_midi does: the tempo, the patterns at track scale 1, the
 	 * scenes and the song, the tracks left out resting (unless keepOthers) and the metronome off.
@@ -216,6 +216,8 @@ export interface PatternWrite {
 		readonly velocity?: number;
 		/** In steps (default 1). */
 		readonly length?: number;
+		/** What readPattern says a drum note plays; ignored here (the note decides). */
+		readonly sound?: string;
 	}[];
 }
 

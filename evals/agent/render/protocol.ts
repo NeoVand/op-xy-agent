@@ -4,18 +4,10 @@
  * bus coming back. Audio travels as base64 of little-endian float32, which is far quicker to hand
  * across than arrays of numbers.
  */
-import type { SimState } from '$lib/sim/params';
+import type { OfflineRender } from '$lib/sound/offline';
 
-/** Renders what the replica plays from this state, for `seconds`. */
-export interface RenderRequest {
-	/** The project (`snapshot(state)`: tracks, aux, tempo, patterns, scenes, songs, mixer…). */
-	readonly project: string;
-	readonly transport: SimState['transport'];
-	/** The active track and mode (the arpeggio and a few others read them). */
-	readonly track: number;
-	readonly mode: SimState['mode'];
-	readonly seconds: number;
-	readonly sampleRate: number;
+/** Renders what the replica plays from this state, for `seconds` (`$lib/sound/offline`). */
+export interface RenderRequest extends OfflineRender {
 	/** The audio of sample files the agent made (a kit's sounds), by file id. */
 	readonly files: readonly RenderFile[];
 }

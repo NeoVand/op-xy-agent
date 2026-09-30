@@ -180,7 +180,9 @@ const patternWrite = z.strictObject({
 				step: z.int().min(1).max(64),
 				note: z.union([z.int().min(0).max(127), z.string().min(2).max(4)]),
 				velocity: z.int().min(1).max(127).optional(),
-				length: z.number().min(0.05).max(64).optional()
+				length: z.number().min(0.05).max(64).optional(),
+				// what readPattern says a drum note plays: notes read back are written as they are
+				sound: z.string().optional()
 			})
 		)
 		.max(120)
@@ -527,7 +529,7 @@ export function createLab(options: LabOptions): LabSession {
 			: (check(midiFile, file, `${what} file`) as unknown as MidiFileNotes);
 
 	const midi: LabMidi = Object.freeze({
-		shapes(file: MidiFileNotes): TrackShape[] {
+		shapes(file: MidiFileNotes | string): TrackShape[] {
 			const read = fileOf(file, 'midi.shapes');
 			const shapes = trackShapes(read);
 			return read.tracks
@@ -547,7 +549,7 @@ export function createLab(options: LabOptions): LabSession {
 					};
 				});
 		},
-		plan(file: MidiFileNotes, planning: unknown): ImportPlan {
+		plan(file: MidiFileNotes | string, planning: unknown): ImportPlan {
 			const read = fileOf(file, 'midi.plan');
 			const o = check(planOptions, planning, 'midi.plan');
 			try {

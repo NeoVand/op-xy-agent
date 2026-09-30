@@ -588,6 +588,7 @@ export class Conductor {
 	dispose(): void {
 		this.#disposed = true;
 		this.stop();
+		this.#env.lab?.dispose?.();
 		this.#listeners.clear();
 		this.#journal.onChange(null);
 		this.#queue.onChange(null);

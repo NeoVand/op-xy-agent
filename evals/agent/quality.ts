@@ -26,6 +26,7 @@ import { basename, dirname, join } from 'node:path';
 import { z } from 'zod';
 import { prepareAttachment, type PreparedAttachment } from '$lib/agent/attachments';
 import { createAnthropicClient } from '$lib/agent/client';
+import { createNodeLabHost } from '$lib/agent/lab/node';
 import type { ChatEntry } from '$lib/agent/chat';
 import { Conductor } from '$lib/agent/conductor.svelte';
 import { loadManualSource, type ManualSource } from '$lib/agent/manual-source';
@@ -196,6 +197,8 @@ async function environment(
 	const sent: string[] = [];
 	const store = createMemoryThreadStore();
 	const listen = ears?.host(sim, files) ?? null;
+	// the lab runs the agent's programs in this process, and hears its forks through the ears
+	const lab = createNodeLabHost({ sim, render: ears?.renderer(files) ?? null });
 	const conductor = await Conductor.create({
 		client: createAnthropicClient({ apiKey }),
 		device: null,
@@ -212,6 +215,7 @@ async function environment(
 			}
 		},
 		listen,
+		lab,
 		manual,
 		store,
 		autoApprove: true,

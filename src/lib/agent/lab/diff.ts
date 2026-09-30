@@ -155,7 +155,11 @@ function patternChange(x: Pattern, y: Pattern): string {
 	if (nx !== ny) parts.push(`${nx} → ${plural(ny, 'note')}`);
 	else if (notes(x) !== notes(y)) parts.push(`notes changed (${plural(ny, 'note')})`);
 	if (x.bars !== y.bars) parts.push(`${x.bars} → ${plural(y.bars, 'bar')}`);
-	if (x.length !== y.length) parts.push(`length ${x.length} → ${y.length} steps`);
+	// a length that only follows the bars says nothing more
+	const full = (p: Pattern) => p.length === p.bars * 16;
+	if (x.length !== y.length && !(full(x) && full(y))) {
+		parts.push(`length ${x.length} → ${y.length} steps`);
+	}
 	if (x.scale !== y.scale) parts.push(`scale ${x.scale} → ${y.scale}`);
 	const locks = (p: Pattern) => json(p.steps.map((s) => [s.locks, s.components]));
 	if (locks(x) !== locks(y)) parts.push('step locks or components changed');

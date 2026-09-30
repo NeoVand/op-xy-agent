@@ -108,6 +108,9 @@ const HARMLESS = [
 
 const KEEP: ReadonlySet<string> = new Set<string>([...LANGUAGE, ...HARMLESS, 'eval']);
 
+/** Timers that stay, wrapped so they take functions only (a string would be new code). */
+const TIMERS = ['setTimeout', 'setInterval'] as const;
+
 /** Built-in prototype properties code sets on its own objects (see the header). */
 const OVERRIDABLE: readonly [() => object, readonly string[]][] = [
 	[() => Object.prototype, ['constructor', 'toString', 'toLocaleString', 'valueOf']],
@@ -235,31 +238,51 @@ export function lockDown(scope: typeof globalThis = globalThis): LockdownReport 
 	] as const) {
 		Object.defineProperty(Object.getPrototypeOf(fn), 'constructor', { value: refusing(what) });
 	}
-	global.Function = FunctionStandIn;
-	global.eval = refusing('eval');
-	for (const name of ['setTimeout', 'setInterval'] as const) {
+	const own = (key: string, value: unknown) =>
+		Object.defineProperty(scope, key, { value, writable: true, configurable: true });
+	own('Function', FunctionStandIn);
+	own('eval', refusing('eval'));
+	for (const name of TIMERS) {
 		const timer = scope[name] as unknown as (handler: unknown, ...rest: unknown[]) => unknown;
-		global[name] = (handler: unknown, ...rest: unknown[]) => {
+		own(name, (handler: unknown, ...rest: unknown[]) => {
 			if (typeof handler !== 'function') throw new EvalError(`${name} takes a function in the lab`);
 			return timer.call(scope, handler, ...rest);
-		};
+		});
 	}
 
-	// no way out: everything not kept goes
+	// no way out: everything not kept goes, from the global and the prototypes it inherits from
+	// (browsers keep most of a worker's API there), up to EventTarget's
+	const stop = typeof EventTarget === 'undefined' ? Object.prototype : EventTarget.prototype;
+	const chain: object[] = [];
+	for (let at: object | null = scope; at && at !== stop && at !== Object.prototype;) {
+		chain.push(at);
+		at = Object.getPrototypeOf(at) as object | null;
+	}
+	const gone = new Set<string | symbol>();
+	for (const holder of chain) {
+		const inherited = holder !== scope;
+		for (const key of Reflect.ownKeys(holder)) {
+			if (key === Symbol.toStringTag || (inherited && key === 'constructor')) continue;
+			const kept = typeof key === 'string' && KEEP.has(key);
+			// the wrapped timers stay on the global; the originals go from its prototypes
+			if (kept && !(inherited && (TIMERS as readonly string[]).includes(key))) continue;
+			if (!kept) gone.add(key);
+			Reflect.deleteProperty(holder, key);
+		}
+	}
 	const removed: string[] = [];
 	const stuck: string[] = [];
-	for (const key of Reflect.ownKeys(scope)) {
-		if (typeof key === 'string' && KEEP.has(key)) continue;
-		const name = String(key);
-		if (Reflect.deleteProperty(scope, key) && !Reflect.has(scope, key)) {
-			removed.push(name);
+	for (const key of gone) {
+		if (!Reflect.has(scope, key)) {
+			removed.push(String(key));
 			continue;
 		}
+		// could not be deleted somewhere along the chain: shadow it on the global
 		try {
 			Object.defineProperty(scope, key, { value: undefined, writable: false, configurable: false });
-			removed.push(name);
+			removed.push(String(key));
 		} catch {
-			stuck.push(name);
+			stuck.push(String(key));
 		}
 	}
 

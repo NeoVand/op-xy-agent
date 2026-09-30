@@ -6,7 +6,8 @@
  * built-ins. Then it says it is ready, takes one program, streams what it prints, asks the page to
  * render when it listens, and posts the result (`protocol.ts`).
  */
-import { z } from 'zod';
+// first: the lab's schemas must be made after zod is told not to compile (see jitless.ts)
+import './jitless';
 import { createVirtualOpxy } from '$lib/app/virtual';
 import { attachedFiles, createLab, type LabAudio, type LabRenderer } from './core';
 import { lockDown } from './lockdown';
@@ -95,7 +96,5 @@ worker.addEventListener('message', (event) => {
 	else if (message.type === 'rendered' && message.id === running) rendered(message);
 });
 
-// zod compiles fast paths with new Function unless told not to, and the walls take that away
-z.config({ jitless: true });
 lockDown();
 post({ type: 'ready' });

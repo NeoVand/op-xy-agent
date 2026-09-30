@@ -45,6 +45,8 @@ export interface LabHost {
 	 * null when that point is unknown (too old, or from before a reload).
 	 */
 	revert(point: string): Landed | null;
+	/** Lets its workers go (the conductor is going away). */
+	dispose?(): void;
 }
 
 /** What the browser host works with. */

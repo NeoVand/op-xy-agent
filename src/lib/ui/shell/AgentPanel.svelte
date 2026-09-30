@@ -293,7 +293,8 @@ above the composer says what voice is doing while it is on.
 				guide,
 				presets,
 				projects,
-				listen: capture
+				listen: capture,
+				samples: sound?.samples ?? null
 			});
 			conductor = next;
 			booting = false;
