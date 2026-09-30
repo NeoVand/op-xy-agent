@@ -3,6 +3,52 @@
 Re-run with `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5` (needs `ANTHROPIC_API_KEY`
 in `.env`; never printed). Newest first.
 
+## 2026-09-30 — agent v2 (skills, grounding, the lab, memory), conductor claude-sonnet-5-5
+
+The v2 layer of docs/AGENT-V2.md, measured on the final main of the night (`4ade7eb`) against v1.
+
+| Suite                                 | v1 (tuned, 2026-09-29) | v2                                                                                                                                                |
+| ------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| manual Q&A (`run.mjs`)                | 40/42, facts 98 %      | 38/42, facts 96 % (two of the four pass on a rerun; the other two leave out a side fact, "players take no locks", "autosave can be switched off") |
+| device tasks                          | 18/18                  | 18/18                                                                                                                                             |
+| how-to (`howto.mjs`)                  | 25/25                  | 25/25                                                                                                                                             |
+| quality (`quality.mjs`, 44 cases + 4) | 34/34 (on 34 cases)    | 42/48 single run; docs ×3 38/42 (90 %), every other category full but one multi case                                                              |
+| episodes (`episodes.mjs`, 12 users)   | —                      | 9/12 → 11/12 after the fixes below; pump then 2/2                                                                                                 |
+| honesty (`honesty.mjs`)               | —                      | 82 % of 256 claims supported, 9 contradicted → composing cases 92 %, 3 contradicted                                                               |
+| latency, manual suite                 | 5.5 s mean             | 7.7 s (a demonstration now finishes before the answer; its hold was then cut to 0.7 s)                                                            |
+
+What the new evals found, and what changed for it:
+
+- **Honesty** (`node evals/agent/honesty.mjs <run.json>`): each claim an answer makes about what it
+  did, against the tool results and the replica's changes. The contradicted ones were nearly all
+  the agent misdescribing its own music: a bass grid drawn by hand, "Gm7" for notes that spell G7
+  (a wrong note it never saw), accents "on the downbeats" that were not. Patterns now come back as
+  a musician reads them (the key, bars with notes or chords, chords where they change; drum grids
+  four steps a beat, X an accent, o a soft hit), and the make-music skill says to describe from
+  that and fix a chord it did not mean.
+- **Episodes**: "let me do it" users passed 1 in 3 because a demonstration pressed the keys for
+  real (it entered the kick, muted track 2, left mix mode on); a demonstration is now put back
+  once seen, and they pass 3 of 3. A 2-bar MIDI loop kept 2 silent bars every pass; a loop or a
+  last block shorter than 4 bars now plays at its own length. The pump user never heard the duck:
+  listening could not hear a pump and the duck page's reading had no hold or release; now
+  listening names a pump (the level folded onto the beat, in the whole sound and the low end) and
+  says when hearing a track alone silences its duck's source.
+- **Skill routing A/B**: on, 42/44; off, 40/44 (the agent loaded a skill itself in 7 of 44
+  conversations, and the misses lost the style's tempo, playback, and said it had not listened).
+  Routing stays on; a question now gets the teaching skill at most, topic skills come with
+  requests.
+- **Manual map + retrieval A/B**: 33/44 against the full manual's 41/44; the full bundle stays.
+- **The lab's four bulk-edit cases** pass with and without the lab (4/4 both); with it the agent
+  transposes a whole song in one program instead of six calls and keeps the plain tools for one
+  or two patterns.
+- **The manual verifier** (`node evals/manual/verify.mjs`, research note 63): 205 procedures played
+  on the replica; the five real errors it found are fixed (the count-in keeps record down, the
+  slice recipe leaves the record page first, and three more), and a rerun reaches 174 (170).
+
+Cost: about $55 for the runs above (a quality run about $10, main $4.7, how-to $2.6, episodes
+$3.6, the honesty check $0.9 on a quality run, the verifier $0.5); the helpers spent about $20 more
+building and baselining theirs.
+
 ## Episodes
 
 ### 2026-09-30 — the baseline, agent claude-sonnet-5-5, simulated user claude-sonnet-5

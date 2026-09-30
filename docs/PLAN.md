@@ -6,10 +6,16 @@
 
 ## Status (2026-09-30)
 
-- **Now: Agent v2** (`docs/AGENT-V2.md`, D12). The replica is good enough to be the agent's lab, so
-  the AI layer is being rebuilt around it: skills on demand instead of a rule wall, code in a
-  sandbox against forks of the replica, answers grounded in the replica's diff, memory, and
-  episodes with simulated users as the measure of success. The video waits for it.
+- **Now: Agent v2** (`docs/AGENT-V2.md`, D12; where each phase stands is at the end of it). Built
+  in the night of 2026-09-30 and on main: a prose core prompt with 14 skills and a router; the
+  replica's changes grounding every answer, with undo per turn from the chat; patterns read back as
+  a musician reads them; the lab (the model's JavaScript on forks of the replica, one undo for what
+  it commits); memory; demonstrations put back once seen; listening that hears a pump. New evals:
+  episodes with simulated users (9/12 → 11/12), the honesty check, the manual verifier (its five
+  manual errors fixed). Regression suites hold (evals/agent/RESULTS.md). The video waits for it.
+- **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
+  sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
+  (rename with an alias in the key planner, then rerun the how-to eval).
 - **2026-09-29/30:** Sonnet 5.5 as the default; `read_sound`, `send_project`, the demo run sheet;
   `import_midi` (a whole MIDI file as scenes and a song) after the Brother Louie failure.
 

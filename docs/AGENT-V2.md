@@ -167,6 +167,29 @@ Each phase lands with its tests and evals, on `main`, one commit or more.
 9. **V2.8 — Knowledge by use.** The manual audited by the episodes; every procedure checked on the
    simulator; weak units rewritten.
 
+## Where it stands (2026-09-30, end of the first night)
+
+- **V2.0–V2.2 done.** The prose core and 14 skills (the router adds what a request clearly needs;
+  on, 42/44, off, 40/44); the full manual stays (the map lost, 33/44 against 41/44). Grounding: the
+  replica's changes reach the model after each tool batch, a changed pattern says how its notes
+  changed, and the honesty check (`evals/agent/honesty.mjs`) reads every claim against them: 82 % of
+  256 claims supported and 9 contradicted before patterns came back as a musician reads them, 92 %
+  and 3 in the composing cases after. Not yet the zero the phase asks for.
+- **V2.3 done, not yet exercised much.** The lab runs in a locked-down worker per program; the
+  agent reaches for it for many edits at once (a whole song transposed in one program instead of
+  six calls) and keeps the plain tools for one or two. Brother Louie still arranges through
+  import_midi's preview; comparing mappings in a program is in the skills, not yet chosen.
+- **V2.4 done.** Memory on IndexedDB, the profile with the first message.
+- **V2.5 done: the north star is measured.** Episodes 9/12 at baseline; 11/12 after demonstrations
+  were put back once seen, short MIDI loops kept their length and listening said when a solo
+  silences a duck; the pump episode then passed twice once listening could hear a pump.
+- **V2.6 not started.** Nothing in the numbers asks for an arranger or a checker yet.
+- **V2.7 begun.** A turn's changes note takes the turn back (undo, then put back); a
+  demonstration leaves nothing behind; working notes stay out of the answer; the lab's chip shows
+  its purpose and code. Level-aware teaching that watches the user's keys is next.
+- **V2.8 begun.** `evals/manual/verify.mjs` plays each of the manual's procedures on the replica
+  (docs/research/63-manual-verification.md); its hand-checked findings are the next manual edits.
+
 ## Risks
 
 - **Retrieval may answer worse than the full manual.** The A/B decides; the full bundle stays as
