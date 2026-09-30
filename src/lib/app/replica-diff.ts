@@ -3,9 +3,12 @@
  * agent is handed these lines before it writes its answer, so it describes what happened, never what
  * it meant to do. Playback, tempo, groove and the click; each instrument track's sound as its pages
  * read on the screen (only for tracks that changed, since reading a sound plays keys on a copy);
- * mix; patterns; the send effects; scenes and the song.
+ * mix; patterns; the send effects; scenes and the song. Each change also says it briefly, for
+ * people (only the values that differ), and names the keys that lead to it on the device, which the
+ * replica lights once the answer is written.
  */
-import type { VirtualOpxy } from '$lib/agent/virtual-opxy';
+import type { ControlId } from '$lib/core/opxy';
+import type { ReplicaChange, VirtualOpxy } from '$lib/agent/virtual-opxy';
 import { GROOVES, type SimState } from '$lib/sim/params';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 
@@ -31,6 +34,54 @@ function patternList(numbers: readonly number[]): string {
 	if (numbers.length === 1) return `pattern ${numbers[0]}`;
 	const contiguous = numbers.every((n, i) => i === 0 || n === numbers[i - 1] + 1);
 	return contiguous ? `patterns ${numbers[0]}–${numbers.at(-1)}` : `patterns ${numbers.join(', ')}`;
+}
+
+/** The page key a sound page is on ("T3 M3 filter", "shift M2 play mode", "player"). */
+function pageKey(page: string): ControlId | null {
+	if (page === 'player') return 'key.player';
+	const m = /\bM([1-4])\b/.exec(page);
+	return m ? (`key.m${m[1]}` as ControlId) : null;
+}
+
+/** "cutoff 00" and "cutoff 40" share "cutoff ": the words before the first that differs. */
+function sharedLabel(a: string, b: string): string {
+	let end = 0;
+	for (let i = 0; i < Math.min(a.length, b.length) && a[i] === b[i]; i++) {
+		if (a[i] === ' ') end = i + 1;
+	}
+	return a.slice(0, end);
+}
+
+/**
+ * Only what differs between two readings of a page: "cutoff 00 → 40", "svf filter on → off,
+ * resonance 10 → 20". Readings of another shape (an lfo of another type) are given whole.
+ */
+export function briefChange(was: string, now: string): string {
+	const whole = `${was} → ${now}`;
+	const split = (text: string) => {
+		const at = text.indexOf(': ');
+		return at < 0
+			? { head: '', body: text }
+			: { head: text.slice(0, at), body: text.slice(at + 2) };
+	};
+	const a = split(was);
+	const b = split(now);
+	if (a.head !== b.head && (!a.head || !b.head)) return whole;
+	const parts: string[] = [];
+	if (a.head !== b.head) {
+		const label = sharedLabel(a.head, b.head);
+		parts.push(`${a.head} → ${b.head.slice(label.length)}`);
+	}
+	const pa = a.body.split(', ');
+	const pb = b.body.split(', ');
+	if (pa.length !== pb.length) return whole;
+	pa.forEach((x, i) => {
+		const y = pb[i];
+		if (x === y) return;
+		const label = sharedLabel(x, y);
+		parts.push(`${x} → ${y.slice(label.length)}`);
+	});
+	return parts.length > 0 ? parts.join(', ') : whole;
 }
 
 /** A track's patterns, changed: which, and their notes before and after. */
@@ -68,27 +119,46 @@ function patternChanges(
  * The changes from `before` to `after`, one line each (at most {@link MAX_CHANGE_LINES}), or none.
  */
 export function replicaChanges(before: SimState, after: SimState, read: DiffReaders): string[] {
-	const lines: string[] = [];
+	const lines = replicaChangeList(before, after, read).map((change) => change.line);
+	if (lines.length <= MAX_CHANGE_LINES) return lines;
+	return [
+		...lines.slice(0, MAX_CHANGE_LINES),
+		`… and ${lines.length - MAX_CHANGE_LINES} more changes`
+	];
+}
+
+/** The changes from `before` to `after`, every one, each with its brief and its keys. */
+export function replicaChangeList(
+	before: SimState,
+	after: SimState,
+	read: DiffReaders
+): ReplicaChange[] {
+	const changes: ReplicaChange[] = [];
+	const add = (line: string, controls: readonly ControlId[], brief = line) =>
+		changes.push({ line, brief, controls });
 	if (before.transport.playing !== after.transport.playing) {
-		lines.push(after.transport.playing ? 'playback started' : 'playback stopped');
+		add(after.transport.playing ? 'playback started' : 'playback stopped', ['key.play']);
 	}
 	const t0 = before.tempo;
 	const t1 = after.tempo;
-	if (t0.bpm !== t1.bpm) lines.push(`tempo ${t0.bpm} → ${t1.bpm} bpm`);
+	const tempo: ControlId[] = ['key.tempo'];
+	if (t0.bpm !== t1.bpm) add(`tempo ${t0.bpm} → ${t1.bpm} bpm`, tempo);
 	if (t0.groove !== t1.groove) {
-		lines.push(`groove ${GROOVES[t0.groove] ?? t0.groove} → ${GROOVES[t1.groove] ?? t1.groove}`);
+		add(`groove ${GROOVES[t0.groove] ?? t0.groove} → ${GROOVES[t1.groove] ?? t1.groove}`, tempo);
 	}
 	if (round(t0.swing) !== round(t1.swing)) {
-		lines.push(`groove amount ${round(t0.swing)} → ${round(t1.swing)}`);
+		add(`groove amount ${round(t0.swing)} → ${round(t1.swing)}`, tempo);
 	}
 	if (t0.metronome.on !== t1.metronome.on) {
-		lines.push(
-			`metronome click ${t0.metronome.on ? 'on' : 'off'} → ${t1.metronome.on ? 'on' : 'off'}`
+		add(
+			`metronome click ${t0.metronome.on ? 'on' : 'off'} → ${t1.metronome.on ? 'on' : 'off'}`,
+			tempo
 		);
 	}
 
 	for (let t = 0; t < 8; t++) {
 		const label = `T${t + 1}`;
+		const track = `track.${t + 1}` as ControlId;
 		const was = before.tracks[t];
 		const now = after.tracks[t];
 		const wasPreset = before.areas.system.trackPresets[t] ?? null;
@@ -96,7 +166,9 @@ export function replicaChanges(before: SimState, after: SimState, read: DiffRead
 		if (was.engine !== now.engine || wasPreset !== nowPreset) {
 			const name = (engine: string, preset: string | null) =>
 				preset && preset !== '/' ? `${engine} (${preset})` : engine;
-			lines.push(`${label} sound: ${name(was.engine, wasPreset)} → ${name(now.engine, nowPreset)}`);
+			add(`${label} sound: ${name(was.engine, wasPreset)} → ${name(now.engine, nowPreset)}`, [
+				track
+			]);
 		}
 		// the sound without the patterns and the mix, which have their own lines
 		const sound = (track: typeof was) => ({ ...track, sequence: null, mix: null });
@@ -105,17 +177,26 @@ export function replicaChanges(before: SimState, after: SimState, read: DiffRead
 			const a = read.before.readSound(t + 1).pages;
 			const b = read.after.readSound(t + 1).pages;
 			for (const page of Object.keys(b)) {
-				if (a[page] !== b[page]) lines.push(`${label} ${page}: ${a[page] ?? '—'} → ${b[page]}`);
+				if (a[page] === b[page]) continue;
+				const key = pageKey(page);
+				add(
+					`${label} ${page}: ${a[page] ?? '—'} → ${b[page]}`,
+					key ? [track, key] : [track],
+					`${label} ${page}: ${a[page] === undefined ? `— → ${b[page]}` : briefChange(a[page], b[page])}`
+				);
 			}
 		}
 		const m0 = was.mix;
 		const m1 = now.mix;
+		const mix: ControlId[] = [track, 'key.mix'];
 		if (round(m0.level) !== round(m1.level))
-			lines.push(`${label} level ${round(m0.level)} → ${round(m1.level)}`);
+			add(`${label} level ${round(m0.level)} → ${round(m1.level)}`, mix);
 		if (round(m0.pan) !== round(m1.pan))
-			lines.push(`${label} pan ${round(m0.pan)} → ${round(m1.pan)}`);
-		if (m0.muted !== m1.muted) lines.push(`${label} ${m1.muted ? 'muted' : 'unmuted'}`);
-		lines.push(...patternChanges(label, was.sequence.patterns, now.sequence.patterns));
+			add(`${label} pan ${round(m0.pan)} → ${round(m1.pan)}`, mix);
+		if (m0.muted !== m1.muted) add(`${label} ${m1.muted ? 'muted' : 'unmuted'}`, mix);
+		for (const line of patternChanges(label, was.sequence.patterns, now.sequence.patterns)) {
+			add(line, [track]);
+		}
 	}
 
 	const fx0 = before.areas.auxiliary.fx;
@@ -123,27 +204,27 @@ export function replicaChanges(before: SimState, after: SimState, read: DiffRead
 	fx1.forEach((slot, i) => {
 		const name = i === 0 ? 'FX I' : 'FX II';
 		const was = fx0[i];
-		if (!was || was.type !== slot.type) lines.push(`${name}: ${was?.type ?? '—'} → ${slot.type}`);
-		else if (!same(was.params, slot.params)) lines.push(`${name} (${slot.type}) settings changed`);
+		const aux: ControlId[] = ['key.auxiliary'];
+		if (!was || was.type !== slot.type) add(`${name}: ${was?.type ?? '—'} → ${slot.type}`, aux);
+		else if (!same(was.params, slot.params)) add(`${name} (${slot.type}) settings changed`, aux);
 	});
-	if (!same(before.areas.mixer, after.areas.mixer))
-		lines.push('the mixer’s master section changed');
+	if (!same(before.areas.mixer, after.areas.mixer)) {
+		add('the mixer’s master section changed', ['key.mix']);
+	}
 
 	const a0 = read.before.readArrangement();
 	const a1 = read.after.readArrangement();
+	const arrange: ControlId[] = ['key.arrange'];
 	if (!same(a0.scenes, a1.scenes)) {
-		lines.push(`scenes: ${a0.scenes.length} → ${a1.scenes.length} with patterns set`);
+		add(`scenes: ${a0.scenes.length} → ${a1.scenes.length} with patterns set`, arrange);
 	}
 	if (!same(a0.song, a1.song)) {
 		const order = (o: readonly number[]) =>
 			o.length > 12 ? `${o.slice(0, 12).join(' ')} … (${o.length} entries)` : o.join(' ');
-		lines.push(
-			`song: ${order(a0.song.order)} → ${order(a1.song.order)}${a0.song.loop !== a1.song.loop ? `, loop ${a1.song.loop ? 'on' : 'off'}` : ''}`
+		add(
+			`song: ${order(a0.song.order)} → ${order(a1.song.order)}${a0.song.loop !== a1.song.loop ? `, loop ${a1.song.loop ? 'on' : 'off'}` : ''}`,
+			arrange
 		);
 	}
-	if (lines.length <= MAX_CHANGE_LINES) return lines;
-	return [
-		...lines.slice(0, MAX_CHANGE_LINES),
-		`… and ${lines.length - MAX_CHANGE_LINES} more changes`
-	];
+	return changes;
 }

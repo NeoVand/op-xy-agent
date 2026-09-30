@@ -121,12 +121,15 @@ describe('the conductor grounds its answer', () => {
 		expect(note.type).toBe('text');
 		expect(note.text).toMatch(/^<replica-changes>\n/);
 		expect(note.text).toContain('- tempo 120 → 100 bpm');
-		// and the chat shows the same list once the turn ends
+		// and the chat shows the same list once the turn ends, each change with the keys it is on
 		expect(conductor.entries.at(-1)).toMatchObject({
 			kind: 'changes',
 			lines: ['tempo 120 → 100 bpm'],
+			changes: [{ brief: 'tempo 120 → 100 bpm', controls: ['key.tempo'] }],
 			undo: 'ready'
 		});
+		// which the replica lights until the next message
+		expect(conductor.litChanges?.changes.map((c) => c.brief)).toEqual(['tempo 120 → 100 bpm']);
 	});
 
 	it('takes a turn back from its changes note, keeps what the user did since, and puts it back', async () => {
@@ -168,14 +171,20 @@ describe('the conductor grounds its answer', () => {
 			bars: 1,
 			notes: [{ step: 5, note: 50, velocity: 90, length: 1 }]
 		});
+		expect(conductor.litChanges?.id).toBe(note.id);
 		expect(await conductor.undoTurn(note.id)).toBe(true);
 		expect(sim.state.tempo.bpm).toBe(120);
+		// taken back: nothing of it is lit
+		expect(conductor.litChanges).toBeNull();
 		expect(virtual.readPattern(3).notes.map((n) => n.step)).toEqual([5]);
 		expect(conductor.entries.at(-1)).toMatchObject({ kind: 'changes', undo: 'undone' });
 		expect(await conductor.undoTurn(note.id)).toBe(true);
 		expect(sim.state.tempo.bpm).toBe(100);
+		// put back: it lights again, until the next message
+		expect(conductor.litChanges?.id).toBe(note.id);
 		// the model hears of both with the next message
 		await conductor.send('thanks');
+		expect(conductor.litChanges).toBeNull();
 		const text = JSON.stringify(api.messageRequests[2].body.messages.at(-1));
 		expect(text).toMatch(/The user took back what your answer changed on the replica/);
 		expect(text).toMatch(/The user put back what your answer had changed/);

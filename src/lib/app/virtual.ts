@@ -31,7 +31,7 @@ import {
 import { captureScene, playPattern, startSong, trackSequence } from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
-import { replicaChanges } from './replica-diff';
+import { replicaChangeList, replicaChanges } from './replica-diff';
 import { AUX_NAMES, type SimState } from '$lib/sim/params';
 import { takeBack } from '$lib/sim/merge';
 import {
@@ -436,6 +436,15 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			const was = JSON.parse(checkpoint.state) as SimState;
 			const before = createVirtualOpxy({ sim: new OpxySim({ state: was, now: () => 0 }) });
 			return replicaChanges(JSON.parse(checkpoint.state) as SimState, s, { before, after: api });
+		},
+
+		changedSince(checkpoint) {
+			const was = JSON.parse(checkpoint.state) as SimState;
+			const before = createVirtualOpxy({ sim: new OpxySim({ state: was, now: () => 0 }) });
+			return replicaChangeList(JSON.parse(checkpoint.state) as SimState, s, {
+				before,
+				after: api
+			});
 		}
 	};
 	return api;

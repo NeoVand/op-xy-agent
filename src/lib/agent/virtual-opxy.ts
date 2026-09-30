@@ -9,6 +9,7 @@
  * scenes 1–99, steps 1–64 (bar 2 starts at step 17).
  */
 
+import type { ControlId } from '$lib/core/opxy';
 import type {
 	NavPlan,
 	PageValueGoal,
@@ -199,6 +200,8 @@ export interface VirtualOpxy {
 	checkpoint(): VirtualCheckpoint;
 	/** What changed since `checkpoint`, a line each in words; empty when nothing did. */
 	changesSince(checkpoint: VirtualCheckpoint): readonly string[];
+	/** The same changes, each with a shorter line for people and the keys that lead to it. */
+	changedSince(checkpoint: VirtualCheckpoint): readonly ReplicaChange[];
 	/**
 	 * Puts the replica back as it was at `to`: its mode, pages and selected track as well as its
 	 * sounds, notes and mutes, but not the transport; only where it still reads as `from` (default:
@@ -210,4 +213,14 @@ export interface VirtualOpxy {
 /** The replica at one moment (opaque: its state, serialized). */
 export interface VirtualCheckpoint {
 	readonly state: string;
+}
+
+/** One change on the replica, as the agent reads it and as a person does, and where it lives. */
+export interface ReplicaChange {
+	/** The agent's line: "T3 M3 filter: svf filter on: cutoff 00, … → svf filter on: cutoff 40, …". */
+	readonly line: string;
+	/** Only what differs, for people: "T3 M3 filter: cutoff 00 → 40". */
+	readonly brief: string;
+	/** The keys that lead to it on the device: its track and page (`track.3`, `key.m3`). */
+	readonly controls: readonly ControlId[];
 }

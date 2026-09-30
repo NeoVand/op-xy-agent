@@ -50,6 +50,19 @@ export type KeyLedState = 'off' | 'dim' | 'white' | 'red';
  */
 export type GuideMark = 'note' | 'root';
 
+/**
+ * How a control shows that an answer changed something there: breathing softly a few times as the
+ * answer ends, then resting faintly lit, or held lit while the answer's changes note is pointed at.
+ */
+export type ChangeMark = 'breathe' | 'rest' | 'lit';
+
+/** A control an answer changed something at: how it is lit, and what changed there, in words. */
+export interface ChangedControl {
+	readonly mark: ChangeMark;
+	/** "T3 M3 filter: cutoff 00 → 40" (a line per change), shown while the pointer is on it. */
+	readonly note: string;
+}
+
 /** A key or encoder push went down or came up. */
 export interface PressEvent {
 	readonly type: 'press' | 'release';
@@ -195,6 +208,7 @@ export class ReplicaState {
 	readonly #turns = new SvelteMap<EncoderId, number>();
 	readonly #highlights = new SvelteMap<ControlId, HighlightKind>();
 	readonly #guide = new SvelteMap<KeyId, GuideMark>();
+	readonly #changed = new SvelteMap<ControlId, ChangedControl>();
 	readonly #hints = new SvelteMap<TurnableId, 1 | -1>();
 	readonly #lastTurn = new SvelteMap<TurnableId, LastTurn>();
 	#volume = $state(DEFAULT_VOLUME);
@@ -280,6 +294,11 @@ export class ReplicaState {
 	/** How the app points a key out under its LED, if it does. */
 	guide(id: KeyId): GuideMark | undefined {
 		return this.#guide.get(id);
+	}
+
+	/** What an answer changed at a control, and how it shows it, if it did. */
+	changed(id: ControlId): ChangedControl | undefined {
+		return this.#changed.get(id);
 	}
 
 	/** True while a key's LED blinks. */
@@ -541,6 +560,20 @@ export class ReplicaState {
 				throw new ReplicaError(`${id} has no LED window`);
 			}
 			if (this.#guide.get(id) !== mark) this.#guide.set(id, mark);
+		}
+	}
+
+	/**
+	 * Marks the controls an answer changed something at (`marks` replaces every mark there was; an
+	 * empty object clears them). Never sent anywhere.
+	 */
+	setChanged(marks: Partial<Record<ControlId, ChangedControl>>): void {
+		for (const id of [...this.#changed.keys()]) if (!(id in marks)) this.#changed.delete(id);
+		for (const [id, mark] of Object.entries(marks) as [ControlId, ChangedControl | undefined][]) {
+			if (!mark) continue;
+			if (!isControlId(id)) throw new ReplicaError(`unknown control "${id}"`);
+			const was = this.#changed.get(id);
+			if (was?.mark !== mark.mark || was.note !== mark.note) this.#changed.set(id, mark);
 		}
 	}
 

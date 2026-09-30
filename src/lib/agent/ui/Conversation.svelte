@@ -38,6 +38,8 @@ says what it is doing and for how long.
 		onretry?: () => void;
 		/** Takes back (or puts back) what a turn changed on the replica, by its changes note. */
 		onundochanges?: (id: string) => void;
+		/** A changes note is pointed at (its entry id), or none is any more (null). */
+		onpointchanges?: (id: string | null) => void;
 		/** Opens the settings (for key errors). */
 		onsettings?: () => void;
 	}
@@ -51,6 +53,7 @@ says what it is doing and for how long.
 		cite,
 		onretry,
 		onundochanges,
+		onpointchanges,
 		onsettings
 	}: Props = $props();
 
@@ -180,8 +183,10 @@ says what it is doing and for how long.
 				{:else if entry.kind === 'changes'}
 					<ChangesNote
 						lines={entry.lines}
+						changes={entry.changes}
 						undo={entry.undo}
 						onundo={onundochanges ? () => onundochanges(entry.id) : undefined}
+						onpoint={onpointchanges ? (on) => onpointchanges(on ? entry.id : null) : undefined}
 					/>
 				{:else if entry.kind === 'approval'}
 					<p class="conv__approval">

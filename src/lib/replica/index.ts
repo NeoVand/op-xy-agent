@@ -13,6 +13,8 @@ export {
 	type AnimateOptions,
 	type AnimationHandle,
 	type BendEvent,
+	type ChangedControl,
+	type ChangeMark,
 	type ClickEvent,
 	type GuideMark,
 	type InputSource,

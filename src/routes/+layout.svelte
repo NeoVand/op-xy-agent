@@ -136,6 +136,11 @@
 			simulator.sim.state.track = 2;
 			return stop;
 		});
+		// development only (production builds drop it): the replica and its simulator for page
+		// scripts, e.g. screenshots of states that take an answer to reach
+		if (import.meta.env.DEV) {
+			Object.assign(globalThis, { __opxy: { replica, simulator } });
+		}
 		return () => {
 			void saving.then((stop) => stop());
 			stopSamples();

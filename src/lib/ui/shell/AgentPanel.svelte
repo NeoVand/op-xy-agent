@@ -8,6 +8,9 @@ to api.anthropic.com). Its code (the SDK, tools, manual index and conductor) loa
 is present. It reads the app's device stack and replica from context: without a connected OP-XY it
 still teaches and animates the replica, and says plainly that device tools need a connection.
 
+Each answer's changes light on the replica (`ChangeGlow`): the keys that lead to them breathe as
+the answer ends, and pointing at its changes note holds them lit.
+
 The panel is a fixed-height column: the conversation scrolls inside it and the composer always
 stays in view. Files go to the agent from the [+] key (the device's own plus), by pasting (a
 screenshot, say) or by dropping them anywhere on the page; they are read in the browser
@@ -22,7 +25,7 @@ user's own OpenAI key; the voice hands every request to this conductor (`$lib/vo
 above the composer says what voice is doing while it is on.
 -->
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import {
 		ArrowUp02Icon,
@@ -50,7 +53,7 @@ above the composer says what voice is doing while it is on.
 	import type { ProjectHost } from '$lib/agent/tools/define';
 	import { ProjectTransfer } from '$lib/app/project-transfer.svelte';
 	import blankUrl from '$lib/core/xy/fixtures/blank-1.1.4.xy?url';
-	import { browserUsb } from '$lib/device';
+	import { browserTimers, browserUsb } from '$lib/device';
 	import { KeyStore, type KeyProvider } from '$lib/agent/keys.svelte';
 	import { DEFAULT_CONDUCTOR_MODEL, modelOptions, profileFor } from '$lib/agent/models';
 	import ApprovalSheet from '$lib/agent/ui/ApprovalSheet.svelte';
@@ -67,6 +70,7 @@ above the composer says what voice is doing while it is on.
 	import type { DeviceStack } from '$lib/device/stack';
 	import { getReplicaState } from '$lib/replica/context';
 	import KeyCombo from '$lib/replica/glyphs/KeyCombo.svelte';
+	import { ChangeGlow } from '$lib/replica/change-glow';
 	import { replicaPointer } from '$lib/replica/glyphs/pointing';
 	import type { ReplicaState } from '$lib/replica/state.svelte';
 	import { VoiceSession } from '$lib/voice/session.svelte';
@@ -99,6 +103,8 @@ above the composer says what voice is doing while it is on.
 	const replica: ReplicaState | null = fromContext(getReplicaState);
 	/** Rings on the replica the keys the reader points at in an answer. */
 	const pointer = replica ? replicaPointer(replica) : undefined;
+	/** Lights on the replica what each answer changed. */
+	const glow = replica ? new ChangeGlow({ replica, timers: browserTimers }) : null;
 	const simulator = fromContext(getAppSimulator);
 	const sound = fromContext(getAppSound);
 	const persistence = fromContext(getSimPersistence);
@@ -243,11 +249,26 @@ above the composer says what voice is doing while it is on.
 		if (import.meta.env.DEV) transcripts = new URLSearchParams(location.search).has('transcripts');
 		if (demoMode !== null) void bootDemo(demoMode !== 'idle');
 		else if (keys.has('anthropic')) void boot();
+		const stopGlow = glow?.start();
 		return () => {
+			stopGlow?.();
 			voice.dispose();
 			conductor?.dispose();
 		};
 	});
+
+	// the last answer's changes breathe on the replica as it ends; a new message puts them out
+	$effect(() => {
+		const lit = conductor?.litChanges ?? null;
+		untrack(() => (lit ? glow?.show(lit.changes) : glow?.clear()));
+	});
+
+	/** A changes note pointed at: its keys held lit on the replica (none for a taken-back turn). */
+	function pointChanges(id: string | null): void {
+		const entry = id ? conductor?.entries.find((e) => e.kind === 'changes' && e.id === id) : null;
+		const live = entry?.kind === 'changes' && entry.undo !== 'undone';
+		glow?.point(live ? (entry.changes ?? null) : null);
+	}
 
 	/** Development only: a conductor on a paced fake API, optionally asking its question at once. */
 	async function bootDemo(autoplay: boolean): Promise<void> {
@@ -576,6 +597,7 @@ above the composer says what voice is doing while it is on.
 					cite={manualCitation}
 					onretry={() => void conductor?.retry()}
 					onundochanges={(id) => void conductor?.undoTurn(id)}
+					onpointchanges={glow ? pointChanges : undefined}
 					onsettings={openSettings}
 				/>
 			{:else}

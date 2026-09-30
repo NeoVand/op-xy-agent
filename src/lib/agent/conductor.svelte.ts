@@ -70,7 +70,7 @@ import {
 	type ToolContext,
 	type ToolRegistry
 } from './tools';
-import type { VirtualCheckpoint, VirtualOpxy } from './virtual-opxy';
+import type { ReplicaChange, VirtualCheckpoint, VirtualOpxy } from './virtual-opxy';
 import type {
 	AgentErrorInfo,
 	AgentEvent,
@@ -231,6 +231,13 @@ export class Conductor {
 	grants: string[] = $state.raw([]);
 	/** What the agent is doing right now, for the live status line; null while no run is active. */
 	activity: Activity | null = $state.raw(null);
+	/**
+	 * The last answer's changes for the replica to light (its changes note's id, and each change
+	 * with its keys): set as a turn ends having changed something, and again when its undo is put
+	 * back; null once there is nothing to light (a new message, the turn taken back, another thread).
+	 */
+	litChanges: { readonly id: string; readonly changes: readonly ReplicaChange[] } | null =
+		$state.raw(null);
 
 	/** Which manual the agent answers from. */
 	readonly manualKind: ManualSourceKind;
@@ -427,6 +434,7 @@ export class Conductor {
 		// busy from here: the context is worked out before the message joins the thread, so the
 		// thread gets both at once, and a second send cannot slip in while it is
 		this.status = 'running';
+		this.litChanges = null;
 		this.activity = startActivity(this.#now(), !this.#answered);
 		this.#checkpoint = this.#env.virtual?.checkpoint() ?? null;
 		this.#reported = '';
@@ -455,6 +463,7 @@ export class Conductor {
 			code: null
 		});
 		this.status = 'running';
+		this.litChanges = null;
 		this.activity = startActivity(this.#now(), !this.#answered);
 		// what the user did is theirs: only the agent's own changes from here are reported
 		this.#checkpoint = this.#env.virtual?.checkpoint() ?? null;
@@ -726,9 +735,17 @@ export class Conductor {
 			return;
 		}
 		if (lines.length === 0) return;
+		// what people read of it, and where each change lives on the device (the replica lights it)
+		let changes: readonly ReplicaChange[] | undefined;
+		try {
+			changes = virtual.changedSince(this.#checkpoint);
+		} catch {
+			changes = undefined;
+		}
 		const id = entryId('changes');
 		this.#turns.set(id, { before: this.#checkpoint, after: virtual.checkpoint(), undone: null });
-		this.entries.push({ kind: 'changes', id, lines, undo: 'ready' });
+		this.entries.push({ kind: 'changes', id, lines, changes, undo: 'ready' });
+		this.litChanges = changes && changes.length > 0 ? { id, changes } : null;
 	}
 
 	/**
@@ -746,6 +763,7 @@ export class Conductor {
 			virtual.revert(turn.before, turn.after);
 			turn.undone = virtual.checkpoint();
 			entry.undo = 'undone';
+			if (this.litChanges?.id === id) this.litChanges = null;
 			this.#pendingNotes.push(
 				`The user took back what your answer changed on the replica (${list}); the replica is as it was before, apart from what they changed since.`
 			);
@@ -753,6 +771,7 @@ export class Conductor {
 			if (!turn.undone) return false;
 			virtual.revert(turn.after, turn.undone);
 			entry.undo = 'ready';
+			if (entry.changes?.length) this.litChanges = { id, changes: entry.changes };
 			this.#pendingNotes.push(
 				`The user put back what your answer had changed on the replica (${list}).`
 			);
@@ -949,6 +968,7 @@ export class Conductor {
 		this.#createdAt = this.#now();
 		this.#messages = [];
 		this.entries = [];
+		this.litChanges = null;
 		this.todos = [];
 		this.usage = emptyUsage();
 		this.lastError = null;
@@ -969,6 +989,7 @@ export class Conductor {
 		this.#answered = record.messages.some((m) => m.role === 'assistant');
 		this.#repairTranscript();
 		this.entries = record.entries;
+		this.litChanges = null;
 		settleEntries(this.entries, { voice: true });
 		// a turn's take-back lives in the page session that made it
 		for (const entry of this.entries) if (entry.kind === 'changes') delete entry.undo;

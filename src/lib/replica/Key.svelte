@@ -1,8 +1,8 @@
 <!--
 @component
 One of the 68 keys: its tile, the round keycap with TE's legend, the LED window (off, dim, white or
-red, optionally blinking, with a glow), the press animation, and a ring for keyboard focus and for
-teaching highlights. The whole tile is the hit area. Pointer, touch and keyboard input go to the
+red, optionally blinking, with a glow), the press animation, a ring for keyboard focus and for
+teaching highlights, and a soft light over the tile where an answer changed something. The whole tile is the hit area. Pointer, touch and keyboard input go to the
 ReplicaState; an alt- or ⌘-click latches the key for single-pointer combos (Shift is the OP-XY's
 shift: see Replica.svelte).
 
@@ -46,6 +46,7 @@ does the rest, so a key press never re-renders the legend paths.
 	const root = $derived(guided && replica.guide(part.id) === 'root');
 	const blinking = $derived(part.art.led !== null && replica.isBlinking(part.id));
 	const highlight = $derived(replica.highlight(part.id));
+	const changed = $derived(replica.changed(part.id)?.mark);
 
 	/** The computer key shown on the tile while the pointer is over the keyboard (its first key). */
 	const hint = $derived.by(() => {
@@ -135,6 +136,7 @@ does the rest, so a key press never re-renders the legend paths.
 	data-id={part.id}
 	data-led={led}
 	data-hl={highlight}
+	data-changed={changed}
 	data-root={root || undefined}
 	data-guide={guided || undefined}
 	data-pressed={pressed || undefined}
@@ -237,6 +239,16 @@ does the rest, so a key press never re-renders the legend paths.
 		>
 	{/if}
 
+	{#if changed}
+		<rect
+			class="key__mark"
+			x={tile.x + 0.15}
+			y={tile.y + 0.15}
+			width={tile.w - 0.3}
+			height={tile.h - 0.3}
+			rx={tile.r}
+		/>
+	{/if}
 	{#if highlight === 'hold' || highlight === 'press'}
 		<rect
 			class="key__halo"
@@ -444,6 +456,43 @@ does the rest, so a key press never re-renders the legend paths.
 		stroke-dasharray: 0.9 0.7;
 	}
 
+	/* what an answer changed: the tile takes a soft light, breathing a few times as the answer
+	 * ends (change-glow.ts times three breaths), then resting faint; held while its note is
+	 * pointed at */
+	.key__mark {
+		fill: var(--rx-ring, #f7f5f5);
+		fill-opacity: 0.2;
+		stroke: var(--rx-ring, #f7f5f5);
+		stroke-width: 0.3;
+		opacity: 0.2;
+		pointer-events: none;
+		transition: opacity 400ms var(--rx-ease-decay, ease-out);
+	}
+
+	/* in to the resting light, then three breaths from it and back to it */
+	.key[data-changed='breathe'] .key__mark {
+		animation:
+			key-mark-in 0.6s ease-out both,
+			key-breathe 2.6s ease-in-out 0.6s 3 forwards;
+	}
+
+	.key[data-changed='lit'] .key__mark {
+		opacity: 0.55;
+		transition-duration: 160ms;
+	}
+
+	@keyframes key-mark-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes key-breathe {
+		50% {
+			opacity: 0.6;
+		}
+	}
+
 	@keyframes key-blink {
 		50% {
 			opacity: 0;
@@ -462,7 +511,8 @@ does the rest, so a key press never re-renders the legend paths.
 			transition: none;
 		}
 
-		.key[data-hl='press'] .key__ring {
+		.key[data-hl='press'] .key__ring,
+		.key[data-changed='breathe'] .key__mark {
 			animation: none;
 		}
 	}

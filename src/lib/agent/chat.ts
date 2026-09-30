@@ -7,6 +7,7 @@
 import type { AttachmentView } from './attachments';
 import type { TokenCounts } from './models';
 import type { AgentErrorInfo, AgentEvent, Citation, ToolKind } from './types';
+import type { ReplicaChange } from './virtual-opxy';
 
 /** Tool chip state. */
 export type ToolStatus = 'pending' | 'running' | 'ok' | 'error' | 'rejected' | 'stopped';
@@ -72,6 +73,8 @@ export type ChatEntry =
 			readonly kind: 'changes';
 			readonly id: string;
 			readonly lines: readonly string[];
+			/** The same changes briefly, with the keys that lead to each (absent in older threads). */
+			readonly changes?: readonly ReplicaChange[];
 			/** Whether the turn can be taken back (`ready`) or put back (`undone`); absent after a reload. */
 			undo?: 'ready' | 'undone';
 	  }

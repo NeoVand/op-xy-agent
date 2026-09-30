@@ -1,32 +1,57 @@
 <!--
 @component
 What a turn changed on the replica, once it ends: one quiet line with a count that opens into the
-list the agent was given (docs/AGENT-V2.md, grounding), so what the answer says and what happened can
-be compared at a glance. Beside it, while this page session can: undo, which takes the turn back
-(what the user changed since stays), and then put back.
+list the agent was given (docs/AGENT-V2.md, grounding), each change said briefly (only the values
+that differ), so what the answer says and what happened can be compared at a glance. Beside it,
+while this page session can: undo, which takes the turn back (what the user changed since stays),
+and then put back. Pointing at it (`onpoint`) lights on the replica the keys that lead to each change.
 -->
 <script lang="ts">
 	import Led from '$lib/ui/Led.svelte';
+	import type { ReplicaChange } from '../virtual-opxy';
 
 	interface Props {
+		/** The agent's lines (shown when there are no `changes`, as in older threads). */
 		lines: readonly string[];
+		/** The same changes, briefly, with their keys. */
+		changes?: readonly ReplicaChange[];
 		/** `ready` offers undo, `undone` put back; absent offers neither. */
 		undo?: 'ready' | 'undone';
 		onundo?: () => void;
+		/** The pointer or focus came onto the note (true) or left it (false). */
+		onpoint?: (on: boolean) => void;
 	}
 
-	let { lines, undo, onundo }: Props = $props();
+	let { lines, changes, undo, onundo, onpoint }: Props = $props();
+
+	/** Most changes the list names; the rest are counted, as the agent's lines are. */
+	const SHOWN = 40;
+	const shown = $derived.by(() => {
+		if (!changes || changes.length === 0) return lines;
+		const briefs = changes.slice(0, SHOWN).map((change) => change.brief);
+		if (changes.length > SHOWN) briefs.push(`… and ${changes.length - SHOWN} more changes`);
+		return briefs;
+	});
+	const count = $derived(changes && changes.length > 0 ? changes.length : lines.length);
 </script>
 
-<div class={['changes', undo === 'undone' && 'changes--undone']}>
+<div
+	class={['changes', undo === 'undone' && 'changes--undone']}
+	role="group"
+	aria-label="what the answer changed on the replica"
+	onpointerenter={() => onpoint?.(true)}
+	onpointerleave={() => onpoint?.(false)}
+	onfocusin={() => onpoint?.(true)}
+	onfocusout={() => onpoint?.(false)}
+>
 	<details class="changes__details">
 		<summary class="changes__head">
 			<Led state={undo === 'undone' ? 'off' : 'white'} size="sm" />
 			<span>{undo === 'undone' ? 'taken back on the replica' : 'changed on the replica'}</span>
-			<span class="changes__count">{lines.length}</span>
+			<span class="changes__count">{count}</span>
 		</summary>
 		<ul class="changes__list">
-			{#each lines as line, i (i)}
+			{#each shown as line, i (i)}
 				<li>{line}</li>
 			{/each}
 		</ul>

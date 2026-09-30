@@ -11,7 +11,8 @@ computer's Shift key holds the replica's shift (except while typing in a text fi
 on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for combos. With
 `keys`, the computer keyboard plays the replica too (`keyboard.ts`: two rows of keys, `-` `=` for
 the octave, Space for play and stop). `overScreen` lays something exactly over the display, above
-its pixels: the home page puts a key there that shows the display large.
+its pixels: the home page puts a key there that shows the display large. With the pointer on a key
+an answer changed something at (`ReplicaState.setChanged`), a note over it says what.
 
 ```svelte
 <script lang="ts">
@@ -25,7 +26,7 @@ its pixels: the home page puts a key there that shows the display large.
 	import type { Snippet } from 'svelte';
 	import type { Attachment } from 'svelte/attachments';
 	import type { ClassValue } from 'svelte/elements';
-	import type { KeyId } from '$lib/core/opxy';
+	import type { ControlId, KeyId } from '$lib/core/opxy';
 	import Body from './Body.svelte';
 	import Encoder from './Encoder.svelte';
 	import Grille from './Grille.svelte';
@@ -68,6 +69,24 @@ its pixels: the home page puts a key there that shows the display large.
 
 	/** The key that holds the keys' single Tab stop. */
 	let focusKey = $state<KeyId>('key.play');
+	/** The control under the mouse, for the note of what an answer changed there. */
+	let hovered = $state<ControlId | null>(null);
+	const changeNote = $derived(hovered ? (replica.changed(hovered)?.note ?? null) : null);
+	/** Where that note stands: centred over the key's tile, as % of the panel. */
+	const noteAt = $derived.by(() => {
+		const part = changeNote ? KEY_PARTS.find((k) => k.id === hovered) : undefined;
+		if (!part) return null;
+		return {
+			left: pct(part.x + part.tile.x + part.tile.w / 2, PANEL_W),
+			top: pct(part.y + part.tile.y, PANEL_H)
+		};
+	});
+
+	function onpointerover(event: PointerEvent) {
+		if (event.pointerType !== 'mouse') return;
+		const control = (event.target as Element | null)?.closest?.('[data-id]');
+		hovered = (control?.getAttribute('data-id') as ControlId | null) ?? null;
+	}
 	/** The computer's Shift, held on the replica's shift key. */
 	const shift = new ComputerShift(() => replica);
 	/** The computer's keys, played on the replica's (while `keys`). */
@@ -105,7 +124,9 @@ its pixels: the home page puts a key there that shows the display large.
 	let svg: SVGSVGElement | null = null;
 
 	const active = SCREEN_PART.active;
-	const pct = (value: number, of: number) => `${((value / of) * 100).toFixed(4)}%`;
+	function pct(value: number, of: number): string {
+		return `${((value / of) * 100).toFixed(4)}%`;
+	}
 	const screenBox = {
 		left: pct(active.x, PANEL_W),
 		top: pct(active.y, PANEL_H),
@@ -170,6 +191,8 @@ its pixels: the home page puts a key there that shows the display large.
 	aria-label={label}
 	style:--rx-body-radius={bodyRadius}
 	onpointerdowncapture={(event) => shift.pointerdown(event.shiftKey)}
+	{onpointerover}
+	onpointerleave={() => (hovered = null)}
 >
 	<svg
 		class="replica__svg"
@@ -219,6 +242,11 @@ its pixels: the home page puts a key there that shows the display large.
 	>
 		<Screen lines={replica.screen.lines} />
 	</div>
+	{#if changeNote && noteAt}
+		<p class="replica__note" role="tooltip" style:left={noteAt.left} style:top={noteAt.top}>
+			{changeNote}
+		</p>
+	{/if}
 	{#if overScreen}
 		<!-- not inside the display's box: that clips, and what sits here may draw round its edge -->
 		<div
@@ -304,5 +332,37 @@ its pixels: the home page puts a key there that shows the display large.
 
 	.replica__over-screen {
 		position: absolute;
+	}
+
+	/* what an answer changed at the key under the pointer: a tiny black screen over it, as the
+	   app's tooltips are, after a moment (passing over keys shows nothing) */
+	.replica__note {
+		position: absolute;
+		z-index: 2;
+		width: max-content;
+		max-width: 18rem;
+		margin: 0;
+		padding: 0.3125rem 0.5625rem;
+		border-radius: var(--xy-radius-card, 0.375rem);
+		background: var(--xy-scr-bg, #000000);
+		box-shadow:
+			0 0 0 1px rgb(255 255 255 / 0.08),
+			0 8px 24px -6px rgb(0 0 0 / 0.6);
+		color: var(--xy-scr-fg, #f7f5f5);
+		font-family: var(--xy-font-sans, sans-serif);
+		font-size: var(--xy-text-xs, 0.75rem);
+		line-height: var(--xy-leading-xs, 1rem);
+		font-weight: 450;
+		letter-spacing: var(--xy-tracking-label, 0.01em);
+		white-space: pre-line;
+		pointer-events: none;
+		transform: translate(-50%, calc(-100% - 0.375rem));
+		animation: replica-note-in var(--xy-dur-base, 200ms) var(--xy-ease-standard, ease) 250ms both;
+	}
+
+	@keyframes replica-note-in {
+		from {
+			opacity: 0;
+		}
 	}
 </style>

@@ -95,6 +95,13 @@ Claude.
   (`sim/merge.ts` `takeBack`, `VirtualOpxy.revert(to, from)`), so what the user changed since
   stays, and can be put back. A changed pattern says how its notes changed
   (`sim/pattern-change.ts`: "up 2 semitones", "8 velocities 100 → 72–108").
+- **Change glow** (`VirtualOpxy.changedSince()`, `replica/change-glow.ts`): each change also comes
+  briefly for people (only the values that differ: "T3 M3 filter: cutoff 00 → 40", which the
+  changes note lists) and with the keys that lead to it (its track and page, the tempo, mix or
+  arrange key). As a turn ends the conductor's `litChanges` names them; those keys breathe three
+  times on the replica, then rest faintly lit a while (`ReplicaState.setChanged`), the pointer on
+  one shows what changed there, pointing at the changes note holds them lit, and a key the user
+  presses goes out. A new message, or taking the turn back, puts them all out.
 - **Reading back what was written** (`agent/pattern-reading.ts`): write_pattern and read_pattern
   return a drum pattern as a grid (four steps a beat, X an accent, o a soft hit) and any other as
   its bars and chords, spelled in the key its notes suggest, so the answer describes what the
