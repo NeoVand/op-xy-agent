@@ -500,8 +500,10 @@
 		margin: 0.75rem 0.75rem 0.75rem 0;
 	}
 
-	/* The status line under the replica, shown while no hint is up. */
+	/* The status line under the replica, shown while no hint is up; the scale menu's card opens
+	 * against it. */
 	.hints {
+		position: relative;
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;

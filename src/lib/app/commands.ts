@@ -226,7 +226,7 @@ export function homeCommands(
 		if (typed) {
 			out.push({
 				id: `scale:${typed.root}:${typed.scale.name}`,
-				label: `light ${typed.name} ${typed.scale.name}`,
+				label: `light the ${typed.name} ${typed.scale.name} scale`,
 				detail: 'on the keyboard',
 				group: 'replica',
 				score: 1,
@@ -237,7 +237,7 @@ export function homeCommands(
 		for (const scale of GUIDE_SCALES) {
 			out.push({
 				id: `scale:${guide.root}:${scale.name}`,
-				label: `light ${ROOT_NAMES[guide.root]} ${scale.name}`,
+				label: `light the ${ROOT_NAMES[guide.root]} ${scale.name} scale`,
 				detail: 'on the keyboard',
 				group: 'replica',
 				keywords: 'scale keyboard guide',
@@ -247,10 +247,11 @@ export function homeCommands(
 		if (guide.lit) {
 			out.push({
 				id: 'scale.off',
-				label: 'scale off',
-				detail: guide.lit,
+				label: 'turn the scale off',
+				detail: `${guide.lit} is lit`,
 				group: 'replica',
 				keywords: 'keyboard guide unlight',
+				suggest: true,
 				run: () => replica.lightScale(guide.root, null)
 			});
 		}

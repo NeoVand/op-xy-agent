@@ -106,16 +106,19 @@ describe('the home page’s commands', () => {
 		expect(labels('128', replica({ live: true }), null)).not.toContain('tempo 128 bpm');
 
 		const [scale, ...more] = rank('f# dorian', homeCommands('f# dorian', r, null));
-		expect(scale.label).toBe('light F# dorian');
+		expect(scale.label).toBe('light the F# dorian scale');
 		scale.run();
 		expect(r.lightScale).toHaveBeenCalledWith(6, expect.objectContaining({ name: 'dorian' }));
 		// the same scale from the root lit is one row
-		expect(more.map((c) => c.label)).not.toContain('light F# dorian');
-		expect(labels('a minor', r, null).filter((l) => l === 'light A minor')).toHaveLength(1);
-		expect(labels('scale', r, null)).toContain('light A dorian');
-		expect(labels('scale off', replica({ scale: { root: 9, lit: 'A minor' } }), null)[0]).toBe(
-			'scale off'
+		expect(more.map((c) => c.label)).not.toContain('light the F# dorian scale');
+		expect(labels('a minor', r, null).filter((l) => l === 'light the A minor scale')).toHaveLength(
+			1
 		);
+		expect(labels('scale', r, null)).toContain('light the A dorian scale');
+		// once one is lit, the way to turn it off is offered before anything is typed
+		const lit = replica({ scale: { root: 9, lit: 'A minor' } });
+		expect(labels('scale off', lit, null)[0]).toBe('turn the scale off');
+		expect(labels('', lit, null)).toContain('turn the scale off');
 	});
 
 	it('take back or put back the last answer’s changes', () => {

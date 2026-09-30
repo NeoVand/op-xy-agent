@@ -12,12 +12,16 @@ does the rest, so a key press never re-renders the legend paths.
 <svelte:options namespace="svg" />
 
 <script lang="ts" module>
+	import { colorHex } from '$lib/core/opxy';
+
 	/**
 	 * An unlit LED window is a small black hole in the cap, on the pale step keys as on the dark
 	 * ones (TE's top-down photo: #1c1e21–#252221 unlit, #fcfeff lit), so a lit one, pure white,
 	 * stands out from every cap.
 	 */
 	const UNLIT_WINDOW = '#1d1f22';
+	/** The legends' warm white (TE's top-down photo). */
+	const PRINT = colorHex('legend');
 </script>
 
 <script lang="ts">
@@ -47,6 +51,8 @@ does the rest, so a key press never re-renders the legend paths.
 	const blinking = $derived(part.art.led !== null && replica.isBlinking(part.id));
 	const highlight = $derived(replica.highlight(part.id));
 	const changed = $derived(replica.changed(part.id)?.mark);
+	/** A dark cap with the warm-white print (not a pale step key, not the red record dot). */
+	const softPrint = $derived(!part.light && part.colors.legend === PRINT);
 
 	/** The computer key shown on the tile while the pointer is over the keyboard (its first key). */
 	const hint = $derived.by(() => {
@@ -131,7 +137,7 @@ does the rest, so a key press never re-renders the legend paths.
 </script>
 
 <g
-	class={['key', part.light && 'key--light']}
+	class={['key', part.light && 'key--light', softPrint && 'key--print']}
 	transform="translate({part.x} {part.y})"
 	data-id={part.id}
 	data-led={led}
@@ -176,7 +182,7 @@ does the rest, so a key press never re-renders the legend paths.
 		stroke-width="0.14"
 	/>
 	{#each part.tileLegend as art (art.d)}
-		<path d={art.d} fill={part.colors.legend} fill-rule={art.rule} />
+		<path class="key__print" d={art.d} fill={part.colors.legend} fill-rule={art.rule} />
 	{/each}
 
 	<!-- the cap stands 2 mm proud: the tile's collar catching light behind it, a short soft shadow
@@ -204,8 +210,13 @@ does the rest, so a key press never re-renders the legend paths.
 			stroke={part.light ? 'url(#rx-cap-rim-light)' : 'url(#rx-cap-rim)'}
 			stroke-width="0.2"
 		/>
+		{#if ledArt}
+			<!-- a scale lit on the keyboard: the cap lit from within (CSS shows it for its keys) -->
+			<circle class="key__wash" r={capR - 0.1} />
+		{/if}
 		{#each part.capLegend as art (art.d)}
 			<path
+				class="key__print"
 				d={art.d}
 				fill={art.stroke ? 'none' : part.colors.legend}
 				stroke={art.stroke ? part.colors.legend : undefined}
@@ -436,19 +447,40 @@ does the rest, so a key press never re-renders the legend paths.
 		animation: key-pulse 0.9s ease-in-out infinite;
 	}
 
-	/* a guide's keys (a scale lit on the keyboard) light a little brighter than the device's dim,
-	 * so they read at a glance; the device's own light still wins */
+	/* the legends' warm white a touch softer on the dark caps than in the photo, so a lit window
+	 * (pure white) reads against them (the owner: the symbols were nearly as bright as a light) */
+	.key--print .key__print {
+		opacity: 0.86;
+	}
+
+	/* a guide's keys (a scale lit on the keyboard): the cap lit from within and the window bright,
+	 * so the scale reads at a glance across the keyboard; the root brighter still, with a steady
+	 * ring. The device's own light still wins over the windows. */
+	.key__wash {
+		fill: #ffffff;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 260ms var(--rx-ease-decay, ease-out);
+	}
+
+	.key[data-guide] .key__wash {
+		opacity: 0.1;
+	}
+
+	.key[data-root] .key__wash {
+		opacity: 0.2;
+	}
+
 	.key[data-guide][data-led='dim'] .key__core--white {
-		opacity: 0.62;
+		opacity: 0.92;
 	}
 
 	.key[data-guide][data-led='dim'] .key__glow--white {
-		opacity: 0.3;
+		opacity: 0.6;
 	}
 
-	/* a guide's root: a faint, steady ring */
 	.key[data-root] .key__ring {
-		opacity: 0.32;
+		opacity: 0.75;
 	}
 
 	.key[data-hl='candidate'] .key__ring {
