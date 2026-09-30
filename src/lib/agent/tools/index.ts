@@ -5,6 +5,7 @@
 import { DEVICE_TOOLS } from './device';
 import { DEVICE_MAP_TOOLS } from './device-map';
 import { KNOWLEDGE_TOOLS } from './knowledge';
+import { LAB_TOOLS } from './lab';
 import { LISTEN_TOOLS } from './listen';
 import { MIDI_TOOLS } from './midi';
 import { NAVIGATE_TOOLS } from './navigate';
@@ -17,6 +18,7 @@ export * from './define';
 export * from './device';
 export * from './device-map';
 export * from './knowledge';
+export * from './lab';
 export * from './listen';
 export * from './midi';
 export * from './navigate';
@@ -29,6 +31,7 @@ export const CONDUCTOR_TOOLS: readonly AnyTool[] = [
 	...DEVICE_TOOLS,
 	...DEVICE_MAP_TOOLS,
 	...KNOWLEDGE_TOOLS,
+	...LAB_TOOLS,
 	...LISTEN_TOOLS,
 	...MIDI_TOOLS,
 	...NAVIGATE_TOOLS,

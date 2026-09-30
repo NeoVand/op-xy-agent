@@ -274,12 +274,14 @@ export class ToolExecutor {
 		const preview = tool.preview?.(input, before, env) ?? null;
 		const result = await tool.run(input, { toolCallId, agent, signal, env });
 		if (result.isError) return { status: 'error', result };
-		if (tool.kind === 'mutate' && tool.inverse && result.applied !== false) {
+		// a tool whose undo is known only after it ran hands it back with the result
+		const undo = result.inverse !== undefined ? result.inverse : inverse;
+		if (tool.kind === 'mutate' && (tool.inverse || undo) && result.applied !== false) {
 			const revision = this.#journal.record({
 				tool: tool.name,
 				label: preview?.label ?? tool.label,
 				input: input as Record<string, unknown>,
-				inverse,
+				inverse: undo,
 				before: before ?? null,
 				after: result.after ?? null,
 				firmware: this.#firmware(),

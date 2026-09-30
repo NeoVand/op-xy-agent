@@ -108,7 +108,8 @@ describe('conductor: requests and streaming', () => {
 		'listen_tracks',
 		'make_kit',
 		'play_notes',
-		'plan_steps'
+		'plan_steps',
+		'run_lab'
 	];
 
 	it('sends a cache-friendly, strict request and streams the answer into the chat', async () => {

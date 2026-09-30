@@ -118,6 +118,8 @@ export function inputSummary(name: string, input: unknown): string {
 				? `tracks ${tracks.filter((t) => typeof t === 'number').join(', ')}`
 				: '';
 		}
+		case 'run_lab':
+			return clip(text('purpose') ?? '');
 		case 'device_status':
 		case 'panic':
 			return '';

@@ -85,6 +85,10 @@ describe('inputSummary', () => {
 		expect(inputSummary('play_notes', { track: 1, steps: [{}, {}] })).toBe('track 1, 2 steps');
 		expect(inputSummary('write_todos', { todos: [{}] })).toBe('1 step');
 		expect(inputSummary('device_status', {})).toBe('');
+		// a lab program says what it is for, never its code
+		expect(inputSummary('run_lab', { code: 'const f = lab.fork();', purpose: 'try two' })).toBe(
+			'try two'
+		);
 		expect(inputSummary('some_new_tool', { level: 7, name: 'x' })).toBe('7');
 	});
 

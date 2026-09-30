@@ -21,6 +21,7 @@ import type {
 import { z } from 'zod';
 import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
+import type { LabHost } from '../lab/host';
 import type { ListenHost } from '../listen-host';
 import type { ManualSource } from '../manual-source';
 import type { AgentName, InverseCall, Todo, ToolKind, ToolPreview } from '../types';
@@ -63,6 +64,8 @@ export interface AgentEnvironment {
 	readonly files?: AttachedFiles | null;
 	/** Records what the OP-XY or the replica plays and hears it (`listen`); absent when headless. */
 	readonly listen?: ListenHost | null;
+	/** Runs the model's programs on forks of the replica (`run_lab`); absent when headless. */
+	readonly lab?: LabHost | null;
 	readonly manual: ManualSource;
 	readonly timers: AgentTimers;
 	/** How long device tools wait to see the device confirm a change (e.g. echoed start); 0 = no wait. */
@@ -169,6 +172,11 @@ export interface ToolResult {
 	readonly applied?: boolean;
 	/** The state after the change, for the journal. */
 	readonly after?: unknown;
+	/**
+	 * For mutate tools whose undo is known only once they ran (a lab program's commits): the call
+	 * that undoes this one, in place of the tool's `inverse`.
+	 */
+	readonly inverse?: InverseCall | null;
 }
 
 /** A tool as the registry stores it. `S` is the snapshot type taken before a change. */

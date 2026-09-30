@@ -22,7 +22,7 @@ import {
 export const MAX_VERSIONS = 16;
 
 /** What a snapshot holds. */
-interface ProjectContent {
+export interface ProjectContent {
 	readonly tracks: SimState['tracks'];
 	readonly aux: SimState['aux'];
 	readonly tempo: SimState['tempo'];
