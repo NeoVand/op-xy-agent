@@ -223,6 +223,22 @@ describe('ReplicaState output', () => {
 		expect(() => state.setLed('track.1', 'blue' as never)).toThrow(/unknown LED state/);
 	});
 
+	it('shows guide marks dim under the LEDs, the device’s own lights winning', () => {
+		const state = new ReplicaState();
+		state.setGuide({ 'keyboard.c4': 'note', 'keyboard.a3': 'root' });
+		expect(state.shownLed('keyboard.c4')).toBe('dim');
+		expect(state.guide('keyboard.a3')).toBe('root');
+		// the device lights a key the guide marks: its light shows; the LED itself is untouched
+		state.setLed('keyboard.c4', 'white');
+		expect(state.shownLed('keyboard.c4')).toBe('white');
+		expect(state.led('keyboard.a3')).toBe('off');
+		// the next marks replace the last
+		state.setGuide({ 'keyboard.d4': 'note' });
+		expect(state.guide('keyboard.a3')).toBeUndefined();
+		expect(state.shownLed('keyboard.d4')).toBe('dim');
+		expect(() => state.setGuide({ 'key.m1': 'note' })).toThrow(/no LED window/);
+	});
+
 	it('shows screen text and the level meter', () => {
 		const state = new ReplicaState({ screen: 'tempo\n120.0' });
 		expect(state.screen.lines).toEqual(['tempo', '120.0']);

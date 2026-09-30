@@ -75,7 +75,8 @@ export class VirtualOpxyError extends Error {
 const clampInt = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(v)));
 
 /** A drum key's sound from its file's name: "kick 1.wav" → "kick 1", a made kit's "53 kick.wav" → "kick". */
-const soundName = (file: string) => file.replace(/\.(wav|aiff?)$/i, '').replace(/^\d+\s+/, '');
+export const soundName = (file: string) =>
+	file.replace(/\.(wav|aiff?)$/i, '').replace(/^\d+\s+/, '');
 
 /** Track 1–16 → the simulator's index 0–15 (0–7 instrument, 8–15 auxiliary). */
 function trackIndex(track: number): number {

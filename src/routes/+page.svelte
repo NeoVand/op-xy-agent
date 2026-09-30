@@ -7,7 +7,9 @@
 		getReplicaGuide,
 		GuideCard,
 		HintCaption,
+		PlayReadout,
 		ReplicaBridge,
+		ScaleGuide,
 		StageHint,
 		sweepSteps
 	} from '$lib/app';
@@ -18,6 +20,8 @@
 	import AgentPanel from '$lib/ui/shell/AgentPanel.svelte';
 	import DeviceStage from '$lib/ui/shell/DeviceStage.svelte';
 	import ProjectMenu from '$lib/ui/shell/ProjectMenu.svelte';
+	import ScaleMenu from '$lib/ui/shell/ScaleMenu.svelte';
+	import { isDrumTrack } from '$lib/sim/areas/sequencer/model';
 	import { getShellStatus } from '$lib/ui/shell/status.svelte';
 
 	const status = getShellStatus();
@@ -79,9 +83,22 @@
 	const caption = new HintCaption({ clock: browserClock, timers: browserTimers });
 	// The agent's walkthrough takes the caption line while it runs.
 	const guide = getReplicaGuide();
+	// A scale lit on the keyboard, and what the keys being played make (on the caption line).
+	const scale = simulator ? new ScaleGuide({ replica, sim: () => simulator.sim.state }) : null;
+	const readout = simulator
+		? new PlayReadout({
+				replica,
+				sim: () => simulator.sim.state,
+				timers: browserTimers,
+				flats: () => scale?.flats ?? false
+			})
+		: null;
+	const drumTrack = $derived(simulator ? isDrumTrack(simulator.sim.state) : false);
 
 	onMount(() => {
 		const stopBridge = bridge.start();
+		const stopScale = scale?.start();
+		const stopReadout = readout?.start();
 		const stopHints = bridge.onHint((hint) => caption.show(hint));
 		// The page's one orchestrated moment: a playhead sweeps the step row once.
 		const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -89,6 +106,8 @@
 		return () => {
 			stopSweep?.();
 			stopHints();
+			stopReadout?.();
+			stopScale?.();
 			stopBridge();
 			caption.dispose();
 		};
@@ -242,6 +261,9 @@
 		</div>
 		<!-- beside the line, not in it: a hint taking the line must not close the project card -->
 		<div class="hints__tools">
+			{#if scale}
+				<ScaleMenu guide={scale} drums={drumTrack} />
+			{/if}
 			<ToolButton
 				icon={KeyboardIcon}
 				label="computer keyboard"
@@ -265,15 +287,24 @@
 {#snippet caption_line()}
 	<StageHint {caption}>
 		{#snippet idle()}
-			<p class="line">
-				{#if bridge.live}
-					<span class="line__state">live</span>
-					<span>the keyboard, play, stop and track keys play the op-xy</span>
-				{:else}
-					<span class="line__state">simulated</span>
-					<span>the replica works like an op-xy; nothing is sent</span>
-				{/if}
-			</p>
+			<!-- what the keys make takes the status line's place while they play, and eases back -->
+			<div class="lines">
+				<p class={['line', readout?.reading && 'line--away']}>
+					{#if bridge.live}
+						<span class="line__state">live</span>
+						<span>the keyboard, play, stop and track keys play the op-xy</span>
+					{:else}
+						<span class="line__state">simulated</span>
+						<span>the replica works like an op-xy; nothing is sent</span>
+					{/if}
+				</p>
+				<p class={['line', 'line--reading', !readout?.reading && 'line--away']} aria-hidden="true">
+					{#if readout?.reading}
+						<span class="line__chord">{readout.reading.name}</span>
+						{#if readout.reading.detail}<span>{readout.reading.detail}</span>{/if}
+					{/if}
+				</p>
+			</div>
 		{/snippet}
 	</StageHint>
 {/snippet}
@@ -338,6 +369,28 @@
 
 	.line__state {
 		color: var(--xy-fg-muted);
+	}
+
+	/* the status line and the reading share one place, crossfading */
+	.lines {
+		display: grid;
+	}
+
+	.lines > .line {
+		grid-area: 1 / 1;
+		transition: opacity var(--xy-dur-slow, 240ms) var(--xy-ease-standard, ease);
+	}
+
+	.line--away {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.line__chord {
+		color: var(--xy-fg);
+		font-size: var(--xy-text-sm);
+		font-weight: 500;
+		letter-spacing: normal;
 	}
 
 	.conn {

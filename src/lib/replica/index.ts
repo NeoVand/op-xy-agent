@@ -14,6 +14,7 @@ export {
 	type AnimationHandle,
 	type BendEvent,
 	type ClickEvent,
+	type GuideMark,
 	type InputSource,
 	type KeyLedState,
 	type LastTurn,

@@ -4,7 +4,8 @@
  * device makes one, and persistence keeps its work across reloads; the bridge maps replica input to MIDI (through the transport) and mirrors the
  * device back onto the replica; hints explain what cannot be done remotely; the caption shows them,
  * rate-limited; the guide walks the user through the agent's steps on the replica; the device
- * samples are the audio of the samples a project names on the OP-XY's drive, read over USB and kept.
+ * samples are the audio of the samples a project names on the OP-XY's drive, read over USB and kept;
+ * the play readout names what the keyboard plays, and the scale guide lights a scale on it.
  */
 export { BridgeError, ReplicaBridge, type ReplicaBridgeOptions } from './bridge.svelte';
 export { HINT_REPEAT_MS, HintCaption, type HintCaptionOptions } from './caption.svelte';
@@ -83,3 +84,17 @@ export {
 	type ReplicaGuideOptions
 } from './guide.svelte';
 export { default as GuideCard } from './GuideCard.svelte';
+export {
+	PlayReadout,
+	readKeys,
+	type PlayReading,
+	type PlayReadoutOptions
+} from './play-readout.svelte';
+export {
+	GUIDE_SCALES,
+	ROOT_NAMES,
+	ScaleGuide,
+	scaleMarks,
+	type GuideScale,
+	type ScaleGuideOptions
+} from './scale-guide.svelte';

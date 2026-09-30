@@ -41,7 +41,9 @@ does the rest, so a key press never re-renders the legend paths.
 	let { part, replica, shortcut, tabbable = false, onfocuskey, onnavigate }: Props = $props();
 
 	const pressed = $derived(replica.isPressed(part.id));
-	const led = $derived(part.art.led ? replica.led(part.id) : 'off');
+	const led = $derived(part.art.led ? replica.shownLed(part.id) : 'off');
+	const guided = $derived(part.art.led ? replica.guide(part.id) !== undefined : false);
+	const root = $derived(guided && replica.guide(part.id) === 'root');
 	const blinking = $derived(part.art.led !== null && replica.isBlinking(part.id));
 	const highlight = $derived(replica.highlight(part.id));
 
@@ -133,6 +135,8 @@ does the rest, so a key press never re-renders the legend paths.
 	data-id={part.id}
 	data-led={led}
 	data-hl={highlight}
+	data-root={root || undefined}
+	data-guide={guided || undefined}
 	data-pressed={pressed || undefined}
 	data-blink={blinking || undefined}
 	role="button"
@@ -418,6 +422,21 @@ does the rest, so a key press never re-renders the legend paths.
 	.key[data-hl='press'] .key__ring {
 		opacity: 1;
 		animation: key-pulse 0.9s ease-in-out infinite;
+	}
+
+	/* a guide's keys (a scale lit on the keyboard) light a little brighter than the device's dim,
+	 * so they read at a glance; the device's own light still wins */
+	.key[data-guide][data-led='dim'] .key__core--white {
+		opacity: 0.62;
+	}
+
+	.key[data-guide][data-led='dim'] .key__glow--white {
+		opacity: 0.3;
+	}
+
+	/* a guide's root: a faint, steady ring */
+	.key[data-root] .key__ring {
+		opacity: 0.32;
 	}
 
 	.key[data-hl='candidate'] .key__ring {

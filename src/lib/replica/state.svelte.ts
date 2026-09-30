@@ -43,6 +43,13 @@ export type TurnableId = EncoderId | 'knob.volume';
 /** States of a key's LED window. */
 export type KeyLedState = 'off' | 'dim' | 'white' | 'red';
 
+/**
+ * A key the app points out under its LED (a scale's notes on the keyboard): shown dim where the
+ * device lights nothing, the root with a faint ring. Never sent anywhere; the device's own lights
+ * always win.
+ */
+export type GuideMark = 'note' | 'root';
+
 /** A key or encoder push went down or came up. */
 export interface PressEvent {
 	readonly type: 'press' | 'release';
@@ -187,6 +194,7 @@ export class ReplicaState {
 	readonly #blinking = new SvelteSet<KeyId>();
 	readonly #turns = new SvelteMap<EncoderId, number>();
 	readonly #highlights = new SvelteMap<ControlId, HighlightKind>();
+	readonly #guide = new SvelteMap<KeyId, GuideMark>();
 	readonly #hints = new SvelteMap<TurnableId, 1 | -1>();
 	readonly #lastTurn = new SvelteMap<TurnableId, LastTurn>();
 	#volume = $state(DEFAULT_VOLUME);
@@ -260,6 +268,18 @@ export class ReplicaState {
 	/** What a key's LED window shows. */
 	led(id: KeyId): KeyLedState {
 		return this.#leds.get(id) ?? 'off';
+	}
+
+	/** What a key's LED window shows on screen: the device's light, else a guide mark's dim one. */
+	shownLed(id: KeyId): KeyLedState {
+		const lit = this.#leds.get(id);
+		if (lit) return lit;
+		return this.#guide.has(id) ? 'dim' : 'off';
+	}
+
+	/** How the app points a key out under its LED, if it does. */
+	guide(id: KeyId): GuideMark | undefined {
+		return this.#guide.get(id);
 	}
 
 	/** True while a key's LED blinks. */
@@ -507,6 +527,21 @@ export class ReplicaState {
 	clearLeds(): void {
 		this.#leds.clear();
 		this.#blinking.clear();
+	}
+
+	/**
+	 * Points keys out under their LEDs (`marks` replaces every mark there was; an empty object
+	 * clears them): the app's guide layer, e.g. a scale lit on the keyboard.
+	 */
+	setGuide(marks: Partial<Record<KeyId, GuideMark>>): void {
+		for (const id of [...this.#guide.keys()]) if (!(id in marks)) this.#guide.delete(id);
+		for (const [id, mark] of Object.entries(marks) as [KeyId, GuideMark | undefined][]) {
+			if (!mark) continue;
+			if (!isControlId(id) || getControl(id).kind !== 'key' || getControl(id).led === null) {
+				throw new ReplicaError(`${id} has no LED window`);
+			}
+			if (this.#guide.get(id) !== mark) this.#guide.set(id, mark);
+		}
 	}
 
 	/** Sets the level meter, 0–1. */
