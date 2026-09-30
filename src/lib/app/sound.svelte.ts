@@ -76,6 +76,15 @@ const VELOCITY = 100;
 const METER_FLOOR_DB = -48;
 /** How much of the meter's height falls away per tick (rising is instant). */
 const METER_FALL = 0.035;
+/** A peak (0–1) as a meter's height: its decibels between the floor and 0 dBFS. */
+function meterLevel(peak: number): number {
+	const db = peak > 0 ? 20 * Math.log10(peak) : -Infinity;
+	return Math.min(1, Math.max(0, (db - METER_FLOOR_DB) / -METER_FLOOR_DB));
+}
+
+/** Each track's meter moves in steps this fine (a change of step re-renders it). */
+const TRACK_METER_STEPS = 8;
+const SILENT_TRACKS: readonly number[] = Array.from({ length: 8 }, () => 0);
 
 /** A keyboard key (or a player's note) going down or up, on the track it plays. */
 interface LiveEvent {
@@ -168,6 +177,10 @@ export class AppSound {
 	#bendTrack: number | null = null;
 	#meter = 0;
 	#lit = 0;
+	/** Each instrument track's level, 0–1 in steps (its meter), while this computer plays. */
+	#trackLevels = $state.raw<readonly number[]>(SILENT_TRACKS);
+	/** The levels unstepped, falling away as the master meter does. */
+	#trackPeaks: number[] = [...SILENT_TRACKS];
 	#stop: (() => void) | null = null;
 
 	constructor(options: AppSoundOptions) {
@@ -250,6 +263,14 @@ export class AppSound {
 	/** False when this browser cannot make sound (no Web Audio, or the engine failed to load). */
 	get available(): boolean {
 		return !this.#unavailable;
+	}
+
+	/**
+	 * How loud each instrument track plays here, after its fader, 0–1 in eighths (a meter each;
+	 * all 0 while this computer makes no sound).
+	 */
+	get trackLevels(): readonly number[] {
+		return this.#trackLevels;
 	}
 
 	/**
@@ -379,6 +400,8 @@ export class AppSound {
 		this.#bendTrack = null;
 		this.#follow();
 		this.#showMeter(0);
+		this.#trackPeaks = [...SILENT_TRACKS];
+		this.#showTracks(SILENT_TRACKS);
 		const context = this.#context;
 		if (context?.state !== 'running') return;
 		// let the quick fades finish, then stop the audio thread
@@ -558,6 +581,8 @@ export class AppSound {
 		this.#playerLive.clear();
 		this.#pending = [];
 		this.#showMeter(0);
+		this.#trackPeaks = [...SILENT_TRACKS];
+		this.#showTracks(SILENT_TRACKS);
 		const context = this.#context;
 		this.#context = null;
 		this.#onStateChange();
@@ -592,6 +617,8 @@ export class AppSound {
 		if (!state.transport.playing && context.currentTime > engine.quietAt + IDLE_SECONDS) {
 			// long silent: rest the audio thread until the next gesture or note
 			this.#showMeter(0);
+			this.#trackPeaks = [...SILENT_TRACKS];
+			this.#showTracks(SILENT_TRACKS);
 			void context.suspend().catch(() => {});
 			return;
 		}
@@ -599,10 +626,19 @@ export class AppSound {
 	};
 
 	#meterTick(engine: Engine): void {
-		const peak = engine.level();
-		const db = peak > 0 ? 20 * Math.log10(peak) : -Infinity;
-		const level = Math.min(1, Math.max(0, (db - METER_FLOOR_DB) / -METER_FLOOR_DB));
-		this.#showMeter(Math.max(level, this.#meter - METER_FALL));
+		this.#showMeter(Math.max(meterLevel(engine.level()), this.#meter - METER_FALL));
+		const levels = engine.trackLevels();
+		this.#trackPeaks = this.#trackPeaks.map((was, t) =>
+			Math.max(meterLevel(levels[t] ?? 0), was - METER_FALL)
+		);
+		this.#showTracks(this.#trackPeaks);
+	}
+
+	/** Each track's meter, touched only when one of them moves a step. */
+	#showTracks(peaks: readonly number[]): void {
+		const stepped = peaks.map((p) => Math.round(p * TRACK_METER_STEPS) / TRACK_METER_STEPS);
+		if (stepped.every((v, t) => v === this.#trackLevels[t])) return;
+		this.#trackLevels = stepped;
 	}
 
 	/** Lights the replica's meter, touching it only when the number of lit LEDs changes. */

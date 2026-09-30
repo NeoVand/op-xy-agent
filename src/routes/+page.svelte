@@ -5,9 +5,11 @@
 		getAppSimulator,
 		getAppSound,
 		getReplicaGuide,
+		getSimPersistence,
 		GuideCard,
 		HintCaption,
 		LargeScreen,
+		NowPlaying,
 		PlayReadout,
 		ReplicaBridge,
 		ScaleGuide,
@@ -34,6 +36,8 @@
 	const simulator = getAppSimulator();
 	// The replica's own sound (root layout): on while simulated, off while the OP-XY plays.
 	const sound = getAppSound();
+	// What the replica keeps across reloads (root layout): the strip's mutes are saved with it.
+	const persistence = getSimPersistence();
 
 	// Choices remembered in this browser: the computer keyboard plays the replica's keys (on unless
 	// turned off), and the display shows large over the device (off until asked for).
@@ -215,6 +219,7 @@
 			onconnect={connect}
 			plate={engaged ? connection : undefined}
 			caption={hints}
+			strip={simulator ? playing : undefined}
 			above={largeScreen ? largeDisplay : undefined}
 		>
 			<Replica
@@ -227,6 +232,18 @@
 	</section>
 	<AgentPanel class="home__agent" />
 </div>
+
+{#snippet playing()}
+	{#if simulator}
+		<NowPlaying
+			{simulator}
+			levels={sound.trackLevels}
+			bpm={bridge.live && mirror.measuredBpm !== null ? mirror.measuredBpm.toFixed(1) : null}
+			live={bridge.live}
+			onchange={() => persistence.markDirty()}
+		/>
+	{/if}
+{/snippet}
 
 {#snippet largeDisplay()}
 	<LargeScreen {replica} onclose={() => showLarge(false)} />
@@ -551,13 +568,14 @@
 			container-type: size;
 			/* Vertical only; the faint light pool around the device may spill sideways, clipped. */
 			overflow: hidden auto;
-			--stage-reserve: 13.5rem;
+			/* the caption, the strip under it and the plate, with their gaps */
+			--stage-reserve: 14rem;
 			/* the widest the device gets with the caption and the plate under it */
 			--stage-fit-w: min(76rem, calc((100cqh - var(--stage-reserve)) * 285 / 102));
 			--stage-max-w: var(--stage-fit-w);
-			/* the display, large: as tall as the room over the device at that width (9–16.5rem) */
+			/* the display, large: as tall as the room over the device at that width (8–16.5rem) */
 			--large-screen-h: clamp(
-				9rem,
+				8rem,
 				calc(
 					100cqh - var(--stage-reserve) - min(100cqw, var(--stage-fit-w)) * 102 / 285 -
 						var(--stage-above-gap)
@@ -567,7 +585,7 @@
 		}
 
 		.home__stage--engaged {
-			--stage-reserve: 16rem;
+			--stage-reserve: 16.5rem;
 		}
 
 		/* With the display large the stage's own margins give it room, and the device gets smaller

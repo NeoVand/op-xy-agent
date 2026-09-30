@@ -60,6 +60,9 @@ export class Channel {
 	readonly #level: GainNode;
 	readonly #pan: StereoPannerNode;
 	readonly #sends: [GainNode, GainNode];
+	/** What leaves the strip after its fader, for the track's level meter. */
+	readonly #tap: AnalyserNode;
+	readonly #samples: Float32Array<ArrayBuffer>;
 	#route: LfoRoute = { kind: 'none' };
 	#lfo: Lfo | null = null;
 	#engineTremolo: { osc: OscillatorNode; depth: GainNode; amount: number } | null = null;
@@ -99,6 +102,18 @@ export class Channel {
 			this.#pan.connect(send);
 			send.connect(fx[i]);
 		});
+		this.#tap = context.createAnalyser();
+		this.#tap.fftSize = 256;
+		this.#samples = new Float32Array(this.#tap.fftSize);
+		this.#pan.connect(this.#tap);
+	}
+
+	/** Peak level of what the track plays right now, after its fader, 0–1. */
+	level(): number {
+		this.#tap.getFloatTimeDomainData(this.#samples);
+		let peak = 0;
+		for (const v of this.#samples) peak = Math.max(peak, Math.abs(v));
+		return peak;
 	}
 
 	/** Where the LFO goes now. */

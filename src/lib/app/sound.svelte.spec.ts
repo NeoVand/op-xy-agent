@@ -76,6 +76,10 @@ class FakeEngine {
 	level() {
 		return 0.5;
 	}
+	/** Track 3 plays at the master's level, the rest are silent. */
+	trackLevels() {
+		return [0, 0, 0.5, 0, 0, 0, 0, 0];
+	}
 }
 
 class FakeScheduler {
@@ -281,6 +285,18 @@ describe('AppSound: the replica sounds while simulated', () => {
 		await rig.time.advance(50);
 		// a 0.5 peak is −6 dBFS: seven eighths of the way up a 48 dB meter
 		expect(replica.meter).toBeCloseTo(11 / 13, 2);
+	});
+
+	it('meters each track after its fader, in eighths, and darkens them when off', async () => {
+		const { press, sound, replica, settle, rig } = setup();
+		press('keyboard.c4');
+		await settle();
+		await rig.time.advance(50);
+		expect(sound.trackLevels).toEqual([0, 0, 7 / 8, 0, 0, 0, 0, 0]);
+		expect(replica.meter).toBeGreaterThan(0);
+		sound.toggle();
+		flushSync();
+		expect(sound.trackLevels.every((level) => level === 0)).toBe(true);
 	});
 
 	it('switches off at once, remembers it, and gives the playhead back to the page clock', async () => {

@@ -391,6 +391,11 @@ export class SoundEngine {
 		return end + FX_TAIL;
 	}
 
+	/** Peak level of each instrument track right now, after its fader, 0–1. */
+	trackLevels(): number[] {
+		return this.#channels.map((channel) => channel.level());
+	}
+
 	/** Peak level of what is playing right now, 0–1. */
 	level(): number {
 		this.#analyser.getFloatTimeDomainData(this.#meter);

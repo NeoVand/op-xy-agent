@@ -5,7 +5,7 @@ The device stage: the area framed at the device body's exact 285:102 aspect wher
 plate: an honest invitation to connect, unless `plate` replaces it (with the connected device's
 card, for example). The connect key stays disabled, marked "coming soon", until the Web MIDI layer
 provides `onconnect`. `caption` is a line of its own right under the device, for a status line and
-short notes about what the replica just did.
+short notes about what the replica just did; `strip`, a line under it (what plays, say).
 
 The stage is at most 76rem wide; a page can lower that with `--stage-max-w` (the home page does, so
 device, caption and plate fit the height of the window). `above` sits over the device, with
@@ -33,9 +33,11 @@ smoothly, the device easing down to make it (the home page shows its display lar
 		caption?: Snippet;
 		/** Over the device, e.g. its display large; the device makes room while it comes and goes. */
 		above?: Snippet;
+		/** A line under the caption, on the device's tile grid (what plays). */
+		strip?: Snippet;
 	}
 
-	let { children, onconnect, webMidi = 'unknown', plate, caption, above }: Props = $props();
+	let { children, onconnect, webMidi = 'unknown', plate, caption, above, strip }: Props = $props();
 
 	const uid = $props.id();
 	const canConnect = $derived(Boolean(onconnect) && webMidi !== 'unavailable');
@@ -68,6 +70,10 @@ smoothly, the device easing down to make it (the home page shows its display lar
 
 	{#if caption}
 		<div class="stage__caption">{@render caption()}</div>
+	{/if}
+
+	{#if strip}
+		<div class="stage__strip">{@render strip()}</div>
 	{/if}
 
 	{#if plate}
@@ -162,6 +168,13 @@ smoothly, the device easing down to make it (the home page shows its display lar
 		display: grid;
 		min-height: 3.5rem;
 		margin-block: calc(var(--stage-gap) / -2);
+		padding-inline: calc(100% * 4.41 / 285) calc(100% * 17.09 / 285);
+	}
+
+	/* Right under the caption, on the same grid, a line's spacing below its text. */
+	.stage__strip {
+		position: relative;
+		margin-top: calc(var(--stage-gap) / -2 - 0.75rem);
 		padding-inline: calc(100% * 4.41 / 285) calc(100% * 17.09 / 285);
 	}
 

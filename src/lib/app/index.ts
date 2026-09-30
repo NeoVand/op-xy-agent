@@ -6,7 +6,8 @@
  * rate-limited; the guide walks the user through the agent's steps on the replica; the device
  * samples are the audio of the samples a project names on the OP-XY's drive, read over USB and kept;
  * the play readout names what the keyboard plays, and the scale guide lights a scale on it; the
- * large screen is the replica's display drawn big over the device.
+ * large screen is the replica's display drawn big over the device; now playing is the line under it
+ * of what plays (tempo, bar, the song, each track's meter and mute).
  */
 export { BridgeError, ReplicaBridge, type ReplicaBridgeOptions } from './bridge.svelte';
 export { HINT_REPEAT_MS, HintCaption, type HintCaptionOptions } from './caption.svelte';
@@ -86,6 +87,8 @@ export {
 } from './guide.svelte';
 export { default as GuideCard } from './GuideCard.svelte';
 export { default as LargeScreen } from './LargeScreen.svelte';
+export { default as NowPlaying } from './NowPlaying.svelte';
+export { barBeat, nowPlaying, type NowPlayingView, type SongBlock } from './now-playing';
 export {
 	PlayReadout,
 	readKeys,

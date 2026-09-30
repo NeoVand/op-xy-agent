@@ -557,6 +557,17 @@ export function cueSong(s: SimState, by: number): void {
 	a.cue = clamp((a.cue ?? a.position) + by, 0, order.length - 1);
 }
 
+/**
+ * An entry of the playing song picked (ours: the app's song blocks under the replica): it is cued,
+ * taken at the next scene end as one cued with shift + [-] / [+] is. Nothing while no song plays.
+ */
+export function cueSongAt(s: SimState, index: number): void {
+	const a = s.areas.arrange;
+	const order = a.songs[a.song].order;
+	if (!a.playing || !Number.isInteger(index) || index < 0 || index >= order.length) return;
+	a.cue = index === a.position ? null : index;
+}
+
 /** The song starts from its first scene (the owner's unit: play always starts from the top). */
 export function startSong(s: SimState): void {
 	const a = s.areas.arrange;
