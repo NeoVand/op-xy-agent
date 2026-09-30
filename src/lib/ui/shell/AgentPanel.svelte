@@ -52,6 +52,7 @@ above the composer says what voice is doing while it is on.
 	import type { Conductor } from '$lib/agent/conductor.svelte';
 	import type { ProjectHost } from '$lib/agent/tools/define';
 	import { ProjectTransfer } from '$lib/app/project-transfer.svelte';
+	import { patternHost } from '$lib/app/pattern-host';
 	import blankUrl from '$lib/core/xy/fixtures/blank-1.1.4.xy?url';
 	import { browserTimers, browserUsb } from '$lib/device';
 	import { KeyStore, type KeyProvider } from '$lib/agent/keys.svelte';
@@ -108,6 +109,15 @@ above the composer says what voice is doing while it is on.
 	const simulator = fromContext(getAppSimulator);
 	const sound = fromContext(getAppSound);
 	const persistence = fromContext(getSimPersistence);
+	/** The replica's patterns for the chat's pattern cards. */
+	const patterns = simulator
+		? patternHost({
+				simulator,
+				preview: (track, note, velocity, seconds) =>
+					void sound?.preview(track, note, velocity, seconds),
+				changed: () => persistence?.markDirty()
+			})
+		: undefined;
 	const guide = fromContext(getReplicaGuide);
 	const presets = fromContext(getPresetInbox);
 	/** The replica's project to the OP-XY over USB, for send_project (its own transfer, as the project key has). */
@@ -281,7 +291,7 @@ above the composer says what voice is doing while it is on.
 			try {
 				const { createDemoConductor, DEMO_QUESTION } = await import('$lib/agent/demo.dev');
 				conductor?.dispose();
-				conductor = await createDemoConductor(replica);
+				conductor = await createDemoConductor(replica, simulator);
 				keyStatus = 'valid';
 				if (autoplay) void conductor.send(DEMO_QUESTION);
 			} catch (error) {
@@ -597,8 +607,10 @@ above the composer says what voice is doing while it is on.
 					cite={manualCitation}
 					onretry={() => void conductor?.retry()}
 					onundochanges={(id) => void conductor?.undoTurn(id)}
+					onholdchanges={(id, holding) => conductor?.holdTurn(id, holding)}
 					onpointchanges={glow ? pointChanges : undefined}
 					onreply={send}
+					{patterns}
 					onsettings={openSettings}
 				/>
 			{:else}

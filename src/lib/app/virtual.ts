@@ -367,7 +367,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					ownLength: true
 				});
 			}
-			playPattern(s, t, pattern - 1);
+			if (write.play !== false) playPattern(s, t, pattern - 1);
 			changed();
 			return readPattern(track, pattern);
 		},

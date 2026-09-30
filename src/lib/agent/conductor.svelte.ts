@@ -284,7 +284,13 @@ export class Conductor {
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	readonly #turns = new Map<
 		string,
-		{ before: VirtualCheckpoint; after: VirtualCheckpoint; undone: VirtualCheckpoint | null }
+		{
+			before: VirtualCheckpoint;
+			after: VirtualCheckpoint;
+			undone: VirtualCheckpoint | null;
+			/** While its note's "before" key is held: the replica before the hold, and during it. */
+			held?: { from: VirtualCheckpoint; shown: VirtualCheckpoint };
+		}
 	>();
 	readonly #routeSkills: boolean;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -777,6 +783,29 @@ export class Conductor {
 			);
 		}
 		await this.#save();
+		return true;
+	}
+
+	/**
+	 * Compares a turn by ear (its changes note's "before" key): while `holding`, the replica sounds
+	 * as it was before the turn, and on release it comes back exactly as it was. Only while the
+	 * turn stands (not taken back); the model is not told, since nothing was decided.
+	 */
+	holdTurn(id: string, holding: boolean): boolean {
+		const virtual = this.#env.virtual;
+		const turn = this.#turns.get(id);
+		const entry = this.entries.find((e) => e.kind === 'changes' && e.id === id);
+		if (!virtual || !turn || entry?.kind !== 'changes') return false;
+		if (holding) {
+			if (turn.held || entry.undo !== 'ready') return false;
+			const from = virtual.checkpoint();
+			virtual.revert(turn.before, turn.after);
+			turn.held = { from, shown: virtual.checkpoint() };
+			return true;
+		}
+		if (!turn.held) return false;
+		virtual.revert(turn.held.from, turn.held.shown);
+		turn.held = undefined;
 		return true;
 	}
 

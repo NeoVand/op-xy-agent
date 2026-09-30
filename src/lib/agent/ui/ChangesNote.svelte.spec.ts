@@ -59,4 +59,22 @@ describe('the changes note', () => {
 		await userEvent.hover(document.body);
 		expect(pointed.at(-1)).toBe(false);
 	});
+
+	it('sounds as it was only while its before key is held', async () => {
+		const held: boolean[] = [];
+		const screen = await render(ChangesNote, {
+			props: {
+				lines: ['tempo 120 → 100 bpm'],
+				undo: 'ready',
+				onhold: (on: boolean) => held.push(on)
+			}
+		});
+		const key = screen.getByRole('button', { name: 'hold to hear it as it was before' });
+		const element = key.element() as HTMLElement;
+		element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
+		await expect.element(key).toHaveTextContent('as it was');
+		element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+		await expect.element(key).toHaveTextContent('before');
+		expect(held).toEqual([true, false]);
+	});
 });

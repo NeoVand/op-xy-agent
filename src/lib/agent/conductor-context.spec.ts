@@ -132,6 +132,41 @@ describe('the conductor grounds its answer', () => {
 		expect(conductor.litChanges?.changes.map((c) => c.brief)).toEqual(['tempo 120 → 100 bpm']);
 	});
 
+	it('lets a turn be heard as it was while its before key is held, telling the model nothing', async () => {
+		const api = scriptedApi([
+			{
+				content: [{ type: 'tool_use', id: 'toolu_t', name: 'set_tempo', input: { bpm: 100 } }],
+				stop_reason: 'tool_use'
+			},
+			answer('At 100 now.'),
+			answer('Sure.')
+		]);
+		const sim = new OpxySim({ now: () => 0 });
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('slow it down to 100');
+		const note = conductor.entries.at(-1)!;
+		expect(conductor.holdTurn(note.id, true)).toBe(true);
+		expect(sim.state.tempo.bpm).toBe(120);
+		// a second press while held changes nothing
+		expect(conductor.holdTurn(note.id, true)).toBe(false);
+		expect(conductor.holdTurn(note.id, false)).toBe(true);
+		expect(sim.state.tempo.bpm).toBe(100);
+		await conductor.send('thanks');
+		expect(JSON.stringify(api.messageRequests.at(-1)?.body.messages.at(-1))).not.toMatch(
+			/took back/
+		);
+	});
+
 	it('takes a turn back from its changes note, keeps what the user did since, and puts it back', async () => {
 		const api = scriptedApi([
 			{

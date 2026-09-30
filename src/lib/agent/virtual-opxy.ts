@@ -71,6 +71,8 @@ export interface PatternWrite {
 	/** Track scale (default: leave it). */
 	readonly scale?: number;
 	readonly notes: readonly VirtualNote[];
+	/** Make it the pattern the track plays (default); false edits it in place (a pattern card). */
+	readonly play?: boolean;
 }
 
 /** A scene: the pattern each of the 16 tracks plays in it (index 0 = track 1). */

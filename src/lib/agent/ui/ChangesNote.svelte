@@ -4,7 +4,8 @@ What a turn changed on the replica, once it ends: one quiet line with a count th
 list the agent was given (docs/AGENT-V2.md, grounding), each change said briefly (only the values
 that differ), so what the answer says and what happened can be compared at a glance. Beside it,
 while this page session can: undo, which takes the turn back (what the user changed since stays),
-and then put back. Pointing at it (`onpoint`) lights on the replica the keys that lead to each change.
+and then put back; and "before", held to hear the replica as it was (`onhold`), let go to have the
+changes back. Pointing at it (`onpoint`) lights on the replica the keys that lead to each change.
 -->
 <script lang="ts">
 	import Led from '$lib/ui/Led.svelte';
@@ -18,11 +19,27 @@ and then put back. Pointing at it (`onpoint`) lights on the replica the keys tha
 		/** `ready` offers undo, `undone` put back; absent offers neither. */
 		undo?: 'ready' | 'undone';
 		onundo?: () => void;
+		/** The "before" key went down (true) or came up (false): compare by ear. */
+		onhold?: (holding: boolean) => void;
 		/** The pointer or focus came onto the note (true) or left it (false). */
 		onpoint?: (on: boolean) => void;
 	}
 
-	let { lines, changes, undo, onundo, onpoint }: Props = $props();
+	let { lines, changes, undo, onundo, onhold, onpoint }: Props = $props();
+
+	let holding = $state(false);
+
+	function hold(on: boolean): void {
+		if (holding === on) return;
+		holding = on;
+		onhold?.(on);
+	}
+
+	function onholdkey(event: KeyboardEvent, on: boolean): void {
+		if (event.key !== ' ' && event.key !== 'Enter') return;
+		event.preventDefault();
+		if (!event.repeat) hold(on);
+	}
 
 	/** Most changes the list names; the rest are counted, as the agent's lines are. */
 	const SHOWN = 40;
@@ -56,6 +73,26 @@ and then put back. Pointing at it (`onpoint`) lights on the replica the keys tha
 			{/each}
 		</ul>
 	</details>
+	{#if undo === 'ready' && onhold}
+		<!-- held, not clicked: the replica sounds as it was only while it is down -->
+		<button
+			type="button"
+			class={['changes__undo', holding && 'changes__undo--held']}
+			aria-label="hold to hear it as it was before"
+			aria-pressed={holding}
+			onpointerdown={(event) => {
+				if (event.button === 0) hold(true);
+			}}
+			onpointerup={() => hold(false)}
+			onpointerleave={() => hold(false)}
+			onpointercancel={() => hold(false)}
+			onkeydown={(event) => onholdkey(event, true)}
+			onkeyup={(event) => onholdkey(event, false)}
+			onblur={() => hold(false)}
+		>
+			{holding ? 'as it was' : 'before'}
+		</button>
+	{/if}
 	{#if undo && onundo}
 		<button type="button" class="changes__undo" onclick={onundo}>
 			{undo === 'undone' ? 'put back' : 'undo'}
@@ -121,6 +158,11 @@ and then put back. Pointing at it (`onpoint`) lights on the replica the keys tha
 	.changes__undo:focus-visible {
 		color: var(--xy-fg);
 		background-color: var(--xy-hover);
+	}
+
+	.changes__undo--held {
+		color: var(--xy-fg);
+		background-color: var(--xy-selection);
 	}
 
 	.changes__list {

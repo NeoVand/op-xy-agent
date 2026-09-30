@@ -2,8 +2,10 @@
 @component
 The conversation: your messages (with the files you sent), the agent's answers (streamed, with a caret while they are being
 written and keycaps you can click to see a combo on the replica), its tool calls (a subagent's work
-shows live under its chip), approval records and notices. Under the last answer, with `onreply`,
-two or three things to say next, sent with a click (`quick-replies.ts`). With voice on, what the mic heard and
+shows live under its chip), approval records and notices. A pattern the agent wrote shows under
+its chip as a card to play with, live on the replica (`patterns`; on its latest write only). Under
+the last answer, with `onreply`, two or three things to say next, sent with a click
+(`quick-replies.ts`). With voice on, what the mic heard and
 what the voice said are lines of their own, and a request the voice handed to Claude is marked.
 
 It is its own scroll area. It follows the newest line while you are at the bottom and stops when you
@@ -20,6 +22,8 @@ says what it is doing and for how long.
 	import ActivityLine from './ActivityLine.svelte';
 	import AttachmentChip from './AttachmentChip.svelte';
 	import ChangesNote from './ChangesNote.svelte';
+	import PatternCard from './PatternCard.svelte';
+	import type { PatternHost } from './pattern-card';
 	import QuickReplies from './QuickReplies.svelte';
 	import { quickReplies } from '../quick-replies';
 	import type { ControlId } from '$lib/core/opxy';
@@ -41,10 +45,14 @@ says what it is doing and for how long.
 		onretry?: () => void;
 		/** Takes back (or puts back) what a turn changed on the replica, by its changes note. */
 		onundochanges?: (id: string) => void;
+		/** A changes note's "before" key went down or came up: hear the turn by comparison. */
+		onholdchanges?: (id: string, holding: boolean) => void;
 		/** A changes note is pointed at (its entry id), or none is any more (null). */
 		onpointchanges?: (id: string | null) => void;
 		/** Sends a quick reply as the user's message (without it none are offered). */
 		onreply?: (text: string) => void;
+		/** The replica's patterns, for the cards of the patterns the agent wrote. */
+		patterns?: PatternHost;
 		/** Opens the settings (for key errors). */
 		onsettings?: () => void;
 	}
@@ -58,8 +66,10 @@ says what it is doing and for how long.
 		cite,
 		onretry,
 		onundochanges,
+		onholdchanges,
 		onpointchanges,
 		onreply,
+		patterns,
 		onsettings
 	}: Props = $props();
 
@@ -68,6 +78,27 @@ says what it is doing and for how long.
 		entries.filter((e) => e.kind !== 'progress' && (!('parent' in e) || e.parent === null))
 	);
 	const lastIndex = $derived(top.length - 1);
+	/** A written pattern's track and pattern, from its call's input (instrument tracks only). */
+	function writtenPattern(entry: ChatEntry): { track: number; pattern: number } | null {
+		if (entry.kind !== 'tool' || entry.name !== 'write_pattern' || entry.status !== 'ok')
+			return null;
+		const input = entry.input as { track?: unknown; pattern?: unknown } | null;
+		const track = typeof input?.track === 'number' ? input.track : null;
+		const pattern = typeof input?.pattern === 'number' ? input.pattern : 1;
+		return track !== null && track >= 1 && track <= 8 ? { track, pattern } : null;
+	}
+
+	/** The calls that show a pattern card: the latest write of each pattern. */
+	const cards = $derived.by(() => {
+		if (!patterns) return [];
+		const latest: Record<string, string> = {};
+		for (const entry of entries) {
+			const written = writtenPattern(entry);
+			if (written) latest[`${written.track}:${written.pattern}`] = entry.id;
+		}
+		return Object.values(latest);
+	});
+
 	/** What to say next, once the last answer is written. */
 	const replies = $derived(onreply && !running ? quickReplies(entries) : []);
 	/** The answer block being written right now (it gets the caret). */
@@ -188,12 +219,19 @@ says what it is doing and for how long.
 						{onkeys}
 						{onpoint}
 					/>
+					{@const written = patterns && cards.includes(entry.id) ? writtenPattern(entry) : null}
+					{#if patterns && written}
+						<div class="conv__card">
+							<PatternCard host={patterns} track={written.track} pattern={written.pattern} />
+						</div>
+					{/if}
 				{:else if entry.kind === 'changes'}
 					<ChangesNote
 						lines={entry.lines}
 						changes={entry.changes}
 						undo={entry.undo}
 						onundo={onundochanges ? () => onundochanges(entry.id) : undefined}
+						onhold={onholdchanges ? (holding) => onholdchanges(entry.id, holding) : undefined}
 						onpoint={onpointchanges ? (on) => onpointchanges(on ? entry.id : null) : undefined}
 					/>
 				{:else if entry.kind === 'approval'}
@@ -266,6 +304,10 @@ says what it is doing and for how long.
 
 	.conv__item--tool + .conv__item--tool {
 		margin-top: -0.625rem;
+	}
+
+	.conv__card {
+		margin: 0.5rem 0 0.25rem;
 	}
 
 	.conv__user {

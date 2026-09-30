@@ -8,9 +8,13 @@
  * the chat reducer and the activity line. The API is a paced fake (`testing/paced-api.ts`) that plays
  * a realistic run whatever you ask: a couple of seconds of silence while the cached prompt is read,
  * thinking notes, `show_on_replica` (the replica really animates), a `task` for the manual expert
- * (which really searches and reads our manual), then the answer streamed word by word. Nothing is
- * stored and no device is attached, so the demo can never send MIDI.
+ * (which really searches and reads our manual), then the answer streamed word by word. Ask it for
+ * a beat and it writes one on the replica instead (`write_pattern`, with the virtual OP-XY when the
+ * page hands it the simulator), so the changes note, the change glow, the pattern card and the quick
+ * replies show. Nothing is stored and no device is attached, so the demo can never send MIDI.
  */
+import type { AppSimulator } from '$lib/app/simulator.svelte';
+import { createVirtualOpxy } from '$lib/app/virtual';
 import type { ReplicaState } from '$lib/replica';
 import { createAnthropicClient } from './client';
 import { Conductor } from './conductor.svelte';
@@ -27,14 +31,18 @@ export const DEMO_QUESTION = 'what does shift + M1 do?';
 /** A placeholder, never a key: every request is answered by the fake fetch inside this page. */
 const NOT_A_KEY = 'demo-not-a-key';
 
-/** Builds a conductor that talks to the paced fake API. */
-export async function createDemoConductor(replica: ReplicaState | null): Promise<Conductor> {
+/** Builds a conductor that talks to the paced fake API (writing on the replica with `simulator`). */
+export async function createDemoConductor(
+	replica: ReplicaState | null,
+	simulator: AppSimulator | null = null
+): Promise<Conductor> {
 	const api = pacedApi(respond);
 	const client = createAnthropicClient({ apiKey: NOT_A_KEY, fetch: api.fetch, maxRetries: 0 });
 	return Conductor.create({
 		client,
 		device: null,
 		replica,
+		virtual: simulator ? createVirtualOpxy({ sim: simulator.sim }) : undefined,
 		manual: await loadManualSource(),
 		store: createMemoryThreadStore(),
 		preferences: { get: () => null, set: () => {} },
@@ -82,10 +90,28 @@ function firstUnitId(body: RequestBody): string {
 	return 'instrument.engine';
 }
 
+/** The text of the user's last message. */
+function lastUserText(body: RequestBody): string {
+	const last = body.messages.findLast((m) => m.role === 'user');
+	if (typeof last?.content === 'string') return last.content;
+	return lastUserBlocks(body)
+		.map((b) => (b.type === 'text' ? String(b.text) : ''))
+		.join(' ');
+}
+
 function respond(request: CapturedRequest): PacedTurn {
 	const body = request.body as RequestBody;
 	const conductor = body.tools?.some((t) => t.name === 'task') ?? false;
 	const results = resultIds(body);
+	if (conductor && results.some((id) => id.includes('_beat_'))) return beatAnswer();
+	if (conductor && results.some((id) => id.includes('_bass_'))) return partAnswer('bass');
+	if (conductor && results.some((id) => id.includes('_chords_'))) return partAnswer('chords');
+	if (conductor && results.length === 0) {
+		const asked = lastUserText(body);
+		if (/\bbass/i.test(asked)) return part(++run, 'bass');
+		if (/\b(chords?|keys|pad)\b/i.test(asked)) return part(++run, 'chords');
+		if (/\b(beat|groove|drums?)\b/i.test(asked)) return beat(++run);
+	}
 	if (conductor) return results.length === 0 ? plan(++run) : answer();
 	if (results.some((id) => id.includes('_search_'))) return readUnit(firstUnitId(body));
 	if (results.some((id) => id.includes('_read_'))) return expertAnswer();
@@ -184,6 +210,99 @@ function answer(): PacedTurn {
 				'Loading changes the whole sound, the engine included, and lands on `M1`, the engine page: its four encoders edit the loaded engine’s own parameters. ' +
 				'I showed the combo on the replica. A click of `E1` in the browser swaps to the category view [instrument.preset-browser].',
 			{ size: 1, every: jitter(50) }
+		)
+		.stop('end_turn');
+}
+
+/** Asked for a beat: a four-on-the-floor house beat on track 1, written on the replica. */
+function beat(n: number): PacedTurn {
+	const kick = [1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 118 }));
+	const clap = [5, 13].map((step) => ({ step, note: 58, velocity: 100 }));
+	const hats = [3, 7, 11, 15].map((step) => ({ step, note: 63, velocity: 84 }));
+	const ghost = [8, 16].map((step) => ({ step, note: 61, velocity: 52 }));
+	return new PacedTurn('claude-opus-5-5')
+		.wait(700)
+		.start({ input: 60, cacheRead: 131_000 })
+		.wait(500)
+		.thinking('A house beat: kick on every beat, clap on 2 and 4, open hats on the offbeats.', {
+			size: 5,
+			every: jitter(100)
+		})
+		.wait(200)
+		.toolUse(
+			`toolu_demo_beat_${n}`,
+			'write_pattern',
+			{ track: 1, pattern: 1, bars: 1, notes: [...kick, ...clap, ...hats, ...ghost] },
+			{ size: 8, every: 60 }
+		)
+		.stop('tool_use');
+}
+
+/** The beat's answer, streamed, ending on an offer. */
+function beatAnswer(): PacedTurn {
+	return new PacedTurn('claude-opus-5-5')
+		.wait(500)
+		.start({ input: 900, cacheRead: 131_200 })
+		.wait(300)
+		.text(
+			'A house beat on T1: the kick on every beat, the clap on 2 and 4, open hats on the offbeats and two soft closed hats pushing into the next beat. Press `play` to hear it, or click the steps in the card to change it.\n\nWant me to add a bassline, or make it a song?',
+			{ size: 1, every: jitter(45) }
+		)
+		.stop('end_turn');
+}
+
+/** Asked for a bassline (track 3) or chords (track 4): a pitched part in A minor, written on the replica. */
+function part(n: number, kind: 'bass' | 'chords'): PacedTurn {
+	const notes =
+		kind === 'bass'
+			? [
+					{ step: 1, note: 45, velocity: 110, length: 2 },
+					{ step: 4, note: 45, velocity: 80, length: 1 },
+					{ step: 7, note: 52, velocity: 96, length: 1 },
+					{ step: 9, note: 41, velocity: 110, length: 2 },
+					{ step: 12, note: 43, velocity: 88, length: 1 },
+					{ step: 15, note: 48, velocity: 92, length: 2 }
+				]
+			: [
+					[57, 60, 64],
+					[53, 57, 60],
+					[48, 52, 55],
+					[55, 59, 62]
+				].flatMap((chord, i) =>
+					chord.map((note) => ({ step: i * 4 + 1, note, velocity: 90, length: 3 }))
+				);
+	return new PacedTurn('claude-opus-5-5')
+		.wait(600)
+		.start({ input: 60, cacheRead: 131_000 })
+		.wait(400)
+		.thinking(
+			kind === 'bass'
+				? 'A bassline in A minor under the beat.'
+				: 'Am, F, C and G, a bar each beat.',
+			{
+				size: 4,
+				every: jitter(100)
+			}
+		)
+		.toolUse(
+			`toolu_demo_${kind}_${n}`,
+			'write_pattern',
+			{ track: kind === 'bass' ? 3 : 4, pattern: 1, bars: 1, notes },
+			{ size: 8, every: 60 }
+		)
+		.stop('tool_use');
+}
+
+function partAnswer(kind: 'bass' | 'chords'): PacedTurn {
+	return new PacedTurn('claude-opus-5-5')
+		.wait(400)
+		.start({ input: 900, cacheRead: 131_200 })
+		.wait(300)
+		.text(
+			kind === 'bass'
+				? 'A bassline in A minor on T3: the root on the one, a push before the fifth, down to F for the second half. Click the notes in the card to move it around.'
+				: 'Am, F, C and G on T4, a beat each. Click a chord’s name in the card to hear it.\n\nShould I voice them wider, or add a seventh?',
+			{ size: 1, every: jitter(45) }
 		)
 		.stop('end_turn');
 }
