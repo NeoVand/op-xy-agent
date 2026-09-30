@@ -226,6 +226,7 @@ export class OpxySim {
 		const t = this.state.transport;
 		t.playing = transport !== 'stop';
 		if (transport !== 'continue') t.position = 0;
+		if (transport === 'start') t.starts = (t.starts ?? 0) + 1;
 	}
 
 	/** The device's tempo (measured from its clock, or what the app set). */
@@ -285,6 +286,7 @@ export class OpxySim {
 				// play starts; pressed again while playing it jumps back to the start (manual: layout)
 				s.transport.playing = true;
 				s.transport.position = 0;
+				s.transport.starts = (s.transport.starts ?? 0) + 1;
 				break;
 			case 'key.stop':
 				s.transport.playing = false;

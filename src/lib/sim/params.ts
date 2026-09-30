@@ -268,7 +268,16 @@ export interface SimState {
 		swing: number;
 		metronome: { level: number; on: boolean };
 	};
-	transport: { playing: boolean; recording: boolean; position: number };
+	transport: {
+		playing: boolean;
+		recording: boolean;
+		position: number;
+		/**
+		 * How many times play started (play, play again, a device starting): the sound's scheduler
+		 * tells a new run from a scene's start, where the position also goes back to 0.
+		 */
+		starts?: number;
+	};
 	project: { name: string };
 	com: { advertising: boolean; multiOut: MultiOutMode; charging: boolean };
 	picker: { kind: PickerKind; index: number } | null;

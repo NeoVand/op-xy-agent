@@ -429,7 +429,7 @@ describe('the lookahead scheduler', () => {
 		expect(notes.at(-1)?.time).toBeCloseTo(clock.now, 1);
 	});
 
-	it('starts the walks over when the position jumps back (play again, a scene starting)', () => {
+	it('starts the walks over when play starts again', () => {
 		const { state, play, run, notes, stops, pattern } = rig();
 		const p = pattern(0);
 		toggleStep(p, 0, [53]);
@@ -440,11 +440,39 @@ describe('the lookahead scheduler', () => {
 		expect(notes).toHaveLength(1);
 		state.transport.position = 20;
 		run(0.025);
+		// play pressed again: a new run
 		state.transport.position = 0;
+		state.transport.starts = (state.transport.starts ?? 0) + 1;
 		run(0.3);
 		expect(stops).toHaveLength(1);
 		// the new start counts passes from one again: its first pass is silent too
 		expect(notes).toHaveLength(1);
+	});
+
+	it('carries the walks on into a scene’s start in the same run', () => {
+		const { state, play, run, notes, stops, pattern } = rig();
+		const p = pattern(0);
+		toggleStep(p, 0, [53]);
+		setComponentValue(p, [0], 'skip trigger', 2);
+		/** To the bar's end, where the song comes round (its one scene again) and counts from 0. */
+		const bar = () => {
+			state.transport.position = 15.8;
+			run(0.2);
+			state.transport.position = 0.1;
+			run(1.8);
+		};
+		play();
+		run(1.8);
+		// the first pass is silent, the second sounds, the third not, the fourth again
+		expect(notes).toHaveLength(0);
+		bar();
+		expect(notes).toHaveLength(1);
+		bar();
+		expect(notes).toHaveLength(1);
+		bar();
+		expect(notes).toHaveLength(2);
+		// and nothing was stopped at the bar lines
+		expect(stops).toHaveLength(0);
 	});
 
 	it('re-anchors on a tempo change without losing its place', () => {

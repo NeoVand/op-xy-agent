@@ -24,12 +24,20 @@
  * down again from the start whenever what it depends on changes (the scale, the length, the flow
  * components, another pattern), as the LEDs do, so what sounds is what lights unless the walk itself
  * is random. The timeline is anchored on the audio clock when the transport starts; it starts again
- * from the simulator's position when that jumps back (play again, a scene or a device starting over),
- * re-anchors when the tempo changes, follows the position while a device's clock drives it, and
- * ends the sequence's notes when the transport stops.
+ * from the simulator's position when that jumps back for a new run (play again, a device starting
+ * over), re-anchors when the tempo changes, follows the position while a device's clock drives it,
+ * and ends the sequence's notes when the transport stops.
+ *
+ * A scene's start (the song moving on, or its one scene again) also takes the simulator's position
+ * back to 0, but it is the same run: where every track plays on what it played and would be back at
+ * its first step there anyway, the timeline goes on across the join, only counted from further on;
+ * elsewhere it is laid down again with each track's random source and passes carried over from
+ * where the scene ended. Either way random, the ramps and the skips go on changing from pass to
+ * pass, as on the device, instead of playing the first pass again every time the scene comes round.
  */
 import { brainInfluence, brainShift } from '$lib/sim/areas/auxiliary/sim';
 import { lockParam } from '$lib/sim/areas/sequencer/locks';
+import { sceneLength } from '$lib/sim/areas/arrange/model';
 import { activeTrack, heldNotes, seq } from '$lib/sim/areas/sequencer/model';
 import { playerOf } from '$lib/sim/areas/sequencer/players';
 import type { SimState, TrackState } from '$lib/sim/params';
@@ -38,6 +46,7 @@ import {
 	arpEvent,
 	arpStepLength,
 	bendCurve,
+	hasFlowComponents,
 	maestroEvents,
 	seededRng,
 	startPlayhead,
@@ -292,9 +301,13 @@ interface Walk {
 	key: string;
 	head: Playhead;
 	rng: Rng;
-	/** The next slot to schedule (slot j starts at j × scale sixteenths). */
+	/** The next slot to schedule (slot j starts at origin + j × scale sixteenths). */
 	slot: number;
 	scale: number;
+	/** Where its slot 0 is on the timeline: the start of the scene it was laid down in. */
+	origin: number;
+	/** The walk as the scene ended (before its first slot past the end), for a new timeline. */
+	join?: Playhead;
 	/** The locks the last step played sent to the sounding notes. */
 	locks: Readonly<Record<string, number>>;
 	/** Chords maestro has strummed (its up/down pattern alternates). */
@@ -334,6 +347,14 @@ export class Scheduler {
 	#walks: Walk[] = [];
 	#nextClick = 0;
 	#lastPosition = 0;
+	/** The simulator's play starts when the timeline began (a new run when they change). */
+	#starts = 0;
+	/** Where the current scene began on the timeline (sixteenths the position counts behind it). */
+	#offset = 0;
+	/** Where the current scene ends on the timeline. */
+	#sceneEnd = Infinity;
+	/** Walks laid down fresh in this run since it began (each on a source of its own). */
+	#fresh = 0;
 	/** Each track's running arpeggio, and the sequenced notes it plays over. */
 	#arps = new Map<number, ArpRun>();
 	#held: Held[][] = [];
@@ -374,18 +395,23 @@ export class Scheduler {
 		}
 		if (!this.#anchor) this.#start(state, now);
 		else if (transport.position < this.#lastPosition - 1e-6) {
-			// back to the start (play again), a scene's start, a device starting over: a new timeline
-			this.#sink.stop(now);
-			this.#start(state, now);
+			// back to 0: a scene's start in the same run carries on where it can; play again, a
+			// device starting over, or a scene the walks cannot carry on into, is a new timeline
+			const run = (transport.starts ?? 0) === this.#starts;
+			if (!run || !this.#carryOn(state)) {
+				this.#sink.stop(now);
+				this.#start(state, now, run);
+			}
 		} else if (
 			this.#follow() &&
-			Math.abs(transport.position - positionAt(this.#anchor, now)) > FOLLOW_TOLERANCE
+			Math.abs(transport.position + this.#offset - positionAt(this.#anchor, now)) > FOLLOW_TOLERANCE
 		) {
-			this.#anchor = { position: transport.position, time: now, bpm: tempo.bpm };
+			this.#anchor = { position: transport.position + this.#offset, time: now, bpm: tempo.bpm };
 		} else if (tempo.bpm !== this.#anchor.bpm) {
 			this.#anchor = { position: positionAt(this.#anchor, now), time: now, bpm: tempo.bpm };
 		}
 		this.#lastPosition = transport.position;
+		this.#sceneEnd = this.#offset + sceneLength(state);
 		const anchor = this.#anchor as Anchor;
 		const until = positionAt(anchor, now + lookahead);
 		const arpAhead = lookahead > this.#lookahead ? lookahead : Math.min(lookahead, ARP_LOOKAHEAD);
@@ -417,14 +443,72 @@ export class Scheduler {
 		this.#anchor = null;
 	}
 
-	#start(state: SimState, now: number): void {
+	/**
+	 * A scene's start while the transport plays on (the song moving on, or its one scene again),
+	 * where the simulator counts from 0 again. When the scene that ended was whole bars and every
+	 * track plays on what it played, back at its first step there anyway (its loop divides the
+	 * scene; no pulse, pulse hold or jump in its walk; no arpeggio, whose steps count from the
+	 * scene's start), the timeline goes on across the join: nothing is cut or laid down again, and
+	 * each walk keeps its random source and passes. Returns false when it cannot.
+	 */
+	#carryOn(state: SimState): boolean {
+		const length = this.#sceneEnd - this.#offset;
+		if (
+			!(length > 0) ||
+			!Number.isFinite(length) ||
+			Math.abs(length / 16 - Math.round(length / 16)) > 1e-6
+		) {
+			return false;
+		}
+		const fits = state.tracks.every((track, k) => {
+			const walk = this.#walks[k];
+			const pattern = currentPattern(track.sequence);
+			if (!walk || walk.key !== walkKey(track, pattern)) return false;
+			if (pattern.player.on && pattern.player.type === 'arpeggio') return false;
+			if (hasFlowComponents(pattern)) return false;
+			const slots = (this.#sceneEnd - walk.origin) / walk.scale;
+			const whole = Math.round(slots);
+			return Math.abs(slots - whole) < 1e-6 && whole % pattern.length === 0;
+		});
+		// the auxiliary tracks (the brain, punch-in) are read on the timeline: each that plays notes
+		// must be back at its first step at the join too
+		const aux = state.aux.every((track) => {
+			const pattern = currentPattern(track.sequence);
+			if (!pattern.steps.slice(0, pattern.length).some(hasNotes)) return true;
+			const slots = this.#sceneEnd / scaleOf(pattern);
+			const whole = Math.round(slots);
+			return Math.abs(slots - whole) < 1e-6 && whole % pattern.length === 0;
+		});
+		if (!fits || !aux) return false;
+		this.#offset = this.#sceneEnd;
+		for (const walk of this.#walks) walk.join = undefined;
+		return true;
+	}
+
+	/**
+	 * A new timeline from the simulator's position. Within the same run (a scene the walks could not
+	 * carry on into) each track that plays on its pattern keeps its random source and its passes as
+	 * they were when the scene ended; the others start afresh.
+	 */
+	#start(state: SimState, now: number, run = false): void {
 		const position = state.transport.position;
+		const was = run ? this.#walks : [];
+		if (!run) this.#fresh = 0;
 		this.#anchor = { position, time: now + START_MARGIN, bpm: state.tempo.bpm };
-		this.#walks = state.tracks.map((track) => {
+		this.#offset = 0;
+		this.#starts = state.transport.starts ?? 0;
+		this.#walks = state.tracks.map((track, k) => {
 			const pattern = currentPattern(track.sequence);
 			const scale = scaleOf(pattern);
+			const old = was[k];
+			const from =
+				old && old.key === walkKey(track, pattern)
+					? { rng: old.rng, passes: (old.join ?? old.head).passes }
+					: run
+						? { rng: seededRng(WALK_SEED + ++this.#fresh), passes: [] }
+						: undefined;
 			// a count-in's bar goes by before the first slot
-			return this.#walk(track, pattern, position < 0 ? 0 : firstIndex(position, scale));
+			return this.#walk(track, pattern, position < 0 ? 0 : firstIndex(position, scale), from);
 		});
 		this.#nextClick = firstIndex(position, 4, 0.5);
 		this.#lastPosition = position;
@@ -434,10 +518,20 @@ export class Scheduler {
 		this.#nextFill = firstIndex(Math.max(0, position), 1, 0.5);
 	}
 
-	/** A walk from the start, replayed up to slot `slot` without sounding (as the LEDs replay it). */
-	#walk(track: TrackState, pattern: Pattern, slot: number): Walk {
-		let head = startPlayhead();
-		const rng = seededRng(WALK_SEED);
+	/**
+	 * A walk from the start of the scene it is laid down in (`origin` on the timeline), replayed up
+	 * to slot `slot` without sounding (as the LEDs replay it): on the LEDs' random source, or on the
+	 * source and passes it carries on `from`.
+	 */
+	#walk(
+		track: TrackState,
+		pattern: Pattern,
+		slot: number,
+		from?: { readonly rng: Rng; readonly passes: readonly number[] },
+		origin = 0
+	): Walk {
+		let head: Playhead = from ? { ...startPlayhead(), passes: [...from.passes] } : startPlayhead();
+		const rng = from?.rng ?? seededRng(WALK_SEED);
 		const target = Math.max(0, slot);
 		for (let i = 0; i < Math.min(target, REPLAY_LIMIT); i++) {
 			head = advancePlayhead(pattern, head, rng).head;
@@ -448,6 +542,7 @@ export class Scheduler {
 			rng,
 			slot: target,
 			scale: scaleOf(pattern),
+			origin,
 			locks: {},
 			hits: 0
 		};
@@ -465,26 +560,39 @@ export class Scheduler {
 			let walk = this.#walks[k];
 			const key = walkKey(track, pattern);
 			if (!walk || walk.key !== key) {
-				// the pattern changed under the walk: lay it down again from where time has got to
-				const reached = walk ? walk.slot * walk.scale : Math.max(0, positionAt(anchor, now));
-				walk = this.#walk(track, pattern, Math.ceil(reached / scale - 1e-9));
+				// the pattern changed under the walk: lay it down again from the scene's start, up to
+				// where time has got to
+				const reached = walk
+					? walk.origin + walk.slot * walk.scale
+					: Math.max(0, positionAt(anchor, now));
+				const origin = this.#offset;
+				walk = this.#walk(
+					track,
+					pattern,
+					Math.ceil((reached - origin) / scale - 1e-9),
+					undefined,
+					origin
+				);
 				this.#walks[k] = walk;
 			}
 			const groove = trackGroove(state, pattern);
 			const lead = 0.5 * scale + maxEarlyShift(groove);
 			const audible = !track.mix.muted && track.engine !== 'midi';
-			while (walk.slot * scale - lead < until) {
+			while (walk.origin + walk.slot * scale - lead < until) {
 				const slot = walk.slot++;
+				const at = walk.origin + slot * scale;
+				// the walk as the scene ends, in case the next one lays the walks down again
+				if (walk.join === undefined && at >= this.#sceneEnd - 1e-9) walk.join = walk.head;
 				const next = advancePlayhead(pattern, walk.head, walk.rng, options);
 				walk.head = next.head;
 				// a punch-in repeat plays the slots it holds instead (the walk goes on underneath)
 				const play = this.#punch.replay(k, slot, scale, next.play);
 				if (!audible || !play) continue;
-				this.#automate(due, k, track, pattern, walk, play.locks, slot * scale, anchor, now);
-				const shift = routed ? brainShift(state, brain.key, slot * scale) : 0;
+				this.#automate(due, k, track, pattern, walk, play.locks, at, anchor, now);
+				const shift = routed ? brainShift(state, brain.key, at) : 0;
 				const player = pattern.player.on ? pattern.player : null;
 				const played = { walk, pattern, player, shift };
-				this.#play(due, k, track, play, slot * scale, scale, groove, anchor, now, played);
+				this.#play(due, k, track, play, at, scale, groove, anchor, now, played);
 			}
 		});
 		return due;
