@@ -43,3 +43,5 @@ __pycache__/
 
 # Agent eval transcripts (evals/agent/quality.mjs): local, re-made by every run
 /evals/agent/out
+# Manual verifier output (evals/manual/verify.mjs): the full report and the judge's cache
+/evals/manual/out

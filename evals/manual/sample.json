@@ -1,0 +1,104 @@
+{
+	"about": "Flagged items of the manual verifier checked by hand (read against the unit, replayed on the simulator step by step, the simulator's code read where it decides). finding: manual (the manual is wrong or leaves something out), replica (the replica differs from what the manual rightly says, or cannot show it), verifier or judge (this tool's own limits). Our words only.",
+	"procedures": [
+		{
+			"ref": "hardware.layout#silence",
+			"finding": "judge",
+			"note": "A new project is stopped, so `stop → stop` changes nothing: the start lacks playback, which the judge's own rubric counts as missing from the start (unclear), yet it answered no. The procedure is fine; a precondition 'something is playing' would make it self-contained."
+		},
+		{
+			"ref": "sequencer.overview#show-track",
+			"finding": "judge",
+			"note": "On a new project every pattern is empty, so the step keys have nothing to show. On the seeded project `Tn` played T2 and the step keys lit its notes (steps 3, 7, 11, 15), but the judge wanted track 1's although `Tn` means any track. The procedure is fine."
+		},
+		{
+			"ref": "sequencer.live-recording#count-in",
+			"finding": "manual",
+			"note": "Written `record + play → play`, which lets go of record before the second play: the replica records at once (a second later 8 steps in). Kept down, `record + play → + play`, it counts in first (a second later still 8 steps before the bar). The summary, the fact count-in and this procedure need `→ +`."
+		},
+		{
+			"ref": "instrument.preset-management#move",
+			"finding": "manual",
+			"note": "Flagged because a new project has no user preset, so `M1` cut nothing. By hand: on OS 1.1.33 the browser opens in engine view (the preset-browser unit's own facts), where `turn E1` steps through engines, not folders; folders are the categories a click of `E1` switches to. The procedure needs that click before choosing the folder (it already says the guide is unclear here). The replica's paste works only in category view, our assumption."
+		},
+		{
+			"ref": "sampler.overview#choose",
+			"finding": "judge",
+			"note": "T1 is already the drum sampler: `turn E1` stayed on drum (the screen already named it) and `click E2` loaded a drum kit. The goal held throughout, but the judge did not count the drum engine as a sampler engine, though its prompt says so. The procedure is fine."
+		},
+		{
+			"ref": "sampler.sampling#record",
+			"finding": "judge",
+			"note": "The replica arms and records, but takes nothing from audio in, which the judge's prompt lists as outside the replica; on the seeded project it judged the same steps unclear for that reason. The procedure is fine as far as the replica can tell."
+		},
+		{
+			"ref": "com.midi-settings#leave",
+			"finding": "manual",
+			"note": "Minor: no precondition, yet its one step (`M1`) leaves the system settings only when they are open; anywhere else it picks the M1 page. Add 'the system settings are open' (reached by #open)."
+		},
+		{
+			"ref": "com.controller-mode#exit",
+			"finding": "manual",
+			"note": "Minor: no precondition. By hand, `shift + com` does leave controller mode after `com → M2`, but from instrument mode it only opens the com page. Add 'controller mode is on' (reached by #enter)."
+		},
+		{
+			"ref": "howto.slice-a-loop#slice",
+			"finding": "manual",
+			"note": "The recipe's #record ends on the record page, where `key E5 + M1` re-arms recording instead of opening the slicer, and the closing `M4` there emptied E5 (step 4). By hand: `sample` again first (back on the drum page), then `key E5 + M1` opens the slicer. Add that step (sampler.slicing starts from the M1 page). Check on the unit, since the M4 there may clear the take."
+		}
+	],
+	"parameters": [
+		{
+			"ref": "instrument.preset-browser preset browser/click/E2",
+			"finding": "verifier",
+			"note": "The click loads the highlighted preset and returns to the track's M1 page, which is what the replica showed (T3's engine page). Consistent."
+		},
+		{
+			"ref": "sampler.sampling sample/shift/E1",
+			"finding": "verifier",
+			"note": "The record page opens on the mic, which has no channels. With line in or USB chosen, `shift + E1` picks the input channel and the screen shows it while shift is held (the simulator's sample area). The checker reads the page as it opens."
+		},
+		{
+			"ref": "auxiliary.brain M1/base/E1",
+			"finding": "verifier",
+			"note": "The same encoder: the manual names its two values, the replica the control (mode)."
+		},
+		{
+			"ref": "auxiliary.external-audio M1/click/E1",
+			"finding": "verifier",
+			"note": "The click switches the input on and off (the replica: mic off → on). Consistent."
+		},
+		{
+			"ref": "tempo.tempo-screen tempo/base/E3",
+			"finding": "replica",
+			"note": "The manual and research note 59 (§2.11, CC81 drawn as a slider) call it the groove amount; 'swing' is the navigator's name for it in the device map. Rename it in the map so the app and the manual use one word."
+		},
+		{
+			"ref": "com.bluetooth-midi com/base/E1",
+			"finding": "verifier",
+			"note": "The same control: the manual names the feature, the replica the words on its screen."
+		}
+	],
+	"observations": [
+		{
+			"ref": "project.templates#load",
+			"finding": "manual",
+			"note": "Judged reached, but nothing chooses a template: the projects folder opens on user, so `M1` loaded project 1 from there. A step is missing: turn E1 to the templates folder (one step left of user on the replica), then choose the template."
+		},
+		{
+			"ref": "instrument.save-copy-scramble#copy",
+			"finding": "manual",
+			"note": "Minor: both steps write `Tn`, which in our key grammar is the same track; the destination should be `Tm`. The verifier played T2 only because the note says destination."
+		},
+		{
+			"ref": "project.projects-folder#delete",
+			"finding": "replica",
+			"note": "Judged reached on the confirmation alone: the replica asks (M4 deletes, M3 cancels), our own assumption, and the manual's procedure ends at `hold M4`. Check on the unit: if it asks, the manual lacks the confirming press; if not, the replica should drop the question."
+		},
+		{
+			"ref": "mix.mute-solo#solo",
+			"finding": "judge",
+			"note": "Judged reached for the wrong reason (T2 selected, which is not a solo). A solo lasts only while the key is held and shows only in the meters of a playing pattern; the verifier records the state after the key is let go. The procedure is presumably right; the replica cannot show it here."
+		}
+	]
+}
