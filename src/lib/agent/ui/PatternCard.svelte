@@ -154,6 +154,14 @@ move, Enter or Space toggles. A tiny black screen in both themes, as the walkthr
 			<span class="card__title">
 				T{track} <span class="card__dim">pattern {pattern}</span>
 			</span>
+			{#if host.download}
+				<button
+					type="button"
+					class="card__bar card__download"
+					aria-label="download track {track} pattern {pattern} as midi"
+					onclick={() => host.download?.(track, pattern)}>midi ↓</button
+				>
+			{/if}
 			{#if bars > 1}
 				<span class="card__bars" role="group" aria-label="bars">
 					{#each Array.from({ length: bars }, (_, i) => i) as index (index)}
@@ -269,6 +277,16 @@ move, Enter or Space toggles. A tiny black screen in both themes, as the walkthr
 	.card__bars {
 		display: flex;
 		gap: 0.125rem;
+	}
+
+	/* the download sits with the title; the bar keys, when there are any, at the right */
+	.card__download {
+		margin-right: auto;
+	}
+
+	.card__download:hover {
+		background-color: var(--xy-ramp-2);
+		color: var(--xy-ramp-7);
 	}
 
 	.card__bar {

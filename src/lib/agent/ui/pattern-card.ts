@@ -20,6 +20,8 @@ export interface PatternHost {
 	playhead(track: number, pattern: number): number | null;
 	/** Sounds notes on the track briefly (a hit, a chord), to hear them. */
 	preview(track: number, notes: readonly number[]): void;
+	/** Downloads the pattern as a MIDI file, when the app can. */
+	download?(track: number, pattern: number): void;
 }
 
 /** A row of the grid: a drum sound or a pitch. */

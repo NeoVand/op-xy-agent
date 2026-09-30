@@ -5,6 +5,7 @@
  */
 import type { PatternHost } from '$lib/agent/ui/pattern-card';
 import { stepAt } from '$lib/sim/sequencer';
+import { fileName, patternMidi, saveFile } from './export';
 import type { AppSimulator } from './simulator.svelte';
 import { createVirtualOpxy } from './virtual';
 
@@ -55,6 +56,14 @@ export function patternHost(options: PatternHostOptions): PatternHost {
 		},
 		preview(track, notes) {
 			for (const note of notes) options.preview?.(track - 1, note, 100, PREVIEW_SECONDS);
+		},
+		download(track, pattern) {
+			const s = state();
+			saveFile(
+				patternMidi(s, track, pattern),
+				fileName(s, `T${track} pattern ${pattern}`, 'mid'),
+				'audio/midi'
+			);
 		}
 	};
 }

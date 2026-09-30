@@ -2,14 +2,17 @@
 @component
 The replica's project as the device's own `.xy` file (M6, `app/project-transfer`): a small
 "project" key on the caption line opens a card to start a new project with the default sounds,
-open a `.xy` from disk, download the project as one, load the project the OP-XY has open over USB
-(with the samples its tracks use, `app/device-samples`), or add the replica's project to the
-OP-XY. The last one writes to the device, so it says what it will add and waits for a second click.
+open a `.xy` from disk, load the project the OP-XY has open over USB (with the samples its tracks
+use, `app/device-samples`), or add the replica's project to the OP-XY. The last one writes to the
+device, so it says what it will add and waits for a second click. Its export row takes what you
+made elsewhere (`app/export`): the song as a WAV, rendered through the replica's own sound, or as
+MIDI for a DAW, and the project as the device's `.xy`.
 -->
 <script lang="ts">
 	import { Folder01Icon } from '@hugeicons/core-free-icons';
 	import { Button, IconButton, Legend, ToolButton } from '$lib/ui';
-	import { getAppSimulator, getDeviceSamples, getSimPersistence } from '$lib/app';
+	import { getAppSimulator, getAppSound, getDeviceSamples, getSimPersistence } from '$lib/app';
+	import { fileName, saveFile, songMidi, songScenes, songWav } from '$lib/app/export';
 	import { PROJECT_NAME, ProjectTransfer } from '$lib/app/project-transfer.svelte';
 	import { browserUsb } from '$lib/device';
 	import blankUrl from '$lib/core/xy/fixtures/blank-1.1.4.xy?url';
@@ -28,6 +31,8 @@ OP-XY. The last one writes to the device, so it says what it will add and waits 
 	const persistence = optional(getSimPersistence);
 	/** The samples a project uses, read from the device with it (absent outside the app). */
 	const samples = optional(getDeviceSamples);
+	/** The replica's sound, whose samples a WAV renders with (absent outside the app). */
+	const sound = optional(getAppSound);
 	const transfer = simulator
 		? new ProjectTransfer({
 				sim: simulator.sim,
@@ -57,13 +62,35 @@ OP-XY. The last one writes to the device, so it says what it will add and waits 
 
 	async function download() {
 		const file = await transfer?.download();
-		if (!file) return;
-		const url = URL.createObjectURL(new Blob([file.bytes as Uint8Array<ArrayBuffer>]));
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = file.name;
-		link.click();
-		setTimeout(() => URL.revokeObjectURL(url), 1000);
+		if (file) saveFile(file.bytes, file.name, 'application/octet-stream');
+	}
+
+	/** The WAV being rendered: how far it has got, or an error. */
+	let rendering = $state<{ done: number; of: number } | null>(null);
+	let exportError = $state<string | null>(null);
+
+	function downloadMidi() {
+		if (!simulator) return;
+		const s = simulator.sim.state;
+		saveFile(songMidi(s), fileName(s, 'song', 'mid'), 'audio/midi');
+	}
+
+	async function downloadWav() {
+		if (!simulator || !sound || rendering) return;
+		exportError = null;
+		const s = simulator.sim.state;
+		rendering = { done: 0, of: songScenes(s).length };
+		try {
+			const { renderOffline } = await import('$lib/sound/offline');
+			const bytes = await songWav(s, (request) => renderOffline(request, sound.samples), {
+				onProgress: (done, of) => (rendering = { done, of })
+			});
+			saveFile(bytes, fileName(s, 'song', 'wav'), 'audio/wav');
+		} catch (error) {
+			exportError = `could not render the song: ${error instanceof Error ? error.message : String(error)}`;
+		} finally {
+			rendering = null;
+		}
 	}
 
 	function startSave() {
@@ -85,7 +112,7 @@ OP-XY. The last one writes to the device, so it says what it will add and waits 
 		<ToolButton
 			icon={Folder01Icon}
 			label="project file"
-			tip="project: new, open, download, load from or save to the op-xy"
+			tip="project: new, open, download the song as audio or midi, load from or save to the op-xy"
 			aria-expanded={open}
 			aria-controls="project-card"
 			onclick={() => (open = !open)}
@@ -107,8 +134,30 @@ OP-XY. The last one writes to the device, so it says what it will add and waits 
 						>new project</Button
 					>
 					<Button size="sm" busy={transfer.busy} onclick={openFile}>open .xy…</Button>
-					<Button size="sm" disabled={transfer.busy} onclick={download}>download .xy</Button>
 				</div>
+				<!-- what you made, to take elsewhere -->
+				<Legend as="p" size="2xs" tone="subtle">download what you made</Legend>
+				<div class="project__row" role="group" aria-label="download">
+					<Button
+						size="sm"
+						busy={rendering !== null}
+						disabled={!sound?.available || rendering !== null}
+						onclick={downloadWav}>song .wav</Button
+					>
+					<Button size="sm" onclick={downloadMidi}>song .mid</Button>
+					<Button size="sm" disabled={transfer.busy} onclick={download}>project .xy</Button>
+				</div>
+				{#if rendering}
+					<Legend as="p" size="2xs" tone="muted">
+						rendering the song through the replica’s sound: scene {Math.min(
+							rendering.done + 1,
+							rendering.of
+						)} of {rendering.of}
+					</Legend>
+				{/if}
+				{#if exportError}
+					<Legend as="p" size="2xs" tone="accent">{exportError}</Legend>
+				{/if}
 				{#if transfer.usbAvailable}
 					<Legend as="p" size="2xs" tone="subtle">
 						over usb: first put the op-xy in mtp mode (com, then M4)
