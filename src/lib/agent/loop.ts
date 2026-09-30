@@ -373,6 +373,18 @@ export function isWorkingNote(text: string): boolean {
 	return note.length > 0 && note.length <= WORKING_NOTE_CHARS && !note.includes('\n');
 }
 
+const plain = (text: string) => text.toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * Whether the closing `answer` restates `draft`, a text written before a tool call: it opens with
+ * the draft's first sentence ("Yes, the maestro player does this."), so the draft was an answer the
+ * model began and then wrote again in full. The chat keeps the full one.
+ */
+export function restatesDraft(answer: string, draft: string): boolean {
+	const first = plain(/^(.+?[.!?])(\s|$)/s.exec(draft.trim())?.[1] ?? draft.split('\n')[0]);
+	return first.length >= 12 && plain(answer).startsWith(first);
+}
+
 /** Runs the loop until the model ends its turn, fails, is stopped or hits the step limit. */
 export async function runLoop(config: LoopConfig, transcript: Transcript): Promise<LoopResult> {
 	const { agent, emit, signal } = config;
@@ -384,6 +396,8 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 	let iterations = 0;
 	/** Answers in a row cut off at the output limit with tool calls in them (they carry on). */
 	let cutOffs = 0;
+	/** Texts the chat kept from answers that went on to call tools; the closing one may restate them. */
+	const drafts: { turn: string; block: number; text: string }[] = [];
 
 	const finish = (stopReason: string | null, error: AgentErrorInfo | null): LoopResult => {
 		const { text, citations } = messageText(last);
@@ -528,6 +542,9 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 
 		if (message.stop_reason === 'tool_use' && calls.length > 0) {
 			cutOffs = 0;
+			message.content.forEach((b, block) => {
+				if (b.type === 'text' && !isWorkingNote(b.text)) drafts.push({ turn, block, text: b.text });
+			});
 			const results = await config.runTools(calls);
 			const after = (await config.afterTools?.()) ?? [];
 			transcript.append({ role: 'user', content: [...results, ...after] });
@@ -589,6 +606,12 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 				message: 'This conversation no longer fits the model. Start a new conversation.',
 				retryable: false
 			});
+		}
+		const answer = message.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('\n');
+		for (const draft of drafts) {
+			if (!restatesDraft(answer, draft.text)) continue;
+			emit({ type: 'text_replace', agent, turn: draft.turn, block: draft.block, text: '' });
+			emit({ type: 'progress', agent, turn: draft.turn, block: draft.block, delta: draft.text });
 		}
 		return finish(message.stop_reason, null);
 	}

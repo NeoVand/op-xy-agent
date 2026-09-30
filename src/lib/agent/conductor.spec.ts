@@ -662,6 +662,26 @@ describe('conductor: errors, stop and persistence', () => {
 		expect(first.content[0]).toMatchObject({ type: 'text', text: 'Good fit. Importing it.' });
 	});
 
+	it('keeps only the full answer when it restates one begun before a tool call', async () => {
+		const final = 'Yes, the maestro player does this. I put it on track 8.\n\n1. `player`';
+		const { conductor } = await setup([
+			{
+				content: [
+					{
+						type: 'text',
+						text: 'Yes, the maestro player does this. You store a chord once.\n\nYour pad is `T8`.'
+					},
+					{ type: 'tool_use', id: 'toolu_a', name: 'device_status', input: {} }
+				],
+				stop_reason: 'tool_use'
+			},
+			{ content: [{ type: 'text', text: final }], stop_reason: 'end_turn' }
+		]);
+		await conductor.send('can the op-xy play a chord from one key?');
+		const texts = conductor.entries.filter((e) => e.kind === 'text');
+		expect(texts.map((e) => e.kind === 'text' && e.text)).toEqual([final]);
+	});
+
 	it('carries on from an answer cut off inside its tool calls: the complete ones run', async () => {
 		const { api, conductor } = await setup([
 			{

@@ -7,6 +7,7 @@
  */
 import { z } from 'zod';
 import { parseNoteName } from '$lib/core/midi/notes';
+import { hitMark, readPattern } from '../pattern-reading';
 import type { ArrangementWrite, VirtualArrangement, VirtualPattern } from '../virtual-opxy';
 import {
 	defineTool,
@@ -60,6 +61,7 @@ function patternView(p: VirtualPattern) {
 		byStep.set(n.step, list);
 	}
 	const grid = drumGrid(p);
+	const reading = grid ? null : readPattern(p);
 	return {
 		track: p.track,
 		pattern: p.pattern,
@@ -70,27 +72,35 @@ function patternView(p: VirtualPattern) {
 		scale: scaleName(p.scale),
 		noteCount: p.notes.length,
 		...(grid ? { grid } : {}),
+		...(reading ? { reading } : {}),
 		steps: [...byStep.entries()].map(([step, notes]) => ({ step, notes }))
 	};
 }
 
 /**
  * A drum pattern as a drummer's grid, one line per sound, a bar per group of sixteen steps (x a
- * hit, . a rest): "kick 1": "x...x...x...x...", so what plays where reads at a glance.
+ * hit, X an accent and o a soft hit next to the sound's other hits, . a rest):
+ * "closed hat 1": "X.x.X.x.X.x.X.x.", so what plays where, and how hard, reads at a glance.
  */
 function drumGrid(p: VirtualPattern): Record<string, string> | null {
-	const sounds = new Map<string, { note: number; steps: Set<number> }>();
+	const sounds = new Map<string, { note: number; steps: Map<number, number> }>();
 	for (const n of p.notes) {
 		if (!n.sound) continue;
-		const entry = sounds.get(n.sound) ?? { note: n.note, steps: new Set<number>() };
-		entry.steps.add(n.step);
+		const entry = sounds.get(n.sound) ?? { note: n.note, steps: new Map<number, number>() };
+		entry.steps.set(n.step, n.velocity);
 		sounds.set(n.sound, entry);
 	}
 	if (sounds.size === 0) return null;
 	const grid: Record<string, string> = {};
 	for (const [sound, { steps }] of [...sounds].sort((a, b) => a[1].note - b[1].note)) {
+		const low = Math.min(...steps.values());
+		const high = Math.max(...steps.values());
+		const mark = (step: number) => {
+			const velocity = steps.get(step);
+			return velocity === undefined ? '.' : hitMark(velocity, low, high);
+		};
 		const bars = Array.from({ length: p.bars }, (_, bar) =>
-			Array.from({ length: 16 }, (_, i) => (steps.has(bar * 16 + i + 1) ? 'x' : '.')).join('')
+			Array.from({ length: 16 }, (_, i) => mark(bar * 16 + i + 1)).join('')
 		);
 		grid[sound] = bars.join(' ');
 	}
@@ -105,7 +115,7 @@ export const writePatternTool = defineTool({
 	kind: 'mutate',
 	approval: 'auto',
 	description:
-		'Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held and makes it the pattern the track plays. Up to 120 notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. Undo restores the previous pattern. Use write_arrangement for scenes and the song, transport to hear it.',
+		'Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held and makes it the pattern the track plays. Up to 120 notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. Undo restores the previous pattern. The result reads the pattern back: a drum track as a grid (x a hit, X an accent, o a soft hit), any other as its bars and chords, spelled in the key its notes suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.',
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16 (1–8 instrument, 9–16 auxiliary)'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default 1)'),

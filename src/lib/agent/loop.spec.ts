@@ -8,7 +8,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	buildRequest,
 	createQuirks,
+	isWorkingNote,
 	renderMessages,
+	restatesDraft,
 	runawayCut,
 	sanitizeAssistantContent
 } from './loop';
@@ -124,6 +126,24 @@ describe('sanitizeAssistantContent', () => {
 		]);
 		const plain = content.filter((b) => b.type !== 'fallback');
 		expect(sanitizeAssistantContent(plain)).toEqual(plain);
+	});
+});
+
+describe('drafts and working notes', () => {
+	it('tells a line on the way to a tool from an answer', () => {
+		expect(isWorkingNote('Good fit. Importing it.')).toBe(true);
+		expect(isWorkingNote('Copy it first.\n\n1. `shift + T1`')).toBe(false);
+		expect(isWorkingNote('   ')).toBe(false);
+	});
+
+	it('sees an answer that opens with the first sentence of a draft', () => {
+		const draft = 'Yes, the maestro player does this. You store a chord once.';
+		expect(restatesDraft('Yes, the maestro  player does this. I put it on T8.', draft)).toBe(true);
+		expect(restatesDraft('The replica is now in arrange mode.', 'Copy the pattern first.')).toBe(
+			false
+		);
+		// too short to tell
+		expect(restatesDraft('Done. Playing now.', 'Done.')).toBe(false);
 	});
 });
 

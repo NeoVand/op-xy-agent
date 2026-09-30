@@ -191,6 +191,18 @@ describe('write_pattern', () => {
 		expect(two.written.grid).toEqual({ 'kick 1': 'x...x...x...x... x...x...x...x...' });
 		const keys = json(await run(writePatternTool, { track: 4, notes: [{ step: 1, note: 60 }] }));
 		expect(keys.written.grid).toBeUndefined();
+		expect(keys.written.reading.bars).toEqual(['C4 · · · | · · · · | · · · · | · · · ·']);
+	});
+
+	it('marks accents and soft hits on the grid', async () => {
+		const { run } = setup();
+		const hats = [1, 3, 5, 7, 9, 11, 13, 15].map((step) => ({
+			step,
+			note: 61,
+			velocity: step % 4 === 1 ? 110 : 60
+		}));
+		const written = json(await run(writePatternTool, { track: 1, notes: hats }));
+		expect(written.written.grid).toEqual({ 'closed hat 1': 'X.o.X.o.X.o.X.o.' });
 	});
 });
 
