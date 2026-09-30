@@ -72,6 +72,8 @@ export type ChatEntry =
 			readonly kind: 'changes';
 			readonly id: string;
 			readonly lines: readonly string[];
+			/** Whether the turn can be taken back (`ready`) or put back (`undone`); absent after a reload. */
+			undo?: 'ready' | 'undone';
 	  }
 	| {
 			readonly kind: 'approval';

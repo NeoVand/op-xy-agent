@@ -36,6 +36,8 @@ says what it is doing and for how long.
 		cite?: (ref: string) => CitationTarget | null;
 		/** Re-runs the last turn after an error. */
 		onretry?: () => void;
+		/** Takes back (or puts back) what a turn changed on the replica, by its changes note. */
+		onundochanges?: (id: string) => void;
 		/** Opens the settings (for key errors). */
 		onsettings?: () => void;
 	}
@@ -48,6 +50,7 @@ says what it is doing and for how long.
 		onpoint,
 		cite,
 		onretry,
+		onundochanges,
 		onsettings
 	}: Props = $props();
 
@@ -175,7 +178,11 @@ says what it is doing and for how long.
 						{onpoint}
 					/>
 				{:else if entry.kind === 'changes'}
-					<ChangesNote lines={entry.lines} />
+					<ChangesNote
+						lines={entry.lines}
+						undo={entry.undo}
+						onundo={onundochanges ? () => onundochanges(entry.id) : undefined}
+					/>
 				{:else if entry.kind === 'approval'}
 					<p class="conv__approval">
 						<Led

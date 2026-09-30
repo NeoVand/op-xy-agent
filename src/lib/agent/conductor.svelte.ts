@@ -273,6 +273,12 @@ export class Conductor {
 	/** The replica when the user's message arrived, and the changes last reported against it. */
 	#checkpoint: VirtualCheckpoint | null = null;
 	#reported = '';
+	/** Each turn's replica before and after it, for its take-back (this page session only). */
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	readonly #turns = new Map<
+		string,
+		{ before: VirtualCheckpoint; after: VirtualCheckpoint; undone: VirtualCheckpoint | null }
+	>();
 	readonly #routeSkills: boolean;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	readonly #subagentSystems = new Map<string, Promise<BetaTextBlockParam[]>>();
@@ -719,7 +725,40 @@ export class Conductor {
 		} catch {
 			return;
 		}
-		if (lines.length > 0) this.entries.push({ kind: 'changes', id: entryId('changes'), lines });
+		if (lines.length === 0) return;
+		const id = entryId('changes');
+		this.#turns.set(id, { before: this.#checkpoint, after: virtual.checkpoint(), undone: null });
+		this.entries.push({ kind: 'changes', id, lines, undo: 'ready' });
+	}
+
+	/**
+	 * Takes back what a turn changed on the replica (its changes note's undo), or puts it back
+	 * after that: only where the replica still reads as the turn, or the take-back, left it, so what
+	 * the user changed since stays. The model hears of it with the next message.
+	 */
+	async undoTurn(id: string): Promise<boolean> {
+		const virtual = this.#env.virtual;
+		const turn = this.#turns.get(id);
+		const entry = this.entries.find((e) => e.kind === 'changes' && e.id === id);
+		if (!virtual || !turn || entry?.kind !== 'changes' || !entry.undo) return false;
+		const list = entry.lines.join('; ');
+		if (entry.undo === 'ready') {
+			virtual.revert(turn.before, turn.after);
+			turn.undone = virtual.checkpoint();
+			entry.undo = 'undone';
+			this.#pendingNotes.push(
+				`The user took back what your answer changed on the replica (${list}); the replica is as it was before, apart from what they changed since.`
+			);
+		} else {
+			if (!turn.undone) return false;
+			virtual.revert(turn.after, turn.undone);
+			entry.undo = 'ready';
+			this.#pendingNotes.push(
+				`The user put back what your answer had changed on the replica (${list}).`
+			);
+		}
+		await this.#save();
+		return true;
 	}
 
 	/**
@@ -931,6 +970,8 @@ export class Conductor {
 		this.#repairTranscript();
 		this.entries = record.entries;
 		settleEntries(this.entries, { voice: true });
+		// a turn's take-back lives in the page session that made it
+		for (const entry of this.entries) if (entry.kind === 'changes') delete entry.undo;
 		this.todos = record.todos;
 		this.usage = { ...emptyUsage(), ...record.usage };
 		this.lastError = null;

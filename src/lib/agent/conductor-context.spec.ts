@@ -124,8 +124,61 @@ describe('the conductor grounds its answer', () => {
 		// and the chat shows the same list once the turn ends
 		expect(conductor.entries.at(-1)).toMatchObject({
 			kind: 'changes',
-			lines: ['tempo 120 → 100 bpm']
+			lines: ['tempo 120 → 100 bpm'],
+			undo: 'ready'
 		});
+	});
+
+	it('takes a turn back from its changes note, keeps what the user did since, and puts it back', async () => {
+		const api = scriptedApi([
+			{
+				content: [
+					{ type: 'tool_use', id: 'toolu_t', name: 'set_tempo', input: { bpm: 100 } },
+					{
+						type: 'tool_use',
+						id: 'toolu_p',
+						name: 'write_pattern',
+						input: { track: 3, notes: [{ step: 1, note: 48 }] }
+					}
+				],
+				stop_reason: 'tool_use'
+			},
+			answer('Done.'),
+			answer('Fine.')
+		]);
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('slow it down and give me a bass note');
+		const note = conductor.entries.at(-1)!;
+		expect(note.kind).toBe('changes');
+		// the user changes the pattern the turn wrote; the tempo still reads as the turn left it
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 5, note: 50, velocity: 90, length: 1 }]
+		});
+		expect(await conductor.undoTurn(note.id)).toBe(true);
+		expect(sim.state.tempo.bpm).toBe(120);
+		expect(virtual.readPattern(3).notes.map((n) => n.step)).toEqual([5]);
+		expect(conductor.entries.at(-1)).toMatchObject({ kind: 'changes', undo: 'undone' });
+		expect(await conductor.undoTurn(note.id)).toBe(true);
+		expect(sim.state.tempo.bpm).toBe(100);
+		// the model hears of both with the next message
+		await conductor.send('thanks');
+		const text = JSON.stringify(api.messageRequests[2].body.messages.at(-1));
+		expect(text).toMatch(/The user took back what your answer changed on the replica/);
+		expect(text).toMatch(/The user put back what your answer had changed/);
 	});
 });
 

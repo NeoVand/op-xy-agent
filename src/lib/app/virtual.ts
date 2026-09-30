@@ -425,8 +425,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			return { state: JSON.stringify(s) };
 		},
 
-		revert(checkpoint) {
-			const reverted = takeBack(s, checkpoint.state, JSON.stringify(s));
+		revert(to, from) {
+			const reverted = takeBack(s, to.state, from?.state ?? JSON.stringify(s));
 			if (reverted) changed();
 			return reverted;
 		},

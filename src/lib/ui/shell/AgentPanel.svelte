@@ -575,6 +575,7 @@ above the composer says what voice is doing while it is on.
 					onpoint={pointer}
 					cite={manualCitation}
 					onretry={() => void conductor?.retry()}
+					onundochanges={(id) => void conductor?.undoTurn(id)}
 					onsettings={openSettings}
 				/>
 			{:else}
