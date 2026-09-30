@@ -220,6 +220,16 @@ describe('listen_tracks on the virtual OP-XY', () => {
 		expect(result.summary).toBe('heard 3 tracks alone');
 	});
 
+	it('says when a heard track ducks from one that was muted in its take', async () => {
+		const { sim, runTimed } = await virtualSetup();
+		Object.assign(sim.state.tracks[2].lfo, { type: 'duck', on: true, source: 1 });
+		const text = String((await runTimed(listenTracksTool, {})).content);
+		expect(text).toMatch(/T3 ducks from T1, which was muted while T3 played alone/);
+		// the metronome, or no duck, needs no word
+		Object.assign(sim.state.tracks[2].lfo, { source: 17 });
+		expect(String((await runTimed(listenTracksTool, {})).content)).not.toMatch(/ducks from/);
+	});
+
 	it('hears only the tracks asked for, as long as asked', async () => {
 		const { host, runTimed } = await virtualSetup();
 		await runTimed(listenTracksTool, { tracks: [3, 3, 1], seconds: 2 });

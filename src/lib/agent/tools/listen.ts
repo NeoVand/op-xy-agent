@@ -28,6 +28,7 @@ import { encodeCcValue, getTrack, resolveCc } from '$lib/core/opxy';
 import type { DeviceStack } from '$lib/device';
 import { deviceSnapshot } from '../device-state';
 import type { ListenFrom, ListenHost } from '../listen-host';
+import type { SimState } from '$lib/sim/params';
 import type { VirtualOpxy } from '../virtual-opxy';
 import {
 	defineTool,
@@ -270,6 +271,24 @@ const DEVICE_MUTES_UNKNOWN =
 	'The OP-XY never reports mutes set by hand, so the app cannot put them back exactly and did not start. Ask the user which instrument tracks are muted on the device now, set all eight to that with mute_track (they approve it once), then call listen_tracks again: it will put every mute back the way they are.';
 
 /** Sets one instrument track's mute on the target. */
+/**
+ * Heard tracks whose duck listens to another instrument track: alone, that track was muted, so the
+ * duck never moved in the take (the episodes: the agent heard no pump and rewrote the bass as a
+ * manual one). Only the replica says how its tracks' LFOs are set.
+ */
+function silencedDucks(target: Target, tracks: readonly number[]): string[] {
+	if (target.kind !== 'virtual') return [];
+	const state = JSON.parse(target.virtual.checkpoint().state) as SimState;
+	return tracks.flatMap((track) => {
+		const lfo = state.tracks[track - 1]?.lfo;
+		if (lfo?.type !== 'duck' || !lfo.on || lfo.source === track) return [];
+		if (!(INSTRUMENT_TRACKS as readonly number[]).includes(lfo.source)) return [];
+		return [
+			`T${track} ducks from T${lfo.source}, which was muted while T${track} played alone, so the duck did not move in its take; the whole mix (listen) is where to hear it.`
+		];
+	});
+}
+
 function setMute(target: Target, track: number, muted: boolean, ctx: ToolContext): void {
 	if (target.kind === 'virtual') {
 		target.virtual.setMuted(track, muted);
@@ -408,6 +427,7 @@ export const listenTracksTool = defineTool({
 			content: [
 				summary.text,
 				...(click ? [click] : []),
+				...silencedDucks(target, tracks),
 				putBack,
 				`numbers: ${JSON.stringify(numbers)}`
 			].join('\n'),

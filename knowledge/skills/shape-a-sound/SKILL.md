@@ -35,9 +35,12 @@ keys to make it on their own unit in order, from the plan's steps.
 The duck dips the track that should make room (usually the bass or a pad) whenever its source plays.
 The source is a track or the metronome.
 
-- When the kick shares its track with the hats (every kit in a new project does), the drum track's
-  audio ducks on every hat too. The metronome as source pumps on every beat instead, which is what a
+- Read the drum track's pattern before you pick the source, rather than assume what is on it. When
+  the kick shares its track with the hats (every kit in a new project does), the drum track's audio
+  ducks on every hat too. The metronome as source pumps on every beat instead, which is what a
   four-on-the-floor kick wants. With a kick on its own track, that track is the natural source.
+- Hear a duck in the whole mix. Hearing tracks one at a time mutes the others, the source too, so
+  the duck does not move there; that is no sign it does not work.
 - On the replica a metronome duck pumps whether the click is on or off. Whether the unit does the
   same with its click off has not been checked; do not claim either way for the unit.
 - A track has one LFO, so a duck replaces the LFO its sound had. In a new project only the bass on
