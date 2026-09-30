@@ -150,7 +150,10 @@ export type AgentEvent =
 			readonly block: number;
 			readonly citation: Citation;
 	  }
-	/** Replaces a streamed text block: a runaway answer cut back to the part before it ran away. */
+	/**
+	 * Replaces a streamed text block: a runaway answer cut back to the part before it ran away, or
+	 * (empty) a working note taken out of the answer on its way to the progress notes.
+	 */
 	| {
 			readonly type: 'text_replace';
 			readonly agent: AgentName;

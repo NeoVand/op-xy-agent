@@ -632,6 +632,36 @@ describe('conductor: errors, stop and persistence', () => {
 		]);
 	});
 
+	it('keeps a short line on the way to a tool out of the answer, and a long one in', async () => {
+		const answer = 'Copy it in arrange first.\n\n1. `shift + T1`\n2. `step 1 + turn E1`';
+		const { api, conductor } = await setup([
+			{
+				content: [
+					{ type: 'text', text: 'Good fit. Importing it.' },
+					{ type: 'tool_use', id: 'toolu_a', name: 'device_status', input: {} }
+				],
+				stop_reason: 'tool_use'
+			},
+			{
+				content: [
+					{ type: 'text', text: answer },
+					{ type: 'tool_use', id: 'toolu_b', name: 'device_status', input: {} }
+				],
+				stop_reason: 'tool_use'
+			},
+			{ content: [{ type: 'text', text: 'Done.' }], stop_reason: 'end_turn' }
+		]);
+		await conductor.send('put this song on the replica');
+		const texts = conductor.entries.filter((e) => e.kind === 'text');
+		expect(texts.map((e) => e.kind === 'text' && e.text)).toEqual([answer, 'Done.']);
+		expect(conductor.entries).toContainEqual(
+			expect.objectContaining({ kind: 'progress', text: 'Good fit. Importing it.' })
+		);
+		// The model's own record is untouched.
+		const first = api.messageRequests[1].body.messages.at(-2);
+		expect(first.content[0]).toMatchObject({ type: 'text', text: 'Good fit. Importing it.' });
+	});
+
 	it('carries on from an answer cut off inside its tool calls: the complete ones run', async () => {
 		const { api, conductor } = await setup([
 			{

@@ -359,6 +359,20 @@ function runawayMessage(
 /** Answers in a row cut off inside tool calls that the loop carries on from before it gives up. */
 const MAX_CUT_OFFS = 3;
 
+/** The longest line on the way to a tool call that still counts as a working note. */
+const WORKING_NOTE_CHARS = 240;
+
+/**
+ * A short line of one paragraph written before a tool call ("Good fit. Importing it.") is a
+ * working note, not part of the answer: the chat turns it into a progress note, which the status
+ * line shows while the agent works. A longer text there (an answer written before a last
+ * demonstration) stays in the conversation.
+ */
+export function isWorkingNote(text: string): boolean {
+	const note = text.trim();
+	return note.length > 0 && note.length <= WORKING_NOTE_CHARS && !note.includes('\n');
+}
+
 /** Runs the loop until the model ends its turn, fails, is stopped or hits the step limit. */
 export async function runLoop(config: LoopConfig, transcript: Transcript): Promise<LoopResult> {
 	const { agent, emit, signal } = config;
@@ -404,6 +418,13 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 			};
 			for await (const event of stream) {
 				if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
+					// Only the chat changes: the transcript keeps the text as the model wrote it.
+					texts.forEach((text, block) => {
+						if (!isWorkingNote(text)) return;
+						emit({ type: 'text_replace', agent, turn, block, text: '' });
+						emit({ type: 'progress', agent, turn, block, delta: text.trim() });
+						delete texts[block];
+					});
 					const { id, name } = event.content_block;
 					calls.set(event.index, { id, chars: 0, shown: -1 });
 					emit({
