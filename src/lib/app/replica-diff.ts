@@ -7,6 +7,7 @@
  */
 import type { VirtualOpxy } from '$lib/agent/virtual-opxy';
 import { GROOVES, type SimState } from '$lib/sim/params';
+import { describeNoteChange } from '$lib/sim/pattern-change';
 
 /** Most lines a diff gives; the rest are counted. */
 export const MAX_CHANGE_LINES = 40;
@@ -47,10 +48,14 @@ function patternChanges(
 		return changed.map((n) => {
 			const was = before[n - 1];
 			const now = after[n - 1];
-			if (!now) return `${label} pattern ${n} removed`;
-			const bars = was && was.bars !== now.bars ? `, ${was.bars} → ${now.bars} bars` : '';
-			const length = now.length !== now.bars * 16 ? ` (${now.length} steps)` : '';
-			return `${label} pattern ${n}: ${was ? notesIn(was) : 'new, 0'} → ${notesIn(now)} notes${bars}${length}`;
+			const parts = [describeNoteChange(was, now) ?? `${notesIn(now)} notes`];
+			if (was && now) {
+				if (was.bars !== now.bars) parts.push(`${was.bars} → ${now.bars} bars`);
+				if (was.length !== now.length) parts.push(`${was.length} → ${now.length} steps`);
+				const extras = (p: Pattern) => p.steps.map((s) => [s.components, s.locks]);
+				if (!same(extras(was), extras(now))) parts.push('step components or locks changed');
+			} else if (now && now.length !== now.bars * 16) parts.push(`${now.length} steps`);
+			return `${label} pattern ${n}: ${parts.join(', ')}`;
 		});
 	}
 	const total = (list: readonly Pattern[]) => list.reduce((sum, p) => sum + notesIn(p), 0);

@@ -341,6 +341,11 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				if (!Number.isInteger(n.step) || n.step < 1 || n.step > steps) {
 					throw new VirtualOpxyError(`step ${n.step} is outside ${bars} bar(s) (1–${steps})`);
 				}
+				if (!Number.isFinite(n.velocity) || !Number.isFinite(n.length)) {
+					throw new VirtualOpxyError(
+						`the note on step ${n.step} needs a velocity (1–127) and a length in steps`
+					);
+				}
 			}
 			ensurePatterns(s, t, pattern);
 			const target = trackSequence(s, t).patterns[pattern - 1];

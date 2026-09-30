@@ -59,8 +59,38 @@ describe('replica changes', () => {
 		});
 		const lines = virtual.changesSince(start);
 		expect(lines).toContain('T1 pattern 1: 0 → 4 notes');
-		expect(lines).toContain('T1 pattern 2: new, 0 → 5 notes');
+		expect(lines).toContain('T1 pattern 2: new, 5 notes');
 		expect(lines.some((l) => /^scenes: 1 → 2/.test(l))).toBe(true);
 		expect(lines).toContain('song: 1 → 1 2 2');
+	});
+
+	it('say how the notes changed: a transposition, new velocities', () => {
+		const { virtual } = setup();
+		const line = [1, 4, 7, 9].map((step, i) => ({
+			step,
+			note: [50, 50, 53, 57][i],
+			velocity: 100,
+			length: 1
+		}));
+		virtual.writePattern(3, { pattern: 1, bars: 1, notes: line });
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 3, note: 61, velocity: 100, length: 1 }]
+		});
+		const start = virtual.checkpoint();
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 1,
+			notes: line.map((n) => ({ ...n, note: n.note + 2 }))
+		});
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 3, note: 61, velocity: 72, length: 1 }]
+		});
+		const lines = virtual.changesSince(start);
+		expect(lines).toContain('T3 pattern 1: 4 notes, up 2 semitones');
+		expect(lines).toContain('T1 pattern 1: 1 note, velocities 100 → 72');
 	});
 });
