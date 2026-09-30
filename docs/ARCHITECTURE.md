@@ -74,6 +74,26 @@ the question and their transcript is a clear yes; "allow for this session" is ne
 voice. Heard and said lines reach the chat through `Conductor.voiceLine` and are never sent to
 Claude.
 
+## The agent v2: context, skills, grounding, memory (docs/AGENT-V2.md)
+
+- **Core prompt** (`agent/prompts.ts`, `CONDUCTOR_ROLE`): prose with the reasons (who the users are,
+  teaching and doing, skills, truthfulness, memory, writing, limits). It does not grow from single
+  incidents: a fix goes into a skill, a tool's contract or code, and must move an eval.
+- **Skills** (`knowledge/skills/<name>/SKILL.md`, the Agent Skills format; `agent/skills.ts`): the
+  index sits in the system prompt, the `skill` tool loads a body, and `agent/skill-router.ts` adds
+  the skills a message clearly needs with it (at most two, once a thread, in the same system note as
+  the device update; a how-to question gets the teaching skill alone).
+- **Manual**: the whole bundle stays in the cached system prompt (`manualMode: 'full'`); `'map'`
+  (the units by id and title, the best three retrieved into each message) lost the A/B, 33/44
+  against 41/44 on the quality suite, and stays for experiments (`EVAL_MANUAL_MODE=map`).
+- **Grounding** (`app/replica-diff.ts`, `VirtualOpxy.checkpoint()` / `changesSince()`): the replica
+  is checkpointed when a message arrives; after each batch of tool results the loop's `afterTools`
+  hook adds what changed since then, in words, to the same message, and the chat shows the same
+  list once the turn ends (`ChangesNote`).
+- **Memory** (`agent/memory.ts`, tool `memory`): files under `/memories` in IndexedDB (a map in
+  tests and evals); the profile `/memories/user.md` comes with a conversation's first message. Our
+  own tool with the API memory tool's commands, since the API's type brings a view-first round trip.
+
 ## The agent: from an idea to steps
 
 - **Navigator** (`sim/navigator.ts`): from where the simulator stands to a page, a parameter value,
