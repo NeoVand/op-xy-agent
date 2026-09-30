@@ -762,7 +762,21 @@ export class Conductor {
 			const kinds = attachments.map((a) => a.view.kind);
 			for (const name of routeSkills({ text, attachments: kinds, loaded })) {
 				const skill = skillNamed(name);
-				if (skill) parts.push(skillText(skill));
+				if (!skill) continue;
+				parts.push(skillText(skill));
+				// the chat shows a routed skill as the chip a loaded one gets
+				this.entries.push({
+					kind: 'tool',
+					id: entryId('skill'),
+					agent: 'conductor',
+					parent: null,
+					name: 'skill',
+					label: 'skill',
+					toolKind: 'read',
+					status: 'ok',
+					input: { name },
+					summary: name
+				});
 			}
 		}
 		if (this.#manualMode === 'map' && text) {
