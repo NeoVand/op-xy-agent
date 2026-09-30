@@ -123,3 +123,27 @@ consequences. Superseded entries stay, marked as such.
   rights holder objects. The app's own UI text stays on open fonts (Work Sans, Red Hat Mono).
 - **Consequences:** keep the font pipeline swappable (one module, `src/lib/sim/screen/font.ts`, reads the
   glyph data), so a replacement face needs only a new data file.
+
+## D12 — 2026-09-30 — Agent v2: skills, a lab on the replica, grounding, memory, outcome evals
+
+- **Context:** v1 (D4) built the loop, tools, approvals, subagents and the device queue, but not the
+  skills and memory D4 promised. Every lesson became a rule in the system prompt (31 bullet
+  paragraphs, ~5,000 tokens) beside the whole manual (~90,000 tokens) on every request, and every
+  hard task became a purpose-built tool. The Brother Louie rehearsals (about a dozen rounds of rule
+  and heuristic patches) showed the limit: the agent could not compute, could not try things before
+  acting, remembered nothing, and could claim changes it had not made. The owner asked for a step
+  back: "an agent that can spawn subagents that can write code and validate, … have a plan, … have
+  memory", skills instead of "a ginormous amount of text in its context".
+- **Decision (owner, "go ahead and make this awesome"):** keep our browser harness (it runs where
+  the OP-XY and the replica are; Codex and the Claude Agent SDK need a backend, and Deep Agents in the
+  browser failed in D4) and build the missing layer natively: a prose core prompt; skills in the
+  Agent Skills `SKILL.md` format, loaded on demand; a lab where model-written code runs in a
+  sandboxed worker against forks of the replica, with offline listening and an undoable commit; a
+  per-turn diff of the replica that grounds every answer; the API's memory tool on IndexedDB; the
+  manual as a map plus per-turn retrieval (A/B against the full bundle); specialist subagents where
+  their own context pays; episodes with simulated users as the outcome metric. Plan:
+  `docs/AGENT-V2.md`.
+- **Consequences:** new modules `src/lib/agent/{skills,grounding,memory}.ts` and `src/lib/agent/lab/`,
+  skills under `knowledge/skills/`, evals `evals/agent/episodes.*`. The core prompt stops growing
+  from single incidents; fixes go into skills, tools' contracts or code, and must move an eval. The
+  full-manual mode stays available until retrieval matches it.

@@ -4,6 +4,15 @@
 > Decisions: [`DECISIONS.md`](DECISIONS.md). Questions for the owner: [`QUESTIONS.md`](QUESTIONS.md).
 > Update the **Status** block whenever a milestone moves.
 
+## Status (2026-09-30)
+
+- **Now: Agent v2** (`docs/AGENT-V2.md`, D12). The replica is good enough to be the agent's lab, so
+  the AI layer is being rebuilt around it: skills on demand instead of a rule wall, code in a
+  sandbox against forks of the replica, answers grounded in the replica's diff, memory, and
+  episodes with simulated users as the measure of success. The video waits for it.
+- **2026-09-29/30:** Sonnet 5.5 as the default; `read_sound`, `send_project`, the demo run sheet;
+  `import_midi` (a whole MIDI file as scenes and a song) after the Brother Louie failure.
+
 ## Status (2026-09-29)
 
 - **Keys as the device draws them (2026-09-29):** the manual and the chat draw every key combo as
