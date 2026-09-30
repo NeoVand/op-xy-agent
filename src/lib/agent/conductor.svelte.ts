@@ -68,7 +68,7 @@ import {
 	type ToolContext,
 	type ToolRegistry
 } from './tools';
-import type { VirtualOpxy } from './virtual-opxy';
+import type { VirtualCheckpoint, VirtualOpxy } from './virtual-opxy';
 import type {
 	AgentErrorInfo,
 	AgentEvent,
@@ -264,6 +264,9 @@ export class Conductor {
 	#resolveApproval: ((decision: ApprovalDecision) => void) | null = null;
 	#system: Promise<BetaTextBlockParam[]> | null = null;
 	readonly #manualMode: 'full' | 'map';
+	/** The replica when the user's message arrived, and the changes last reported against it. */
+	#checkpoint: VirtualCheckpoint | null = null;
+	#reported = '';
 	readonly #routeSkills: boolean;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	readonly #subagentSystems = new Map<string, Promise<BetaTextBlockParam[]>>();
@@ -411,6 +414,8 @@ export class Conductor {
 		// thread gets both at once, and a second send cannot slip in while it is
 		this.status = 'running';
 		this.activity = startActivity(this.#now(), !this.#answered);
+		this.#checkpoint = this.#env.virtual?.checkpoint() ?? null;
+		this.#reported = '';
 		const context = await this.#turnContext(trimmed, attachments);
 		this.#messages.push({ role: 'user', content: userContent(trimmed, attachments) });
 		for (const a of attachments) if (a.midi) this.#files.set(a.view.name, a.midi);
@@ -673,6 +678,30 @@ export class Conductor {
 	}
 
 	/**
+	 * What changed on the replica since the user's message, after a batch of tools, when it differs
+	 * from what was last reported (docs/AGENT-V2.md, grounding): the model describes the outcome
+	 * from this, not from what it meant to do.
+	 */
+	#grounding(): BetaTextBlockParam[] {
+		const virtual = this.#env.virtual;
+		if (!virtual || !this.#checkpoint) return [];
+		let lines: readonly string[];
+		try {
+			lines = virtual.changesSince(this.#checkpoint);
+		} catch {
+			return [];
+		}
+		const report = lines.join('\n');
+		if (report === this.#reported) return [];
+		this.#reported = report;
+		const text =
+			lines.length === 0
+				? 'The replica is as it was before the user\u2019s message: nothing on it changed.'
+				: `What changed on the replica since the user\u2019s message (describe the outcome from this):\n${lines.map((l) => `- ${l}`).join('\n')}`;
+		return [{ type: 'text', text: `<replica-changes>\n${text}\n</replica-changes>` }];
+	}
+
+	/**
 	 * What the app adds to a message (docs/AGENT-V2.md): the skills it clearly needs that the
 	 * conversation does not hold yet, and in map mode the manual units that best match it.
 	 */
@@ -739,6 +768,7 @@ export class Conductor {
 							env: this.#env,
 							signal: controller.signal
 						}),
+					afterTools: () => this.#grounding(),
 					quirks: this.#quirks
 				},
 				this.#transcript()

@@ -195,4 +195,13 @@ export interface VirtualOpxy {
 	 * virtual OP-XY itself does not move) and reporting whether they got there.
 	 */
 	plan(goal: NavGoal): NavPlan | SettingsPlan;
+	/** The replica as it stands, to compare with later (a turn's grounding, the lab). */
+	checkpoint(): VirtualCheckpoint;
+	/** What changed since `checkpoint`, a line each in words; empty when nothing did. */
+	changesSince(checkpoint: VirtualCheckpoint): readonly string[];
+}
+
+/** The replica at one moment (opaque: its state, serialized). */
+export interface VirtualCheckpoint {
+	readonly state: string;
 }

@@ -1,7 +1,10 @@
 // What the conductor adds to a message (docs/AGENT-V2.md): the skill a message clearly needs rides
 // with it, in the same system note as the device update, once per thread; in map mode the system
-// prompt carries the manual's map and each message brings the units that match it.
+// prompt carries the manual's map and each message brings the units that match it; after tools
+// change the replica, the model is told what changed before it answers.
 import { describe, expect, it } from 'vitest';
+import { createVirtualOpxy } from '$lib/app/virtual';
+import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { createAnthropicClient } from './client';
 import { Conductor } from './conductor.svelte';
 import { createUnitSource } from './manual-index';
@@ -84,5 +87,38 @@ describe('the conductor adds what a message needs', () => {
 		const body = api.messageRequests[0].body;
 		expect(body.system.at(-1).text).toContain('E1 sets the BPM');
 		expect(requestText(body)).not.toContain('<manual-unit');
+	});
+});
+
+describe('the conductor grounds its answer', () => {
+	it('in what changed on the replica, after the tools and before the answer', async () => {
+		const api = scriptedApi([
+			{
+				content: [{ type: 'tool_use', id: 'toolu_t', name: 'set_tempo', input: { bpm: 100 } }],
+				stop_reason: 'tool_use'
+			},
+			answer('It runs at 100 now.')
+		]);
+		const sim = new OpxySim({ now: () => 0 });
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('slow it down to 100');
+		const second = api.messageRequests[1].body;
+		const results = second.messages.at(-1);
+		expect(results.role).toBe('user');
+		expect(results.content[0].type).toBe('tool_result');
+		const note = results.content.at(-1);
+		expect(note.type).toBe('text');
+		expect(note.text).toMatch(/^<replica-changes>\n/);
+		expect(note.text).toContain('- tempo 120 → 100 bpm');
 	});
 });

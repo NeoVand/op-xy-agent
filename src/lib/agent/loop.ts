@@ -75,6 +75,12 @@ export interface LoopConfig {
 	readonly emit: (event: AgentEvent) => void;
 	/** Runs one turn's tool calls; must resolve with one result per call, in order. */
 	readonly runTools: (calls: readonly ToolCallRequest[]) => Promise<BetaToolResultBlockParam[]>;
+	/**
+	 * Text to send after a batch of tool results, in the same message (the conductor's grounding:
+	 * what changed on the replica since the user's message), or none.
+	 */
+	readonly afterTools?: () =>
+		readonly BetaTextBlockParam[] | Promise<readonly BetaTextBlockParam[]>;
 	/** The `task` call this loop runs under (subagents), for nesting in the UI. */
 	readonly parent?: string | null;
 	/** Turn ids (injectable for tests). */
@@ -502,7 +508,8 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 		if (message.stop_reason === 'tool_use' && calls.length > 0) {
 			cutOffs = 0;
 			const results = await config.runTools(calls);
-			transcript.append({ role: 'user', content: results });
+			const after = (await config.afterTools?.()) ?? [];
+			transcript.append({ role: 'user', content: [...results, ...after] });
 			if (signal.aborted) return finish('aborted', ABORTED);
 			continue;
 		}
@@ -514,18 +521,22 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 			const done = calls.filter((c) => complete.has(c.id));
 			const results = done.length > 0 ? await config.runTools(done) : [];
 			const byId = new Map(results.map((r) => [r.tool_use_id, r]));
+			const after = done.length > 0 ? ((await config.afterTools?.()) ?? []) : [];
 			transcript.append({
 				role: 'user',
-				content: calls.map(
-					(c) =>
-						byId.get(c.id) ?? {
-							type: 'tool_result' as const,
-							tool_use_id: c.id,
-							is_error: true,
-							content:
-								'Not run: your answer reached the output limit before this call was complete. Send it again, and fewer or smaller calls per answer.'
-						}
-				)
+				content: [
+					...calls.map(
+						(c) =>
+							byId.get(c.id) ?? {
+								type: 'tool_result' as const,
+								tool_use_id: c.id,
+								is_error: true,
+								content:
+									'Not run: your answer reached the output limit before this call was complete. Send it again, and fewer or smaller calls per answer.'
+							}
+					),
+					...after
+				]
 			});
 			if (signal.aborted) return finish('aborted', ABORTED);
 			continue;

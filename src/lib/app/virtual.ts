@@ -31,6 +31,7 @@ import {
 import { captureScene, playPattern, startSong, trackSequence } from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { replicaChanges } from './replica-diff';
 import { AUX_NAMES, type SimState } from '$lib/sim/params';
 import {
 	MAX_BARS,
@@ -219,7 +220,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		scene.patterns.forEach((pattern, t) => playPattern(s, t, pattern));
 	}
 
-	return {
+	const api: VirtualOpxy = {
 		status(): VirtualStatus {
 			const tracks = Array.from({ length: 16 }, (_, t) => {
 				const seq = trackSequence(s, t);
@@ -412,6 +413,17 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			if ('to' in goal) return planToSetting(sim.state, goal.to);
 			if ('label' in goal) return planPageValue(sim.state, goal);
 			return planParam(sim.state, goal);
+		},
+
+		checkpoint() {
+			return { state: JSON.stringify(s) };
+		},
+
+		changesSince(checkpoint) {
+			const was = JSON.parse(checkpoint.state) as SimState;
+			const before = createVirtualOpxy({ sim: new OpxySim({ state: was, now: () => 0 }) });
+			return replicaChanges(JSON.parse(checkpoint.state) as SimState, s, { before, after: api });
 		}
 	};
+	return api;
 }
