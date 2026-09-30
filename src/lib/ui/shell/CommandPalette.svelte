@@ -195,9 +195,9 @@ it somewhere.
 		flex-direction: column;
 		width: min(37.5rem, 100%);
 		overflow: hidden;
-		border: 1px solid var(--xy-line);
+		border: 1px solid var(--xy-line-float);
 		border-radius: 0.5rem;
-		background-color: var(--xy-surface-raised);
+		background-color: var(--xy-surface-float);
 		box-shadow: var(--xy-shadow-float);
 		transform-origin: 50% 0;
 	}
@@ -208,7 +208,7 @@ it somewhere.
 		gap: 0.625rem;
 		height: 3rem;
 		padding: 0 0.75rem 0 0.9375rem;
-		border-bottom: 1px solid var(--xy-line);
+		border-bottom: 1px solid var(--xy-line-float);
 	}
 
 	.palette__icon {
@@ -259,7 +259,7 @@ it somewhere.
 	}
 
 	.row[aria-selected='true'] {
-		background-color: var(--xy-surface-sunken);
+		background-color: var(--xy-hover-float);
 	}
 
 	.row__text {

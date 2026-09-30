@@ -712,9 +712,9 @@ units beside it. On narrow screens it is a drawer. Open areas and the fold are r
 		width: 18rem;
 		overflow: auto;
 		padding: 0.5rem;
-		border: 1px solid var(--xy-line);
+		border: 1px solid var(--xy-line-float);
 		border-radius: 0.875rem;
-		background-color: var(--xy-surface-raised);
+		background-color: var(--xy-surface-float);
 		box-shadow: 0 12px 40px rgb(0 0 0 / 0.35);
 	}
 
@@ -729,7 +729,7 @@ units beside it. On narrow screens it is a drawer. Open areas and the fold are r
 	}
 
 	.flyout .unit[aria-current='page'] {
-		background-color: var(--xy-hover);
+		background-color: var(--xy-hover-float);
 	}
 
 	.backdrop {

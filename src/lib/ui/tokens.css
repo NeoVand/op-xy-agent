@@ -195,6 +195,11 @@
 	--xy-surface: var(--xy-ramp-0);
 	--xy-surface-raised: var(--xy-ramp-1);
 	--xy-surface-sunken: #0a0a0d;
+	/* what floats over the page (menus, the command palette, search results): the device's own
+	 * neutral graphite, a step above the agent panel, with a hairline of its own */
+	--xy-surface-float: #1b1c1f;
+	--xy-line-float: #2c2d31;
+	--xy-hover-float: rgb(255 255 255 / 0.065);
 	--xy-hover: rgb(247 245 245 / 0.045);
 	--xy-line: var(--xy-ramp-1);
 	--xy-line-strong: var(--xy-ramp-2);
@@ -274,6 +279,9 @@
 	--xy-surface: #ffffff;
 	--xy-surface-raised: #ffffff;
 	--xy-surface-sunken: #ecebea;
+	--xy-surface-float: #ffffff;
+	--xy-line-float: #e0dede;
+	--xy-hover-float: rgb(15 14 18 / 0.055);
 	--xy-hover: rgb(15 14 18 / 0.045);
 	--xy-line: #e0dede;
 	--xy-line-strong: #cdcdcd;

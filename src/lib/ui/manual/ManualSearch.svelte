@@ -283,9 +283,9 @@ anywhere on the page that is not a text field, unless `shortcuts` is off.
 		z-index: var(--xy-z-overlay, 50);
 		min-width: 18rem;
 		padding: 0.375rem;
-		border: 1px solid var(--xy-line);
+		border: 1px solid var(--xy-line-float);
 		border-radius: 0.75rem;
-		background-color: var(--xy-surface-raised);
+		background-color: var(--xy-surface-float);
 		box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
 	}
 
@@ -314,7 +314,7 @@ anywhere on the page that is not a text field, unless `shortcuts` is off.
 	}
 
 	.hit--active {
-		background-color: var(--xy-hover);
+		background-color: var(--xy-hover-float);
 	}
 
 	.hit__icon {

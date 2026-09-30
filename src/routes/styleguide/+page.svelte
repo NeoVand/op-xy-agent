@@ -103,6 +103,7 @@
 		{ token: '--xy-surface', note: 'panels' },
 		{ token: '--xy-surface-raised', note: 'raised controls' },
 		{ token: '--xy-surface-sunken', note: 'inputs, wells' },
+		{ token: '--xy-surface-float', note: 'menus, palette, results' },
 		{ token: '--xy-line', note: 'hairlines' },
 		{ token: '--xy-line-strong', note: 'emphasised lines' },
 		{ token: '--xy-line-control', note: 'input borders, 3:1' },

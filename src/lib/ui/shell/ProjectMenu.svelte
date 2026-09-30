@@ -235,9 +235,9 @@ MIDI for a DAW, and the project as the device's `.xy`.
 		gap: 0.5rem;
 		width: 22rem;
 		padding: 0.75rem;
-		border: 1px solid var(--xy-line);
+		border: 1px solid var(--xy-line-float);
 		border-radius: var(--xy-radius-card);
-		background-color: var(--xy-surface-raised);
+		background-color: var(--xy-surface-float);
 		box-shadow: var(--xy-shadow-float);
 		color: var(--xy-fg-muted);
 		letter-spacing: normal;

@@ -130,9 +130,9 @@ show dim under their LEDs, the root with a faint ring. Off turns it back off.
 		gap: 0.75rem;
 		width: 19.5rem;
 		padding: 0.75rem;
-		border: 1px solid var(--xy-line);
+		border: 1px solid var(--xy-line-float);
 		border-radius: var(--xy-radius-card);
-		background-color: var(--xy-surface-raised);
+		background-color: var(--xy-surface-float);
 		box-shadow: var(--xy-shadow-float);
 		color: var(--xy-fg-muted);
 		letter-spacing: normal;
