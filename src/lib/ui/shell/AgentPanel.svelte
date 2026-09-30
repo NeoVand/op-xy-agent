@@ -271,6 +271,18 @@ above the composer says what voice is doing while it is on.
 		}
 	}
 
+	// a walkthrough the user finished: the agent says what they did and what comes next
+	$effect(() => {
+		const agent = conductor;
+		if (!guide || !agent) return;
+		return guide.onDone((goal, screen) => {
+			void agent.followUp(
+				`The user followed your walkthrough on the replica to its end (${goal}); its screen now shows: ${screen}. In a sentence or two, tell them what they just did and what it does, and offer one next step. Do not repeat the steps.`,
+				`walkthrough done: ${goal}`
+			);
+		});
+	});
+
 	async function boot(): Promise<void> {
 		const apiKey = keys.get('anthropic');
 		if (!apiKey) return;

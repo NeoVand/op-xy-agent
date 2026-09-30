@@ -44,6 +44,8 @@ export class ReplicaGuide {
 	readonly #timers: Timers;
 	#stopObserving: (() => void) | null = null;
 	#doneTimer: unknown = null;
+	/** Who hears that a walkthrough is done (the agent follows up). */
+	#doneListeners: ((goal: string, screen: string) => void)[] = [];
 
 	constructor(options: ReplicaGuideOptions) {
 		this.#replica = options.replica;
@@ -67,6 +69,17 @@ export class ReplicaGuide {
 		// after every input, once the simulator (another observer) has taken it
 		this.#stopObserving = this.#replica.observe(() => queueMicrotask(() => this.#check()));
 		this.#check();
+	}
+
+	/**
+	 * Calls `listener` whenever the user reaches a walkthrough's last step, with its goal and what
+	 * the screen shows then. Returns the unsubscribe function.
+	 */
+	onDone(listener: (goal: string, screen: string) => void): () => void {
+		this.#doneListeners.push(listener);
+		return () => {
+			this.#doneListeners = this.#doneListeners.filter((l) => l !== listener);
+		};
 	}
 
 	/** Passes over the current step (one the user cannot do on the replica, say). */
@@ -110,6 +123,8 @@ export class ReplicaGuide {
 		this.#stopObserving = null;
 		this.#replica.clearHighlights();
 		this.status = 'done';
+		const screen = this.#read();
+		for (const listener of this.#doneListeners) listener(this.goal, screen);
 		this.#doneTimer = this.#timers.setTimeout(() => {
 			this.#doneTimer = null;
 			this.stop();

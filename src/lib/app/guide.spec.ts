@@ -33,6 +33,29 @@ async function tap(replica: ReplicaState, id: 'track.3' | 'key.m3' | 'key.mix' |
 }
 
 describe('the replica walkthrough', () => {
+	it('tells who listens when the user reaches its end, with what the screen shows', async () => {
+		const { sim, replica, guide } = setup();
+		const done: [string, string][] = [];
+		const stop = guide.onDone((goal, screen) => done.push([goal, screen]));
+		guide.start(
+			'track 3 filter',
+			planPlace(sim.state, { area: 'instrument', track: 3, page: 3 }).steps
+		);
+		await tap(replica, 'track.3');
+		expect(done).toEqual([]);
+		await tap(replica, 'key.m3');
+		expect(done).toHaveLength(1);
+		expect(done[0][0]).toBe('track 3 filter');
+		expect(done[0][1]).toMatch(/filter/);
+		stop();
+		guide.start(
+			'track 3 filter',
+			planPlace(sim.state, { area: 'instrument', track: 3, page: 2 }).steps
+		);
+		await tap(replica, 'key.m2');
+		expect(done).toHaveLength(1);
+	});
+
 	it('lights each step, and moves on once the screen shows where it leads', async () => {
 		const { sim, replica, guide } = setup();
 		const plan = planParam(sim.state, { track: 3, param: 'cutoff', value: 5 });

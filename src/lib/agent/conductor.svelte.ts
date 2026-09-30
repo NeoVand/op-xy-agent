@@ -430,6 +430,29 @@ export class Conductor {
 		await this.#run();
 	}
 
+	/**
+	 * Lets the agent follow up on something the user did in the app (they finished a walkthrough):
+	 * `note` reaches the model as the app's message and it answers in the chat; `shown` is the line
+	 * the chat shows for it. Nothing happens while the agent is busy or before a conversation.
+	 */
+	async followUp(note: string, shown: string): Promise<void> {
+		if (this.busy || this.#disposed || this.#messages.length === 0) return;
+		this.entries.push({
+			kind: 'notice',
+			id: entryId('notice'),
+			tone: 'info',
+			text: shown,
+			code: null
+		});
+		this.status = 'running';
+		this.activity = startActivity(this.#now(), !this.#answered);
+		// what the user did is theirs: only the agent's own changes from here are reported
+		this.#checkpoint = this.#env.virtual?.checkpoint() ?? null;
+		this.#reported = '';
+		this.#messages.push({ role: 'system', content: note });
+		await this.#run();
+	}
+
 	/** Runs the agent again on the conversation as it is (after an error). */
 	async retry(): Promise<void> {
 		if (this.busy || this.#disposed || this.#messages.length === 0) return;

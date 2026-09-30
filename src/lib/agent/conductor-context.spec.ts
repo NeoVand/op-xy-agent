@@ -149,3 +149,28 @@ describe('the conductor remembers', () => {
 		expect(requestText(second).split('<memory>')).toHaveLength(2);
 	});
 });
+
+describe('the conductor follows up', () => {
+	it('on what the user did in the app, as the app’s message, and shows a line for it', async () => {
+		const api = scriptedApi([answer('Try it.'), answer('That opened the filter.')]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			session: 'session-test'
+		});
+		// nothing to follow up before a conversation
+		await conductor.followUp('note', 'shown');
+		expect(api.messageRequests).toHaveLength(0);
+		await conductor.send('walk me through opening the filter');
+		await conductor.followUp('The user finished the walkthrough.', 'walkthrough done: filter');
+		const body = api.messageRequests[1].body;
+		expect(body.messages.at(-1).role).toBe('user');
+		expect(requestText(body)).toContain('The user finished the walkthrough.');
+		const kinds = conductor.entries.map((e) => e.kind);
+		expect(kinds.slice(-2)).toEqual(['notice', 'text']);
+	});
+});
