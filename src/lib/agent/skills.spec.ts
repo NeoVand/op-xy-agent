@@ -111,6 +111,22 @@ describe('routing', () => {
 		expect(route('here is a song I like', ['midi'])[0]).toBe('midi-to-opxy');
 		expect(route('can you play this', ['image'])).toEqual(['sheet-music-and-images']);
 		expect(route('thanks!')).toEqual([]);
+		expect(route('I just got this. Can you make something cool I can jam over?')).toEqual([
+			'first-steps',
+			'perform-live'
+		]);
+		expect(route('how do I play my Minilogue from track 5?')).toEqual([
+			'teach-on-the-replica',
+			'midi-gear'
+		]);
+		expect(route('turn this loop into a song with an intro and a chorus')).toEqual([
+			'song-arrangement',
+			'make-music'
+		]);
+		expect(route('how do I mute tracks live without stopping?')).toEqual([
+			'teach-on-the-replica',
+			'perform-live'
+		]);
 	});
 
 	it('never adds more than two, nor one the thread holds', () => {
