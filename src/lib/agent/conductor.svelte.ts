@@ -681,6 +681,19 @@ export class Conductor {
 		return this.#system;
 	}
 
+	/** Shows what the turn changed on the replica, once it ends (the list the model was given). */
+	#noteChanges(): void {
+		const virtual = this.#env.virtual;
+		if (!virtual || !this.#checkpoint) return;
+		let lines: readonly string[];
+		try {
+			lines = virtual.changesSince(this.#checkpoint);
+		} catch {
+			return;
+		}
+		if (lines.length > 0) this.entries.push({ kind: 'changes', id: entryId('changes'), lines });
+	}
+
 	/**
 	 * What changed on the replica since the user's message, after a batch of tools, when it differs
 	 * from what was last reported (docs/AGENT-V2.md, grounding): the model describes the outcome
@@ -785,6 +798,7 @@ export class Conductor {
 			);
 			const failed = result.error !== null && result.error.code !== 'aborted';
 			this.lastError = failed ? result.error : null;
+			this.#noteChanges();
 			this.status = failed ? 'error' : 'idle';
 		} catch (error) {
 			const info = normalizeError(error);

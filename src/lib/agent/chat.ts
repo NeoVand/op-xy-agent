@@ -67,6 +67,12 @@ export type ChatEntry =
 			readonly text: string;
 			readonly code: AgentErrorInfo['code'] | null;
 	  }
+	/** What a turn changed on the replica (the grounding list), shown once the turn ends. */
+	| {
+			readonly kind: 'changes';
+			readonly id: string;
+			readonly lines: readonly string[];
+	  }
 	| {
 			readonly kind: 'approval';
 			readonly id: string;

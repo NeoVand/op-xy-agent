@@ -121,6 +121,11 @@ describe('the conductor grounds its answer', () => {
 		expect(note.type).toBe('text');
 		expect(note.text).toMatch(/^<replica-changes>\n/);
 		expect(note.text).toContain('- tempo 120 → 100 bpm');
+		// and the chat shows the same list once the turn ends
+		expect(conductor.entries.at(-1)).toMatchObject({
+			kind: 'changes',
+			lines: ['tempo 120 → 100 bpm']
+		});
 	});
 });
 

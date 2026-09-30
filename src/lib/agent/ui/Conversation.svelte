@@ -18,6 +18,7 @@ says what it is doing and for how long.
 	import type { ChatEntry } from '../chat';
 	import ActivityLine from './ActivityLine.svelte';
 	import AttachmentChip from './AttachmentChip.svelte';
+	import ChangesNote from './ChangesNote.svelte';
 	import type { ControlId } from '$lib/core/opxy';
 	import MessageText, { type CitationTarget } from './MessageText.svelte';
 	import ToolChip from './ToolChip.svelte';
@@ -173,6 +174,8 @@ says what it is doing and for how long.
 						{onkeys}
 						{onpoint}
 					/>
+				{:else if entry.kind === 'changes'}
+					<ChangesNote lines={entry.lines} />
 				{:else if entry.kind === 'approval'}
 					<p class="conv__approval">
 						<Led
