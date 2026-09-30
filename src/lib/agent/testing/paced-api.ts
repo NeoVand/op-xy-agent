@@ -1,8 +1,9 @@
 /**
  * A paced stand-in for api.anthropic.com: a `fetch` that streams server-sent events to the real SDK
  * with pauses between them, the way the live API trickles out thinking notes, tool calls and text.
- * The dev-only demo run (`demo.dev.ts`) plays a whole conversation with it, and UI tests use it to
- * check that the chat renders each delta as it arrives. Production code never imports it.
+ * The dev-only demo run (`demo.dev.ts`) plays a whole conversation with it, the examples shown
+ * without a key replay recorded ones through it (`examples/replay.ts`, loaded on the first play),
+ * and UI tests use it to check that the chat renders each delta as it arrives.
  */
 import {
 	FAKE_MODEL_IDS,

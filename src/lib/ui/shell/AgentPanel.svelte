@@ -11,6 +11,10 @@ still teaches and animates the replica, and says plainly that device tools need 
 Each answer's changes light on the replica (`ChangeGlow`): the keys that lead to them breathe as
 the answer ends, and pointing at its changes note holds them lit.
 
+Without a key, examples show what the agent does: real conversations of it, recorded, replayed with
+their tools running on the replica (`$lib/agent/examples`). One plays on a new project with saving
+held, and back puts the user's own project where it was (`app/set-aside`).
+
 The panel is a fixed-height column: the conversation scrolls inside it and the composer always
 stays in view. Files go to the agent from the [+] key (the device's own plus), by pasting (a
 screenshot, say) or by dropping them anywhere on the page; they are read in the browser
@@ -72,6 +76,10 @@ above the composer says what voice is doing while it is on.
 	import { getReplicaState } from '$lib/replica/context';
 	import KeyCombo from '$lib/replica/glyphs/KeyCombo.svelte';
 	import { ChangeGlow } from '$lib/replica/change-glow';
+	import exampleList from '$lib/agent/examples/list.json';
+	import type { ExamplePlayer } from '$lib/agent/examples/replay';
+	import { setAside } from '$lib/app/set-aside';
+	import { createVirtualOpxy } from '$lib/app/virtual';
 	import { replicaPointer } from '$lib/replica/glyphs/pointing';
 	import type { ReplicaState } from '$lib/replica/state.svelte';
 	import { VoiceSession } from '$lib/voice/session.svelte';
@@ -154,6 +162,11 @@ above the composer says what voice is doing while it is on.
 	let keyStatus = $state<'unchecked' | 'checking' | 'valid' | 'invalid'>('unchecked');
 	let draft = $state('');
 	let undoing = $state<number | null>(null);
+	/** The example playing without a key, and what puts the user's project back; null otherwise. */
+	let example = $state.raw<{ player: ExamplePlayer; back: () => void } | null>(null);
+	/** The example being loaded. */
+	let exampleLoading = $state<string | null>(null);
+
 	/** A scripted demo run instead of the API (development builds only: always false otherwise). */
 	let demo = $state(false);
 	/** Saved eval runs replayed in the chat instead of it (development builds only). */
@@ -327,6 +340,7 @@ above the composer says what voice is doing while it is on.
 	async function boot(): Promise<void> {
 		const apiKey = keys.get('anthropic');
 		if (!apiKey) return;
+		leaveExample();
 		demo = false;
 		booting = true;
 		bootError = null;
@@ -534,6 +548,46 @@ above the composer says what voice is doing while it is on.
 		settingsOpen = true;
 	}
 
+	/**
+	 * Plays an example without a key: the replica set aside for a new project (the recording's
+	 * start), the recorded conversation replayed through a conductor of its own, its tools real.
+	 */
+	async function playExample(id: string): Promise<void> {
+		if (!simulator || !replica || example || exampleLoading) return;
+		exampleLoading = id;
+		const back = setAside(simulator.sim, persistence);
+		try {
+			const { createExamplePlayer } = await import('$lib/agent/examples/replay');
+			const player = await createExamplePlayer(id, {
+				device: null,
+				replica,
+				virtual: createVirtualOpxy({ sim: simulator.sim, sound: sound ?? null }),
+				guide: guide ?? null,
+				presets: presets ?? null
+			});
+			example = { player, back };
+			conductor = player.conductor;
+			void player.play();
+		} catch (error) {
+			back();
+			bootError = error instanceof Error ? error.message : String(error);
+		} finally {
+			exampleLoading = null;
+		}
+	}
+
+	/** Back from an example: it stops, and the user's project comes back as it was. */
+	function leaveExample(): void {
+		const was = example;
+		if (!was) return;
+		example = null;
+		was.player.stop();
+		if (conductor === was.player.conductor) conductor = null;
+		was.player.conductor.dispose();
+		guide?.stop();
+		was.back();
+	}
+
 	function closeSettings(): void {
 		settingsOpen = false;
 		queueMicrotask(() => composer?.focus());
@@ -554,7 +608,9 @@ above the composer says what voice is doing while it is on.
 			{#if ledBlink || led === 'red'}<Led state={led} blink={ledBlink} size="sm" />{/if}
 			<h2 class="agent__title">agent</h2>
 			<!-- The literal DEV check lets production builds drop this branch entirely. -->
-			{#if import.meta.env.DEV && demo}
+			{#if example}
+				<span class="agent__model">example</span>
+			{:else if import.meta.env.DEV && demo}
 				<span class="agent__model">demo run</span>
 			{:else if hasKey}
 				<span class="agent__model">{modelLabel}</span>
@@ -619,7 +675,7 @@ above the composer says what voice is doing while it is on.
 					onundochanges={(id) => void conductor?.undoTurn(id)}
 					onholdchanges={(id, holding) => conductor?.holdTurn(id, holding)}
 					onpointchanges={glow ? pointChanges : undefined}
-					onreply={send}
+					onreply={example ? undefined : send}
 					{patterns}
 					takesOn={conductor.takesOn}
 					onheartake={hearTake}
@@ -638,6 +694,33 @@ above the composer says what voice is doing while it is on.
 							<Button variant="secondary" onclick={openSettings}>add your anthropic key</Button>
 							<p class="empty__note">Your key stays in this browser and goes only to Anthropic.</p>
 						</div>
+						{#if simulator && replica}
+							<!-- no key yet: real conversations of the agent, replayed on the replica -->
+							<div class="plays" role="group" aria-label="examples to watch">
+								<p class="plays__head">or watch it work first</p>
+								<ul class="plays__list">
+									{#each exampleList as play (play.id)}
+										<li>
+											<button
+												type="button"
+												class="play"
+												aria-label="watch the example: {play.ask}"
+												disabled={exampleLoading !== null}
+												onclick={() => void playExample(play.id)}
+												{@attach tooltip(`“${play.ask}”: ${play.about}`, { describe: false })}
+											>
+												{#if exampleLoading === play.id}
+													<Led state="white" blink="breathe" size="sm" />
+												{:else}
+													<span class="play__glyph" aria-hidden="true"></span>
+												{/if}
+												<span class="play__title">{play.title}</span>
+											</button>
+										</li>
+									{/each}
+								</ul>
+							</div>
+						{/if}
 					{:else if booting}
 						<p class="empty__status">
 							<Led state="white" blink="breathe" size="sm" /> starting the agent
@@ -647,7 +730,11 @@ above the composer says what voice is doing while it is on.
 							<Led state="red" size="sm" /> The agent could not start: {bootError}
 						</p>
 					{/if}
-					<ul class="empty__examples" aria-label="things you can ask">
+					<ul
+						class="empty__examples"
+						aria-label="things you can ask"
+						hidden={keys.loaded && !hasKey && Boolean(simulator && replica)}
+					>
 						{#each EXAMPLES as example (example)}
 							<li>
 								{#if conductor}
@@ -727,62 +814,86 @@ above the composer says what voice is doing while it is on.
 			{#if voice.visible && !settingsOpen}
 				<VoiceStrip {voice} claudeBusy={busy} onsettings={openSettings} />
 			{/if}
-			<form class="composer" onsubmit={submit}>
-				<label class="sr-only" for="{uid}-message">message to the agent</label>
-				<textarea
-					id="{uid}-message"
-					class="composer__field"
-					rows="1"
-					placeholder={busy
-						? 'Working… (esc to stop)'
-						: files.length > 0
-							? 'Say what to do with it, or just send'
-							: 'Ask anything'}
-					disabled={!conductor || settingsOpen}
-					bind:value={draft}
-					{@attach trackComposer}
-					onkeydown={onKeyDown}
-					onpaste={onPaste}></textarea>
-				<div class="composer__bar">
-					<button
-						type="button"
-						class="round"
-						aria-label="attach files"
-						disabled={!canAttach}
-						onclick={() => picker?.click()}
-						{@attach tooltip('attach a photo, a PDF or a MIDI file')}
-					>
-						<HugeIcon icon={PlusSignIcon} size="1.125rem" strokeWidth={1.7} />
-					</button>
-					<span class="composer__gap"></span>
-					<VoiceKey {voice} variant="round" disabled={!conductor || settingsOpen} />
-					{#if busy}
+			{#if example}
+				<!-- an example plays in place of the composer: nothing typed here reaches it -->
+				<div class="example" role="status">
+					<p class="example__line">
+						<Led state={busy ? 'white' : 'dim'} blink={busy ? 'breathe' : false} size="sm" />
+						<span class="example__title">{example.player.example.title}</span>
+						<span class="example__note">recorded, replayed on the replica</span>
+					</p>
+					<div class="example__actions">
+						<Button size="sm" variant="secondary" onclick={leaveExample}
+							>back to your project</Button
+						>
+						<Button size="sm" variant="ghost" onclick={openSettings}
+							>add your key to ask your own</Button
+						>
+					</div>
+				</div>
+			{:else}
+				<form class="composer" onsubmit={submit}>
+					<label class="sr-only" for="{uid}-message">message to the agent</label>
+					<textarea
+						id="{uid}-message"
+						class="composer__field"
+						rows="1"
+						placeholder={busy
+							? 'Working… (esc to stop)'
+							: files.length > 0
+								? 'Say what to do with it, or just send'
+								: 'Ask anything'}
+						disabled={!conductor || settingsOpen}
+						bind:value={draft}
+						{@attach trackComposer}
+						onkeydown={onKeyDown}
+						onpaste={onPaste}></textarea>
+					<div class="composer__bar">
 						<button
 							type="button"
-							class="round round--solid"
-							aria-label="stop"
-							onclick={() => conductor?.stop()}
+							class="round"
+							aria-label="attach files"
+							disabled={!canAttach}
+							onclick={() => picker?.click()}
+							{@attach tooltip('attach a photo, a PDF or a MIDI file')}
 						>
-							<HugeIcon icon={StopIcon} size="1rem" strokeWidth={2} />
+							<HugeIcon icon={PlusSignIcon} size="1.125rem" strokeWidth={1.7} />
 						</button>
-					{:else}
-						<button type="submit" class="round round--solid" aria-label="send" disabled={!canSend}>
-							<HugeIcon icon={ArrowUp02Icon} size="1.125rem" strokeWidth={2} />
-						</button>
-					{/if}
-				</div>
-				<input
-					{@attach trackPicker}
-					class="sr-only"
-					type="file"
-					multiple
-					accept={ATTACHMENT_ACCEPT}
-					tabindex="-1"
-					aria-hidden="true"
-					onchange={onPick}
-				/>
-			</form>
-			{#if conductor && conductor.usage.calls > 0}
+						<span class="composer__gap"></span>
+						<VoiceKey {voice} variant="round" disabled={!conductor || settingsOpen} />
+						{#if busy}
+							<button
+								type="button"
+								class="round round--solid"
+								aria-label="stop"
+								onclick={() => conductor?.stop()}
+							>
+								<HugeIcon icon={StopIcon} size="1rem" strokeWidth={2} />
+							</button>
+						{:else}
+							<button
+								type="submit"
+								class="round round--solid"
+								aria-label="send"
+								disabled={!canSend}
+							>
+								<HugeIcon icon={ArrowUp02Icon} size="1.125rem" strokeWidth={2} />
+							</button>
+						{/if}
+					</div>
+					<input
+						{@attach trackPicker}
+						class="sr-only"
+						type="file"
+						multiple
+						accept={ATTACHMENT_ACCEPT}
+						tabindex="-1"
+						aria-hidden="true"
+						onchange={onPick}
+					/>
+				</form>
+			{/if}
+			{#if conductor && conductor.usage.calls > 0 && !example}
 				<div class="deck__cost"><CostMeter usage={conductor.usage} /></div>
 			{/if}
 		</div>
@@ -976,6 +1087,110 @@ above the composer says what voice is doing while it is on.
 	.empty__example:hover {
 		background-color: var(--xy-hover);
 		color: var(--xy-fg);
+	}
+
+	/* the examples without a key: two columns of short keys, what each shows in its tip */
+	.plays {
+		margin-top: 1.5rem;
+	}
+
+	.plays__head {
+		margin: 0 0 0.5rem;
+		color: var(--xy-fg-subtle);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+		font-weight: 450;
+		letter-spacing: var(--xy-tracking-label);
+	}
+
+	.plays__list {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.25rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.play {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		min-height: 2.25rem;
+		padding: 0.375rem 0.5rem;
+		border: 1px solid var(--xy-line);
+		border-radius: var(--xy-radius-tile);
+		color: var(--xy-fg-muted);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+		text-align: left;
+		cursor: pointer;
+		transition:
+			border-color var(--xy-dur-quick) var(--xy-ease-standard),
+			color var(--xy-dur-quick) var(--xy-ease-standard),
+			background-color var(--xy-dur-quick) var(--xy-ease-standard);
+	}
+
+	.play:hover:not(:disabled) {
+		border-color: var(--xy-line-control);
+		background-color: var(--xy-hover);
+		color: var(--xy-fg);
+	}
+
+	.play:disabled {
+		cursor: default;
+	}
+
+	.play:focus-visible {
+		outline: 1.5px solid var(--xy-focus);
+		outline-offset: 1px;
+	}
+
+	/* a small play mark, the device's triangle */
+	.play__glyph {
+		flex: none;
+		width: 0;
+		height: 0;
+		border-block: 0.25rem solid transparent;
+		border-left: 0.375rem solid currentColor;
+		opacity: 0.7;
+	}
+
+	.play__title {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	/* the deck while an example plays */
+	.example {
+		display: flex;
+		flex-direction: column;
+		gap: 0.625rem;
+		padding: 0.875rem 1rem;
+	}
+
+	.example__line {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem 0.5rem;
+		margin: 0;
+		color: var(--xy-fg-subtle);
+		font-size: var(--xy-text-xs);
+		line-height: var(--xy-leading-xs);
+	}
+
+	.example__title {
+		color: var(--xy-fg);
+	}
+
+	.example__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.375rem;
 	}
 
 	.empty__meta {

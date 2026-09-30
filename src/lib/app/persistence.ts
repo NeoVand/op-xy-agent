@@ -414,6 +414,8 @@ export class SimPersistence {
 	readonly #timers: PersistTimers;
 	readonly #delay: number;
 	#ready = false;
+	/** Holds on saving (an example plays on the replica): while any is on, nothing is saved. */
+	#holds = 0;
 	#pending: unknown = null;
 	#last: string | null = null;
 	#stop: (() => void) | null = null;
@@ -472,9 +474,23 @@ export class SimPersistence {
 		this.#changed();
 	}
 
+	/**
+	 * Holds saving while the replica holds something that is not the user's work (an example plays
+	 * on a new project): nothing is saved, not even when the page goes away. Returns the release.
+	 */
+	hold(): () => void {
+		this.#holds++;
+		let released = false;
+		return () => {
+			if (released) return;
+			released = true;
+			this.#holds--;
+		};
+	}
+
 	/** Saves now when anything changed since the last save. */
 	async flush(): Promise<void> {
-		if (!this.#ready) return;
+		if (!this.#ready || this.#holds > 0) return;
 		this.#timers.clearTimeout(this.#pending);
 		this.#pending = null;
 		const saved = captureSim(this.#state);

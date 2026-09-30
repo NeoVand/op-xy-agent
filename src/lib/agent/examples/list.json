@@ -1,0 +1,50 @@
+[
+	{
+		"id": "shift-m1",
+		"title": "what shift + M1 does",
+		"about": "an answer from the manual, shown on the replica",
+		"ask": "what does shift + M1 do?"
+	},
+	{
+		"id": "walkthrough",
+		"title": "walk me to the cutoff",
+		"about": "lit steps to follow on the replica",
+		"ask": "walk me through setting the filter cutoff on track 3"
+	},
+	{
+		"id": "kit",
+		"title": "a 909 kit and a beat",
+		"about": "a kit made, a beat written, playing",
+		"ask": "make a punchy 909 kit and play a house beat with it"
+	},
+	{
+		"id": "dark",
+		"title": "why track 3 is dark",
+		"about": "the sound read, the cause and the fix",
+		"ask": "why does track 3 sound so dark?"
+	},
+	{
+		"id": "pump",
+		"title": "make the bass pump",
+		"about": "a duck set up on the replica",
+		"ask": "make the bass pump with the kick"
+	},
+	{
+		"id": "lofi",
+		"title": "a lo-fi loop at 80",
+		"about": "drums, bass and jazzy chords, playing",
+		"ask": "make a chill lofi loop at 80 bpm, drums bass and some jazzy chords, and play it"
+	},
+	{
+		"id": "song",
+		"title": "a song in three scenes",
+		"about": "patterns, scenes and the song, playing",
+		"ask": "Build a short song: scene 1 is just drums on track 1, scene 2 adds a bassline on track 3, scene 3 is the bassline alone. The song goes 1, 2, 2, 3 and loops. Play it."
+	},
+	{
+		"id": "chord",
+		"title": "chords from one key",
+		"about": "the maestro player, from the manual",
+		"ask": "can the op-xy play a whole chord from one key?"
+	}
+]

@@ -262,6 +262,21 @@ describe('SimPersistence: when it saves', () => {
 		await time.advance(2000);
 	});
 
+	it('saves nothing while held (an example on the replica), and saves again once let go', async () => {
+		const { store, replica, persistence } = await setup();
+		await persistence.start();
+		await persistence.flush();
+		const first = (await store.load())!.project;
+		const release = persistence.hold();
+		tap(replica, 'step.4');
+		await persistence.flush();
+		expect((await store.load())!.project).toBe(first);
+		release();
+		release(); // twice is once
+		await persistence.flush();
+		expect((await store.load())!.project).not.toBe(first);
+	});
+
 	it('never saves before the stored work is back', async () => {
 		const { store, replica, persistence } = await setup(captureSim(withWork().state));
 		tap(replica, 'step.4'); // input before start(): not a reason to save a blank project

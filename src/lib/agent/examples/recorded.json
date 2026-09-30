@@ -1,0 +1,1126 @@
+[
+	{
+		"id": "shift-m1",
+		"title": "what shift + M1 does",
+		"about": "an answer from the manual, shown on the replica",
+		"model": "recorded",
+		"turns": [
+			{
+				"user": "what does shift + M1 do?",
+				"conductor": [
+					{
+						"tools": [
+							{
+								"id": "toolu_01CiudPxVNEWb7X7hJKkHriq",
+								"name": "show_on_replica",
+								"input": {
+									"keys": "shift + M1",
+									"caption": "Opens the preset browser for the selected track"
+								}
+							}
+						]
+					},
+					{
+						"tools": [],
+						"text": "In instrument mode, `shift + M1` opens the preset browser for the selected track. On OS 1.1.33 it's also how you change a track's engine. The browser opens on the track's current preset, with the engines in the middle and that engine's presets on the right.\n\nTo load a sound, turn `E1` to pick an engine, turn `E2` to pick a preset, then click `E2` to load it. Loading replaces the track's whole sound, including the envelopes, filter and LFO. If you're changing engine, choose it first and shape the other pages afterwards.\n\nIn other modes `shift + M1` does something else. In arrange it clones the current scene, and in song mode it clears the song order.\n\n[instrument.preset-browser] [instrument.engine] [arrange.scenes]"
+					}
+				],
+				"subagent": []
+			}
+		]
+	},
+	{
+		"id": "walkthrough",
+		"title": "walk me to the cutoff",
+		"about": "lit steps to follow on the replica",
+		"model": "recorded",
+		"turns": [
+			{
+				"user": "walk me through setting the filter cutoff on track 3",
+				"conductor": [
+					{
+						"tools": [
+							{
+								"id": "toolu_01Dhu3PmPV68ybhorHqoDvJM",
+								"name": "plan_steps",
+								"input": {
+									"show": false,
+									"guide": true,
+									"track": 3,
+									"param": "cutoff"
+								}
+							}
+						]
+					},
+					{
+						"tools": [],
+						"text": "Follow the lit keys on the replica:\n\n1. Press `T3` to select track 3.\n2. Press `M3` to open the filter page. It shows the svf filter with cutoff at 00.\n3. Turn `E1` clockwise to raise the cutoff. Higher values open the filter and make the sound brighter.\n\nIf `M3` shows an \"off\" box, the filter is switched off. Press `M3` again to switch it on.\n\n[instrument.filter]"
+					}
+				],
+				"subagent": []
+			}
+		]
+	},
+	{
+		"id": "kit",
+		"title": "a 909 kit and a beat",
+		"about": "a kit made, a beat written, playing",
+		"model": "recorded",
+		"turns": [
+			{
+				"user": "make a punchy 909 kit and play a house beat with it",
+				"conductor": [
+					{
+						"tools": [
+							{
+								"id": "toolu_01VtcL7gU9ZE1ivYe4jYPkwK",
+								"name": "make_kit",
+								"input": {
+									"name": "punchy 909",
+									"style": "909",
+									"track": 1,
+									"voices": [
+										{
+											"key": 53,
+											"type": "kick",
+											"pitch": 52,
+											"decay": 0.35,
+											"snap": 0.7,
+											"drive": 0.4
+										},
+										{
+											"key": 55,
+											"type": "snare",
+											"pitch": 190,
+											"snap": 0.7
+										},
+										{
+											"key": 58,
+											"type": "clap",
+											"tone": 0.6
+										},
+										{
+											"key": 61,
+											"type": "closed hat",
+											"decay": 0.05,
+											"tone": 0.8
+										},
+										{
+											"key": 63,
+											"type": "open hat",
+											"decay": 0.3,
+											"tone": 0.8
+										}
+									]
+								}
+							},
+							{
+								"id": "toolu_01H9f2i3mXjq9W8Xh2ZRu2J1",
+								"name": "write_pattern",
+								"input": {
+									"track": 1,
+									"bars": 1,
+									"notes": [
+										{
+											"step": 1,
+											"note": 53,
+											"velocity": 120
+										},
+										{
+											"step": 5,
+											"note": 53,
+											"velocity": 120
+										},
+										{
+											"step": 9,
+											"note": 53,
+											"velocity": 120
+										},
+										{
+											"step": 13,
+											"note": 53,
+											"velocity": 120
+										},
+										{
+											"step": 5,
+											"note": 55,
+											"velocity": 110
+										},
+										{
+											"step": 13,
+											"note": 55,
+											"velocity": 110
+										},
+										{
+											"step": 5,
+											"note": 58,
+											"velocity": 90
+										},
+										{
+											"step": 13,
+											"note": 58,
+											"velocity": 90
+										},
+										{
+											"step": 3,
+											"note": 63,
+											"velocity": 100
+										},
+										{
+											"step": 7,
+											"note": 63,
+											"velocity": 100
+										},
+										{
+											"step": 11,
+											"note": 63,
+											"velocity": 100
+										},
+										{
+											"step": 15,
+											"note": 63,
+											"velocity": 100
+										},
+										{
+											"step": 2,
+											"note": 61,
+											"velocity": 60
+										},
+										{
+											"step": 4,
+											"note": 61,
+											"velocity": 70
+										},
+										{
+											"step": 6,
+											"note": 61,
+											"velocity": 60
+										},
+										{
+											"step": 8,
+											"note": 61,
+											"velocity": 70
+										},
+										{
+											"step": 10,
+											"note": 61,
+											"velocity": 60
+										},
+										{
+											"step": 12,
+											"note": 61,
+											"velocity": 70
+										},
+										{
+											"step": 14,
+											"note": 61,
+											"velocity": 60
+										},
+										{
+											"step": 16,
+											"note": 61,
+											"velocity": 70
+										}
+									]
+								}
+							},
+							{
+								"id": "toolu_01SHsNHYTWrJTu6vkCeXo3xz",
+								"name": "set_tempo",
+								"input": {
+									"bpm": 124
+								}
+							},
+							{
+								"id": "toolu_01RzumW9Qf8CnWExciFLPewA",
+								"name": "transport",
+								"input": {
+									"action": "play"
+								}
+							}
+						]
+					},
+					{
+						"tools": [],
+						"text": "The punchy 909 kit is on track 1 of the replica, and a house beat is playing at 124 BPM.\n\n```\nkick       x...x...x...x...\nsnare      ....x.......x...\nclap       ....x.......x...\nclosed hat .x.x.x.x.x.x.x.x\nopen hat   ..x...x...x...x.\n```\n\nIt's a four-on-the-floor kick with the snare and clap layered on beats 2 and 4. The open hats sit on the off-beats, and the closed hats fill in between them. The kick has a hard click and some drive. The hats are short, and the open hat is a little longer.\n\nThe kit is also in the preset maker, where you can download it or install it on your OP-XY."
+					}
+				],
+				"subagent": []
+			}
+		]
+	},
+	{
+		"id": "dark",
+		"title": "why track 3 is dark",
+		"about": "the sound read, the cause and the fix",
+		"model": "recorded",
+		"turns": [
+			{
+				"user": "why does track 3 sound so dark?",
+				"conductor": [
+					{
+						"tools": [
+							{
+								"id": "toolu_01TrJtrKDprrZ7QBFTq7c5Az",
+								"name": "read_sound",
+								"input": {
+									"track": 3
+								}
+							}
+						]
+					},
+					{
+						"tools": [],
+						"text": "The filter cutoff on track 3 is at 00. That closes the svf lowpass almost completely, so only the darkest part of the sound gets through. The filter envelope (env amount 33) opens it a little on each note, but not by much.\n\nTo brighten it, raise the cutoff:\n\n1. `T3`, then `M3`\n2. `turn E1` clockwise. Try around 40–60 and adjust by ear.\n\nIf you want the filter to snap open on each note instead, raise env amount with `turn E3` on the same page."
+					}
+				],
+				"subagent": []
+			}
+		]
+	},
+	{
+		"id": "pump",
+		"title": "make the bass pump",
+		"about": "a duck set up on the replica",
+		"model": "recorded",
+		"turns": [
+			{
+				"user": "make the bass pump with the kick",
+				"conductor": [
+					{
+						"tools": [
+							{
+								"id": "toolu_018vj7Yysg39mTU2oHd9nsxs",
+								"name": "device_status",
+								"input": {}
+							}
+						]
+					},
+					{
+						"tools": [
+							{
+								"id": "toolu_01E7CnfT2HxArsGyuSGDEJTH",
+								"name": "plan_steps",
+								"input": {
+									"show": true,
+									"track": 3,
+									"settings": [
+										{
+											"param": "lfo type",
+											"value": "duck"
+										},
+										{
+											"param": "duck source",
+											"value": "1"
+										},
+										{
+											"param": "lfo amount",
+											"value": 70
+										},
+										{
+											"param": "duck hold",
+											"value": 10
+										},
+										{
+											"param": "duck release",
+											"value": 40
+										}
+									]
+								}
+							}
+						],
+						"text": "Track 3 is the bass and track 1 the drums. I'll set the duck on the bass with track 1 as its source."
+					},
+					{
+						"tools": [],
+						"text": "The bass on track 3 now ducks on the replica whenever track 1 plays. I set the duck LFO on `M4` like this:\n\n- **Source:** track 1, the drums.\n- **Amount:** about 70, a clear dip.\n- **Hold:** short, so the dip is tight.\n- **Release:** about 40, so the bass swells back between hits.\n\nThe patterns are empty at the moment, so you won't hear it until track 1 and track 3 have notes.\n\nTrack 1 also carries the hats, so the bass will dip on every hat as well as every kick. For a pump on the kick only, put the kick on its own drum track (track 2) and set the source to that track. Or set the source to the metronome, which dips the bass on every beat.\n\nTo undo it, use `shift + M4` on track 3 and pick another LFO type.\n\nI can write a beat and a bassline so you can hear it if you like.\n\n[instrument.lfo-duck] [howto.sidechain-duck]"
+					}
+				],
+				"subagent": []
+			}
+		]
+	},
+	{
+		"id": "lofi",
+		"title": "a lo-fi loop at 80",
+		"about": "drums, bass and jazzy chords, playing",
+		"model": "recorded",
+		"turns": [
+			{
+				"user": "make a chill lofi loop at 80 bpm, drums bass and some jazzy chords, and play it",
+				"conductor": [
+					{
+						"tools": [
+							{
+								"id": "toolu_01DjxFw8EhgYvvndD6x3HnNg",
+								"name": "set_tempo",
+								"input": {
+									"bpm": 80
+								}
+							},
+							{
+								"id": "toolu_016KS2RPgZ3THVtc3wHVVuiA",
+								"name": "write_pattern",
+								"input": {
+									"track": 1,
+									"bars": 2,
+									"notes": [
+										{
+											"step": 1,
+											"note": 53,
+											"velocity": 110
+										},
+										{
+											"step": 8,
+											"note": 53,
+											"velocity": 80
+										},
+										{
+											"step": 11,
+											"note": 53,
+											"velocity": 95
+										},
+										{
+											"step": 17,
+											"note": 53,
+											"velocity": 110
+										},
+										{
+											"step": 20,
+											"note": 53,
+											"velocity": 70
+										},
+										{
+											"step": 27,
+											"note": 53,
+											"velocity": 95
+										},
+										{
+											"step": 5,
+											"note": 55,
+											"velocity": 105
+										},
+										{
+											"step": 13,
+											"note": 55,
+											"velocity": 105
+										},
+										{
+											"step": 21,
+											"note": 55,
+											"velocity": 105
+										},
+										{
+											"step": 29,
+											"note": 55,
+											"velocity": 105
+										},
+										{
+											"step": 32,
+											"note": 55,
+											"velocity": 40
+										},
+										{
+											"step": 1,
+											"note": 61,
+											"velocity": 80
+										},
+										{
+											"step": 3,
+											"note": 61,
+											"velocity": 50
+										},
+										{
+											"step": 5,
+											"note": 61,
+											"velocity": 70
+										},
+										{
+											"step": 7,
+											"note": 61,
+											"velocity": 50
+										},
+										{
+											"step": 9,
+											"note": 61,
+											"velocity": 80
+										},
+										{
+											"step": 11,
+											"note": 61,
+											"velocity": 50
+										},
+										{
+											"step": 13,
+											"note": 61,
+											"velocity": 70
+										},
+										{
+											"step": 15,
+											"note": 63,
+											"velocity": 60
+										},
+										{
+											"step": 17,
+											"note": 61,
+											"velocity": 80
+										},
+										{
+											"step": 19,
+											"note": 61,
+											"velocity": 50
+										},
+										{
+											"step": 21,
+											"note": 61,
+											"velocity": 70
+										},
+										{
+											"step": 23,
+											"note": 61,
+											"velocity": 50
+										},
+										{
+											"step": 25,
+											"note": 61,
+											"velocity": 80
+										},
+										{
+											"step": 27,
+											"note": 61,
+											"velocity": 50
+										},
+										{
+											"step": 29,
+											"note": 61,
+											"velocity": 70
+										},
+										{
+											"step": 31,
+											"note": 63,
+											"velocity": 60
+										}
+									]
+								}
+							},
+							{
+								"id": "toolu_01LPdzCVNxACcr8CNnbWm123",
+								"name": "write_pattern",
+								"input": {
+									"track": 3,
+									"bars": 4,
+									"notes": [
+										{
+											"step": 1,
+											"note": 38,
+											"length": 4
+										},
+										{
+											"step": 7,
+											"note": 45,
+											"length": 2
+										},
+										{
+											"step": 11,
+											"note": 41,
+											"length": 3
+										},
+										{
+											"step": 17,
+											"note": 43,
+											"length": 4
+										},
+										{
+											"step": 23,
+											"note": 50,
+											"length": 2
+										},
+										{
+											"step": 27,
+											"note": 41,
+											"length": 3
+										},
+										{
+											"step": 33,
+											"note": 36,
+											"length": 4
+										},
+										{
+											"step": 39,
+											"note": 43,
+											"length": 2
+										},
+										{
+											"step": 43,
+											"note": 40,
+											"length": 3
+										},
+										{
+											"step": 49,
+											"note": 33,
+											"length": 4
+										},
+										{
+											"step": 55,
+											"note": 40,
+											"length": 2
+										},
+										{
+											"step": 59,
+											"note": 38,
+											"length": 4
+										}
+									]
+								}
+							},
+							{
+								"id": "toolu_01RRJajBgodCiZYXtjvFQEba",
+								"name": "write_pattern",
+								"input": {
+									"track": 4,
+									"bars": 4,
+									"notes": [
+										{
+											"step": 1,
+											"note": 50,
+											"length": 7
+										},
+										{
+											"step": 1,
+											"note": 53,
+											"length": 7
+										},
+										{
+											"step": 1,
+											"note": 57,
+											"length": 7
+										},
+										{
+											"step": 1,
+											"note": 60,
+											"length": 7
+										},
+										{
+											"step": 1,
+											"note": 64,
+											"length": 7
+										},
+										{
+											"step": 11,
+											"note": 53,
+											"length": 4
+										},
+										{
+											"step": 11,
+											"note": 57,
+											"length": 4
+										},
+										{
+											"step": 11,
+											"note": 60,
+											"length": 4
+										},
+										{
+											"step": 17,
+											"note": 53,
+											"length": 7
+										},
+										{
+											"step": 17,
+											"note": 59,
+											"length": 7
+										},
+										{
+											"step": 17,
+											"note": 64,
+											"length": 7
+										},
+										{
+											"step": 17,
+											"note": 69,
+											"length": 7
+										},
+										{
+											"step": 27,
+											"note": 53,
+											"length": 4
+										},
+										{
+											"step": 27,
+											"note": 59,
+											"length": 4
+										},
+										{
+											"step": 27,
+											"note": 64,
+											"length": 4
+										},
+										{
+											"step": 33,
+											"note": 52,
+											"length": 7
+										},
+										{
+											"step": 33,
+											"note": 55,
+											"length": 7
+										},
+										{
+											"step": 33,
+											"note": 59,
+											"length": 7
+										},
+										{
+											"step": 33,
+											"note": 62,
+											"length": 7
+										},
+										{
+											"step": 43,
+											"note": 55,
+											"length": 4
+										},
+										{
+											"step": 43,
+											"note": 59,
+											"length": 4
+										},
+										{
+											"step": 43,
+											"note": 62,
+											"length": 4
+										},
+										{
+											"step": 49,
+											"note": 55,
+											"length": 7
+										},
+										{
+											"step": 49,
+											"note": 57,
+											"length": 7
+										},
+										{
+											"step": 49,
+											"note": 60,
+											"length": 7
+										},
+										{
+											"step": 49,
+											"note": 64,
+											"length": 7
+										},
+										{
+											"step": 59,
+											"note": 54,
+											"length": 4
+										},
+										{
+											"step": 59,
+											"note": 60,
+											"length": 4
+										},
+										{
+											"step": 59,
+											"note": 63,
+											"length": 4
+										}
+									]
+								}
+							},
+							{
+								"id": "toolu_01CRasSF54rW2bHDWz1TKvEH",
+								"name": "write_pattern",
+								"input": {
+									"track": 4,
+									"bars": 4,
+									"notes": [
+										{
+											"step": 1,
+											"note": 50,
+											"length": 7
+										},
+										{
+											"step": 1,
+											"note": 53,
+											"length": 7
+										},
+										{
+											"step": 1,
+											"note": 57,
+											"length": 7
+										},
+										{
+											"step": 1,
+											"note": 60,
+											"length": 7
+										},
+										{
+											"step": 1,
+											"note": 64,
+											"length": 7
+										},
+										{
+											"step": 11,
+											"note": 53,
+											"length": 4
+										},
+										{
+											"step": 11,
+											"note": 57,
+											"length": 4
+										},
+										{
+											"step": 11,
+											"note": 60,
+											"length": 4
+										},
+										{
+											"step": 17,
+											"note": 53,
+											"length": 7
+										},
+										{
+											"step": 17,
+											"note": 59,
+											"length": 7
+										},
+										{
+											"step": 17,
+											"note": 64,
+											"length": 7
+										},
+										{
+											"step": 17,
+											"note": 69,
+											"length": 7
+										},
+										{
+											"step": 27,
+											"note": 53,
+											"length": 4
+										},
+										{
+											"step": 27,
+											"note": 59,
+											"length": 4
+										},
+										{
+											"step": 27,
+											"note": 64,
+											"length": 4
+										},
+										{
+											"step": 33,
+											"note": 48,
+											"length": 7
+										},
+										{
+											"step": 33,
+											"note": 52,
+											"length": 7
+										},
+										{
+											"step": 33,
+											"note": 55,
+											"length": 7
+										},
+										{
+											"step": 33,
+											"note": 59,
+											"length": 7
+										},
+										{
+											"step": 33,
+											"note": 62,
+											"length": 7
+										},
+										{
+											"step": 43,
+											"note": 52,
+											"length": 4
+										},
+										{
+											"step": 43,
+											"note": 55,
+											"length": 4
+										},
+										{
+											"step": 43,
+											"note": 59,
+											"length": 4
+										},
+										{
+											"step": 49,
+											"note": 55,
+											"length": 7
+										},
+										{
+											"step": 49,
+											"note": 57,
+											"length": 7
+										},
+										{
+											"step": 49,
+											"note": 60,
+											"length": 7
+										},
+										{
+											"step": 49,
+											"note": 64,
+											"length": 7
+										},
+										{
+											"step": 59,
+											"note": 54,
+											"length": 4
+										},
+										{
+											"step": 59,
+											"note": 57,
+											"length": 4
+										},
+										{
+											"step": 59,
+											"note": 60,
+											"length": 4
+										},
+										{
+											"step": 59,
+											"note": 62,
+											"length": 4
+										}
+									]
+								}
+							},
+							{
+								"id": "toolu_01VAoK4k2mCxgAe9wxugSLxx",
+								"name": "transport",
+								"input": {
+									"action": "play"
+								}
+							}
+						]
+					},
+					{
+						"tools": [],
+						"text": "Your lofi loop is playing on the replica at 80 BPM. I haven't listened to it, so I can't say how it sounds.\n\n- **Drums (T1):** a two-bar pattern. The kick is lazy and a little off the beat, the snare sits on 2 and 4 with a soft ghost snare at the end of bar 2, and the closed hats alternate soft and firm on eighths with an open hat before each bar ends.\n- **Bass (T3):** a four-bar line in D minor that walks through the root, fifth and passing notes of each chord.\n- **Chords (T4):** a four-bar jazz loop, Dm9 → G13 → Cmaj9 → Am7 to D7. Each chord is held, then gets a short stab on the \"and\" of beat 3.\n\nNext, try adding some swing with `tempo` → `turn E3` past the centre. It loosens the hats and kick, and it will make the loop feel more lofi."
+					}
+				],
+				"subagent": []
+			}
+		]
+	},
+	{
+		"id": "song",
+		"title": "a song in three scenes",
+		"about": "patterns, scenes and the song, playing",
+		"model": "recorded",
+		"turns": [
+			{
+				"user": "Build a short song: scene 1 is just drums on track 1, scene 2 adds a bassline on track 3, scene 3 is the bassline alone. The song goes 1, 2, 2, 3 and loops. Play it.",
+				"conductor": [
+					{
+						"tools": [
+							{
+								"id": "toolu_01E7vY7Na9vYcfKxrmFAzpad",
+								"name": "write_pattern",
+								"input": {
+									"track": 1,
+									"pattern": 1,
+									"notes": [
+										{
+											"step": 1,
+											"note": 53
+										},
+										{
+											"step": 5,
+											"note": 55
+										},
+										{
+											"step": 9,
+											"note": 53
+										},
+										{
+											"step": 11,
+											"note": 53
+										},
+										{
+											"step": 13,
+											"note": 55
+										},
+										{
+											"step": 1,
+											"note": 61
+										},
+										{
+											"step": 3,
+											"note": 61
+										},
+										{
+											"step": 5,
+											"note": 61
+										},
+										{
+											"step": 7,
+											"note": 61
+										},
+										{
+											"step": 9,
+											"note": 61
+										},
+										{
+											"step": 11,
+											"note": 61
+										},
+										{
+											"step": 13,
+											"note": 61
+										},
+										{
+											"step": 15,
+											"note": 63
+										}
+									]
+								}
+							},
+							{
+								"id": "toolu_01JGVZGnWpeRU1ftotyvek4Y",
+								"name": "write_pattern",
+								"input": {
+									"track": 3,
+									"pattern": 1,
+									"notes": [
+										{
+											"step": 1,
+											"note": 36,
+											"length": 3
+										},
+										{
+											"step": 5,
+											"note": 36,
+											"length": 2
+										},
+										{
+											"step": 8,
+											"note": 43,
+											"length": 1
+										},
+										{
+											"step": 9,
+											"note": 36,
+											"length": 3
+										},
+										{
+											"step": 13,
+											"note": 39,
+											"length": 2
+										},
+										{
+											"step": 15,
+											"note": 43,
+											"length": 2
+										}
+									]
+								}
+							},
+							{
+								"id": "toolu_01XuW1NUmRBRpb9tRKiXag8S",
+								"name": "write_arrangement",
+								"input": {
+									"scenes": [
+										{
+											"scene": 1,
+											"patterns": [
+												{
+													"track": 1,
+													"pattern": 1
+												},
+												{
+													"track": 3,
+													"pattern": 2
+												}
+											]
+										},
+										{
+											"scene": 2,
+											"patterns": [
+												{
+													"track": 1,
+													"pattern": 1
+												},
+												{
+													"track": 3,
+													"pattern": 1
+												}
+											]
+										},
+										{
+											"scene": 3,
+											"patterns": [
+												{
+													"track": 1,
+													"pattern": 2
+												},
+												{
+													"track": 3,
+													"pattern": 1
+												}
+											]
+										}
+									],
+									"song": {
+										"scenes": [1, 2, 2, 3],
+										"loop": true
+									}
+								}
+							},
+							{
+								"id": "toolu_01RsaLduP2a5ZhkkKNuamhdo",
+								"name": "transport",
+								"input": {
+									"action": "play"
+								}
+							}
+						]
+					},
+					{
+						"tools": [],
+						"text": "The song is playing on the replica. It runs scenes 1, 2, 2, 3 and then loops.\n\n- **Scene 1:** a one-bar drum beat on track 1 with kick, snare, closed hats and an open hat. Track 3 plays an empty pattern.\n- **Scene 2:** the same drums plus a bassline on track 3. The bassline is a short line around C and G.\n- **Scene 3:** the bassline alone. Track 1 plays an empty pattern.\n\nNext, try giving scene 3 its own bass variation. Add a new pattern for track 3 in arrange with `M1`, then point scene 3 at it."
+					}
+				],
+				"subagent": []
+			}
+		]
+	},
+	{
+		"id": "chord",
+		"title": "chords from one key",
+		"about": "the maestro player, from the manual",
+		"model": "recorded",
+		"turns": [
+			{
+				"user": "can the op-xy play a whole chord from one key?",
+				"conductor": [
+					{
+						"tools": [
+							{
+								"id": "toolu_014RzP5ZkZ39ha2h5jzAn4fY",
+								"name": "show_on_replica",
+								"input": {
+									"keys": "shift + player",
+									"caption": "Open the player list to pick maestro"
+								}
+							}
+						]
+					},
+					{
+						"tools": [],
+						"text": "Yes. The maestro player does this. You store a chord once, and then any single key plays that chord, shifted up or down to follow the key.\n\n1. `shift + player` opens the player list. Keep `shift` held and turn `E1` to maestro. When you let go of `shift`, the maestro page opens.\n2. Press `player` to switch the player on. The first press only shows the page, dimmed under an off box.\n3. Hold `shift` and play every note of the chord on the keyboard. That stores it.\n4. Release `shift`. Each key you press now plays the whole chord.\n\nOn the maestro page, `E1` sets roll (a strum from block chord to slow spread). `E2` sets the strum order, and `E4` holds the chord after you let go.\n\nMaestro works on sequenced notes too, so you can put a single note on each step and get a chord progression.\n\n[players.maestro] [players.overview]"
+					}
+				],
+				"subagent": []
+			}
+		]
+	}
+]
