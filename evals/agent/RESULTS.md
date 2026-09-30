@@ -3,6 +3,79 @@
 Re-run with `node evals/agent/run.mjs --manual ours --judge claude-sonnet-5` (needs `ANTHROPIC_API_KEY`
 in `.env`; never printed). Newest first.
 
+## Episodes
+
+### 2026-09-30 — the baseline, agent claude-sonnet-5-5, simulated user claude-sonnet-5
+
+`node evals/agent/episodes.mjs --out evals/agent/out/ep-v1.json` (docs/AGENT-V2.md, "Evals"). Twelve
+OP-XY owners bring a goal in their own words: beginners, intermediates and veterans; patient,
+impatient or vague; wanting it done for them, shown to them, or to do it with their own hands. A
+simulated user reads each answer, presses keys on the replica in the key grammar with a count on
+turns (`turn E1 +40`), follows lit walkthroughs, looks and listens, then writes again or stops.
+Success is read from the replica's state and from who changed what (the user's own presses, or the
+agent), never from what either of them says.
+
+| Episode         | Persona                                 | Result | Msgs | Agent $ | What happened                                                                                                                                                       |
+| --------------- | --------------------------------------- | ------ | ---- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `first-jam`     | beginner · vague · do it for me         | pass   | 3    | 0.73    | A 92 BPM groove on three tracks in its first answer; two more turns went on the user not hearing their own keys, a harness gap since fixed.                         |
+| `brighter-bass` | beginner · patient · let me do it       | pass   | 1    | 0.11    | `read_sound` found the cutoff at 00; a lit walkthrough (`T3`, `M3`, `turn E1 +40`) and the user's own hands did the rest.                                           |
+| `pump`          | intermediate · patient · show me        | pass   | 5    | 0.47    | A duck on track 3 at once, but keyed to the metronome: it assumed kick and hats share track 1 without reading the project, and the user had to correct it.          |
+| `kick-lesson`   | beginner · patient · let me do it       | fail   | 1    | 0.11    | Its demonstration (`show_on_replica`, ending on `step 1`) entered the first kick itself; the user pressed the other three.                                          |
+| `snare-roll`    | veteran · impatient · do it for me      | pass   | 2    | 0.20    | Two bars, the first kept, a roll in the second, in one write.                                                                                                       |
+| `song`          | intermediate · patient · do it for me   | pass\* | 3    | 0.84    | Intro, groove, break and the groove again as scenes 1–4; the user watched arrange move through them.                                                                |
+| `warm-pad`      | intermediate · patient · show me        | pass   | 2    | 0.15    | Attack and release shown on the replica in one `plan_steps`, and it explained why a lower release is a longer one.                                                  |
+| `mute-live`     | beginner · patient · let me do it       | fail\* | 5    | 0.41    | Its demo muted track 2 and left mix mode on, so the user's `mix` swapped to the auxiliary tracks; it then took the user's unmute for a press that did not register. |
+| `tempo-swing`   | intermediate · impatient · do it for me | pass   | 1    | 0.07    | 90 BPM and a swing in one turn.                                                                                                                                     |
+| `midi-file`     | intermediate · patient · do it for me   | fail   | 4    | 0.55    | `import_midi` left the 2-bar file in 4-bar patterns; the agent said the last two bars rest instead of fixing it, then tuned the bass when the user heard the gaps.  |
+| `boring`        | beginner · vague · do it for me         | pass   | 1    | 0.32    | Rebuilt the whole loop on five tracks without asking; the user liked it.                                                                                            |
+| `impatient-vet` | veteran · impatient · do it for me      | pass   | 3    | 0.30    | The beat at once; two more turns went on "chords" the user's hearing reported in a drum loop, a harness artifact since fixed.                                       |
+
+**9/12.** By level: beginner 3/5, intermediate 4/5, veteran 2/2. By temperament: patient 4/7,
+impatient 3/3, vague 2/2. By learning style: do it for me 6/7, show me 2/2, **let me do it 1/3**.
+The user's verdict matched the replica's state in every episode they ended themselves, except that
+the kick-lesson user was happy although the agent had entered one of the four kicks. Mean 69 s and
+2.2 messages an episode. Cost: agent $3.46 and simulated user $0.24 for the twelve (`ep-v1.json`),
+then $1.34 for the two re-run (`ep-v1-rerun.json`).
+
+\*Re-run after the harness fixes below. As first scored, `song` failed on a check of ours that
+compared scene numbers rather than their music (scene 4 was a copy of scene 2), and `mute-live`'s
+user ended on an empty reply the harness took for giving up.
+
+What the failures say about the agent:
+
+- **Demonstrations that change the replica teach badly.** For users who want to do it themselves,
+  the agent's first move was `show_on_replica`, which presses the keys for real: it entered the
+  first kick (kick-lesson, both runs) and muted track 2 (mute-live, all three runs). It also left
+  the replica where its written steps did not start from: after the demo the replica was in mix
+  mode, so the user's `mix` swapped to the auxiliary tracks and `shift + T2` muted the punch-in FX.
+  The walkthrough, which lights keys and changes nothing, worked every time it was used.
+- **It does not keep track of its own changes.** In mute-live the user's `shift + T2` unmuted track
+  2, because the demo had muted it; the agent said the press "probably didn't register". The
+  grounding diff (V2.2) is aimed at exactly this.
+- **It guesses where it could measure.** It assumed kick and hats share track 1 (pump, mute-live)
+  and picked the duck's source from that guess; one `read_pattern` would have answered it.
+- **It reports a defect instead of fixing it.** In all three runs of midi-file it said the 2-bar
+  file rests through the last two bars of every loop and left it so; in the baseline it then
+  changed the bass sound when the user heard the gaps.
+- **Its listening misleads it about the duck.** The replica's sound applies the duck (a track dips
+  when its source plays a note), but `listen_tracks` hears the bass alone by muting the kick, so the
+  duck never fires, and the loudness summary cannot resolve 100 ms dips. In both runs it measured
+  no dip: once it concluded the replica ignores the duck and rewrote the bass as a "manual pump",
+  once it called the pump unverified.
+- **Vague requests get a rebuild, not a question** (boring, both runs): five tracks rewritten on the
+  first message. The user liked it here; a pickier one might not.
+
+The harness, as it changed while building it: the first run (`ep-v0.json`, 8/12) had no clock
+under the simulator, so a song never left its first scene and every listen heard the same bar; and
+the user heard the analyser's readout, reading a kick's click as a clap on every beat. The clock
+now runs as the app runs it, and the user hears in words (level, brightness, the beat, its tempo,
+swing, the key). After `ep-v1`: text typed beside a press counts as the message, the song check
+compares the scenes' music, the tempo in the user's words follows the music's beat when the pulse
+finder locks onto double time, and a key played is heard. After the re-run, not yet run with: a
+`hold` shows what the replica shows while held (shift in mix shows the mutes), and harmony is heard
+only when the key is clear. None of those decide the three failures, which happen in the agent's
+first answer or the import.
+
 ## 2026-09-28 — runnable recipes and values by name, conductor claude-opus-5-5
 
 The navigator now plans every value the device map shows by the name its screen uses (a drum key's

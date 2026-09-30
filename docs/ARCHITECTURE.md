@@ -122,7 +122,9 @@ Claude.
   OP-XY only, since the device takes none over MIDI.
 - **Evals** (`evals/agent/`): manual Q&A and device tasks (`run.mjs`), how-to and idea-to-device
   cases checked against the simulator's end state (`howto.mjs`), programming the virtual OP-XY
-  (`virtual.mjs`), files (`files.mjs`). Results in `evals/agent/RESULTS.md`.
+  (`virtual.mjs`), files (`files.mjs`), and episodes (`episodes.mjs`): simulated users with a
+  persona and a goal talk to the agent and press keys on the replica themselves, and success is
+  read from the replica's state and from who changed what. Results in `evals/agent/RESULTS.md`.
 - **Listening** (note 61): `listen` records the OP-XY's USB audio or the replica's sound
   (`ListenHost` in the environment; `device/listen` in the browser) and hands the model the
   summary of `core/listen`; `listen_tracks` hears tracks alone through the mutes (CC9 on a device,

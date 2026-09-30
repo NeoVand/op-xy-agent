@@ -54,7 +54,8 @@ export default defineConfig({
 					environment: 'node',
 					// the synth's DSP tests run several times slower on CI's shared runners
 					testTimeout: process.env.CI ? 30_000 : 5_000,
-					include: ['src/**/*.{test,spec}.{js,ts}'],
+					// the evals' own deterministic parts (the episodes' hands, walkthrough, checks) too
+					include: ['src/**/*.{test,spec}.{js,ts}', 'evals/**/*.{test,spec}.{js,ts}'],
 					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
 				}
 			}

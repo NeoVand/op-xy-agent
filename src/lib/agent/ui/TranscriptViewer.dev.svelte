@@ -40,6 +40,8 @@ Pick a run and a case: its checks, lints and the judge's scores sit above the ch
 		readonly usd: number;
 		/** What the replica played when the agent was done. */
 		readonly heard?: { readonly text: string; readonly flags: readonly string[] } | null;
+		/** An episode's persona, goal and verdict (`episodes.mjs`); its user's actions are notices. */
+		readonly brief?: readonly string[];
 	}
 	interface Saved {
 		readonly model: string;
@@ -130,6 +132,7 @@ Pick a run and a case: its checks, lints and the judge's scores sit above the ch
 							{/each}
 						{/if}
 					</p>
+					{#each result.brief ?? [] as line, i (i)}<p class="viewer__brief">{line}</p>{/each}
 					{#each result.fails as fail, i (i)}<p class="viewer__fail">✗ {fail}</p>{/each}
 					{#each result.lints as l, i (i)}
 						<p class={l.severity === 'error' ? 'viewer__fail' : 'viewer__warn'}>
@@ -216,6 +219,10 @@ Pick a run and a case: its checks, lints and the judge's scores sit above the ch
 
 	.viewer__issue {
 		color: var(--xy-fg-faint);
+	}
+
+	.viewer__brief {
+		color: var(--xy-fg);
 	}
 
 	.viewer__heard pre {
