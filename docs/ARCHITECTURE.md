@@ -127,6 +127,15 @@ Claude.
   (`ListenHost` in the environment; `device/listen` in the browser) and hands the model the
   summary of `core/listen`; `listen_tracks` hears tracks alone through the mutes (CC9 on a device,
   through the transport) with approval, and puts every mute back in a `finally`.
+- **The lab** (`agent/lab`, `run_lab`, D12): the model's own program runs on forks of the replica
+  (`core.ts`: each fork a simulator with the virtual OP-XY's calls, the navigator and the keys; every
+  argument checked), in a fresh worker per program in the browser (`worker.ts`, locked down by
+  `lockdown.ts`: no network, storage, devices or new code, frozen built-ins) and in a `node:vm`
+  context in Node (`node.ts`). Listening renders forks through `sound/offline.ts` on the page.
+  Commits land after the program, as a three-way merge (`apply.ts`) kept as an undo point; the
+  tool hands its inverse back with its result, so the journal undoes it like any change. The
+  worker and the Node host import `app/virtual` as composition roots, as `agent/runtime.ts` does.
+  The model's guide is `knowledge/skills/lab/SKILL.md`, whose examples a test runs.
 
 ## Rules
 

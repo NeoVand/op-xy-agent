@@ -150,7 +150,10 @@ describe('Conversation (browser)', () => {
 		expect(live?.querySelector('.chip__nested')?.textContent).toMatch(/search manual/);
 		expect(container.querySelector('.act')?.textContent).toMatch(/manual expert/);
 		await run;
-		const chip = container.querySelector<HTMLDetailsElement>('.conv__item--tool details');
+		// the task's chip (the teaching skill the app added comes first)
+		const chip = [
+			...container.querySelectorAll<HTMLDetailsElement>('.conv__item--tool details')
+		].find((d) => /manual expert/.test(d.textContent ?? ''));
 		expect(chip?.open).toBe(false);
 		expect(chip?.textContent).toMatch(/manual expert answered/);
 	});

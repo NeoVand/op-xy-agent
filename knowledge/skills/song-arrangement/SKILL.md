@@ -34,7 +34,9 @@ Muting tracks in a scene is often cleaner than writing empty patterns.
 
 Write the patterns a section needs (a variation is usually a copy with a few changes: a fill in the
 last bar, the bass up a fifth, the hats doubled), then the scenes, then the song order, then play from
-the top. Say the form in one line afterwards ("intro 4 bars, verse 8, chorus 8, break 4,
+the top. Variations made from what is already there (every part's copy, a breakdown's mutes) are
+easiest in one lab program, which reads the patterns, writes the copies and sets the scenes
+together, as one change the user can undo. Say the form in one line afterwards ("intro 4 bars, verse 8, chorus 8, break 4,
 chorus 8") and what changes at each boundary; do not list every pattern.
 
 The manual's recipe for a song from scenes is [howto.song-from-scenes].

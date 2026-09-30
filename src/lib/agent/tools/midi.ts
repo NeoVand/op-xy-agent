@@ -103,6 +103,53 @@ function restOthers(virtual: VirtualOpxy, imported: ReadonlySet<number>) {
 	return { rests, playing };
 }
 
+/** What writing an import plan did beyond the plan itself. */
+export interface ImportWrite {
+	/** Tracks the import left out, each resting on an empty pattern during the song. */
+	readonly rests: readonly { readonly track: number; readonly pattern: number }[];
+	/** Tracks left out that keep playing their pattern 1 (16 patterns, none empty). */
+	readonly playing: readonly number[];
+	/** The metronome was on and is off now. */
+	readonly clickOff: boolean;
+}
+
+/**
+ * Writes an import plan onto a virtual OP-XY (import_midi's, and the lab's on a fork): the tempo,
+ * the patterns at track scale 1 (a step is a sixteenth, as the file's notes were placed), the
+ * tracks left out resting unless `keepOthers`, the scenes and the song, and the metronome off, so
+ * the song plays without the click (a new project has it on).
+ * @throws {Error} what the virtual OP-XY refused, part way through
+ */
+export function writeImport(
+	virtual: VirtualOpxy,
+	plan: ImportPlan,
+	options: { readonly keepOthers?: boolean } = {}
+): ImportWrite {
+	const clickOff = virtual.status().metronome === true;
+	virtual.setTempo(Math.min(220, Math.max(40, plan.bpm)));
+	if (clickOff) virtual.setMetronome(false);
+	for (const p of plan.patterns) {
+		virtual.writePattern(p.track, {
+			pattern: p.pattern,
+			bars: p.bars,
+			length: p.length,
+			scale: 1,
+			notes: p.notes
+		});
+	}
+	const others = options.keepOthers
+		? { rests: [], playing: [] }
+		: restOthers(virtual, new Set(plan.tracks.map((t) => t.to)));
+	virtual.writeArrangement({
+		scenes: plan.scenes.map((s) => ({
+			scene: s.scene,
+			patterns: [...s.patterns, ...others.rests]
+		})),
+		song: { order: plan.song, loop: true }
+	});
+	return { ...others, clickOff };
+}
+
 export const importMidiTool = defineTool({
 	name: 'import_midi',
 	label: 'import midi',
@@ -199,30 +246,9 @@ export const importMidiTool = defineTool({
 		}
 		const virtual = ctx.env.virtual;
 		if (!virtual) return errorResult('There is no replica in this session.', 'no replica');
-		let others: ReturnType<typeof restOthers> = { rests: [], playing: [] };
-		// a song plays without the click (a new project has the metronome on)
-		const clickWasOn = virtual.status().metronome === true;
+		let written: ImportWrite;
 		try {
-			virtual.setTempo(Math.min(220, Math.max(40, plan.bpm)));
-			if (clickWasOn) virtual.setMetronome(false);
-			for (const p of plan.patterns) {
-				// track scale 1: a step is a sixteenth, as the file's notes were placed
-				virtual.writePattern(p.track, {
-					pattern: p.pattern,
-					bars: p.bars,
-					length: p.length,
-					scale: 1,
-					notes: p.notes
-				});
-			}
-			if (!input.keep_others) others = restOthers(virtual, new Set(plan.tracks.map((t) => t.to)));
-			virtual.writeArrangement({
-				scenes: plan.scenes.map((s) => ({
-					scene: s.scene,
-					patterns: [...s.patterns, ...others.rests]
-				})),
-				song: { order: plan.song, loop: true }
-			});
+			written = writeImport(virtual, plan, { keepOthers: input.keep_others });
 		} catch (error) {
 			return errorResult(
 				`The import stopped part way: ${error instanceof Error ? error.message : String(error)}`,
@@ -232,17 +258,17 @@ export const importMidiTool = defineTool({
 		return jsonResult(
 			{
 				imported: view,
-				...(others.rests.length
+				...(written.rests.length
 					? {
-							resting: `track${others.rests.length === 1 ? '' : 's'} ${others.rests.map((r) => r.track).join(', ')} rest during the song (their own patterns are kept)`
+							resting: `track${written.rests.length === 1 ? '' : 's'} ${written.rests.map((r) => r.track).join(', ')} rest during the song (their own patterns are kept)`
 						}
 					: {}),
-				...(others.playing.length
+				...(written.playing.length
 					? {
-							stillPlaying: `track${others.playing.length === 1 ? '' : 's'} ${others.playing.join(', ')} keep playing their pattern 1 in every scene (16 patterns, none empty): mute ${others.playing.length === 1 ? 'it' : 'them'} if the song should play alone`
+							stillPlaying: `track${written.playing.length === 1 ? '' : 's'} ${written.playing.join(', ')} keep playing their pattern 1 in every scene (16 patterns, none empty): mute ${written.playing.length === 1 ? 'it' : 'them'} if the song should play alone`
 						}
 					: {}),
-				...(clickWasOn
+				...(written.clickOff
 					? {
 							metronome:
 								'switched off, so the song plays without the click (the tempo page’s click E4 brings it back; a duck with the metronome as source still pumps on the beat)'

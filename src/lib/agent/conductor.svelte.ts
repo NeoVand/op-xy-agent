@@ -46,6 +46,7 @@ import {
 	type ModelQuirks,
 	type Transcript
 } from './loop';
+import type { LabHost } from './lab/host';
 import type { ListenHost } from './listen-host';
 import type { ManualEntry, ManualSource, ManualSourceKind } from './manual-source';
 import { DEFAULT_CONDUCTOR_MODEL, modelOptions, type ModelOption } from './models';
@@ -111,6 +112,8 @@ export interface ConductorOptions {
 	readonly projects?: ProjectHost | null;
 	/** Listening to the OP-XY or the replica (listen, listen_tracks); absent when headless. */
 	readonly listen?: ListenHost | null;
+	/** Runs the model's programs on forks of the replica (run_lab); absent when headless. */
+	readonly lab?: LabHost | null;
 	readonly manual: ManualSource;
 	readonly store: ThreadStore;
 	/** Remembers the last thread and the chosen model; memory-only when absent. */
@@ -338,6 +341,7 @@ export class Conductor {
 			},
 			listen: options.listen ?? null,
 			memory: options.memory ?? null,
+			lab: options.lab ?? null,
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,
@@ -640,6 +644,7 @@ export class Conductor {
 	dispose(): void {
 		this.#disposed = true;
 		this.stop();
+		this.#env.lab?.dispose?.();
 		this.#listeners.clear();
 		this.#journal.onChange(null);
 		this.#queue.onChange(null);

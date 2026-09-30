@@ -9,8 +9,11 @@ import { createVirtualOpxy, type VirtualSound } from '$lib/app/virtual';
 import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
 import { describeFrame } from '$lib/sim/screen/render';
+import { SampleRegistry } from '$lib/sound/samples';
 import { createAnthropicClient } from './client';
 import { Conductor, type PreferenceStore } from './conductor.svelte';
+import type { LabRenderer } from './lab/core';
+import { BrowserLabHost } from './lab/host';
 import { loadManualSource } from './manual-source';
 import type { ListenHost } from './listen-host';
 import { createIdbThreadStore } from './threads';
@@ -39,6 +42,28 @@ export interface BrowserConductorOptions {
 	readonly projects?: ProjectHost | null;
 	/** Listening (from `createBrowserCapture`, below): the OP-XY's USB audio or the replica's sound. */
 	readonly listen?: ListenHost | null;
+	/** The audio of the replica's sample files (the sound's registry), for the lab's listening. */
+	readonly samples?: SampleRegistry | null;
+}
+
+/** The sample rate the lab renders at (the eval's ears use the same). */
+const LAB_SAMPLE_RATE = 48_000;
+
+/**
+ * The lab's ears: a fork rendered offline through the replica's own sound, on this page (the lab's
+ * worker has no audio). The engine's chunk loads on the first listen.
+ */
+function labRenderer(samples: SampleRegistry | null): LabRenderer | null {
+	if (typeof OfflineAudioContext === 'undefined') return null;
+	return {
+		async render(request) {
+			const { renderOffline } = await import('$lib/sound/offline');
+			return renderOffline(
+				{ ...request, sampleRate: LAB_SAMPLE_RATE },
+				samples ?? new SampleRegistry()
+			);
+		}
+	};
 }
 
 /** read_screen's view of the simulator: the page in words plus where the interface stands. */
@@ -112,6 +137,13 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 		presets: options.presets ?? null,
 		projects: options.projects ?? null,
 		listen: options.listen ?? null,
+		lab: options.simulator
+			? new BrowserLabHost({
+					sim: options.simulator.sim,
+					changed: () => options.persistence?.markDirty(),
+					render: labRenderer(options.samples ?? null)
+				})
+			: null,
 		manual,
 		store: createIdbThreadStore(),
 		memory: createIdbMemoryStore(),

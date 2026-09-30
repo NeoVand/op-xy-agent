@@ -38,6 +38,10 @@ beat, a backbeat is the snare on 2 and 4. Velocity per step is a step component
 A kit made from generated sounds can be put straight onto a drum track, so a beat written there
 plays with it at once.
 
+Many edits at once (the whole song transposed, the hats of every pattern humanised, a variation of
+each part) are one lab program, exact to the note and one change to undo; the lab skill has the
+shapes. A pattern or two are clearer written directly.
+
 ## Say what you made
 
 Describe what you made from what the write returned, not from what you meant: a drum pattern comes

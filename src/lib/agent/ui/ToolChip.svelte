@@ -58,9 +58,15 @@ the full answer.
 	const asked = $derived(inputSummary(entry.name, entry.input));
 	/** What it was asked while it runs; what came of it once it is done. */
 	const summary = $derived(running ? asked : entry.summary || asked);
-	const input = $derived(
-		entry.input === null || entry.input === undefined ? '' : JSON.stringify(entry.input, null, 1)
-	);
+	/** The exact input; a lab program's code as it reads, after the other fields. */
+	const input = $derived.by(() => {
+		const value = entry.input;
+		if (value === null || value === undefined) return '';
+		const fields = typeof value === 'object' ? (value as Record<string, unknown>) : null;
+		if (typeof fields?.code !== 'string') return JSON.stringify(value, null, 1);
+		const rest = Object.fromEntries(Object.entries(fields).filter(([key]) => key !== 'code'));
+		return `${JSON.stringify(rest, null, 1)}\n\n${fields.code}`;
+	});
 	const nestedTools = $derived(nested.filter((e) => e.kind === 'tool'));
 	const nestedText = $derived(
 		nested

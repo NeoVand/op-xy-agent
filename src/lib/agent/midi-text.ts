@@ -36,7 +36,8 @@ function pitch(note: FileNote): string {
 	return noteName(note.note, { ascii: true });
 }
 
-function range(lowest: number | null, highest: number | null, drums: boolean): string {
+/** A track's range: "C2–G4", or drum note numbers ("notes 36–42"); '' without notes. */
+export function pitchRange(lowest: number | null, highest: number | null, drums: boolean): string {
 	if (lowest === null || highest === null) return '';
 	if (drums) return lowest === highest ? `note ${lowest}` : `notes ${lowest}–${highest}`;
 	const name = (n: number) => noteName(n, { ascii: true });
@@ -79,9 +80,10 @@ const gridKey = (n: FileNote, pitchClass: boolean) =>
  * semitones or more, two notes a bar or more where it plays), other single notes or chords, a
  * track it doubles (nine in ten of its notes also in an earlier track, same grid step and pitch or
  * pitch class), and the melody lines it takes turns with (under a tenth of their bars shared), which
- * are often one melody split between a verse track and a chorus track.
+ * are often one melody split between a verse track and a chorus track. Keyed by the track's 0-based
+ * index; tracks without notes are left out.
  */
-function trackShapes(read: MidiFileNotes): Map<number, string[]> {
+export function trackShapes(read: MidiFileNotes): Map<number, string[]> {
 	const byTrack = read.tracks.map((t) => read.notes.filter((n) => n.track === t.index));
 	const barsOf = byTrack.map((notes) => notes.map((n) => barPosition(n.start, read.meters).bar));
 	const drums = read.tracks.map(
@@ -191,7 +193,7 @@ function header(read: MidiFileNotes, name: string, bars: number): string[] {
 		parts.push(
 			track.noteCount === 0
 				? 'no notes'
-				: `${track.noteCount} note${track.noteCount === 1 ? '' : 's'}, ${range(track.lowest, track.highest, drums)}`
+				: `${track.noteCount} note${track.noteCount === 1 ? '' : 's'}, ${pitchRange(track.lowest, track.highest, drums)}`
 		);
 		parts.push(...(shapes.get(track.index) ?? []));
 		lines.push(`- track ${track.index + 1}${quote(track.name)}: ${parts.join(', ')}`);

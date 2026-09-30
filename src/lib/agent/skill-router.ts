@@ -63,6 +63,8 @@ export function routeSkills(input: RouteInput): string[] {
 		if (when && !wanted.includes(name)) wanted.push(name);
 	};
 	want('midi-to-opxy', kinds.includes('midi'));
+	// a file's parts are arranged by comparing mappings in one program
+	want('lab', kinds.includes('midi'));
 	want('sheet-music-and-images', kinds.includes('image') || kinds.includes('pdf'));
 	// A question gets the teaching skill at most, and the sound skill when it is about how something
 	// sounds: a topic skill beside it invites the extras a question did not ask for (the preset

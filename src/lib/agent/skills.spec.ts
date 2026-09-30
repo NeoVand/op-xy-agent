@@ -31,8 +31,9 @@ describe('the shipped skills', () => {
 	});
 
 	it('only show key combinations that parse', () => {
+		// inline code only: a fenced block (a program, a grid) holds no key combos
 		const combos = SKILLS.flatMap((s) =>
-			[...s.body.matchAll(/`([^`]+)`/g)].map((m) => m[1])
+			[...s.body.replace(/```[\s\S]*?```/g, '').matchAll(/`([^`]+)`/g)].map((m) => m[1])
 		).filter((c) => /\+|→|^hold |^turn |^click /.test(c));
 		expect(combos.length).toBeGreaterThan(5);
 		for (const combo of combos) expect(tryParseKeys(combo).ok, combo).toBe(true);
@@ -108,7 +109,7 @@ describe('routing', () => {
 		]);
 		expect(route('make the bass pump with the kick')).toEqual(['shape-a-sound']);
 		expect(route('love it. put it on my op-xy')).toEqual(['projects-and-the-device']);
-		expect(route('here is a song I like', ['midi'])[0]).toBe('midi-to-opxy');
+		expect(route('here is a song I like', ['midi'])).toEqual(['midi-to-opxy', 'lab']);
 		expect(route('can you play this', ['image'])).toEqual(['sheet-music-and-images']);
 		expect(route('thanks!')).toEqual([]);
 		expect(route('I just got this. Can you make something cool I can jam over?')).toEqual([

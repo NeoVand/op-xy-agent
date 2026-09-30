@@ -40,8 +40,10 @@ line is the lead even when its program says pad or organ.
 - Leave out doubles (two tracks playing the same notes) first, and then only what still does not
   fit. When a part is left out for room, say that tracks 1 and 2 only take drums.
 
-When the choice is close, preview both mappings and compare how much of each part plays as
-written; import the better one.
+When the choice is close, compare the mappings in one lab program rather than previewing them one
+by one: plan each, score how much of each part plays as written, write the better one and commit it
+(the lab skill's first example). The program's result says what landed, so the song still plays
+straight away.
 
 ## What to tell the user
 

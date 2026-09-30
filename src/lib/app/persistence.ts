@@ -19,6 +19,7 @@ import { PRESET_CATEGORIES, SNAPSHOT_FOLDER } from '$lib/sim/areas/system/catalo
 import { restore, snapshot } from '$lib/sim/areas/system/projects';
 import type { SystemState } from '$lib/sim/areas/system/state';
 import { DEFAULT_LEVEL, defaultState, type SimState } from '$lib/sim/params';
+import { settleSession } from '$lib/sim/session';
 
 /**
  * Bumped when a save can no longer simply be merged onto the defaults; older versions that can be
@@ -279,36 +280,10 @@ export function captureSim(state: SimState, now = Date.now()): SavedSim {
 }
 
 /**
- * Clears what only means something mid-gesture, so reloaded work starts idle like a booted device:
- * the sequencer's gestures, clipboards and undo; queued, armed or half-typed scenes and a playing
- * song; an open effect list; the mixer's send popup; the recorder, an open slicer and the library
- * cursor.
+ * Clears what only means something mid-gesture, so reloaded work starts idle like a booted device
+ * (the fields are listed in `sim/session.ts`, which the lab's forks share).
  */
-export function settleSession(state: SimState): void {
-	const fresh = defaultState().areas;
-	const areas = state.areas;
-	areas.sequencer = fresh.sequencer;
-	Object.assign(areas.arrange, {
-		view: fresh.arrange.view,
-		queued: null,
-		armed: false,
-		entry: null,
-		playing: false,
-		position: 0,
-		cue: null,
-		clipboard: fresh.arrange.clipboard
-	});
-	areas.auxiliary.picker = null;
-	// a send popup that was up when the work was saved
-	areas.mixer.sendPopup = 0;
-	Object.assign(areas.sample, {
-		record: fresh.sample.record,
-		slicer: null,
-		page: fresh.sample.page,
-		library: fresh.sample.library,
-		clipboard: null
-	});
-}
+export { settleSession };
 
 /**
  * Puts saved work back into `state` (merged onto the defaults, gestures idle). Returns false,
