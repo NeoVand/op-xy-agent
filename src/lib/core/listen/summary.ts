@@ -98,6 +98,8 @@ export interface SummaryData {
 		readonly swing: number | null;
 		readonly swingEighth: number | null;
 	} | null;
+	/** The pump heard (a duck), dB and where in the beat the level is lowest. */
+	readonly pump: { readonly depthDb: number; readonly lowAt: number } | null;
 	readonly drums: Readonly<
 		Partial<
 			Record<
@@ -261,6 +263,7 @@ function dataOf(a: ListenAnalysis, focus: ListenFocus): SummaryData {
 					swingEighth: grid?.swingEighth ?? null
 				}
 			: null,
+		pump: a.pump ? { depthDb: a.pump.depthDb, lowAt: r2(a.pump.lowAt) } : null,
 		drums: a.rhythm?.drums
 			? Object.fromEntries(
 					(['low', 'mid', 'high'] as const)
@@ -410,6 +413,11 @@ function rhythmLine(a: ListenAnalysis, detail: boolean): string | null {
 	return `rhythm: ${parts.join('; ')}`;
 }
 
+function pumpLine(a: ListenAnalysis): string | null {
+	if (!a.pump) return null;
+	return `pump: after each beat the level falls ${r1(a.pump.depthDb)} dB and swells back before the next, as a duck makes it`;
+}
+
 function drumsLine(a: ListenAnalysis): string | null {
 	const d = a.rhythm?.drums;
 	if (!d) return null;
@@ -475,15 +483,16 @@ export function summarize(analysis: ListenAnalysis, options: SummaryOptions = {}
 		tone: toneLine(analysis, focus === 'tone'),
 		stereo: stereoLine(analysis),
 		rhythm: rhythmLine(analysis, focus === 'tempo' || focus === 'drums'),
+		pump: pumpLine(analysis),
 		drums: drumsLine(analysis),
 		harmony: harmonyLine(analysis, focus === 'harmony'),
 		silence: silenceLine(analysis)
 	};
 	const order: Record<ListenFocus, readonly string[]> = {
-		all: ['level', 'tone', 'stereo', 'rhythm', 'drums', 'harmony', 'silence'],
-		mix: ['level', 'tone', 'stereo', 'silence', 'rhythm'],
-		drums: ['rhythm', 'drums', 'level', 'tone', 'silence'],
-		tempo: ['rhythm', 'drums', 'silence'],
+		all: ['level', 'tone', 'stereo', 'rhythm', 'pump', 'drums', 'harmony', 'silence'],
+		mix: ['level', 'pump', 'tone', 'stereo', 'silence', 'rhythm'],
+		drums: ['rhythm', 'pump', 'drums', 'level', 'tone', 'silence'],
+		tempo: ['rhythm', 'pump', 'drums', 'silence'],
 		harmony: ['harmony', 'level', 'silence'],
 		tone: ['tone', 'level', 'stereo', 'silence']
 	};
@@ -550,6 +559,7 @@ export function summarizeTracks(
 					`${a.rhythm.onsets} onsets${g ? `, grid ${r1(g.tightnessMs)} ms rms` : ''}${g?.swing !== null && g?.swing !== undefined && Math.abs(g.swing - 50) >= 2 ? `, swing ${r1(g.swing)} %` : ''}`
 				);
 			}
+			if (a.pump) parts.push(`pumps with the beat, ${r1(a.pump.depthDb)} dB`);
 			const harmony = take.percussive ? null : a.harmony;
 			const chords = harmony?.chords.filter((c) => c.chord !== 'N') ?? [];
 			if (harmony?.key?.clear) parts.push(`key ${harmony.key.key}`);

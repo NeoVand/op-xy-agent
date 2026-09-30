@@ -28,8 +28,10 @@ import { prepareAttachment, type PreparedAttachment } from '$lib/agent/attachmen
 import { entryId, type ChatEntry } from '$lib/agent/chat';
 import { createAnthropicClient } from '$lib/agent/client';
 import { Conductor } from '$lib/agent/conductor.svelte';
+import { createNodeLabHost } from '$lib/agent/lab/node';
 import type { ListenHost } from '$lib/agent/listen-host';
 import { loadManualSource, type ManualSource } from '$lib/agent/manual-source';
+import { createMemoryStore } from '$lib/agent/memory';
 import { createMemoryThreadStore, type ThreadStore } from '$lib/agent/threads';
 import type { ScreenReader } from '$lib/agent/tools';
 import type { VirtualOpxy } from '$lib/agent/virtual-opxy';
@@ -50,6 +52,7 @@ import {
 } from './changes';
 import { heardInWords, parseUserKeys, playUserKeys, userView, type UserKeys } from './hands';
 import { anthropicKey, openaiKey } from './key';
+import { evalAgentModes } from './modes';
 import { attachResults, writeIndex, type TraceCall } from './saved';
 import { openEars, type Ears } from './render';
 import {
@@ -245,7 +248,10 @@ async function environment(e: Episode, opts: Options): Promise<Env> {
 	});
 	const store = createMemoryThreadStore();
 	const listen = opts.ears?.host(sim, files) ?? null;
+	// the app's agent: the lab on the replica (heard through the same ears) and a memory
+	const lab = createNodeLabHost({ sim, render: opts.ears?.renderer(files) ?? null });
 	const conductor = await Conductor.create({
+		...evalAgentModes(),
 		client: createAnthropicClient({ apiKey: opts.apiKey }),
 		device: null,
 		replica,
@@ -260,6 +266,8 @@ async function environment(e: Episode, opts: Options): Promise<Env> {
 			}
 		},
 		listen,
+		lab,
+		memory: createMemoryStore(),
 		manual: opts.manual,
 		store,
 		autoApprove: true,

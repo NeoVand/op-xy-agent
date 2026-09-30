@@ -28,7 +28,7 @@ describe('device_map', () => {
 			id: 'instrument.m4.duck',
 			track: 3,
 			keys: 'T3, M4, shift + M4, turn E1 ×3 counter-clockwise, click E1',
-			screen: 'duck lfo: source 1 (audio), amount 0',
+			screen: 'duck lfo: source 1 (audio), amount 0, hold 50, release 50',
 			manual: ['instrument.lfo-duck', 'instrument.lfo']
 		});
 		expect(duck.controls[0]).toBe(

@@ -2210,7 +2210,7 @@
 					"keys": "click E1"
 				}
 			],
-			"screen": "duck lfo: source 1 (audio), amount 0",
+			"screen": "duck lfo: source 1 (audio), amount 0, hold 50, release 50",
 			"units": [
 				"instrument.lfo-duck",
 				"instrument.lfo"
@@ -2277,7 +2277,59 @@
 						"first": "00",
 						"last": "99",
 						"detents": 99,
-						"step": 1
+						"step": 1,
+						"shows": [
+							{
+								"from": "00",
+								"to": "00",
+								"shows": "0"
+							},
+							{
+								"from": "01",
+								"to": "01",
+								"shows": "1"
+							},
+							{
+								"from": "02",
+								"to": "02",
+								"shows": "2"
+							},
+							{
+								"from": "03",
+								"to": "03",
+								"shows": "3"
+							},
+							{
+								"from": "04",
+								"to": "04",
+								"shows": "4"
+							},
+							{
+								"from": "05",
+								"to": "05",
+								"shows": "5"
+							},
+							{
+								"from": "06",
+								"to": "06",
+								"shows": "6"
+							},
+							{
+								"from": "07",
+								"to": "07",
+								"shows": "7"
+							},
+							{
+								"from": "08",
+								"to": "08",
+								"shows": "8"
+							},
+							{
+								"from": "09",
+								"to": "09",
+								"shows": "9"
+							}
+						]
 					},
 					"midi": {
 						"cc": 42,
@@ -2298,7 +2350,59 @@
 						"first": "00",
 						"last": "99",
 						"detents": 99,
-						"step": 1
+						"step": 1,
+						"shows": [
+							{
+								"from": "00",
+								"to": "00",
+								"shows": "0"
+							},
+							{
+								"from": "01",
+								"to": "01",
+								"shows": "1"
+							},
+							{
+								"from": "02",
+								"to": "02",
+								"shows": "2"
+							},
+							{
+								"from": "03",
+								"to": "03",
+								"shows": "3"
+							},
+							{
+								"from": "04",
+								"to": "04",
+								"shows": "4"
+							},
+							{
+								"from": "05",
+								"to": "05",
+								"shows": "5"
+							},
+							{
+								"from": "06",
+								"to": "06",
+								"shows": "6"
+							},
+							{
+								"from": "07",
+								"to": "07",
+								"shows": "7"
+							},
+							{
+								"from": "08",
+								"to": "08",
+								"shows": "8"
+							},
+							{
+								"from": "09",
+								"to": "09",
+								"shows": "9"
+							}
+						]
 					},
 					"midi": {
 						"cc": 43,

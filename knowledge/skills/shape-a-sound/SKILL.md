@@ -40,7 +40,9 @@ The source is a track or the metronome.
   ducks on every hat too. The metronome as source pumps on every beat instead, which is what a
   four-on-the-floor kick wants. With a kick on its own track, that track is the natural source.
 - Hear a duck in the whole mix. Hearing tracks one at a time mutes the others, the source too, so
-  the duck does not move there; that is no sign it does not work.
+  the duck does not move there; that is no sign it does not work. Listening names a pump it hears
+  (how far the level falls after each beat and swells back); short, gapped bass notes show little
+  of one, a held note all of it.
 - On the replica a metronome duck pumps whether the click is on or off. Whether the unit does the
   same with its click off has not been checked; do not claim either way for the unit.
 - A track has one LFO, so a duck replaces the LFO its sound had. In a new project only the bass on

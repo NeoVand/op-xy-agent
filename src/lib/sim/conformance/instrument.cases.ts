@@ -1393,7 +1393,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await lfo(d, 'duck');
 			await d.withShift(() => d.turn(1, 1));
-			expect(d.screen()).toBe('duck lfo: source 1 (notes), amount 0');
+			expect(d.screen()).toBe('duck lfo: source 1 (notes), amount 0, hold 50, release 50');
 			await d.withShift(() => d.turn(1, -1));
 			expect(on(d, 'lfo')).toMatchObject({ source: '1', sourceAudio: true });
 		});

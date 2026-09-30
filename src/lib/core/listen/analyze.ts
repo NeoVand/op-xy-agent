@@ -16,6 +16,7 @@ import {
 } from './harmony';
 import { levelStats, type LevelStats } from './level';
 import { detectOnsets, type OnsetBand } from './onsets';
+import { pumpStats, type PumpStats } from './pump';
 import { silenceStats, type SilenceStats } from './silence';
 import { spectrumStats, type SpectrumStats } from './spectrum';
 import { stereoStats, type StereoStats } from './stereo';
@@ -66,6 +67,8 @@ export interface ListenAnalysis {
 	readonly spectrum: SpectrumStats | null;
 	readonly stereo: StereoStats | null;
 	readonly rhythm: RhythmStats | null;
+	/** The level falling after each beat and swelling back (a duck), when heard. */
+	readonly pump: PumpStats | null;
 	readonly harmony: HarmonyStats | null;
 }
 
@@ -102,7 +105,7 @@ export function analyzeAudio(
 	const silence = silenceStats(channels, sampleRate);
 	const base = { sampleRate, seconds: n / sampleRate, channels: channels.length, level, silence };
 	if (silence.silent) {
-		return { ...base, spectrum: null, stereo: null, rhythm: null, harmony: null };
+		return { ...base, spectrum: null, stereo: null, rhythm: null, pump: null, harmony: null };
 	}
 
 	const onsets = detectOnsets(channels, sampleRate);
@@ -122,6 +125,11 @@ export function analyzeAudio(
 				high: beatPositions(onsets.bands.high, grid.bpm, grid.phase)
 			}
 		: null;
+
+	// the pump at the grid's tempo (a held pad has none: the set tempo), from where the level bites:
+	// a ducked part's onsets are its swells back, so the grid's own phase can sit on those
+	const pumpBpm = grid?.bpm ?? expectedBpm;
+	const pump = pumpBpm ? pumpStats(channels, sampleRate, pumpBpm, null) : null;
 
 	const chroma = chromagram(channels, sampleRate);
 	const chords = grid
@@ -145,6 +153,7 @@ export function analyzeAudio(
 			grid,
 			drums
 		},
+		pump,
 		harmony: { key, chords: spelled }
 	};
 }

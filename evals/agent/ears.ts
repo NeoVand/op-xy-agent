@@ -2,7 +2,8 @@
  * A check of the eval's ears without the model: programs a beat on the replica with the agent's own
  * tools (a made kit on T1, drums, a bass line, chords), plays it, and prints what `listen` and
  * `listen_tracks` hand the agent, as the quality eval's agent would read it, then what a lab program
- * hears of two forks through the same ears. No API calls.
+ * hears of two forks through the same ears, and a held bass ducked on every beat (its pump). No API
+ * calls.
  *
  *   node evals/agent/ears.mjs [--stand-ins]   (--stand-ins: the replica's own kit, no made kit)
  */
@@ -14,6 +15,7 @@ import { listenTool, listenTracksTool } from '$lib/agent/tools/listen';
 import { makeKitTool } from '$lib/agent/tools/presets';
 import { writePatternTool } from '$lib/agent/tools/virtual';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { DUCK_METRONOME } from '$lib/sim/params';
 import type { SampleData } from '$lib/sound/samples';
 import { openEars } from './render';
 
@@ -122,6 +124,26 @@ export async function main(argv: readonly string[]): Promise<void> {
 		console.log(
 			`\n── lab: T3 at two cutoffs, heard offline (${result.ms} ms)\n${JSON.stringify(result.ok ? result.value : result.error)}`
 		);
+
+		// a pump: the bass held for the bar, ducked from the metronome (which fires with the click off
+		// and with the other tracks muted), heard alone and in the mix
+		await run(writePatternTool, {
+			track: 3,
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 1, note: 41, length: 16, velocity: 110 }]
+		});
+		Object.assign(sim.state.tracks[2].lfo, {
+			type: 'duck',
+			on: true,
+			source: DUCK_METRONOME,
+			amount: 80,
+			hold: 10,
+			release: 45
+		});
+		virtual.setMetronome(false);
+		say('listen, the bass ducked', await run(listenTool, { seconds: 4, focus: 'mix' }));
+		say('listen_tracks, the bass ducked', await run(listenTracksTool, { tracks: [3] }));
 	} finally {
 		await ears.close();
 	}

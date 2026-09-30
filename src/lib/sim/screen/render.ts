@@ -142,7 +142,12 @@ export function describeFrame(frame: ScreenFrame): string {
 		case 'lfo':
 			if (frame.type === 'duck') {
 				const kind = frame.sourceAudio === false ? 'notes' : 'audio';
-				return `duck lfo${frame.off ? ' off' : ''}: source ${frame.source} (${kind}), amount ${Math.round(frame.amount)}`;
+				// hold and release are drawn as the pulse's length and knee: read on their 0–99 lanes
+				const shape =
+					frame.hold === undefined || frame.release === undefined
+						? ''
+						: `, hold ${Math.round(frame.hold * 99)}, release ${Math.round(frame.release * 99)}`;
+				return `duck lfo${frame.off ? ' off' : ''}: source ${frame.source} (${kind}), amount ${Math.round(frame.amount)}${shape}`;
 			}
 			return (
 				`${frame.type} lfo${frame.off ? ' off' : ''}: ` +

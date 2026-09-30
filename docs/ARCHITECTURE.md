@@ -80,16 +80,31 @@ Claude.
   teaching and doing, skills, truthfulness, memory, writing, limits). It does not grow from single
   incidents: a fix goes into a skill, a tool's contract or code, and must move an eval.
 - **Skills** (`knowledge/skills/<name>/SKILL.md`, the Agent Skills format; `agent/skills.ts`): the
-  index sits in the system prompt, the `skill` tool loads a body, and `agent/skill-router.ts` adds
-  the skills a message clearly needs with it (at most two, once a thread, in the same system note as
-  the device update; a how-to question gets the teaching skill alone).
+  index sits in the system prompt, the `skill` tool loads a body (or a reference file beside it,
+  such as the lab's `examples.md`), and `agent/skill-router.ts` adds the skills a message clearly
+  needs with it (at most two, once a thread, in the same system note as the device update). A
+  question gets the teaching skill at most, and the sound skill when it is about how something
+  sounds; topic skills come with requests (routing on: 42/44 against 40/44 without).
 - **Manual**: the whole bundle stays in the cached system prompt (`manualMode: 'full'`); `'map'`
   (the units by id and title, the best three retrieved into each message) lost the A/B, 33/44
   against 41/44 on the quality suite, and stays for experiments (`EVAL_MANUAL_MODE=map`).
 - **Grounding** (`app/replica-diff.ts`, `VirtualOpxy.checkpoint()` / `changesSince()`): the replica
   is checkpointed when a message arrives; after each batch of tool results the loop's `afterTools`
   hook adds what changed since then, in words, to the same message, and the chat shows the same
-  list once the turn ends (`ChangesNote`).
+  list once the turn ends (`ChangesNote`), with undo: the turn is taken back three-way
+  (`sim/merge.ts` `takeBack`, `VirtualOpxy.revert(to, from)`), so what the user changed since
+  stays, and can be put back. A changed pattern says how its notes changed
+  (`sim/pattern-change.ts`: "up 2 semitones", "8 velocities 100 → 72–108").
+- **Reading back what was written** (`agent/pattern-reading.ts`): write_pattern and read_pattern
+  return a drum pattern as a grid (four steps a beat, X an accent, o a soft hit) and any other as
+  its bars and chords, spelled in the key its notes suggest, so the answer describes what the
+  pattern plays and a chord that came out wrong shows by its name.
+- **Demonstrations leave nothing behind**: `show_on_replica` waits for its animation, lets it be
+  seen, then puts the replica back (pages and selection too; not the transport), unless the user
+  took over while it played.
+- **Working notes**: a short line the model writes on the way to a tool call, or a draft the
+  closing answer restates, moves from the conversation to the progress notes the status line
+  shows (`agent/loop.ts` `isWorkingNote`, `restatesDraft`); the transcript keeps it as written.
 - **Memory** (`agent/memory.ts`, tool `memory`): files under `/memories` in IndexedDB (a map in
   tests and evals); the profile `/memories/user.md` comes with a conversation's first message. Our
   own tool with the API memory tool's commands, since the API's type brings a view-first round trip.
