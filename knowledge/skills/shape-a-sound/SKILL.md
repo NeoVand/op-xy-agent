@@ -22,7 +22,7 @@ signal taken away), and give no tips for states the reading does not show (the f
 ## Designing from an idea
 
 Work out the parameters and their values first; the manual's how-to recipes list ones that were
-tried. Then set them in one go with the key planner's settings list, so the user can watch it
+tried ([howto.acid-bass], [howto.pluck], [howto.pad-swell], [howto.wobble], [howto.sidechain-duck]). Then set them in one go with the key planner's settings list, so the user can watch it
 happen on the replica and the steps come back as keys. Put list picks first (engine or preset, filter
 type, LFO type), and an engine or preset first of all, because loading one resets the sound. With an
 OP-XY connected, the parameters MIDI reaches can be sent to it directly (the user approves each).

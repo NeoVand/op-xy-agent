@@ -19,6 +19,7 @@
  *
  * Real API calls with the owner's key from $ANTHROPIC_API_KEY or .env (never printed).
  */
+import { loadedSkills, messageTexts } from '$lib/agent/skills';
 import { createMemoryStore } from '$lib/agent/memory';
 import { evalAgentModes } from './modes';
 import Anthropic from '@anthropic-ai/sdk';
@@ -132,6 +133,8 @@ export interface CaseResult {
 	readonly error: string | null;
 	/** What the replica played when the agent was done (4 s through the eval's ears), if playing. */
 	readonly heard: { readonly text: string; readonly flags: readonly string[] } | null;
+	/** The skills the conversation held by the end (routed in or loaded). */
+	readonly skills?: readonly string[];
 }
 
 // ─── the environment ────────────────────────────────────────────────────────────────────────────
@@ -586,6 +589,7 @@ async function runCase(
 	}
 	const seconds = (performance.now() - started) / 1000;
 	await attachResults(env.store, trace);
+	const skills = await threadSkills(env.store);
 	const agentError =
 		error ??
 		(conductor.lastError ? `${conductor.lastError.code}: ${conductor.lastError.message}` : null);
@@ -651,7 +655,8 @@ async function runCase(
 		seconds,
 		calls: conductor.usage.calls,
 		error: agentError,
-		heard
+		heard,
+		skills
 	};
 	conductor.dispose();
 	return result;
@@ -673,6 +678,16 @@ async function hearEnd(env: Env): Promise<CaseResult['heard']> {
 			flags: []
 		};
 	}
+}
+
+/** The skills the saved threads hold (their markers), in name order. */
+async function threadSkills(store: ThreadStore): Promise<string[]> {
+	const names = new Set<string>();
+	for (const summary of await store.list()) {
+		const thread = await store.load(summary.id);
+		for (const name of loadedSkills(messageTexts(thread?.messages ?? []))) names.add(name);
+	}
+	return [...names].sort();
 }
 
 /** Fills in each call's result from the saved thread (tool_result blocks by tool_use id). */
@@ -762,7 +777,7 @@ function scorecard(results: readonly CaseResult[], model: string, judge: string)
 					.filter((t) => !t.nested)
 					.map((t) => t.name)
 					.join(' → ') || 'no tools'
-			}`
+			}${r.skills?.length ? `  [${r.skills.join(', ')}]` : ''}`
 		);
 		for (const f of r.fails) lines.push(`     ✗ ${f}`);
 		for (const l of r.lints)
