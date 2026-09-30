@@ -30,6 +30,11 @@ request: lazy, swung or laid back is the tempo page's groove and its amount. Wit
 pick one that suits the style (house 120–126, techno 128–135, hip hop and boom bap 85–95, lo-fi
 70–85, drum and bass 170–175).
 
+Musical words mean what a drummer or producer means: a fill fills its bar (sixteenths building in
+velocity into the next downbeat, toms at the end if you like), four-on-the-floor is a kick on every
+beat, a backbeat is the snare on 2 and 4. Velocity per step is a step component
+([sequencer.component-velocity]), not a parameter lock.
+
 A kit made from generated sounds can be put straight onto a drum track, so a beat written there
 plays with it at once.
 
