@@ -261,7 +261,8 @@ const LENGTH: Record<string, number> = {
 	compose: 1500,
 	kit: 1500,
 	multi: 1600,
-	edge: 900
+	edge: 900,
+	lab: 1200
 };
 
 /** Backticked text that looks like a key combo but is not one the chat can draw. */

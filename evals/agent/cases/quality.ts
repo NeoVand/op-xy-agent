@@ -5,6 +5,7 @@
  */
 import type { SampleInput } from '$lib/core/presets';
 import type { VirtualOpxy } from '$lib/agent/virtual-opxy';
+import { createVirtualOpxy } from '$lib/app/virtual';
 import { playStep } from '$lib/sim/navigator';
 import type { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import type { SimState } from '$lib/sim/params';
@@ -39,7 +40,7 @@ export interface Outcome {
 	readonly sent: readonly string[];
 }
 
-export type Category = 'docs' | 'show' | 'compose' | 'kit' | 'multi' | 'edge' | 'demo';
+export type Category = 'docs' | 'show' | 'compose' | 'kit' | 'multi' | 'edge' | 'demo' | 'lab';
 
 export interface QualityCase {
 	readonly id: string;
@@ -666,6 +667,161 @@ const DEMO: readonly QualityCase[] = [
 	}
 ];
 
+// ─── bulk changes (the lab's work; checked note for note) ──────────────────────────────────────
+
+/** A small song in D minor: drums on 1, bass on 3, a melody on 5, pad chords on 8; scenes 1 and 2. */
+const SONG = {
+	drums: [
+		...[1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 115, length: 1 })),
+		...[5, 13].map((step) => ({ step, note: 55, velocity: 105, length: 1 })),
+		...[1, 3, 5, 7, 9, 11, 13, 15].map((step) => ({ step, note: 61, velocity: 90, length: 1 }))
+	],
+	bass: [
+		{ step: 1, note: 38, velocity: 100, length: 2 },
+		{ step: 4, note: 38, velocity: 90, length: 1 },
+		{ step: 7, note: 45, velocity: 100, length: 2 },
+		{ step: 11, note: 41, velocity: 100, length: 2 },
+		{ step: 15, note: 43, velocity: 95, length: 2 }
+	],
+	melody: [
+		{ step: 1, note: 74, velocity: 100, length: 3 },
+		{ step: 5, note: 72, velocity: 95, length: 2 },
+		{ step: 7, note: 69, velocity: 95, length: 2 },
+		{ step: 9, note: 70, velocity: 100, length: 4 },
+		{ step: 13, note: 69, velocity: 90, length: 4 }
+	],
+	pad: [62, 65, 69].map((note) => ({ step: 1, note, velocity: 80, length: 16 }))
+};
+
+function writeSong(sim: OpxySim) {
+	const v = createVirtualOpxy({ sim });
+	v.writePattern(1, { pattern: 1, bars: 1, notes: SONG.drums });
+	v.writePattern(3, { pattern: 1, bars: 1, notes: SONG.bass });
+	v.writePattern(5, { pattern: 1, bars: 1, notes: SONG.melody });
+	v.writePattern(8, { pattern: 1, bars: 1, notes: SONG.pad });
+	const all = [1, 3, 5, 8].map((track) => ({ track, pattern: 1 }));
+	v.writeArrangement({
+		scenes: [
+			{ scene: 1, patterns: all },
+			{ scene: 2, patterns: all }
+		],
+		song: { order: [1, 2], loop: true }
+	});
+}
+
+/** A pattern's notes as "step:note" (pitch and place, not loudness), sorted. */
+const shape = (list: readonly { step: number; note: number }[], shift = 0) =>
+	list.map((n) => `${n.step}:${n.note + shift}`).sort();
+
+const LAB: QualityCase[] = [
+	{
+		id: 'lab-transpose',
+		category: 'lab',
+		setup: writeSong,
+		turns: ['Transpose the whole song up a whole step, to E minor. Leave the drums alone.'],
+		intent:
+			'Every pitched note of tracks 3, 5 and 8 up two semitones, each note where it was; the drums untouched; says it briefly.',
+		check(o) {
+			const fails: string[] = [];
+			const want: [number, readonly { step: number; note: number }[]][] = [
+				[3, SONG.bass],
+				[5, SONG.melody],
+				[8, SONG.pad]
+			];
+			for (const [track, notesWere] of want) {
+				if (shape(notes(o, track, 1)).join() !== shape(notesWere, 2).join()) {
+					fails.push(`track ${track} is not the same notes two semitones up`);
+				}
+			}
+			if (shape(notes(o, 1, 1)).join() !== shape(SONG.drums).join())
+				fails.push('the drums changed');
+			return fails;
+		}
+	},
+	{
+		id: 'lab-variation',
+		category: 'lab',
+		setup: writeSong,
+		turns: [
+			'Make a chorus version of the bassline: the same rhythm a fourth higher, as a new pattern, and use it in scene 2.'
+		],
+		intent:
+			"A new pattern on track 3 with the bass's rhythm five semitones up, scene 2 plays it, scene 1 keeps the original.",
+		check(o) {
+			const fails: string[] = [];
+			const scenes = o.virtual.readArrangement().scenes;
+			const two = scenes.find((s) => s.scene === 2)?.patterns[2];
+			const one = scenes.find((s) => s.scene === 1)?.patterns[2];
+			if (!two || two === one) fails.push('scene 2 does not play a new bass pattern');
+			else if (shape(notes(o, 3, two)).join() !== shape(SONG.bass, 5).join()) {
+				fails.push(`track 3 pattern ${two} is not the bassline a fourth up`);
+			}
+			if (one !== undefined && shape(notes(o, 3, one)).join() !== shape(SONG.bass).join()) {
+				fails.push('the original bassline changed');
+			}
+			return fails;
+		}
+	},
+	{
+		id: 'lab-humanize',
+		category: 'lab',
+		setup: writeSong,
+		turns: [
+			'The hats sound robotic. Humanize their velocities, somewhere between 70 and 110, without moving them.'
+		],
+		intent:
+			'The closed hats keep their steps; their velocities vary between 70 and 110; kick and snare untouched.',
+		check(o) {
+			const fails: string[] = [];
+			const hats = notes(o, 1, 1).filter((n) => n.note === 61);
+			if (hats.map((h) => h.step).join() !== [1, 3, 5, 7, 9, 11, 13, 15].join()) {
+				fails.push('the hats moved or changed in number');
+			}
+			if (hats.some((h) => h.velocity < 70 || h.velocity > 110))
+				fails.push('a hat velocity is outside 70–110');
+			if (new Set(hats.map((h) => h.velocity)).size < 4)
+				fails.push('the hat velocities barely vary');
+			const rest = notes(o, 1, 1).filter((n) => n.note !== 61);
+			if (shape(rest).join() !== shape(SONG.drums.filter((n) => n.note !== 61)).join()) {
+				fails.push('kick or snare changed');
+			}
+			return fails;
+		}
+	},
+	{
+		id: 'lab-breakdown',
+		category: 'lab',
+		setup: writeSong,
+		turns: [
+			'Add a breakdown between the two scenes: only the pad and the melody, no drums or bass. Then play the song.'
+		],
+		intent:
+			'A new scene where only tracks 5 and 8 sound (drums and bass silent: empty patterns or muted), between scenes 1 and 2 in the song; playing.',
+		check(o) {
+			const fails = playing(o);
+			const a = o.virtual.readArrangement();
+			const order = a.song.order;
+			const middle = order.find((s, i) => i > 0 && i < order.length - 1 && s !== 1 && s !== 2);
+			if (order[0] !== 1 || order.at(-1) !== 2 || middle === undefined) {
+				fails.push(`song ${order.join(' ')}: no new scene between 1 and 2`);
+				return fails;
+			}
+			const scene = a.scenes.find((s) => s.scene === middle);
+			if (!scene) return [...fails, `scene ${middle} is empty`];
+			const silent = (track: number) => notes(o, track, scene.patterns[track - 1]).length === 0;
+			const muted = (track: number) =>
+				o.state.areas.arrange.scenes[middle - 1]?.mix[track - 1]?.muted === true;
+			for (const track of [1, 3]) {
+				if (!silent(track) && !muted(track))
+					fails.push(`track ${track} still plays in the breakdown`);
+			}
+			for (const track of [5, 8])
+				if (silent(track)) fails.push(`track ${track} is silent in the breakdown`);
+			return fails;
+		}
+	}
+];
+
 export const QUALITY_CASES: readonly QualityCase[] = [
 	...DOCS,
 	...SHOW,
@@ -673,5 +829,6 @@ export const QUALITY_CASES: readonly QualityCase[] = [
 	...KIT,
 	...MULTI,
 	...EDGE,
-	...DEMO
+	...DEMO,
+	...LAB
 ];
