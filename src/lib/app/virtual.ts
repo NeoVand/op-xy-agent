@@ -33,6 +33,7 @@ import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { replicaChanges } from './replica-diff';
 import { AUX_NAMES, type SimState } from '$lib/sim/params';
+import { takeBack } from '$lib/sim/merge';
 import {
 	MAX_BARS,
 	MAX_NOTES,
@@ -422,6 +423,12 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 
 		checkpoint() {
 			return { state: JSON.stringify(s) };
+		},
+
+		revert(checkpoint) {
+			const reverted = takeBack(s, checkpoint.state, JSON.stringify(s));
+			if (reverted) changed();
+			return reverted;
 		},
 
 		changesSince(checkpoint) {

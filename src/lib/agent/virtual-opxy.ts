@@ -199,6 +199,11 @@ export interface VirtualOpxy {
 	checkpoint(): VirtualCheckpoint;
 	/** What changed since `checkpoint`, a line each in words; empty when nothing did. */
 	changesSince(checkpoint: VirtualCheckpoint): readonly string[];
+	/**
+	 * Puts the replica back as it was at `checkpoint`: its mode, pages and selected track as well as
+	 * its sounds, notes and mutes, but not the transport. Returns whether anything changed.
+	 */
+	revert(checkpoint: VirtualCheckpoint): boolean;
 }
 
 /** The replica at one moment (opaque: its state, serialized). */

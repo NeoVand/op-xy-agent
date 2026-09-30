@@ -6,7 +6,7 @@ import type { BetaSearchResultBlockParam } from '@anthropic-ai/sdk/resources/bet
 import { z } from 'zod';
 import { formatKeys, tryParseKeys } from '$lib/core/opxy';
 import type { Todo } from '../types';
-import { defineTool, errorResult, jsonResult, type ToolResultBlock } from './define';
+import { defineTool, errorResult, jsonResult, sleep, type ToolResultBlock } from './define';
 
 /** Splits text into citable paragraphs (the text block is the smallest unit a citation points at). */
 export function citableBlocks(text: string, maxBlocks = 12): { type: 'text'; text: string }[] {
@@ -103,12 +103,15 @@ export const readManualUnitTool = defineTool({
 	}
 });
 
+/** How long a demonstration's result stays on the replica before it goes back, ms. */
+export const DEMO_HOLD_MS = 1200;
+
 export const showOnReplicaTool = defineTool({
 	name: 'show_on_replica',
 	label: 'show on replica',
 	kind: 'ui',
 	description:
-		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"). The keys play from wherever the replica stands and really move it, as a press would: start with the track key when the user names a track, and write the same steps in your answer as you showed. Sends nothing to the device. When the user asks how to do something on the device, play the main combination once, before you write the answer, and do not mention that you did.',
+		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"). The keys play from wherever the replica stands, as presses would (start with the track key when the user names a track, and write the same steps in your answer as you showed); once the result has been seen the replica goes back to where it was, so the user can try it from there, and the call returns then. Nothing stays changed: to leave the replica changed, use the key planner with show. Sends nothing to the device. When the user asks how to do something on the device, play the main combination once, before you write the answer, and do not mention that you did.',
 	input: z.object({
 		keys: z.string().min(1).max(120).describe('One key combo in the key grammar'),
 		caption: z.string().max(160).optional().describe('What the combo does, in a few words')
@@ -130,10 +133,47 @@ export const showOnReplicaTool = defineTool({
 			);
 		}
 		ctx.env.guide?.stop();
+		// A demonstration leaves nothing behind (docs/research episodes: a demo that muted track 2
+		// or entered a kick left the user's own try starting from somewhere else). Unless the user
+		// takes over while it plays: then what they did stays.
+		const virtual = ctx.env.virtual;
+		const before = virtual?.checkpoint() ?? null;
+		let tookOver = false;
+		const stop = replica.subscribe((event) => {
+			if (event.source === 'pointer' || event.source === 'keyboard') tookOver = true;
+		});
 		const handle = replica.animate(parsed.value);
+		const onAbort = () => handle.cancel();
+		ctx.signal.addEventListener('abort', onAbort, { once: true });
+		let outcome: 'finished' | 'cancelled';
+		try {
+			outcome = await handle.done;
+			if (outcome === 'finished') await sleep(DEMO_HOLD_MS, ctx.env.timers, ctx.signal);
+		} catch {
+			outcome = 'cancelled';
+		} finally {
+			ctx.signal.removeEventListener('abort', onAbort);
+			stop();
+		}
+		// a demo cut short by another one is the other's to put back
+		const putBack =
+			before !== null &&
+			!tookOver &&
+			(outcome === 'finished' || ctx.signal.aborted) &&
+			virtual!.revert(before);
+		const caption = input.caption ? `${keys}: ${input.caption}` : `showed ${keys}`;
 		return jsonResult(
-			{ shown: true, keys, seconds: Math.round(handle.plan.duration / 100) / 10 },
-			input.caption ? `${keys}: ${input.caption}` : `showing ${keys}`
+			{
+				shown: outcome === 'finished',
+				keys,
+				seconds: Math.round(handle.plan.duration / 100) / 10,
+				replica: putBack
+					? 'back where it was: the user can try it from there'
+					: tookOver
+						? 'the user took over while it played; what they did stays'
+						: 'unchanged'
+			},
+			caption
 		);
 	}
 });

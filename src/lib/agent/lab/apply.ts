@@ -15,79 +15,8 @@
 import type { ProjectContent } from '$lib/sim/areas/system/projects';
 import { snapshot } from '$lib/sim/areas/system/projects';
 import type { SimState } from '$lib/sim/params';
+import { mergeInto, type Conflicts, type Container, type Json } from '$lib/sim/merge';
 import { SESSION_FIELDS } from '$lib/sim/session';
-
-type Json = unknown;
-type Container = Record<string | number, unknown>;
-
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-	typeof v === 'object' && v !== null && !Array.isArray(v);
-
-/** Deep equality of plain JSON values. */
-function same(a: Json, b: Json): boolean {
-	if (a === b) return true;
-	if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
-	if (Array.isArray(a)) {
-		if (!Array.isArray(b) || a.length !== b.length) return false;
-		for (let i = 0; i < a.length; i++) if (!same(a[i], b[i])) return false;
-		return true;
-	}
-	if (Array.isArray(b)) return false;
-	const x = a as Record<string, unknown>;
-	const y = b as Record<string, unknown>;
-	const keys = Object.keys(x);
-	if (keys.length !== Object.keys(y).length) return false;
-	for (const key of keys) if (!(key in y) || !same(x[key], y[key])) return false;
-	return true;
-}
-
-/** How a merge treats a value the state has changed too: `next` wins, or the state's is kept. */
-type Conflicts = 'take' | 'keep';
-
-/**
- * Merges what changed from `base` to `next` into `parent[key]`, in place. Returns whether anything
- * was written.
- */
-function mergeInto(
-	parent: Container,
-	key: string | number,
-	base: Json,
-	next: Json,
-	conflicts: Conflicts
-): boolean {
-	if (same(base, next)) return false;
-	const live = parent[key];
-	if (isRecord(base) && isRecord(next) && isRecord(live)) {
-		let changed = false;
-		for (const k of new Set([...Object.keys(base), ...Object.keys(next)])) {
-			if (!(k in next)) {
-				if (k in live && (conflicts === 'take' || same(live[k], base[k]))) {
-					delete live[k];
-					changed = true;
-				}
-			} else changed = mergeInto(live, k, base[k], next[k], conflicts) || changed;
-		}
-		return changed;
-	}
-	if (
-		Array.isArray(base) &&
-		Array.isArray(next) &&
-		Array.isArray(live) &&
-		base.length === next.length &&
-		live.length === base.length
-	) {
-		let changed = false;
-		for (let i = 0; i < next.length; i++) {
-			changed = mergeInto(live as unknown as Container, i, base[i], next[i], conflicts) || changed;
-		}
-		return changed;
-	}
-	if (same(live, next)) return false;
-	// changed here since `base`: an undo leaves it be
-	if (conflicts === 'keep' && !same(live, base)) return false;
-	parent[key] = next;
-	return true;
-}
 
 /**
  * Merges the project change `base` → `next` (both `snapshot` JSON) into `state`: what changed in
