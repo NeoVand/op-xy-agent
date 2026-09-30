@@ -59,6 +59,8 @@ export interface AgentEnvironment {
 	readonly presets?: PresetInboxHost | null;
 	/** The replica's project going to the OP-XY over USB (send_project); absent when headless. */
 	readonly projects?: ProjectHost | null;
+	/** Files the user attached in this conversation that tools read themselves (import_midi). */
+	readonly files?: AttachedFiles | null;
 	/** Records what the OP-XY or the replica plays and hears it (`listen`); absent when headless. */
 	readonly listen?: ListenHost | null;
 	readonly manual: ManualSource;
@@ -82,6 +84,14 @@ export interface PresetInboxHost {
 	put(draft: { readonly name: string; readonly samples: readonly SampleInput[] }): void;
 	/** The preset maker's address, for the answer's link. */
 	readonly href: string;
+}
+
+/** Files attached in this conversation, as tools read them (kept in memory, by name). */
+export interface AttachedFiles {
+	/** A MIDI file's bytes by the name the chat shows, or null. */
+	midi(name: string): Uint8Array | null;
+	/** The names of the MIDI files attached so far. */
+	midiNames(): readonly string[];
 }
 
 /** The app's project transfer (`$lib/app/project-transfer.svelte.ts`) as send_project sees it. */

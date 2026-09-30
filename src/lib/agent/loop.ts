@@ -350,6 +350,9 @@ function runawayMessage(
 	};
 }
 
+/** Answers in a row cut off inside tool calls that the loop carries on from before it gives up. */
+const MAX_CUT_OFFS = 3;
+
 /** Runs the loop until the model ends its turn, fails, is stopped or hits the step limit. */
 export async function runLoop(config: LoopConfig, transcript: Transcript): Promise<LoopResult> {
 	const { agent, emit, signal } = config;
@@ -359,6 +362,8 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 	let usd: number | null = 0;
 	let last: BetaMessage | null = null;
 	let iterations = 0;
+	/** Answers in a row cut off at the output limit with tool calls in them (they carry on). */
+	let cutOffs = 0;
 
 	const finish = (stopReason: string | null, error: AgentErrorInfo | null): LoopResult => {
 		const { text, citations } = messageText(last);
@@ -372,6 +377,8 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 		iterations++;
 		const turn = makeTurnId();
 		let message: BetaMessage;
+		/** Tool calls whose input streamed to the end of their block (the others were cut off). */
+		const complete = new Set<string>();
 		try {
 			const params = buildRequest(config, transcript.messages);
 			emit({ type: 'turn', agent, turn, model: config.model });
@@ -404,6 +411,7 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 				} else if (event.type === 'content_block_stop') {
 					const call = calls.get(event.index);
 					if (call && call.shown !== call.chars) preview(event.index);
+					if (call) complete.add(call.id);
 					calls.delete(event.index);
 				} else if (event.type === 'content_block_delta') {
 					const { delta, index } = event;
@@ -492,8 +500,33 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 			.map((b) => ({ id: b.id, name: b.name, input: b.input }));
 
 		if (message.stop_reason === 'tool_use' && calls.length > 0) {
+			cutOffs = 0;
 			const results = await config.runTools(calls);
 			transcript.append({ role: 'user', content: results });
+			if (signal.aborted) return finish('aborted', ABORTED);
+			continue;
+		}
+		if (message.stop_reason === 'max_tokens' && calls.length > 0 && cutOffs < MAX_CUT_OFFS) {
+			// Cut off at the output limit while writing tool calls (a whole song's patterns in one
+			// answer): the calls that are complete run, the cut one comes back as an error, and the
+			// model carries on from there, told to send fewer at a time.
+			cutOffs++;
+			const done = calls.filter((c) => complete.has(c.id));
+			const results = done.length > 0 ? await config.runTools(done) : [];
+			const byId = new Map(results.map((r) => [r.tool_use_id, r]));
+			transcript.append({
+				role: 'user',
+				content: calls.map(
+					(c) =>
+						byId.get(c.id) ?? {
+							type: 'tool_result' as const,
+							tool_use_id: c.id,
+							is_error: true,
+							content:
+								'Not run: your answer reached the output limit before this call was complete. Send it again, and fewer or smaller calls per answer.'
+						}
+				)
+			});
 			if (signal.aborted) return finish('aborted', ABORTED);
 			continue;
 		}

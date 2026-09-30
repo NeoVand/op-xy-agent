@@ -46,6 +46,8 @@ export interface QualityCase {
 	readonly category: Category;
 	/** What the user types, turn by turn. */
 	readonly turns: readonly string[];
+	/** Files attached to the first turn: paths on this computer (a case is skipped without them). */
+	readonly attach?: readonly string[];
 	/** Where the replica stands when the user asks (a new project otherwise). */
 	readonly setup?: (sim: OpxySim) => void;
 	/** Facts the final answer must state (judged). */
@@ -610,6 +612,26 @@ const DEMO: readonly QualityCase[] = [
 					(t.input as { guide?: boolean }).guide === true
 			);
 			return walked ? [] : ['started no walkthrough after "walk me through opening it up"'];
+		}
+	},
+	{
+		id: 'midi-song',
+		category: 'demo',
+		turns: [
+			'I wanted to make the song "Brother Louie" from Modern Talking. I found this MIDI file online. I want you to do it on the replica OP-XY first. You have to come up with a cool way of doing it. Once it is great and works out, I will move it to my device.'
+		],
+		attach: ['/Users/neo/Downloads/Modern Talking - Brother Louie.mid'],
+		intent:
+			'Imports the file onto the replica with import_midi (drums, bass, the lead and the chords on fitting tracks), plays the song, and says briefly which part went where and what was approximated; never retypes the notes.',
+		tools: { must: ['import_midi'], not: ['write_pattern'] },
+		check(o) {
+			const fails = playing(o);
+			const a = o.virtual.readArrangement();
+			if (a.song.order.length < 8) fails.push(`a song of ${a.song.order.length} scenes`);
+			const busy = [1, 2, 3, 4, 5, 6, 7, 8].filter((t) => notes(o, t).length > 0);
+			if (busy.length < 4) fails.push(`only ${busy.length} tracks with notes`);
+			if (Math.abs(o.state.tempo.bpm - 107) > 1) fails.push(`tempo ${o.state.tempo.bpm}, not 107`);
+			return fails;
 		}
 	},
 	{

@@ -237,6 +237,9 @@ export class Conductor {
 	readonly #executor: ToolExecutor;
 	readonly #quirks: ModelQuirks = createQuirks();
 	readonly #env: AgentEnvironment;
+	/** MIDI files attached in this conversation, by name (import_midi reads them; not UI state). */
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	readonly #files = new Map<string, Uint8Array>();
 	#messages: BetaMessageParam[] = [];
 	#createdAt = 0;
 	#deviceNote: string | null = null;
@@ -263,7 +266,8 @@ export class Conductor {
 		this.#subagentModel = options.subagentModel ?? null;
 		this.#effort = options.effort ?? 'medium';
 		this.#maxIterations = options.maxIterations ?? 16;
-		this.#maxTokens = options.maxTokens ?? 16_000;
+		// room for a whole arrangement's calls in one answer (Sonnet 5.5 and Opus 5.5 write 128k)
+		this.#maxTokens = options.maxTokens ?? 64_000;
 		this.#now = options.now ?? (() => Date.now());
 		this.manualKind = options.manual.kind;
 		this.manualLabel = options.manual.label;
@@ -295,6 +299,19 @@ export class Conductor {
 			guide: options.guide ?? null,
 			presets: options.presets ?? null,
 			projects: options.projects ?? null,
+			files: {
+				midi: (name) => {
+					const files = this.#files;
+					if (files.has(name)) return files.get(name) ?? null;
+					// the model may drop the extension or change the case
+					const want = name.toLowerCase().replace(/\.(mid|midi|smf|kar|rmi)$/, '');
+					for (const [known, bytes] of files) {
+						if (known.toLowerCase().replace(/\.(mid|midi|smf|kar|rmi)$/, '') === want) return bytes;
+					}
+					return null;
+				},
+				midiNames: () => [...this.#files.keys()]
+			},
 			listen: options.listen ?? null,
 			manual: options.manual,
 			timers: this.#timers,
@@ -373,6 +390,7 @@ export class Conductor {
 			...(options.via ? { via: options.via } : {})
 		});
 		this.#messages.push({ role: 'user', content: userContent(trimmed, attachments) });
+		for (const a of attachments) if (a.midi) this.#files.set(a.view.name, a.midi);
 		if (options.via === 'voice') this.#pendingNotes.push(VOICE_NOTE);
 		const note = this.#deviceUpdate();
 		if (note) this.#messages.push({ role: 'system', content: note });

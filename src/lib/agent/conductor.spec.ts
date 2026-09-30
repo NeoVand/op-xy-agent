@@ -103,6 +103,7 @@ describe('conductor: requests and streaming', () => {
 	/** Tools sent without strict mode, to keep the strict ones under the API's grammar size limit. */
 	const LOOSE_TOOLS = [
 		'device_map',
+		'import_midi',
 		'listen',
 		'listen_tracks',
 		'make_kit',
@@ -623,6 +624,44 @@ describe('conductor: errors, stop and persistence', () => {
 		expect(answer.content).toEqual([
 			{ type: 'text', text: 'Use the master page: `mix → M4`.', citations: null }
 		]);
+	});
+
+	it('carries on from an answer cut off inside its tool calls: the complete ones run', async () => {
+		const { api, conductor } = await setup([
+			{
+				content: [
+					{ type: 'text', text: 'Reading the device first.' },
+					{ type: 'tool_use', id: 'toolu_a', name: 'device_status', input: {} },
+					{ type: 'tool_use', id: 'toolu_b', name: 'device_status', input: {} },
+					{
+						type: 'tool_use',
+						id: 'toolu_c',
+						name: 'write_todos',
+						input: { todos: [{ content: 'write every pattern', status: 'pending' }] },
+						cut: true
+					}
+				],
+				stop_reason: 'max_tokens'
+			},
+			{ content: [{ type: 'text', text: 'Done.' }], stop_reason: 'end_turn' }
+		]);
+		await conductor.send('build the whole song');
+		expect(conductor.status).toBe('idle');
+		expect(conductor.lastError).toBeNull();
+		const results = api.messageRequests[1].body.messages.at(-1).content as {
+			tool_use_id: string;
+			is_error?: boolean;
+			content: unknown;
+		}[];
+		expect(results.map((r) => [r.tool_use_id, Boolean(r.is_error)])).toEqual([
+			['toolu_a', false],
+			['toolu_b', false],
+			['toolu_c', true]
+		]);
+		expect(String(results[2].content)).toMatch(/output limit/);
+		expect(conductor.entries.filter((e) => e.kind === 'text').at(-1)).toMatchObject({
+			text: 'Done.'
+		});
 	});
 
 	it('does not append a refused turn and reports it plainly', async () => {

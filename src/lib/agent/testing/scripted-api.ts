@@ -18,6 +18,8 @@ export type ScriptedBlock =
 			readonly id: string;
 			readonly name: string;
 			readonly input: unknown;
+			/** Cut off partway through its input (the answer hit max_tokens): no block stop. */
+			readonly cut?: boolean;
 	  }
 	| { readonly type: 'fallback'; readonly from: { model: string }; readonly to: { model: string } };
 
@@ -190,13 +192,18 @@ export function sseEvents(
 					content_block: { type: 'tool_use', id: block.id, name: block.name, input: {} }
 				})
 			);
+			const json = JSON.stringify(block.input);
 			events.push(
 				sseEvent('content_block_delta', {
 					type: 'content_block_delta',
 					index,
-					delta: { type: 'input_json_delta', partial_json: JSON.stringify(block.input) }
+					delta: {
+						type: 'input_json_delta',
+						partial_json: block.cut ? json.slice(0, Math.ceil(json.length / 2)) : json
+					}
 				})
 			);
+			if (block.cut) return;
 		} else {
 			events.push(
 				sseEvent('content_block_start', {

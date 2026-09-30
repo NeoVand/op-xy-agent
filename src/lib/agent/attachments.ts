@@ -45,6 +45,8 @@ export interface PreparedAttachment {
 	readonly blocks: readonly BetaContentBlockParam[];
 	/** Characters this file adds to every request (base64 or text). */
 	readonly bytes: number;
+	/** A MIDI file's own bytes, for import_midi (kept with the conversation, in memory). */
+	readonly midi?: Uint8Array;
 }
 
 /**
@@ -470,8 +472,9 @@ async function prepareMidi(file: File, id: string): Promise<PreparedAttachment> 
 	// The MIDI reader loads with the first MIDI file, not with the page.
 	const { describeMidiFile } = await import('./midi-text');
 	let described: MidiText;
+	const raw = new Uint8Array(await file.arrayBuffer());
 	try {
-		described = describeMidiFile(await file.arrayBuffer(), file.name, ATTACHMENT_LIMITS.midiNotes);
+		described = describeMidiFile(raw, file.name, ATTACHMENT_LIMITS.midiNotes);
 	} catch (error) {
 		const name = error instanceof Error ? error.name : '';
 		if (name === 'SmfFormatError' || name === 'MidiRangeError' || error instanceof RangeError) {
@@ -486,10 +489,12 @@ async function prepareMidi(file: File, id: string): Promise<PreparedAttachment> 
 				type: 'document',
 				source: { type: 'text', media_type: 'text/plain', data: described.text },
 				title: file.name,
-				context: 'A MIDI file the user attached, listed note for note by the app.'
+				context:
+					'A MIDI file the user attached, listed note for note by the app. To put it on the replica, import_midi reads the whole file itself.'
 			}
 		],
-		bytes: described.text.length
+		bytes: described.text.length,
+		midi: raw
 	};
 }
 

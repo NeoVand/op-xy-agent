@@ -21,9 +21,10 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { z } from 'zod';
+import { prepareAttachment, type PreparedAttachment } from '$lib/agent/attachments';
 import { createAnthropicClient } from '$lib/agent/client';
 import type { ChatEntry } from '$lib/agent/chat';
 import { Conductor } from '$lib/agent/conductor.svelte';
@@ -529,11 +530,19 @@ async function runCase(
 	const answers: string[] = [];
 	const started = performance.now();
 	let error: string | null = null;
+	// the first turn's attachments, read from disk the way the app reads a dropped file
+	const attached: PreparedAttachment[] = [];
+	for (const path of c.attach ?? []) {
+		const name = basename(path);
+		attached.push(
+			await prepareAttachment(new File([new Uint8Array(readFileSync(path))], name), name)
+		);
+	}
 	for (const [i, message] of c.turns.entries()) {
 		turn = i;
 		const before = conductor.entries.length;
 		try {
-			await conductor.send(message);
+			await conductor.send(message, i === 0 ? attached : []);
 		} catch (e) {
 			error = e instanceof Error ? e.message : String(e);
 		}
@@ -788,7 +797,11 @@ export async function main(argv: readonly string[]): Promise<void> {
 	const units = new Set((await manual.catalog()).map((e) => e.id));
 	const bundle = await manual.promptBundle();
 	const cases = QUALITY_CASES.filter(
-		(c) => (!ids || ids.includes(c.id)) && (!category || c.category === category)
+		(c) =>
+			(!ids || ids.includes(c.id)) &&
+			(!category || c.category === category) &&
+			// a case whose files are not on this computer is skipped
+			(c.attach ?? []).every((path) => existsSync(path))
 	);
 	const jobs = cases.flatMap((c) => Array.from({ length: repeat }, (_, run) => ({ c, run })));
 	// the replica's sound for listen (quality.mjs serves the page); without it listening fails
