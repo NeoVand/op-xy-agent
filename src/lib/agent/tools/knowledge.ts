@@ -104,7 +104,7 @@ export const readManualUnitTool = defineTool({
 });
 
 /** How long a demonstration's result stays on the replica before it goes back, ms. */
-export const DEMO_HOLD_MS = 1200;
+export const DEMO_HOLD_MS = 700;
 
 export const showOnReplicaTool = defineTool({
 	name: 'show_on_replica',
