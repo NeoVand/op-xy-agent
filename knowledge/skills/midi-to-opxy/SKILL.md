@@ -40,8 +40,8 @@ line is the lead even when its program says pad or organ.
 - Leave out doubles (two tracks playing the same notes) first, and then only what still does not
   fit. When a part is left out for room, say that tracks 1 and 2 only take drums.
 
-When the choice is close, try both mappings in the lab on two copies of the replica, compare how much
-of each part plays as written (and listen if it is about the sound), and commit the better one.
+When the choice is close, preview both mappings and compare how much of each part plays as
+written; import the better one.
 
 ## What to tell the user
 

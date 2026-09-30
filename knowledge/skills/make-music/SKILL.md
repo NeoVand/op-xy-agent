@@ -30,10 +30,6 @@ request: lazy, swung or laid back is the tempo page's groove and its amount. Wit
 pick one that suits the style (house 120–126, techno 128–135, hip hop and boom bap 85–95, lo-fi
 70–85, drum and bass 170–175).
 
-For bigger jobs (a song from several scenes, variations of a pattern, reshaping many patterns at
-once, anything that needs arithmetic over notes) use the lab: one program on a copy of the replica,
-checked, then committed, instead of dozens of calls.
-
 A kit made from generated sounds can be put straight onto a drum track, so a beat written there
 plays with it at once.
 
