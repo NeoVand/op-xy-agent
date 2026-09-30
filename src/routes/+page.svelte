@@ -7,6 +7,7 @@
 		getReplicaGuide,
 		GuideCard,
 		HintCaption,
+		LargeScreen,
 		PlayReadout,
 		ReplicaBridge,
 		ScaleGuide,
@@ -15,8 +16,9 @@
 	} from '$lib/app';
 	import { browserClock, browserTimers, getDeviceStack, type SessionPhase } from '$lib/device';
 	import { getReplicaState, Replica } from '$lib/replica';
+	import { isTyping } from '$lib/replica/modifiers';
 	import { KeyboardIcon, VolumeHighIcon, VolumeOffIcon } from '@hugeicons/core-free-icons';
-	import { Button, Led, Readout, ToolButton } from '$lib/ui';
+	import { Button, Led, Readout, ToolButton, tooltip } from '$lib/ui';
 	import AgentPanel from '$lib/ui/shell/AgentPanel.svelte';
 	import DeviceStage from '$lib/ui/shell/DeviceStage.svelte';
 	import ProjectMenu from '$lib/ui/shell/ProjectMenu.svelte';
@@ -33,25 +35,52 @@
 	// The replica's own sound (root layout): on while simulated, off while the OP-XY plays.
 	const sound = getAppSound();
 
-	// The computer keyboard plays the replica's keys; the choice is remembered in this browser.
+	// Choices remembered in this browser: the computer keyboard plays the replica's keys (on unless
+	// turned off), and the display shows large over the device (off until asked for).
 	const KEYS_STORE = 'opxy.computer-keys';
-	let computerKeys = $state(readKeysChoice());
+	const LARGE_STORE = 'opxy.large-display';
+	let computerKeys = $state(readChoice(KEYS_STORE, true));
+	let largeScreen = $state(readChoice(LARGE_STORE, false));
 
-	function readKeysChoice(): boolean {
+	function readChoice(store: string, fallback: boolean): boolean {
 		try {
-			return globalThis.localStorage?.getItem(KEYS_STORE) !== 'off';
+			const saved = globalThis.localStorage?.getItem(store);
+			return saved === 'on' ? true : saved === 'off' ? false : fallback;
 		} catch {
-			return true;
+			return fallback;
+		}
+	}
+
+	function keepChoice(store: string, on: boolean): void {
+		try {
+			localStorage.setItem(store, on ? 'on' : 'off');
+		} catch {
+			// private windows and blocked storage: the choice lasts until the page closes
 		}
 	}
 
 	function toggleKeys(): void {
 		computerKeys = !computerKeys;
-		try {
-			localStorage.setItem(KEYS_STORE, computerKeys ? 'on' : 'off');
-		} catch {
-			// private windows and blocked storage: the choice lasts until the page closes
-		}
+		keepChoice(KEYS_STORE, computerKeys);
+	}
+
+	/** The device eases to its new size while the large display comes and goes (not on resizes). */
+	let moving = $state(false);
+	let movingTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function showLarge(on: boolean): void {
+		if (largeScreen === on) return;
+		largeScreen = on;
+		keepChoice(LARGE_STORE, on);
+		moving = true;
+		clearTimeout(movingTimer);
+		movingTimer = setTimeout(() => (moving = false), 600);
+	}
+
+	function onkeydown(event: KeyboardEvent): void {
+		if (event.key !== 'Escape' || !largeScreen || event.defaultPrevented) return;
+		if (isTyping(event.target)) return;
+		showLarge(false);
 	}
 
 	const keysTip = $derived(
@@ -110,6 +139,7 @@
 			stopScale?.();
 			stopBridge();
 			caption.dispose();
+			clearTimeout(movingTimer);
 		};
 	});
 
@@ -159,7 +189,7 @@
 	}
 </script>
 
-<svelte:window onblur={releaseNotes} onpagehide={releaseNotes} />
+<svelte:window onblur={releaseNotes} onpagehide={releaseNotes} {onkeydown} />
 <svelte:document {onvisibilitychange} />
 
 <svelte:head>
@@ -171,22 +201,50 @@
 </svelte:head>
 
 <div class="home">
-	<section class={['home__stage', engaged && 'home__stage--engaged']} aria-label="device">
+	<section
+		class={[
+			'home__stage',
+			engaged && 'home__stage--engaged',
+			largeScreen && 'home__stage--large',
+			moving && 'home__stage--moving'
+		]}
+		aria-label="device"
+	>
 		<DeviceStage
 			webMidi={status.webMidi}
 			onconnect={connect}
 			plate={engaged ? connection : undefined}
 			caption={hints}
+			above={largeScreen ? largeDisplay : undefined}
 		>
 			<Replica
 				{replica}
 				keys={computerKeys}
 				playing={() => simulator?.sim.state.transport.playing ?? false}
+				overScreen={screenKey}
 			/>
 		</DeviceStage>
 	</section>
 	<AgentPanel class="home__agent" />
 </div>
+
+{#snippet largeDisplay()}
+	<LargeScreen {replica} onclose={() => showLarge(false)} />
+{/snippet}
+
+<!-- over the replica's display: a click shows it large above the device, another puts it back -->
+{#snippet screenKey()}
+	<button
+		type="button"
+		class="screen-key"
+		aria-label="show the display large"
+		aria-pressed={largeScreen}
+		onclick={() => showLarge(!largeScreen)}
+		{@attach tooltip(largeScreen ? 'put the large display back' : 'show the display large', {
+			describe: false
+		})}
+	></button>
+{/snippet}
 
 {#snippet connection()}
 	<div class="conn">
@@ -321,11 +379,41 @@
 	}
 
 	.home__stage {
+		/* the display, large, over the device: its glass tile's height, and the gap under it */
+		--large-screen-h: min(13rem, 42vw);
+		--stage-above-gap: 1rem;
 		display: grid;
 		align-content: safe center;
 		min-width: 0;
 		min-height: 0;
 		padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 4vw, 4rem);
+	}
+
+	/* the key over the replica's display: a faint ring round it on hover */
+	.screen-key {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		padding: 0;
+		border: 0;
+		border-radius: inherit;
+		background: transparent;
+		cursor: zoom-in;
+		transition: box-shadow var(--xy-dur-base) var(--xy-ease-standard);
+	}
+
+	.screen-key[aria-pressed='true'] {
+		cursor: zoom-out;
+	}
+
+	.screen-key:hover {
+		box-shadow: 0 0 0 0.3cqw rgb(247 245 245 / 0.2);
+	}
+
+	.screen-key:focus-visible {
+		outline: 1.5px solid var(--xy-focus);
+		outline-offset: 0.3cqw;
 	}
 
 	.home :global(.home__agent) {
@@ -463,12 +551,40 @@
 			container-type: size;
 			/* Vertical only; the faint light pool around the device may spill sideways, clipped. */
 			overflow: hidden auto;
-			--stage-max-w: min(76rem, calc((100cqh - var(--stage-reserve)) * 285 / 102));
 			--stage-reserve: 13.5rem;
+			/* the widest the device gets with the caption and the plate under it */
+			--stage-fit-w: min(76rem, calc((100cqh - var(--stage-reserve)) * 285 / 102));
+			--stage-max-w: var(--stage-fit-w);
+			/* the display, large: as tall as the room over the device at that width (9–16.5rem) */
+			--large-screen-h: clamp(
+				9rem,
+				calc(
+					100cqh - var(--stage-reserve) - min(100cqw, var(--stage-fit-w)) * 102 / 285 -
+						var(--stage-above-gap)
+				),
+				16.5rem
+			);
 		}
 
 		.home__stage--engaged {
 			--stage-reserve: 16rem;
+		}
+
+		/* With the display large the stage's own margins give it room, and the device gets smaller
+		 * only when what is left is under the display's least. */
+		.home__stage--large {
+			padding-block: 1rem;
+			--stage-max-w: min(
+				76rem,
+				calc(
+					(100cqh - var(--stage-reserve) - var(--large-screen-h) - var(--stage-above-gap)) * 285 /
+						102
+				)
+			);
+		}
+
+		.home__stage--moving :global(.stage) {
+			transition: max-width 420ms cubic-bezier(0.33, 1, 0.68, 1);
 		}
 	}
 

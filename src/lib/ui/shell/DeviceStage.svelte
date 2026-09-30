@@ -8,10 +8,14 @@ provides `onconnect`. `caption` is a line of its own right under the device, for
 short notes about what the replica just did.
 
 The stage is at most 76rem wide; a page can lower that with `--stage-max-w` (the home page does, so
-device, caption and plate fit the height of the window).
+device, caption and plate fit the height of the window). `above` sits over the device, with
+`--stage-above-gap` (1rem) under it: when it comes and goes, the room for it opens and closes
+smoothly, the device easing down to make it (the home page shows its display large there).
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { cubicOut } from 'svelte/easing';
+	import type { TransitionConfig } from 'svelte/transition';
 	import Button from '../Button.svelte';
 	import Icon from '../Icon.svelte';
 	import DevicePlaceholder from './DevicePlaceholder.svelte';
@@ -27,15 +31,33 @@ device, caption and plate fit the height of the window).
 		plate?: Snippet;
 		/** A line right under the device: a status line, and hints from the replica. */
 		caption?: Snippet;
+		/** Over the device, e.g. its display large; the device makes room while it comes and goes. */
+		above?: Snippet;
 	}
 
-	let { children, onconnect, webMidi = 'unknown', plate, caption }: Props = $props();
+	let { children, onconnect, webMidi = 'unknown', plate, caption, above }: Props = $props();
 
 	const uid = $props.id();
 	const canConnect = $derived(Boolean(onconnect) && webMidi !== 'unavailable');
+
+	/** The room over the device opens from nothing, and the gap under it with it (and back). */
+	function reveal(node: HTMLElement): TransitionConfig {
+		const height = node.offsetHeight;
+		const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+		return {
+			duration: calm ? 0 : 420,
+			easing: cubicOut,
+			css: (t) =>
+				`height: ${t * height}px; margin-bottom: calc(${t} * var(--stage-above-gap, 1rem) - var(--stage-gap));`
+		};
+	}
 </script>
 
 <div class="stage">
+	{#if above}
+		<div class="stage__above" transition:reveal>{@render above()}</div>
+	{/if}
+
 	<div class="stage__device">
 		{#if children}
 			{@render children()}
@@ -112,6 +134,17 @@ device, caption and plate fit the height of the window).
 
 	:global([data-theme='light']) .stage::before {
 		background: radial-gradient(closest-side, rgb(255 255 255 / 0.9), transparent);
+	}
+
+	/* Over the device, with its own gap under it (not the stage's). While the room for it opens,
+	 * what is taller than the room so far stands out of its top rather than pushing the device. */
+	.stage__above {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		min-height: 0;
+		margin-bottom: calc(var(--stage-above-gap, 1rem) - var(--stage-gap));
 	}
 
 	.stage__device {

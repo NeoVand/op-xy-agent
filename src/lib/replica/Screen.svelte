@@ -6,7 +6,7 @@ that page the way TE's guide art shows it (`$lib/sim/screen`, loaded on first us
 shows `lines` with the placeholder text renderer in `screen.ts`. Its backing store follows the
 on-screen size × devicePixelRatio so it stays crisp at any zoom; it redraws only when the content
 or the size changes. A faint glass sheen sits on top. The content is also exposed as text for
-screen readers.
+screen readers (unless `speak` is off: a second copy of the display on a page should be quiet).
 
 Place it over the replica's active screen area (Replica does this with a positioned overlay).
 -->
@@ -23,9 +23,11 @@ Place it over the replica's active screen area (Replica does this with a positio
 		frame?: ScreenFrame | null;
 		/** Animation step for pages that move on their own. */
 		tick?: number;
+		/** Whether screen readers hear what it shows (one display on a page should). */
+		speak?: boolean;
 	}
 
-	let { lines, frame = null, tick }: Props = $props();
+	let { lines, frame = null, tick, speak = true }: Props = $props();
 
 	const source = getScreenFrameSource();
 	const shown = $derived(frame ?? source?.frame ?? null);
@@ -46,7 +48,9 @@ Place it over the replica's active screen area (Replica does this with a positio
 		if (shown) loadRenderer();
 	});
 
-	const spoken = $derived(shown && renderer ? renderer.describeFrame(shown) : lines.join(', '));
+	const spoken = $derived(
+		!speak ? '' : shown && renderer ? renderer.describeFrame(shown) : lines.join(', ')
+	);
 
 	const { width, height } = SCREEN_RESOLUTION;
 	/** Backing-store size in device pixels, never below the logical resolution. */
@@ -90,10 +94,12 @@ Place it over the replica's active screen area (Replica does this with a positio
 	};
 </script>
 
-<div class="screen">
+<div class="screen" aria-hidden={speak ? undefined : 'true'}>
 	<canvas {width} {height} aria-hidden="true" {@attach display}></canvas>
 	<div class="screen__glass"></div>
-	<p class="screen__text" aria-live="polite">{spoken}</p>
+	{#if speak}
+		<p class="screen__text" aria-live="polite">{spoken}</p>
+	{/if}
 </div>
 
 <style>

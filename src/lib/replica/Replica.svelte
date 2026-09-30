@@ -10,7 +10,8 @@ move between them); encoders, the volume knob and the pitch bend each have their
 computer's Shift key holds the replica's shift (except while typing in a text field), so a click
 on M1 with Shift down is `shift + M1`; alt- or ⌘-click holds any other key for combos. With
 `keys`, the computer keyboard plays the replica too (`keyboard.ts`: two rows of keys, `-` `=` for
-the octave, Space for play and stop).
+the octave, Space for play and stop). `overScreen` lays something exactly over the display, above
+its pixels: the home page puts a key there that shows the display large.
 
 ```svelte
 <script lang="ts">
@@ -21,6 +22,7 @@ the octave, Space for play and stop).
 ```
 -->
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import type { Attachment } from 'svelte/attachments';
 	import type { ClassValue } from 'svelte/elements';
 	import type { KeyId } from '$lib/core/opxy';
@@ -49,6 +51,8 @@ the octave, Space for play and stop).
 		keys?: boolean;
 		/** Whether the transport runs, so Space plays or stops. */
 		playing?: () => boolean;
+		/** Laid exactly over the display's active area, above its pixels (a key, say). */
+		overScreen?: Snippet;
 		class?: ClassValue;
 	}
 
@@ -58,6 +62,7 @@ the octave, Space for play and stop).
 		grain = true,
 		keys = false,
 		playing,
+		overScreen,
 		class: className
 	}: Props = $props();
 
@@ -214,6 +219,19 @@ the octave, Space for play and stop).
 	>
 		<Screen lines={replica.screen.lines} />
 	</div>
+	{#if overScreen}
+		<!-- not inside the display's box: that clips, and what sits here may draw round its edge -->
+		<div
+			class="replica__over-screen"
+			style:left={screenBox.left}
+			style:top={screenBox.top}
+			style:width={screenBox.width}
+			style:height={screenBox.height}
+			style:border-radius={screenBox.radius}
+		>
+			{@render overScreen()}
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -282,5 +300,9 @@ the octave, Space for play and stop).
 		position: absolute;
 		overflow: hidden;
 		pointer-events: none;
+	}
+
+	.replica__over-screen {
+		position: absolute;
 	}
 </style>

@@ -5,7 +5,8 @@
  * device back onto the replica; hints explain what cannot be done remotely; the caption shows them,
  * rate-limited; the guide walks the user through the agent's steps on the replica; the device
  * samples are the audio of the samples a project names on the OP-XY's drive, read over USB and kept;
- * the play readout names what the keyboard plays, and the scale guide lights a scale on it.
+ * the play readout names what the keyboard plays, and the scale guide lights a scale on it; the
+ * large screen is the replica's display drawn big over the device.
  */
 export { BridgeError, ReplicaBridge, type ReplicaBridgeOptions } from './bridge.svelte';
 export { HINT_REPEAT_MS, HintCaption, type HintCaptionOptions } from './caption.svelte';
@@ -84,6 +85,7 @@ export {
 	type ReplicaGuideOptions
 } from './guide.svelte';
 export { default as GuideCard } from './GuideCard.svelte';
+export { default as LargeScreen } from './LargeScreen.svelte';
 export {
 	PlayReadout,
 	readKeys,
