@@ -285,19 +285,25 @@ function lint(
 ): Lint[] {
 	const out: Lint[] = [];
 	if (agentError) out.push({ code: 'agent-error', severity: 'error', detail: agentError });
-	for (const call of trace) {
-		if (call.nested) continue;
-		if (call.status === 'error') {
-			const unavailable = /not available|unavailable|no audio|headless|no listening/i.test(
-				`${call.summary} ${call.result ?? ''}`
-			);
-			out.push({
-				code: unavailable ? 'tool-unavailable' : 'tool-error',
-				severity: unavailable ? 'warn' : 'error',
-				detail: `${call.name}: ${call.summary}`
-			});
-		}
-	}
+	trace.forEach((call, i) => {
+		if (call.nested || call.status !== 'error') return;
+		const unavailable = /not available|unavailable|no audio|headless|no listening/i.test(
+			`${call.summary} ${call.result ?? ''}`
+		);
+		// a lab program that failed and was then fixed in the same turn: the loop the lab is for
+		const fixed =
+			call.name === 'run_lab' &&
+			trace
+				.slice(i + 1)
+				.some(
+					(c) => !c.nested && c.turn === call.turn && c.name === 'run_lab' && c.status === 'ok'
+				);
+		out.push({
+			code: unavailable ? 'tool-unavailable' : fixed ? 'lab-retry' : 'tool-error',
+			severity: unavailable || fixed ? 'warn' : 'error',
+			detail: `${call.name}: ${call.summary}`
+		});
+	});
 	const seen = new Set<string>();
 	for (const call of trace) {
 		if (call.nested) continue;

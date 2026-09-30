@@ -50,6 +50,20 @@ describe('forks', () => {
 		expect(f.readSound(3).pages['M2 amp envelope']).toContain('release 60');
 	});
 
+	it('plan() says the steps set() would play, without moving the fork', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		const before = f.screen();
+		const plan = f.plan({ track: 3, param: 'cutoff', value: 40 });
+		expect(plan.reached).toBe(true);
+		expect(plan.screen).toContain('cutoff 40');
+		expect(f.screen()).toBe(before);
+		expect(f.readSound(3).pages['M3 filter']).not.toContain('cutoff 40');
+		expect(f.set({ track: 3, param: 'cutoff', value: 40 }).steps).toEqual(plan.steps);
+		const missed = f.plan({ track: 3, param: 'cutoff', value: 'loud' });
+		expect(missed.reached).toBe(false);
+	});
+
 	it('set() throws, changing nothing, when a setting cannot be reached', () => {
 		const { lab } = labOn();
 		const f = lab.fork();
@@ -235,7 +249,9 @@ describe('listen', () => {
 
 	it('says plainly when there is no renderer', async () => {
 		const { lab } = labOn();
-		await expect(lab.listen(lab.fork())).rejects.toThrow(/isn't available here/);
+		await expect(lab.listen(lab.fork())).rejects.toThrow(
+			/listening is not available in the lab here/
+		);
 	});
 });
 

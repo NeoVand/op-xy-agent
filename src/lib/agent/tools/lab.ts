@@ -33,9 +33,23 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 /** A run's purpose without the undo's or redo's mark ("undo: try two mappings"). */
 const purposeOf = (purpose: string) => purpose.replace(/^(undo|redo): /, '');
 
+/** Commit lines the result lists in all, before the rest are counted. */
+const CHANGE_LINES = 90;
+
+/** Each commit's changes, the later ones counted once the list is long. */
+function commitsOf(result: LabRunResult) {
+	let room = CHANGE_LINES;
+	return result.commits.map((c) => {
+		const shown = c.changes.slice(0, Math.max(0, room));
+		room -= shown.length;
+		const more = c.changes.length - shown.length;
+		return { label: c.label, changes: more ? [...shown, `and ${more} more changes`] : shown };
+	});
+}
+
 /** The result as the model reads it: what was printed and returned, what landed, what failed. */
 function view(result: LabRunResult, landed: boolean) {
-	const commits = result.commits.map((c) => ({ label: c.label, changes: c.changes }));
+	const commits = commitsOf(result);
 	return {
 		ok: result.ok,
 		...(result.logs ? { logs: result.logs } : {}),
@@ -85,8 +99,8 @@ export const runLabTool = defineTool({
 	// one long code string and an optional limit: kept out of the strict grammar, checked by zod
 	strict: false,
 	description: [
-		'Run a short JavaScript program in the lab: a sandbox where forks (copies) of the replica let you compute, try options, measure them and keep the best, in one call instead of many. code is the body of an async function (await works; return a value to read it back); in scope are only lab and console. console.log / lab.log print; what is printed and returned comes back, cut at about 10,000 characters, so print summaries. There is no network, no storage, no DOM, no timers for strings, no imports and no connected OP-XY; the program stops at timeout_s.',
-		'lab.fork() copies the replica as it stands, lab.fork(other) another fork. A fork has the replica’s own calls: status(), readPattern(track, pattern?), writePattern(track, {pattern?, bars?, length?, scale?, notes: [{step, note, velocity?, length?}]}), readArrangement(), writeArrangement({scenes?: [{scene, patterns: [{track, pattern}] | null}], song?: {order, loop}}), readSound(track), setTempo(bpm), setMetronome(on), setMuted(track, muted), selectTrack(track); and set({param, value, track?, area?, page?, key?}) or set([...]) (a setting reached through the keys, as plan_steps takes it; throws when it cannot be reached), press(keys, clicks?) (the key grammar, a turn with its detents; returns the screen), screen(), diff(other?) (what changed, in words).',
+		'Run a short JavaScript program in the lab: a sandbox where forks (copies) of the replica let you compute, try options, measure them and keep the best, in one call instead of many. code is the body of an async function (await works; return a value to read it back); in scope are only lab and console. console.log / lab.log print; what is printed and returned comes back, cut at about 10,000 characters, so print summaries. There is no network, no storage, no DOM, no imports and no connected OP-XY, and the program stops at timeout_s.',
+		'lab.fork() copies the replica as it stands, lab.fork(other) another fork. A fork has the replica’s own calls: status(), readPattern(track, pattern?), writePattern(track, {pattern?, bars?, length?, scale?, notes: [{step, note, velocity?, length?}]}), readArrangement(), writeArrangement({scenes?: [{scene, patterns: [{track, pattern}] | null}], song?: {order, loop}}), readSound(track), setTempo(bpm), setMetronome(on), setMuted(track, muted), selectTrack(track); and set({param, value, track?, area?, page?, key?}) or set([...]) (a setting reached through the keys, as plan_steps takes it; throws when it cannot be reached), plan(setting) (the steps set would play, without playing them), press(keys, clicks?) (the key grammar, a turn with its detents; returns the screen), screen(), diff(other?) (what changed, in words).',
 		'lab.files.names() and lab.files.midi(name) read attached MIDI files (their notes[].track, tracks[].index and channels count from 0); lab.midi.shapes(file) says what each track plays, lab.midi.plan(file, {tracks: [{midi, to, transpose?, drums?}], fromBar?, toBar?}) plans an import as import_midi does (plan.tracks[i].asWritten is the share of notes that play as written) and lab.midi.write(fork, plan, {keepOthers?}) writes it. await lab.listen(fork, {seconds?, tracks?: "each", scene?}) renders a fork offline through the replica’s sound and hears it (the song does not move on while it renders: hear later parts by scene).',
 		'Nothing reaches the replica until lab.commit(fork, label): when the program finishes without an error, what the committed forks changed lands on the replica as one change the user can undo; what they left alone stays. A program that throws or runs out of time changes nothing. Numbers are the device’s: tracks 1–16, patterns 1–16, scenes 1–99, steps 1–64. The lab skill has worked examples.'
 	].join(' '),

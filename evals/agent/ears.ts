@@ -1,11 +1,13 @@
 /**
  * A check of the eval's ears without the model: programs a beat on the replica with the agent's own
  * tools (a made kit on T1, drums, a bass line, chords), plays it, and prints what `listen` and
- * `listen_tracks` hand the agent, as the quality eval's agent would read it. No API calls.
+ * `listen_tracks` hand the agent, as the quality eval's agent would read it, then what a lab program
+ * hears of two forks through the same ears. No API calls.
  *
  *   node evals/agent/ears.mjs [--stand-ins]   (--stand-ins: the replica's own kit, no made kit)
  */
 import { createVirtualOpxy } from '$lib/app/virtual';
+import { createNodeLabHost } from '$lib/agent/lab/node';
 import { NO_MANUAL } from '$lib/agent/manual-source';
 import type { AgentEnvironment, AnyTool, ToolResult } from '$lib/agent/tools/define';
 import { listenTool, listenTracksTool } from '$lib/agent/tools/listen';
@@ -101,6 +103,25 @@ export async function main(argv: readonly string[]): Promise<void> {
 		virtual.transport('play');
 		say('listen', await run(listenTool, { seconds: 4 }));
 		say('listen_tracks', await run(listenTracksTool, {}));
+
+		// the lab hears its forks through the same ears, offline: the bass at two cutoffs, alone
+		const lab = createNodeLabHost({ sim, render: ears.renderer(files) });
+		const { result } = await lab.run(
+			[
+				'const tries = [];',
+				'for (const cutoff of [10, 70]) {',
+				'	const f = lab.fork();',
+				'	f.set({ track: 3, param: "cutoff", value: cutoff });',
+				'	const heard = await lab.listen(f, { tracks: [3], seconds: 3 });',
+				'	tries.push({ cutoff, centroidHz: heard.tracks[0].data.tone?.centroidHz });',
+				'}',
+				'return tries;'
+			].join('\n'),
+			{ signal: new AbortController().signal, timeoutMs: 60_000 }
+		);
+		console.log(
+			`\n── lab: T3 at two cutoffs, heard offline (${result.ms} ms)\n${JSON.stringify(result.ok ? result.value : result.error)}`
+		);
 	} finally {
 		await ears.close();
 	}

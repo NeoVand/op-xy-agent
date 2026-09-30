@@ -186,14 +186,16 @@ export interface Setting {
 	readonly key?: number | string;
 }
 
-/** What `set` did. */
+/** What `set` did, or what `plan` would do. */
 export interface SetResult {
-	/** Every setting reads its value now (set throws when one cannot be reached). */
+	/** Every setting reads its value (set throws when one cannot be reached). */
 	readonly reached: boolean;
-	/** The keys it played, in the key grammar ("T3", "M3", "turn E1 ×-12"). */
+	/** The keys, in the key grammar ("T3", "M3", "turn E1 ×-12"). */
 	readonly steps: readonly string[];
-	/** What the fork's screen shows after them. */
+	/** What the screen shows after them. */
 	readonly screen: string;
+	/** Why a setting was not reached, from `plan`. */
+	readonly note?: string;
 }
 
 /** What to write onto a pattern; it replaces the pattern's notes. */
@@ -257,6 +259,8 @@ export interface Fork {
 	 * setting cannot be reached, saying why.
 	 */
 	set(setting: Setting | readonly Setting[]): SetResult;
+	/** The steps `set` would play from where the fork stands, without playing them. */
+	plan(setting: Setting | readonly Setting[]): SetResult;
 	/**
 	 * Presses a key combo in the key grammar ("shift + M1", "T3", "record + play"); a turn takes its
 	 * detents ("turn E2", 5; negative turns left). Returns what the screen shows after it.

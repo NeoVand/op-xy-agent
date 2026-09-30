@@ -1,13 +1,17 @@
 // The conductor end to end against a scripted API (the real SDK over a fake fetch) and the fake
 // OP-XY from test/fakes: request shape (cache layout, thinking, betas, strict tools), streaming into
 // the chat, thinking blocks passed back unchanged, parallel tool calls serialised on the device
-// queue, approvals, journal and undo, subagents, errors and persistence.
+// queue, approvals, journal and undo, subagents, errors and persistence, and a lab program's change
+// undone from the app.
 import { describe, expect, it } from 'vitest';
+import { createVirtualOpxy } from '$lib/app/virtual';
 import type { MidiEvent } from '$lib/core/midi/bus';
+import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { createFakeRig } from '../../../test/fakes/rig';
 import { ATTACHMENT_LIMITS, type PreparedAttachment } from './attachments';
 import { createAnthropicClient } from './client';
 import { Conductor, type PreferenceStore } from './conductor.svelte';
+import { createNodeLabHost } from './lab/node';
 import { createUnitSource } from './manual-index';
 import { createMemoryThreadStore, type ThreadStore } from './threads';
 import { PacedTurn, pacedApi } from './testing/paced-api';
@@ -878,5 +882,63 @@ describe('conductor: what it is doing (the live status line)', () => {
 		const startIndex = events.findIndex((e) => e.type === 'tool_start' && e.id === 'toolu_plan');
 		expect(events.findIndex((e) => e.type === 'tool_input')).toBeLessThan(startIndex);
 		expect(conductor.todos).toHaveLength(5);
+	});
+});
+
+describe('conductor: the lab', () => {
+	it('runs a lab program on the replica, lists it with the changes, and undoes it from the app', async () => {
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		let resultBlock: Record<string, unknown> | null = null;
+		const api = scriptedApi([
+			{
+				content: [
+					{
+						type: 'tool_use',
+						id: 'toolu_lab',
+						name: 'run_lab',
+						input: {
+							purpose: 'a slower groove',
+							code: 'const f = lab.fork();\nf.setTempo(92);\nreturn lab.commit(f, "92 bpm").changes;'
+						}
+					}
+				],
+				stop_reason: 'tool_use'
+			},
+			(request) => {
+				resultBlock = request.body.messages.at(-1).content[0];
+				return { content: [{ type: 'text', text: 'Slowed it to 92.' }], stop_reason: 'end_turn' };
+			}
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			lab: createNodeLabHost({ sim }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			preferences: memoryPreferences(),
+			confirmWindowMs: 0,
+			session: 'session-test'
+		});
+		await conductor.send('make it a bit slower');
+		expect(resultBlock).toMatchObject({ tool_use_id: 'toolu_lab' });
+		expect(JSON.parse(String(resultBlock!.content))).toMatchObject({
+			ok: true,
+			value: ['tempo 120 → 92 bpm'],
+			replica: expect.stringMatching(/^changed/)
+		});
+		expect(virtual.status().bpm).toBe(92);
+		expect(conductor.revisions.map((r) => r.label)).toEqual(['lab: a slower groove']);
+		const chip = conductor.entries.find((e) => e.kind === 'tool');
+		expect(chip?.kind === 'tool' && chip.summary).toBe('a slower groove: 1 fork, committed');
+		expect(await conductor.undo(1)).toBe(true);
+		expect(virtual.status().bpm).toBe(120);
+		expect(conductor.entries.at(-1)).toMatchObject({
+			kind: 'notice',
+			text: 'Undone: the replica back as it was before “a slower groove”.'
+		});
+		conductor.dispose();
 	});
 });

@@ -8,7 +8,9 @@
  * clipboards, a playing song's position; `sim/session.ts`) never travel.
  *
  * Undo points keep a commit's project before and after, so it can be undone the same way: merging
- * from after back to before touches only what the commit changed.
+ * from after back to before touches only what the commit changed, and only where the state still
+ * reads as the commit left it (a later change to the same value, the user's or another run's, is
+ * kept rather than undone with it).
  */
 import type { ProjectContent } from '$lib/sim/areas/system/projects';
 import { snapshot } from '$lib/sim/areas/system/projects';
@@ -39,22 +41,31 @@ function same(a: Json, b: Json): boolean {
 	return true;
 }
 
+/** How a merge treats a value the state has changed too: `next` wins, or the state's is kept. */
+type Conflicts = 'take' | 'keep';
+
 /**
  * Merges what changed from `base` to `next` into `parent[key]`, in place. Returns whether anything
  * was written.
  */
-function mergeInto(parent: Container, key: string | number, base: Json, next: Json): boolean {
+function mergeInto(
+	parent: Container,
+	key: string | number,
+	base: Json,
+	next: Json,
+	conflicts: Conflicts
+): boolean {
 	if (same(base, next)) return false;
 	const live = parent[key];
 	if (isRecord(base) && isRecord(next) && isRecord(live)) {
 		let changed = false;
 		for (const k of new Set([...Object.keys(base), ...Object.keys(next)])) {
 			if (!(k in next)) {
-				if (k in live) {
+				if (k in live && (conflicts === 'take' || same(live[k], base[k]))) {
 					delete live[k];
 					changed = true;
 				}
-			} else changed = mergeInto(live, k, base[k], next[k]) || changed;
+			} else changed = mergeInto(live, k, base[k], next[k], conflicts) || changed;
 		}
 		return changed;
 	}
@@ -67,27 +78,36 @@ function mergeInto(parent: Container, key: string | number, base: Json, next: Js
 	) {
 		let changed = false;
 		for (let i = 0; i < next.length; i++) {
-			changed = mergeInto(live as unknown as Container, i, base[i], next[i]) || changed;
+			changed = mergeInto(live as unknown as Container, i, base[i], next[i], conflicts) || changed;
 		}
 		return changed;
 	}
 	if (same(live, next)) return false;
+	// changed here since `base`: an undo leaves it be
+	if (conflicts === 'keep' && !same(live, base)) return false;
 	parent[key] = next;
 	return true;
 }
 
 /**
  * Merges the project change `base` → `next` (both `snapshot` JSON) into `state`: what changed in
- * between lands; everything else, and every session field, stays. Returns whether `state` changed.
+ * between lands; everything else, and every session field, stays. Where the state has changed a
+ * value too, `next`'s wins, unless `conflicts` is `keep` (an undo). Returns whether `state` changed.
  */
-export function applyProject(state: SimState, base: string, next: string): boolean {
+export function applyProject(
+	state: SimState,
+	base: string,
+	next: string,
+	conflicts: Conflicts = 'take'
+): boolean {
 	const b = JSON.parse(base) as ProjectContent;
 	const n = JSON.parse(next) as ProjectContent;
 	const s = state as unknown as Container;
 	let changed = false;
-	for (const key of ['tracks', 'aux', 'tempo'] as const) {
-		changed = mergeInto(s, key, b[key], n[key]) || changed;
-	}
+	const merge = (parent: Container, key: string, from: Json, to: Json) => {
+		changed = mergeInto(parent, key, from, to, conflicts) || changed;
+	};
+	for (const key of ['tracks', 'aux', 'tempo'] as const) merge(s, key, b[key], n[key]);
 	const areas = state.areas as unknown as Record<string, Container>;
 	const baseAreas = b.areas as unknown as Record<string, Container | undefined>;
 	const nextAreas = n.areas as unknown as Record<string, Container | undefined>;
@@ -98,13 +118,13 @@ export function applyProject(state: SimState, base: string, next: string): boole
 		const to = nextAreas[area] ?? {};
 		for (const field of new Set([...Object.keys(from), ...Object.keys(to)])) {
 			if ((skip as readonly string[] | undefined)?.includes(field) || !(field in to)) continue;
-			changed = mergeInto(areas[area], field, from[field], to[field]) || changed;
+			merge(areas[area], field, from[field], to[field]);
 		}
 	}
 	const system = state.areas.system as unknown as Container;
-	changed = mergeInto(system, 'projectSettings', b.settings, n.settings) || changed;
-	changed = mergeInto(system, 'trackPresets', b.trackPresets, n.trackPresets) || changed;
-	changed = mergeInto(system, 'presetSettings', b.presetSettings, n.presetSettings) || changed;
+	merge(system, 'projectSettings', b.settings, n.settings);
+	merge(system, 'trackPresets', b.trackPresets, n.trackPresets);
+	merge(system, 'presetSettings', b.presetSettings, n.presetSettings);
 	return changed;
 }
 
@@ -146,14 +166,14 @@ export class UndoPoints {
 	}
 
 	/**
-	 * Takes an undo point's change back (only what it changed; later changes elsewhere stay), and
-	 * keeps a point for the way forward again. Null when the point is unknown or too old.
+	 * Takes an undo point's change back (only what it changed, and only where nothing changed it
+	 * since), and keeps a point for the way forward again. Null when the point is unknown or too old.
 	 */
 	revert(state: SimState, point: string): Landed | null {
 		const kept = this.#points.get(point);
 		if (!kept) return null;
 		const before = snapshot(state);
-		applyProject(state, kept.after, kept.before);
+		applyProject(state, kept.after, kept.before, 'keep');
 		return { point: this.#keep({ before, after: snapshot(state) }) };
 	}
 

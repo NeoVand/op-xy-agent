@@ -250,7 +250,10 @@ export class BrowserLabHost implements LabHost {
 				worker.removeEventListener('error', onError);
 				resolve({ ...result, base });
 			};
-			const stop = (failure: LabFailure) => finish(failed(failure, printed.join('\n'), started));
+			const stop = (failure: LabFailure) => {
+				const cut = size > MAX_LOG_CHARS ? '\n[the rest of the output was cut]' : '';
+				finish(failed(failure, printed.join('\n') + cut, started));
+			};
 			const onAbort = () => stop({ kind: 'stopped', message: 'stopped before it finished' });
 			const onError = (event: ErrorEvent) => {
 				event.preventDefault();

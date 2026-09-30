@@ -113,9 +113,9 @@ export interface LabSession {
 	counts(): { readonly forks: number; readonly listens: number };
 }
 
-/** Seconds `listen` hears by default: the mix, and each track alone. */
-export const LISTEN_SECONDS = 8;
-export const TRACK_SECONDS = 4;
+/** Seconds `listen` hears by default: the mix, and each track alone (as listen and listen_tracks). */
+const LISTEN_SECONDS = 8;
+const TRACK_SECONDS = 4;
 /** What one program may render: renders, and seconds in all. */
 export const LISTEN_LIMITS = { renders: 24, seconds: 240 } as const;
 
@@ -410,18 +410,23 @@ export function createLab(options: LabOptions): LabSession {
 			});
 		}
 
-		function set(input: Setting | readonly Setting[]): SetResult {
+		/** The navigator's plan for settings as a program passes them, from where the fork stands. */
+		function planned(input: unknown, what: 'set' | 'plan'): { list: Setting[]; plan: NavPlan } {
 			const list = Array.isArray(input)
-				? check(z.array(setting).min(1).max(16), input, 'set')
-				: [check(setting, input, 'set')];
+				? check(z.array(setting).min(1).max(16), input, what)
+				: [check(setting, input, what)];
 			const selected = virtual.status().selectedTrack;
 			const goals = list.map((s) => {
 				const goal = settingGoal(s, selected);
-				if (typeof goal === 'string') throw new LabError(`set ${s.param}: ${goal}`);
+				if (typeof goal === 'string') throw new LabError(`${what} ${s.param}: ${goal}`);
 				return goal;
 			});
-			const plan: NavPlan =
-				goals.length === 1 ? virtual.plan(goals[0]) : virtual.plan({ settings: goals });
+			const plan = goals.length === 1 ? virtual.plan(goals[0]) : virtual.plan({ settings: goals });
+			return { list, plan };
+		}
+
+		function set(input: Setting | readonly Setting[]): SetResult {
+			const { list, plan } = planned(input, 'set');
 			if (!plan.reached) {
 				const what = list.map((s) => `${s.track ? `track ${s.track} ` : ''}${s.param} ${s.value}`);
 				throw new LabError(
@@ -430,6 +435,16 @@ export function createLab(options: LabOptions): LabSession {
 			}
 			for (const step of plan.steps) playStep(sim, step);
 			return { reached: true, steps: plan.steps.map(stepText), screen: screenOf(sim) };
+		}
+
+		function plan(input: Setting | readonly Setting[]): SetResult {
+			const { plan: p } = planned(input, 'plan');
+			return {
+				reached: p.reached,
+				steps: p.steps.map(stepText),
+				screen: p.screen,
+				...(p.note ? { note: p.note } : {})
+			};
 		}
 
 		function press(keys: string, clicks?: number): string {
@@ -492,6 +507,7 @@ export function createLab(options: LabOptions): LabSession {
 				),
 			selectTrack: (track: number) => virtual.selectTrack(check(track16, track, 'selectTrack')),
 			set,
+			plan,
 			press,
 			screen: () => screenOf(sim),
 			diff,
@@ -602,7 +618,7 @@ export function createLab(options: LabOptions): LabSession {
 		const renderer = options.render;
 		if (!renderer) {
 			throw new LabError(
-				"listen: listening in the lab isn't available here; judge by the patterns and the sounds' pages instead"
+				"listen: listening is not available in the lab here; judge by the patterns and the sounds' pages instead"
 			);
 		}
 		if (renders >= LISTEN_LIMITS.renders || rendered + seconds > LISTEN_LIMITS.seconds) {
@@ -700,6 +716,3 @@ export function createLab(options: LabOptions): LabSession {
 		counts: () => ({ forks, listens: renders })
 	};
 }
-
-/** Whether an error is the lab's own (a program's mistake), for the runner's report. */
-export const isLabError = (error: unknown): error is LabError => error instanceof LabError;

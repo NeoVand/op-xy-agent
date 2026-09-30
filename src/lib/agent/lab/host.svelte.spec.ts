@@ -145,6 +145,6 @@ describe('the lab in the browser', () => {
 		expect(heard.result.value).toMatch(/^heard 2 s of fork 1/);
 		expect(heard.result.listens).toBe(1);
 		const none = await setup().run('await lab.listen(lab.fork());');
-		expect(none.result.error?.message).toMatch(/isn't available here/);
+		expect(none.result.error?.message).toMatch(/listening is not available in the lab here/);
 	}, 60_000);
 });

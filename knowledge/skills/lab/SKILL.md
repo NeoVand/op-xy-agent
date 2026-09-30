@@ -50,6 +50,7 @@ fork.writeArrangement({ scenes?: [{ scene, patterns: [{ track, pattern }] | null
   song?: { order, loop } })  fork.readSound(track)  fork.setTempo(bpm)  fork.setMetronome(on)
 fork.setMuted(track, muted)  fork.selectTrack(track)
 fork.set({ param, value, track?, area?, page?, key? })   // or an array, in order
+fork.plan(setting)         // the steps set would play, without playing them
 fork.press(keys, clicks?)  fork.screen()  fork.diff(other?)
 ```
 

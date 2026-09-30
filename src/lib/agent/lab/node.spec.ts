@@ -98,6 +98,19 @@ describe('the Node lab host', () => {
 		expect(host.revert('lab-unknown')).toBeNull();
 	});
 
+	it('keeps a later change to the same value when an earlier run is undone', async () => {
+		const { replica, run, host } = setup();
+		const first = await run(
+			'const f = lab.fork();\nf.setTempo(90);\nf.setMuted(3, true);\nlab.commit(f, "a");'
+		);
+		const second = await run('const f = lab.fork();\nf.setTempo(100);\nlab.commit(f, "b");');
+		expect(second.landed).not.toBeNull();
+		host.revert(first.landed?.point ?? '');
+		// the first run's mute goes; the tempo the second run set since stays
+		expect(replica.status().tracks[2].muted).toBe(false);
+		expect(replica.status().bpm).toBe(100);
+	});
+
 	it('refuses to listen where there is no renderer', async () => {
 		const sim = new OpxySim({ now: () => 0 });
 		const host = createNodeLabHost({ sim });
@@ -106,7 +119,7 @@ describe('the Node lab host', () => {
 			signal: new AbortController().signal,
 			timeoutMs: 2_000
 		});
-		expect(result.error?.message).toMatch(/isn't available here/);
+		expect(result.error?.message).toMatch(/listening is not available in the lab here/);
 	});
 
 	it('stops when the run is stopped, landing nothing', async () => {
