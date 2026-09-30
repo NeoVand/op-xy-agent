@@ -598,6 +598,7 @@ above the composer says what voice is doing while it is on.
 					onretry={() => void conductor?.retry()}
 					onundochanges={(id) => void conductor?.undoTurn(id)}
 					onpointchanges={glow ? pointChanges : undefined}
+					onreply={send}
 					onsettings={openSettings}
 				/>
 			{:else}

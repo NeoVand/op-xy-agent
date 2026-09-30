@@ -2,7 +2,8 @@
 @component
 The conversation: your messages (with the files you sent), the agent's answers (streamed, with a caret while they are being
 written and keycaps you can click to see a combo on the replica), its tool calls (a subagent's work
-shows live under its chip), approval records and notices. With voice on, what the mic heard and
+shows live under its chip), approval records and notices. Under the last answer, with `onreply`,
+two or three things to say next, sent with a click (`quick-replies.ts`). With voice on, what the mic heard and
 what the voice said are lines of their own, and a request the voice handed to Claude is marked.
 
 It is its own scroll area. It follows the newest line while you are at the bottom and stops when you
@@ -19,6 +20,8 @@ says what it is doing and for how long.
 	import ActivityLine from './ActivityLine.svelte';
 	import AttachmentChip from './AttachmentChip.svelte';
 	import ChangesNote from './ChangesNote.svelte';
+	import QuickReplies from './QuickReplies.svelte';
+	import { quickReplies } from '../quick-replies';
 	import type { ControlId } from '$lib/core/opxy';
 	import MessageText, { type CitationTarget } from './MessageText.svelte';
 	import ToolChip from './ToolChip.svelte';
@@ -40,6 +43,8 @@ says what it is doing and for how long.
 		onundochanges?: (id: string) => void;
 		/** A changes note is pointed at (its entry id), or none is any more (null). */
 		onpointchanges?: (id: string | null) => void;
+		/** Sends a quick reply as the user's message (without it none are offered). */
+		onreply?: (text: string) => void;
 		/** Opens the settings (for key errors). */
 		onsettings?: () => void;
 	}
@@ -54,6 +59,7 @@ says what it is doing and for how long.
 		onretry,
 		onundochanges,
 		onpointchanges,
+		onreply,
 		onsettings
 	}: Props = $props();
 
@@ -62,6 +68,8 @@ says what it is doing and for how long.
 		entries.filter((e) => e.kind !== 'progress' && (!('parent' in e) || e.parent === null))
 	);
 	const lastIndex = $derived(top.length - 1);
+	/** What to say next, once the last answer is written. */
+	const replies = $derived(onreply && !running ? quickReplies(entries) : []);
 	/** The answer block being written right now (it gets the caret). */
 	const streaming = $derived(activity?.phase === 'writing' ? activity.key : null);
 
@@ -216,6 +224,11 @@ says what it is doing and for how long.
 				{/if}
 			</li>
 		{/each}
+		{#if onreply && replies.length > 0}
+			<li class="conv__item conv__item--replies">
+				<QuickReplies {replies} {onreply} />
+			</li>
+		{/if}
 	</ol>
 	<div class="conv__foot">
 		{#if !pinned}
