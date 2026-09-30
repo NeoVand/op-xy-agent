@@ -13,6 +13,13 @@
   it commits); memory; demonstrations put back once seen; listening that hears a pump. New evals:
   episodes with simulated users (9/12 → 11/12), the honesty check, the manual verifier (its five
   manual errors fixed). Regression suites hold (evals/agent/RESULTS.md). The video waits for it.
+- **The UI round (2026-09-30, the owner's picks), on main:** what the keys play read as a chord or
+  scale under the replica; the change glow (an answer's changes breathe on the keys that lead to
+  them); the display large over the device (a click on its screen); quick replies under the last
+  answer; downloads (the song as WAV or MIDI, a pattern as MIDI); eight recorded conversations to
+  watch without a key; pattern cards in the chat to hear and edit; takes from the lab to audition
+  and keep; the now-playing strip (tempo, bar, song, track meters that mute); the ⌘K command
+  palette. Next there: an undo for a kept take, change marks on encoders, the song WAV from ⌘K.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).
