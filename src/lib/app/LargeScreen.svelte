@@ -1,9 +1,9 @@
 <!--
 @component
-The replica's display, large: its glass tile at the device's own proportions, the pixels drawn big
-and crisp from the same frames as the replica's display (the page's frame source). It sits over the
-device (DeviceStage's `above`), its left edge on the small display's, grows out of that corner and
-goes back into it; a click on it puts it away. The page sets its height, the glass tile's, with
+The replica's display, large: its pixels at the display's own proportions in a thin frame, drawn
+big and crisp from the same frames as the replica's display (the page's frame source). It sits over
+the device (DeviceStage's `above`), its left edge on the small display's, grows out of that corner
+and goes back into it; a click on it puts it away. The page sets its height with
 `--large-screen-h` (the room it has above the device).
 
 ```svelte
@@ -33,21 +33,12 @@ goes back into it; a click on it puts it away. The page sets its height, the gla
 	/** How long it takes to grow out of the small display and to go back, ms. */
 	const GROW_MS = 420;
 
-	const { tile, active } = SCREEN_PART;
-	/** The glass tile's corner on the panel, millimetres. */
-	const tileX = SCREEN_PART.x + tile.x;
-	const tileY = SCREEN_PART.y + tile.y;
+	const { active } = SCREEN_PART;
 	const pct = (value: number, of: number) => `${((value / of) * 100).toFixed(4)}%`;
-	const glass = {
-		left: pct(tileX, PANEL_W),
-		ratio: (tile.w / tile.h).toFixed(4),
-		radius: `${pct(tile.r, tile.w)} / ${pct(tile.r, tile.h)}`
-	};
+	/** The pixels' place on the panel (their left edge), their proportions and their corners. */
 	const pixels = {
-		left: pct(active.x - tileX, tile.w),
-		top: pct(active.y - tileY, tile.h),
-		width: pct(active.w, tile.w),
-		height: pct(active.h, tile.h),
+		left: pct(active.x, PANEL_W),
+		ratio: (active.w / active.h).toFixed(4),
 		radius: `${pct(active.r, active.w)} / ${pct(active.r, active.h)}`
 	};
 
@@ -64,16 +55,9 @@ goes back into it; a click on it puts it away. The page sets its height, the gla
 	}
 </script>
 
-<div class="large" style:--glass-left={glass.left} style:--glass-ratio={glass.ratio}>
-	<div class="large__glass" style:border-radius={glass.radius} transition:grow>
-		<div
-			class="large__pixels"
-			style:left={pixels.left}
-			style:top={pixels.top}
-			style:width={pixels.width}
-			style:height={pixels.height}
-			style:border-radius={pixels.radius}
-		>
+<div class="large" style:--pixels-left={pixels.left} style:--pixels-ratio={pixels.ratio}>
+	<div class="large__frame" transition:grow>
+		<div class="large__pixels" style:border-radius={pixels.radius}>
 			<Screen lines={replica.screen.lines} speak={false} />
 		</div>
 		<button
@@ -92,31 +76,43 @@ goes back into it; a click on it puts it away. The page sets its height, the gla
 		display: flex;
 	}
 
-	/* the device's black glass tile, magnified; its sheen under the pixels, as on the device */
-	.large__glass {
+	/* the pixels in a thin frame: a band of the device's glass, lit a little at its edge; the
+	 * pixels keep the display's proportions (the ratio is the content box's), all of it --h tall */
+	.large__frame {
+		--band: 3px;
 		position: relative;
 		flex: none;
-		height: var(--h);
-		aspect-ratio: var(--glass-ratio);
-		/* on the small display's left edge, as far as the stage leaves room */
-		margin-left: max(0px, min(var(--glass-left), 100% - var(--h) * var(--glass-ratio)));
+		box-sizing: content-box;
+		height: calc(var(--h) - 2 * var(--band));
+		aspect-ratio: var(--pixels-ratio);
+		/* the pixels on the small display's left edge, as far as the stage leaves room */
+		margin-left: max(
+			0px,
+			min(
+				var(--pixels-left) - var(--band),
+				100% - (var(--h) - 2 * var(--band)) * var(--pixels-ratio) - 2 * var(--band)
+			)
+		);
+		padding: var(--band);
+		border-radius: 0.5rem;
 		transform-origin: 0 100%;
-		background:
-			linear-gradient(
-				160deg,
-				rgb(255 255 255 / 0.07) 0%,
-				rgb(255 255 255 / 0.015) 35%,
-				rgb(255 255 255 / 0) 70%
-			),
-			#141517;
+		background-color: #141517;
 		box-shadow:
+			inset 0 0 0 1px rgb(255 255 255 / 0.07),
 			0 0 0 1px rgb(0 0 0 / 0.6),
-			0 0.25rem 0.75rem rgb(0 0 0 / 0.35),
-			0 1.25rem 2.5rem -0.75rem rgb(0 0 0 / 0.5);
+			0 1rem 2rem -0.75rem rgb(0 0 0 / 0.5);
+	}
+
+	:global([data-theme='light']) .large__frame {
+		box-shadow:
+			inset 0 0 0 1px rgb(255 255 255 / 0.07),
+			0 0 0 1px rgb(15 14 18 / 0.35),
+			0 1rem 2rem -0.75rem rgb(15 14 18 / 0.3);
 	}
 
 	.large__pixels {
-		position: absolute;
+		width: 100%;
+		height: 100%;
 		overflow: hidden;
 		background: #000000;
 	}

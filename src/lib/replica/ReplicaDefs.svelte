@@ -59,19 +59,22 @@ pressed key cheap. Ids are prefixed `rx-`.
 	</linearGradient>
 
 	<!-- keycaps: a flat disc standing 2 mm proud of its tile. TE's top-down photo: the shadow drops
-	     sharply at the cap's edge (to a quarter of the tile's light below a black cap) and fades out
-	     about 2 mm in front, 1.5 mm at the sides, hardly at all behind. The circle is r + 1.3 mm,
-	     set 0.7 mm toward the front; the cap covers its inner 0.78 -->
+	     at the cap's edge (to a quarter of the tile's light below a black cap) and fades out about
+	     2 mm in front, 1.5 mm at the sides, hardly at all behind; drawn a little softer than the
+	     photo's (the owner: a hard shadow read as harsh), fading over more of its width. The circle
+	     is r + 1.6 mm, set 0.7 mm toward the front; the cap covers its inner 0.75 -->
 	<radialGradient id="rx-cap-shadow" cx="0.5" cy="0.5" r="0.5">
-		<stop offset="0.78" stop-color="#000000" stop-opacity="0.8" />
-		<stop offset="0.86" stop-color="#000000" stop-opacity="0.5" />
-		<stop offset="0.93" stop-color="#000000" stop-opacity="0.2" />
+		<stop offset="0.745" stop-color="#000000" stop-opacity="0.64" />
+		<stop offset="0.8" stop-color="#000000" stop-opacity="0.46" />
+		<stop offset="0.86" stop-color="#000000" stop-opacity="0.27" />
+		<stop offset="0.93" stop-color="#000000" stop-opacity="0.1" />
 		<stop offset="1" stop-color="#000000" stop-opacity="0" />
 	</radialGradient>
 	<radialGradient id="rx-cap-shadow-light" cx="0.5" cy="0.5" r="0.5">
-		<stop offset="0.78" stop-color="#000000" stop-opacity="0.55" />
-		<stop offset="0.86" stop-color="#000000" stop-opacity="0.34" />
-		<stop offset="0.93" stop-color="#000000" stop-opacity="0.12" />
+		<stop offset="0.745" stop-color="#000000" stop-opacity="0.44" />
+		<stop offset="0.8" stop-color="#000000" stop-opacity="0.31" />
+		<stop offset="0.86" stop-color="#000000" stop-opacity="0.18" />
+		<stop offset="0.93" stop-color="#000000" stop-opacity="0.07" />
 		<stop offset="1" stop-color="#000000" stop-opacity="0" />
 	</radialGradient>
 	<!-- the tile's collar round the cap, bright behind it (photo, above a black cap: dark just past

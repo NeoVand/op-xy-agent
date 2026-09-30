@@ -1,6 +1,7 @@
 // A pattern card on the replica's own patterns: it shows what the pattern holds, a click adds or
-// takes away a hit there (the track keeps playing the pattern it played), and a drag up on a hit
-// makes it harder.
+// takes away a hit there (the track keeps playing the pattern it played), a drag up on a hit
+// makes it harder, and its play key plays it (keeping to the scene when the song has others) while
+// its stop key stops the replica.
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { userEvent } from 'vitest/browser';
@@ -60,5 +61,38 @@ describe('a pattern card on the replica', () => {
 			.toBe(127);
 		// the drag did not take the hit away
 		expect(virtual.readPattern(1, 1).notes.map((n) => n.step)).toEqual([1, 5, 9, 13]);
+	});
+
+	it('plays the pattern from its card, and stops the replica', async () => {
+		const { sim, host } = setup();
+		const screen = render(PatternCard, { host, track: 1, pattern: 1 });
+		const play = screen.getByRole('button', { name: 'play track 1 pattern 1' });
+		const stop = screen.getByRole('button', { name: 'stop' });
+		await expect.element(stop).toBeDisabled();
+		await play.click();
+		// the track plays pattern 1 now, and the replica plays
+		expect(sim.state.tracks[0].sequence.current).toBe(0);
+		expect(sim.state.transport.playing).toBe(true);
+		await expect.element(play).toHaveAttribute('aria-pressed', 'true');
+		await stop.click();
+		expect(sim.state.transport.playing).toBe(false);
+		await expect.element(play).toHaveAttribute('aria-pressed', 'false');
+	});
+
+	it('keeps to the scene when the song has others, so the pattern played is heard', () => {
+		const { sim, virtual, host } = setup();
+		virtual.writeArrangement({
+			scenes: [
+				{ scene: 1, patterns: [{ track: 1, pattern: 2 }] },
+				{ scene: 2, patterns: [{ track: 1, pattern: 2 }] }
+			],
+			song: { order: [2, 1], loop: true }
+		});
+		host.play(1, 1);
+		// plain play would start the song at scene 2, and its pattern 2
+		expect(sim.state.areas.arrange.scene).toBe(0);
+		expect(sim.state.areas.arrange.held).toBe(true);
+		expect(sim.state.tracks[0].sequence.current).toBe(0);
+		expect(sim.state.transport.playing).toBe(true);
 	});
 });

@@ -179,8 +179,8 @@ does the rest, so a key press never re-renders the legend paths.
 		<path d={art.d} fill={part.colors.legend} fill-rule={art.rule} />
 	{/each}
 
-	<!-- the cap stands 2 mm proud: the tile's collar catching light behind it, a short hard shadow
-	     in front and a crisp dark edge all round where it leaves the tile (TE's top-down photo) -->
+	<!-- the cap stands 2 mm proud: the tile's collar catching light behind it, a short soft shadow
+	     in front and a dark edge all round where it leaves the tile (TE's top-down photo) -->
 	<circle
 		r={capR + 2.4}
 		fill={part.light ? 'url(#rx-collar-light)' : 'url(#rx-collar)'}
@@ -190,10 +190,10 @@ does the rest, so a key press never re-renders the legend paths.
 		class="key__shadow"
 		cx="0.15"
 		cy="0.7"
-		r={capR + 1.3}
+		r={capR + 1.6}
 		fill={part.light ? 'url(#rx-cap-shadow-light)' : 'url(#rx-cap-shadow)'}
 	/>
-	<circle cy="0.05" r={capR + 0.18} fill="#000000" fill-opacity={part.light ? 0.36 : 0.56} />
+	<circle cy="0.05" r={capR + 0.16} fill="#000000" fill-opacity={part.light ? 0.27 : 0.42} />
 	<g class="key__cap">
 		<circle r={capR} fill={part.colors.cap} />
 		<circle r={capR} fill={part.light ? 'url(#rx-cap-shade-light)' : 'url(#rx-cap-shade)'} />

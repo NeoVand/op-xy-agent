@@ -28,7 +28,17 @@ it somewhere.
 	const rows = $derived(palette.open ? palette.commands(palette.query) : []);
 	const current = $derived(Math.min(palette.active, Math.max(0, rows.length - 1)));
 
+	/**
+	 * ⌘K anywhere; and while open, esc wherever focus is (before the page's own esc, which would
+	 * put the large display away too).
+	 */
 	function onWindowKey(event: KeyboardEvent): void {
+		if (palette.open && event.key === 'Escape' && !event.isComposing) {
+			event.preventDefault();
+			event.stopPropagation();
+			palette.hide();
+			return;
+		}
 		const k = event.key.toLowerCase() === 'k';
 		if (!k || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
 		event.preventDefault();
@@ -49,10 +59,6 @@ it somewhere.
 		} else if (event.key === 'Enter') {
 			event.preventDefault();
 			if (rows[current]) run(rows[current]);
-		} else if (event.key === 'Escape') {
-			event.preventDefault();
-			event.stopPropagation();
-			palette.hide();
 		} else if (event.key === 'Tab') {
 			// the field is the palette's one stop: focus stays in it while it is open
 			event.preventDefault();
@@ -97,7 +103,7 @@ it somewhere.
 	}
 </script>
 
-<svelte:window onkeydown={onWindowKey} />
+<svelte:window onkeydowncapture={onWindowKey} />
 
 {#if palette.open}
 	<div

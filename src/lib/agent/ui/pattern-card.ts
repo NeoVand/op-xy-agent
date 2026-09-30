@@ -18,6 +18,12 @@ export interface PatternHost {
 	write(track: number, pattern: number, notes: readonly VirtualNote[]): void;
 	/** The step under the playhead (1-based) while the track plays this pattern, else null. */
 	playhead(track: number, pattern: number): number | null;
+	/** Whether the replica plays at all (its transport runs; read reactively). */
+	running(): boolean;
+	/** Plays the pattern from its top: the track plays it, and the transport starts if it stood. */
+	play(track: number, pattern: number): void;
+	/** Stops the replica's transport. */
+	stop(): void;
 	/** Sounds notes on the track briefly (a hit, a chord), to hear them. */
 	preview(track: number, notes: readonly number[]): void;
 	/** Downloads the pattern as a MIDI file, when the app can. */

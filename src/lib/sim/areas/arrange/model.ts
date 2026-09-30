@@ -453,6 +453,17 @@ export function chooseScene(
 	}
 }
 
+/**
+ * The current scene plays round and round rather than the song moving on, as it does once a scene
+ * is picked (ours, for the chat's pattern cards: the pattern played is the one heard).
+ */
+export function holdScene(s: SimState): void {
+	const a = s.areas.arrange;
+	a.held = true;
+	a.queued = null;
+	if (a.playing) haltSong(a);
+}
+
 // ───────────────────────────────────────────────────────────────── songs
 
 /** Keeps the song editor's cursor on screen (four rows of eight). */

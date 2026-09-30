@@ -129,34 +129,34 @@ A surface. Panels differ by material, not by decoration:
 			0 2px 8px rgb(15 14 18 / 0.08);
 	}
 
-	/* The chassis of the replica (see ReplicaDefs' rx-body and rx-rim): lit along the back edge, a
-	 * faint catch-light along the front, a dark outline where it meets the desk. Dark theme only; the
-	 * light theme's slab is below. */
+	/* The chassis of the replica (see ReplicaDefs' rx-body and rx-rim), in its darkest anodising:
+	 * lit along the back edge, a faint catch-light along the front, a dark outline where it meets the
+	 * desk. Dark theme only; the light theme's slab is below. */
 	:global([data-theme='dark']) .panel--device {
 		--xy-fg: var(--xy-mat-legend);
 		--xy-fg-muted: #b9b8b5;
 		--xy-fg-subtle: #909195;
 		--xy-fg-faint: #6c6e73;
-		--xy-line: rgb(0 0 0 / 0.5);
-		--xy-hover: rgb(255 255 255 / 0.05);
-		--xy-surface: var(--xy-mat-tile);
-		--xy-surface-raised: var(--xy-mat-tile);
-		/* its wells (the composer, your messages, fields) are the app's background, not black */
-		--xy-surface-sunken: var(--xy-bg);
+		--xy-line: rgb(0 0 0 / 0.55);
+		--xy-hover: rgb(255 255 255 / 0.045);
+		--xy-surface: #1d1e21;
+		--xy-surface-raised: #1d1e21;
+		/* its wells (the composer, your messages, fields) sit a step below the slab */
+		--xy-surface-sunken: #0b0b0d;
 		border-radius: 1rem;
-		background: linear-gradient(to bottom, #212225, #1e1f22 45%, #1b1c1f);
+		background: linear-gradient(to bottom, #17181b, #151619 45%, #131417);
 		color: var(--xy-fg);
 		box-shadow:
-			inset 0 1px 0 rgb(255 255 255 / 0.12),
-			inset 0 -1px 0 rgb(255 255 255 / 0.05),
-			0 0 0 1px #0b0c0e,
+			inset 0 1px 0 rgb(255 255 255 / 0.08),
+			inset 0 -1px 0 rgb(255 255 255 / 0.035),
+			0 0 0 1px #0a0b0d,
 			0 1.5rem 3rem -1.5rem rgb(0 0 0 / 0.6);
 	}
 
 	/* the header sits on a groove, like the gap between the replica's tiles */
 	:global([data-theme='dark']) .panel--device .panel__head {
-		border-bottom-color: rgb(0 0 0 / 0.55);
-		box-shadow: 0 1px 0 rgb(255 255 255 / 0.035);
+		border-bottom-color: rgb(0 0 0 / 0.6);
+		box-shadow: 0 1px 0 rgb(255 255 255 / 0.03);
 	}
 
 	/* on paper: the same slab, white with a soft edge, its wells the page's paper */

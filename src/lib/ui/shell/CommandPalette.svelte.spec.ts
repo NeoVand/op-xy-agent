@@ -57,6 +57,16 @@ describe('the command palette', () => {
 		expect(palette.open).toBe(false);
 		// focus goes back where it was
 		await expect.poll(() => document.activeElement).toBe(before);
+		// and esc closes it wherever focus is, before the page hears it
+		let heard = 0;
+		const page = (event: KeyboardEvent) => event.key === 'Escape' && heard++;
+		window.addEventListener('keydown', page);
+		palette.show();
+		before.focus();
+		await userEvent.keyboard('{Escape}');
+		expect(palette.open).toBe(false);
+		expect(heard).toBe(0);
+		window.removeEventListener('keydown', page);
 		before.remove();
 	});
 
