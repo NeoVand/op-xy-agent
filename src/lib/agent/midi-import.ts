@@ -313,6 +313,8 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 	const byBlock = new Map<number, number[]>();
 	let offGrid = 0;
 	const lastStep = Math.min(totalSteps, songBlocks * blockSteps);
+	/** Steps a block plays: a whole block, or the music left for the last one (a 2-bar loop, 2). */
+	const blockLength = (b: number) => Math.min(blockSteps, lastStep - b * blockSteps);
 
 	for (const to of targets) {
 		const hitsByBlock: Hit[][] = Array.from({ length: songBlocks }, () => []);
@@ -361,8 +363,17 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 		}
 		const drums = parts.every((p) => p.drums);
 
-		// identical blocks share a pattern; an empty block plays an empty one
-		const keys = hitsByBlock.map(blockKey);
+		// identical blocks share a pattern; an empty block plays an empty one; a short last block
+		// plays a pattern of its own length, a rest too, since a scene lasts as long as its longest
+		const keys = hitsByBlock.map((hits, b) => {
+			const length = blockLength(b);
+			const k = blockKey(hits);
+			return length === blockSteps ? k : `${length}|${k || 'rest'}`;
+		});
+		const lengthOf = new Map<string, number>();
+		keys.forEach((k, b) => {
+			if (k && !lengthOf.has(k)) lengthOf.set(k, blockLength(b));
+		});
 		const counts = new Map<string, number>();
 		for (const k of keys) if (k) counts.set(k, (counts.get(k) ?? 0) + 1);
 		const needsEmpty = keys.some((k) => !k);
@@ -396,11 +407,12 @@ export function planMidiImport(read: MidiFileNotes, options: ImportOptions): Imp
 			}
 			chosen.sort((a, b) => a.step - b.step || a.note - b.note);
 			plays.set(k, chosen);
+			const length = lengthOf.get(k) ?? blockSteps;
 			patterns.push({
 				track: to,
 				pattern: numberOf.get(k) ?? 1,
-				bars: Math.ceil(blockSteps / 16),
-				length: blockSteps,
+				bars: Math.ceil(length / 16),
+				length,
 				notes: chosen.map((h) => ({
 					step: h.step,
 					note: h.note,

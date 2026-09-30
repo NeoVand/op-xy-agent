@@ -102,6 +102,34 @@ describe('planMidiImport', () => {
 		expect(plan.notes).toEqual([]);
 	});
 
+	it('plays a short loop at its own length, and a short last block too', () => {
+		// a 2-bar loop is one 2-bar scene, not a 4-bar one with two silent bars
+		const loop = midiFileNotes(file(120, drums(2)));
+		const two = planMidiImport(loop, { tracks: [{ midi: 2, to: 1 }] });
+		expect(two.patterns).toMatchObject([{ track: 1, pattern: 1, bars: 2, length: 32 }]);
+		expect(two.song).toEqual([1]);
+		// 6 bars: a 4-bar block, then a 2-bar one; the bass rests in the last, on a short rest
+		const read = midiFileNotes(file(120, drums(6), phrase(0, 33)));
+		const six = planMidiImport(read, {
+			tracks: [
+				{ midi: 2, to: 1 },
+				{ midi: 3, to: 3 }
+			]
+		});
+		const lengths = (track: number) =>
+			six.patterns.filter((p) => p.track === track).map((p) => [p.pattern, p.length]);
+		expect(lengths(1)).toEqual([
+			[1, 64],
+			[2, 32]
+		]);
+		expect(lengths(3)).toEqual([
+			[1, 64],
+			[2, 32]
+		]);
+		expect(six.patterns.find((p) => p.track === 3 && p.pattern === 2)?.notes).toEqual([]);
+		expect(six.song).toEqual([1, 2]);
+	});
+
 	it('gives an empty stretch an empty pattern, transposes, and takes a range of bars', () => {
 		const bass = [...phrase(0, 33), ...phrase(8, 33)];
 		const read = midiFileNotes(file(120, bass));

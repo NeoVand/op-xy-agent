@@ -13,12 +13,13 @@ tell the user plainly what you gave up.
 ## What the import does for you
 
 The importer reads the whole file itself, so never retype a file's notes. You choose which file
-tracks go to which OP-XY tracks; it writes each track's parts as 4-bar patterns (identical bars share
-one), a scene for every 4 bars, the song through them in order, and the tempo. It starts at the first
-bar the chosen tracks play, lands GM drums on the kit layout, moves notes off the sixteenths onto
-them, rests the tracks you left out, and switches the click off so the song plays clean. A part that
-changes more often than 16 patterns hold plays the closest of its patterns in some blocks (chosen by
-its notes and its harmony), and the result says how much of it still plays as written.
+tracks go to which OP-XY tracks; it writes each track's parts as 4-bar patterns (identical bars
+share one; a shorter loop or last block plays at its own length), a scene for every 4 bars, the song
+through them in order, and the tempo. It starts at the first bar the chosen tracks play, lands GM
+drums on the kit layout, moves notes off the sixteenths onto them, rests the tracks you left out,
+and switches the click off so the song plays clean. A part that changes more often than 16 patterns
+hold plays the closest of its patterns in some blocks (chosen by its notes and its harmony), and the
+result says how much of it still plays as written.
 
 Preview a big file first. The preview writes nothing and reports each part's fate, so you can
 change the mapping before anything is written. Then import, add your touches and start playback in

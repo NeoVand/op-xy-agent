@@ -64,14 +64,14 @@ function planView(plan: ImportPlan, read: MidiFileNotes) {
 	};
 }
 
-/** How long the scenes are, the last one's music said when it is shorter. */
+/** How long the scenes are, the last one's said when it is shorter. */
 function lastBlockNote(plan: ImportPlan): string {
 	const bars = plan.toBar - plan.fromBar + 1;
 	const last = bars - (plan.blocks - 1) * plan.barsPerBlock;
-	const each = `${plan.barsPerBlock} bars each`;
-	return last < plan.barsPerBlock
-		? `${each}; the last holds ${last} bar${last === 1 ? '' : 's'} of music, then rests`
-		: each;
+	const plural = (n: number) => `${n} bar${n === 1 ? '' : 's'}`;
+	if (plan.blocks === 1) return plural(last);
+	const each = `${plural(plan.barsPerBlock)} each`;
+	return last < plan.barsPerBlock ? `${each}, the last ${plural(last)}` : each;
 }
 
 /**
@@ -158,7 +158,7 @@ export const importMidiTool = defineTool({
 	// optional fields per track would crowd the strict grammar; zod still checks every call
 	strict: false,
 	description:
-		"Put a MIDI file the user attached onto the replica as the OP-XY plays a song: pick which of the file's tracks go to which OP-XY instrument tracks (drums on a drum track, 1 or 2; several file tracks can share one OP-XY track, such as a melody split between a verse track and a chorus track, or parts that take turns) and this writes, from the file itself, from the first bar they play to the last: each track's parts as 4-bar patterns (identical bars share one, 16 per track at most), a scene for every 4 bars, the song through them in order, and the tempo. GM drums land on the kit's layout. A part that changes more often than 16 patterns hold plays the closest of its patterns in some blocks (the result says how much plays as written), notes off the sixteenths move onto them, and one tempo plays throughout. Tracks left out rest during the song unless keep_others. Use preview first for a big file: it reports all that and writes nothing. Replaces the patterns on the tracks it writes, and the scenes and song. Never retype a MIDI file's notes with write_pattern; then transport play.",
+		"Put a MIDI file the user attached onto the replica as the OP-XY plays a song: pick which of the file's tracks go to which OP-XY instrument tracks (drums on a drum track, 1 or 2; several file tracks can share one OP-XY track, such as a melody split between a verse track and a chorus track, or parts that take turns) and this writes, from the file itself, from the first bar they play to the last: each track's parts as 4-bar patterns (identical bars share one, 16 per track at most; a shorter loop or last block plays at its own length), a scene for every 4 bars, the song through them in order, and the tempo. GM drums land on the kit's layout. A part that changes more often than 16 patterns hold plays the closest of its patterns in some blocks (the result says how much plays as written), notes off the sixteenths move onto them, and one tempo plays throughout. Tracks left out rest during the song unless keep_others. Use preview first for a big file: it reports all that and writes nothing. Replaces the patterns on the tracks it writes, and the scenes and song. Never retype a MIDI file's notes with write_pattern; then transport play.",
 	input: z.object({
 		file: z.string().min(1).max(200).describe('The MIDI file, by the name the chat shows'),
 		tracks: z
