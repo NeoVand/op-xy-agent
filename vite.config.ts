@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 export default defineConfig({
 	// Honour a PORT handed to us by the harness; fall back to Vite's default.
@@ -12,6 +13,19 @@ export default defineConfig({
 		watch: { ignored: ['**/.claude/worktrees/**'] },
 		// the dev-only transcript viewer (?transcripts=1) reads saved agent evals from here
 		fs: { allow: ['evals/agent/out'] }
+	},
+	// Worker bundles do not get the page's plugins: the lab's sandbox runs the simulator, whose state
+	// is a rune, so its .svelte.ts modules are compiled there too (the dev server already serves them
+	// compiled; a build without this shipped `$state(` raw and every lab.fork() threw)
+	worker: {
+		plugins: () => [
+			svelte({
+				compilerOptions: {
+					runes: ({ filename }) =>
+						filename.split(/[/\\]/).includes('node_modules') ? undefined : true
+				}
+			})
+		]
 	},
 	plugins: [
 		tailwindcss(),
