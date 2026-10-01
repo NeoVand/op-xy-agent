@@ -19,7 +19,6 @@
 		SimPersistence,
 		createIdbSampleCache,
 		createIdbSimStore,
-		musicMark,
 		setAppSimulator,
 		setAppSound,
 		setDeviceSamples,
@@ -35,6 +34,7 @@
 	import type { SessionPhase } from '$lib/device';
 	import { ReplicaState, setReplicaState } from '$lib/replica';
 	import { setScreenFrameSource } from '$lib/replica/screen';
+	import { musicMark } from '$lib/sim/music-mark';
 	import { describeFrame } from '$lib/sim/screen/render';
 	import { Theme, setTheme } from '$lib/ui/theme.svelte';
 	import AppHeader from '$lib/ui/shell/AppHeader.svelte';

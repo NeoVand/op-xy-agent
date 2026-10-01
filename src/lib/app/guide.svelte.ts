@@ -11,7 +11,6 @@
 import { createContext } from 'svelte';
 import { tryParseKeys } from '$lib/core/opxy';
 import { planAnimation, type ReplicaState, type Timers, type TurnableId } from '$lib/replica';
-import type { SimState } from '$lib/sim/params';
 
 /** One step of a walkthrough: a key combo, the detents of a turn, and the screen it leads to. */
 export interface GuideStep {
@@ -20,29 +19,8 @@ export interface GuideStep {
 	readonly clicks?: number;
 	/** What the replica's screen shows once the step is done (the simulator's description). */
 	readonly screen: string;
-	/** The replica's music once the step is done ({@link musicMark}), where the screen alone cannot tell. */
+	/** The replica's music once the step is done (`musicMark`), where the screen alone cannot tell. */
 	readonly music?: string;
-}
-
-/**
- * What a key press can change that the screen may not show: the selected track and each drum
- * track's key, every track's playing pattern and its notes, and whether the transport runs.
- */
-export function musicMark(s: SimState): string {
-	return JSON.stringify({
-		track: s.track,
-		keys: s.tracks.map((t) => t.drumKey),
-		playing: s.transport.playing,
-		notes: s.tracks.map((t) => {
-			const p = t.sequence.patterns[t.sequence.current];
-			return [
-				t.sequence.current,
-				...(p?.steps.flatMap((step, i) =>
-					step.notes.length > 0 ? [`${i}:${step.notes.map((n) => n.note).join('.')}`] : []
-				) ?? [])
-			];
-		})
-	});
 }
 
 export type GuideStatus = 'idle' | 'running' | 'done';
@@ -51,7 +29,7 @@ export interface ReplicaGuideOptions {
 	readonly replica: ReplicaState;
 	/** What the replica's screen shows now, in the simulator's words. */
 	readonly read: () => string;
-	/** The replica's music now ({@link musicMark}), for steps that change it. */
+	/** The replica's music now (`musicMark`), for steps that change it. */
 	readonly music?: () => string;
 	readonly timers: Timers;
 }

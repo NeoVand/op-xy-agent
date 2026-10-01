@@ -15,7 +15,7 @@ import type {
 	VirtualTrackSound
 } from '$lib/agent/virtual-opxy';
 import { KEYBOARD_NOTE_NAMES, formatKeys, parseKeys, type KeyTerm } from '$lib/core/opxy';
-import { musicMark } from './guide.svelte';
+import { musicMark } from '$lib/sim/music-mark';
 import { lockParam } from '$lib/sim/areas/sequencer/locks';
 import { buildFrame } from '$lib/sim/frames';
 import { describeFrame } from '$lib/sim/screen/render';

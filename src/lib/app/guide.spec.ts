@@ -8,7 +8,8 @@ import { planParam, planPlace } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { describeFrame } from '$lib/sim/screen/render';
 import { FakeTime } from '../../../test/fakes/fake-time';
-import { GUIDE_DONE_MS, ReplicaGuide, musicMark } from './guide.svelte';
+import { musicMark } from '$lib/sim/music-mark';
+import { GUIDE_DONE_MS, ReplicaGuide } from './guide.svelte';
 import { createVirtualOpxy } from './virtual';
 
 function setup() {

@@ -80,7 +80,6 @@ export {
 	GUIDE_DONE_MS,
 	ReplicaGuide,
 	getReplicaGuide,
-	musicMark,
 	setReplicaGuide,
 	type GuideStatus,
 	type GuideStep,
