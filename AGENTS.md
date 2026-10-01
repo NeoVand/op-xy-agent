@@ -28,6 +28,10 @@ Rules:
   or send firmware-updater SysEx.
 - The LLM never writes raw bytes: it emits typed intent; deterministic, tested TS code produces MIDI,
   `.xy` and preset files.
+- After changing the agent, its tools or skills, or the app around them, probe it: talk to the real
+  agent on the built site (`node evals/agent/probe.mjs serve`, then `say`, `press`, `debrief`) with
+  real user tasks, read every tool result, and end with the debrief question. Unit tests check what
+  we imagined; the owner's own sessions found what they missed.
 - Never print or commit `.env` values (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`).
 - Code from repos without a license is reference-only; MIT code (e.g. `kmorrill/xy-format`) may be
   ported with attribution.

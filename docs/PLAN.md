@@ -26,6 +26,11 @@
   listening no longer starts the song; `set_metronome`, and on/off in the planner (a click of E4);
   write_pattern's short forms (a note string, a drum grid, a pattern velocity); sound changes read
   from an idle copy, never from the screen where it stands; playback the user started is marked.
+- **The probe (2026-10-01):** `evals/agent/probe.mjs` talks to the agent on the built site (headless
+  Chromium, the key swapped in Node), presses replica keys as a user does, and ends with the owner's
+  debrief question. Its first rounds fixed grounding (whether the replica plays, and from where),
+  device-only approvals, section-by-section listening, a key-heard-versus-written note, readable
+  results, screen values the pages draw, and a walkthrough that guides any key sequence key by key.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).
