@@ -13,6 +13,7 @@ import {
 	muteTrackTool,
 	playNotesTool,
 	selectTrackTool,
+	setMetronomeTool,
 	setTempoTool,
 	transportTool
 } from './device';
@@ -255,6 +256,97 @@ describe('write_arrangement', () => {
 	});
 });
 
+describe('write_pattern, short', () => {
+	it('takes the notes as one string: a word per note, chords, lengths, velocities', async () => {
+		const { sim, run } = setup();
+		const result = await run(writePatternTool, {
+			track: 3,
+			velocity: 70,
+			notes: '1:A2:4 5:C3+E3+G3:2 9:E2::110'
+		});
+		expect(result.isError).toBeFalsy();
+		const p = currentPattern(sim.state.tracks[2].sequence);
+		const at = (i: number) => p.steps[i].notes.map((n) => [n.note, n.velocity, n.length]);
+		expect(at(0)).toEqual([[45, 70, 4]]);
+		expect(at(4)).toEqual([
+			[48, 70, 2],
+			[52, 70, 2],
+			[55, 70, 2]
+		]);
+		expect(at(8)).toEqual([[40, 110, 1]]);
+		// a list of objects takes the pattern's velocity too
+		await run(writePatternTool, { track: 4, velocity: 60, notes: [{ step: 1, note: 'C3' }] });
+		expect(currentPattern(sim.state.tracks[3].sequence).steps[0].notes[0].velocity).toBe(60);
+	});
+
+	it('writes drums from a grid by the sounds’ names, notes and numbers, with a string beside it', async () => {
+		const { sim, run } = setup();
+		const result = await run(writePatternTool, {
+			track: 1,
+			velocity: 90,
+			grid: {
+				'kick 1': 'x... ..x. x... ....',
+				F3: '.... X... .... X...',
+				62: '..o. ..o. ..o. ..o.'
+			},
+			notes: '16:63'
+		});
+		expect(result.isError).toBeFalsy();
+		const p = currentPattern(sim.state.tracks[0].sequence);
+		const hits = p.steps
+			.map((s, i) => s.notes.map((n) => `${i + 1}:${n.note}:${n.velocity}`).sort())
+			.flat();
+		// "kick 1" sits on F3 (53) in a new project's kit, as F3 does: both lines are the same key
+		expect(hits).toEqual([
+			'1:53:90',
+			'3:62:50',
+			'5:53:115',
+			'7:53:90',
+			'7:62:50',
+			'9:53:90',
+			'11:62:50',
+			'13:53:115',
+			'15:62:50',
+			'16:63:90'
+		]);
+		expect(json(result).written.grid).toBeDefined();
+	});
+
+	it('says what it cannot read, and writes nothing', async () => {
+		const { sim, run } = setup();
+		const before = JSON.stringify(sim.state.tracks[0].sequence);
+		const bad = await run(writePatternTool, { track: 1, notes: '1:C3 5' });
+		expect(bad).toMatchObject({ isError: true, summary: 'notes not read' });
+		expect(String(bad.content)).toMatch(/"5" is not step:note/);
+		const sound = await run(writePatternTool, { track: 1, grid: { cowbel: 'x...' } });
+		expect(sound).toMatchObject({ isError: true, summary: 'unknown grid sounds' });
+		expect(String(sound.content)).toMatch(/"cowbel" is no sound.*this track's sounds: .*kick 1/);
+		const none = await run(writePatternTool, { track: 1 });
+		expect(none).toMatchObject({ isError: true, summary: 'no notes given' });
+		const many = await run(writePatternTool, {
+			track: 3,
+			notes: Array.from({ length: 64 }, (_, i) => `${i + 1}:C3+E3`).join(' ')
+		});
+		expect(many).toMatchObject({ isError: true, summary: 'too many notes' });
+		expect(JSON.stringify(sim.state.tracks[0].sequence)).toBe(before);
+		// an empty string clears, as an empty list does
+		await run(writePatternTool, { track: 1, notes: '1:53' });
+		await run(writePatternTool, { track: 1, notes: '' });
+		expect(
+			currentPattern(sim.state.tracks[0].sequence).steps.every((s) => s.notes.length === 0)
+		).toBe(true);
+	});
+
+	it('previews the notes it was given in either form', () => {
+		const preview = writePatternTool.preview!(
+			{ track: 1, grid: { 53: 'x...x...' }, notes: '3:62' } as never,
+			null,
+			{} as never
+		);
+		expect(preview.label).toBe('track 1 pattern 1: 3 notes');
+	});
+});
+
 describe('live tools on the virtual OP-XY (no device connected)', () => {
 	it('starts and stops its transport and says where it happened', async () => {
 		const { sim, run } = setup();
@@ -273,6 +365,37 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		const next = json(await run(setTempoTool, { bpm: 100 }));
 		expect(next).toMatchObject({ target: 'virtual', tempoBpm: 100 });
 		expect(next.note).toBeUndefined();
+	});
+
+	it('switches its metronome off and on, and says when it already was', async () => {
+		const { sim, env, run } = setup();
+		// a new project's metronome clicks
+		expect(sim.state.tempo.metronome.on).toBe(true);
+		expect(setMetronomeTool.snapshot!({ on: false }, env)).toEqual({ on: true });
+		const off = await run(setMetronomeTool, { on: false });
+		expect(json(off)).toMatchObject({ target: 'virtual', metronome: 'off' });
+		expect(off).toMatchObject({
+			applied: true,
+			after: false,
+			summary: 'metronome off on the replica'
+		});
+		expect(sim.state.tempo.metronome.on).toBe(false);
+		const again = await run(setMetronomeTool, { on: false });
+		expect(json(again).note).toBe('It was already off.');
+		expect(again.applied).toBe(false);
+		expect(setMetronomeTool.inverse!({ on: false }, { on: true }, env)).toMatchObject({
+			tool: 'set_metronome',
+			input: { on: true }
+		});
+		// on means heard: a level turned down to 0 comes back up with it
+		sim.state.tempo.metronome.level = 0;
+		await run(setMetronomeTool, { on: true });
+		expect(sim.state.tempo.metronome.on).toBe(true);
+		expect(sim.state.tempo.metronome.level).toBeGreaterThan(0);
+		// and off at level 0 is off on the screen too, not just silent
+		sim.state.tempo.metronome.level = 0;
+		await run(setMetronomeTool, { on: false });
+		expect(sim.state.tempo.metronome.on).toBe(false);
 	});
 
 	it('sets its tempo to the tenth, selects and mutes its tracks', async () => {

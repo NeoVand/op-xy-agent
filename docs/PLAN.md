@@ -4,7 +4,7 @@
 > Decisions: [`DECISIONS.md`](DECISIONS.md). Questions for the owner: [`QUESTIONS.md`](QUESTIONS.md).
 > Update the **Status** block whenever a milestone moves.
 
-## Status (2026-09-30)
+## Status (2026-10-01)
 
 - **Now: Agent v2** (`docs/AGENT-V2.md`, D12; where each phase stands is at the end of it). Built
   in the night of 2026-09-30 and on main: a prose core prompt with 14 skills and a router; the
@@ -20,6 +20,12 @@
   watch without a key; pattern cards in the chat to hear and edit; takes from the lab to audition
   and keep; the now-playing strip (tempo, bar, song, track meters that mute); the ⌘K command
   palette. Next there: an undo for a kept take, change marks on encoders, the song WAV from ⌘K.
+- **The agent's own report (2026-10-01), from a trap beat it struggled with:** the lab runs on the
+  published site (its worker gets the Svelte compiler; an e2e guard); `listen` hears one scene
+  looping (`scene`, rendered offline, `tracks` each alone, no mutes touched), and the lab's scene
+  listening no longer starts the song; `set_metronome`, and on/off in the planner (a click of E4);
+  write_pattern's short forms (a note string, a drum grid, a pattern velocity); sound changes read
+  from an idle copy, never from the screen where it stands; playback the user started is marked.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

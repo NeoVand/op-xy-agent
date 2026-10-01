@@ -124,7 +124,10 @@ export interface VirtualStatus {
 	readonly arrangement: VirtualArrangement;
 	/** Whether the browser makes its sound: on, off (the switch), or unavailable (no audio). */
 	readonly sound: 'on' | 'off' | 'unavailable';
-	/** Whether the metronome clicks along (the tempo page); its click is in what the agent hears. */
+	/**
+	 * Whether the metronome clicks along, heard (the tempo page: on, with a level above 0); its click
+	 * is in what the agent hears.
+	 */
 	readonly metronome?: boolean;
 }
 
@@ -174,7 +177,10 @@ export interface VirtualOpxy {
 	/** Starts (the song, when it has more than one entry) or stops the transport. */
 	transport(action: 'play' | 'stop'): void;
 	setTempo(bpm: number): void;
-	/** Switches the metronome's click on or off (the tempo page's `click E4`). */
+	/**
+	 * Switches the metronome's click on or off (the tempo page's `click E4`); on at level 0 also
+	 * brings its level back to a new project's, so it is heard.
+	 */
 	setMetronome(on: boolean): void;
 	selectTrack(track: number): void;
 	setMuted(track: number, muted: boolean): void;

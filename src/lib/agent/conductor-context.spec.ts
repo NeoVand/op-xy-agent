@@ -133,6 +133,50 @@ describe('the conductor grounds its answer', () => {
 		expect(conductor.litChanges?.changes.map((c) => c.brief)).toEqual(['tempo 120 → 100 bpm']);
 	});
 
+	it('says when playback started by the user’s hand, not by a tool of the agent’s', async () => {
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const tempo = {
+			content: [{ type: 'tool_use', id: 'toolu_t', name: 'set_tempo', input: { bpm: 100 } }],
+			stop_reason: 'tool_use'
+		} as const;
+		const api = scriptedApi([
+			() => {
+				// the user presses play while the agent works
+				sim.press('key.play');
+				return tempo;
+			},
+			answer('It runs at 100 now.'),
+			{
+				content: [
+					{ type: 'tool_use', id: 'toolu_s', name: 'transport', input: { action: 'stop' } }
+				],
+				stop_reason: 'tool_use'
+			},
+			answer('Stopped.')
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('slow it down to 100');
+		const note = api.messageRequests[1].body.messages.at(-1).content.at(-1);
+		expect(note.text).toContain('- playback started (by the user: no tool of yours did)');
+		expect(note.text).toContain('anything the user did on it meanwhile');
+		// its own transport call needs no word
+		await conductor.send('stop it');
+		const own = api.messageRequests[3].body.messages.at(-1).content.at(-1);
+		expect(own.text).toContain('- playback stopped\n');
+		expect(own.text).not.toContain('by the user');
+	});
+
 	it('puts a lab run’s takes on the replica one at a time, and keeps the one on as the user goes on', async () => {
 		const offer = [
 			'for (const note of ["A1", "D2"]) {',

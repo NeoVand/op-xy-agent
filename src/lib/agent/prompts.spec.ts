@@ -44,8 +44,11 @@ describe('prompts', () => {
 			deviceFacts(),
 			...CONDUCTOR_TOOLS.map((t) => t.description)
 		];
-		// Grammar descriptions use variables ("a + b", "hold x"); skip those.
-		const combos = texts.flatMap(examples).filter((c) => !/(^|\s)[abx](\s|$)/.test(c));
+		// Grammar descriptions use variables ("a + b", "hold x"), and write_pattern's notes join a
+		// chord with + ("5:C3+E3+G3"); skip those.
+		const combos = texts
+			.flatMap(examples)
+			.filter((c) => !/(^|\s)[abx](\s|$)/.test(c) && !/^\d+:/.test(c));
 		expect(combos.length).toBeGreaterThan(5);
 		for (const combo of combos) {
 			expect(tryParseKeys(combo).ok, combo).toBe(true);

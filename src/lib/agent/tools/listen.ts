@@ -4,7 +4,10 @@
  * - `listen` records a few seconds of what plays — the OP-XY's USB audio when it is connected,
  *   else the virtual OP-XY in the browser — and returns what the analysis heard (`core/listen`):
  *   short lines in words, the flags worth acting on, and the numbers. It changes nothing; it needs
- *   the transport to be playing, and says so when it is not.
+ *   the transport to be playing, and says so when it is not. With `scene` (or `tracks`) it renders
+ *   that scene of the replica looping, offline (`scene-render`), whole or one track at a time:
+ *   nothing has to play, and the song, the transport and the mutes are left alone (an agent once
+ *   asked for its beat and heard the song's drumless intro, then the song ending).
  * - `listen_tracks` hears instrument tracks one at a time by muting the others (CC9 on the device,
  *   the simulator's mutes on the virtual OP-XY). Mutes are project state, so the user approves it
  *   first, and every mute is put back exactly as it was afterwards, also when it fails or is
@@ -26,9 +29,10 @@ import {
 } from '$lib/core/listen';
 import { encodeCcValue, getTrack, resolveCc } from '$lib/core/opxy';
 import type { DeviceStack } from '$lib/device';
+import type { SimState } from '$lib/sim/params';
 import { deviceSnapshot } from '../device-state';
 import type { ListenFrom, ListenHost } from '../listen-host';
-import type { SimState } from '$lib/sim/params';
+import { alone, renderRequest, sceneState, tracksPlaying } from '../scene-render';
 import type { VirtualOpxy } from '../virtual-opxy';
 import {
 	defineTool,
@@ -141,15 +145,32 @@ const recordFrom = (target: Target): ListenFrom =>
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
-/** What the analysis cannot know and the agent should. */
-function notesFor(target: Target, analysis: ListenAnalysis): string[] {
+/** The replica's scene now (1–99), or null on a device. */
+const sceneOf = (target: Target): number | null =>
+	target.kind === 'virtual' ? target.virtual.readArrangement().scene : null;
+
+/** What the analysis cannot know and the agent should; `from` is the scene the take started on. */
+function notesFor(target: Target, analysis: ListenAnalysis, from: number | null): string[] {
 	const notes: string[] = [];
 	if (target.kind === 'virtual') {
 		const status = target.virtual.status();
 		if (status.metronome) {
 			notes.push("The replica's metronome is on: its click is in what you heard, on every beat.");
 		}
-		if (!status.playing) notes.push('The transport stopped while listening.');
+		const arrangement = target.virtual.readArrangement();
+		if (from !== null && arrangement.scene !== from) {
+			notes.push(
+				`The song moved on from scene ${from} to scene ${arrangement.scene} while listening, so the take holds both. To hear one scene, listen with scene.`
+			);
+		}
+		if (!status.playing) {
+			const song = arrangement.song;
+			notes.push(
+				song.order.length > 1 && !song.loop
+					? 'The transport stopped while listening: the song came to its end (its loop is off), so the take ends in silence. To hear one scene, listen with scene.'
+					: 'The transport stopped while listening (stopped by hand, perhaps), so the take ends in silence.'
+			);
+		}
 	} else {
 		const s = deviceSnapshot(target.stack);
 		if (analysis.silence.silent && s.playState === 'unknown') {
@@ -182,7 +203,7 @@ export const listenTool = defineTool({
 	kind: 'read',
 	strict: false,
 	description:
-		'Listen to what is playing for a few seconds and get back what it sounds like: loudness (LUFS), peaks and clipping, tone against pink noise, stereo width and a mono low end, tempo compared with the set tempo, timing and swing, where the low, mid and high hits sit in the beat, a key and rough chords, silence and dropouts, and flags worth acting on. Hears the connected OP-XY over its USB audio, else the replica in the browser (from chooses). The transport must be playing: if it is stopped this says so, and nothing is recorded. Changes nothing. Use it to check your own work, then revise and listen again.',
+		'Listen to what is playing for a few seconds and get back what it sounds like: loudness (LUFS), peaks and clipping, tone against pink noise, stereo width and a mono low end, tempo compared with the set tempo, timing and swing, where the low, mid and high hits sit in the beat, a key and rough chords, silence and dropouts, and flags worth acting on. Hears the connected OP-XY over its USB audio, else the replica in the browser (from chooses). The transport must be playing: if it is stopped this says so, and nothing is recorded. With scene, it renders that scene of the replica looping instead, offline: nothing needs to play, and the song, the transport and the mutes are left alone (a song playing moves on from scene to scene, so this is how to hear one scene); add tracks to hear instrument tracks one at a time, each alone, without touching any mute. Changes nothing. Use it to check your own work, then revise and listen again.',
 	input: z.object({
 		seconds: z
 			.number()
@@ -200,15 +221,31 @@ export const listenTool = defineTool({
 			.enum(['device', 'virtual'])
 			.optional()
 			.describe(
-				'device: the connected OP-XY; virtual: the replica in the browser (default: the device when connected)'
+				'device: the connected OP-XY; virtual: the replica in the browser (default: the device when connected; the replica with scene or tracks)'
+			),
+		scene: z
+			.int()
+			.min(1)
+			.max(99)
+			.optional()
+			.describe(
+				"A scene of the replica to hear looping, 1–99, rendered offline: it need not be playing, and the song isn't started"
+			),
+		tracks: z
+			.union([z.literal('each'), z.array(z.int().min(1).max(8)).min(1).max(8)])
+			.optional()
+			.describe(
+				`Instrument tracks to hear one at a time, each alone, in the scene rendered offline (each: every track with notes there; default scene: the one the replica is on), ${TRACK_SECONDS} s each unless seconds says`
 			)
 	}),
 	async run(input, ctx) {
+		if (input.scene !== undefined || input.tracks !== undefined) return offline(input, ctx);
 		const target = targetOf(ctx.env, input.from);
 		if (isResult(target)) return target;
 		const blocked = notReady(target, ctx.env);
 		if (blocked) return blocked;
 		const seconds = input.seconds ?? LISTEN_SECONDS;
+		const from = sceneOf(target);
 		let analysis: ListenAnalysis;
 		try {
 			const recording = await target.host.record(recordFrom(target), seconds, ctx.signal);
@@ -220,12 +257,111 @@ export const listenTool = defineTool({
 		const summary = summarize(analysis, { focus: input.focus, source: sourceText(target) });
 		const lines = [
 			summary.text,
-			...notesFor(target, analysis).map((n) => `note: ${n}`),
+			...notesFor(target, analysis, from).map((n) => `note: ${n}`),
 			`numbers: ${JSON.stringify(summary.data)}`
 		];
 		return { content: lines.join('\n'), summary: chipLine(analysis.seconds, summary) };
 	}
 });
+
+interface OfflineInput {
+	readonly seconds?: number;
+	readonly focus?: (typeof LISTEN_FOCUS)[number];
+	readonly from?: 'device' | 'virtual';
+	readonly scene?: number;
+	readonly tracks?: 'each' | readonly number[];
+}
+
+/**
+ * listen with `scene` or `tracks`: a copy of the replica's project looping the scene, rendered
+ * offline through its own sound, whole or each track alone (the copy's mutes, never the replica's).
+ */
+async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResult> {
+	if (input.from === 'device') {
+		return errorResult(
+			"scene and tracks render the replica offline; the OP-XY's own audio can only be heard as it plays. Ask the user to play that scene on the OP-XY and listen without them, or leave from out to render the replica's.",
+			'offline: replica only'
+		);
+	}
+	const { virtual, listen: host } = ctx.env;
+	if (!virtual) return errorResult('There is no replica here to listen to.', 'no virtual op-xy');
+	if (!host?.render) {
+		return errorResult(
+			'Rendering offline is not available here. Listen without scene and tracks while the replica plays the scene (write_arrangement or the user picks it), or read_pattern to see what it holds.',
+			'no offline render'
+		);
+	}
+	const render = host.render.bind(host);
+	const arrangement = virtual.readArrangement();
+	const scene = input.scene ?? arrangement.scene;
+	const scenes = arrangement.scenes.map((s) => s.scene);
+	if (!scenes.includes(scene)) {
+		return errorResult(
+			`Scene ${scene} is empty: the replica's scenes are ${scenes.join(', ')}.`,
+			`scene ${scene} is empty`
+		);
+	}
+	const state = sceneState(JSON.parse(virtual.checkpoint().state) as SimState, scene);
+	const expectedBpm = state.tempo.bpm;
+	const source = `scene ${scene} of the replica, rendered offline`;
+	const notes = virtual.status().metronome
+		? [
+				"The replica's metronome is on: its click is in what you heard, on every beat (set_metronome off silences it)."
+			]
+		: [];
+	try {
+		if (input.tracks === undefined) {
+			const seconds = input.seconds ?? LISTEN_SECONDS;
+			const recording = await render(renderRequest(state, seconds), ctx.signal);
+			const analysis = await host.analyze(recording, { expectedBpm });
+			const summary = summarize(analysis, { focus: input.focus, source });
+			return {
+				content: [
+					summary.text,
+					...notes.map((n) => `note: ${n}`),
+					`numbers: ${JSON.stringify(summary.data)}`
+				].join('\n'),
+				summary: chipLine(analysis.seconds, summary).replace(/^heard/, `heard scene ${scene},`)
+			};
+		}
+		const tracks =
+			input.tracks === 'each'
+				? tracksPlaying(state)
+				: [...new Set(input.tracks)].sort((a, b) => a - b);
+		if (tracks.length === 0) {
+			return errorResult(
+				`No instrument track has notes in scene ${scene}, so there is nothing to hear alone.`,
+				'nothing to hear'
+			);
+		}
+		const playing = tracksPlaying(state);
+		const silent = tracks
+			.filter((t) => !playing.includes(t))
+			.map((t) => `T${t} has no notes in scene ${scene}, so its take is silence.`);
+		const seconds = input.seconds ?? TRACK_SECONDS;
+		const takes: TrackTake[] = [];
+		for (const track of tracks) {
+			const recording = await render(renderRequest(alone(state, track), seconds), ctx.signal);
+			const analysis = await host.analyze(recording, { expectedBpm });
+			const name = state.tracks[track - 1].engine;
+			takes.push({ track, name, percussive: name === 'drum', analysis });
+		}
+		const summary = summarizeTracks(takes, { source });
+		return {
+			content: [
+				summary.text,
+				...silent,
+				...notes,
+				...ducksIn(state, tracks),
+				`numbers: ${JSON.stringify(trackNumbers(summary))}`
+			].join('\n'),
+			summary: `heard ${takes.length} track${takes.length === 1 ? '' : 's'} of scene ${scene} alone`
+		};
+	} catch (error) {
+		if (ctx.signal.aborted) throw error;
+		return errorResult(`Nothing was heard: ${message(error)}`, 'could not listen');
+	}
+}
 
 // ─── listen_tracks ──────────────────────────────────────────────────────────────────────────────
 
@@ -270,7 +406,6 @@ function mutesText(mutes: readonly (boolean | null)[]): string {
 const DEVICE_MUTES_UNKNOWN =
 	'The OP-XY never reports mutes set by hand, so the app cannot put them back exactly and did not start. Ask the user which instrument tracks are muted on the device now, set all eight to that with mute_track (they approve it once), then call listen_tracks again: it will put every mute back the way they are.';
 
-/** Sets one instrument track's mute on the target. */
 /**
  * Heard tracks whose duck listens to another instrument track: alone, that track was muted, so the
  * duck never moved in the take (the episodes: the agent heard no pump and rewrote the bass as a
@@ -278,7 +413,11 @@ const DEVICE_MUTES_UNKNOWN =
  */
 function silencedDucks(target: Target, tracks: readonly number[]): string[] {
 	if (target.kind !== 'virtual') return [];
-	const state = JSON.parse(target.virtual.checkpoint().state) as SimState;
+	return ducksIn(JSON.parse(target.virtual.checkpoint().state) as SimState, tracks);
+}
+
+/** `silencedDucks` in a project's state. */
+function ducksIn(state: SimState, tracks: readonly number[]): string[] {
 	return tracks.flatMap((track) => {
 		const lfo = state.tracks[track - 1]?.lfo;
 		if (lfo?.type !== 'duck' || !lfo.on || lfo.source === track) return [];
@@ -289,6 +428,22 @@ function silencedDucks(target: Target, tracks: readonly number[]): string[] {
 	});
 }
 
+/** The numbers worth keeping from each track's take. */
+function trackNumbers(summary: ReturnType<typeof summarizeTracks>) {
+	return summary.tracks.map((t) => ({
+		track: t.track,
+		flags: t.flags,
+		level: t.data.level,
+		tone: t.data.tone,
+		rhythm: t.data.rhythm && {
+			onsets: t.data.rhythm.onsets,
+			tightnessMs: t.data.rhythm.tightnessMs,
+			swing: t.data.rhythm.swing
+		}
+	}));
+}
+
+/** Sets one instrument track's mute on the target. */
 function setMute(target: Target, track: number, muted: boolean, ctx: ToolContext): void {
 	if (target.kind === 'virtual') {
 		target.virtual.setMuted(track, muted);
@@ -312,7 +467,7 @@ export const listenTracksTool = defineTool({
 	kind: 'mutate',
 	device: true,
 	strict: false,
-	description: `Hear instrument tracks one at a time, each alone: mutes the other instrument tracks, listens (${TRACK_SECONDS} s per track by default), moves on, and afterwards puts every mute back exactly as it was, also if it fails or is stopped. Returns a line per track (loudness, where its energy sits, its hits, key and chords) and how they compare (tracks crowding the same band). The user approves it first, since mutes are project state. On the connected OP-XY (CC9) it runs only when the app knows all eight instrument tracks' mutes, because the device never reports mutes set by hand: if not, set them with mute_track first as the user says they are. The transport must be playing.`,
+	description: `Hear instrument tracks one at a time, each alone: mutes the other instrument tracks, listens (${TRACK_SECONDS} s per track by default), moves on, and afterwards puts every mute back exactly as it was, also if it fails or is stopped. Returns a line per track (loudness, where its energy sits, its hits, key and chords) and how they compare (tracks crowding the same band). The user approves it first, since mutes are project state. On the connected OP-XY (CC9) it runs only when the app knows all eight instrument tracks' mutes, because the device never reports mutes set by hand: if not, set them with mute_track first as the user says they are. The transport must be playing. On the replica, listen with scene and tracks hears the tracks alone offline without touching a mute or asking: prefer it there.`,
 	input: z.object({
 		tracks: z
 			.array(z.int().min(1).max(8))
@@ -412,17 +567,7 @@ export const listenTracksTool = defineTool({
 			target.kind === 'virtual' && target.virtual.status().metronome
 				? "The replica's metronome is on: its click is in every take, on every beat."
 				: null;
-		const numbers = summary.tracks.map((t) => ({
-			track: t.track,
-			flags: t.flags,
-			level: t.data.level,
-			tone: t.data.tone,
-			rhythm: t.data.rhythm && {
-				onsets: t.data.rhythm.onsets,
-				tightnessMs: t.data.rhythm.tightnessMs,
-				swing: t.data.rhythm.swing
-			}
-		}));
+		const numbers = trackNumbers(summary);
 		return {
 			content: [
 				summary.text,

@@ -46,6 +46,25 @@ describe('replica changes', () => {
 		expect(lines.every((l) => l.startsWith('T3 '))).toBe(true);
 	});
 
+	it('read a sound by its pages wherever the screen stands, never the screen itself', () => {
+		const { sim, virtual, start } = setup();
+		// T1's amp release changed; the screen left on the preset browser, shift down, then a boot
+		sim.state.tracks[0].amp.release = 40;
+		sim.press('track.1');
+		sim.input({ type: 'press', id: 'key.shift' });
+		sim.press('key.m1');
+		expect(sim.state.areas.system.page).toBe('presets');
+		const lines = virtual.changesSince(start);
+		expect(lines.filter((l) => l.startsWith('T1 '))).toEqual([
+			expect.stringMatching(
+				/^T1 M2 amp envelope: amp envelope: .*release 03 → amp envelope: .*release 40$/
+			)
+		]);
+		sim.state.areas.system.power = { on: true, booting: true, elapsed: 0, since: 0 };
+		expect(virtual.changesSince(start)).toEqual(lines);
+		expect(lines.join('\n')).not.toMatch(/presets for|starting up/);
+	});
+
 	it('count patterns by their notes, and read scenes and the song', () => {
 		const { virtual, start } = setup();
 		const kick = [1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 110, length: 1 }));

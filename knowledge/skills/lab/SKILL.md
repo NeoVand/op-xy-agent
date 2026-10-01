@@ -118,7 +118,8 @@ Listening renders from the top, as play would start it, and the song does not mo
 scene while it renders; to hear a later part, name its scene. Each render takes a moment (about as
 long as a second or two of audio takes to render, per render), a program hears at most 24 renders
 and 240 seconds in all, and the whole program has its time limit (20 s unless timeout_s says
-otherwise, 60 at most). A new project's metronome is on, and its click is in what you hear.
+otherwise, 60 at most). A new project's metronome is on, and its click is in what you hear (`fork.setMetronome(false)`
+leaves it out).
 
 What the program prints and returns comes back cut at about 10,000 characters, so print counts,
 scores and the few notes that matter rather than whole patterns. Returned values come back as

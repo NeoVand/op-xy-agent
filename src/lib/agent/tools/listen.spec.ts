@@ -1,14 +1,16 @@
 // The listening tools against fakes: a host whose recordings hold only the tracks that are unmuted
-// when it records (drums on T1, a bass on T3, a pad on T5), the app's virtual OP-XY on a bare
-// simulator, and the emulated OP-XY. listen hears what plays and compares it with the set tempo,
-// and refuses (recording nothing) when there is nothing to hear; listen_tracks hears each track
-// alone and puts every mute back exactly — after a failure and a stop too — and on a device only
-// when the app knows every mute.
+// when it records (drums on T1, a bass on T3, a pad on T5), and whose offline renders hold the
+// tracks that play in the project handed over; the app's virtual OP-XY on a bare simulator, and the
+// emulated OP-XY. listen hears what plays and compares it with the set tempo, and refuses
+// (recording nothing) when there is nothing to hear; with a scene it renders that scene, whole or a
+// track at a time, touching nothing; listen_tracks hears each track alone and puts every mute back
+// exactly — after a failure and a stop too — and on a device only when the app knows every mute.
 import { describe, expect, it } from 'vitest';
 import { createVirtualOpxy, type VirtualSound } from '$lib/app/virtual';
 import { analyzeAudio } from '$lib/core/listen';
 import { drumLoop, gain, mix, progression } from '$lib/core/listen/signals';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import type { SimState } from '$lib/sim/params';
 import { createFakeRig } from '../../../../test/fakes/rig';
 import { FakeTime } from '../../../../test/fakes/fake-time';
 import type { ListenFrom, ListenHost, ListenRecording } from '../listen-host';
@@ -57,31 +59,61 @@ function trackAudio(track: number, seconds: number): Float32Array {
 
 interface FakeHost extends ListenHost {
 	readonly records: { source: ListenFrom; seconds: number; audible: number[] }[];
+	/** Offline renders: the tracks that play in the project, and whether its scene is held. */
+	readonly renders: { seconds: number; audible: number[]; held: boolean; playing: boolean }[];
 	failOn?: number;
+}
+
+/** A recording of `tracks` playing together. */
+function recordingOf(tracks: readonly number[], seconds: number, source: ListenFrom) {
+	const channel = mix(
+		new Float32Array(Math.round(seconds * SR)),
+		...tracks.map((t) => trackAudio(t, seconds))
+	);
+	return {
+		channels: [channel, channel],
+		sampleRate: SR,
+		source,
+		label: source === 'device' ? 'OP-XY' : 'replica'
+	};
+}
+
+/** The instrument tracks that sound in a project: unmuted, with notes in the pattern they play. */
+function soundingIn(project: string): number[] {
+	const p = JSON.parse(project) as Pick<SimState, 'tracks'>;
+	return p.tracks.flatMap((t, i) => {
+		const pattern = t.sequence.patterns[t.sequence.current];
+		const notes = pattern?.steps.some((step) => step.notes.length > 0) ?? false;
+		return i < 8 && notes && !t.mix.muted ? [i + 1] : [];
+	});
 }
 
 /** A host that hears the tracks `audible()` says sound now. */
 function fakeHost(audible: () => number[]): FakeHost {
 	const host: FakeHost = {
 		records: [],
+		renders: [],
 		async record(source, seconds, signal) {
 			if (signal.aborted) throw new Error('stopped');
 			const now = audible();
 			host.records.push({ source, seconds, audible: now });
 			if (host.failOn === host.records.length) throw new Error('the audio stopped running');
-			const channel = mix(
-				new Float32Array(Math.round(seconds * SR)),
-				...now.map((t) => trackAudio(t, seconds))
-			);
-			return {
-				channels: [channel, channel],
-				sampleRate: SR,
-				source,
-				label: source === 'device' ? 'OP-XY' : 'replica'
-			};
+			return recordingOf(now, seconds, source);
 		},
 		async analyze(recording: ListenRecording, options) {
 			return analyzeAudio(recording.channels, recording.sampleRate, options);
+		},
+		async render(request, signal) {
+			if (signal.aborted) throw new Error('stopped');
+			const now = soundingIn(request.project);
+			const held = (JSON.parse(request.project) as Pick<SimState, 'areas'>).areas.arrange.held;
+			host.renders.push({
+				seconds: request.seconds,
+				audible: now,
+				held,
+				playing: request.transport.playing
+			});
+			return recordingOf(now, request.seconds, 'replica');
 		}
 	};
 	return host;
@@ -200,6 +232,86 @@ describe('listen on the virtual OP-XY', () => {
 		const bare = { ...env, listen: null };
 		const result = await listenTool.run({}, ctxFor(bare));
 		expect(result).toMatchObject({ isError: true, summary: 'no listening here' });
+	});
+});
+
+describe('listen to a scene, rendered offline', () => {
+	/** Scene 1 (the intro: all three), scene 2 (T3 on its empty pattern 2), the song 1 → 2. */
+	async function songSetup(options: { playing?: boolean } = {}) {
+		const setup = await virtualSetup(options);
+		setup.virtual.writeArrangement({
+			scenes: [
+				{ scene: 1, patterns: [{ track: 3, pattern: 1 }] },
+				{ scene: 2, patterns: [{ track: 3, pattern: 2 }] }
+			],
+			song: { order: [1, 2], loop: false }
+		});
+		return setup;
+	}
+
+	it('hears the scene asked for looping, though stopped, and touches nothing', async () => {
+		const { host, virtual, run } = await songSetup({ playing: false });
+		const before = virtual.checkpoint().state;
+		const result = await run(listenTool, { scene: 2, seconds: 4 });
+		expect(result.isError).toBeFalsy();
+		// the scene, held so it loops; not the song from its first scene
+		expect(host.renders).toEqual([{ seconds: 4, audible: [1, 5], held: true, playing: true }]);
+		expect(host.records).toEqual([]);
+		const text = String(result.content);
+		expect(text).toMatch(/^heard 4 s of scene 2 of the replica, rendered offline/);
+		expect(result.summary).toMatch(/^heard scene 2, 4 s/);
+		// the replica: still stopped, on scene 1, its song as it was
+		expect(virtual.checkpoint().state).toBe(before);
+		expect(virtual.status().playing).toBe(false);
+	});
+
+	it('hears each track of the scene alone, without a mute changed', async () => {
+		const { host, virtual, run } = await songSetup();
+		virtual.setMuted(5, true);
+		const result = await run(listenTool, { scene: 1, tracks: 'each' });
+		expect(result.isError).toBeFalsy();
+		// T5, muted on the replica, is heard alone all the same
+		expect(host.renders.map((r) => [r.audible, r.seconds])).toEqual([
+			[[1], 4],
+			[[3], 4],
+			[[5], 4]
+		]);
+		expect(muted(virtual)).toEqual([5]);
+		expect(String(result.content)).toMatch(/^heard 3 tracks alone, one at a time, from scene 1/);
+		expect(result.summary).toBe('heard 3 tracks of scene 1 alone');
+		// tracks alone: the scene the replica is on unless one is named
+		await run(listenTool, { tracks: [5, 1], seconds: 2 });
+		expect(host.renders.slice(3).map((r) => r.audible)).toEqual([[1], [5]]);
+	});
+
+	it('says what is wrong: an empty scene, a device, no offline render', async () => {
+		const { env, run } = await songSetup();
+		const empty = await run(listenTool, { scene: 9 });
+		expect(empty).toMatchObject({ isError: true, summary: 'scene 9 is empty' });
+		expect(String(empty.content)).toMatch(/scenes are 1, 2/);
+		// a track named that plays nothing there is heard, and said to be silent
+		const quiet = await run(listenTool, { scene: 2, tracks: [3] });
+		expect(String(quiet.content)).toMatch(/T3 has no notes in scene 2/);
+		const device = await run(listenTool, { scene: 2, from: 'device' });
+		expect(device).toMatchObject({ isError: true, summary: 'offline: replica only' });
+		const live = { ...env, listen: { ...env.listen!, render: undefined } };
+		const none = await listenTool.run({ scene: 2 }, ctxFor(live));
+		expect(none).toMatchObject({ isError: true, summary: 'no offline render' });
+	});
+
+	it('says when a live take ran over a scene change or the end of the song', async () => {
+		const { virtual, sim, host, run } = await songSetup();
+		// the song moves on and ends (its loop off) while the take records
+		const record = host.record.bind(host);
+		host.record = async (source, seconds, signal) => {
+			const recording = await record(source, seconds, signal);
+			sim.state.areas.arrange.scene = 1;
+			virtual.transport('stop');
+			return recording;
+		};
+		const text = String((await run(listenTool, {})).content);
+		expect(text).toMatch(/moved on from scene 1 to scene 2/);
+		expect(text).toMatch(/the song came to its end \(its loop is off\)/);
 	});
 });
 

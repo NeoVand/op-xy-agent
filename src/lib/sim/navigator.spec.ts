@@ -124,6 +124,22 @@ describe('the navigator: parameters', () => {
 		expect(keys(groove)).toEqual(['tempo', 'turn E2 2']);
 	});
 
+	it('switches the metronome on and off with a click of E4; a number is its level', () => {
+		const sim = boot();
+		expect(sim.state.tempo.metronome.on).toBe(true);
+		const off = planParam(sim.state, { param: 'metronome', value: 'off' });
+		expect(off.reached).toBe(true);
+		expect(keys(off)).toEqual(['tempo', 'click E4']);
+		// already on: the page and nothing to click
+		const on = planParam(sim.state, { param: 'metronome', value: 'on' });
+		expect([on.reached, keys(on)]).toEqual([true, ['tempo']]);
+		// level 0 is silent with the metronome still on, and the plan says so
+		const zero = planParam(sim.state, { param: 'metronome', value: 0 });
+		expect(zero.reached).toBe(true);
+		expect(zero.note).toMatch(/still on \(the value off switches it off\)/);
+		expect(zero.screen).toMatch(/metronome on/);
+	});
+
 	it('refuses a number for a list of words rather than clamping it onto the last word', () => {
 		const sim = boot();
 		// "groove 70" meant the swing amount: the groove type is a list, and 70 is none of it

@@ -115,7 +115,8 @@ describe('conductor: requests and streaming', () => {
 		'memory',
 		'plan_steps',
 		'run_lab',
-		'skill'
+		'skill',
+		'write_pattern'
 	];
 
 	it('sends a cache-friendly, strict request and streams the answer into the chat', async () => {

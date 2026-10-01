@@ -7,6 +7,13 @@
  */
 import { z } from 'zod';
 import { parseNoteName } from '$lib/core/midi/notes';
+import {
+	compactNotes,
+	gridHits,
+	markVelocity,
+	PatternNotesError,
+	type WrittenNote
+} from '../pattern-notes';
 import { hitMark, readPattern } from '../pattern-reading';
 import type { ArrangementWrite, VirtualArrangement, VirtualPattern } from '../virtual-opxy';
 import {
@@ -112,13 +119,62 @@ function drumGrid(p: VirtualPattern): Record<string, string> | null {
 
 // ─── write_pattern ──────────────────────────────────────────────────────────────────────────────
 
+/** Notes a pattern holds at most. */
+const MAX_NOTES = 120;
+/** A hit's velocity when nothing says (loud: pads and soft parts want less). */
+const DEFAULT_VELOCITY = 100;
+
+interface PatternInput {
+	readonly track: number;
+	readonly velocity?: number;
+	readonly notes?: string | readonly WrittenNote[];
+	readonly grid?: Readonly<Record<string, string>>;
+}
+
+/** Everything write_pattern was given as written notes, a grid's lines still keyed as written. */
+function writtenNotes(input: PatternInput): {
+	notes: WrittenNote[];
+	hits: ReturnType<typeof gridHits>['hits'];
+	steps: number;
+} {
+	const notes =
+		typeof input.notes === 'string' ? compactNotes(input.notes) : [...(input.notes ?? [])];
+	const { hits, steps } = input.grid ? gridHits(input.grid) : { hits: [], steps: 0 };
+	return { notes, hits, steps };
+}
+
+/** How many notes write_pattern was given, or null where they cannot be read. */
+function noteCount(input: PatternInput): number | null {
+	try {
+		const { notes, hits } = writtenNotes(input);
+		return notes.length + hits.length;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * A grid line's key as a MIDI note: a number, a note name, or (on a drum track) the name of the
+ * sound on a key as read_pattern and read_sound show it ("kick 1"), or null.
+ */
+function gridKey(key: string, kit: Readonly<Record<string, string>> | undefined): number | null {
+	const k = key.trim();
+	if (/^\d{1,3}$/.test(k)) return Number(k) <= 127 ? Number(k) : null;
+	const named = parseNoteName(k, 'c4');
+	if (named !== null) return named;
+	const lower = k.toLowerCase();
+	const sound = Object.entries(kit ?? {}).find(([, name]) => name.toLowerCase() === lower);
+	return sound ? parseNoteName(sound[0], 'c4') : null;
+}
+
 export const writePatternTool = defineTool({
 	name: 'write_pattern',
 	label: 'write pattern',
 	kind: 'mutate',
 	approval: 'auto',
-	description:
-		'Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held and makes it the pattern the track plays. Up to 120 notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. Undo restores the previous pattern. The result reads the pattern back: a drum track as a grid (four steps a beat; x a hit, X an accent, o a soft hit), any other as its bars and chords, spelled in the key its notes suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.',
+	// a string or a list for notes, and a grid's lines: more than the API's strict grammar takes
+	strict: false,
+	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held and makes it the pattern the track plays. Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short: notes as one string, a word per note, step:note[:length[:velocity]] with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), and drums as grid, a line per sound as read_pattern shows them ("kick 1" or 53: "x... x... x... x...": x a hit, X an accent, o a soft hit, . a rest, four steps a beat). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. Undo restores the previous pattern. The result reads the pattern back: a drum track as a grid, any other as its bars and chords, spelled in the key its notes suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16 (1–8 instrument, 9–16 auxiliary)'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default 1)'),
@@ -138,7 +194,26 @@ export const writePatternTool = defineTool({
 			.enum(SCALES)
 			.optional()
 			.describe('Track scale: how many sixteenths one step lasts (default: unchanged)'),
-		notes: z.array(patternNoteSchema).max(120).describe('The notes, in any order; empty clears')
+		velocity: z
+			.int()
+			.min(1)
+			.max(127)
+			.optional()
+			.describe(
+				`Velocity of every note that gives none, and of a grid's x (default ${DEFAULT_VELOCITY})`
+			),
+		notes: z
+			.union([z.string().max(6000), z.array(patternNoteSchema).max(MAX_NOTES)])
+			.optional()
+			.describe(
+				'The notes in any order: a string, a word per note, step:note[:length[:velocity]], a chord joined by + ("1:C3+E3+G3:4 5:A2::80"), or a list of objects; empty clears'
+			),
+		grid: z
+			.record(z.string().min(1).max(40), z.string().max(200))
+			.optional()
+			.describe(
+				'Hits by sound, as read_pattern shows a drum track: its name, note name or number, then a mark a step (x hit, X accent, o soft, . rest; spaces and | ignored), e.g. {"kick 1": "x... ..x. x... ...."}'
+			)
 	}),
 	snapshot(input, env): VirtualPattern | null {
 		const virtual = virtualOf(env);
@@ -150,11 +225,12 @@ export const writePatternTool = defineTool({
 		}
 	},
 	preview(input, before) {
-		const count = input.notes.length;
+		const count = noteCount(input);
+		const notes = count === null ? 'notes' : `${count} note${count === 1 ? '' : 's'}`;
 		return {
-			label: `track ${input.track} pattern ${input.pattern ?? 1}: ${count} note${count === 1 ? '' : 's'}`,
+			label: `track ${input.track} pattern ${input.pattern ?? 1}: ${notes}`,
 			before: before ? `${before.notes.length} notes` : 'empty',
-			after: `${count} notes`
+			after: notes
 		};
 	},
 	inverse(input, before) {
@@ -180,19 +256,64 @@ export const writePatternTool = defineTool({
 	async run(input, ctx): Promise<ToolResult> {
 		const virtual = virtualOf(ctx.env);
 		if (!virtual) return errorResult(NO_VIRTUAL, 'no virtual op-xy');
+		if (input.notes === undefined && input.grid === undefined) {
+			return errorResult(
+				'Nothing to write: give notes (a string or a list; an empty one clears the pattern) or grid.',
+				'no notes given'
+			);
+		}
+		let written: ReturnType<typeof writtenNotes>;
+		try {
+			written = writtenNotes(input);
+		} catch (error) {
+			if (!(error instanceof PatternNotesError)) throw error;
+			return errorResult(`Nothing was written: ${error.message}.`, 'notes not read');
+		}
+		const velocity = input.velocity ?? DEFAULT_VELOCITY;
 		const invalid: string[] = [];
-		const notes = input.notes.map((n) => {
+		const notes = written.notes.map((n) => {
 			const note = typeof n.note === 'number' ? n.note : parseNoteName(n.note, 'c4');
 			if (note === null) invalid.push(String(n.note));
-			return { step: n.step, note: note ?? 0, velocity: n.velocity ?? 100, length: n.length ?? 1 };
+			return {
+				step: n.step,
+				note: note ?? 0,
+				velocity: n.velocity ?? velocity,
+				length: n.length ?? 1
+			};
 		});
+		if (written.hits.length > 0) {
+			const kit = input.track <= 8 ? virtual.readSound(input.track).kit : undefined;
+			const keys = new Map<string, number | null>();
+			for (const hit of written.hits) {
+				if (!keys.has(hit.key)) keys.set(hit.key, gridKey(hit.key, kit));
+				const note = keys.get(hit.key);
+				if (note === null || note === undefined) continue;
+				notes.push({ step: hit.step, note, velocity: markVelocity(hit.mark, velocity), length: 1 });
+			}
+			const unknown = [...keys].filter(([, note]) => note === null).map(([key]) => `"${key}"`);
+			if (unknown.length > 0) {
+				const sounds = kit
+					? ` (this track's sounds: ${[...new Set(Object.values(kit))].join(', ')})`
+					: '';
+				return errorResult(
+					`Nothing was written: grid ${unknown.join(', ')} is no sound, note name or number${sounds}.`,
+					'unknown grid sounds'
+				);
+			}
+		}
 		if (invalid.length > 0) {
 			return errorResult(
 				`Unknown note names: ${invalid.join(', ')}. Use MIDI numbers (60 = middle C) or names like C4, F#3, Bb2.`,
 				'bad note names'
 			);
 		}
-		const lastStep = notes.reduce((max, n) => Math.max(max, n.step), 1);
+		if (notes.length > MAX_NOTES) {
+			return errorResult(
+				`Nothing was written: ${notes.length} notes, and a pattern holds ${MAX_NOTES}. Spread them over more patterns (and scenes), or fewer bars.`,
+				'too many notes'
+			);
+		}
+		const lastStep = notes.reduce((max, n) => Math.max(max, n.step), written.steps || 1);
 		const bars = input.bars ?? Math.ceil(lastStep / 16);
 		if (lastStep > bars * 16) {
 			return errorResult(
@@ -201,7 +322,7 @@ export const writePatternTool = defineTool({
 			);
 		}
 		try {
-			const written = virtual.writePattern(input.track, {
+			const result = virtual.writePattern(input.track, {
 				pattern: input.pattern ?? 1,
 				bars,
 				length: input.length,
@@ -209,9 +330,9 @@ export const writePatternTool = defineTool({
 				notes
 			});
 			return jsonResult(
-				{ written: patternView(written), note: 'On the replica.' },
-				`track ${input.track} pattern ${written.pattern}: ${written.notes.length} notes`,
-				{ applied: true, after: written.notes.length }
+				{ written: patternView(result), note: 'On the replica.' },
+				`track ${input.track} pattern ${result.pattern}: ${result.notes.length} notes`,
+				{ applied: true, after: result.notes.length }
 			);
 		} catch (error) {
 			return errorResult(error instanceof Error ? error.message : String(error), 'not written');

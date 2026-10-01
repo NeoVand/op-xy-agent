@@ -807,10 +807,72 @@ export const panicTool = defineTool({
 });
 
 /** Every device tool. */
+// ─── set_metronome ──────────────────────────────────────────────────────────────────────────────
+
+/** The replica's metronome before a call (null: no replica, or an OP-XY is connected). */
+interface MetronomeSnapshot {
+	readonly on: boolean;
+}
+
+export const setMetronomeTool = defineTool({
+	name: 'set_metronome',
+	label: 'metronome',
+	kind: 'mutate',
+	approval: 'auto',
+	description:
+		'Switch the metronome (its click on every beat) on or off on the replica. A new project starts with it on, so the click is in what plays and what listen hears until it is off. The OP-XY takes no MIDI for it: with a device connected nothing is sent, and the result gives the keys for the user to press (tempo, then click E4).',
+	input: z.object({ on: z.boolean().describe('true: the click plays; false: it is silent') }),
+	snapshot(_input, env): MetronomeSnapshot | null {
+		const virtual = virtualTarget(env);
+		return virtual ? { on: virtual.status().metronome === true } : null;
+	},
+	preview(input, before) {
+		return {
+			label: input.on ? 'metronome on' : 'metronome off',
+			before: before ? (before.on ? 'on' : 'off') : 'unknown',
+			after: input.on ? 'on' : 'off'
+		};
+	},
+	inverse(input, before) {
+		if (!before || before.on === input.on) return null;
+		return {
+			tool: 'set_metronome',
+			input: { on: before.on },
+			label: before.on ? 'metronome back on' : 'metronome back off'
+		};
+	},
+	async run(input, ctx) {
+		const where = whereTo(ctx.env);
+		if (isResult(where)) return where;
+		if (!('virtual' in where)) {
+			return errorResult(
+				`The OP-XY takes no MIDI for its metronome, so nothing was sent. Ask the user to press tempo and click E4 (the metronome's knob) to switch it ${input.on ? 'on' : 'off'}; tempo again leaves the page.`,
+				'ask the user: tempo, click E4'
+			);
+		}
+		const virtual = where.virtual;
+		const was = virtual.status().metronome === true;
+		// off also at level 0 (silent, but the screen says on): both say off afterwards
+		virtual.setMetronome(input.on);
+		const state = input.on ? 'on' : 'off';
+		return jsonResult(
+			{
+				target: 'virtual',
+				metronome: state,
+				...(was === input.on ? { note: `It was already ${state}.` } : {}),
+				...virtualNote(ctx.env)
+			},
+			`metronome ${state} on the replica`,
+			{ applied: was !== input.on, after: input.on }
+		);
+	}
+});
+
 export const DEVICE_TOOLS = [
 	deviceStatusTool,
 	transportTool,
 	setTempoTool,
+	setMetronomeTool,
 	selectTrackTool,
 	muteTrackTool,
 	setSoundTool,

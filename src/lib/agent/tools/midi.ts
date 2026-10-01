@@ -271,7 +271,7 @@ export const importMidiTool = defineTool({
 				...(written.clickOff
 					? {
 							metronome:
-								'switched off, so the song plays without the click (the tempo page’s click E4 brings it back; a duck with the metronome as source still pumps on the beat)'
+								'switched off, so the song plays without the click (set_metronome on brings it back; a duck with the metronome as source still pumps on the beat)'
 						}
 					: {}),
 				note: 'On the replica. transport play runs the song from its first scene.',

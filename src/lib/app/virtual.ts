@@ -32,7 +32,7 @@ import { captureScene, playPattern, startSong, trackSequence } from '$lib/sim/ar
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { replicaChangeList, replicaChanges } from './replica-diff';
-import { AUX_NAMES, type SimState } from '$lib/sim/params';
+import { AUX_NAMES, DEFAULT_METRONOME_LEVEL, type SimState } from '$lib/sim/params';
 import { takeBack } from '$lib/sim/merge';
 import {
 	MAX_BARS,
@@ -46,6 +46,23 @@ import {
 	emptyStep,
 	noteCount
 } from '$lib/sim/sequencer';
+
+/** Puts `state`'s screen where a person starts reading from: on, no page open, no key held. */
+function idle(state: SimState): void {
+	const sys = state.areas.system;
+	sys.power = { on: true, booting: false, elapsed: 0, since: null };
+	sys.page = null;
+	sys.naming = null;
+	sys.confirm = null;
+	sys.hold = null;
+	sys.notice = null;
+	sys.presetPopup = 0;
+	state.overlay = null;
+	state.sub = null;
+	state.picker = null;
+	state.shift = false;
+	state.held = [];
+}
 
 /** The sound the virtual OP-XY makes (`AppSound`), as far as the agent needs it. */
 export interface VirtualSound {
@@ -135,14 +152,17 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		};
 	}
 
-	/** What the screen reads at `place` (on a copy; the replica does not move), shift held or not. */
+	/**
+	 * What the screen reads at `place`, shift held or not: on a copy of the replica that is switched
+	 * on with no page, list or overlay open and no key held, so a sound reads the same wherever the
+	 * screen stands (the replica does not move). Read from where it stood, a preset browser left
+	 * open, a boot or a key held down once went into the sound's pages as if they were its values.
+	 */
 	function screenAt(place: Place, shift = false): string {
-		const plan = planPlace(s, place);
-		const copy = new OpxySim({
-			state: JSON.parse(JSON.stringify(s)) as SimState,
-			now: () => 0
-		});
-		for (const step of plan.steps) playStep(copy, step);
+		const state = JSON.parse(JSON.stringify(s)) as SimState;
+		idle(state);
+		const copy = new OpxySim({ state, now: () => 0 });
+		for (const step of planPlace(state, place).steps) playStep(copy, step);
 		if (shift) copy.input({ type: 'press', id: 'key.shift' });
 		return describeFrame(buildFrame(copy.state));
 	}
@@ -244,7 +264,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				tracks,
 				arrangement: readArrangement(),
 				sound: !sound || !sound.available ? 'unavailable' : sound.enabled ? 'on' : 'off',
-				metronome: s.tempo.metronome.on
+				// heard only while on with a level above 0 (level 0 is silent, though the page says on)
+				metronome: s.tempo.metronome.on && s.tempo.metronome.level > 0
 			};
 		},
 
@@ -266,6 +287,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 
 		setMetronome(on) {
 			s.tempo.metronome.on = on;
+			// on means heard: a level turned down to 0 comes back to a new project's
+			if (on && s.tempo.metronome.level === 0) s.tempo.metronome.level = DEFAULT_METRONOME_LEVEL;
 			changed();
 		},
 

@@ -1,0 +1,130 @@
+/**
+ * write_pattern's short ways to give notes, so a whole beat fits in a few words instead of an
+ * object per note (an agent ran out of output writing seven patterns that way, and the last one
+ * arrived without its notes):
+ *
+ * - a compact string, one note per word, `step:note[:length[:velocity]]`, a chord's notes joined
+ *   by `+`: "1:A2:4 5:C3+E3+G3:2:70 9:E2::90" (a length left empty keeps its default);
+ * - a grid, as read_pattern shows a drum track: a line per sound, one mark per step (x a hit, X an
+ *   accent, o a soft hit, . or - a rest; spaces and | only space it out), keyed by the sound's
+ *   name, a note name or a MIDI number: { "kick 1": "x... x... x... x..." }.
+ *
+ * Both come back as plain notes; note names stay names here (the tool spells them out with the
+ * track's octave convention), and a grid's sound names are left for the tool to look up.
+ */
+
+/** A note as written, before its name is read. */
+export interface WrittenNote {
+	readonly step: number;
+	/** A MIDI note number, or a note name ("F#3"). */
+	readonly note: number | string;
+	readonly velocity?: number;
+	readonly length?: number;
+}
+
+/** A grid line's hit: the line's key (a sound's name, a note name or a number) and its step. */
+export interface GridHit {
+	readonly key: string;
+	readonly step: number;
+	/** The mark: a hit, an accent or a soft hit. */
+	readonly mark: 'x' | 'X' | 'o';
+}
+
+/** Steps a pattern holds: four bars of 16. */
+export const MAX_STEPS = 64;
+
+/** Why notes could not be read, in words the model can act on. */
+export class PatternNotesError extends Error {
+	override name = 'PatternNotesError';
+}
+
+const NOTE_NUMBER = /^\d{1,3}$/;
+
+function noteOf(text: string, word: string): number | string {
+	if (NOTE_NUMBER.test(text)) {
+		const n = Number(text);
+		if (n > 127) throw new PatternNotesError(`"${word}": note ${n} is past 127`);
+		return n;
+	}
+	if (!/^[a-g][#♯b♭]?-?\d+$/i.test(text)) {
+		throw new PatternNotesError(
+			`"${word}": "${text}" is not a note (a MIDI number, 60 = middle C, or a name like C4, F#3, Bb2)`
+		);
+	}
+	return text;
+}
+
+/** Reads a compact string: `step:note[:length[:velocity]]` words, chords joined by `+`. */
+export function compactNotes(text: string): WrittenNote[] {
+	const notes: WrittenNote[] = [];
+	for (const word of text.split(/[\s,;]+/).filter(Boolean)) {
+		const parts = word.split(':');
+		if (parts.length < 2 || parts.length > 4) {
+			throw new PatternNotesError(
+				`"${word}" is not step:note[:length[:velocity]] (e.g. 1:C3, 5:C3+E3+G3:4:70)`
+			);
+		}
+		const [stepText, chord, lengthText = '', velocityText = ''] = parts;
+		const step = Number(stepText);
+		if (!Number.isInteger(step) || step < 1 || step > MAX_STEPS) {
+			throw new PatternNotesError(`"${word}": the step is 1–${MAX_STEPS}`);
+		}
+		const length = lengthText === '' ? undefined : Number(lengthText);
+		if (length !== undefined && !(length >= 0.05 && length <= MAX_STEPS)) {
+			throw new PatternNotesError(`"${word}": the length is 0.05–${MAX_STEPS} steps`);
+		}
+		const velocity = velocityText === '' ? undefined : Number(velocityText);
+		if (
+			velocity !== undefined &&
+			!(Number.isInteger(velocity) && velocity >= 1 && velocity <= 127)
+		) {
+			throw new PatternNotesError(`"${word}": the velocity is 1–127`);
+		}
+		const keys = chord.split('+');
+		if (keys.some((k) => k === '')) throw new PatternNotesError(`"${word}": a note is missing`);
+		for (const key of keys) {
+			notes.push({
+				step,
+				note: noteOf(key, word),
+				...(length === undefined ? {} : { length }),
+				...(velocity === undefined ? {} : { velocity })
+			});
+		}
+	}
+	return notes;
+}
+
+/** Reads a grid: each line's marks, one per step; returns the hits and how many steps it spans. */
+export function gridHits(grid: Readonly<Record<string, string>>): {
+	hits: GridHit[];
+	steps: number;
+} {
+	const hits: GridHit[] = [];
+	let steps = 0;
+	for (const [key, line] of Object.entries(grid)) {
+		const marks = line.replace(/[\s|]/g, '');
+		if (marks.length > MAX_STEPS) {
+			throw new PatternNotesError(
+				`grid "${key}": ${marks.length} steps, past the ${MAX_STEPS} a pattern holds`
+			);
+		}
+		const bad = marks.match(/[^xXo.-]/);
+		if (bad) {
+			throw new PatternNotesError(
+				`grid "${key}": "${bad[0]}" is not a mark (x a hit, X an accent, o a soft hit, . a rest)`
+			);
+		}
+		steps = Math.max(steps, marks.length);
+		[...marks].forEach((mark, i) => {
+			if (mark === 'x' || mark === 'X' || mark === 'o') hits.push({ key, step: i + 1, mark });
+		});
+	}
+	return { hits, steps };
+}
+
+/** A mark's velocity around `velocity` (the pattern's hit): an accent above it, a soft hit about half. */
+export function markVelocity(mark: GridHit['mark'], velocity: number): number {
+	if (mark === 'X') return Math.min(127, velocity + 25);
+	if (mark === 'o') return Math.max(1, Math.round(velocity * 0.55));
+	return velocity;
+}

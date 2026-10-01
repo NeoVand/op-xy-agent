@@ -15,6 +15,7 @@ import {
 	laneCc,
 	laneShows,
 	selectTrackTool,
+	setMetronomeTool,
 	setSoundTool,
 	setTempoTool,
 	transportTool
@@ -105,6 +106,18 @@ describe('set_tempo', () => {
 		expect([deviceTempo(96), deviceTempo(97), deviceTempo(30), deviceTempo(500)]).toEqual([
 			96, 98, 40, 220
 		]);
+	});
+});
+
+describe('set_metronome', () => {
+	it('sends nothing to the OP-XY, which takes no MIDI for it, and gives the user the keys', async () => {
+		const { rig, sent, run } = await setup();
+		const before = sent().length;
+		const result = await run(setMetronomeTool, { on: false });
+		await rig.time.advance(5);
+		expect(result).toMatchObject({ isError: true, summary: 'ask the user: tempo, click E4' });
+		expect(String(result.content)).toMatch(/press tempo and click E4/);
+		expect(sent()).toHaveLength(before);
 	});
 });
 

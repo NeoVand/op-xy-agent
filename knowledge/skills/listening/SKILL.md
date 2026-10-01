@@ -11,13 +11,20 @@ tempo against the set tempo, timing and swing, where the kicks, snares and hats 
 key and rough chords, and flags such as clipping or a tempo that drifts. The transport must be
 playing; if it is stopped, start it or ask the user to.
 
+A song moves on from scene to scene while you listen, and play starts it from its first scene (often
+an intro). To hear one part, listen with its scene: the replica renders that scene looping, offline,
+so nothing has to play and the song, the transport and the mutes stay as they are. A new project's
+metronome clicks on every beat, and you hear it too: when the user does not want it, set_metronome
+switches it off.
+
 ## When it is worth it
 
 Listen when the sound itself is the question: after you shape a sound, after you build something
 with several parts, when the user asks how it sounds, or when something seems off. For a single part
 you wrote note by note, the notes are what you wrote, so there is nothing to learn from hearing it.
-To find which track clashes, crowds a band or drags, hear the tracks one at a time (the user approves
-it, and every mute is put back afterwards).
+To find which track clashes, crowds a band or drags, hear the tracks one at a time: on the replica,
+listen with tracks (and a scene) renders each alone without touching a mute; on a connected OP-XY,
+listen_tracks mutes the others live (the user approves it, and every mute is put back afterwards).
 
 ## Saying what you heard
 

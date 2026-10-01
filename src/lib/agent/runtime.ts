@@ -66,6 +66,19 @@ function labRenderer(samples: SampleRegistry | null): LabRenderer | null {
 	};
 }
 
+/** The listening host, rendering offline with the lab's ears too (listen's `scene`). */
+function withRender(host: ListenHost | null, renderer: LabRenderer | null): ListenHost | null {
+	if (!host || !renderer) return host;
+	return {
+		record: (source, seconds, signal) => host.record(source, seconds, signal),
+		analyze: (recording, options) => host.analyze(recording, options),
+		async render(request, signal) {
+			const audio = await renderer.render(request, signal);
+			return { ...audio, source: 'replica', label: 'replica, rendered offline' };
+		}
+	};
+}
+
 /** read_screen's view of the simulator: the page in words plus where the interface stands. */
 function screenReader(simulator: AppSimulator): ScreenReader {
 	return {
@@ -121,6 +134,7 @@ function browserPreferences(): PreferenceStore {
 export async function createBrowserConductor(options: BrowserConductorOptions): Promise<Conductor> {
 	const client = createAnthropicClient({ apiKey: options.apiKey });
 	const manual = await loadManualSource();
+	const render = labRenderer(options.samples ?? null);
 	return Conductor.create({
 		client,
 		device: options.device,
@@ -136,12 +150,12 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 		guide: options.guide ?? null,
 		presets: options.presets ?? null,
 		projects: options.projects ?? null,
-		listen: options.listen ?? null,
+		listen: withRender(options.listen ?? null, render),
 		lab: options.simulator
 			? new BrowserLabHost({
 					sim: options.simulator.sim,
 					changed: () => options.persistence?.markDirty(),
-					render: labRenderer(options.samples ?? null)
+					render
 				})
 			: null,
 		manual,

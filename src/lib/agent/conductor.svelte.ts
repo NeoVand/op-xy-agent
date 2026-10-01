@@ -880,14 +880,38 @@ export class Conductor {
 		} catch {
 			return [];
 		}
-		const report = lines.join('\n');
+		// playback only the transport tool starts or stops: otherwise it was the user (an agent
+		// once could not tell, and left it out)
+		const own = this.#calledSinceMessage('transport');
+		const marked = lines.map((l) =>
+			!own && /^playback (started|stopped)$/.test(l)
+				? `${l} (by the user: no tool of yours did)`
+				: l
+		);
+		const report = marked.join('\n');
 		if (report === this.#reported) return [];
 		this.#reported = report;
 		const text =
-			lines.length === 0
+			marked.length === 0
 				? 'The replica is as it was before the user\u2019s message: nothing on it changed.'
-				: `What changed on the replica since the user\u2019s message (describe the outcome from this):\n${lines.map((l) => `- ${l}`).join('\n')}`;
+				: `What changed on the replica since the user\u2019s message, yours and anything the user did on it meanwhile (describe the outcome from this):\n${marked.map((l) => `- ${l}`).join('\n')}`;
 		return [{ type: 'text', text: `<replica-changes>\n${text}\n</replica-changes>` }];
+	}
+
+	/** Whether the model has called the tool `name` since the user's message. */
+	#calledSinceMessage(name: string): boolean {
+		for (let i = this.#messages.length - 1; i >= 0; i--) {
+			const m = this.#messages[i];
+			if (m.role === 'user') {
+				if (typeof m.content === 'string' || !m.content.some((b) => b.type === 'tool_result')) {
+					return false;
+				}
+				continue;
+			}
+			if (typeof m.content === 'string') continue;
+			if (m.content.some((b) => b.type === 'tool_use' && b.name === name)) return true;
+		}
+		return false;
 	}
 
 	/**

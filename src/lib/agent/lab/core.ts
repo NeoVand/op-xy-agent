@@ -23,7 +23,6 @@ import {
 	type TrackTake
 } from '$lib/core/listen';
 import { KeyParseError, parseKeys } from '$lib/core/opxy';
-import { selectScene } from '$lib/sim/areas/arrange/model';
 import { snapshot } from '$lib/sim/areas/system/projects';
 import { buildFrame } from '$lib/sim/frames';
 import { playStep, type NavPlan, type NavStep } from '$lib/sim/navigator';
@@ -35,6 +34,7 @@ import { settleSession } from '$lib/sim/session';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
 import { MidiImportError, planMidiImport, type ImportPlan } from '../midi-import';
 import { pitchRange, trackShapes } from '../midi-text';
+import { alone, clickHeard, renderRequest, sceneState, tracksPlaying } from '../scene-render';
 import type { AttachedFiles } from '../tools/define';
 import { writeImport } from '../tools/midi';
 import type { VirtualOpxy } from '../virtual-opxy';
@@ -616,17 +616,15 @@ export function createLab(options: LabOptions): LabSession {
 
 	/** A copy of a fork set playing from the top (or looping one scene), as its render starts. */
 	function playing(f: ForkRecord, scene: number | undefined): SimState {
+		if (scene !== undefined) {
+			const shown = f.virtual.readArrangement().scenes.map((s) => s.scene);
+			if (!shown.includes(scene)) {
+				throw new LabError(`listen: scene ${scene} is empty (scenes: ${shown.join(', ')})`);
+			}
+			return sceneState(f.sim.state, scene);
+		}
 		const sim = new OpxySim({ state: JSON.parse(JSON.stringify(f.sim.state)), now: () => 0 });
-		if (scene === undefined) {
-			options.virtual(sim).transport('play');
-			return sim.state;
-		}
-		const shown = f.virtual.readArrangement().scenes.map((s) => s.scene);
-		if (!shown.includes(scene)) {
-			throw new LabError(`listen: scene ${scene} is empty (scenes: ${shown.join(', ')})`);
-		}
-		selectScene(sim.state, scene - 1);
-		sim.press('key.play');
+		options.virtual(sim).transport('play');
 		return sim.state;
 	}
 
@@ -644,16 +642,7 @@ export function createLab(options: LabOptions): LabSession {
 		}
 		renders++;
 		rendered += seconds;
-		const audio = await renderer.render(
-			{
-				project: snapshot(state),
-				transport: { ...state.transport },
-				track: state.track,
-				mode: state.mode,
-				seconds
-			},
-			options.signal
-		);
+		const audio = await renderer.render(renderRequest(state, seconds), options.signal);
 		return analyzeAudio(audio.channels, audio.sampleRate, { expectedBpm: state.tempo.bpm });
 	}
 
@@ -661,7 +650,7 @@ export function createLab(options: LabOptions): LabSession {
 		const f = record(fork, 'listen');
 		const o = check(listenOptions, listening ?? {}, 'listen');
 		const state = playing(f, o.scene);
-		const click = state.tempo.metronome.on
+		const click = clickHeard(state)
 			? '\nnote: the metronome is on, so its click is in what you heard'
 			: '';
 		if (!o.tracks) {
@@ -669,20 +658,12 @@ export function createLab(options: LabOptions): LabSession {
 			const summary = summarize(analysis, { source: f.name });
 			return { text: summary.text + click, flags: summary.flags, data: summary.data };
 		}
-		const tracks =
-			o.tracks === 'each'
-				? state.tracks.flatMap((t, i) => {
-						const p = t.sequence.patterns[t.sequence.current];
-						return p?.steps.some((s) => s.notes.length > 0) ? [i + 1] : [];
-					})
-				: o.tracks;
+		const tracks = o.tracks === 'each' ? tracksPlaying(state) : o.tracks;
 		if (tracks.length === 0) throw new LabError('listen: no instrument track plays anything here');
 		const takes: TrackTake[] = [];
 		for (const track of tracks) {
-			const alone = JSON.parse(JSON.stringify(state)) as SimState;
-			alone.tracks.forEach((t, i) => (t.mix.muted = i !== track - 1));
-			const engine = alone.tracks[track - 1].engine;
-			const analysis = await renderOf(alone, o.seconds ?? TRACK_SECONDS);
+			const engine = state.tracks[track - 1].engine;
+			const analysis = await renderOf(alone(state, track), o.seconds ?? TRACK_SECONDS);
 			takes.push({ track, name: engine, percussive: engine === 'drum', analysis });
 		}
 		const summary = summarizeTracks(takes, { source: f.name });

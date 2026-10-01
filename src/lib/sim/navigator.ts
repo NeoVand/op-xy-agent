@@ -145,6 +145,12 @@ export interface TempoParam {
 	readonly step: number;
 }
 
+/** "on" or "off" as a switch's value (the metronome's), else null. */
+function switchedTo(value: string | number): boolean | null {
+	const v = String(value).trim().toLowerCase();
+	return v === 'on' ? true : v === 'off' ? false : null;
+}
+
 /** Tempo page parameters (E1–E4 on the tempo page), by id. */
 export const TEMPO_PARAMS: Readonly<Record<string, TempoParam>> = {
 	'tempo.bpm': {
@@ -968,6 +974,18 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 	const tempo = TEMPO_PARAMS[id];
 	if (tempo) {
 		walk(rec, { area: 'tempo' });
+		// the metronome's on or off is a click of its knob (E4); a number is its level, and level 0
+		// is silent with the metronome still on (an agent asked for 0 and the screen said "on")
+		const on = id === 'tempo.metronome' ? switchedTo(goal.value) : null;
+		if (on !== null) {
+			const m = () => rec.sim.state.tempo.metronome;
+			if (m().on !== on) rec.do('click E4');
+			if (m().on !== on) return rec.plan(false, 'the metronome did not switch');
+			return rec.plan(
+				true,
+				on && m().level === 0 ? 'on, at level 0: turn E4 up to hear it' : undefined
+			);
+		}
 		const target = targetValue(goal.value, tempo.format, tempo.min, tempo.max, tempo.step);
 		if (target === null) {
 			const words = wordReadings(tempo.format, tempo.min, tempo.max, tempo.step);
@@ -977,7 +995,11 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 		}
 		const read = (sim: OpxySim) => tempo.get(sim.state);
 		const ok = turnTo(rec, tempo.encoder, false, read, target, (v) => Math.abs(v - target) < 0.05);
-		return rec.plan(ok, ok ? undefined : `${id} stopped at ${tempo.format(read(rec.sim))}`);
+		const silent =
+			id === 'tempo.metronome' && target === 0 && rec.sim.state.tempo.metronome.on
+				? 'level 0 is silent, but the metronome is still on (the value off switches it off)'
+				: undefined;
+		return rec.plan(ok, ok ? silent : `${id} stopped at ${tempo.format(read(rec.sim))}`);
 	}
 
 	if (id === 'engine') return planEngine(rec, track, goal.value);

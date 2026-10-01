@@ -107,7 +107,9 @@ Claude.
 - **Reading back what was written** (`agent/pattern-reading.ts`): write_pattern and read_pattern
   return a drum pattern as a grid (four steps a beat, X an accent, o a soft hit) and any other as
   its bars and chords, spelled in the key its notes suggest, so the answer describes what the
-  pattern plays and a chord that came out wrong shows by its name.
+  pattern plays and a chord that came out wrong shows by its name. write_pattern takes its notes
+  short too (`agent/pattern-notes.ts`): a string of `step:note[:length[:velocity]]` words, and a
+  grid in the same marks it reads back, so a song's patterns fit in the model's output.
 - **Demonstrations leave nothing behind**: `show_on_replica` waits for its animation, lets it be
   seen, then puts the replica back (pages and selection too; not the transport), unless the user
   took over while it played.
@@ -152,7 +154,11 @@ Claude.
 - **Listening** (note 61): `listen` records the OP-XY's USB audio or the replica's sound
   (`ListenHost` in the environment; `device/listen` in the browser) and hands the model the
   summary of `core/listen`; `listen_tracks` hears tracks alone through the mutes (CC9 on a device,
-  through the transport) with approval, and puts every mute back in a `finally`.
+  through the transport) with approval, and puts every mute back in a `finally`. With `scene` (and
+  `tracks`), `listen` renders a copy of the replica looping that scene offline instead, whole or a
+  track alone at a time (`agent/scene-render.ts`, shared with the lab; the host's `render`, which
+  the browser runtime gives the lab's renderer): nothing plays, nothing is muted, the song is not
+  started from its first scene.
 - **The lab** (`agent/lab`, `run_lab`, D12): the model's own program runs on forks of the replica
   (`core.ts`: each fork a simulator with the virtual OP-XY's calls, the navigator and the keys; every
   argument checked), in a fresh worker per program in the browser (`worker.ts`, locked down by

@@ -147,6 +147,7 @@ describe('the conductor tool set', () => {
 			device_status: 'read',
 			transport: 'mutate',
 			set_tempo: 'mutate',
+			set_metronome: 'mutate',
 			select_track: 'ui',
 			mute_track: 'mutate',
 			set_sound: 'mutate',

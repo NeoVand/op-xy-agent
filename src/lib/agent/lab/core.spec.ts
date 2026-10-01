@@ -235,15 +235,28 @@ describe('listen', () => {
 		expect(lab.fork().status().bpm).toBe(120);
 	});
 
-	it('hears one scene looping, and refuses an empty one', async () => {
+	it('hears one scene looping, not the song from its top, and refuses an empty one', async () => {
 		const render = clickRenderer();
 		const { lab } = labOn({ render });
 		const f = lab.fork();
 		f.writePattern(3, { pattern: 2, notes: [{ step: 1, note: 45 }] });
-		f.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 3, pattern: 2 }] }] });
+		// a song that opens on scene 1 (an intro with track 3's pattern 1), the beat in scene 2
+		f.writeArrangement({
+			scenes: [
+				{ scene: 1, patterns: [{ track: 3, pattern: 1 }] },
+				{ scene: 2, patterns: [{ track: 3, pattern: 2 }] }
+			],
+			song: { order: [1, 2], loop: true }
+		});
 		await lab.listen(f, { scene: 2, seconds: 2 });
 		const project = JSON.parse(render.requests[0].project);
 		expect(project.tracks[2].sequence.current).toBe(1);
+		// held, as picking a scene holds it: it loops instead of the song moving on
+		expect(project.areas.arrange.held).toBe(true);
+		expect(render.requests[0].transport.playing).toBe(true);
+		// from the top it is the song, from its first scene
+		await lab.listen(f, { seconds: 2 });
+		expect(JSON.parse(render.requests[1].project).tracks[2].sequence.current).toBe(0);
 		await expect(lab.listen(f, { scene: 7 })).rejects.toThrow(/scene 7 is empty/);
 	});
 

@@ -25,7 +25,11 @@ pluck on 6, strings on 7 and a pad on 8.
 ## Carry out the whole request
 
 Write the patterns first (patterns for different tracks can go out together in one answer), then the
-scenes and the song when there is more than one part, then start playback. A feel is part of the
+scenes and the song when there is more than one part, then start playback. Write them short: notes
+as one string, a word per note (step:note[:length[:velocity]], a chord joined by +), and drums as a
+grid, a line per sound as read_pattern shows them. An answer has an output limit, so send a few
+patterns at a time, not a whole song. Give quiet parts their velocity (pads, strings and keys about
+50–80); left out, every note plays at 100. A feel is part of the
 request: lazy, swung or laid back is the tempo page's groove and its amount. With no tempo given,
 pick one that suits the style (house 120–126, techno 128–135, hip hop and boom bap 85–95, lo-fi
 70–85, drum and bass 170–175).
