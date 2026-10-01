@@ -34,7 +34,15 @@ import { settleSession } from '$lib/sim/session';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
 import { MidiImportError, planMidiImport, type ImportPlan } from '../midi-import';
 import { pitchRange, trackShapes } from '../midi-text';
-import { alone, clickHeard, renderRequest, sceneState, tracksPlaying } from '../scene-render';
+import {
+	alone,
+	clickHeard,
+	keyNote,
+	renderRequest,
+	sceneState,
+	tracksPlaying,
+	writtenKey
+} from '../scene-render';
 import type { AttachedFiles } from '../tools/define';
 import { writeImport } from '../tools/midi';
 import type { VirtualOpxy } from '../virtual-opxy';
@@ -656,7 +664,12 @@ export function createLab(options: LabOptions): LabSession {
 		if (!o.tracks) {
 			const analysis = await renderOf(state, o.seconds ?? LISTEN_SECONDS);
 			const summary = summarize(analysis, { source: f.name });
-			return { text: summary.text + click, flags: summary.flags, data: summary.data };
+			const key = keyNote(writtenKey(state), analysis.harmony?.key);
+			return {
+				text: summary.text + click + (key ? `\nnote: ${key}` : ''),
+				flags: summary.flags,
+				data: summary.data
+			};
 		}
 		const tracks = o.tracks === 'each' ? tracksPlaying(state) : o.tracks;
 		if (tracks.length === 0) throw new LabError('listen: no instrument track plays anything here');

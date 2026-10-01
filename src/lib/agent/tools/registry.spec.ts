@@ -11,6 +11,7 @@ import {
 	strictJsonSchema,
 	ToolDefinitionError,
 	ToolRegistry,
+	type AgentEnvironment,
 	type AnyTool
 } from './define';
 import { CONDUCTOR_TOOLS, createConductorRegistry, MANUAL_EXPERT_TOOL_NAMES } from './index';
@@ -110,6 +111,13 @@ describe('ToolRegistry', () => {
 		expect(() => new ToolRegistry([tool('fast', { priority: true })])).toThrow(/priority/);
 	});
 
+	it('says what a field that failed takes, from its description', () => {
+		const registry = createConductorRegistry();
+		const bad = registry.parse('listen', { scene: 'the hook' });
+		expect(bad.ok).toBe(false);
+		expect(!bad.ok && bad.error).toMatch(/scene takes: A scene of the replica to hear looping/);
+	});
+
 	it('re-validates input with zod, including ranges strict schemas cannot express', () => {
 		const registry = createConductorRegistry();
 		expect(registry.parse('set_tempo', { bpm: 96 })).toMatchObject({
@@ -177,10 +185,16 @@ describe('the conductor tool set', () => {
 	});
 
 	it('asks for approval only for project changes; transport, previews and panic are always allowed', () => {
-		const asks = CONDUCTOR_TOOLS.filter(asksForApproval)
+		const asks = CONDUCTOR_TOOLS.filter((t) => asksForApproval(t))
 			.map((t) => t.name)
 			.sort();
 		expect(asks).toEqual(['listen_tracks', 'mute_track', 'send_project', 'set_sound', 'set_tempo']);
+		// on the replica, with no OP-XY connected, only what goes to a device asks: the rest lands
+		// at once, and the changes note takes it back
+		const replica = { device: null } as unknown as AgentEnvironment;
+		expect(CONDUCTOR_TOOLS.filter((t) => asksForApproval(t, replica)).map((t) => t.name)).toEqual([
+			'send_project'
+		]);
 	});
 
 	it('runs everything that sends MIDI on the device queue; only panic skips it', () => {

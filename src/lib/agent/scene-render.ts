@@ -5,6 +5,7 @@
  * scene (which is what plain play does whenever the project has a song: the agent once asked for
  * the beat and heard the drumless intro).
  */
+import { estimateKey, type KeyEstimate } from '$lib/core/listen/harmony';
 import { holdScene, selectScene } from '$lib/sim/areas/arrange/model';
 import { snapshot } from '$lib/sim/areas/system/projects';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
@@ -48,4 +49,34 @@ export function renderRequest(state: SimState, seconds: number): LabRender {
 		mode: state.mode,
 		seconds
 	};
+}
+
+/** The key the pitched notes playing in `state` suggest together (drums and mutes left out). */
+export function writtenKey(state: SimState): KeyEstimate | null {
+	const chroma = new Array<number>(12).fill(0);
+	const classes = new Set<number>();
+	for (const t of state.tracks) {
+		if (t.engine === 'drum' || t.mix.muted) continue;
+		const p = t.sequence.patterns[t.sequence.current];
+		for (const step of p?.steps.slice(0, p.length) ?? []) {
+			for (const n of step.notes) {
+				chroma[n.note % 12] += Math.max(0.25, n.length);
+				classes.add(n.note % 12);
+			}
+		}
+	}
+	return classes.size >= 3 ? estimateKey(chroma) : null;
+}
+
+/**
+ * A note for when the key heard is not the key written (an agent once explained C minor heard over
+ * its F minor as "the same notes"): heard keys come from the whole sound and miss often.
+ */
+export function keyNote(
+	written: KeyEstimate | null,
+	heard: KeyEstimate | null | undefined
+): string | null {
+	if (!written || !heard) return null;
+	if (written.pitchClass === heard.pitchClass && written.mode === heard.mode) return null;
+	return `The notes written read as ${written.key}; the analysis heard ${heard.key}. A heard key comes from the whole sound (drums, a bass's overtones, effects) and misses often: go by the written key, and leave the heard one out.`;
 }

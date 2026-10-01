@@ -437,6 +437,9 @@ export function findParam(
 	const q = query.trim().toLowerCase();
 	const exact = PARAMS.find((p) => p.id.toLowerCase() === q);
 	if (exact) return exact.id;
+	// set_sound's names for the four M1 values ("engine p1"), which an agent carried over
+	const engine = /^engine\s*(?:p|param(?:eter)?\s*)([1-4])$/.exec(q);
+	if (engine) return `m1.${engine[1]}`;
 	if (lockParam(query)) return query;
 	if (s) {
 		const t = s.tracks[(track ?? s.track + 1) - 1] ?? s.tracks[s.track];
@@ -953,6 +956,13 @@ function planRegion(
 export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 	const track = goal.track ?? state.track + 1;
 	const id = findParam(goal.param, state, track, goal.value);
+	// the groove's type is a list of names; a number is how much: its amount (E3, swing). An
+	// agent asked for groove 70 and had to try again with swing.
+	if (id === 'tempo.groove' && /^[+\-−]?\d+(\.\d+)?$/.test(String(goal.value).trim())) {
+		const amount = planParam(state, { ...goal, param: 'tempo.swing' });
+		const note = 'a number sets the groove amount (E3, swing); the groove type stays as it was';
+		return { ...amount, note: amount.note ? `${note}; ${amount.note}` : note };
+	}
 	const rec = new Recorder(copy(state));
 	if (!id) {
 		// not a sound parameter: a value one of the track's pages shows by that name (the midi

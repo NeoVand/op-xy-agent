@@ -10,8 +10,10 @@
  * request is byte-identical and stays in the prompt cache (docs/research/70-agent-harness.md §4, §7).
  *
  * Kinds set the default policy: `read` and `ui` run at once, `propose` never touches the device,
- * `mutate` waits for the user's approval unless the tool says `approval: 'auto'`. `device: true`
- * tools run one at a time on the single-flight device queue.
+ * `mutate` waits for the user's approval unless the tool says `approval: 'auto'`, or `'device'`
+ * (it asks only while an OP-XY is connected: on the replica the change lands at once and the
+ * changes note takes it back). `device: true` tools run one at a time on the single-flight device
+ * queue.
  */
 import type { MemoryStore } from '../memory';
 import type {
@@ -198,8 +200,11 @@ export interface ToolDefinition<I = unknown, S = unknown> {
 	readonly device?: boolean;
 	/** Skips the queue and interrupts it (panic only). */
 	readonly priority?: boolean;
-	/** Override the kind's default policy (`mutate` asks, everything else runs). */
-	readonly approval?: 'ask' | 'auto';
+	/**
+	 * Override the kind's default policy (`mutate` asks, everything else runs); `device` asks only
+	 * while an OP-XY is connected (the replica's changes can be taken back from the changes note).
+	 */
+	readonly approval?: 'ask' | 'auto' | 'device';
 	/**
 	 * false sends the schema without `strict`: the API then does not compile it into its grammar,
 	 * which has a size limit that a schema with many optional fields can push the whole tool set
@@ -493,17 +498,33 @@ export class ToolRegistry {
 		}
 		const result = tool.input.safeParse(input);
 		if (result.success) return { ok: true, tool, input: result.data };
+		// what each field that failed takes, from its description: a bare "Invalid input → at
+		// scene" once made an agent give up on listening instead of sending it again
+		const shape =
+			tool.input instanceof z.ZodObject ? (tool.input.shape as Record<string, z.ZodType>) : {};
+		const fields = [...new Set(result.error.issues.map((i) => String(i.path[0] ?? '')))].filter(
+			Boolean
+		);
+		const takes = fields.flatMap((field) => {
+			const description = shape[field]?.description;
+			return description ? [`${field} takes: ${description}`] : [];
+		});
 		return {
 			ok: false,
 			tool,
-			error: `Invalid input for ${name}:\n${z.prettifyError(result.error)}`
+			error: `Invalid input for ${name}:\n${z.prettifyError(result.error)}${takes.length > 0 ? `\n${takes.join('\n')}` : ''}`
 		};
 	}
 }
 
-/** Whether a tool must wait for the user's approval by default (before session grants). */
-export function asksForApproval(tool: AnyTool): boolean {
-	return (tool.approval ?? (tool.kind === 'mutate' ? 'ask' : 'auto')) === 'ask';
+/**
+ * Whether a tool must wait for the user's approval by default (before session grants). A
+ * `device` tool asks while an OP-XY is connected, and, with no environment to tell, always.
+ */
+export function asksForApproval(tool: AnyTool, env?: AgentEnvironment): boolean {
+	const policy = tool.approval ?? (tool.kind === 'mutate' ? 'ask' : 'auto');
+	if (policy === 'device') return env === undefined || env.device?.session.phase === 'ready';
+	return policy === 'ask';
 }
 
 // ─── helpers for tool implementations ───────────────────────────────────────────────────────────

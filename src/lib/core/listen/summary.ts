@@ -159,6 +159,23 @@ const BAND_WORDS: Record<OnsetBand, string> = {
 
 const SLOT_WORDS = { beat: 'on the beat', e: 'on the "e"', and: 'on the "and"', a: 'on the "a"' };
 
+/** What each flag means and what usually helps, in a few words (for the reader of a summary). */
+export const FLAG_MEANINGS: Readonly<Record<string, string>> = {
+	silent: 'nothing was heard',
+	clipping: 'the waveform hit full scale and flattened: turn the loudest parts or the master down',
+	hot: `peaks within ${-FLAG_LIMITS.hotPeakDbfs} dB of full scale, no clipping yet but no headroom: the master or the loudest tracks a little down`,
+	quiet: `under ${FLAG_LIMITS.quietLufs} LUFS: very quiet for a mix`,
+	loud: `over ${FLAG_LIMITS.loudLufs} LUFS: very loud for a mix`,
+	dropouts: 'short silences inside sound: notes cut off, or a gap in the audio',
+	'dc-offset':
+		'the waveform sits off zero (often a synthesized kick or a very low note): it costs headroom; a high-pass or a less boomy sound clears it',
+	'mostly-silent': 'silence for more than half of the take',
+	phase: 'left and right partly cancel: it thins out in mono',
+	'off-tempo': 'the beat heard does not fit the set tempo',
+	loose: `hits sit more than ${FLAG_LIMITS.looseMs} ms off the grid on average`,
+	'no-pulse': 'no steady beat heard'
+};
+
 /** The flags an analysis raises. */
 export function flagsOf(a: ListenAnalysis): string[] {
 	const flags: string[] = [];
@@ -540,7 +557,10 @@ export function summarizeTracks(
 	const lines: string[] = [];
 	const tracks = takes.map((take) => {
 		const a = take.analysis;
-		const flags = flagsOf(a);
+		// heard alone, a part need not carry the pulse, and drums are mostly the gaps between hits
+		const flags = flagsOf(a).filter(
+			(f) => f !== 'no-pulse' && !(take.percussive && f === 'mostly-silent')
+		);
 		const label = `T${take.track} (${take.name})`;
 		if (a.silence.silent) {
 			lines.push(`${label}: silent (nothing plays on it here, or its level is down)`);
@@ -554,7 +574,9 @@ export function summarizeTracks(
 			if (bands.length > 0 && a.spectrum)
 				parts.push(`mostly ${bands.join(' and ')}, centroid ${hz(a.spectrum.centroidHz)}`);
 			if (a.rhythm) {
-				const g = a.rhythm.grid;
+				// tightness says little with a few long notes (a bass, a pad)
+				const g =
+					a.rhythm.grid && a.rhythm.grid.onsets >= FLAG_LIMITS.gridOnsets ? a.rhythm.grid : null;
 				parts.push(
 					`${a.rhythm.onsets} onsets${g ? `, grid ${r1(g.tightnessMs)} ms rms` : ''}${g?.swing !== null && g?.swing !== undefined && Math.abs(g.swing - 50) >= 2 ? `, swing ${r1(g.swing)} %` : ''}`
 				);

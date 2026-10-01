@@ -121,8 +121,14 @@ function dimmedIfOff(ctx: ScreenCtx, off: boolean | undefined, draw: () => void)
 /** A short spoken description of what the screen shows (for `aria-live`). */
 export function describeFrame(frame: ScreenFrame): string {
 	switch (frame.page) {
-		case 'tempo':
-			return `tempo ${frame.bpm} bpm, groove ${frame.groove}, metronome ${frame.metronome.on ? 'on' : 'off'}`;
+		case 'tempo': {
+			// the swing and the metronome's level are drawn (a slider's thumb, speaker waves), never
+			// written; said here on their lanes, so a reader can tell where they stand (an agent set
+			// a swing it could not see)
+			const level = Math.round(frame.metronome.level * 99);
+			const metronome = frame.metronome.on ? `on at level ${level}` : 'off';
+			return `tempo ${frame.bpm} bpm, groove ${frame.groove}, swing ${Math.round(frame.swing * 99)}, metronome ${metronome}`;
+		}
 		case 'synth':
 			return `${frame.engine}: ${frame.header.map((c) => `${c.label} ${c.value}`.trim()).join(', ')}`;
 		case 'drum':
@@ -152,6 +158,8 @@ export function describeFrame(frame: ScreenFrame): string {
 			return (
 				`${frame.type} lfo${frame.off ? ' off' : ''}: ` +
 				(frame.type === 'element' ? `source ${frame.source}, ` : '') +
+				// the speed: a count when synced to the tempo, else the free dial (drawn, on its lane)
+				`speed ${frame.speed.synced ? frame.speed.label : `free ${Math.round(frame.speed.position * 99)}`}, ` +
 				`amount ${Math.round(frame.amount)}, destination ${frame.destination.label}`
 			);
 		case 'mix': {

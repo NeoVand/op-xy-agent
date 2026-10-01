@@ -20,6 +20,7 @@
  */
 import { z } from 'zod';
 import {
+	FLAG_MEANINGS,
 	LISTEN_FOCUS,
 	summarize,
 	summarizeTracks,
@@ -32,7 +33,14 @@ import type { DeviceStack } from '$lib/device';
 import type { SimState } from '$lib/sim/params';
 import { deviceSnapshot } from '../device-state';
 import type { ListenFrom, ListenHost } from '../listen-host';
-import { alone, renderRequest, sceneState, tracksPlaying } from '../scene-render';
+import {
+	alone,
+	keyNote,
+	renderRequest,
+	sceneState,
+	tracksPlaying,
+	writtenKey
+} from '../scene-render';
 import type { VirtualOpxy } from '../virtual-opxy';
 import {
 	defineTool,
@@ -47,6 +55,10 @@ import {
 export const LISTEN_SECONDS = 8;
 /** Seconds per track `listen_tracks` records when not told. */
 export const TRACK_SECONDS = 4;
+/** Seconds of each section `scene: "song"` hears when not told. */
+export const SECTION_SECONDS = 4;
+/** Sections it hears at most. */
+const MAX_SECTIONS = 12;
 /**
  * How long the other tracks get to fall silent after a mute, ms: a mute stops new notes, and the
  * tails of the ones sounding ring on (delay and reverb returns keep going too).
@@ -145,6 +157,14 @@ const recordFrom = (target: Target): ListenFrom =>
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
+/** What the flags raised mean, in a line, or null when none were. */
+function flagLegend(flags: readonly string[]): string | null {
+	const known = [...new Set(flags)].filter((f) => FLAG_MEANINGS[f]);
+	return known.length > 0
+		? `flags: ${known.map((f) => `${f} = ${FLAG_MEANINGS[f]}`).join('; ')}`
+		: null;
+}
+
 /** The replica's scene now (1–99), or null on a device. */
 const sceneOf = (target: Target): number | null =>
 	target.kind === 'virtual' ? target.virtual.readArrangement().scene : null;
@@ -157,6 +177,9 @@ function notesFor(target: Target, analysis: ListenAnalysis, from: number | null)
 		if (status.metronome) {
 			notes.push("The replica's metronome is on: its click is in what you heard, on every beat.");
 		}
+		const state = JSON.parse(target.virtual.checkpoint().state) as SimState;
+		const key = keyNote(writtenKey(state), analysis.harmony?.key);
+		if (key) notes.push(key);
 		const arrangement = target.virtual.readArrangement();
 		if (from !== null && arrangement.scene !== from) {
 			notes.push(
@@ -203,7 +226,7 @@ export const listenTool = defineTool({
 	kind: 'read',
 	strict: false,
 	description:
-		'Listen to what is playing for a few seconds and get back what it sounds like: loudness (LUFS), peaks and clipping, tone against pink noise, stereo width and a mono low end, tempo compared with the set tempo, timing and swing, where the low, mid and high hits sit in the beat, a key and rough chords, silence and dropouts, and flags worth acting on. Hears the connected OP-XY over its USB audio, else the replica in the browser (from chooses). The transport must be playing: if it is stopped this says so, and nothing is recorded. With scene, it renders that scene of the replica looping instead, offline: nothing needs to play, and the song, the transport and the mutes are left alone (a song playing moves on from scene to scene, so this is how to hear one scene); add tracks to hear instrument tracks one at a time, each alone, without touching any mute. Changes nothing. Use it to check your own work, then revise and listen again.',
+		'Listen to what is playing for a few seconds and get back what it sounds like: loudness (LUFS), peaks and clipping, tone against pink noise, stereo width and a mono low end, tempo compared with the set tempo, timing and swing, where the low, mid and high hits sit in the beat, a key and rough chords, silence and dropouts, and flags worth acting on. Hears the connected OP-XY over its USB audio, else the replica in the browser (from chooses). The transport must be playing: if it is stopped this says so, and nothing is recorded. With scene, it renders that scene of the replica looping instead, offline: nothing needs to play, and the song, the transport and the mutes are left alone (a song playing moves on from scene to scene, so this is how to hear one scene); add tracks to hear instrument tracks one at a time, each alone, without touching any mute; scene "song" hears every section of the song side by side. Changes nothing. Use it to check your own work, then revise and listen again.',
 	input: z.object({
 		seconds: z
 			.number()
@@ -224,12 +247,11 @@ export const listenTool = defineTool({
 				'device: the connected OP-XY; virtual: the replica in the browser (default: the device when connected; the replica with scene or tracks)'
 			),
 		scene: z
-			.int()
-			.min(1)
-			.max(99)
+			// a number written as a string too ("1"): an agent sent one and gave up listening
+			.union([z.int().min(1).max(99), z.literal('song'), z.string().regex(/^[1-9][0-9]?$/)])
 			.optional()
 			.describe(
-				"A scene of the replica to hear looping, 1–99, rendered offline: it need not be playing, and the song isn't started"
+				`A scene of the replica to hear looping, 1–99, rendered offline: it need not be playing, and the song isn't started. "song": each scene of the song in its order, ${SECTION_SECONDS} s each unless seconds says, side by side (how the sections compare: a break that drops, a hook that lands)`
 			),
 		tracks: z
 			.union([z.literal('each'), z.array(z.int().min(1).max(8)).min(1).max(8)])
@@ -239,7 +261,13 @@ export const listenTool = defineTool({
 			)
 	}),
 	async run(input, ctx) {
-		if (input.scene !== undefined || input.tracks !== undefined) return offline(input, ctx);
+		if (input.scene !== undefined || input.tracks !== undefined) {
+			const scene =
+				typeof input.scene === 'string' && input.scene !== 'song'
+					? Number(input.scene)
+					: input.scene;
+			return offline({ ...input, scene: scene as number | 'song' | undefined }, ctx);
+		}
 		const target = targetOf(ctx.env, input.from);
 		if (isResult(target)) return target;
 		const blocked = notReady(target, ctx.env);
@@ -255,9 +283,11 @@ export const listenTool = defineTool({
 			return errorResult(`Nothing was heard: ${message(error)}`, 'could not listen');
 		}
 		const summary = summarize(analysis, { focus: input.focus, source: sourceText(target) });
+		const legend = flagLegend(summary.flags);
 		const lines = [
 			summary.text,
 			...notesFor(target, analysis, from).map((n) => `note: ${n}`),
+			...(legend ? [legend] : []),
 			`numbers: ${JSON.stringify(summary.data)}`
 		];
 		return { content: lines.join('\n'), summary: chipLine(analysis.seconds, summary) };
@@ -268,8 +298,93 @@ interface OfflineInput {
 	readonly seconds?: number;
 	readonly focus?: (typeof LISTEN_FOCUS)[number];
 	readonly from?: 'device' | 'virtual';
-	readonly scene?: number;
+	readonly scene?: number | 'song';
 	readonly tracks?: 'each' | readonly number[];
+}
+
+/**
+ * listen with `scene: "song"`: each scene of the song, in its order, rendered offline for a few
+ * seconds, a line each and how they compare (an agent wanted to know how loud each section was
+ * next to the others, and could hear only one scene at a time).
+ */
+async function sections(
+	input: OfflineInput,
+	ctx: ToolContext,
+	arrangement: ReturnType<VirtualOpxy['readArrangement']>,
+	render: NonNullable<ListenHost['render']>
+): Promise<ToolResult> {
+	const virtual = ctx.env.virtual!;
+	const host = ctx.env.listen!;
+	const order = arrangement.song.order.length > 0 ? arrangement.song.order : [arrangement.scene];
+	const distinct = [...new Set(order)].slice(0, MAX_SECTIONS);
+	const where = (scene: number) => {
+		const at = order.flatMap((s, i) => (s === scene ? [i + 1] : []));
+		return at.length === 1 ? `entry ${at[0]}` : `entries ${at.join(', ')}`;
+	};
+	const seconds = input.seconds ?? SECTION_SECONDS;
+	const base = JSON.parse(virtual.checkpoint().state) as SimState;
+	const heard: { scene: number; lufs: number | null; line: string; flags: string[] }[] = [];
+	try {
+		for (const scene of distinct) {
+			const state = sceneState(base, scene);
+			const recording = await render(renderRequest(state, seconds), ctx.signal);
+			const analysis = await host.analyze(recording, { expectedBpm: state.tempo.bpm });
+			const summary = summarize(analysis, { source: `scene ${scene}` });
+			const d = summary.data;
+			const tone = d.tone?.vsPink
+				? Object.entries(d.tone.vsPink)
+						.filter(([, v]) => v !== null)
+						.map(([band, v]) => `${band} ${v}`)
+						.join(', ')
+				: null;
+			const parts = [
+				d.level.lufs !== null ? `${d.level.lufs} LUFS` : 'silent',
+				`peak ${d.level.peakDbfs} dBFS`,
+				...(tone ? [`vs pink: ${tone}`] : []),
+				...(d.rhythm ? [`${d.rhythm.onsets} onsets`] : []),
+				...(summary.flags.length > 0 ? [`worth a look: ${summary.flags.join(', ')}`] : [])
+			];
+			heard.push({
+				scene,
+				lufs: d.level.lufs,
+				line: `scene ${scene} (${where(scene)}): ${parts.join('; ')}`,
+				flags: [...summary.flags]
+			});
+		}
+	} catch (error) {
+		if (ctx.signal.aborted) throw error;
+		return errorResult(`Nothing was heard: ${message(error)}`, 'could not listen');
+	}
+	// the song's moves from one section to the next, in loudness
+	const lufs = new Map(heard.map((h) => [h.scene, h.lufs]));
+	const moves: string[] = [];
+	for (let i = 1; i < order.length; i++) {
+		const [a, b] = [order[i - 1], order[i]];
+		const [la, lb] = [lufs.get(a), lufs.get(b)];
+		if (a === b || la === undefined || lb === undefined || la === null || lb === null) continue;
+		const step = `scene ${a} → ${b}: ${lb - la >= 0 ? '+' : ''}${Math.round((lb - la) * 10) / 10} LU`;
+		if (!moves.includes(step)) moves.push(step);
+	}
+	const audible = heard.filter((h) => h.lufs !== null);
+	const loud = [...audible].sort((x, y) => y.lufs! - x.lufs!);
+	const legend = flagLegend(heard.flatMap((h) => h.flags));
+	return {
+		content: [
+			`heard ${heard.length} scene${heard.length === 1 ? '' : 's'} of the song, ${seconds} s each, rendered offline (song: ${order.join(' ')})`,
+			...heard.map((h) => h.line),
+			...(loud.length >= 2
+				? [
+						`compared: loudest scene ${loud[0].scene}, quietest scene ${loud.at(-1)!.scene}, ${Math.round((loud[0].lufs! - loud.at(-1)!.lufs!) * 10) / 10} LU apart`
+					]
+				: []),
+			...(moves.length > 0 ? [`from one section to the next: ${moves.join('; ')}`] : []),
+			...(distinct.length < new Set(order).size
+				? [`(the first ${MAX_SECTIONS} scenes of the song only)`]
+				: []),
+			...(legend ? [legend] : [])
+		].join('\n'),
+		summary: `heard ${heard.length} section${heard.length === 1 ? '' : 's'} of the song`
+	};
 }
 
 /**
@@ -293,6 +408,15 @@ async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResul
 	}
 	const render = host.render.bind(host);
 	const arrangement = virtual.readArrangement();
+	if (input.scene === 'song') {
+		if (input.tracks !== undefined) {
+			return errorResult(
+				'scene "song" hears the sections whole; for tracks alone, name one scene.',
+				'song or tracks'
+			);
+		}
+		return sections(input, ctx, arrangement, render);
+	}
 	const scene = input.scene ?? arrangement.scene;
 	const scenes = arrangement.scenes.map((s) => s.scene);
 	if (!scenes.includes(scene)) {
@@ -315,10 +439,13 @@ async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResul
 			const recording = await render(renderRequest(state, seconds), ctx.signal);
 			const analysis = await host.analyze(recording, { expectedBpm });
 			const summary = summarize(analysis, { focus: input.focus, source });
+			const key = keyNote(writtenKey(state), analysis.harmony?.key);
+			const legend = flagLegend(summary.flags);
 			return {
 				content: [
 					summary.text,
-					...notes.map((n) => `note: ${n}`),
+					...[...notes, ...(key ? [key] : [])].map((n) => `note: ${n}`),
+					...(legend ? [legend] : []),
 					`numbers: ${JSON.stringify(summary.data)}`
 				].join('\n'),
 				summary: chipLine(analysis.seconds, summary).replace(/^heard/, `heard scene ${scene},`)
@@ -347,12 +474,14 @@ async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResul
 			takes.push({ track, name, percussive: name === 'drum', analysis });
 		}
 		const summary = summarizeTracks(takes, { source });
+		const legend = flagLegend(summary.tracks.flatMap((t) => t.flags));
 		return {
 			content: [
 				summary.text,
 				...silent,
 				...notes,
 				...ducksIn(state, tracks),
+				...(legend ? [legend] : []),
 				`numbers: ${JSON.stringify(trackNumbers(summary))}`
 			].join('\n'),
 			summary: `heard ${takes.length} track${takes.length === 1 ? '' : 's'} of scene ${scene} alone`
@@ -465,6 +594,7 @@ export const listenTracksTool = defineTool({
 	name: 'listen_tracks',
 	label: 'listen to tracks',
 	kind: 'mutate',
+	approval: 'device',
 	device: true,
 	strict: false,
 	description: `Hear instrument tracks one at a time, each alone: mutes the other instrument tracks, listens (${TRACK_SECONDS} s per track by default), moves on, and afterwards puts every mute back exactly as it was, also if it fails or is stopped. Returns a line per track (loudness, where its energy sits, its hits, key and chords) and how they compare (tracks crowding the same band). The user approves it first, since mutes are project state. On the connected OP-XY (CC9) it runs only when the app knows all eight instrument tracks' mutes, because the device never reports mutes set by hand: if not, set them with mute_track first as the user says they are. The transport must be playing. On the replica, listen with scene and tracks hears the tracks alone offline without touching a mute or asking: prefer it there.`,

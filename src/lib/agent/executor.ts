@@ -140,7 +140,7 @@ export class ToolExecutor {
 		const needing = new Set<string>();
 		const actions: ProposedAction[] = [];
 		for (const { call, parsed } of prepared) {
-			if (!parsed.ok || !this.#gate.needsApproval(parsed.tool)) continue;
+			if (!parsed.ok || !this.#gate.needsApproval(parsed.tool, env)) continue;
 			needing.add(call.id);
 			const tool = parsed.tool;
 			let preview: ToolPreview;

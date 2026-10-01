@@ -34,5 +34,7 @@ and listen again; stop when it matches, or after a couple of rounds. Measurement
 judge them against the request and the genre.
 
 Some readings come from how the analysis hears rather than from what plays (a half-time tempo, a key
-the chords do not support). They are quirks of the measurement, not news, so leave them out. If you
-did not listen, say nothing about listening.
+the chords do not support). They are quirks of the measurement, not news, so leave them out, and
+never explain them with music theory: when the heard key is not the key you wrote, the result says
+so; go by what you wrote. If you did not listen, say nothing about listening, and when the user
+asks how something sounds, listen first.

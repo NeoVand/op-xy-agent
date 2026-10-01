@@ -140,15 +140,19 @@ describe('the navigator: parameters', () => {
 		expect(zero.screen).toMatch(/metronome on/);
 	});
 
-	it('refuses a number for a list of words rather than clamping it onto the last word', () => {
+	it('takes a number for the groove as its amount, and refuses one for a list elsewhere', () => {
 		const sim = boot();
-		// "groove 70" meant the swing amount: the groove type is a list, and 70 is none of it
-		const wrong = planParam(sim.state, { param: 'groove', value: 70 });
-		expect(wrong.reached).toBe(false);
-		expect(wrong.note).toContain('shuffle');
-		expect(wrong.note).toContain('swing');
+		// "groove 70" means the amount (E3): the groove type is a list of names
+		const amount = planParam(sim.state, { param: 'groove', value: 70 });
+		expect(amount.reached).toBe(true);
+		expect(keys(amount)).toEqual(['tempo', 'turn E3 70']);
+		expect(amount.note).toMatch(/groove amount \(E3, swing\); the groove type stays/);
 		expect(sim.state.tempo.groove).toBe(0);
-		expect(planParam(sim.state, { param: 'swing', value: 70 }).reached).toBe(true);
+		// a list never clamps a number onto its last word
+		const wrong = planParam(sim.state, { track: 3, param: 'lfo type', value: 70 });
+		expect(wrong.reached).toBe(false);
+		// set_sound's names for the engine's four values work here too
+		expect(findParam('engine p2', sim.state, 3)).toBe('m1.2');
 	});
 
 	it('picks engines, filter types and LFO types from their lists', () => {
@@ -214,10 +218,10 @@ describe('the navigator: parameters', () => {
 		expect(env.steps.at(-1)).toMatchObject({ keys: 'turn E3', clicks: -3 });
 		for (const step of env.steps) playStep(sim, step);
 		expect(sim.state.tracks[2].lfo).toMatchObject({ type: 'element', destination: 1 });
-		expect(env.screen).toBe('element lfo: source G, amount 0, destination env');
+		expect(env.screen).toBe('element lfo: source G, speed free 66, amount 0, destination env');
 		const amp = planParam(sim.state, { track: 3, param: 'lfo destination', value: 'amp' });
 		expect(amp.reached).toBe(true);
-		expect(amp.screen).toBe('element lfo: source G, amount 0, destination amp');
+		expect(amp.screen).toBe('element lfo: source G, speed free 66, amount 0, destination amp');
 	});
 
 	it('reaches the midi engine at the end of the browser’s engines, with its starting sound (ours)', () => {

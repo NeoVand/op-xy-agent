@@ -423,7 +423,7 @@ describe('renderFrame (recorded draw calls)', () => {
 				pendulum: -1,
 				weight: 80 / 180
 			})
-		).toBe('tempo 120 bpm, groove SH, metronome off');
+		).toBe('tempo 120 bpm, groove SH, swing 0, metronome off');
 		expect(describeFrame({ page: 'midi', channel: '1', bank: null, program: '1' })).toContain(
 			'bank none'
 		);

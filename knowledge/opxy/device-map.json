@@ -2461,7 +2461,7 @@
 					"keys": "click E1"
 				}
 			],
-			"screen": "element lfo: source G, amount 0, destination syn",
+			"screen": "element lfo: source G, speed free 66, amount 0, destination syn",
 			"units": [
 				"instrument.lfo-element",
 				"instrument.lfo"
@@ -2614,7 +2614,7 @@
 					"keys": "click E1"
 				}
 			],
-			"screen": "random lfo: amount 0, destination syn",
+			"screen": "random lfo: speed free 66, amount 0, destination syn",
 			"units": [
 				"instrument.lfo-random",
 				"instrument.lfo"
@@ -2758,7 +2758,7 @@
 					"keys": "M4"
 				}
 			],
-			"screen": "tremolo lfo: amount 0, destination syn",
+			"screen": "tremolo lfo: speed free 66, amount 0, destination syn",
 			"note": "off in a new project: M4 on this page switches it on and off",
 			"units": [
 				"instrument.lfo-tremolo",
@@ -2899,7 +2899,7 @@
 					"keys": "click E1"
 				}
 			],
-			"screen": "value lfo: amount 0, destination syn",
+			"screen": "value lfo: speed free 66, amount 0, destination syn",
 			"units": [
 				"instrument.lfo-value",
 				"instrument.lfo"
@@ -3721,7 +3721,7 @@
 					"keys": "click E1",
 					"layer": "click",
 					"encoder": 1,
-					"does": "opens tremolo lfo: amount 0, destination syn"
+					"does": "opens tremolo lfo: speed free 66, amount 0, destination syn"
 				}
 			]
 		},
@@ -7635,7 +7635,7 @@
 					"keys": "tempo"
 				}
 			],
-			"screen": "tempo 120 bpm, groove SH, metronome on",
+			"screen": "tempo 120 bpm, groove SH, swing 0, metronome on at level 65",
 			"note": "tempo pressed again on this page taps the tempo",
 			"units": [
 				"tempo.tempo-screen",
@@ -7789,7 +7789,7 @@
 					"layer": "click",
 					"encoder": 4,
 					"label": "metronome on/off",
-					"does": "metronome on → off"
+					"does": "metronome on at level 65 → off"
 				}
 			]
 		},

@@ -58,4 +58,6 @@ load their engine's starting sound, so choosing one by name will not sound like 
 A new project's FX I is a delay set to a dotted eighth and FX II a reverb, which makes the sends an
 easy way to add an echo or a space to a part.
 
-When the sound matters, listen to it after you change it (the listening skill), and adjust.
+When the sound matters, listen to it after you change it (the listening skill), and adjust: listen
+with its scene and the track (tracks) hears it alone even while stopped. When the user asks how it
+sounds, listen before you say.

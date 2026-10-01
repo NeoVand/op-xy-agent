@@ -83,6 +83,10 @@ describe('make_kit', () => {
 			kit: 'punch',
 			on_replica: { track: 3, keys: 24, engine_changed: true, audible: true }
 		});
+		// each key's sound by the name write_pattern's grid takes
+		const sounds = JSON.parse(String(result.content)).on_replica.sounds;
+		expect(sounds.F3).toBe('909 kick');
+		expect(Object.keys(sounds)).toHaveLength(24);
 		// track 3 (prism in a new project) is a drum sampler now, its keys holding the kit
 		expect(sim.state.tracks[2].engine).toBe('drum');
 		const keys = sim.state.areas.sample.tracks[2].keys;

@@ -167,6 +167,8 @@ export interface VirtualTrackSound {
 	readonly pages: Readonly<Record<string, string>>;
 	/** The mixer's level (0–99) and pan (−100 … 100) for the track, and whether it is muted. */
 	readonly mix: { readonly level: number; readonly pan: number; readonly muted: boolean };
+	/** What the sends feed: the effect FX I and FX II hold, as their pages read ("reverb: size 69, …"). */
+	readonly fx?: { readonly 'FX I': string; readonly 'FX II': string };
 	/** On a drum track, the sound on each key ("F3": "kick 1"). */
 	readonly kit?: Readonly<Record<string, string>>;
 }
@@ -174,7 +176,10 @@ export interface VirtualTrackSound {
 /** The virtual OP-XY. */
 export interface VirtualOpxy {
 	status(): VirtualStatus;
-	/** Starts (the song, when it has more than one entry) or stops the transport. */
+	/**
+	 * Starts (the song, when it has more than one entry) or stops the transport; play while it
+	 * plays starts again from the top, as the play key does.
+	 */
 	transport(action: 'play' | 'stop'): void;
 	setTempo(bpm: number): void;
 	/**

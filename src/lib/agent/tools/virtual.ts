@@ -51,8 +51,12 @@ function virtualOf(env: AgentEnvironment) {
 	return env.virtual ?? null;
 }
 
-/** A pattern as the model reads it: compact, notes grouped by step. */
-function patternView(p: VirtualPattern) {
+/**
+ * A pattern as the model reads it: compact, notes grouped by step. `drumSteps: false` leaves a
+ * drum pattern as its grid alone (write_pattern's result: the steps again, note by note, made an
+ * agent's drum results twice as long as they needed to be).
+ */
+function patternView(p: VirtualPattern, { drumSteps = true } = {}) {
 	const byStep = new Map<
 		number,
 		{ note: number; sound?: string; velocity: number; length: number }[]
@@ -80,7 +84,9 @@ function patternView(p: VirtualPattern) {
 		noteCount: p.notes.length,
 		...(grid ? { grid } : {}),
 		...(reading ? { reading } : {}),
-		steps: [...byStep.entries()].map(([step, notes]) => ({ step, notes }))
+		...(grid && !drumSteps
+			? {}
+			: { steps: [...byStep.entries()].map(([step, notes]) => ({ step, notes })) })
 	};
 }
 
@@ -162,9 +168,20 @@ function gridKey(key: string, kit: Readonly<Record<string, string>> | undefined)
 	if (/^\d{1,3}$/.test(k)) return Number(k) <= 127 ? Number(k) : null;
 	const named = parseNoteName(k, 'c4');
 	if (named !== null) return named;
+	// by the sound's name; then without a number ("kick 1" where a made kit says "kick", "kick"
+	// where the new project's kit says "kick 1" and "kick 2": the lowest), as an agent once wrote
+	const sounds = Object.entries(kit ?? {})
+		.map(([note, name]) => ({ note: parseNoteName(note, 'c4'), name: name.toLowerCase() }))
+		.filter((x): x is { note: number; name: string } => x.note !== null)
+		.sort((a, b) => a.note - b.note);
 	const lower = k.toLowerCase();
-	const sound = Object.entries(kit ?? {}).find(([, name]) => name.toLowerCase() === lower);
-	return sound ? parseNoteName(sound[0], 'c4') : null;
+	const bare = (name: string) => name.replace(/\s+\d+$/, '');
+	return (
+		sounds.find((x) => x.name === lower)?.note ??
+		sounds.find((x) => x.name === bare(lower))?.note ??
+		sounds.find((x) => bare(x.name) === lower)?.note ??
+		null
+	);
 }
 
 export const writePatternTool = defineTool({
@@ -174,7 +191,7 @@ export const writePatternTool = defineTool({
 	approval: 'auto',
 	// a string or a list for notes, and a grid's lines: more than the API's strict grammar takes
 	strict: false,
-	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held and makes it the pattern the track plays. Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short: notes as one string, a word per note, step:note[:length[:velocity]] with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), and drums as grid, a line per sound as read_pattern shows them ("kick 1" or 53: "x... x... x... x...": x a hit, X an accent, o a soft hit, . a rest, four steps a beat). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. Undo restores the previous pattern. The result reads the pattern back: a drum track as a grid, any other as its bars and chords, spelled in the key its notes suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
+	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held and makes it the pattern the track plays. Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short: notes as one string, a word per note, step:note[:length[:velocity]] with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), and drums as grid, a line per sound by its name on this track (as read_pattern, read_sound or make_kit list them), its note or its number ({"kick": "x... x... x... x...", "62": "..x. ..x. ..x. ..x."}: x a hit, X an accent, o a soft hit, . a rest, four steps a beat). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. Undo restores the previous pattern. The result reads the pattern back: a drum track as a grid, any other as its bars and chords, spelled in the key its notes suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16 (1–8 instrument, 9–16 auxiliary)'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default 1)'),
@@ -329,8 +346,19 @@ export const writePatternTool = defineTool({
 				scale: input.scale === undefined ? undefined : scaleValue(input.scale),
 				notes
 			});
+			// a grid line shorter or longer than the pattern is often a miscount (an agent wrote 30
+			// marks for 32 steps): say so, the rest of a short line plays as rests
+			const span = bars * 16;
+			const uneven = Object.entries(input.grid ?? {})
+				.map(([key, line]) => [key, line.replace(/[\s|]/g, '').length] as const)
+				.filter(([, n]) => n !== span)
+				.map(([key, n]) => `${key} has ${n}`);
+			const note =
+				uneven.length > 0
+					? `On the replica. Grid lines not ${span} steps long (the pattern's): ${uneven.join(', ')}; check them against the grid above.`
+					: 'On the replica.';
 			return jsonResult(
-				{ written: patternView(result), note: 'On the replica.' },
+				{ written: patternView(result, { drumSteps: false }), note },
 				`track ${input.track} pattern ${result.pattern}: ${result.notes.length} notes`,
 				{ applied: true, after: result.notes.length }
 			);
@@ -374,7 +402,7 @@ export const readSoundTool = defineTool({
 	label: 'read sound',
 	kind: 'read',
 	description:
-		'Read an instrument track\'s whole sound on the replica, each page as its screen shows it: the engine and the preset it came from, the engine\'s four M1 values by name (a drum track: its selected key, plus the sound on every key), the amp and filter envelopes, the play mode, the filter (type, cutoff, resonance, envelope amount, key tracking), the sends, the LFO, the player, and the mix level and pan. Use it before you explain, judge or change a sound ("why does my pad sound dull?", "what makes this bass pluck?"), so you speak from its real values. With an OP-XY connected, the replica holds the device\'s sounds only after its project was loaded (the project key); otherwise these are the replica\'s own. Changes nothing.',
+		'Read an instrument track\'s whole sound on the replica, each page as its screen shows it: the engine and the preset it came from, the engine\'s four M1 values by name (a drum track: its selected key, plus the sound on every key), the amp and filter envelopes, the play mode, the filter (type, cutoff, resonance, envelope amount, key tracking), the sends and what FX I and FX II hold (where the sends go), the LFO, the player, and the mix level and pan. Use it before you explain, judge or change a sound ("why does my pad sound dull?", "what makes this bass pluck?"), so you speak from its real values. With an OP-XY connected, the replica holds the device\'s sounds only after its project was loaded (the project key); otherwise these are the replica\'s own. Changes nothing.',
 	input: z.object({
 		track: z.int().min(1).max(8).describe('Instrument track 1–8')
 	}),
@@ -487,7 +515,7 @@ export const writeArrangementTool = defineTool({
 			});
 			return jsonResult(
 				{
-					arrangement: result,
+					arrangement: arrangementView(result),
 					...(added.length ? { addedEmpty: added } : {}),
 					note: 'On the replica.'
 				},
@@ -499,6 +527,28 @@ export const writeArrangementTool = defineTool({
 		}
 	}
 });
+
+/**
+ * The arrangement in words: each scene's tracks that play another pattern than 1 ("T1 p3, T3 p2"),
+ * the rest playing their pattern 1, and the song (an agent found sixteen numbers a scene hard to
+ * read, and could not tell the auxiliary tracks among them).
+ */
+function arrangementView(a: VirtualArrangement) {
+	const name = (index: number) => (index < 8 ? `T${index + 1}` : `aux T${index - 7}`);
+	return {
+		scene: a.scene,
+		scenes: Object.fromEntries(
+			a.scenes.map((s) => {
+				const others = s.patterns.flatMap((p, i) => (p !== 1 ? [`${name(i)} p${p}`] : []));
+				return [
+					`scene ${s.scene}`,
+					others.length > 0 ? `${others.join(', ')}; the rest p1` : 'every track p1'
+				];
+			})
+		),
+		song: a.song
+	};
+}
 
 export const VIRTUAL_TOOLS = [
 	writePatternTool,

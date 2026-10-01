@@ -199,6 +199,19 @@ function memoryPreferences(): PreferenceStore {
 	};
 }
 
+/** Whether the replica plays, and what: the song from where, or the scene it loops. */
+function playingNow(virtual: VirtualOpxy): string {
+	try {
+		if (!virtual.status().playing) return 'the replica is stopped.';
+		const a = virtual.readArrangement();
+		return a.song.order.length > 1
+			? `the replica is playing its song (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now.`
+			: `the replica is playing scene ${a.scene}, looping.`;
+	} catch {
+		return 'unknown.';
+	}
+}
+
 /** The agent behind the panel. Create with {@link Conductor.create}. */
 export class Conductor {
 	/** Where the conductor stands. */
@@ -888,13 +901,16 @@ export class Conductor {
 				? `${l} (by the user: no tool of yours did)`
 				: l
 		);
-		const report = marked.join('\n');
+		// where playback stands, so an answer never says it plays when it does not (an agent once
+		// told a user "playback is running" on a stopped replica)
+		const now = `Now: ${playingNow(virtual)}`;
+		const report = [...marked, now].join('\n');
 		if (report === this.#reported) return [];
 		this.#reported = report;
 		const text =
 			marked.length === 0
-				? 'The replica is as it was before the user\u2019s message: nothing on it changed.'
-				: `What changed on the replica since the user\u2019s message, yours and anything the user did on it meanwhile (describe the outcome from this):\n${marked.map((l) => `- ${l}`).join('\n')}`;
+				? `The replica is as it was before the user\u2019s message: nothing on it changed.\n${now}`
+				: `What changed on the replica since the user\u2019s message, yours and anything the user did on it meanwhile (describe the outcome from this):\n${marked.map((l) => `- ${l}`).join('\n')}\n${now}`;
 		return [{ type: 'text', text: `<replica-changes>\n${text}\n</replica-changes>` }];
 	}
 

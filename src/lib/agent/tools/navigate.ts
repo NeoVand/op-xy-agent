@@ -172,8 +172,20 @@ const stepView = (s: NavStep) => ({
 
 /** The plan as the model reads it; several settings come grouped by the parameter they set. */
 function planView(plan: NavPlan | SettingsPlan) {
+	// in a batch, what did not land, up front (an agent once had to read every entry to find it)
+	const failed =
+		'parts' in plan
+			? plan.parts
+					.filter((p) => !p.reached)
+					.map((p) => {
+						const name = 'label' in p.goal ? p.goal.label : p.goal.param;
+						const track = p.goal.track !== undefined ? `track ${p.goal.track} ` : '';
+						return `${track}${name} ${p.goal.value}${p.note ? `: ${p.note}` : ''}`;
+					})
+			: [];
 	return {
 		reached: plan.reached,
+		...(failed.length > 0 ? { failed, landed: 'every other setting' } : {}),
 		...('parts' in plan
 			? {
 					settings: plan.parts.map((p) => ({
@@ -237,7 +249,9 @@ export const planStepsTool = defineTool({
 						...planView(plan),
 						reason: !guide
 							? 'No replica walkthrough in this view.'
-							: 'Nothing to do: already there.'
+							: plan.reached
+								? 'Nothing to do: already there.'
+								: 'No steps: the goal was not found (see note).'
 					},
 					summaryOf(plan)
 				);

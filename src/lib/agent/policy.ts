@@ -6,7 +6,7 @@
  * own words (`voice/bridge.ts`; never "allow for this session"). Never from model output, tool
  * results or files.
  */
-import { asksForApproval, type AnyTool } from './tools/define';
+import { asksForApproval, type AgentEnvironment, type AnyTool } from './tools/define';
 import type { ApprovalDecision, ApprovalRequest, ProposedAction } from './types';
 
 /** Constructor options. */
@@ -34,9 +34,9 @@ export class PolicyGate {
 		this.#makeId = options.makeId ?? (() => `approval-${Date.now().toString(36)}-${++counter}`);
 	}
 
-	/** Whether a call to this tool must wait for the user right now. */
-	needsApproval(tool: AnyTool): boolean {
-		return asksForApproval(tool) && !this.#autoApprove && !this.#grants.has(tool.name);
+	/** Whether a call to this tool must wait for the user right now (in `env`, when known). */
+	needsApproval(tool: AnyTool, env?: AgentEnvironment): boolean {
+		return asksForApproval(tool, env) && !this.#autoApprove && !this.#grants.has(tool.name);
 	}
 
 	/** Tools the user allowed for this session. */

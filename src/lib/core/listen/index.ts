@@ -58,6 +58,7 @@ export {
 export { LOW_END_HZ, stereoStats, type StereoStats } from './stereo';
 export {
 	FLAG_LIMITS,
+	FLAG_MEANINGS,
 	LISTEN_FOCUS,
 	flagsOf,
 	summarize,

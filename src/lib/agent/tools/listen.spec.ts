@@ -299,6 +299,58 @@ describe('listen to a scene, rendered offline', () => {
 		expect(none).toMatchObject({ isError: true, summary: 'no offline render' });
 	});
 
+	it('hears each section of the song side by side, and how loudness moves between them', async () => {
+		const { host, virtual, run } = await songSetup({ playing: false });
+		virtual.writeArrangement({ song: { order: [1, 2, 2, 1], loop: false } });
+		const result = await run(listenTool, { scene: 'song', seconds: 2 });
+		expect(result.isError, String(result.content)).toBeFalsy();
+		// each scene once, in the song's order
+		expect(host.renders.map((r) => r.audible)).toEqual([
+			[1, 3, 5],
+			[1, 5]
+		]);
+		const text = String(result.content);
+		expect(text).toMatch(
+			/^heard 2 scenes of the song, 2 s each, rendered offline \(song: 1 2 2 1\)/
+		);
+		expect(text).toMatch(/^scene 1 \(entries 1, 4\): -?\d/m);
+		expect(text).toMatch(/^scene 2 \(entries 2, 3\): /m);
+		expect(text).toMatch(/^compared: loudest scene 1, quietest scene 2/m);
+		expect(text).toMatch(
+			/from one section to the next: scene 1 → 2: -[\d.]+ LU; scene 2 → 1: \+[\d.]+ LU/
+		);
+		expect(result.summary).toBe('heard 2 sections of the song');
+		// sections are heard whole
+		expect((await run(listenTool, { scene: 'song', tracks: 'each' })).summary).toBe(
+			'song or tracks'
+		);
+		// a scene's number written as a string is that scene
+		expect((await run(listenTool, { scene: '2', seconds: 2 })).summary).toMatch(/^heard scene 2,/);
+	});
+
+	it('says when the key heard is not the key written, and to go by the written one', async () => {
+		const { run } = await songSetup({ playing: false });
+		// the written notes say F# major; the fake audio plays A minor
+		await run(writePatternTool, {
+			track: 3,
+			pattern: 1,
+			notes: '1:F#2:4 5:A#2:4 9:C#3:4 13:F#3:4'
+		});
+		const text = String((await run(listenTool, { scene: 1, seconds: 4 })).content);
+		expect(text).toMatch(
+			/note: The notes written read as F# major; the analysis heard \w+ (major|minor)/
+		);
+		expect(text).toMatch(/go by the written key/);
+	});
+
+	it('leaves out the flags a part heard alone always raises', async () => {
+		const { run } = await songSetup();
+		const text = String((await run(listenTool, { scene: 1, tracks: 'each' })).content);
+		// a drum track alone is mostly the gaps between its hits; a pad alone has no beat of its own
+		expect(text).not.toMatch(/T1 \(drum\):.*mostly-silent/);
+		expect(text).not.toMatch(/no-pulse/);
+	});
+
 	it('says when a live take ran over a scene change or the end of the song', async () => {
 		const { virtual, sim, host, run } = await songSetup();
 		// the song moves on and ends (its loop off) while the take records

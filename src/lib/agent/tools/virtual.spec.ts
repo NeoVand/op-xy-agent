@@ -162,7 +162,10 @@ describe('write_pattern', () => {
 				]
 			})
 		);
-		expect(written.written.steps).toEqual([
+		// written, a drum pattern comes back as its grid alone; read, note by note too
+		expect(written.written.steps).toBeUndefined();
+		const read = json(await run(readPatternTool, { track: 1 }));
+		expect(read.steps).toEqual([
 			{
 				step: 1,
 				notes: [
@@ -337,6 +340,29 @@ describe('write_pattern, short', () => {
 		).toBe(true);
 	});
 
+	it('finds a sound by its name with or without a number, and says when a line is short', async () => {
+		const { sim, run } = setup();
+		// a new project's kit names "kick 1" and "kick 2": "kick" is the first; "closed hat 2" itself
+		const result = await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			grid: { kick: 'x... x... x... x...', 'closed hat 2': '..x. ..x. ..x. ..x.' }
+		});
+		expect(result.isError).toBeFalsy();
+		const p = currentPattern(sim.state.tracks[0].sequence);
+		expect(p.steps[0].notes.map((n) => n.note)).toEqual([53]);
+		expect(p.steps[2].notes.map((n) => n.note)).toEqual([62]);
+		// both lines cover one bar of the pattern's two: said, so a miscount shows
+		expect(json(result).note).toMatch(/not 32 steps long .*kick has 16, closed hat 2 has 16/);
+		// a made kit's "kick", written as the new project's "kick 1"
+		sim.state.areas.sample.tracks[0].keys[0] = {
+			...sim.state.areas.sample.tracks[0].keys[0]!,
+			name: '53 kick.wav'
+		};
+		const made = await run(writePatternTool, { track: 1, grid: { 'kick 1': 'x...' } });
+		expect(made.isError).toBeFalsy();
+	});
+
 	it('previews the notes it was given in either form', () => {
 		const preview = writePatternTool.preview!(
 			{ track: 1, grid: { 53: 'x...x...' }, notes: '3:62' } as never,
@@ -348,14 +374,32 @@ describe('write_pattern, short', () => {
 });
 
 describe('live tools on the virtual OP-XY (no device connected)', () => {
-	it('starts and stops its transport and says where it happened', async () => {
-		const { sim, run } = setup();
+	it('starts and stops its transport and says where it happened, and from where it plays', async () => {
+		const { sim, run, virtual } = setup();
 		const started = await run(transportTool, { action: 'play' });
-		expect(json(started)).toMatchObject({ target: 'virtual', playState: 'playing' });
+		expect(json(started)).toMatchObject({
+			target: 'virtual',
+			playState: 'playing',
+			from: 'scene 1, looping'
+		});
 		expect(sim.state.transport.playing).toBe(true);
-		expect((await run(transportTool, { action: 'play' })).applied).toBe(false);
+		// play while it plays starts again from the top, as the play key does
+		sim.advance(1500);
+		expect(sim.state.transport.position).toBeGreaterThan(0);
+		const again = await run(transportTool, { action: 'play' });
+		expect(again).toMatchObject({ applied: true, summary: 'played again from the top' });
+		expect(json(again).note).toMatch(/started again from the top/);
+		expect(sim.state.transport.position).toBe(0);
 		await run(transportTool, { action: 'stop' });
 		expect(sim.state.transport.playing).toBe(false);
+		// with a song, from its first scene
+		virtual.writeArrangement({
+			scenes: [{ scene: 2, patterns: [{ track: 1, pattern: 1 }] }],
+			song: { order: [1, 2], loop: false }
+		});
+		expect(json(await run(transportTool, { action: 'play' })).from).toBe(
+			'the song from its first scene (1 2), once through, then it stops'
+		);
 	});
 
 	it('says once per conversation that no OP-XY is connected', async () => {

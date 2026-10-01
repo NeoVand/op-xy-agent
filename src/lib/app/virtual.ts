@@ -201,6 +201,11 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				'M4 lfo': stated(screenAt(at(4))),
 				player: screenAt({ area: 'player', track })
 			},
+			// where the sends go: what FX I and FX II hold (auxiliary T7 and T8, their M1 pages)
+			fx: {
+				'FX I': screenAt({ area: 'auxiliary', track: 7, page: 1 }).replace(/^FX I /, ''),
+				'FX II': screenAt({ area: 'auxiliary', track: 8, page: 1 }).replace(/^FX II /, '')
+			},
 			mix: {
 				level: Math.round(t.mix.level),
 				pan: Math.round(t.mix.pan),
@@ -274,7 +279,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				if (s.transport.playing) sim.press('key.stop');
 				return;
 			}
-			if (s.transport.playing) return;
+			// pressed while it plays, the play key starts again from the top
 			sim.press('key.play');
 			const a = s.areas.arrange;
 			if (a.songs[a.song].order.length > 1) startSong(s);

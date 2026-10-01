@@ -89,25 +89,47 @@ says what it is doing and for how long.
 		entries.filter((e) => e.kind !== 'progress' && (!('parent' in e) || e.parent === null))
 	);
 	const lastIndex = $derived(top.length - 1);
-	/** A written pattern's track and pattern, from its call's input (instrument tracks only). */
-	function writtenPattern(entry: ChatEntry): { track: number; pattern: number } | null {
+	/**
+	 * A written pattern's track and pattern, from its call's input (instrument tracks only), and
+	 * whether the write cleared it (no notes, no grid).
+	 */
+	function writtenPattern(
+		entry: ChatEntry
+	): { track: number; pattern: number; empty: boolean } | null {
 		if (entry.kind !== 'tool' || entry.name !== 'write_pattern' || entry.status !== 'ok')
 			return null;
-		const input = entry.input as { track?: unknown; pattern?: unknown } | null;
+		const input = entry.input as {
+			track?: unknown;
+			pattern?: unknown;
+			notes?: unknown;
+			grid?: unknown;
+		} | null;
 		const track = typeof input?.track === 'number' ? input.track : null;
 		const pattern = typeof input?.pattern === 'number' ? input.pattern : 1;
-		return track !== null && track >= 1 && track <= 8 ? { track, pattern } : null;
+		const notes = input?.notes;
+		const empty =
+			(notes === undefined ||
+				(typeof notes === 'string' && notes.trim() === '') ||
+				(Array.isArray(notes) && notes.length === 0)) &&
+			(input?.grid === undefined || Object.keys(input.grid as object).length === 0);
+		return track !== null && track >= 1 && track <= 8 ? { track, pattern, empty } : null;
 	}
 
-	/** The calls that show a pattern card: the latest write of each pattern. */
+	/**
+	 * The calls that show a pattern card: the latest write of each pattern, unless that write
+	 * cleared it (a part that drops out of a scene: an empty card only clutters the chat).
+	 */
 	const cards = $derived.by(() => {
 		if (!patterns) return [];
-		const latest: Record<string, string> = {};
+		const latest: Record<string, { id: string; empty: boolean }> = {};
 		for (const entry of entries) {
 			const written = writtenPattern(entry);
-			if (written) latest[`${written.track}:${written.pattern}`] = entry.id;
+			if (written)
+				latest[`${written.track}:${written.pattern}`] = { id: entry.id, empty: written.empty };
 		}
-		return Object.values(latest);
+		return Object.values(latest)
+			.filter((w) => !w.empty)
+			.map((w) => w.id);
 	});
 
 	/** What to say next, once the last answer is written. */

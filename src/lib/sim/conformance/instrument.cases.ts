@@ -522,7 +522,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 		it('shows the tempo, the groove and the metronome of a new project', async () => {
 			const d = await start();
 			await d.click('key.tempo');
-			expect(d.screen()).toBe('tempo 120 bpm, groove SH, metronome on');
+			expect(d.screen()).toBe('tempo 120 bpm, groove SH, swing 0, metronome on at level 65');
 			expect(on(d, 'tempo')).toMatchObject({
 				bpm: '120',
 				groove: 'SH',
@@ -640,7 +640,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(4, -15);
 			expect(on(d, 'tempo').metronome).toEqual({ level: 50 / 99, on: true });
 			await d.push(4);
-			expect(d.screen()).toBe('tempo 120 bpm, groove SH, metronome off');
+			expect(d.screen()).toBe('tempo 120 bpm, groove SH, swing 0, metronome off');
 			await d.push(4);
 			expect(on(d, 'tempo').metronome.on).toBe(true);
 		});
@@ -1094,7 +1094,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m4');
-			expect(d.screen()).toBe('tremolo lfo off: amount 0, destination syn');
+			expect(d.screen()).toBe('tremolo lfo off: speed free 66, amount 0, destination syn');
 		});
 
 		it('lists the LFO types with shift + M4: duck, element, random, tremolo and value', async () => {
@@ -1544,7 +1544,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			await d.click('key.m4');
-			expect(d.screen()).toBe('value lfo: amount 0, destination syn');
+			expect(d.screen()).toBe('value lfo: speed 4, amount 0, destination syn');
 		});
 
 		it('takes the next preset’s own sound after the midi engine (OS 1.1.33 loads presets: the synth set aside by OS 1.0.50’s engine list does not come back)', async () => {

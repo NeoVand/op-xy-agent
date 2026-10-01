@@ -170,11 +170,14 @@ describe('the conductor grounds its answer', () => {
 		const note = api.messageRequests[1].body.messages.at(-1).content.at(-1);
 		expect(note.text).toContain('- playback started (by the user: no tool of yours did)');
 		expect(note.text).toContain('anything the user did on it meanwhile');
+		// and where playback stands, so the answer never guesses
+		expect(note.text).toContain('Now: the replica is playing scene 1, looping.');
 		// its own transport call needs no word
 		await conductor.send('stop it');
 		const own = api.messageRequests[3].body.messages.at(-1).content.at(-1);
 		expect(own.text).toContain('- playback stopped\n');
 		expect(own.text).not.toContain('by the user');
+		expect(own.text).toContain('Now: the replica is stopped.');
 	});
 
 	it('puts a lab run’s takes on the replica one at a time, and keeps the one on as the user goes on', async () => {

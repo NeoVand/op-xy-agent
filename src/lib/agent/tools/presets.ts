@@ -78,8 +78,13 @@ export const makeKitTool = defineTool({
 		}
 		const samples = [...byKey.values()].sort((a, b) => (a.key as number) - (b.key as number));
 		inbox?.put({ name, samples });
-		let loaded: { track: number; keys: number; engine_changed: boolean; audible: boolean } | null =
-			null;
+		let loaded: {
+			track: number;
+			keys: number;
+			engine_changed: boolean;
+			audible: boolean;
+			sounds?: Readonly<Record<string, string>>;
+		} | null = null;
 		if (track && virtual) {
 			try {
 				const load = virtual.loadKit(track, {
@@ -90,7 +95,10 @@ export const makeKitTool = defineTool({
 					track: load.track,
 					keys: load.keys,
 					engine_changed: load.engineChanged,
-					audible: load.audible
+					audible: load.audible,
+					// each key's sound by name: write_pattern's grid takes these names (an agent wrote
+					// "kick 1", the new project's name, onto a made kit's "kick")
+					sounds: virtual.readSound(load.track).kit
 				};
 			} catch (error) {
 				return errorResult(

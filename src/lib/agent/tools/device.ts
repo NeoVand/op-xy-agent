@@ -170,6 +170,19 @@ interface TransportSnapshot {
 	readonly reported: boolean;
 }
 
+/** Where the replica plays from: its song from the first scene, or the scene it loops. */
+function playingFrom(virtual: VirtualOpxy): string {
+	const a = virtual.readArrangement();
+	if (a.song.order.length > 1) {
+		const order =
+			a.song.order.length > 16
+				? `${a.song.order.slice(0, 16).join(' ')} …`
+				: a.song.order.join(' ');
+		return `the song from its first scene (${order}), ${a.song.loop ? 'looping' : 'once through, then it stops'}`;
+	}
+	return `scene ${a.scene}, looping`;
+}
+
 export const transportTool = defineTool({
 	name: 'transport',
 	label: 'transport',
@@ -177,7 +190,7 @@ export const transportTool = defineTool({
 	approval: 'auto',
 	device: true,
 	description:
-		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the replica on screen (its song from the first scene, when the song has more than one entry).',
+		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the replica on screen: play runs its song from the first scene (when the song has more than one entry), and while it plays starts it again from the top, as the play key does; the result says where it plays from.',
 	input: z.object({
 		action: z.enum(['play', 'stop']).describe('play starts the sequencer, stop stops it')
 	}),
@@ -212,18 +225,21 @@ export const transportTool = defineTool({
 		if (isResult(where)) return where;
 		if ('virtual' in where) {
 			const virtual = where.virtual;
-			if (input.action === 'play' && virtual.status().playing) {
-				return jsonResult(
-					{ target: 'virtual', playState: 'playing', note: 'Already playing.' },
-					'already playing',
-					{ applied: false }
-				);
-			}
+			const was = virtual.status().playing;
 			virtual.transport(input.action);
 			const playState = virtual.status().playing ? 'playing' : 'stopped';
+			const again = input.action === 'play' && was;
 			return jsonResult(
-				{ target: 'virtual', playState, ...virtualNote(ctx.env) },
-				`${playState} on the replica`,
+				{
+					target: 'virtual',
+					playState,
+					...(playState === 'playing' ? { from: playingFrom(virtual) } : {}),
+					...(again
+						? { note: 'It was playing: it started again from the top, as the play key does.' }
+						: {}),
+					...virtualNote(ctx.env)
+				},
+				again ? 'played again from the top' : `${playState} on the replica`,
 				{ applied: true, after: playState }
 			);
 		}
@@ -278,6 +294,7 @@ export const setTempoTool = defineTool({
 	name: 'set_tempo',
 	label: 'set tempo',
 	kind: 'mutate',
+	approval: 'device',
 	device: true,
 	description:
 		'Set the project tempo on the OP-XY (CC80). Changes the project (autosave keeps it), so the user approves it in the app. The device steps in 2 BPM: odd tempos round to the nearest even BPM, and the result says which tempo was sent. With no OP-XY connected it sets the replica on screen, to the tenth of a BPM.',
@@ -426,6 +443,7 @@ export const muteTrackTool = defineTool({
 	name: 'mute_track',
 	label: 'mute track',
 	kind: 'mutate',
+	approval: 'device',
 	device: true,
 	description:
 		"Mute or unmute one track on the OP-XY (CC9 on the track's channel). Changes the project, so the user approves it in the app. Mutes stop new notes; tails keep ringing. The device never reports mutes made by hand, so the previous state is known only if this app set it. With no OP-XY connected it mutes the track on the replica on screen.",
@@ -559,6 +577,7 @@ export const setSoundTool = defineTool({
 	name: 'set_sound',
 	label: 'set sound',
 	kind: 'mutate',
+	approval: 'device',
 	device: true,
 	description:
 		"Set one sound parameter of an instrument track on the connected OP-XY over MIDI (its CC on the track's channel): engine p1–p4 (the four M1 values; synth engines only, the samplers ignore them), the amp and filter envelopes, cutoff, resonance, env amount, key tracking, the FX I send, the track's mix level and pan. Values as the screen shows them, 0–99 (pan −100 left … 100 right). Changes the project's sound, so the user approves it. The device never reports parameter values: what it had before is known only if this app set it. Only for a connected OP-XY; for the replica use plan_steps with show, which also shows the keys.",
