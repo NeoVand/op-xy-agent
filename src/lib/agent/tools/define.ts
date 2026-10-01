@@ -30,7 +30,7 @@ import type { ListenHost } from '../listen-host';
 import type { ManualSource } from '../manual-source';
 import type { AgentName, InverseCall, Todo, ToolKind, ToolPreview, ToolDisplay } from '../types';
 import type { SampleInput } from '$lib/core/presets';
-import type { VirtualOpxy } from '../virtual-opxy';
+import type { RehearsedStep, VirtualOpxy } from '../virtual-opxy';
 
 /** `setTimeout` / `clearTimeout`, injectable for tests. */
 export interface AgentTimers {
@@ -120,11 +120,11 @@ export interface ProjectHost {
 
 /** The app's walkthrough (`$lib/app/guide.svelte.ts`) as the tools see it. */
 export interface GuideHost {
-	/** Starts lighting `steps` on the replica, each until the screen shows where it leads. */
-	start(
-		goal: string,
-		steps: readonly { readonly keys: string; readonly clicks?: number; readonly screen: string }[]
-	): void;
+	/**
+	 * Starts lighting `steps` on the replica, each until the screen shows where it leads (and the
+	 * music, where a step says what it becomes: a step key's press shows in the pattern).
+	 */
+	start(goal: string, steps: readonly RehearsedStep[]): void;
 	/** Ends a walkthrough (an animation on the replica would clear its marks). */
 	stop(): void;
 }

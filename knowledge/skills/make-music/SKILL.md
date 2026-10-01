@@ -33,8 +33,9 @@ patterns at a time, not a whole song. Give quiet parts their velocity (pads, str
 request: lazy, swung or laid back is the tempo page's groove and its amount. With no tempo given,
 pick one that suits the style (house 120–126, techno 128–135, hip hop and boom bap 85–95, lo-fi
 70–85, drum and bass 170–175); slow, ambient or a pad wants 60–80 (one chord a bar at 120 is not
-slow). A new project's metronome clicks on every beat: when you start what you made, switch it off
-(set_metronome) unless the user plays along to it, and say so in a few words.
+slow). A new project's metronome clicks on every beat: when you start playback of a beat or song you made,
+switch it off first (set_metronome) and say so in a few words; otherwise leave it alone (someone
+learning or playing along keeps time by it).
 
 Musical words mean what a drummer or producer means: a fill fills its bar (sixteenths building in
 velocity into the next downbeat, toms at the end if you like), four-on-the-floor is a kick on every

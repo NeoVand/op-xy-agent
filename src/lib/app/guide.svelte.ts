@@ -1,14 +1,17 @@
 /**
  * A walkthrough on the replica (Phase F4): the agent plans the steps to a page or a value
- * (`plan_steps` with `guide`) and the replica lights one step at a time, with a turn arrow for
- * encoders, until the user has done it. A step counts as done when the replica's screen shows
- * what that step leads to, so any way of getting there works (a shortcut skips ahead) and a turn
- * past the value waits until it comes back. Nothing is sent anywhere: the user's own presses on
- * the replica move its simulator, as always.
+ * (`plan_steps` with `guide`), or rehearses any key sequence (`show_on_replica` with `guide`:
+ * a drum key, then the steps it goes on), and the replica lights one step at a time, with a turn
+ * arrow for encoders, until the user has done it. A step counts as done when the replica's screen
+ * shows what that step leads to, and its music too where the step says so (a press on a step key
+ * changes the pattern, not the screen), so any way of getting there works (a shortcut skips
+ * ahead) and a turn past the value waits until it comes back. Nothing is sent anywhere: the
+ * user's own presses on the replica move its simulator, as always.
  */
 import { createContext } from 'svelte';
 import { tryParseKeys } from '$lib/core/opxy';
 import { planAnimation, type ReplicaState, type Timers, type TurnableId } from '$lib/replica';
+import type { SimState } from '$lib/sim/params';
 
 /** One step of a walkthrough: a key combo, the detents of a turn, and the screen it leads to. */
 export interface GuideStep {
@@ -17,6 +20,29 @@ export interface GuideStep {
 	readonly clicks?: number;
 	/** What the replica's screen shows once the step is done (the simulator's description). */
 	readonly screen: string;
+	/** The replica's music once the step is done ({@link musicMark}), where the screen alone cannot tell. */
+	readonly music?: string;
+}
+
+/**
+ * What a key press can change that the screen may not show: the selected track and each drum
+ * track's key, every track's playing pattern and its notes, and whether the transport runs.
+ */
+export function musicMark(s: SimState): string {
+	return JSON.stringify({
+		track: s.track,
+		keys: s.tracks.map((t) => t.drumKey),
+		playing: s.transport.playing,
+		notes: s.tracks.map((t) => {
+			const p = t.sequence.patterns[t.sequence.current];
+			return [
+				t.sequence.current,
+				...(p?.steps.flatMap((step, i) =>
+					step.notes.length > 0 ? [`${i}:${step.notes.map((n) => n.note).join('.')}`] : []
+				) ?? [])
+			];
+		})
+	});
 }
 
 export type GuideStatus = 'idle' | 'running' | 'done';
@@ -25,6 +51,8 @@ export interface ReplicaGuideOptions {
 	readonly replica: ReplicaState;
 	/** What the replica's screen shows now, in the simulator's words. */
 	readonly read: () => string;
+	/** The replica's music now ({@link musicMark}), for steps that change it. */
+	readonly music?: () => string;
 	readonly timers: Timers;
 }
 
@@ -41,6 +69,7 @@ export class ReplicaGuide {
 
 	readonly #replica: ReplicaState;
 	readonly #read: () => string;
+	readonly #music: (() => string) | null;
 	readonly #timers: Timers;
 	#stopObserving: (() => void) | null = null;
 	#doneTimer: unknown = null;
@@ -50,6 +79,7 @@ export class ReplicaGuide {
 	constructor(options: ReplicaGuideOptions) {
 		this.#replica = options.replica;
 		this.#read = options.read;
+		this.#music = options.music ?? null;
 		this.#timers = options.timers;
 	}
 
@@ -104,8 +134,11 @@ export class ReplicaGuide {
 	#check(): void {
 		if (this.status !== 'running') return;
 		const shows = this.#read();
+		const music = this.#music?.() ?? null;
+		const done = (step: GuideStep) =>
+			step.screen === shows && (step.music === undefined || music === null || step.music === music);
 		for (let i = this.steps.length - 1; i >= this.index; i--) {
-			if (this.steps[i].screen === shows) {
+			if (done(this.steps[i])) {
 				this.#advanceTo(i + 1);
 				return;
 			}

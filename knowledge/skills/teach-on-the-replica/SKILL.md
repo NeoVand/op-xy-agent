@@ -29,10 +29,12 @@ steps you give are ones that work. Give those steps rather than working keys out
 - Without `show` it only plans. Nothing changed, so never describe it as done.
 
 **Walk them through it.** When they want to do it themselves ("walk me through", "guide me", "teach
-me", "let me do it", "I want to learn this"), plan with `guide` instead of `show`. The replica lights
-one key at a time, with the direction to turn, and waits until they have done it. Tell them to follow
-the lit keys and change nothing yourself: the point is that their hands learn it. When they are done,
-one sentence on what they changed and what it does.
+me", "let me do it", "I want to learn this", "light the keys"), let the replica light one key at a
+time and wait until they have done it. For a page or a value, plan with `guide` instead of `show`
+(it shows the direction to turn). For anything else made of presses (a drum key and the steps it
+goes on, a pattern copied), show the combination with `guide`: "T1 → key G3 → step 5 → step 13"
+lights each in turn. Tell them to follow the lit keys and change nothing yourself: the point is
+that their hands learn it. When they are done, one sentence on what they changed and what it does.
 
 ## Knowing where they are
 

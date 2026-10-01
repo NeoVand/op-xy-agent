@@ -6,6 +6,7 @@
  * and every change tells persistence to save.
  */
 import type {
+	RehearsedStep,
 	VirtualArrangement,
 	VirtualKitLoad,
 	VirtualOpxy,
@@ -13,7 +14,8 @@ import type {
 	VirtualStatus,
 	VirtualTrackSound
 } from '$lib/agent/virtual-opxy';
-import { KEYBOARD_NOTE_NAMES } from '$lib/core/opxy';
+import { KEYBOARD_NOTE_NAMES, formatKeys, parseKeys, type KeyTerm } from '$lib/core/opxy';
+import { musicMark } from './guide.svelte';
 import { lockParam } from '$lib/sim/areas/sequencer/locks';
 import { buildFrame } from '$lib/sim/frames';
 import { describeFrame } from '$lib/sim/screen/render';
@@ -440,6 +442,37 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			}
 			changed();
 			return readArrangement();
+		},
+
+		rehearse(keys) {
+			const sequence = parseKeys(keys);
+			if (sequence.chords.some((c) => c.terms.some((t) => t.gesture === 'turn'))) {
+				throw new VirtualOpxyError(
+					'a turn has no detents to follow: for a value, plan_steps with guide lights the way to it'
+				);
+			}
+			const steps: RehearsedStep[] = [];
+			let held: KeyTerm[] = [];
+			sequence.chords.forEach((chord, i) => {
+				held = chord.keepHeld ? held : [];
+				// the step as the user does it: the keys still held from before, written out
+				const shown = formatKeys({
+					chords: [{ keepHeld: false, terms: [...held, ...chord.terms] }]
+				});
+				held = [...held, ...chord.terms.slice(0, -1)];
+				// where the sequence so far leaves a copy of the replica
+				const copy = new OpxySim({
+					state: JSON.parse(JSON.stringify(s)) as SimState,
+					now: () => 0
+				});
+				playStep(copy, { keys: formatKeys({ chords: sequence.chords.slice(0, i + 1) }) });
+				steps.push({
+					keys: shown,
+					screen: describeFrame(buildFrame(copy.state)),
+					music: musicMark(copy.state)
+				});
+			});
+			return steps;
 		},
 
 		plan(goal) {

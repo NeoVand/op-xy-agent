@@ -19,6 +19,7 @@
 		SimPersistence,
 		createIdbSampleCache,
 		createIdbSimStore,
+		musicMark,
 		setAppSimulator,
 		setAppSound,
 		setDeviceSamples,
@@ -69,6 +70,7 @@
 	const guide = new ReplicaGuide({
 		replica,
 		read: () => describeFrame(simulator.frame),
+		music: () => musicMark(simulator.sim.state),
 		timers: browserTimers
 	});
 	setReplicaGuide(guide);

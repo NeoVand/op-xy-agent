@@ -544,13 +544,74 @@ export async function main(args: readonly string[]): Promise<void> {
 
 	/** Sends a message and waits for the turn to end, approving what the agent asks. */
 	async function say(s: Session, text: string, timeoutMs: number): Promise<TurnReport> {
-		const turn = ++s.turns;
+		const field = s.page.getByLabel('message to the agent');
+		await field.fill(text);
 		const from = s.exchanges.length;
 		const errorsFrom = s.pageErrors.length;
 		const started = Date.now();
-		const field = s.page.getByLabel('message to the agent');
-		await field.fill(text);
 		await field.press('Enter');
+		return (await waitTurn(s, text, { from, errorsFrom, started, timeoutMs, grace: 5000 }))!;
+	}
+
+	/**
+	 * Presses keys on the replica as a user would (a click on each), then waits for a turn they
+	 * set off (a walkthrough's end tells the agent), or reports none.
+	 */
+	async function press(s: Session, ids: readonly string[], timeoutMs: number) {
+		const from = s.exchanges.length;
+		const errorsFrom = s.pageErrors.length;
+		const started = Date.now();
+		const missing: string[] = [];
+		for (const id of ids) {
+			// a computer key held down or let go (the replica's keyboard shortcuts: X is G3)
+			const held = /^(down|up):(.+)$/.exec(id);
+			if (held) {
+				await (held[1] === 'down' ? s.page.keyboard.down(held[2]) : s.page.keyboard.up(held[2]));
+				await sleep(150);
+				continue;
+			}
+			const key = s.page.locator(`[data-id="${id}"]`).first();
+			if ((await key.count()) === 0) {
+				missing.push(id);
+				continue;
+			}
+			await key.click();
+			await sleep(250);
+		}
+		const turn = await waitTurn(s, `(pressed ${ids.join(', ')})`, {
+			from,
+			errorsFrom,
+			started,
+			timeoutMs,
+			grace: 3000,
+			optional: true
+		});
+		return { pressed: ids.filter((id) => !missing.includes(id)), missing, lit: await lit(s), turn };
+	}
+
+	/** The replica's keys lit for the user now (a walkthrough's), and what its screen says. */
+	async function lit(s: Session) {
+		return s.page.evaluate(() => ({
+			keys: [...document.querySelectorAll('[data-hl]')]
+				.map((e) => `${e.getAttribute('data-id')}:${e.getAttribute('data-hl')}`)
+				.filter((x) => !x.endsWith(':')),
+			screen: document.querySelector('[aria-live]')?.textContent?.trim() ?? null
+		}));
+	}
+
+	async function waitTurn(
+		s: Session,
+		text: string,
+		o: {
+			from: number;
+			errorsFrom: number;
+			started: number;
+			timeoutMs: number;
+			grace: number;
+			optional?: boolean;
+		}
+	): Promise<TurnReport | null> {
+		const { from, errorsFrom, started, timeoutMs } = o;
 		// the composer's own stop button (pattern cards in the chat have stop buttons too)
 		const stop = s.page.locator('form.composer button[aria-label="stop"]');
 		/** Working: the composer says so, or offers to stop. */
@@ -588,13 +649,15 @@ export async function main(args: readonly string[]): Promise<void> {
 			}
 			const busy = await working();
 			if (busy) sawBusy = true;
-			const quiet = !busy && s.inFlight === 0 && (sawBusy || Date.now() - started > 5000);
+			if (o.optional && !sawBusy && s.inFlight === 0 && Date.now() - started > o.grace) return null;
+			const quiet = !busy && s.inFlight === 0 && (sawBusy || Date.now() - started > o.grace);
 			if (quiet) {
 				idleSince ??= Date.now();
 				if (Date.now() - idleSince > 1500) break;
 			} else idleSince = null;
 			await sleep(250);
 		}
+		const turn = ++s.turns;
 		const report = turnReport(turn, text, s.exchanges.slice(from), {
 			seconds: Math.round((Date.now() - started) / 100) / 10,
 			approvals,
@@ -632,6 +695,13 @@ export async function main(args: readonly string[]): Promise<void> {
 					if (!text) return reply(400, { error: 'nothing to say' });
 					return reply(200, await say(s, text, Number(body.timeoutMs ?? 15 * 60_000)));
 				}
+				case '/press': {
+					const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+					if (ids.length === 0) return reply(400, { error: 'no keys to press' });
+					return reply(200, await press(s, ids, Number(body.timeoutMs ?? 15 * 60_000)));
+				}
+				case '/lit':
+					return reply(200, await lit(s));
 				case '/shot': {
 					const path = join(s.dir, `shot-${Date.now()}.png`);
 					await s.page.screenshot({ path, fullPage: false });

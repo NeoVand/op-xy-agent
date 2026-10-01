@@ -1014,6 +1014,14 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 
 	if (id === 'engine') return planEngine(rec, track, goal.value);
 	if (id === 'preset') return planPreset(rec, track, goal.value);
+	// the LFO on or off: M4 again on its page switches it, as M3 does the filter's
+	const lfoOn = id === 'lfo.type' ? switchedTo(goal.value) : null;
+	if (lfoOn !== null) {
+		walk(rec, { area: 'instrument', track, page: 4 });
+		const lfo = () => rec.sim.state.tracks[track - 1].lfo;
+		if (lfo().on !== lfoOn) rec.do('M4');
+		return rec.plan(lfo().on === lfoOn, lfo().on === lfoOn ? undefined : 'the LFO did not switch');
+	}
 
 	const picker = PICKERS[id];
 	if (picker) {

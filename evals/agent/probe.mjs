@@ -8,6 +8,8 @@
  *                                                              background); builds the site first
  *   node evals/agent/probe.mjs say "make me a trap beat"        one turn, reported whole
  *   node evals/agent/probe.mjs debrief                          the owner's debrief question
+ *   node evals/agent/probe.mjs press step.5 keyboard.g3          press replica keys as a user would
+ *   node evals/agent/probe.mjs lit                              the keys lit for the user now
  *   node evals/agent/probe.mjs shot | info | reset | stop
  *
  * say prints the answer, every tool call (input and result, cut short; --full for all of them),
@@ -98,6 +100,22 @@ try {
 		case 'debrief':
 			print(await call('/say', { text: DEBRIEF }));
 			break;
+		case 'press': {
+			// replica control ids: step.5, keyboard.g3, track.1, key.play, encoder.2 …
+			const result = await call('/press', { ids: words });
+			console.log(
+				`pressed: ${result.pressed.join(', ') || '(none)'}${result.missing.length ? `; not on the page: ${result.missing.join(', ')}` : ''}`
+			);
+			console.log(`lit now: ${result.lit.keys.join(', ') || '(nothing)'}`);
+			if (result.turn) print(result.turn);
+			else console.log('(no agent turn followed)');
+			break;
+		}
+		case 'lit': {
+			const result = await call('/lit');
+			console.log(`lit: ${result.keys.join(', ') || '(nothing)'}\nscreen: ${result.screen ?? '?'}`);
+			break;
+		}
 		case 'shot':
 		case 'info':
 		case 'reset':

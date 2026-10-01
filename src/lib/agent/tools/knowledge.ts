@@ -6,7 +6,15 @@ import type { BetaSearchResultBlockParam } from '@anthropic-ai/sdk/resources/bet
 import { z } from 'zod';
 import { formatKeys, tryParseKeys } from '$lib/core/opxy';
 import type { Todo } from '../types';
-import { defineTool, errorResult, jsonResult, sleep, type ToolResultBlock } from './define';
+import {
+	defineTool,
+	errorResult,
+	jsonResult,
+	sleep,
+	type ToolContext,
+	type ToolResult,
+	type ToolResultBlock
+} from './define';
 
 /** Splits text into citable paragraphs (the text block is the smallest unit a citation points at). */
 export function citableBlocks(text: string, maxBlocks = 12): { type: 'text'; text: string }[] {
@@ -106,15 +114,54 @@ export const readManualUnitTool = defineTool({
 /** How long a demonstration's result stays on the replica before it goes back, ms. */
 export const DEMO_HOLD_MS = 700;
 
+/**
+ * show_on_replica with `guide`: the sequence rehearsed on a copy of the replica, then lit one
+ * combo at a time for the user to press (a beginner asked to be walked through a beat key by
+ * key, and the walkthrough knew only the way to a page or a value).
+ */
+function guideKeys(keys: string, caption: string | undefined, ctx: ToolContext): ToolResult {
+	const { guide, virtual } = ctx.env;
+	if (!guide || !virtual) {
+		return jsonResult(
+			{ guided: false, keys, reason: 'No replica walkthrough in this view.' },
+			`${keys} (no walkthrough here)`
+		);
+	}
+	let steps: ReturnType<typeof virtual.rehearse>;
+	try {
+		steps = virtual.rehearse(keys);
+	} catch (error) {
+		return errorResult(
+			`Not a walkthrough: ${error instanceof Error ? error.message : String(error)}.`,
+			'cannot guide this'
+		);
+	}
+	guide.start(caption ?? keys, steps);
+	return jsonResult(
+		{
+			guided: true,
+			steps: steps.map((s) => s.keys),
+			note: 'The replica now lights each step in turn and waits for the user: tell them to follow the lit keys. It moves on by itself once a press has done what the step does, and says when the last one is done.'
+		},
+		`guiding ${keys}`
+	);
+}
+
 export const showOnReplicaTool = defineTool({
 	name: 'show_on_replica',
 	label: 'show on replica',
 	kind: 'ui',
 	description:
-		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"); the keys before a + stay held, and + at the start of the next combo keeps them held ("key G3 + record → + step 5 → + step 13": the snare held while its steps are pressed; "hold" goes only on a last key). The keys play from wherever the replica stands, as presses would (start with the track key when the user names a track, and write the same steps in your answer as you showed); once the result has been seen the replica goes back to where it was, so the user can try it from there, and the call returns then. Nothing stays changed: to leave the replica changed, use the key planner with show. Sends nothing to the device. When the user asks how to do something on the device, play the main combination once, before you write the answer, and do not mention that you did.',
+		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"); the keys before a + stay held, and + at the start of the next combo keeps them held ("key G3 + record → + step 5 → + step 13": the snare held while its steps are pressed; "hold" goes only on a last key). The keys play from wherever the replica stands, as presses would (start with the track key when the user names a track, and write the same steps in your answer as you showed); once the result has been seen the replica goes back to where it was, so the user can try it from there, and the call returns then. Nothing stays changed: to leave the replica changed, use the key planner with show. Sends nothing to the device. When the user asks how to do something on the device, play the main combination once, before you write the answer, and do not mention that you did. When they want to do it themselves key by key ("walk me through it", "light the keys"), guide instead: the replica lights each combo and waits for their press.',
 	input: z.object({
 		keys: z.string().min(1).max(120).describe('One key combo in the key grammar'),
-		caption: z.string().max(160).optional().describe('What the combo does, in a few words')
+		caption: z.string().max(160).optional().describe('What the combo does, in a few words'),
+		guide: z
+			.boolean()
+			.optional()
+			.describe(
+				'true: instead of playing it, light the keys one combo at a time and wait for the user to press each (a walkthrough to follow by hand: presses, not turns)'
+			)
 	}),
 	async run(input, ctx) {
 		const parsed = tryParseKeys(input.keys);
@@ -125,6 +172,7 @@ export const showOnReplicaTool = defineTool({
 			);
 		}
 		const keys = formatKeys(parsed.value);
+		if (input.guide) return guideKeys(keys, input.caption, ctx);
 		const replica = ctx.env.replica;
 		if (!replica) {
 			return jsonResult(

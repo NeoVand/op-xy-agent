@@ -173,6 +173,15 @@ export interface VirtualTrackSound {
 	readonly kit?: Readonly<Record<string, string>>;
 }
 
+/** A step of a walkthrough: its keys, a turn's detents, and what the replica shows after it. */
+export interface RehearsedStep {
+	readonly keys: string;
+	readonly clicks?: number;
+	readonly screen: string;
+	/** The replica's music after it, where a press changes that and not the screen. */
+	readonly music?: string;
+}
+
 /** The virtual OP-XY. */
 export interface VirtualOpxy {
 	status(): VirtualStatus;
@@ -209,6 +218,13 @@ export interface VirtualOpxy {
 	 * virtual OP-XY itself does not move) and reporting whether they got there.
 	 */
 	plan(goal: NavGoal): NavPlan | SettingsPlan;
+	/**
+	 * A key sequence played on a copy, chord by chord (the virtual OP-XY does not move): each
+	 * step's keys (held keys written out), and the screen and music it leaves, for a walkthrough
+	 * the user follows key by key. Throws for keys outside the grammar, and for turns (their
+	 * detents are a value's: plan one with plan_steps).
+	 */
+	rehearse(keys: string): readonly RehearsedStep[];
 	/** The replica as it stands, to compare with later (a turn's grounding, the lab). */
 	checkpoint(): VirtualCheckpoint;
 	/** What changed since `checkpoint`, a line each in words; empty when nothing did. */

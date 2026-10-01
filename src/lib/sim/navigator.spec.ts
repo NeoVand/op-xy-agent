@@ -140,6 +140,17 @@ describe('the navigator: parameters', () => {
 		expect(zero.screen).toMatch(/metronome on/);
 	});
 
+	it('switches a track’s filter and LFO on and off with their page key', () => {
+		const sim = boot();
+		// a new project's T4 has its filter off and its tremolo on
+		const filter = planParam(sim.state, { track: 4, param: 'filter', value: 'on' });
+		expect([filter.reached, keys(filter)]).toEqual([true, ['T4', 'M3', 'M3']]);
+		const lfo = planParam(sim.state, { track: 4, param: 'lfo', value: 'off' });
+		expect([lfo.reached, keys(lfo)]).toEqual([true, ['T4', 'M4', 'M4']]);
+		expect(lfo.screen).toMatch(/lfo off:/);
+		expect(planParam(sim.state, { track: 4, param: 'lfo', value: 'on' }).steps).toHaveLength(2);
+	});
+
 	it('takes a number for the groove as its amount, and refuses one for a list elsewhere', () => {
 		const sim = boot();
 		// "groove 70" means the amount (E3): the groove type is a list of names
