@@ -1,0 +1,23 @@
+[
+	{
+		"name": "fx-chorus",
+		"about": "The send effects now play what their pages hold: swap FX I for a chorus, send a track, listen.",
+		"steps": [
+			{
+				"say": "write a slow four-chord progression on track 4, then put a chorus on FX I instead of the delay and send track 4 to it. listen and tell me what changed"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fx-dry",
+		"about": "Dry follows the guide (99 a send, 0 an insert); the manual's old advice said the reverse.",
+		"steps": [
+			{
+				"say": "how do I make the delay on FX I replace the sound of track 3 completely, so I only hear the echoes?"
+			},
+			{ "why": true },
+			{ "debrief": true }
+		]
+	}
+]

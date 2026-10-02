@@ -876,6 +876,12 @@ matrix (66).
     - gave transpose's drum conflict (the manual now says what the replica does).
   - Left for G6: the agent asked for a lockable flag per control in the device map, the sampler
     page's loop type in read_sound, and show_on_replica's result naming a link it made.
+  - Effects probe (`probe-scenarios-45.json`, two scenarios, no failed calls). The agent:
+    - swapped FX I for a chorus, sent track 4 to it, and heard the change in a listen;
+    - said dry 0 with a send of 99 leaves only the echoes, hedged as not yet measured.
+
+    For G6 it asked for a stereo-width figure in listen, a test note for listening in an empty
+    project, and the FX tracks' numbering (FX I is track 15, `T7`) in plan_steps' description.
 
 - **G1 — The ledger.** Note 66's 271 rows go into `knowledge/opxy/fidelity.json`, each with status,
   evidence ids, test and manual unit. A test refuses "verified" without a capture and a pinning
