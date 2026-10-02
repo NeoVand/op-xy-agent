@@ -52,9 +52,8 @@ learning or playing along keeps time by it).
 
 Another meter is the project's time signature (the key planner sets "time signature") and a
 pattern length its bars fill: a 3/4 bar is 12 steps (three beats of four), 6/8 is 12 (two beats of
-six), 7/8 is 14, 5/4 is 20, so four bars of 3/4 are bars 3, length 48. With no length a pattern
-takes the whole bars of the meter that its bars of 16 hold (bars 4 in 7/8: 56 steps, four bars of
-it), and the result says so. Readings then group the bars that way. Double time is track scale 1/2
+six), 7/8 is 14, 5/4 is 20. bars alone counts the meter's bars (four of 6/8: bars 4, 48 steps);
+with length, the unit's 16-step bars that hold it (bars 3, length 48). Readings group the bars so. Double time is track scale 1/2
 (each step a thirty-second), half time scale 2.
 
 A new project's T7 strings and T8 pad swell in over about a second and ring on for about three

@@ -231,7 +231,11 @@ export interface SetResult {
 export interface PatternWrite {
 	/** Pattern 1–16 (default 1); patterns missing up to it are added empty. */
 	readonly pattern?: number;
-	/** Bars 1–4 (default: enough for the last step written). */
+	/**
+	 * Bars 1–4 (default: enough for the last step written): of 16 steps in 4/4; in another time
+	 * signature its own bars (four of 6/8: 48 steps), unless length is given, when bars counts the
+	 * unit's 16-step bars that hold it.
+	 */
 	readonly bars?: number;
 	/** Steps that play, when the last bar is shorter (default: all). */
 	readonly length?: number;

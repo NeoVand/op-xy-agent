@@ -605,6 +605,35 @@ describe('the conductor grounds its answer', () => {
 		);
 	});
 
+	it('says when the answer listened only before its changes', async () => {
+		// an agent heard a muddy mix, changed three things and described the fix unheard
+		const use = (id: string, name: string, input: unknown): ScriptedTurn => ({
+			content: [{ type: 'tool_use', id, name, input }],
+			stop_reason: 'tool_use'
+		});
+		const api = scriptedApi([
+			use('toolu_0', 'listen', { seconds: 4 }),
+			use('toolu_1', 'write_pattern', { track: 3, notes: [{ step: 1, note: 45 }] }),
+			use('toolu_2', 'write_pattern', { track: 4, notes: [{ step: 1, note: 57 }] }),
+			answer('Done.')
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim: new OpxySim({ now: () => 0 }) }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('it sounds muddy, fix it');
+		const list = (i: number) => JSON.stringify(api.messageRequests[i].body.messages.at(-1));
+		expect(list(3)).toMatch(/Heard before your changes in this answer, not after them/);
+		expect(list(3)).not.toMatch(/Not heard in this answer/);
+	});
+
 	it('says a demo puts the replica back when nothing changed', async () => {
 		const api = scriptedApi([
 			{

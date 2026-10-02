@@ -419,7 +419,7 @@ describe('write_pattern one bar at a time', () => {
 		expect(new Set(p.notes.map((n) => n.length))).toEqual(new Set([2]));
 		expect(p.notes.filter((n) => n.step === 19).map((n) => n.note)).toEqual([53, 57, 60]);
 		expect(stabs.note).toMatch(
-			/Restruck on the rhythm 8 times \(steps 3, 7, 11, 15, 19, 23, 27, 31\)/
+			/Restruck on the rhythm 8 times \(its 16 steps repeated 2 times over the pattern\) on steps 3, 7, 11, 15, 19, 23, 27, 31:/
 		);
 		// with chords given, in one write; a strike is cut where its chord ends, and digits are
 		// velocities
@@ -437,11 +437,91 @@ describe('write_pattern one bar at a time', () => {
 			[2, 42]
 		]);
 		expect(gated.notes.filter((n) => n.step === 9).every((n) => n.velocity === 127)).toBe(true);
+		// past the note limit, the ways round it: a bar a pattern, or the tremolo LFO
+		await run(writePatternTool, {
+			track: 4,
+			bars: 4,
+			chords: '1:Am7:16 17:Fmaj7:16 33:C:16 49:G:16'
+		});
+		const gate = await run(writePatternTool, { track: 4, rhythm: 'xxxx xxxx xxxx xxxx' });
+		expect(String(gate.content)).toMatch(
+			/With rhythm: a bar a pattern .*the tremolo LFO, which writes no notes/
+		);
+		const bar2 = json(
+			await run(writePatternTool, {
+				track: 4,
+				pattern: 2,
+				copy: 1,
+				copy_bar: 2,
+				stay: true,
+				rhythm: 'xxxx xxxx xxxx xxxx'
+			})
+		);
+		expect(bar2.written).toMatchObject({ bars: 1, noteCount: 64 });
 		// a miscount, drums and bar are refused
 		const short = await run(writePatternTool, { track: 4, rhythm: 'x.x' });
 		expect(String(short.content)).toMatch(/the rhythm has 3 marks, which neither fill/);
 		expect((await run(writePatternTool, { track: 1, rhythm: 'x...' })).isError).toBe(true);
 		expect((await run(writePatternTool, { track: 4, bar: 1, rhythm: 'x...' })).isError).toBe(true);
+	});
+
+	it('reads a track’s new pattern in the key its other patterns were written in', async () => {
+		// a gate split into one-bar patterns read "C major (a guess)" for A minor chords
+		const { run } = setup();
+		await run(writePatternTool, { track: 7, key: 'A minor', chords: '1:Am7:16' });
+		const next = json(
+			await run(writePatternTool, { track: 7, pattern: 2, stay: true, notes: '1:G3+C4+D4+E4:16' })
+		);
+		expect(next.written.reading.key).toBe("A minor (as T7's pattern 1 was written)");
+		// a key given wins
+		const given = json(
+			await run(writePatternTool, {
+				track: 7,
+				pattern: 3,
+				stay: true,
+				key: 'C major',
+				notes: '1:C4+E4+G4:16'
+			})
+		);
+		expect(given.written.reading.key).toBe('C major (as written)');
+	});
+
+	it('ramps velocities over the pattern as it is, one sound alone on a drum track', async () => {
+		// "make the hats get gradually louder over the 4 bars": an agent rewrote the line and
+		// added a hat
+		const { virtual, run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			bars: 4,
+			grid: { kick: 'x... .... x... ....', 'closed hat': 'x.x. x.x. x.x. x.x.' }
+		});
+		const ramp = json(
+			await run(writePatternTool, {
+				track: 1,
+				ramp: { from: 30, to: 127, sounds: ['closed hat'] }
+			})
+		);
+		const p = virtual.readPattern(1);
+		const hats = p.notes.filter((n) => n.sound === 'closed hat 1');
+		const kicks = p.notes.filter((n) => n.sound === 'kick 1');
+		expect(hats).toHaveLength(32);
+		expect(hats[0].velocity).toBe(30);
+		expect(hats.at(-1)?.velocity).toBe(127);
+		expect(hats.every((n, i) => i === 0 || n.velocity >= hats[i - 1].velocity)).toBe(true);
+		expect(kicks.every((n) => n.velocity === 100)).toBe(true);
+		expect(ramp.note).toMatch(
+			/Ramped 32 notes of closed hat from velocity 30 on step 1 to 127 on step 63, evenly between; the rest as they were\./
+		);
+		// a fade on a pitched track takes every note
+		await run(writePatternTool, { track: 3, notes: '1:A1:2 5:A1:2 9:A1:2 13:A1:2' });
+		await run(writePatternTool, { track: 3, ramp: { from: 100, to: 40 } });
+		expect(virtual.readPattern(3).notes.map((n) => n.velocity)).toEqual([100, 80, 60, 40]);
+		// a sound the kit lacks is refused
+		const lacks = await run(writePatternTool, {
+			track: 1,
+			ramp: { from: 1, to: 2, sounds: ['tabla'] }
+		});
+		expect(lacks.isError).toBe(true);
 	});
 
 	it('reads back the bar menu’s shape, which a fade’s locks glide by', async () => {
@@ -616,11 +696,24 @@ describe('patterns in another time signature', () => {
 			await run(writePatternTool, { track: 3, bars: 4, notes: '1:A2:2 15:C3:2 29:E3:2 43:G3:2' })
 		);
 		expect(result.written.length).toBe(56);
+		expect(result.written).toMatchObject({ bars: 4, pages: 4 });
 		expect(result.written.reading.bars).toHaveLength(4);
 		expect(result.meter).toMatch(
-			/^7\/8: bars of 14 steps; this pattern is \d+(\.\d+)? of them \(bars counts bars of 16 steps\)\. The tempo counts quarter notes/
+			/^7\/8: bars of 14 steps; this pattern is 4 of them, on 4 of the unit's 16-step bars \(pages, which bar \+ \[\+\] adds\)\. The tempo counts quarter notes/
 		);
-		expect(result.note).toMatch(/Length 56: 4 whole bars of 7\/8/);
+		// bars alone counts bars of the meter: four of 6/8 are 48 steps (an agent got five)
+		sim.state.areas.system.projectSettings.signature = 3; // 6/8
+		const six = json(
+			await run(writePatternTool, { track: 5, bars: 4, notes: '1:A4:6 13:C5:6 25:E5:6 37:A4:6' })
+		);
+		expect(six.written).toMatchObject({ bars: 4, pages: 3, length: 48 });
+		// more than a pattern holds is refused, saying how many fit
+		sim.state.areas.system.projectSettings.signature = 5; // 12/8
+		const twelve = await run(writePatternTool, { track: 5, bars: 3, notes: '1:A4:6' });
+		expect(String(twelve.content)).toMatch(
+			/3 bars of 12\/8 are 72 steps, and a pattern holds 64: 2 of its bars at most/
+		);
+		sim.state.areas.system.projectSettings.signature = 4; // 7/8
 		// given, it stands
 		const given = json(
 			await run(writePatternTool, { track: 4, bars: 4, length: 64, notes: '1:A3:2' })
@@ -889,9 +982,61 @@ describe('write_pattern on drums', () => {
 			/\(against the chords as they stand now: if they move too, their own write reads this line against them again\)$/
 		);
 		await run(writePatternTool, { track: 3, transpose: -5 });
+		// a line rewritten in another key than the chords says so too
+		const moved = json(
+			await run(writePatternTool, {
+				track: 3,
+				key: 'A major',
+				notes: '1:A2:2 3:A2:1 5:C#3:2 7:A2:1 9:G#2:2 11:A2:1 13:E2:2 15:G#2:2'
+			})
+		);
+		expect(moved.written.reading.againstChords).toMatch(
+			/\(T7's chords were written in E minor and this line in A major: if they move to it too/
+		);
+		// a relative key is the same notes: nothing said
+		const relative = json(
+			await run(writePatternTool, {
+				track: 3,
+				key: 'G major',
+				notes: '1:G2:2 3:G2:1 5:B2:2 7:G2:1 9:F#2:2 11:G2:1 13:D2:2 15:F#2:2'
+			})
+		);
+		expect(relative.written.reading.againstChords ?? '').not.toMatch(/were written in/);
+		await run(writePatternTool, {
+			track: 3,
+			key: 'E minor',
+			notes: '1:E2:2 3:E2:1 5:G2:2 7:E2:1 9:D2:2 11:E2:1 13:B1:2 15:D2:2'
+		});
 		expect(chords.note).toMatch(
 			/T3's line against these chords: 17 of the 32 notes over T7's chords \(the line plays 4 times under them\) are chord tones; on a beat and outside the chord \(1 a half step above a chord tone, which rubs; .*\): .*bar 1 step 9: D2 over Em\/G \(E G B\), .*bar 4 step 5: G2 over D\/F# \(D F# A, a half step above its F#\)/
 		);
+	});
+
+	it('reads a bass under rootless chords as their root, unless the chords were named', async () => {
+		// rootless chords (C E G over the bass's A: Am7) read their bass as outside them, every bar
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 7,
+			notes: '1:C4+E4+G4:16 17:A3+C4+E4:16'
+		});
+		const bass = json(
+			await run(writePatternTool, {
+				track: 3,
+				notes: '1:A1:4 5:A1:4 9:A1:4 13:A1:4 17:F1:4 21:F1:4 25:F1:4 29:F1:4'
+			})
+		);
+		expect(bass.written.reading.againstChords).toMatch(
+			/^8 of the 8 notes over T7's chords are chord tones \(2 of them the root under T7's rootless voicings, which it completes\); none on a beat is outside its chord/
+		);
+		// the same notes named as triads: their names stand, and the bass is outside them
+		await run(writePatternTool, { track: 7, chords: '1:C:16 17:Am:16', voicing: 'root' });
+		const named = json(
+			await run(writePatternTool, {
+				track: 3,
+				notes: '1:A1:4 5:A1:4 9:A1:4 13:A1:4 17:F1:4 21:F1:4 25:F1:4 29:F1:4'
+			})
+		);
+		expect(named.written.reading.againstChords).not.toMatch(/rootless/);
 	});
 
 	it('reads a part to come against the other tracks’ patterns of its number', async () => {

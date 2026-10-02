@@ -378,6 +378,32 @@ describe('plan_steps with show', () => {
 		expect(wrong.isError).toBe(true);
 	});
 
+	it('lights a step held while its encoder turns, for a lock with no value given', async () => {
+		// "teach me to put a parameter lock on step 5": the walkthrough lit M3 and E1 alone, and
+		// the user turned the track's cutoff; step 5 also held no note
+		const { sim, run, guided } = setup(true);
+		const virtual = createVirtualOpxy({ sim });
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 2,
+			notes: [1, 4, 7, 20].map((step) => ({ step, note: 45, velocity: 100, length: 1 }))
+		});
+		const result = json(
+			await run(planStepsTool, { show: false, guide: true, track: 3, param: 'cutoff', step: 5 })
+		);
+		expect(result.guided).toBe(true);
+		expect(guided[0].steps.map((s) => s.keys)).toEqual(['T3', 'M3', 'step 5 + turn E1']);
+		expect(result.silent).toMatch(
+			/^step 5 of T3 holds no note, so a lock there plays nothing; the notes start on steps 1, 4, 7, 20\./
+		);
+		// on the second bar: the bar tapped first, and its step key held
+		const second = json(
+			await run(planStepsTool, { show: false, guide: true, track: 3, param: 'cutoff', step: 20 })
+		);
+		expect(guided[1].steps.map((s) => s.keys).slice(-2)).toEqual(['bar', 'step 4 + turn E1']);
+		expect(second.silent).toBeUndefined();
+	});
+
 	it('hands the steps to the walkthrough with guide, and moves nothing itself', async () => {
 		const { sim, run, animated, guided } = setup(true);
 		const result = json(

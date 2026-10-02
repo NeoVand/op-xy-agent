@@ -333,6 +333,28 @@ describe('commits', () => {
 		]);
 	});
 
+	it('counts bars in the meter’s bars when no length is given, as write_pattern does', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.set({ area: 'project', param: 'time signature', value: '6/8' });
+		const p = f.writePattern(5, { bars: 4, notes: '1:A4:6 13:C5:6 25:E5:6 37:A4:6' });
+		expect([p.bars, p.length]).toEqual([3, 48]);
+		expect(() => f.writePattern(5, { bars: 4, length: 64, notes: '1:A4:6' })).not.toThrow();
+		f.set({ area: 'project', param: 'time signature', value: '12/8' });
+		expect(() => f.writePattern(5, { bars: 3, notes: '1:A4:6' })).toThrow(/2 of its bars at most/);
+	});
+
+	it('locks a step at the track’s own value, a detent away and back', () => {
+		// a fade's first lock, at the track's level, was never made, and the plan read reached
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(3, { notes: '1:A1:4 5:C2:4 9:E2:4 13:G2:4' });
+		const own = Number(/volume (\d+)/.exec(f.readSound(3).pages['shift M2 play mode'] ?? '')?.[1]);
+		const result = f.set({ param: 'volume', value: own, track: 3, step: 1 });
+		expect(result.reached).toBe(true);
+		expect(f.readPattern(3).stepLocks).toEqual([{ step: 1, values: { 'playMode.volume': own } }]);
+	});
+
 	it('says a new pattern’s locks and shape in its commit', () => {
 		// a fade's volume locks and shape read "new, 16 notes, 4 bars", and an agent could not
 		// tell they had landed
@@ -545,6 +567,32 @@ describe('listen', () => {
 		);
 		await expect(lab.listen(f, { song: { entry: 3 } })).rejects.toThrow(/2 entries/);
 		await expect(lab.listen(f, { song: {}, scene: 2 })).rejects.toThrow(/song goes alone/);
+	});
+
+	it('gives a part of several bars its loudness bar by bar, so a fade reads as one', async () => {
+		// an agent fading a song's last scene could not confirm the fade from one figure a part
+		const fading = (seconds: number) =>
+			Float32Array.from(
+				{ length: Math.round(seconds * 48_000) },
+				(_, i) => 0.5 ** Math.floor(i / 96_000) * 0.5 * Math.sin((2 * Math.PI * 220 * i) / 48_000)
+			);
+		const { lab } = labOn({
+			render: {
+				async render(request) {
+					const c = fading(request.seconds);
+					return { sampleRate: 48_000, channels: [c, c.slice()] };
+				}
+			}
+		});
+		const f = lab.fork();
+		f.writePattern(3, { bars: 4, notes: [{ step: 1, note: 45, length: 64 }] });
+		f.writeArrangement({ song: { order: [1], loop: false } });
+		const heard = await lab.listen(f, { song: {}, seconds: 8 });
+		const bars = /by bar (-?[\d.]+), (-?[\d.]+), (-?[\d.]+), (-?[\d.]+)/.exec(heard.text);
+		expect(bars).not.toBeNull();
+		const levels = (bars ?? []).slice(1).map(Number);
+		// each bar half as loud as the one before: about 6 dB down a bar
+		levels.slice(1).forEach((level, i) => expect(levels[i] - level).toBeGreaterThan(5));
 	});
 
 	it('joins the parts of a song through the master’s ceiling, as one render would', async () => {

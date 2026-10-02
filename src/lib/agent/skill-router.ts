@@ -56,7 +56,7 @@ const LISTEN =
 // "save my project to my computer" is the project card's download too (the answer gave only the
 // device's MTP copy)
 const APP =
-	/\b(computer keyboard|this app|the app|manual page|export|bounce|wav|mp3|audio file|sound file|download (it|this|the song|my song)|(to|on|onto) (my|the) (computer|laptop|pc|mac))\b/i;
+	/\b(computer keyboard|this app|the app|manual page|export|bounce|wav|mp3|audio file|sound file|download (it|this|the song|my song)|(to|on|onto) (my|the) (computer|laptop|pc|mac)|ringtones?)\b/i;
 const NEW =
 	/\b(just (got|bought|unboxed)|new to (this|the op-?xy|music)|where (do|should) i (start|begin)|never (used|made)|beginner|first time|no idea (how|what)|make something (cool|nice|fun)|i don'?t know (anything|much) about)\b/i;
 const GEAR =
@@ -66,7 +66,7 @@ const DAW =
 	/\b((to|with|into|from|and) (my |a |the )?(daw|ableton|logic( pro)?|bitwig|fl studio|cubase)|(daw|ableton|bitwig) (sync|clock|midi))\b/i;
 // a jingle plays once, as a song does (one was left looping for an 8 second intro)
 const FORM =
-	/\b(song|sections?|intro|verse|chorus|bridge|outro|break(down)?|build ?up|drop|arrange|arrangement|structure|jingles?|stings?)\b/i;
+	/\b(song|sections?|intro|verse|chorus|bridge|outro|break(down)?|build ?up|drop|arrange|arrangement|structure|jingles?|stings?|ringtones?)\b/i;
 // "live" as playing live, not a live drummer's feel (which loaded the performance skill)
 const LIVE =
 	/\b(live(?! (drummers?|bands?|feel|sound|instruments?|players?|drums|recording))|jam (over|along|with)|jamming|perform|performance|gig|punch-?in|on the fly)\b/i;

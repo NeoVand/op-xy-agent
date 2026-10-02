@@ -112,6 +112,10 @@ describe('routing', () => {
 		expect(route('how do I save my project to my computer?')).toContain('the-app');
 		// a jingle plays once, as a song does
 		expect(route('make an 8 second podcast intro jingle')).toContain('song-arrangement');
+		// a ringtone is a file too: the app's download
+		expect(route('make a 6 second ringtone that plays once')).toEqual(
+			expect.arrayContaining(['the-app', 'song-arrangement'])
+		);
 		// options to choose between by ear are the lab's takes
 		expect(route('give me three basslines to choose from')).toEqual(['lab', 'make-music']);
 		expect(route('make a punchy 909 kit and play a house beat with it')).toEqual([

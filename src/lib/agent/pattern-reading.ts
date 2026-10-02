@@ -59,6 +59,12 @@ export interface PatternReading {
 	 */
 	readonly outside?: string;
 	/**
+	 * A line of single notes resting on a quarter of its steps or more: how many of its steps
+	 * sound and how many rest (an agent describing a melody "with plenty of rests" guessed two
+	 * thirds; it was half).
+	 */
+	readonly rests?: string;
+	/**
 	 * Every note in write_pattern's own form, step:note:length:velocity, the notes of a step with
 	 * one length and velocity joined by + ("1:A1:2:95 17:G3+B3+E4:16:70"), spelled as the bars are.
 	 */
@@ -233,7 +239,9 @@ export function readPattern(
 	/** Note names with a sharp or flat as the writer gave them ("G#"), to say how they read. */
 	written: readonly string[] = [],
 	/** Chords given by name, by step ("Em7" on 17): read by that name when the notes are its. */
-	named: ReadonlyMap<number, string> = new Map()
+	named: ReadonlyMap<number, string> = new Map(),
+	/** The chords the parts alongside were written by name, by track: their harmony as named. */
+	alongNamed: (track: number) => ReadonlyMap<number, string> | undefined = () => undefined
 ): PatternReading | null {
 	if (p.notes.length === 0) return null;
 	// the key from how long each pitch class sounds, in this part and those with it
@@ -378,22 +386,31 @@ export function readPattern(
 		const beatStarts = new Set<number>();
 		meter.beats.reduce((at, beat) => (beatStarts.add(at), at + beat), 0);
 		const chordAt = (step: number) => {
-			let best: { track: number; notes: number[] } | null = null;
+			let best: { track: number; notes: number[]; start: number; at: number } | null = null;
 			for (const q of alongside) {
 				const at = loopedStep(q, step);
-				const notes = q.notes
-					.filter((n) => n.step <= at && at < n.step + Math.max(1, n.length))
-					.map((n) => n.note);
+				const sounding = q.notes.filter((n) => n.step <= at && at < n.step + Math.max(1, n.length));
+				const notes = sounding.map((n) => n.note);
 				if (
 					new Set(notes.map((n) => n % 12)).size >= 3 &&
 					(!best || notes.length > best.notes.length)
 				)
-					best = { track: q.track, notes };
+					best = {
+						track: q.track,
+						notes,
+						start: Math.max(...sounding.map((n) => n.step)),
+						at
+					};
 			}
 			return best;
 		};
 		let under = 0;
 		let tones = 0;
+		// a bass that is the root a rootless voicing leaves out (C E G over A is Am7): a chord tone
+		// (an agent's rootless chords read their bass as outside them, every bar)
+		let roots = 0;
+		// the root each chord took from the bass at its onset, for the notes under it after
+		const completed = new Map<string, number>();
 		const outside: { at: number; text: string; rub: boolean }[] = [];
 		let passing = 0;
 		const chordTracks = new Set<number>();
@@ -415,9 +432,29 @@ export function readPattern(
 				under++;
 				chordTracks.add(chord.track);
 				const pcs = new Set(chord.notes.map((x) => x % 12));
+				// this chord's onset in the line's own steps, which tells its passes apart
+				const occurrence = `${chord.track}:${at - (chord.at - chord.start)}`;
+				const rooted = completed.get(occurrence);
+				if (rooted !== undefined) pcs.add(rooted);
 				if (pcs.has(n.note % 12)) {
 					tones++;
 					continue;
+				}
+				// the root a voicing leaves out: a bass starting with a chord written as notes, which
+				// with it makes a seventh chord or more on that bass (C E G over A: Am7)
+				if (
+					n.note < Math.min(...chord.notes) &&
+					chord.at === chord.start &&
+					!alongNamed(chord.track)?.has(chord.start)
+				) {
+					const whole = chordName([n.note, ...chord.notes]);
+					const size = new Set([n.note, ...chord.notes].map((x) => x % 12)).size;
+					if (whole && whole.inversion === 0 && whole.root === n.note % 12 && size >= 4) {
+						tones++;
+						roots++;
+						completed.set(occurrence, n.note % 12);
+						continue;
+					}
 				}
 				if (beatStarts.has((at - 1) % meter.bar)) {
 					const named = chordName(chord.notes);
@@ -449,7 +486,10 @@ export function readPattern(
 				: outside.length
 					? ' (none a half step above a chord tone: colours, such as a 7th or a 9th)'
 					: '';
-			againstChords = `${tones} of the ${under} notes over ${by}'s chords${looped} are chord tones${outside.length ? `; on a beat and outside the chord${rubbing}: ${shown.join(', ')}${outside.length > 8 ? ', …' : ''}` : '; none on a beat is outside its chord'}${passing ? `; ${passing} off the beat ${passing === 1 ? 'is a passing note' : 'are passing notes'}` : ''}`;
+			const rooted = roots
+				? ` (${roots === tones ? 'all' : roots} of them the root under ${by}'s rootless voicings, which it completes)`
+				: '';
+			againstChords = `${tones} of the ${under} notes over ${by}'s chords${looped} are chord tones${rooted}${outside.length ? `; on a beat and outside the chord${rubbing}: ${shown.join(', ')}${outside.length > 8 ? ', …' : ''}` : '; none on a beat is outside its chord'}${passing ? `; ${passing} off the beat ${passing === 1 ? 'is a passing note' : 'are passing notes'}` : ''}`;
 		}
 	}
 	// what the chords make over the other part's bass, apart, when any differs from its own name
@@ -544,6 +584,17 @@ export function readPattern(
 			)
 		)
 		.join(' ');
+	// how much of a line of single notes sounds, where it rests a good deal
+	const single = [...starting.values()].every((pitches) => pitches.length === 1);
+	let heardSteps = 0;
+	for (let step = 1; step <= p.length; step++) {
+		if (starting.has(step) || sounding[step]) heardSteps++;
+	}
+	const resting = p.length - heardSteps;
+	const rests =
+		single && resting >= p.length / 4
+			? `it sounds on ${heardSteps} of its ${p.length} steps and rests on ${resting}`
+			: '';
 	return {
 		...(meant
 			? { key: `${meant.label} (as written)` }
@@ -558,6 +609,7 @@ export function readPattern(
 		...(outlines.length ? { outlines } : {}),
 		...(spelled ? { spelled } : {}),
 		...(outside ? { outside } : {}),
+		...(rests ? { rests } : {}),
 		notes
 	};
 }

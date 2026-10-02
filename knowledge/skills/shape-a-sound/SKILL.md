@@ -73,7 +73,8 @@ The source is a track or the metronome.
 On the replica only the new project's eight presets carry their real settings; other factory presets
 load their engine's starting sound, so choosing one by name will not sound like it does on the unit.
 A new project's FX I is a delay set to a dotted eighth and FX II a reverb, which makes the sends an
-easy way to add an echo or a space to a part.
+easy way to add an echo or a space to a part. "More reverb" is the send (10–25 a touch, 40–60 clearly
+there, 70 and over wet), the effect's own size or tone only when asked; it is a guide, so listen.
 
 A send, like every sound setting, is the whole track's: on a drum track it reaches every sound of
 the kit. One sound alone (the snare's delay, the hats' pan) takes a key setting where the key's page

@@ -548,6 +548,29 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   velocity listed; a drum step's component reaching every sound said up front; drifts under a
   hundredth in three places; "save it to my computer" routes the app skill, which names the project
   card's download beside the device's MTP copy.
+- **Probe round thirty-eight (2026-10-02), 18 scenarios (`probe-scenarios-38.json`: re-checks (a
+  lab fade of every track's volume, a ringtone played once, chords and bass swapped, a trance gate
+  by rhythm, a counter-line in the rests, a 6/8 lullaby by its felt pulse, a locked filter sweep in
+  the lab, a key change of everything, the download) and new kinds: techno asked in Turkish, a
+  jungle break, track scale against tempo, hats louder over four bars, a tom fill, reverb on
+  everything, a muddy mix, a call and response, a guided lock):** two failed calls (a gate of 256
+  notes, a grid miscount). Held: the lab fade ran in 2.4 s (38.5 s before), the ringtone stopped
+  after one pass, swap in one call, the counter-line's rests counted, the tempo set by the felt
+  pulse, the commit naming the new pattern's locks and shape. Fixes: **in another meter bars
+  counts its bars** when no length is given (four of 6/8 are 48 steps, where three agents got five
+  bars or worked the steps out), in write_pattern and the lab alike, and readings give bars in the
+  meter with the unit's pages apart; a **guided lock with no value** lights the step held while
+  the encoder turns (it lit M3 and E1 alone, and the user turned the track's cutoff), and a lock on
+  a step with no note is called silent; a lock at the track's own value is made, a detent away and
+  back (a fade's first lock never existed); write_pattern's **`ramp`** makes velocities rise or fall
+  over the pattern as it is (a crescendo of the hats was rewritten by hand and gained a hat); a gate
+  past the note limit names the two ways round (a bar a pattern with copy_bar, or the tremolo LFO);
+  a bass under rootless chords reads as their root, unless the chords were named; a line written
+  in another key than its chords says so (relative keys apart); a track's new pattern reads in its
+  other patterns' key; a resting line says how many of its steps sound; the lab's song listen gives
+  each part bar by bar (a fade checked by ear) and hears a song of one scene that plays once; the
+  conductor says when an answer heard the music only before its changes; the shape's range;
+  ringtones route the app and arrangement skills; a send's rough scale in the sound skill.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval); multiply at `accidental 9`

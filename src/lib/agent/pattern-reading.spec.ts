@@ -136,6 +136,29 @@ describe('readPattern', () => {
 		);
 	});
 
+	it('says how much of a resting line sounds, from its lengths', () => {
+		// a melody "with plenty of rests" was guessed two thirds rests; it was half
+		const melody = readPattern(
+			pattern([
+				{ step: 1, note: 69, length: 3 },
+				{ step: 5, note: 72, length: 2 },
+				{ step: 9, note: 76, length: 3 }
+			])
+		);
+		expect(melody?.rests).toBe('it sounds on 8 of its 16 steps and rests on 8');
+		// a line that hardly rests, or chords, say nothing
+		const legato = readPattern(pattern([{ step: 1, note: 69, length: 14 }]));
+		expect(legato?.rests).toBeUndefined();
+		const chords = readPattern(
+			pattern([
+				{ step: 1, note: 57, length: 1 },
+				{ step: 1, note: 60, length: 1 },
+				{ step: 1, note: 64, length: 1 }
+			])
+		);
+		expect(chords?.rests).toBeUndefined();
+	});
+
 	it('shows rests, held notes and notes that make no chord', () => {
 		const reading = readPattern(
 			pattern([

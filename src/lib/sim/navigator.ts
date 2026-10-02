@@ -1212,6 +1212,21 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 			: '';
 		return rec.plan(false, `"${goal.value}" is not a value of ${id}${ways}`);
 	}
+	// a lock at the track's own value is made as a person makes it, a detent away and back with the
+	// step held (a fade's first lock, at the track's level, was never made, and its plan read
+	// reached)
+	if (goal.step !== undefined) {
+		const index = goal.step - 1;
+		const present = currentPattern(trackSequence(rec.sim.state, track - 1)).steps[index]?.locks[
+			lock.id
+		];
+		const own = lock.get(rec.sim.state.tracks[track - 1]);
+		const same = speed ? Math.round(own) === target : readsAs(lock.format, target, goal.value)(own);
+		if (present === undefined && same) {
+			const away = own + lock.step <= lock.max ? own + lock.step : own - lock.step;
+			turnTo(rec, where.e, where.shift, read, away, (v) => v !== own, hold);
+		}
+	}
 	// compare as the screen shows it, so 40 on a 0–99 lane stops where the page reads 40 (a speed
 	// by its place: synced 16 and free 16 read alike)
 	const ok = turnTo(
@@ -1423,9 +1438,21 @@ export function planToSetting(state: SimState, goal: SettingGoal): NavPlan {
 	if (!place) return rec.plan(false, `no page for "${goal.param}"`);
 	walk(rec, place);
 	const at = encoderFor(rec.sim, id);
+	// a step's own value: on the bar its key shows, with the step held while the encoder turns (a
+	// walkthrough to lock step 5 lit M3 and E1 alone, and the user turned the track's cutoff)
+	let held = '';
+	if (goal.step !== undefined && at) {
+		const pattern = currentPattern(trackSequence(rec.sim.state, track - 1));
+		if (goal.step > pattern.bars * 16) {
+			return rec.plan(false, `the pattern has ${pattern.bars * 16} steps, so no step ${goal.step}`);
+		}
+		const bar = Math.floor((goal.step - 1) / 16);
+		for (let tap = 0; tap < 4 && shownBar(rec.sim.state) !== bar; tap++) rec.do('bar');
+		held = `step ${((goal.step - 1) % 16) + 1} held, `;
+	}
 	return rec.plan(
 		true,
-		at ? `E${at.e + 1}${at.shift ? ' with shift held' : ''} turns it` : undefined
+		at ? `${held}E${at.e + 1}${at.shift ? ' with shift held' : ''} turns it` : undefined
 	);
 }
 

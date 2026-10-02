@@ -1133,10 +1133,13 @@ export class Conductor {
 		const tracks = marked.flatMap((l) => /^T(\d+) pattern \d+:/.exec(l)?.[1] ?? []);
 		const parts = tracks.filter((t, i) => tracks.indexOf(t) === i).length;
 		const shaped = marked.some((l) => /^(aux )?T\d+ (shift )?M\d /.test(l));
+		const heard = shaped || parts >= 2 ? this.#heardState() : 'after';
 		const unheard =
-			(shaped || parts >= 2) && !this.#heardSinceMessage()
+			heard === 'none'
 				? ' Not heard in this answer: describe what you wrote or set, not how it sounds (the balance, warmth, the feel), unless you listen first (listen, or lab.listen in run_lab); if you do not, leave listening unmentioned.'
-				: '';
+				: heard === 'before'
+					? ' Heard before your changes in this answer, not after them: what you heard is from before them. Listen again to say how the result sounds (or whether a fix worked), or describe only what you wrote or set.'
+					: '';
 		// a tempo the user named that the replica is not at (an agent built a song "at 100 bpm" at
 		// 120 and noticed only in its last line)
 		const asked = askedTempo(this.#asked);
@@ -1260,27 +1263,43 @@ export class Conductor {
 	}
 
 	/** Whether the model has called the tool `name` since the user's message. */
-	/** Whether this answer heard the music: listen, listen_tracks, or a lab program that listens. */
-	#heardSinceMessage(): boolean {
-		const hears = (b: { type: string; name?: string; input?: unknown }) =>
+	/**
+	 * Whether this answer heard the music (listen, listen_tracks, or a lab program that listens)
+	 * after its last change ('after'), only before it ('before': an agent heard a muddy mix,
+	 * changed three things and described the fix unheard), or not at all.
+	 */
+	#heardState(): 'after' | 'before' | 'none' {
+		type Block = { type: string; name?: string; input?: unknown };
+		const code = (b: Block) => JSON.stringify(b.input ?? null);
+		const hears = (b: Block) =>
 			b.type === 'tool_use' &&
 			(b.name === 'listen' ||
 				b.name === 'listen_tracks' ||
-				(b.name === 'run_lab' && /lab\.listen\(/.test(JSON.stringify(b.input ?? null))));
+				(b.name === 'run_lab' && /lab\.listen\(/.test(code(b))));
+		const changes = (b: Block) =>
+			b.type === 'tool_use' &&
+			(['write_pattern', 'write_arrangement', 'make_kit', 'import_midi', 'set_tempo'].includes(
+				b.name ?? ''
+			) ||
+				(b.name === 'plan_steps' && /"show":true/.test(code(b))) ||
+				(b.name === 'run_lab' && /lab\.commit\(/.test(code(b))));
+		let changed = false;
 		for (let i = this.#messages.length - 1; i >= 0; i--) {
 			const m = this.#messages[i];
 			if (m.role === 'user') {
 				if (typeof m.content === 'string' || !m.content.some((b) => b.type === 'tool_result')) {
-					return false;
+					return 'none';
 				}
 				continue;
 			}
 			if (typeof m.content === 'string') continue;
-			if (m.content.some((b) => hears(b as { type: string; name?: string; input?: unknown }))) {
-				return true;
+			for (const b of [...m.content].reverse() as Block[]) {
+				// a program that listens and commits heard what it committed, as it did it
+				if (hears(b)) return changed ? 'before' : 'after';
+				if (changes(b)) changed = true;
 			}
 		}
-		return false;
+		return 'none';
 	}
 
 	#calledSinceMessage(name: string): boolean {

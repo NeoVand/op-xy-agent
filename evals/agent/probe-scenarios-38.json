@@ -1,0 +1,154 @@
+[
+	{
+		"name": "lab-fade-fast",
+		"about": "Re-check: a lab program of many locks and shapes inside its time.",
+		"steps": [
+			{
+				"say": "use the lab to make a 3 scene song whose last scene fades out smoothly, every track's volume locked bar by bar"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ringtone-once",
+		"about": "Re-check: a song of one scene that plays once.",
+		"steps": [{ "say": "make a 6 second ringtone that plays once and stops" }, { "why": true }]
+	},
+	{
+		"name": "swap-chords-bass",
+		"about": "Re-check: two tracks' parts swapped with swap.",
+		"steps": [
+			{ "say": "write chords on track 4 and a bass on track 3" },
+			{ "say": "swap the bass and the chords between tracks 3 and 4" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "trance-gate-rhythm",
+		"about": "Re-check: held chords restruck on a rhythm.",
+		"steps": [
+			{ "say": "write a slow chord progression on track 7" },
+			{ "say": "now make the chords pulse in sixteenths like a trance gate" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "counter-in-rests",
+		"about": "Re-check: a counter-line's notes in the other's rests.",
+		"steps": [
+			{ "say": "write a melody on track 5 with plenty of rests" },
+			{
+				"say": "add a counter melody on track 6 that answers in its rests. how many of its notes fall in the rests?"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "six-eight-lullaby",
+		"about": "Re-check: a compound meter's felt pulse.",
+		"steps": [
+			{ "say": "make a 6/8 lullaby with a felt pulse of about 50 beats a minute" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-sweep-locks",
+		"about": "Re-check: a new pattern's locks and shape in the commit.",
+		"steps": [
+			{
+				"say": "use the lab to write a bass in a new pattern on track 3 with a filter sweep locked over its 4 bars, smoothed, and tell me which locks landed"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "move-to-e-minor",
+		"about": "Re-check: a line moved alone, read against the chords as they stand.",
+		"steps": [
+			{ "say": "make a bass and chords in C major" },
+			{ "say": "move everything to E minor" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "download-it",
+		"about": "Re-check: the app's download named.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "how do I get what I made here onto my computer?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "turkish-techno",
+		"about": "A request in Turkish.",
+		"steps": [{ "say": "bas ve davul ile bir tekno ritmi yap" }, { "why": true }]
+	},
+	{
+		"name": "breakbeat",
+		"about": "A genre by its classic break.",
+		"steps": [{ "say": "make a fast breakbeat in the style of a jungle break" }, { "why": true }]
+	},
+	{
+		"name": "scale-vs-tempo",
+		"about": "A concept question.",
+		"steps": [{ "say": "what's the difference between track scale and tempo?" }, { "why": true }]
+	},
+	{
+		"name": "hats-crescendo",
+		"about": "A velocity shape over a pattern.",
+		"steps": [
+			{ "say": "make a 4 bar beat" },
+			{ "say": "make the hats get gradually louder over the 4 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "last-bar-fill",
+		"about": "A fill in one bar.",
+		"steps": [
+			{ "say": "make a 4 bar beat" },
+			{ "say": "add a tom fill in the last bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "reverb-everything",
+		"about": "One setting across tracks.",
+		"steps": [
+			{ "say": "make a beat with bass and chords" },
+			{ "say": "turn the reverb up on everything" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "muddy-mix",
+		"about": "A mix complaint.",
+		"steps": [
+			{ "say": "make a beat with a bass, chords and a pad" },
+			{ "say": "it sounds muddy, fix it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "call-response",
+		"about": "Two parts in dialogue.",
+		"steps": [
+			{ "say": "make a call and response between a lead on track 5 and the bass on track 3" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-lock",
+		"about": "A guided parameter lock, followed.",
+		"steps": [
+			{ "say": "make a bassline on track 3" },
+			{
+				"say": "teach me to put a parameter lock on step 5 of the bass so its filter opens there, light the keys"
+			},
+			{ "follow": 4 },
+			{ "say": "did it work?" },
+			{ "why": true }
+		]
+	}
+]

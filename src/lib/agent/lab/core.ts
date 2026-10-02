@@ -657,8 +657,21 @@ export function createLab(options: LabOptions): LabSession {
 				}
 			}
 			const last = notes.reduce((max, n) => Math.max(max, n.step), 1);
+			// in another meter, bars without a length count its bars, as write_pattern's do
+			const meterBar = BAR[lengthSettings(sim.state).signature];
+			let meterLength: number | undefined;
+			if (meterBar !== 16 && w.bars !== undefined && w.length === undefined) {
+				meterLength = w.bars * meterBar;
+				if (meterLength > 64) {
+					throw new LabError(
+						`writePattern: ${w.bars} bars of ${lengthSettings(sim.state).signature} are ${meterLength} steps, and a pattern holds 64: ${Math.floor(64 / meterBar)} of its bars at most (or length up to 64)`
+					);
+				}
+			}
 			const bars =
-				w.bars ?? (base ? Math.max(base.bars, Math.ceil(last / 16)) : Math.ceil(last / 16));
+				meterLength !== undefined
+					? Math.ceil(meterLength / 16)
+					: (w.bars ?? (base ? Math.max(base.bars, Math.ceil(last / 16)) : Math.ceil(last / 16)));
 			// the base's locks and components on the steps the pattern keeps
 			const steps = bars * 16;
 			const locks = (base?.stepLocks ?? []).filter((l) => l.step <= steps);
@@ -667,7 +680,7 @@ export function createLab(options: LabOptions): LabSession {
 			return virtual.writePattern(t, {
 				pattern: w.pattern ?? 1,
 				bars,
-				length: w.length ?? (base && w.bars === undefined ? base.length : undefined),
+				length: w.length ?? meterLength ?? (base && w.bars === undefined ? base.length : undefined),
 				scale: w.scale ?? (copied ? copied.scale : undefined),
 				...(w.stay ? { play: false } : {}),
 				...(w.groove !== undefined
@@ -1053,9 +1066,10 @@ export function createLab(options: LabOptions): LabSession {
 		const base = f.sim.state;
 		const a = base.areas.arrange;
 		const order = a.songs[a.song]?.order ?? [];
-		if (order.length < 2) {
+		// one entry is a song when it does not loop: it plays once (a sting)
+		if (order.length < 2 && !(order.length === 1 && !a.songs[a.song]?.loop)) {
 			throw new LabError(
-				'listen: song needs a song of two entries or more (writeArrangement song); hear one scene with scene'
+				'listen: song needs a song of two entries or more, or one that does not loop (writeArrangement song); hear one scene with scene'
 			);
 		}
 		const entry = from.entry ?? 1;
@@ -1134,7 +1148,23 @@ export function createLab(options: LabOptions): LabSession {
 					? ` (${lufs - was >= 0 ? '+' : ''}${(lufs - was).toFixed(1)} dB)`
 					: '';
 			if (lufs !== null) was = lufs;
-			return `entry ${p.entry}, scene ${p.scene}${p.bar > 1 ? ` from bar ${p.bar}` : ''} (${clock(p.start)}–${clock(p.start + p.seconds)}): ${lufs === null ? 'silent' : `${lufs.toFixed(1)} LUFS`}${change}`;
+			// and bar by bar, so a fade or a build can be heard as one (an agent fading a song's
+			// last scene could not confirm the fade from one figure a part)
+			const barSeconds = barSteps * per16;
+			const count = Math.floor(p.seconds / barSeconds + 1e-6);
+			const bars =
+				lufs !== null && count >= 2 && count <= 8
+					? `, by bar ${Array.from({ length: count }, (_, b) => {
+							const from = start + Math.round(b * barSeconds * rate);
+							const to = Math.min(end, start + Math.round((b + 1) * barSeconds * rate));
+							const level = loudness(
+								out.map((c) => c.subarray(from, to)),
+								rate
+							).integrated;
+							return level === null ? 'silent' : level.toFixed(1);
+						}).join(', ')}`
+					: '';
+			return `entry ${p.entry}, scene ${p.scene}${p.bar > 1 ? ` from bar ${p.bar}` : ''} (${clock(p.start)}–${clock(p.start + p.seconds)}): ${lufs === null ? 'silent' : `${lufs.toFixed(1)} LUFS`}${change}${bars}`;
 		});
 		const ended =
 			at < seconds - 0.01
