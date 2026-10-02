@@ -379,7 +379,7 @@ export function resetScene(s: SimState): void {
 }
 
 /** Sixteenths in one bar of each time signature. */
-const BAR: Readonly<Record<TimeSignature, number>> = {
+export const BAR: Readonly<Record<TimeSignature, number>> = {
 	'3/4': 12,
 	'4/4': 16,
 	'5/4': 20,
@@ -387,6 +387,29 @@ const BAR: Readonly<Record<TimeSignature, number>> = {
 	'7/8': 14,
 	'12/8': 24
 };
+
+/** How a bar of a time signature counts: its steps, and its beats' steps (a dotted quarter in 6/8). */
+export interface Meter {
+	readonly signature: TimeSignature;
+	readonly bar: number;
+	readonly beats: readonly number[];
+}
+
+const BEATS: Readonly<Record<TimeSignature, readonly number[]>> = {
+	'3/4': [4, 4, 4],
+	'4/4': [4, 4, 4, 4],
+	'5/4': [4, 4, 4, 4, 4],
+	'6/8': [6, 6],
+	'7/8': [4, 4, 6],
+	'12/8': [6, 6, 6, 6]
+};
+
+/** A time signature's bar as readings group it. */
+export const meterOf = (signature: TimeSignature): Meter => ({
+	signature,
+	bar: BAR[signature],
+	beats: BEATS[signature]
+});
 
 /**
  * The project's scene length mode and time signature, as its settings page sets them (project →

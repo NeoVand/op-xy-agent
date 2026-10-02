@@ -118,6 +118,17 @@ function dimmedIfOff(ctx: ScreenCtx, off: boolean | undefined, draw: () => void)
 	text(ctx, 'off', 240.5, 121, 30, COLORS.white, 'center', 0, true);
 }
 
+/**
+ * An LFO's envelope as the agent reads it: −99…99 from steady at 0, "fades in" below and "fades
+ * out" above (the manual counts 64 steady on its 0–127 scale; an agent could not tell the sign).
+ */
+function envelopeText(envelope: number | undefined): string {
+	if (envelope === undefined) return '';
+	const v = Math.round(envelope * 99);
+	// a few either side of 0 is steady still (a preset's −2)
+	return `, envelope ${v}${v <= -5 ? ' (fades in)' : v >= 5 ? ' (fades out)' : ''}`;
+}
+
 /** A short spoken description of what the screen shows (for `aria-live`). */
 export function describeFrame(frame: ScreenFrame): string {
 	switch (frame.page) {
@@ -161,8 +172,7 @@ export function describeFrame(frame: ScreenFrame): string {
 				const speed = frame.speed.synced
 					? `sync ${frame.speed.label}`
 					: `free ${Math.round(frame.speed.position * 99)}`;
-				const envelope =
-					frame.envelope === undefined ? '' : `, envelope ${Math.round(frame.envelope * 99)}`;
+				const envelope = envelopeText(frame.envelope);
 				return `tremolo lfo${frame.off ? ' off' : ''}: speed ${speed}, amount ${Math.round(frame.amount)} (pitch), volume ${Math.round(frame.volume)}${envelope}`;
 			}
 			return (
@@ -171,7 +181,8 @@ export function describeFrame(frame: ScreenFrame): string {
 				// the speed: a count of sixteenths when synced to the tempo ("sync 32", as the key planner
 				// takes it: a bare 32 was read as the free dial's), else the free dial (drawn, on its lane)
 				`speed ${frame.speed.synced ? `sync ${frame.speed.label}` : `free ${Math.round(frame.speed.position * 99)}`}, ` +
-				`amount ${Math.round(frame.amount)}, destination ${frame.destination.label}`
+				`amount ${Math.round(frame.amount)}, destination ${frame.destination.label}` +
+				(frame.type === 'random' ? envelopeText(frame.envelope) : '')
 			);
 		case 'mix': {
 			// the selected strip's values, which the page draws as a level bar and a pan dot and never

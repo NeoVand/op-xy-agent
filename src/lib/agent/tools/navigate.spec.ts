@@ -306,3 +306,28 @@ describe('plan_steps to the project settings', () => {
 		expect(named.note).toMatch(/the project settings have no "nope"; they hold transpose/);
 	});
 });
+
+describe('plan_steps guiding to a page value with none given', () => {
+	it('ends on the turn even when the replica is on the page already', async () => {
+		const { sim, run, guided } = setup(true);
+		await run(planStepsTool, {
+			show: true,
+			area: 'player',
+			track: 4,
+			param: 'player',
+			value: 'on'
+		});
+		const result = json(
+			await run(planStepsTool, {
+				show: false,
+				guide: true,
+				area: 'player',
+				track: 4,
+				param: 'speed'
+			})
+		);
+		expect(result.guided).toBe(true);
+		expect(guided.at(-1)?.steps.map((s) => s.keys)).toEqual(['turn E1']);
+		expect(sim.state.overlay).toBe('players');
+	});
+});

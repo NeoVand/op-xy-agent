@@ -23,10 +23,14 @@ tiny black screen in both themes, like the stage hint; nothing shows while no wa
 	let { guide }: Props = $props();
 
 	const step = $derived(guide?.current ?? null);
+	// a turn to a value: which way from where it reads now, so an overshoot says to come back
+	const live = $derived(guide?.turn ?? null);
 	const turn = $derived(
-		step?.clicks
-			? `${Math.abs(step.clicks)} ${Math.abs(step.clicks) === 1 ? 'detent' : 'detents'} ${step.clicks > 0 ? 'clockwise' : 'counter-clockwise'}`
-			: null
+		live
+			? `${live.label} ${live.now} → ${live.target}: turn ${live.way}`
+			: step?.clicks
+				? `${Math.abs(step.clicks)} ${Math.abs(step.clicks) === 1 ? 'detent' : 'detents'} ${step.clicks > 0 ? 'clockwise' : 'counter-clockwise'}`
+				: null
 	);
 	/**
 	 * How to hold the keys a step holds, with one mouse: ⌥-click latches a key down until it is
@@ -53,7 +57,12 @@ tiny black screen in both themes, like the stage hint; nothing shows while no wa
 <div class="guide" role="status" aria-live="polite" aria-atomic="true">
 	{#if guide && guide.status === 'running' && step}
 		{#key guide.index}
-			<div class="card" data-theme="dark">
+			<div
+				class="card"
+				data-theme="dark"
+				data-turn-way={live?.way}
+				data-turn-detents={live?.detents}
+			>
 				<span class="card__count">{guide.index + 1}/{guide.steps.length}</span>
 				<KeyCombo keys={step.keys} size="sm" class="card__keys" />
 				<p class="card__what">

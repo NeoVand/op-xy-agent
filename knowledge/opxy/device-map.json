@@ -2614,7 +2614,7 @@
 					"keys": "click E1"
 				}
 			],
-			"screen": "random lfo: speed free 66, amount 0, destination syn",
+			"screen": "random lfo: speed free 66, amount 0, destination syn, envelope -2",
 			"units": [
 				"instrument.lfo-random",
 				"instrument.lfo"

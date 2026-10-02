@@ -59,13 +59,33 @@ function unmatchedSteps(a: readonly Placed[], b: readonly Placed[]): number[] {
 	return [...steps].sort((p, q) => p - q);
 }
 
-/** "added on step 3", "removed on steps 7, 15": where, when few (an agent read the pattern to find out). */
-function onSteps(count: number, verb: string, steps: readonly number[]): string {
+/**
+ * "added on step 3", "removed on steps 7, 15 (closed hat 1)": where, when few, and on a drum track
+ * which sounds (an agent read the pattern to find out).
+ */
+function onSteps(
+	count: number,
+	verb: string,
+	steps: readonly number[],
+	sounds: readonly string[] = []
+): string {
 	const at =
 		steps.length > 0 && steps.length <= 8
 			? ` on step${steps.length === 1 ? '' : 's'} ${steps.join(', ')}`
 			: '';
-	return `${count} ${verb}${at}`;
+	const which = sounds.length > 0 && sounds.length <= 3 ? ` (${sounds.join(', ')})` : '';
+	return `${count} ${verb}${at}${which}`;
+}
+
+/** The notes of `a` with no partner in `b`. */
+function unmatchedNotes(a: readonly Placed[], b: readonly Placed[]): Placed[] {
+	const left = new Map<string, number>();
+	for (const n of b) left.set(where(n), (left.get(where(n)) ?? 0) + 1);
+	return a.filter((n) => {
+		const k = left.get(where(n)) ?? 0;
+		if (k > 0) left.set(where(n), k - 1);
+		return k === 0;
+	});
 }
 
 /** "100" or "72–108". */
@@ -106,7 +126,9 @@ function detail(x: readonly Placed[], y: readonly Placed[]): string[] {
  */
 export function describeNoteChange(
 	before: Pattern | undefined,
-	after: Pattern | undefined
+	after: Pattern | undefined,
+	/** A drum note's sound ("kick 1"), on a drum track. */
+	soundOf?: (note: number) => string | null
 ): string | null {
 	const x = placed(before);
 	const y = placed(after);
@@ -118,9 +140,13 @@ export function describeNoteChange(
 		const notes = `${x.length} → ${plural(y.length, 'note')}`;
 		// most of it new: "14 added, 15 removed" read as a puzzle for one rewritten grid
 		if (x.length && removed * 2 > x.length && added * 2 > y.length) return `${notes}, rewritten`;
+		const sounds = (notes: readonly Placed[]) =>
+			soundOf
+				? [...new Set(notes.map((n) => soundOf(n.note)).filter((s): s is string => !!s))]
+				: [];
 		const how = [
-			added ? onSteps(added, 'added', unmatchedSteps(y, x)) : '',
-			removed ? onSteps(removed, 'removed', unmatchedSteps(x, y)) : ''
+			added ? onSteps(added, 'added', unmatchedSteps(y, x), sounds(unmatchedNotes(y, x))) : '',
+			removed ? onSteps(removed, 'removed', unmatchedSteps(x, y), sounds(unmatchedNotes(x, y))) : ''
 		]
 			.filter(Boolean)
 			.join(', ');
@@ -135,6 +161,12 @@ export function describeNoteChange(
 	if (x.every((n, i) => n.step === y[i].step)) {
 		const moves = new Set(y.map((n, i) => n.note - x[i].note));
 		if (moves.size === 1) return `${count}, ${shift(y[0].note - x[0].note)}`;
+		// which steps, when few: one chord changed reads as that chord's step
+		const changed = [...new Set(y.flatMap((n, i) => (n.note !== x[i].note ? [n.step] : [])))];
+		const steps = new Set(y.map((n) => n.step)).size;
+		if (changed.length < steps && changed.length <= 8) {
+			return `${count}, the same rhythm with new pitches on step${changed.length === 1 ? '' : 's'} ${changed.join(', ')}`;
+		}
 		return `${count}, the same rhythm with new pitches`;
 	}
 	const moved = unmatched(y.map(where), x.map(where));

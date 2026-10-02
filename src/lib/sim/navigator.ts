@@ -1262,11 +1262,20 @@ export function planToSetting(state: SimState, goal: SettingGoal): NavPlan {
 			const refused = walkToPage(rec, goal, goal.page ?? 1);
 			return refused ? rec.plan(false, refused) : rec.plan(true);
 		}
-		const found = findPage(state, goal, accessOf(goal));
+		const access = accessOf(goal);
+		const found = findPage(state, goal, access);
 		if (found.rec) {
+			if (found.shifted)
+				return found.rec.plan(true, `${found.label} is on the shift layer: hold shift`);
+			// the encoder that moves it, as for a parameter: a walkthrough to it ends on that turn
+			// (one already on the player page once had nothing to light)
+			const turn = access.prefix
+				? undefined
+				: movesOf(found.rec.sim, found.label, access, false).find((m) => m.turn);
+			const e = turn ? /^(shift \+ )?turn E([1-4])$/.exec(turn.keys) : null;
 			return found.rec.plan(
 				true,
-				found.shifted ? `${found.label} is on the shift layer: hold shift` : undefined
+				e ? `E${e[2]}${e[1] ? ' with shift held' : ''} turns it` : undefined
 			);
 		}
 		if (found.refused) return rec.plan(false, found.refused);

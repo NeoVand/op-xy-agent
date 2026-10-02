@@ -381,7 +381,9 @@ describe('the conductor grounds its answer', () => {
 		expect(list(2)).toMatch(/and 1 change from the earlier list, still as given there/);
 		expect(list(2)).not.toMatch(/- tempo 120 → 100 bpm/);
 		// the tempo back where it was: said, not dropped
-		expect(list(3)).toMatch(/no longer as an earlier list gave it .*tempo 120 → 100 bpm/);
+		expect(list(3)).toMatch(
+			/no longer as an earlier list gave it \(taken back\): tempo 120 → 100 bpm/
+		);
 	});
 
 	it('lets the agent take its last answer back with take_back, as the note would', async () => {

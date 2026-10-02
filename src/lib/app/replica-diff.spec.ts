@@ -89,6 +89,19 @@ describe('replica changes', () => {
 		expect(virtual.changesSince(next)).toEqual(['scene 2: T1 p2 → p1']);
 	});
 
+	it('say a project setting as its page reads, and a drum note by its sound', () => {
+		const { sim, virtual, start } = setup();
+		sim.state.areas.system.projectSettings.signature = 0;
+		expect(virtual.changesSince(start)).toEqual(['project signature: 4/4 → 3/4']);
+		const beat = [1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 100, length: 1 }));
+		virtual.writePattern(1, { pattern: 1, bars: 1, notes: beat });
+		const next = virtual.checkpoint();
+		virtual.writePattern(1, { pattern: 1, bars: 1, notes: beat.slice(0, 3) });
+		expect(virtual.changesSince(next)).toEqual([
+			'T1 pattern 1: 4 → 3 notes (1 removed on step 13 (kick 1))'
+		]);
+	});
+
 	it('say which pattern a track plays, and its player as the page reads', () => {
 		const { sim, virtual, start } = setup();
 		const chord = [60, 64, 67].map((note) => ({ step: 1, note, velocity: 100, length: 16 }));

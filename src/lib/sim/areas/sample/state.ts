@@ -41,6 +41,10 @@ export const KEYS = 24;
 /** MIDI note of the keyboard's first key (F3) at octave 0. */
 export const FIRST_NOTE = 53;
 
+/** A drum key's sound from its file's name: "kick 1.wav" → "kick 1", a made kit's "53 kick.wav" → "kick". */
+export const soundName = (file: string) =>
+	file.replace(/\.(wav|aiff?)$/i, '').replace(/^\d+\s+/, '');
+
 /** A sample file: what a key, zone or the synth sampler holds, and what the library lists. */
 export interface SampleFile {
 	/** Stable id: the handle a sound engine keys the audio buffer by. */

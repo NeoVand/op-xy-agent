@@ -282,6 +282,72 @@ describe('write_pattern one bar at a time', () => {
 	});
 });
 
+describe('patterns in another time signature', () => {
+	it('read bar by bar as the project counts them: a 3/4 bar is three beats of four', async () => {
+		const { sim, run } = setup();
+		sim.state.areas.system.projectSettings.signature = 0; // 3/4
+		const drums = json(
+			await run(writePatternTool, {
+				track: 1,
+				pattern: 1,
+				bars: 3,
+				length: 48,
+				grid: { kick: 'x... .... ....' }
+			})
+		);
+		expect(drums.written.grid['kick 1']).toBe(
+			'x... .... .... | x... .... .... | x... .... .... | x... .... ....'
+		);
+		const bass = json(
+			await run(writePatternTool, {
+				track: 3,
+				pattern: 1,
+				bars: 3,
+				length: 24,
+				notes: '1:A2:4 13:E2:4'
+			})
+		);
+		expect(bass.written.reading.bars).toEqual([
+			'A2 – – – | · · · · | · · · ·',
+			'E2 – – – | · · · · | · · · ·'
+		]);
+	});
+});
+
+describe('write_pattern step components', () => {
+	it('puts components on steps, adds them to a pattern as it is, and reads them back', async () => {
+		const { virtual, run } = setup();
+		const written = json(
+			await run(writePatternTool, {
+				track: 4,
+				pattern: 1,
+				notes: '1:C4:2 5:E4:2 9:G4:2 13:B4:2',
+				components: [
+					{ step: 5, kind: 'random', value: 3 },
+					{ step: 13, kind: 'skip trigger' }
+				]
+			})
+		);
+		expect(written.written.components).toEqual(['step 5: random 3', 'step 13: skip trigger 2']);
+		// alone: onto the pattern as it is
+		await run(writePatternTool, {
+			track: 4,
+			pattern: 1,
+			components: [{ step: 9, kind: 'multiply', value: 3 }]
+		});
+		const p = virtual.readPattern(4, 1);
+		expect(p.notes).toHaveLength(4);
+		expect(p.components?.map((c) => `${c.step} ${c.kind} ${c.value}`)).toEqual([
+			'5 random 3',
+			'9 multiply 3',
+			'13 skip trigger 2'
+		]);
+		// a transpose keeps them
+		await run(writePatternTool, { track: 4, pattern: 1, transpose: 12 });
+		expect(virtual.readPattern(4, 1).components).toHaveLength(3);
+	});
+});
+
 describe('write_pattern on drums', () => {
 	it('fills a shorter pattern by its length, and reads back only the steps that play', async () => {
 		const { run } = setup();
@@ -378,7 +444,7 @@ describe('write_arrangement', () => {
 	});
 
 	it('sets scenes and a song, which then plays scene by scene', async () => {
-		const { sim, run } = setup();
+		const { sim, virtual, run } = setup();
 		await run(writePatternTool, { track: 1, pattern: 1, notes: [{ step: 1, note: 53 }] });
 		await run(writePatternTool, { track: 1, pattern: 2, notes: [{ step: 5, note: 54 }] });
 		const result = await run(writeArrangementTool, {
@@ -415,6 +481,8 @@ describe('write_arrangement', () => {
 		for (let i = 0; i < 21; i++) sim.advance(100); // a bar at 120 BPM is 2 s
 		expect(sim.state.areas.arrange.scene).toBe(1); // after one bar: scene 2
 		expect(sim.state.tracks[0].sequence.current).toBe(1);
+		// where the playhead is: the song's second entry, the scene's first bar
+		expect(virtual.readArrangement().at).toEqual({ bar: 1, entry: 2 });
 	});
 
 	it('plays one scene from its top, round and round, with transport play and a scene', async () => {

@@ -58,6 +58,18 @@ export interface VirtualPattern {
 	/** Track scale: 1–8, 16 or 0.5 (a step lasts that many sixteenths). */
 	readonly scale: number;
 	readonly notes: readonly VirtualNote[];
+	/** Step components on its steps (random, skip trigger, multiply …), when it has any. */
+	readonly components?: readonly VirtualComponent[];
+}
+
+/**
+ * A step component (manual: sequencer/step-component-reference): its kind ("random", "skip
+ * trigger"…) and its digit, 0–9 (0 means random for most).
+ */
+export interface VirtualComponent {
+	readonly step: number;
+	readonly kind: string;
+	readonly value: number;
 }
 
 /** What to write onto a pattern. It replaces the pattern's notes, locks and components. */
@@ -71,6 +83,8 @@ export interface PatternWrite {
 	/** Track scale (default: leave it). */
 	readonly scale?: number;
 	readonly notes: readonly VirtualNote[];
+	/** Step components to put on its steps (each step holds a few at most). */
+	readonly components?: readonly VirtualComponent[];
 	/** Make it the pattern the track plays (default); false edits it in place (a pattern card). */
 	readonly play?: boolean;
 }
@@ -97,6 +111,11 @@ export interface VirtualArrangement {
 	readonly plays: 'song' | 'scene';
 	/** A scene waiting for the current one to end (shift + play, then the scene). */
 	readonly queued?: number;
+	/**
+	 * Where the playhead is while it plays: the bar of the scene (1 = its first) and, while a song
+	 * plays, its entry (1-based) — an agent asked "which part is it on?" could only guess.
+	 */
+	readonly at?: { readonly bar: number; readonly entry?: number };
 	/** Scenes that hold something, in order. */
 	readonly scenes: readonly VirtualScene[];
 	/** The song's scene order (scene numbers) and whether it loops. */
@@ -131,6 +150,8 @@ export interface VirtualTrack {
 /** The virtual OP-XY at a glance. */
 export interface VirtualStatus {
 	readonly bpm: number;
+	/** The project's time signature (project → M4, tempo): how readings group a pattern's bars. */
+	readonly signature: string;
 	readonly playing: boolean;
 	/** The selected track, 1–16. */
 	readonly selectedTrack: number;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hitMark, readPattern } from './pattern-reading';
+import { hitMark, parseKey, readPattern } from './pattern-reading';
 import type { VirtualNote, VirtualPattern } from './virtual-opxy';
 
 function pattern(notes: readonly Omit<VirtualNote, 'velocity'>[], bars = 1): VirtualPattern {
@@ -104,5 +104,39 @@ describe('the key of a pattern with the parts alongside it', () => {
 		expect(readPattern(melody, [chords])?.key).toMatch(/^C major/);
 		// alone, the melody's E, F, G and D still fit no key better than C major (F rules G out)
 		expect(readPattern(melody)?.key ?? '').not.toMatch(/^(G|E) /);
+	});
+});
+
+describe('a chord named over the bass another part plays', () => {
+	it('reads a rootless voicing as the chord its bass makes it', () => {
+		const at = (notes: [number, number, number][], track: number): VirtualPattern => ({
+			track,
+			pattern: 1,
+			patterns: 1,
+			current: true,
+			bars: 1,
+			length: 16,
+			scale: 1,
+			notes: notes.map(([step, note, length]) => ({ step, note, velocity: 100, length }))
+		});
+		// C E G B over A: Am9 without its root
+		const keys = at(
+			[60, 64, 67, 71].map((note) => [1, note, 16] as [number, number, number]),
+			4
+		);
+		const bass = at([[1, 45, 16]], 3);
+		expect(readPattern(keys)?.chords?.[0]).toMatch(/^step 1: Cmaj7 /);
+		const over = readPattern(keys, [bass]);
+		expect(over?.bars[0]).toMatch(/^Am9 /);
+		expect(over?.chords?.[0]).toBe("step 1: Am9 (C E G B over T3's A)");
+	});
+});
+
+describe('parseKey', () => {
+	it('reads a key and spells a mode as its parent', () => {
+		expect(parseKey('A minor')).toEqual({ label: 'A minor', pitchClass: 9, mode: 'minor' });
+		expect(parseKey('D dorian')).toEqual({ label: 'D dorian', pitchClass: 0, mode: 'major' });
+		expect(parseKey('eb')).toEqual({ label: 'Eb major', pitchClass: 3, mode: 'major' });
+		expect(parseKey('H minor')).toBeNull();
 	});
 });

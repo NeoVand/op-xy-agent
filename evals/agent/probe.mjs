@@ -137,10 +137,19 @@ async function runScenario(scenario, dir) {
 					const press = of('press');
 					const turns = of('turn');
 					if (press.length === 0 && turns.length === 0) break;
+					// a turn as the walkthrough card says it: which way, and about how far
+					const card = await call('/eval', {
+						session,
+						js: "(() => { const c = document.querySelector('[data-turn-way]'); return c ? { way: c.dataset.turnWay, detents: Number(c.dataset.turnDetents) } : null; })()"
+					});
+					const hint = card?.value ?? null;
+					const detents = hint
+						? (hint.way === 'clockwise' ? 1 : -1) * Math.max(1, Math.min(hint.detents, 99))
+						: (step.detents ?? 4);
 					const ids = [
 						...hold.map((id) => `latch:${id}`),
 						...press,
-						...turns.map((id) => `turn:${id}:${step.detents ?? 4}`),
+						...turns.map((id) => `turn:${id}:${detents}`),
 						...hold.map((id) => `latch:${id}`)
 					];
 					const result = await call('/press', { session, ids, timeoutMs: 5 * 60_000 });

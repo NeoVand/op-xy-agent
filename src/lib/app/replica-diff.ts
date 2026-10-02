@@ -11,6 +11,8 @@ import type { ControlId } from '$lib/core/opxy';
 import type { ReplicaChange, VirtualOpxy, VirtualScene } from '$lib/agent/virtual-opxy';
 import { GROOVES, type SimState } from '$lib/sim/params';
 import { describeNoteChange } from '$lib/sim/pattern-change';
+import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
+import { PROJECT_SECTIONS } from '$lib/sim/areas/system/settings';
 
 /** Most lines a diff gives; the rest are counted. */
 export const MAX_CHANGE_LINES = 40;
@@ -95,7 +97,8 @@ function patternChanges(
 	label: string,
 	before: readonly Pattern[],
 	after: readonly Pattern[],
-	shown: number
+	shown: number,
+	soundOf?: (note: number) => string | null
 ): string[] {
 	const changed: number[] = [];
 	for (let i = 0; i < Math.max(before.length, after.length); i++) {
@@ -110,7 +113,7 @@ function patternChanges(
 			const now = after[n - 1];
 			const parts: string[] = [];
 			if (!same(unplayed(was), unplayed(now)) || !was || !now) {
-				parts.push(describeNoteChange(was, now) ?? `${notesIn(now)} notes`);
+				parts.push(describeNoteChange(was, now, soundOf) ?? `${notesIn(now)} notes`);
 			}
 			if (was && now) {
 				if (was.bars !== now.bars) parts.push(`${was.bars} → ${now.bars} bars`);
@@ -255,11 +258,20 @@ export function replicaChangeList(
 				track
 			]);
 		}
+		// a drum note by its key's sound ("closed hat 1")
+		const keys = now.engine === 'drum' ? after.areas.sample.tracks[t]?.keys : undefined;
+		const soundOf = keys
+			? (note: number) => {
+					const file = keys[note - FIRST_NOTE];
+					return file ? soundName(file.name) : null;
+				}
+			: undefined;
 		const patterns = patternChanges(
 			label,
 			was.sequence.patterns,
 			now.sequence.patterns,
-			now.sequence.current + 1
+			now.sequence.current + 1,
+			soundOf
 		);
 		for (const line of patterns) add(line, [track]);
 	}
@@ -275,6 +287,19 @@ export function replicaChangeList(
 	});
 	if (!same(before.areas.mixer, after.areas.mixer)) {
 		add('the mixer’s master section changed', ['key.mix']);
+	}
+	// project settings, row by row as the page reads them (an agent set 3/4 and could not see it
+	// land); the groove type has its tempo line above
+	if (!same(before.areas.system.projectSettings, after.areas.system.projectSettings)) {
+		for (const section of PROJECT_SECTIONS) {
+			const was = section.rows(before);
+			for (const row of section.rows(after)) {
+				if (row.label === 'groove type') continue;
+				const a = was.find((r) => r.label === row.label)?.value(before);
+				const b = row.value(after);
+				if (a !== b) add(`project ${row.label}: ${a ?? '—'} → ${b}`, ['key.project']);
+			}
+		}
 	}
 
 	const a0 = read.before.readArrangement();

@@ -207,11 +207,16 @@ function playingNow(virtual: VirtualOpxy): string {
 		const queued = a.queued
 			? ` Scene ${a.queued} is queued: it takes over when this one ends.`
 			: '';
+		const scene = a.scenes.find((s) => s.scene === a.scene);
+		// the bar only where the scene has more than one
+		const bar = a.at && scene && scene.bars > 1 ? `bar ${a.at.bar} of its ${scene.bars}` : '';
 		if (a.plays === 'song') {
-			return `the replica is playing its song (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now.${queued}`;
+			const entry = a.at?.entry ? `entry ${a.at.entry} of ${a.song.order.length}, ` : '';
+			const where = entry || bar ? ` (${entry}${bar})` : '';
+			return `the replica is playing its song (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now${where}.${queued}`;
 		}
 		const held = a.song.order.length > 1 ? ' (picked, so the song does not move on)' : '';
-		return `the replica is playing scene ${a.scene}, looping${held}.${queued}`;
+		return `the replica is playing scene ${a.scene}, looping${held}${bar ? `, at ${bar}` : ''}.${queued}`;
 	} catch {
 		return 'unknown.';
 	}
@@ -1016,15 +1021,17 @@ export class Conductor {
 		const before = this.#reportedLines;
 		const fresh = marked.filter((l) => !before.includes(l));
 		const standing = marked.length - fresh.length;
-		// an earlier line that no longer holds: taken back, or changed again (its new line is above)
-		const gone = before.filter((l) => !marked.includes(l));
+		// an earlier line that no longer holds and has no newer line about the same thing (a pattern
+		// written twice reads as its latest line alone): taken back
+		const about = (l: string) =>
+			l.includes(':') ? l.slice(0, l.indexOf(':')) : l.replace(/\s\d.*$/, '');
+		const renewed = fresh.map(about);
+		const gone = before.filter((l) => !marked.includes(l) && !renewed.includes(about(l)));
 		this.#reportedLines = marked;
 		const listed = [
 			...fresh.map((l) => `- ${l}`),
 			...(gone.length
-				? [
-						`- no longer as an earlier list gave it (taken back, or changed again above): ${gone.join('; ')}`
-					]
+				? [`- no longer as an earlier list gave it (taken back): ${gone.join('; ')}`]
 				: []),
 			...(standing > 0
 				? [

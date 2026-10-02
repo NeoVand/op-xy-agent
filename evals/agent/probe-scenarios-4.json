@@ -1,0 +1,149 @@
+[
+	{
+		"name": "keep-take-by-word",
+		"about": "Re-check: takes offered, then one picked in words.",
+		"steps": [
+			{ "say": "make a hip hop beat at 90" },
+			{ "say": "give me three bass options for it" },
+			{ "say": "the third one please" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "waltz",
+		"about": "Re-check: a 3/4 piece, the time signature set from chat.",
+		"steps": [
+			{ "say": "make a slow waltz in 3/4 at 90 with piano chords and a bass" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "one-chord-change",
+		"about": "Re-check: one bar of a progression changed without resending the rest.",
+		"steps": [
+			{ "say": "write a 4 bar chord progression on track 7: Am F C G, one chord a bar" },
+			{ "say": "change the last chord to E major" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "explain-tremolo",
+		"about": "Re-check: the pad's tremolo explained from its page.",
+		"steps": [{ "say": "what does the LFO on track 8 do right now?" }, { "why": true }]
+	},
+	{
+		"name": "long-build",
+		"about": "A song built over six turns, then a question about all of it.",
+		"steps": [
+			{ "say": "let's build a song together. start with a chill beat at 85" },
+			{ "say": "add a warm bassline" },
+			{ "say": "now some jazzy chords on top" },
+			{ "say": "and a simple melody" },
+			{ "say": "arrange it: intro, two verses, a break and an outro" },
+			{ "say": "what did we make? describe the whole song to me" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "undo-my-hands",
+		"about": "The user changes the replica by hand, then wants their own changes undone.",
+		"steps": [
+			{ "say": "make a four on the floor beat on track 1" },
+			{ "press": ["key.instrument", "track.1", "step.2", "step.4", "step.6", "step.8"] },
+			{ "say": "ugh I messed it up, put it back how you made it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "wrong-premise",
+		"about": "A user's wrong belief about the device, gently corrected.",
+		"steps": [
+			{ "say": "the OP-XY has 16 synth tracks right? put a pad on track 12" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-pluck",
+		"about": "Teaching sound design by hand: several settings lit, followed by the probe.",
+		"steps": [
+			{
+				"say": "teach me to turn track 3 into a plucky bass myself. light up the keys and I'll follow"
+			},
+			{ "follow": 14, "detents": 6 },
+			{ "say": "ok I think I did it. how does it sound now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sample-voice",
+		"about": "A how-to about sampling, with no device.",
+		"steps": [
+			{ "say": "how do I sample my voice and play it across the keyboard?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "external-synth",
+		"about": "Sequencing an external synth over MIDI: teaching.",
+		"steps": [
+			{
+				"say": "I have a Korg Minilogue connected over MIDI. how do I sequence it from the OP-XY?"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "japanese-dnb",
+		"about": "Japanese: a drum and bass beat, answered in Japanese.",
+		"steps": [{ "say": "ドラムンベースのビートを作ってください。テンポは174で。" }, { "why": true }]
+	},
+	{
+		"name": "generative-ambient",
+		"about": "A piece that changes over time: random, probability, slow movement.",
+		"steps": [
+			{
+				"say": "make a generative ambient piece that slowly changes over time and never quite repeats"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "copy-and-fill",
+		"about": "Copy a pattern and put a fill in its last bar.",
+		"steps": [
+			{ "say": "make a rock beat on track 1, two bars long" },
+			{ "say": "copy it to pattern 2 and put a drum fill in the last bar of the copy" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "decide-by-ear",
+		"about": "A choice settled by listening.",
+		"steps": [
+			{ "say": "make a bass line on track 3 and a simple beat" },
+			{
+				"say": "which sounds better for the bass, cutoff 30 or 60? listen to both and decide for me"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "whats-playing",
+		"about": "A grounding question mid-song.",
+		"steps": [
+			{ "say": "make a short song with two scenes, a verse and a chorus, and play it" },
+			{ "say": "what's playing right now, and which part is it on?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-teach-and-do",
+		"about": "Do one part, teach the next.",
+		"steps": [
+			{
+				"say": "put some chords on track 4 and turn on the arpeggiator, then show me how to change the arp speed myself"
+			},
+			{ "why": true }
+		]
+	}
+]

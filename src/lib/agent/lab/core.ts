@@ -408,6 +408,7 @@ export function createLab(options: LabOptions): LabSession {
 			const s = virtual.status();
 			return {
 				bpm: s.bpm,
+				signature: s.signature,
 				playing: s.playing,
 				selectedTrack: s.selectedTrack,
 				tracks: s.tracks,

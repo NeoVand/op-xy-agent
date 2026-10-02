@@ -27,6 +27,81 @@ export interface PatternReading {
 
 const ascii = (name: string) => name.replace(/♯/g, '#').replace(/♭/g, 'b');
 
+/** How readings group a bar: its steps, and each beat's (a 3/4 bar is three beats of four). */
+export interface BarMeter {
+	readonly bar: number;
+	readonly beats: readonly number[];
+}
+
+/** A key as the writer means it: its spelling's tonic and mode (a mode spells as its parent). */
+export interface MeantKey {
+	readonly label: string;
+	readonly pitchClass: number;
+	readonly mode: 'major' | 'minor';
+}
+
+/** Modes by name: the major or minor key they spell as, and how far below its tonic theirs is. */
+const MODES: Readonly<Record<string, { mode: 'major' | 'minor'; down: number }>> = {
+	major: { mode: 'major', down: 0 },
+	ionian: { mode: 'major', down: 0 },
+	minor: { mode: 'minor', down: 0 },
+	aeolian: { mode: 'minor', down: 0 },
+	dorian: { mode: 'major', down: 2 },
+	phrygian: { mode: 'major', down: 4 },
+	lydian: { mode: 'major', down: 5 },
+	mixolydian: { mode: 'major', down: 7 },
+	locrian: { mode: 'major', down: 11 }
+};
+
+/** "A minor", "F# major", "D dorian", "Bb" (major) as a key to spell in; null for anything else. */
+export function parseKey(text: string): MeantKey | null {
+	const m = /^\s*([A-Ga-g])([#b♯♭]?)\s*([a-z]*)\s*$/i.exec(text);
+	if (!m) return null;
+	const letter = m[1].toUpperCase();
+	const natural = [0, 2, 4, 5, 7, 9, 11]['CDEFGAB'.indexOf(letter)];
+	const accidental = m[2] === '#' || m[2] === '♯' ? 1 : m[2] === 'b' || m[2] === '♭' ? -1 : 0;
+	const word = (m[3] || 'major').toLowerCase();
+	const kind = MODES[word];
+	if (!kind) return null;
+	const tonic = (natural + accidental + 12) % 12;
+	return {
+		label: `${letter}${m[2] ? (accidental > 0 ? '#' : 'b') : ''} ${word}`,
+		pitchClass: (tonic - kind.down + 12) % 12,
+		mode: kind.mode
+	};
+}
+
+/** Four beats of four steps. */
+export const FOUR_FOUR: BarMeter = { bar: 16, beats: [4, 4, 4, 4] };
+
+/**
+ * A pattern's steps that play (1…`length`) laid out bar by bar in `meter`: each beat's cells joined
+ * by `cell`, the beats by `beat`. A waltz read in bars of sixteen once looked broken; and steps past
+ * the length do not play, so they are not shown.
+ */
+export function meterBars(
+	length: number,
+	meter: BarMeter,
+	mark: (step: number) => string,
+	cell: string,
+	beat: string
+): string[] {
+	const count = Math.max(1, Math.ceil(length / meter.bar));
+	return Array.from({ length: count }, (_, b) => {
+		let at = b * meter.bar;
+		return meter.beats
+			.map((size) => {
+				const cells = Array.from({ length: size }, (_, i) => at + i + 1)
+					.filter((step) => step <= length)
+					.map(mark);
+				at += size;
+				return cells.join(cell);
+			})
+			.filter(Boolean)
+			.join(beat);
+	});
+}
+
 /**
  * The reading of a pitched pattern, or null for an empty one. The key counts the pitched parts that
  * play `alongside` it too (the scene's other tracks): a melody's first bars alone once read as E
@@ -34,16 +109,26 @@ const ascii = (name: string) => name.replace(/♯/g, '#').replace(/♭/g, 'b');
  */
 export function readPattern(
 	p: VirtualPattern,
-	alongside: readonly VirtualPattern[] = []
+	alongside: readonly VirtualPattern[] = [],
+	meter: BarMeter = FOUR_FOUR,
+	/** The key the writer means: spelled in, and named, instead of guessed. */
+	meant: MeantKey | null = null
 ): PatternReading | null {
 	if (p.notes.length === 0) return null;
 	// the key from how long each pitch class sounds, in this part and those with it
 	const chroma = new Array<number>(12).fill(0);
 	const all = [p, ...alongside].flatMap((q) => q.notes);
 	for (const n of all) chroma[n.note % 12] += Math.max(0.25, n.length);
-	const found =
-		new Set(all.map((n) => n.note % 12)).size >= 3 ? estimateKey(chroma, { written: true }) : null;
-	const names = found ? keySpelling(found.pitchClass, found.mode) : keySpelling(0, 'major');
+	const found = meant
+		? null
+		: new Set(all.map((n) => n.note % 12)).size >= 3
+			? estimateKey(chroma, { written: true })
+			: null;
+	const names = meant
+		? keySpelling(meant.pitchClass, meant.mode)
+		: found
+			? keySpelling(found.pitchClass, found.mode)
+			: keySpelling(0, 'major');
 	const noteName = (note: number) => `${names[note % 12]}${Math.floor(note / 12) - 1}`;
 
 	const slots = p.bars * 16;
@@ -55,27 +140,44 @@ export function readPattern(
 	}
 	const chords: string[] = [];
 	let lastChord = '';
+	// the lowest note another part sounds under a step, below this one's: a bass the chord is over
+	const under = (step: number, below: number): { note: number; track: number } | null => {
+		let best: { note: number; track: number } | null = null;
+		for (const q of alongside) {
+			for (const n of q.notes) {
+				if (n.step > step || n.step + Math.max(1, n.length) <= step || n.note >= below) continue;
+				if (!best || n.note < best.note) best = { note: n.note, track: q.track };
+			}
+		}
+		return best;
+	};
 	const slot = (step: number): string => {
 		const notes = (starting.get(step) ?? []).sort((a, b) => a - b);
 		if (notes.length === 0) return sounding[step] ? '–' : '·';
 		if (notes.length === 1) return noteName(notes[0]);
 		const tones = [...new Set(notes.map((n) => names[n % 12]))];
 		// two notes are an interval, not a chord ("C5" would read as a note)
-		const chord = tones.length >= 3 ? chordName(notes) : null;
+		const alone = tones.length >= 3 ? chordName(notes) : null;
+		// named over the bass another track plays under it, as a musician hears it (a rootless Am9
+		// over the bass's A once read as Cmaj7)
+		const bass = tones.length >= 3 ? under(step, notes[0]) : null;
+		const over = bass ? chordName([bass.note, ...notes]) : null;
+		const chord = over ?? alone;
 		if (!chord) return notes.map(noteName).join('+');
 		// the root as the key spells it ("Db", not "C#", in F minor)
 		const name = respellChord(ascii(chord.name), names);
-		if (name !== lastChord) chords.push(`step ${step}: ${name} (${tones.join(' ')})`);
+		const with_ = over && bass ? ` over T${bass.track}'s ${names[bass.note % 12]}` : '';
+		if (name !== lastChord) chords.push(`step ${step}: ${name} (${tones.join(' ')}${with_})`);
 		lastChord = name;
 		return name;
 	};
-	const bars = Array.from({ length: p.bars }, (_, bar) =>
-		Array.from({ length: 4 }, (_, beat) =>
-			Array.from({ length: 4 }, (_, i) => slot(bar * 16 + beat * 4 + i + 1)).join(' ')
-		).join(' | ')
-	);
+	const bars = meterBars(p.length, meter, (step) => slot(step), ' ', ' | ');
 	return {
-		...(found ? { key: found.clear ? found.key : `${found.key} (a guess)` } : {}),
+		...(meant
+			? { key: `${meant.label} (as written)` }
+			: found
+				? { key: found.clear ? found.key : `${found.key} (a guess)` }
+				: {}),
 		bars,
 		...(chords.length ? { chords } : {})
 	};

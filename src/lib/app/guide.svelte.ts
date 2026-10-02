@@ -27,6 +27,50 @@ export interface GuideStep {
 
 export type GuideStatus = 'idle' | 'running' | 'done';
 
+/** Where a turn stands against the value it leads to: which way, and about how far. */
+export interface TurnHint {
+	readonly label: string;
+	readonly now: number;
+	readonly target: number;
+	readonly way: 'clockwise' | 'counter-clockwise';
+	/** About this many detents (one a step on a 0–99 lane). */
+	readonly detents: number;
+}
+
+/** A screen reading's numbers by their labels: "amp envelope: attack 00, decay 25" → decay: 25. */
+function readings(screen: string): Record<string, number> {
+	const body = screen.includes(': ') ? screen.slice(screen.indexOf(': ') + 2) : screen;
+	const out: Record<string, number> = {};
+	for (const part of body.split(', ')) {
+		const m = /^(.*?)\s([+-]?\d+(?:\.\d+)?)\b/.exec(part.trim());
+		if (m && !(m[1] in out)) out[m[1]] = Number(m[2]);
+	}
+	return out;
+}
+
+/**
+ * For a turn to a value: the value it moves, where it reads now and which way to go, from the
+ * screens (`from`, the step's start, gives the encoder's sense). A user who overshot once had only
+ * the planned "6 detents counter-clockwise", which no longer held.
+ */
+export function turnHint(step: GuideStep, shows: string, from: string | null): TurnHint | null {
+	if (!step.clicks || step.leave !== undefined) return null;
+	const now = readings(shows);
+	const target = readings(step.screen);
+	const start = from ? readings(from) : null;
+	for (const [label, want] of Object.entries(target)) {
+		const at = now[label];
+		if (at === undefined || at === want) continue;
+		const began = start?.[label];
+		// +1: clockwise raises the number (the plan's own turn tells, where it moved it)
+		const sense =
+			began !== undefined && began !== want ? Math.sign(step.clicks) * Math.sign(want - began) : 1;
+		const way = Math.sign(want - at) * sense > 0 ? 'clockwise' : 'counter-clockwise';
+		return { label, now: at, target: want, way, detents: Math.round(Math.abs(want - at)) };
+	}
+	return null;
+}
+
 export interface ReplicaGuideOptions {
 	readonly replica: ReplicaState;
 	/** What the replica's screen shows now, in the simulator's words. */
@@ -46,6 +90,10 @@ export class ReplicaGuide {
 	/** The step to do now (steps.length once all are done). */
 	index = $state(0);
 	status: GuideStatus = $state('idle');
+	/** What the replica's screen reads now, while a walkthrough runs. */
+	shows = $state('');
+	/** What it read as the walkthrough started (the first step's own start). */
+	#started = '';
 
 	readonly #replica: ReplicaState;
 	readonly #read: () => string;
@@ -68,6 +116,14 @@ export class ReplicaGuide {
 		return this.status === 'running' ? (this.steps[this.index] ?? null) : null;
 	}
 
+	/** For a turn step: which way to go from where its value reads now, or null. */
+	get turn(): TurnHint | null {
+		const step = this.current;
+		if (!step) return null;
+		const from = this.index > 0 ? (this.steps[this.index - 1]?.screen ?? null) : this.#started;
+		return turnHint(step, this.shows, from);
+	}
+
 	/** Where the walkthrough stands, for the agent (it once could not tell how far the user got). */
 	progress(): { goal: string; done: string[]; total: number; next: string | null } | null {
 		if (this.status !== 'running') return null;
@@ -86,6 +142,7 @@ export class ReplicaGuide {
 		this.goal = goal;
 		this.steps = steps;
 		this.index = 0;
+		this.#started = this.#read();
 		this.status = 'running';
 		// after every input, once the simulator (another observer) has taken it
 		this.#stopObserving = this.#replica.observe(() => queueMicrotask(() => this.#check()));
@@ -125,6 +182,7 @@ export class ReplicaGuide {
 	#check(): void {
 		if (this.status !== 'running') return;
 		const shows = this.#read();
+		this.shows = shows;
 		const music = this.#music?.() ?? null;
 		const done = (step: GuideStep) =>
 			step.screen === shows && (step.music === undefined || music === null || step.music === music);

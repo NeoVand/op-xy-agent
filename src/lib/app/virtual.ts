@@ -19,7 +19,7 @@ import { musicMark } from '$lib/sim/music-mark';
 import { lockParam } from '$lib/sim/areas/sequencer/locks';
 import { buildFrame } from '$lib/sim/frames';
 import { describeFrame } from '$lib/sim/screen/render';
-import { FIRST_NOTE, KEYS, sampleFile } from '$lib/sim/areas/sample/state';
+import { FIRST_NOTE, KEYS, sampleFile, soundName } from '$lib/sim/areas/sample/state';
 import { loadEngineSound } from '$lib/sim/areas/system/presets';
 import {
 	planPageValue,
@@ -31,9 +31,11 @@ import {
 	planToSetting
 } from '$lib/sim/navigator';
 import {
+	BAR,
 	captureScene,
 	chooseScene,
 	lengthOf,
+	sceneLength,
 	lengthSettings,
 	playPattern,
 	startSong,
@@ -49,8 +51,10 @@ import {
 	MAX_NOTES,
 	MAX_PATTERNS,
 	MAX_STEPS,
+	STEP_COMPONENTS,
 	STEPS_PER_BAR,
 	TRACK_SCALES,
+	type StepComponentKind,
 	currentPattern,
 	emptyPattern,
 	emptyStep,
@@ -101,9 +105,7 @@ export class VirtualOpxyError extends Error {
 
 const clampInt = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(v)));
 
-/** A drum key's sound from its file's name: "kick 1.wav" → "kick 1", a made kit's "53 kick.wav" → "kick". */
-export const soundName = (file: string) =>
-	file.replace(/\.(wav|aiff?)$/i, '').replace(/^\d+\s+/, '');
+export { soundName };
 
 /** Track 1–16 → the simulator's index 0–15 (0–7 instrument, 8–15 auxiliary). */
 function trackIndex(track: number): number {
@@ -150,11 +152,17 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				};
 			})
 		);
+		const components = p.steps
+			.slice(0, MAX_STEPS)
+			.flatMap((step, i) =>
+				step.components.map((c) => ({ step: i + 1, kind: c.kind, value: c.value }))
+			);
 		return {
 			track,
 			pattern: index + 1,
 			patterns: seq.patterns.length,
 			current: index === seq.current,
+			...(components.length ? { components } : {}),
 			bars: p.bars,
 			length: p.length,
 			scale: p.scale,
@@ -253,10 +261,18 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		const song = a.songs[a.song];
 		// a song of one entry is that scene round and round
 		const plays = song.order.length > 1 && (a.playing || !a.held) ? 'song' : 'scene';
+		const length = Math.max(1, sceneLength(s));
+		const at = s.transport.playing
+			? {
+					bar: Math.floor((s.transport.position % length) / BAR[signature]) + 1,
+					...(a.playing ? { entry: a.position + 1 } : {})
+				}
+			: undefined;
 		return {
 			scene: a.scene + 1,
 			plays,
 			...(a.queued !== null ? { queued: a.queued + 1 } : {}),
+			...(at ? { at } : {}),
 			scenes,
 			song: { order: song.order.map((n) => n + 1), loop: song.loop }
 		};
@@ -301,6 +317,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			const sound = options.sound;
 			return {
 				bpm: s.tempo.bpm,
+				signature: lengthSettings(s).signature,
 				playing: s.transport.playing,
 				selectedTrack: s.active === 'auxiliary' ? s.auxTrack + 9 : s.track + 1,
 				tracks,
@@ -431,6 +448,21 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					);
 				}
 			}
+			for (const c of write.components ?? []) {
+				if (!Number.isInteger(c.step) || c.step < 1 || c.step > steps) {
+					throw new VirtualOpxyError(`step ${c.step} is outside ${bars} bar(s) (1–${steps})`);
+				}
+				if (!STEP_COMPONENTS.some((k) => k.kind === c.kind)) {
+					throw new VirtualOpxyError(
+						`no step component "${c.kind}": ${STEP_COMPONENTS.map((k) => k.kind).join(', ')}`
+					);
+				}
+				if (!Number.isInteger(c.value) || c.value < 0 || c.value > 9) {
+					throw new VirtualOpxyError(
+						`a step component's value is a digit, 0–9 (${c.kind} ${c.value})`
+					);
+				}
+			}
 			ensurePatterns(s, t, pattern);
 			const target = trackSequence(s, t).patterns[pattern - 1];
 			target.steps = Array.from({ length: MAX_STEPS }, emptyStep);
@@ -448,6 +480,14 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					offset: 0,
 					ownLength: true
 				});
+			}
+			for (const c of write.components ?? []) {
+				const step = target.steps[c.step - 1];
+				const kind = c.kind as StepComponentKind;
+				// one of each kind a step: a second replaces the first's value
+				const had = step.components.find((x) => x.kind === kind);
+				if (had) had.value = c.value;
+				else step.components.push({ kind, value: c.value });
 			}
 			// the scene on now plays the patterns its tracks play: with an arrangement, switching the
 			// track over would rewrite that scene (it once moved a scene's track onto the pattern an

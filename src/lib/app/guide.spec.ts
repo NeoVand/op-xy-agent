@@ -9,7 +9,7 @@ import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { describeFrame } from '$lib/sim/screen/render';
 import { FakeTime } from '../../../test/fakes/fake-time';
 import { musicMark } from '$lib/sim/music-mark';
-import { GUIDE_DONE_MS, ReplicaGuide } from './guide.svelte';
+import { GUIDE_DONE_MS, ReplicaGuide, turnHint } from './guide.svelte';
 import { createVirtualOpxy } from './virtual';
 
 function setup() {
@@ -166,5 +166,29 @@ describe('the replica walkthrough', () => {
 		// stopped: input no longer moves it
 		await tap(replica, 'track.3');
 		expect(guide.index).toBe(0);
+	});
+});
+
+describe('turnHint', () => {
+	const step = {
+		keys: 'turn E2',
+		clicks: -6,
+		screen: 'amp envelope: attack 00, decay 25, sustain 38, release 79'
+	};
+	const from = 'amp envelope: attack 00, decay 31, sustain 38, release 79';
+	it('says which way from where the value reads, and comes back after an overshoot', () => {
+		expect(turnHint(step, from, from)).toMatchObject({
+			label: 'decay',
+			now: 31,
+			target: 25,
+			way: 'counter-clockwise',
+			detents: 6
+		});
+		const past = 'amp envelope: attack 00, decay 99, sustain 38, release 79';
+		expect(turnHint(step, past, from)).toMatchObject({ way: 'counter-clockwise', detents: 74 });
+		const under = 'amp envelope: attack 00, decay 10, sustain 38, release 79';
+		expect(turnHint(step, under, from)).toMatchObject({ way: 'clockwise', detents: 15 });
+		// there: nothing to say
+		expect(turnHint(step, step.screen, from)).toBeNull();
 	});
 });

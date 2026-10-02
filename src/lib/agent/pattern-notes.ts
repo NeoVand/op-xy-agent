@@ -101,13 +101,15 @@ export function compactNotes(text: string): WrittenNote[] {
  * others 4'); null when its spacing does not say. An agent once learned only that a 64-step line
  * had one mark too many, somewhere.
  */
-export function gridMiscount(line: string): string | null {
+export function gridMiscount(line: string, barSteps = 16): string | null {
 	const bars = line
 		.split('|')
 		.map((b) => b.replace(/\s/g, ''))
 		.filter((b) => b.length > 0);
 	if (bars.length > 1) {
-		const off = bars.flatMap((b, i) => (b.length !== 16 ? [`bar ${i + 1} has ${b.length}`] : []));
+		const off = bars.flatMap((b, i) =>
+			b.length !== barSteps ? [`bar ${i + 1} has ${b.length}`] : []
+		);
 		if (off.length > 0) return off.join(', ');
 	}
 	const groups = line

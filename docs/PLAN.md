@@ -40,6 +40,12 @@
   synced range ("sync 16", "1 bar"); drum marks are absolute (X 115+, o 75 and under); a pattern's
   key counts the other parts and the scale; calls after a change in one batch wait for it (a status
   read ran mid-animation); player, scene and pattern-switch changes are named.
+- **Probe round three (2026-10-02), 17 new scenarios (`probe-scenarios-3.json`; a `follow` step
+  presses what a walkthrough lights):** the round-two fixes held. New: `keep_take` (a take named
+  in words), the planner reaches the project settings (time signature), write_pattern's `bar`,
+  grids by the pattern's length, later change lists give only what is new, the walkthrough's
+  progress reaches the agent, a whole-mix listen points a duck to a per-track listen, tremolo and
+  synced LFO speed read as their pages are, minor keys spell their leading note.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).
