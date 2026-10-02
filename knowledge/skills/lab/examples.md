@@ -72,3 +72,35 @@ const chosen = tries.find((t) => t.hz >= 1500) ?? tries[tries.length - 1];
 lab.commit(chosen.f, `brighter pad, cutoff ${chosen.cutoff}`);
 return { was: page, heard: tries.map(({ cutoff, hz }) => ({ cutoff, hz })), chose: chosen.cutoff };
 ```
+
+Humanised hats in every scene: each hit's velocity nudged inside its mark's band, so accents stay
+accents and soft hits stay soft, each pattern once however many scenes play it, and a few values
+before and after returned so the answer can say what changed:
+
+```js
+const f = lab.fork();
+const hats = (notes) => notes.filter((n) => n.sound?.includes('hat'));
+// X is 115 and over, o 75 and under: a nudge stays inside the band its hit is in
+const band = (v) => (v >= 115 ? [115, 127] : v <= 75 ? [30, 75] : [76, 114]);
+const seen = new Set();
+const sample = [];
+for (const { patterns } of f.readArrangement().scenes) {
+	const pattern = patterns[0]; // track 1's pattern in this scene
+	if (seen.has(pattern)) continue;
+	seen.add(pattern);
+	const p = f.readPattern(1, pattern);
+	const notes = p.notes.map((n, i) => {
+		if (!n.sound?.includes('hat')) return n;
+		const [lo, hi] = band(n.velocity);
+		const nudge = ((i * 37) % 13) - 6; // repeatable, -6…6
+		return { ...n, velocity: Math.min(hi, Math.max(lo, n.velocity + nudge)) };
+	});
+	f.writePattern(1, { pattern, bars: p.bars, length: p.length, notes });
+	const v = (list) =>
+		hats(list)
+			.slice(0, 6)
+			.map((n) => n.velocity);
+	sample.push({ pattern, before: v(p.notes), after: v(notes) });
+}
+return { changes: lab.commit(f, 'humanised hats').changes, sample };
+```

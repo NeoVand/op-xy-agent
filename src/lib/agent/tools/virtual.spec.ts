@@ -203,14 +203,135 @@ describe('write_pattern', () => {
 		const hats = [1, 3, 5, 7, 9, 11, 13, 15].map((step) => ({
 			step,
 			note: 61,
-			velocity: step % 4 === 1 ? 110 : 60
+			velocity: step % 4 === 1 ? 120 : 60
 		}));
 		const written = json(await run(writePatternTool, { track: 1, notes: hats }));
 		expect(written.written.grid).toEqual({ 'closed hat 1': 'X.o. X.o. X.o. X.o.' });
+		// and a grid written with marks reads back with the same marks, a line of soft hats too
+		const marks = { 'closed hat 1': 'o.o. o.o. o.o. o.o.', 'kick 1': 'X... x... X... x...' };
+		const back = json(await run(writePatternTool, { track: 1, velocity: 85, grid: marks }));
+		expect(back.written.grid).toEqual(marks);
+	});
+});
+
+describe('write_pattern in an arrangement', () => {
+	it('leaves the scenes as they are, and says which play the pattern', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, { track: 1, pattern: 1, notes: '1:53' });
+		await run(writePatternTool, { track: 1, pattern: 2, notes: '5:53' });
+		await run(writeArrangementTool, {
+			scenes: [
+				{ scene: 1, patterns: [{ track: 1, pattern: 2 }] },
+				{ scene: 2, patterns: [{ track: 1, pattern: 1 }] }
+			],
+			song: { scenes: [1, 2], loop: true }
+		});
+		// rewriting pattern 1 (scene 2's) while scene 1 is on: scene 1 still plays pattern 2
+		const result = await run(writePatternTool, { track: 1, pattern: 1, notes: '1:53 9:53' });
+		expect(virtual.readArrangement().scenes.map((s) => s.patterns[0])).toEqual([2, 1]);
+		expect(json(result).note).toMatch(
+			/The scenes are as they were: this pattern plays in scene 2\./
+		);
+		expect(json(result).written.current).toBe(false);
+		const spare = await run(writePatternTool, { track: 1, pattern: 3, notes: '1:53' });
+		expect(json(spare).note).toMatch(
+			/none plays this pattern yet: write_arrangement puts it in one/
+		);
+	});
+
+	it('transposes a pattern as it is, and refuses to on drums', async () => {
+		const { sim, run } = setup();
+		await run(writePatternTool, { track: 3, bars: 2, velocity: 80, notes: '1:A2:4 17:C3:2' });
+		const down = await run(writePatternTool, { track: 3, transpose: -12 });
+		expect(down.isError).toBeFalsy();
+		const p = currentPattern(sim.state.tracks[2].sequence);
+		expect(p.bars).toBe(2);
+		expect(p.steps[0].notes.map((n) => [n.note, n.velocity, n.length])).toEqual([[33, 80, 4]]);
+		expect(p.steps[16].notes.map((n) => n.note)).toEqual([36]);
+		expect(json(down).sound).toBe('prism (bass/shoulder)');
+		const drums = await run(writePatternTool, { track: 1, transpose: 2 });
+		expect(drums).toMatchObject({ isError: true, summary: 'drums do not transpose' });
+		const far = await run(writePatternTool, { track: 3, transpose: -48 });
+		expect(far).toMatchObject({ isError: true, summary: 'notes out of range' });
+	});
+});
+
+describe('write_pattern on drums', () => {
+	it('says where a closed and an open hat hit on one step', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 1,
+				pattern: 1,
+				grid: { '61': 'x.x. x.x. x.x. x.x.', '63': '..x. ..x. .... ....' }
+			})
+		);
+		expect(result.note).toMatch(/A closed and an open hat both hit on steps 3, 7:/);
+		const apart = json(
+			await run(writePatternTool, {
+				track: 1,
+				pattern: 1,
+				grid: { '61': 'x... x... x... x...', '63': '..x. ..x. ..x. ..x.' }
+			})
+		);
+		expect(apart.note).not.toMatch(/both hit/);
 	});
 });
 
 describe('write_arrangement', () => {
+	it('rests a track in a scene on an empty pattern (0)', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, { track: 3, pattern: 1, notes: '1:A2:4' });
+		const result = await run(writeArrangementTool, {
+			scenes: [
+				{ scene: 1, patterns: [{ track: 3, pattern: 0 }] },
+				{ scene: 2, patterns: [{ track: 3, pattern: 1 }] }
+			]
+		});
+		expect(result.isError).toBeFalsy();
+		// a new empty pattern 2 for the rest, and scene 2 plays the bass
+		const scenes = virtual.readArrangement().scenes;
+		expect(scenes.map((s) => s.patterns[2])).toEqual([2, 1]);
+		expect(virtual.readPattern(3, 2).notes).toEqual([]);
+		// the next rest reuses it
+		await run(writeArrangementTool, {
+			scenes: [{ scene: 3, patterns: [{ track: 3, pattern: 0 }] }]
+		});
+		expect(virtual.readArrangement().scenes[2].patterns[2]).toBe(2);
+	});
+
+	it('changes one track of a scene, the others keeping theirs', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, { track: 1, pattern: 2, notes: [{ step: 1, note: 53 }] });
+		await run(writePatternTool, { track: 3, pattern: 2, notes: '1:A2:4' });
+		await run(writeArrangementTool, {
+			scenes: [
+				{ scene: 1, patterns: [{ track: 1, pattern: 1 }] },
+				{
+					scene: 2,
+					patterns: [
+						{ track: 1, pattern: 2 },
+						{ track: 3, pattern: 2 }
+					]
+				}
+			]
+		});
+		await run(writeArrangementTool, {
+			scenes: [{ scene: 2, patterns: [{ track: 1, pattern: 1 }] }]
+		});
+		const two = virtual.readArrangement().scenes[1].patterns;
+		expect([two[0], two[2]]).toEqual([1, 2]);
+		// cleared first, a scene starts from pattern 1 everywhere
+		await run(writeArrangementTool, {
+			scenes: [
+				{ scene: 2, patterns: null },
+				{ scene: 2, patterns: [{ track: 1, pattern: 2 }] }
+			]
+		});
+		const fresh = virtual.readArrangement().scenes[1].patterns;
+		expect([fresh[0], fresh[2]]).toEqual([2, 1]);
+	});
+
 	it('sets scenes and a song, which then plays scene by scene', async () => {
 		const { sim, run } = setup();
 		await run(writePatternTool, { track: 1, pattern: 1, notes: [{ step: 1, note: 53 }] });
@@ -222,7 +343,19 @@ describe('write_arrangement', () => {
 			],
 			song: { scenes: [1, 2, 1], loop: false }
 		});
-		expect(json(result).arrangement.song).toEqual({ order: [1, 2, 1], loop: false });
+		expect(json(result).arrangement.song).toEqual({
+			order: [1, 2, 1],
+			loop: false,
+			length: '3 bars, 0:06 at 120 bpm, then it stops'
+		});
+		expect(json(result).arrangement.scenes).toEqual({
+			'scene 1': 'every track p1 (1 bar)',
+			'scene 2': 'T1 p2; the rest p1 (1 bar)'
+		});
+		// the loop alone: an empty order keeps the order
+		const loop = json(await run(writeArrangementTool, { song: { scenes: [], loop: true } }));
+		expect(loop.arrangement.song).toMatchObject({ order: [1, 2, 1], loop: true });
+		await run(writeArrangementTool, { song: { scenes: [1, 2, 1], loop: false } });
 		expect(json(result).addedEmpty).toBeUndefined();
 		expect(sim.state.tracks[0].sequence.current).toBe(0); // scene 1 is the current one
 		await run(transportTool, { action: 'play' });
@@ -230,6 +363,33 @@ describe('write_arrangement', () => {
 		for (let i = 0; i < 21; i++) sim.advance(100); // a bar at 120 BPM is 2 s
 		expect(sim.state.areas.arrange.scene).toBe(1); // after one bar: scene 2
 		expect(sim.state.tracks[0].sequence.current).toBe(1);
+	});
+
+	it('plays one scene from its top, round and round, with transport play and a scene', async () => {
+		const { sim, virtual, run } = setup();
+		await run(writePatternTool, { track: 1, pattern: 1, notes: [{ step: 1, note: 53 }] });
+		await run(writePatternTool, { track: 1, pattern: 2, notes: [{ step: 5, note: 54 }] });
+		await run(writeArrangementTool, {
+			scenes: [
+				{ scene: 1, patterns: [{ track: 1, pattern: 1 }] },
+				{ scene: 2, patterns: [{ track: 1, pattern: 2 }] }
+			],
+			song: { scenes: [1, 2], loop: true }
+		});
+		await run(transportTool, { action: 'play' });
+		sim.advance(500);
+		const result = json(await run(transportTool, { action: 'play', scene: 2 }));
+		expect(result).toMatchObject({ playState: 'playing', from: 'scene 2, looping' });
+		expect(virtual.readArrangement()).toMatchObject({ scene: 2, plays: 'scene' });
+		expect(sim.state.transport.position).toBe(0);
+		for (let i = 0; i < 41; i++) sim.advance(100); // two bars: still scene 2
+		expect(sim.state.areas.arrange.scene).toBe(1);
+		// play alone runs the song again
+		await run(transportTool, { action: 'play' });
+		expect(virtual.readArrangement()).toMatchObject({ scene: 1, plays: 'song' });
+		const missing = await run(transportTool, { action: 'play', scene: 7 });
+		expect(missing.isError).toBe(true);
+		expect(String(missing.content)).toMatch(/scene 7 holds nothing yet/);
 	});
 
 	it('says which patterns a scene added empty', async () => {
@@ -352,8 +512,17 @@ describe('write_pattern, short', () => {
 		const p = currentPattern(sim.state.tracks[0].sequence);
 		expect(p.steps[0].notes.map((n) => n.note)).toEqual([53]);
 		expect(p.steps[2].notes.map((n) => n.note)).toEqual([62]);
-		// both lines cover one bar of the pattern's two: said, so a miscount shows
-		expect(json(result).note).toMatch(/not 32 steps long .*kick has 16, closed hat 2 has 16/);
+		// a bar-long line in a two-bar pattern repeats to fill it
+		expect(p.steps[16].notes.map((n) => n.note)).toEqual([53]);
+		expect(p.steps[18].notes.map((n) => n.note)).toEqual([62]);
+		expect(json(result).note).toBe('On the replica.');
+		// a line that neither fills nor divides it is said, so a miscount shows
+		const short = await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			grid: { kick: 'x... '.repeat(7) + 'x.' }
+		});
+		expect(json(short).note).toMatch(/neither fill the pattern's 32 steps .*kick has 30/);
 		// a made kit's "kick", written as the new project's "kick 1"
 		sim.state.areas.sample.tracks[0].keys[0] = {
 			...sim.state.areas.sample.tracks[0].keys[0]!,

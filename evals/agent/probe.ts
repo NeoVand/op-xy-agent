@@ -502,10 +502,12 @@ export async function main(args: readonly string[]): Promise<void> {
 		headless: !flag('headed'),
 		args: ['--autoplay-policy=no-user-gesture-required']
 	});
-	let session: Session | null = null;
+	/** Conversations by name, each in a browser context of its own (its own storage and key). */
+	const sessions = new Map<string, Session>();
 
-	async function open(): Promise<Session> {
-		const dir = join(root, new Date().toISOString().replace(/[:.]/g, '-'));
+	async function open(name: string): Promise<Session> {
+		const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+		const dir = join(root, name === 'main' ? stamp : `${stamp}-${name.replace(/[^\w-]/g, '_')}`);
 		mkdirSync(dir, { recursive: true });
 		const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 		await context.addInitScript(
@@ -519,13 +521,13 @@ export async function main(args: readonly string[]): Promise<void> {
 		const s: Session = { dir, context, page, exchanges: [], pageErrors: [], inFlight: 0, turns: 0 };
 		await context.route(
 			'https://api.anthropic.com/**',
-			proxy(() => session, key)
+			proxy(() => s, key)
 		);
 		page.on('pageerror', (error) => s.pageErrors.push(`pageerror: ${error.message}`));
 		page.on('console', (message) => {
 			if (message.type() === 'error') s.pageErrors.push(`console: ${message.text().slice(0, 400)}`);
 		});
-		session = s;
+		sessions.set(name, s);
 		await page.goto(site);
 		await page.getByLabel('message to the agent').waitFor({ state: 'visible', timeout: 60_000 });
 		await page.waitForFunction(
@@ -543,7 +545,17 @@ export async function main(args: readonly string[]): Promise<void> {
 	}
 
 	/** Sends a message and waits for the turn to end, approving what the agent asks. */
-	async function say(s: Session, text: string, timeoutMs: number): Promise<TurnReport> {
+	async function say(
+		s: Session,
+		text: string,
+		timeoutMs: number,
+		files: readonly string[] = []
+	): Promise<TurnReport> {
+		// files go in through the composer's picker, as a user's do
+		if (files.length > 0) {
+			await s.page.locator('form.composer input[type=file]').setInputFiles([...files]);
+			await sleep(600);
+		}
 		const field = s.page.getByLabel('message to the agent');
 		await field.fill(text);
 		const from = s.exchanges.length;
@@ -671,7 +683,7 @@ export async function main(args: readonly string[]): Promise<void> {
 		return report;
 	}
 
-	session = await open();
+	await open('main');
 	const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
 		const reply = (status: number, value: unknown) => {
 			res.writeHead(status, { 'content-type': 'application/json' });
@@ -688,12 +700,14 @@ export async function main(args: readonly string[]): Promise<void> {
 			return reply(400, { error: 'bad json' });
 		}
 		try {
-			const s = session ?? (session = await open());
+			const name = typeof body.session === 'string' && body.session ? body.session : 'main';
+			const s = sessions.get(name) ?? (await open(name));
 			switch (req.url) {
 				case '/say': {
 					const text = String(body.text ?? '').trim();
 					if (!text) return reply(400, { error: 'nothing to say' });
-					return reply(200, await say(s, text, Number(body.timeoutMs ?? 15 * 60_000)));
+					const files = Array.isArray(body.files) ? body.files.map(String) : [];
+					return reply(200, await say(s, text, Number(body.timeoutMs ?? 15 * 60_000), files));
 				}
 				case '/press': {
 					const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
@@ -713,8 +727,13 @@ export async function main(args: readonly string[]): Promise<void> {
 				}
 				case '/reset': {
 					await s.context.close();
-					session = await open();
-					return reply(200, { dir: session.dir });
+					sessions.delete(name);
+					return reply(200, { dir: (await open(name)).dir });
+				}
+				case '/close': {
+					await s.context.close();
+					sessions.delete(name);
+					return reply(200, { closed: name });
 				}
 				case '/info':
 					return reply(200, {

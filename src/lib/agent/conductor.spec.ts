@@ -116,6 +116,7 @@ describe('conductor: requests and streaming', () => {
 		'plan_steps',
 		'run_lab',
 		'skill',
+		'take_back',
 		'write_pattern'
 	];
 

@@ -147,6 +147,14 @@ export const deviceStatusTool = defineTool({
 			clock: { deviceSendsClock: s.clockOut, measuredBpm: s.measuredBpm },
 			sentState: { tempoBpm: s.tempoSent, selectedTrack: s.selectedTrack, mutes: s.mutes },
 			virtual: ctx.env.virtual?.status() ?? null,
+			// what sending the replica's project needs (an agent could not tell before trying)
+			...(ctx.env.projects
+				? {
+						sendProject: ctx.env.projects.usb
+							? 'send_project adds the replica as a new project over USB: the OP-XY must be plugged in and in MTP mode (com → M4), which only the user can switch on; the app learns whether it is when it tries.'
+							: 'This browser cannot reach USB devices (no WebUSB), so the replica’s project cannot be sent from here.'
+					}
+				: {}),
 			notes: [
 				'sentState is what this app last sent; the OP-XY never reports tempo edits, mutes or track selection made by hand.',
 				s.clockOut
@@ -173,7 +181,7 @@ interface TransportSnapshot {
 /** Where the replica plays from: its song from the first scene, or the scene it loops. */
 function playingFrom(virtual: VirtualOpxy): string {
 	const a = virtual.readArrangement();
-	if (a.song.order.length > 1) {
+	if (a.plays === 'song') {
 		const order =
 			a.song.order.length > 16
 				? `${a.song.order.slice(0, 16).join(' ')} …`
@@ -190,9 +198,15 @@ export const transportTool = defineTool({
 	approval: 'auto',
 	device: true,
 	description:
-		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the replica on screen: play runs its song from the first scene (when the song has more than one entry), and while it plays starts it again from the top, as the play key does; the result says where it plays from.',
+		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the replica on screen: play runs its song from the first scene (when the song has more than one entry), and while it plays starts it again from the top, as the play key does; the result says where it plays from. play with scene (the replica only) starts that scene from its top and loops it: the way to hear one part of a song ("from where the melody comes in").',
 	input: z.object({
-		action: z.enum(['play', 'stop']).describe('play starts the sequencer, stop stops it')
+		action: z.enum(['play', 'stop']).describe('play starts the sequencer, stop stops it'),
+		scene: z
+			.int()
+			.min(1)
+			.max(99)
+			.optional()
+			.describe('With play, on the replica: start this scene from its top and loop it')
 	}),
 	snapshot(_input, env): TransportSnapshot {
 		const virtual = virtualTarget(env);
@@ -223,10 +237,15 @@ export const transportTool = defineTool({
 	async run(input, ctx) {
 		const where = whereTo(ctx.env);
 		if (isResult(where)) return where;
+		const scene = input.action === 'play' ? input.scene : undefined;
 		if ('virtual' in where) {
 			const virtual = where.virtual;
 			const was = virtual.status().playing;
-			virtual.transport(input.action);
+			try {
+				virtual.transport(input.action, scene !== undefined ? { scene } : {});
+			} catch (error) {
+				return errorResult(error instanceof Error ? error.message : String(error), 'not played');
+			}
 			const playState = virtual.status().playing ? 'playing' : 'stopped';
 			const again = input.action === 'play' && was;
 			return jsonResult(
@@ -234,13 +253,27 @@ export const transportTool = defineTool({
 					target: 'virtual',
 					playState,
 					...(playState === 'playing' ? { from: playingFrom(virtual) } : {}),
-					...(again
-						? { note: 'It was playing: it started again from the top, as the play key does.' }
-						: {}),
+					...(scene !== undefined
+						? {
+								note: `Scene ${scene} plays from its top, round and round; play without a scene runs the song again.`
+							}
+						: again
+							? { note: 'It was playing: it started again from the top, as the play key does.' }
+							: {}),
 					...virtualNote(ctx.env)
 				},
-				again ? 'played again from the top' : `${playState} on the replica`,
+				scene !== undefined
+					? `scene ${scene} from its top`
+					: again
+						? 'played again from the top'
+						: `${playState} on the replica`,
 				{ applied: true, after: playState }
+			);
+		}
+		if (scene !== undefined) {
+			return errorResult(
+				`MIDI cannot pick a scene on the OP-XY, so nothing was sent. To start scene ${scene}, the user picks it in arrange and presses play: plan_steps with area arrange, param scene, value ${scene} and guide shows them the keys.`,
+				'no scene over midi'
 			);
 		}
 		const stack = where.device;

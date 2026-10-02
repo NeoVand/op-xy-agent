@@ -50,8 +50,8 @@ export interface VirtualPattern {
 	readonly pattern: number;
 	/** Patterns the track has. */
 	readonly patterns: number;
-	/** Whether this pattern is the one the track plays. */
-	readonly playing: boolean;
+	/** Whether this pattern is the track's current one (it plays when the replica plays). */
+	readonly current: boolean;
 	readonly bars: number;
 	/** Steps that play (the last bar may be shorter). */
 	readonly length: number;
@@ -79,12 +79,24 @@ export interface PatternWrite {
 export interface VirtualScene {
 	readonly scene: number;
 	readonly patterns: readonly number[];
+	/**
+	 * How long the scene plays before a song moves on, in bars: its longest pattern with notes, by
+	 * the project's scene length (a pattern lasts its steps times its track scale).
+	 */
+	readonly bars: number;
 }
 
 /** Scenes and the song. */
 export interface VirtualArrangement {
 	/** The scene the tracks play now. */
 	readonly scene: number;
+	/**
+	 * What play runs: the song in its order, or one scene round and round (a scene was picked, which
+	 * holds it, or the song has one entry). While a song plays it is `song`.
+	 */
+	readonly plays: 'song' | 'scene';
+	/** A scene waiting for the current one to end (shift + play, then the scene). */
+	readonly queued?: number;
 	/** Scenes that hold something, in order. */
 	readonly scenes: readonly VirtualScene[];
 	/** The song's scene order (scene numbers) and whether it loops. */
@@ -111,6 +123,8 @@ export interface VirtualTrack {
 	readonly current: number;
 	/** Notes in the pattern it plays. */
 	readonly notes: number;
+	/** Notes in each of its patterns, pattern 1 first (0: an empty pattern, where it rests). */
+	readonly byPattern: readonly number[];
 	readonly muted: boolean;
 }
 
@@ -180,6 +194,8 @@ export interface RehearsedStep {
 	readonly screen: string;
 	/** The replica's music after it, where a press changes that and not the screen. */
 	readonly music?: string;
+	/** Done once the screen no longer reads this (a turn with no value to reach). */
+	readonly leave?: string;
 }
 
 /** The virtual OP-XY. */
@@ -187,9 +203,10 @@ export interface VirtualOpxy {
 	status(): VirtualStatus;
 	/**
 	 * Starts (the song, when it has more than one entry) or stops the transport; play while it
-	 * plays starts again from the top, as the play key does.
+	 * plays starts again from the top, as the play key does. With `scene`, play starts that scene
+	 * from its top and loops it (stopped first, then picked, as a person would).
 	 */
-	transport(action: 'play' | 'stop'): void;
+	transport(action: 'play' | 'stop', options?: { readonly scene?: number }): void;
 	setTempo(bpm: number): void;
 	/**
 	 * Switches the metronome's click on or off (the tempo page's `click E4`); on at level 0 also

@@ -557,9 +557,13 @@ export function summarizeTracks(
 	const lines: string[] = [];
 	const tracks = takes.map((take) => {
 		const a = take.analysis;
-		// heard alone, a part need not carry the pulse, and drums are mostly the gaps between hits
+		// heard alone, a part need not carry the pulse, and drums are mostly the gaps between hits;
+		// a pitched part's onsets come from soft attacks and long notes, too blurred to time it by
 		const flags = flagsOf(a).filter(
-			(f) => f !== 'no-pulse' && !(take.percussive && f === 'mostly-silent')
+			(f) =>
+				f !== 'no-pulse' &&
+				!(take.percussive && f === 'mostly-silent') &&
+				!(!take.percussive && f === 'loose')
 		);
 		const label = `T${take.track} (${take.name})`;
 		if (a.silence.silent) {

@@ -232,7 +232,7 @@ export interface PatternWrite {
 
 /** A fork's status: the virtual OP-XY's, without the browser's sound (a fork makes none). */
 export type ForkStatus = Omit<VirtualStatus, 'sound'>;
-/** A pattern as it stands: track, pattern, patterns (on the track), playing, bars, length, scale, notes. */
+/** A pattern as it stands: track, pattern, patterns (on the track), current, bars, length, scale, notes. */
 export type Pattern = VirtualPattern;
 /** Scenes (each the pattern of every track, index 0 = track 1) and the song (order, loop). */
 export type Arrangement = VirtualArrangement;
@@ -248,10 +248,17 @@ export interface Fork {
 	status(): ForkStatus;
 	/** A pattern (default: the one the track plays). */
 	readPattern(track: number, pattern?: number): Pattern;
-	/** Writes a pattern and makes it the one the track plays. */
+	/**
+	 * Writes a pattern. With one scene it becomes the one the track plays; once scenes are set,
+	 * what plays and every scene stay as they were (writeArrangement puts it in a scene).
+	 */
 	writePattern(track: number, write: PatternWrite): Pattern;
 	readArrangement(): Arrangement;
-	/** Sets scenes (`patterns: null` clears one; tracks left out play pattern 1) and the song (`order`, `loop`). */
+	/**
+	 * Sets scenes (`patterns` by track, or every track's as readArrangement gives them; pattern 0
+	 * rests a track; `null` clears a scene; tracks left out play pattern 1) and the song (`order`,
+	 * `loop`).
+	 */
 	writeArrangement(write: ArrangementWrite): Arrangement;
 	/** An instrument track's whole sound (1–8), each page as its screen shows it. */
 	readSound(track: number): TrackSound;

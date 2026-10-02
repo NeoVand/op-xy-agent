@@ -5,6 +5,7 @@
  * tracks' and the mixer's pages, the scenes and the song. The raw state says what changed, so only
  * those pages are read; a change no page shows is still named, so `same` never hides one.
  */
+import { describeNoteChange } from '$lib/sim/pattern-change';
 import { AUX_NAMES, GROOVES, type SimState } from '$lib/sim/params';
 import { planPlace, playStep, pageValues, type Place } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
@@ -152,8 +153,14 @@ function patternChange(x: Pattern, y: Pattern): string {
 	const nx = noteCount(x);
 	const ny = noteCount(y);
 	const notes = (p: Pattern) => json(p.steps.map((s) => s.notes));
-	if (nx !== ny) parts.push(`${nx} → ${plural(ny, 'note')}`);
-	else if (notes(x) !== notes(y)) parts.push(`notes changed (${plural(ny, 'note')})`);
+	// how, as the replica's changes say it ("35 notes, velocities 60–100 → 52–108"): "notes
+	// changed" left an agent unsure its humanize had done anything
+	if (notes(x) !== notes(y)) {
+		parts.push(
+			describeNoteChange(x, y) ??
+				(nx !== ny ? `${nx} → ${plural(ny, 'note')}` : `notes changed (${plural(ny, 'note')})`)
+		);
+	}
 	if (x.bars !== y.bars) parts.push(`${x.bars} → ${plural(y.bars, 'bar')}`);
 	// a length that only follows the bars says nothing more
 	const full = (p: Pattern) => p.length === p.bars * 16;

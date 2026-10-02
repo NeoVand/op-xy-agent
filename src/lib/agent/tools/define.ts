@@ -72,6 +72,8 @@ export interface AgentEnvironment {
 	readonly listen?: ListenHost | null;
 	/** Runs the model's programs on forks of the replica (`run_lab`); absent when headless. */
 	readonly lab?: LabHost | null;
+	/** The replica changes of the agent's earlier answers, to take back (`take_back`). */
+	readonly answers?: AnswerHistory | null;
 	readonly manual: ManualSource;
 	readonly timers: AgentTimers;
 	/** How long device tools wait to see the device confirm a change (e.g. echoed start); 0 = no wait. */
@@ -86,6 +88,15 @@ export interface AgentEnvironment {
 		description: string,
 		ctx: ToolContext
 	) => Promise<SubagentResult>;
+}
+
+/** The conductor's per-answer take-back, as take_back sees it. */
+export interface AnswerHistory {
+	/**
+	 * Takes back on the replica what an earlier answer changed (1: the last that changed something),
+	 * where the replica still reads as that answer left it; or says why it cannot.
+	 */
+	takeBack(answer: number): { readonly undone: readonly string[] } | { readonly error: string };
 }
 
 /** Where make_kit leaves a kit: the app's preset inbox (`$lib/app/preset-inbox.svelte.ts`). */

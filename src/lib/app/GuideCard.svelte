@@ -10,8 +10,10 @@ tiny black screen in both themes, like the stage hint; nothing shows while no wa
 ```
 -->
 <script lang="ts">
+	import { formatKeys, targetIds, tryParseKeys } from '$lib/core/opxy';
 	import Icon from '$lib/ui/Icon.svelte';
 	import KeyCombo from '$lib/replica/glyphs/KeyCombo.svelte';
+	import { COMPUTER_KEYS } from '$lib/replica/keyboard';
 	import type { ReplicaGuide } from './guide.svelte';
 
 	interface Props {
@@ -26,6 +28,26 @@ tiny black screen in both themes, like the stage hint; nothing shows while no wa
 			? `${Math.abs(step.clicks)} ${Math.abs(step.clicks) === 1 ? 'detent' : 'detents'} ${step.clicks > 0 ? 'clockwise' : 'counter-clockwise'}`
 			: null
 	);
+	/**
+	 * How to hold the keys a step holds, with one mouse: ⌥-click latches a key down until it is
+	 * clicked again; a key the computer plays (G3 is X) or shift (the computer's Shift) can be
+	 * held there instead.
+	 */
+	const hold = $derived.by(() => {
+		const parsed = step ? tryParseKeys(step.keys) : null;
+		const chord = parsed?.ok ? parsed.value.chords[0] : null;
+		if (!chord || chord.terms.length < 2) return null;
+		const ways = chord.terms.slice(0, -1).map((term) => {
+			const id = targetIds(term.target)[0];
+			const name = formatKeys({ chords: [{ keepHeld: false, terms: [term] }] });
+			const computer =
+				id === 'key.shift'
+					? 'Shift'
+					: COMPUTER_KEYS[id as keyof typeof COMPUTER_KEYS]?.split(' ')[0];
+			return computer ? `${name} (or hold ${computer})` : name;
+		});
+		return `⌥-click to hold ${ways.join(', ')}`;
+	});
 </script>
 
 <div class="guide" role="status" aria-live="polite" aria-atomic="true">
@@ -36,6 +58,7 @@ tiny black screen in both themes, like the stage hint; nothing shows while no wa
 				<KeyCombo keys={step.keys} size="sm" class="card__keys" />
 				<p class="card__what">
 					{#if turn}<span class="card__turn">{turn}</span>{/if}
+					{#if hold}<span class="card__turn">{hold}</span>{/if}
 					<span class="card__screen"><span aria-hidden="true">→ </span>{step.screen}</span>
 				</p>
 				<div class="card__actions">

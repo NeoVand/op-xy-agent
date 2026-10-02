@@ -36,6 +36,20 @@ async function tap(replica: ReplicaState, id: PressableId) {
 }
 
 describe('the replica walkthrough', () => {
+	it('counts a last turn with no value to reach once the value moves', async () => {
+		const { sim, replica, guide } = setup();
+		const plan = planPlace(sim.state, { area: 'instrument', track: 3, page: 3 });
+		const screen = plan.steps.at(-1)!.screen;
+		guide.start('track 3 cutoff', [...plan.steps, { keys: 'turn E1', screen, leave: screen }]);
+		await tap(replica, 'track.3');
+		await tap(replica, 'key.m3');
+		// on the filter page: the turn is the step now, and nothing has moved yet
+		expect(guide.current?.keys).toBe('turn E1');
+		replica.turn('encoder.1', 3, { source: 'pointer' });
+		await settle();
+		expect(guide.status).toBe('done');
+	});
+
 	it('walks a key sequence press by press: a drum key, then the steps it goes on', async () => {
 		const { sim, replica, guide } = setup();
 		const virtual = createVirtualOpxy({ sim });

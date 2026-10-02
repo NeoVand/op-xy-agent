@@ -78,10 +78,13 @@ describe('import_midi', () => {
 		expect(json(result).preview).toMatchObject({
 			bpm: 107,
 			bars: '1–8',
-			scenes: 2,
-			song: [1, 2],
-			sceneStarts: { '1': 'bars 1–4', '2': 'bars 5–8' }
+			scenes: {
+				'scene 1 (bars 1–4)': expect.stringMatching(/^T1 .*, T3 /),
+				'scene 2 (bars 5–8)': expect.stringMatching(/^T1 .*, T3 /)
+			},
+			song: [1, 2]
 		});
+		expect(json(result).preview.tracks[0]).toMatchObject({ asWritten: '100 %' });
 		expect(virtual.readPattern(1).notes).toHaveLength(0);
 		expect(virtual.status().bpm).toBe(120);
 		expect(virtual.status().metronome).toBe(true);

@@ -480,7 +480,6 @@ async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResul
 				summary.text,
 				...silent,
 				...notes,
-				...ducksIn(state, tracks),
 				...(legend ? [legend] : []),
 				`numbers: ${JSON.stringify(trackNumbers(summary))}`
 			].join('\n'),

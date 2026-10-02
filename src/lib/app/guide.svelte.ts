@@ -21,6 +21,8 @@ export interface GuideStep {
 	readonly screen: string;
 	/** The replica's music once the step is done (`musicMark`), where the screen alone cannot tell. */
 	readonly music?: string;
+	/** Done once the screen no longer reads this (a turn with no value to reach: any change). */
+	readonly leave?: string;
 }
 
 export type GuideStatus = 'idle' | 'running' | 'done';
@@ -116,7 +118,16 @@ export class ReplicaGuide {
 		const done = (step: GuideStep) =>
 			step.screen === shows && (step.music === undefined || music === null || step.music === music);
 		for (let i = this.steps.length - 1; i >= this.index; i--) {
-			if (done(this.steps[i])) {
+			const step = this.steps[i];
+			// a step done by leaving a reading counts only once it is the one to do
+			if (step.leave !== undefined) {
+				if (i === this.index && shows !== step.leave) {
+					this.#advanceTo(i + 1);
+					return;
+				}
+				continue;
+			}
+			if (done(step)) {
 				this.#advanceTo(i + 1);
 				return;
 			}

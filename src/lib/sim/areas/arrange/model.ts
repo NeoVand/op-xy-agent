@@ -417,10 +417,22 @@ export function sceneLength(s: SimState): number {
  * anywhere, all patterns count.
  */
 export function lengthIn(s: SimState, mode: SceneLengthMode, signature: TimeSignature): number {
+	return lengthOf(
+		TRACKS.map((t) => currentPattern(trackSequence(s, t))),
+		mode,
+		signature
+	);
+}
+
+/** How long a scene of these patterns (one per track) lasts, in sixteenths ({@link lengthIn}). */
+export function lengthOf(
+	patterns: readonly Pattern[],
+	mode: SceneLengthMode,
+	signature: TimeSignature
+): number {
 	if (mode === 'time signature') return BAR[signature];
-	const all = TRACKS.map((t) => currentPattern(trackSequence(s, t)));
-	const used = all.filter((p) => !isEmpty(p));
-	const lengths = (used.length > 0 ? used : all).map((p) => p.length * p.scale);
+	const used = patterns.filter((p) => !isEmpty(p));
+	const lengths = (used.length > 0 ? used : patterns).map((p) => p.length * p.scale);
 	const length = mode === 'shortest' ? Math.min(...lengths) : Math.max(...lengths);
 	return length > 0 ? length : STEPS_PER_BAR;
 }

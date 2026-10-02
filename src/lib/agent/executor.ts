@@ -3,9 +3,10 @@
  *
  * 1. validate every input with zod (strict schemas cannot carry ranges);
  * 2. ask the user once for all the changes that need approval (mutate tools);
- * 3. run read and UI tools concurrently, and every device tool on the single-flight queue in the
- *    order the model wrote them (a queued change waits for its approval inside its slot, so later
- *    device calls never overtake it); panic skips the queue and interrupts it;
+ * 3. run read tools concurrently, a call written after a ui or mutate one once that one is done,
+ *    and every device tool on the single-flight queue in the order the model wrote them (a queued
+ *    change waits for its approval inside its slot, so later device calls never overtake it);
+ *    panic skips the queue and interrupts it;
  * 4. journal every applied reversible change with its inverse, before/after and firmware;
  * 5. return one `tool_result` per call, in call order, for a single user message.
  *
@@ -179,7 +180,20 @@ export class ToolExecutor {
 			});
 			return outcome;
 		};
-		const outcomes = await Promise.all(prepared.map(settle));
+		// A call written after one that changes things (a ui or mutate tool: an animated demo, a lab
+		// run, a pattern written) waits for it, so it sees what the change left; reads before any
+		// change still run together. A status read once ran beside an animated plan and read the
+		// replica as it stood before the plan's last key. Panic never waits.
+		let changes: Promise<unknown> | null = null;
+		const outcomes = await Promise.all(
+			prepared.map((entry) => {
+				const tool = entry.parsed.tool;
+				const after: Promise<unknown> | null = tool?.priority ? null : changes;
+				const outcome = after ? after.then(() => settle(entry)) : settle(entry);
+				if (tool && tool.kind !== 'read') changes = after ? Promise.all([after, outcome]) : outcome;
+				return outcome;
+			})
+		);
 		return prepared.map(({ call }, i) => this.#block(call.id, outcomes[i].result));
 	}
 

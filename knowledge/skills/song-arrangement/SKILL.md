@@ -28,7 +28,7 @@ little between neighbouring sections and a lot at the big moments:
 - **Outro:** the intro's tracks, or a fade built from mutes.
 
 Four-bar scenes give a clear form; repeat a scene in the song rather than lengthening its patterns.
-Muting tracks in a scene is often cleaner than writing empty patterns.
+A part left out of a section rests: pattern 0 for its track in that scene (an empty pattern).
 
 ## Building it
 

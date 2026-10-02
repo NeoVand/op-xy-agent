@@ -95,6 +95,36 @@ export function compactNotes(text: string): WrittenNote[] {
 }
 
 /** Reads a grid: each line's marks, one per step; returns the hits and how many steps it spans. */
+/**
+ * Where a grid line's count goes wrong, by its own spacing: a bar (between |) that is not 16 steps,
+ * or a group (between spaces) unlike most ("bar 3 has 17", or 'group 14 ("x....") has 5, the
+ * others 4'); null when its spacing does not say. An agent once learned only that a 64-step line
+ * had one mark too many, somewhere.
+ */
+export function gridMiscount(line: string): string | null {
+	const bars = line
+		.split('|')
+		.map((b) => b.replace(/\s/g, ''))
+		.filter((b) => b.length > 0);
+	if (bars.length > 1) {
+		const off = bars.flatMap((b, i) => (b.length !== 16 ? [`bar ${i + 1} has ${b.length}`] : []));
+		if (off.length > 0) return off.join(', ');
+	}
+	const groups = line
+		.replace(/\|/g, ' ')
+		.split(/\s+/)
+		.filter((g) => g.length > 0);
+	if (groups.length < 3) return null;
+	const counts = new Map<number, number>();
+	for (const g of groups) counts.set(g.length, (counts.get(g.length) ?? 0) + 1);
+	const usual = [...counts].sort((a, b) => b[1] - a[1])[0][0];
+	const off = groups.flatMap((g, i) =>
+		g.length !== usual ? [`group ${i + 1} ("${g}") has ${g.length}`] : []
+	);
+	if (off.length === 0 || off.length > 3) return null;
+	return `${off.join(', ')}, the others ${usual}`;
+}
+
 export function gridHits(grid: Readonly<Record<string, string>>): {
 	hits: GridHit[];
 	steps: number;
@@ -104,8 +134,9 @@ export function gridHits(grid: Readonly<Record<string, string>>): {
 	for (const [key, line] of Object.entries(grid)) {
 		const marks = line.replace(/[\s|]/g, '');
 		if (marks.length > MAX_STEPS) {
+			const where = gridMiscount(line);
 			throw new PatternNotesError(
-				`grid "${key}": ${marks.length} steps, past the ${MAX_STEPS} a pattern holds`
+				`grid "${key}": ${marks.length} steps, past the ${MAX_STEPS} a pattern holds${where ? ` (${where})` : ''}`
 			);
 		}
 		const bad = marks.match(/[^xXo.-]/);
@@ -122,9 +153,12 @@ export function gridHits(grid: Readonly<Record<string, string>>): {
 	return { hits, steps };
 }
 
-/** A mark's velocity around `velocity` (the pattern's hit): an accent above it, a soft hit about half. */
+/**
+ * A mark's velocity around `velocity` (the pattern's hit): an accent above it, a soft hit about
+ * half, each where read_pattern reads it back as the same mark (X from 115, o up to 75).
+ */
 export function markVelocity(mark: GridHit['mark'], velocity: number): number {
-	if (mark === 'X') return Math.min(127, velocity + 25);
-	if (mark === 'o') return Math.max(1, Math.round(velocity * 0.55));
+	if (mark === 'X') return Math.min(127, Math.max(velocity + 25, 115));
+	if (mark === 'o') return Math.max(1, Math.min(Math.round(velocity * 0.55), 75));
 	return velocity;
 }

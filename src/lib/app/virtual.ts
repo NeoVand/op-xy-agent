@@ -30,7 +30,15 @@ import {
 	type Place,
 	planToSetting
 } from '$lib/sim/navigator';
-import { captureScene, playPattern, startSong, trackSequence } from '$lib/sim/areas/arrange/model';
+import {
+	captureScene,
+	chooseScene,
+	lengthOf,
+	lengthSettings,
+	playPattern,
+	startSong,
+	trackSequence
+} from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { replicaChangeList, replicaChanges } from './replica-diff';
@@ -146,7 +154,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			track,
 			pattern: index + 1,
 			patterns: seq.patterns.length,
-			playing: index === seq.current,
+			current: index === seq.current,
 			bars: p.bars,
 			length: p.length,
 			scale: p.scale,
@@ -229,16 +237,42 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 
 	function readArrangement(): VirtualArrangement {
 		const a = s.areas.arrange;
+		const { mode, signature } = lengthSettings(s);
+		const bars = (patterns: readonly number[]) =>
+			lengthOf(
+				patterns.map((p, t) => trackSequence(s, t).patterns[p] ?? emptyPattern()),
+				mode,
+				signature
+			) / STEPS_PER_BAR;
 		const scenes = a.scenes.flatMap((scene, i) => {
 			const shown = i === a.scene ? captureScene(s) : scene;
-			return shown ? [{ scene: i + 1, patterns: shown.patterns.map((p) => p + 1) }] : [];
+			return shown
+				? [{ scene: i + 1, patterns: shown.patterns.map((p) => p + 1), bars: bars(shown.patterns) }]
+				: [];
 		});
 		const song = a.songs[a.song];
+		// a song of one entry is that scene round and round
+		const plays = song.order.length > 1 && (a.playing || !a.held) ? 'song' : 'scene';
 		return {
 			scene: a.scene + 1,
+			plays,
+			...(a.queued !== null ? { queued: a.queued + 1 } : {}),
 			scenes,
 			song: { order: song.order.map((n) => n + 1), loop: song.loop }
 		};
+	}
+
+	/** An empty pattern on track index `t` (1–16): the first it has, else the next new one. */
+	function restingPattern(t: number): number {
+		const seq = trackSequence(s, t);
+		const empty = seq.patterns.findIndex((p) => p.steps.every((step) => step.notes.length === 0));
+		if (empty >= 0) return empty + 1;
+		if (seq.patterns.length >= MAX_PATTERNS) {
+			throw new VirtualOpxyError(
+				`track ${t + 1} has no empty pattern to rest on, and no room for one (16 patterns)`
+			);
+		}
+		return seq.patterns.length + 1;
 	}
 
 	/** Puts every track on its pattern in the current scene. */
@@ -260,6 +294,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					patterns: seq.patterns.length,
 					current: seq.current + 1,
 					notes: noteCount(currentPattern(seq)),
+					byPattern: seq.patterns.map(noteCount),
 					muted: mix.muted
 				};
 			});
@@ -276,9 +311,26 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			};
 		},
 
-		transport(action) {
+		transport(action, options = {}) {
 			if (action === 'stop') {
 				if (s.transport.playing) sim.press('key.stop');
+				return;
+			}
+			if (options.scene !== undefined) {
+				const a = s.areas.arrange;
+				const index = options.scene - 1;
+				if (!Number.isInteger(index) || index < 0 || index >= SCENES) {
+					throw new VirtualOpxyError(`there is no scene ${options.scene} (1–${SCENES})`);
+				}
+				if (index !== a.scene && !a.scenes[index]) {
+					throw new VirtualOpxyError(
+						`scene ${options.scene} holds nothing yet: write_arrangement sets it`
+					);
+				}
+				// as a person would: stop, pick the scene (it holds), play it from its top
+				if (s.transport.playing) sim.press('key.stop');
+				chooseScene(s, index, 'select');
+				sim.press('key.play');
 				return;
 			}
 			// pressed while it plays, the play key starts again from the top
@@ -397,7 +449,11 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					ownLength: true
 				});
 			}
-			if (write.play !== false) playPattern(s, t, pattern - 1);
+			// the scene on now plays the patterns its tracks play: with an arrangement, switching the
+			// track over would rewrite that scene (it once moved a scene's track onto the pattern an
+			// agent was only filling in for a later scene), so the scenes stay as they are
+			const arranged = readArrangement().scenes.length > 1;
+			if (write.play !== false && !arranged) playPattern(s, t, pattern - 1);
 			changed();
 			return readPattern(track, pattern);
 		},
@@ -419,11 +475,14 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				const chosen = base.patterns.map(() => 0);
 				for (const { track, pattern } of patterns) {
 					const t = trackIndex(track);
-					if (!Number.isInteger(pattern) || pattern < 1 || pattern > MAX_PATTERNS) {
-						throw new VirtualOpxyError(`there is no pattern ${pattern} (1–16)`);
+					if (!Number.isInteger(pattern) || pattern < 0 || pattern > MAX_PATTERNS) {
+						throw new VirtualOpxyError(`there is no pattern ${pattern} (1–16, or 0 to rest)`);
 					}
-					ensurePatterns(s, t, pattern);
-					chosen[t] = pattern - 1;
+					// 0: the track rests in this scene, on an empty pattern of its own (one it has, else a
+					// new one)
+					const at = pattern === 0 ? restingPattern(t) : pattern;
+					ensurePatterns(s, t, at);
+					chosen[t] = at - 1;
 				}
 				a.scenes[index] = { patterns: chosen, mix: base.mix };
 				if (index === a.scene) applyCurrentScene();

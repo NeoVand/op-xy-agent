@@ -8,7 +8,7 @@
  * replica lights once the answer is written.
  */
 import type { ControlId } from '$lib/core/opxy';
-import type { ReplicaChange, VirtualOpxy } from '$lib/agent/virtual-opxy';
+import type { ReplicaChange, VirtualOpxy, VirtualScene } from '$lib/agent/virtual-opxy';
 import { GROOVES, type SimState } from '$lib/sim/params';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 
@@ -84,27 +84,40 @@ export function briefChange(was: string, now: string): string {
 	return parts.length > 0 ? parts.join(', ') : whole;
 }
 
-/** A track's patterns, changed: which, and their notes before and after. */
+/** A pattern without its player, which the player page's line says (or "player changed"). */
+const unplayed = (p: Pattern | undefined) => (p ? { ...p, player: null } : p);
+
+/**
+ * A track's patterns, changed: which, and their notes before and after. The player of pattern
+ * `shown` (1-based: the one that plays, whose page has its own line) is left out.
+ */
 function patternChanges(
 	label: string,
 	before: readonly Pattern[],
-	after: readonly Pattern[]
+	after: readonly Pattern[],
+	shown: number
 ): string[] {
 	const changed: number[] = [];
 	for (let i = 0; i < Math.max(before.length, after.length); i++) {
-		if (!same(before[i], after[i])) changed.push(i + 1);
+		const differs =
+			i + 1 === shown ? !same(unplayed(before[i]), unplayed(after[i])) : !same(before[i], after[i]);
+		if (differs) changed.push(i + 1);
 	}
 	if (changed.length === 0) return [];
 	if (changed.length <= 3) {
 		return changed.map((n) => {
 			const was = before[n - 1];
 			const now = after[n - 1];
-			const parts = [describeNoteChange(was, now) ?? `${notesIn(now)} notes`];
+			const parts: string[] = [];
+			if (!same(unplayed(was), unplayed(now)) || !was || !now) {
+				parts.push(describeNoteChange(was, now) ?? `${notesIn(now)} notes`);
+			}
 			if (was && now) {
 				if (was.bars !== now.bars) parts.push(`${was.bars} → ${now.bars} bars`);
 				if (was.length !== now.length) parts.push(`${was.length} → ${now.length} steps`);
 				const extras = (p: Pattern) => p.steps.map((s) => [s.components, s.locks]);
 				if (!same(extras(was), extras(now))) parts.push('step components or locks changed');
+				if (n !== shown && !same(was.player, now.player)) parts.push('its player changed');
 			} else if (now && now.length !== now.bars * 16) parts.push(`${now.length} steps`);
 			return `${label} pattern ${n}: ${parts.join(', ')}`;
 		});
@@ -113,6 +126,44 @@ function patternChanges(
 	return [
 		`${label}: ${patternList(changed)} written; ${before.length} → ${after.length} patterns, ${total(before)} → ${total(after)} notes in all`
 	];
+}
+
+/** Track index 0–15 as the scenes name it: T1–T8, then the auxiliary tracks. */
+const trackName = (index: number) => (index < 8 ? `T${index + 1}` : `aux T${index - 7}`);
+
+/**
+ * Scenes set, changed or cleared, as the lab's diffs say them: "scene 2: T1 p1 → p2, T3 p1 → p3";
+ * a new scene by the tracks that leave pattern 1 ("scene 3: new, T1 p2, T5 p4"). Only once there
+ * are scenes to tell apart.
+ */
+function sceneChanges(before: readonly VirtualScene[], after: readonly VirtualScene[]): string[] {
+	// one scene is only what the tracks play, which their own lines say
+	if (before.length <= 1 && after.length <= 1) return [];
+	const was = new Map(before.map((scene) => [scene.scene, scene.patterns]));
+	const now = new Map(after.map((scene) => [scene.scene, scene.patterns]));
+	const numbers = [...new Set([...was.keys(), ...now.keys()])].sort((a, b) => a - b);
+	const lines: string[] = [];
+	for (const n of numbers) {
+		const a = was.get(n);
+		const b = now.get(n);
+		if (same(a, b)) continue;
+		if (!b) {
+			lines.push(`scene ${n}: cleared`);
+			continue;
+		}
+		const moved = b.flatMap((pattern, t) => {
+			if (a) return a[t] === pattern ? [] : [`${trackName(t)} p${a[t]} → p${pattern}`];
+			return pattern === 1 ? [] : [`${trackName(t)} p${pattern}`];
+		});
+		const list =
+			moved.length > 8
+				? `${moved.slice(0, 8).join(', ')} … (${moved.length} tracks)`
+				: moved.join(', ');
+		lines.push(
+			a ? `scene ${n}: ${list}` : `scene ${n}: new, ${list || 'every track on pattern 1'}`
+		);
+	}
+	return lines;
 }
 
 /**
@@ -173,11 +224,16 @@ export function replicaChangeList(
 		// the sound without the patterns and the mix, which have their own lines
 		const sound = (track: typeof was) => ({ ...track, sequence: null, mix: null });
 		const kit = (s: SimState) => s.areas.sample.tracks[t];
-		if (!same(sound(was), sound(now)) || !same(kit(before), kit(after))) {
+		// the player belongs to the pattern that plays: its page has a line of its own below
+		const player = (track: typeof was) => track.sequence.patterns[track.sequence.current]?.player;
+		const soundChanged = !same(sound(was), sound(now)) || !same(kit(before), kit(after));
+		const playerChanged = !same(player(was), player(now));
+		if (soundChanged || playerChanged) {
 			const a = read.before.readSound(t + 1).pages;
 			const b = read.after.readSound(t + 1).pages;
 			for (const page of Object.keys(b)) {
-				if (a[page] === b[page]) continue;
+				const wanted = page === 'player' ? playerChanged : soundChanged;
+				if (!wanted || a[page] === b[page]) continue;
 				const key = pageKey(page);
 				add(
 					`${label} ${page}: ${a[page] ?? '—'} → ${b[page]}`,
@@ -194,9 +250,18 @@ export function replicaChangeList(
 		if (round(m0.pan) !== round(m1.pan))
 			add(`${label} pan ${round(m0.pan)} → ${round(m1.pan)}`, mix);
 		if (m0.muted !== m1.muted) add(`${label} ${m1.muted ? 'muted' : 'unmuted'}`, mix);
-		for (const line of patternChanges(label, was.sequence.patterns, now.sequence.patterns)) {
-			add(line, [track]);
+		if (was.sequence.current !== now.sequence.current) {
+			add(`${label} plays pattern ${was.sequence.current + 1} → ${now.sequence.current + 1}`, [
+				track
+			]);
 		}
+		const patterns = patternChanges(
+			label,
+			was.sequence.patterns,
+			now.sequence.patterns,
+			now.sequence.current + 1
+		);
+		for (const line of patterns) add(line, [track]);
 	}
 
 	const fx0 = before.areas.auxiliary.fx;
@@ -215,9 +280,7 @@ export function replicaChangeList(
 	const a0 = read.before.readArrangement();
 	const a1 = read.after.readArrangement();
 	const arrange: ControlId[] = ['key.arrange'];
-	if (!same(a0.scenes, a1.scenes)) {
-		add(`scenes: ${a0.scenes.length} → ${a1.scenes.length} with patterns set`, arrange);
-	}
+	for (const line of sceneChanges(a0.scenes, a1.scenes)) add(line, arrange);
 	if (!same(a0.song, a1.song)) {
 		const order = (o: readonly number[]) =>
 			o.length > 12 ? `${o.slice(0, 12).join(' ')} … (${o.length} entries)` : o.join(' ');

@@ -26,6 +26,10 @@ To find which track clashes, crowds a band or drags, hear the tracks one at a ti
 listen with tracks (and a scene) renders each alone without touching a mute; on a connected OP-XY,
 listen_tracks mutes the others live (the user approves it, and every mute is put back afterwards).
 
+The tone bands against pink noise are the whole take's balance, not each sound's: a heavy low end
+(an 808, a sub bass) makes the highs read low even when the hats are bright. To judge one sound's
+own tone, hear its track alone (listen with tracks).
+
 ## Saying what you heard
 
 In a sentence, in a musician's words (the kick sits on the beat, the bass crowds the pad), against

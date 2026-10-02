@@ -7,7 +7,15 @@
  * ones keeps the tool set within the API's grammar limits (`MAX_OPTIONAL_PARAMETERS`).
  */
 import { z } from 'zod';
-import type { NavPlan, NavStep, Place, SettingGoal, SettingsPlan } from '$lib/sim/navigator';
+import {
+	findParam,
+	TEMPO_PARAMS,
+	type NavPlan,
+	type NavStep,
+	type Place,
+	type SettingGoal,
+	type SettingsPlan
+} from '$lib/sim/navigator';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
 import type { NavGoal } from '../virtual-opxy';
 import { defineTool, errorResult, jsonResult, type AgentEnvironment } from './define';
@@ -171,6 +179,13 @@ const stepView = (s: NavStep) => ({
 });
 
 /** The plan as the model reads it; several settings come grouped by the parameter they set. */
+/** A setting's track, or none where it belongs to no track (the tempo page, com). */
+function trackOf(goal: SettingGoal): number | undefined {
+	if ('area' in goal) return goal.area === 'com' ? undefined : goal.track;
+	const id = findParam(goal.param);
+	return id !== null && TEMPO_PARAMS[id] ? undefined : goal.track;
+}
+
 function planView(plan: NavPlan | SettingsPlan) {
 	// in a batch, what did not land, up front (an agent once had to read every entry to find it)
 	const failed =
@@ -179,7 +194,8 @@ function planView(plan: NavPlan | SettingsPlan) {
 					.filter((p) => !p.reached)
 					.map((p) => {
 						const name = 'label' in p.goal ? p.goal.label : p.goal.param;
-						const track = p.goal.track !== undefined ? `track ${p.goal.track} ` : '';
+						const t = trackOf(p.goal);
+						const track = t !== undefined ? `track ${t} ` : '';
 						return `${track}${name} ${p.goal.value}${p.note ? `: ${p.note}` : ''}`;
 					})
 			: [];
@@ -192,7 +208,7 @@ function planView(plan: NavPlan | SettingsPlan) {
 						param: 'label' in p.goal ? p.goal.label : p.goal.param,
 						...('area' in p.goal ? { area: p.goal.area } : {}),
 						value: p.goal.value,
-						track: p.goal.track,
+						...(trackOf(p.goal) !== undefined ? { track: trackOf(p.goal) } : {}),
 						reached: p.reached,
 						...(p.note ? { note: p.note } : {}),
 						steps: p.steps.map(stepView)
@@ -239,10 +255,30 @@ export const planStepsTool = defineTool({
 			return errorResult('There is no replica to plan from in this session.', 'no replica');
 		const goal = toGoal(input, ctx.env);
 		if (typeof goal === 'string') return errorResult(goal, 'bad goal');
+		// where the plan starts: a plan with no track key once read as "track 3 is selected" unseen
+		const status = virtual.status();
+		const selected = status.tracks.find((t) => t.track === status.selectedTrack);
+		const shows = ctx.env.screen?.read().shows;
+		const from = `track ${status.selectedTrack}${selected ? ` (${selected.engine})` : ''} selected${shows ? `, the screen on ${shows}` : ''}`;
 		const plan = virtual.plan(goal);
 		if (input.guide && !input.show) {
 			const guide = ctx.env.guide;
-			if (!guide || plan.steps.length === 0) {
+			// to a value with none given ("walk me through the cutoff"): a last step, the turn, done
+			// once the value it turns has changed (the walkthrough once ended a step short of it)
+			const turn = /^E([1-4])( with shift held)? turns it/.exec(plan.note ?? '');
+			const steps = [
+				...plan.steps,
+				...(turn
+					? [
+							{
+								keys: `${turn[2] ? 'shift + ' : ''}turn E${turn[1]}`,
+								screen: plan.screen,
+								leave: plan.screen
+							}
+						]
+					: [])
+			];
+			if (!guide || steps.length === 0) {
 				return jsonResult(
 					{
 						guided: false,
@@ -256,12 +292,23 @@ export const planStepsTool = defineTool({
 					summaryOf(plan)
 				);
 			}
-			guide.start(goalText(input), plan.steps);
+			guide.start(goalText(input), steps);
 			return jsonResult(
 				{
 					guided: true,
-					note: 'The replica now lights each step in turn and waits for the user; tell them to follow the lit keys. It moves on by itself when the screen shows where a step leads.',
-					...planView(plan)
+					from,
+					...planView(plan),
+					...(turn
+						? {
+								steps: [
+									...plan.steps.map(stepView),
+									{ keys: steps.at(-1)!.keys, until: 'the value changes' }
+								]
+							}
+						: {}),
+					// its own key: the plan's note ("E1 turns it") once took this one's place
+					walkthrough:
+						'The keys are lit on the replica now, one step at a time, and it waits for the user: tell them to follow the lit keys. It moves on by itself when the screen shows where a step leads, and tells you when the last is done.'
 				},
 				`guiding: ${summaryOf(plan)}`
 			);
@@ -271,6 +318,7 @@ export const planStepsTool = defineTool({
 			const setsValues = input.settings !== undefined || input.value !== undefined;
 			return jsonResult(
 				{
+					from,
 					...planView(plan),
 					...(setsValues
 						? {

@@ -284,8 +284,9 @@ describe('ToolExecutor', () => {
 			'value 10 → 20',
 			'value 10 → 30'
 		]);
-		// The read ran at once; device jobs strictly in order, blip after the first set completes.
-		expect(h.log.indexOf('look')).toBeLessThan(h.log.indexOf('set 20 end'));
+		// The read written after the first set waited for it (it reads what the set left); device
+		// jobs strictly in order, blip after the first set completes.
+		expect(h.log.indexOf('look')).toBeGreaterThan(h.log.indexOf('set 20 end'));
 		const deviceOrder = h.log.filter((l) => l !== 'look' && l !== 'asked');
 		expect(deviceOrder).toEqual([
 			'set 20 start',

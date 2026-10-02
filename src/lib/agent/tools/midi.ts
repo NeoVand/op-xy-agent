@@ -23,6 +23,25 @@ function planView(plan: ImportPlan, read: MidiFileNotes) {
 		firstBars.set(scene, `bars ${from}–${Math.min(plan.toBar, from + plan.barsPerBlock - 1)}`);
 	});
 	const bars = plan.toBar - plan.fromBar + 1;
+	// what plays in each scene, by the parts' names (an agent worked it out from the file)
+	const sounding = new Set(
+		plan.patterns.filter((p) => p.notes.length > 0).map((p) => `${p.track}:${p.pattern}`)
+	);
+	const partName = (t: ImportPlan['tracks'][number]) =>
+		t.parts.map((p) => p.name?.trim() || `file track ${p.midi}`).join(' + ');
+	const names = new Map(plan.tracks.map((t) => [t.to, partName(t)]));
+	const scenes = Object.fromEntries(
+		plan.scenes.map((s) => {
+			const playing = s.patterns
+				.filter((p) => sounding.has(`${p.track}:${p.pattern}`))
+				.map((p) => `T${p.track} ${names.get(p.track) ?? ''}`.trim());
+			const where = firstBars.get(s.scene);
+			return [
+				`scene ${s.scene}${where ? ` (${where})` : ''}`,
+				playing.length > 0 ? playing.join(', ') : 'nothing imported plays'
+			];
+		})
+	);
 	return {
 		bpm: Math.round(plan.bpm * 10) / 10,
 		bars: `${plan.fromBar}–${plan.toBar}${plan.silentStart ? ` (the file's first ${plan.silentStart === 1 ? 'bar is' : `${plan.silentStart} bars are`} silent, so the song starts where the music does)` : ''}`,
@@ -32,6 +51,12 @@ function planView(plan: ImportPlan, read: MidiFileNotes) {
 			...(t.drums ? { drums: true } : {}),
 			notes: t.notes,
 			patterns: t.patterns,
+			asWritten: percent(t.asWritten),
+			...(!t.folded && t.patterns < plan.blocks
+				? {
+						repeats: `${plan.blocks} blocks play ${t.patterns} pattern${t.patterns === 1 ? '' : 's'}: blocks that repeat share one, so a pattern holds fewer notes than the part`
+					}
+				: {}),
 			...(t.folded && t.asWritten === 1
 				? {
 						shared: `${t.folded} of ${plan.blocks} blocks share a pattern that differs from them only in loudness or note lengths: every note plays as written`
@@ -56,10 +81,9 @@ function planView(plan: ImportPlan, read: MidiFileNotes) {
 			.map(
 				(t) => `track ${t.index + 1}${t.name ? ` "${t.name.trim()}"` : ''} (${t.noteCount} notes)`
 			),
-		scenes: plan.scenes.length,
 		sceneLength: lastBlockNote(plan),
+		scenes,
 		song: plan.song,
-		sceneStarts: Object.fromEntries(firstBars),
 		...(plan.notes.length ? { notCarried: plan.notes } : {})
 	};
 }

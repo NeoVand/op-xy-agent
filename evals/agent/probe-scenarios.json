@@ -1,0 +1,186 @@
+[
+	{
+		"name": "manual-questions",
+		"about": "Plain questions about the device: answers from the manual, no changes made.",
+		"steps": [
+			{
+				"say": "what's the difference between FX I and FX II, and can I change which effect is on each?"
+			},
+			{ "why": true },
+			{ "say": "how do I save my project and start a new one without losing this one?" },
+			{ "why": true },
+			{ "say": "can the op-xy record audio from a mic? where does it go?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "midi-import",
+		"about": "A MIDI file attached: put it on the replica, then change it and play a part.",
+		"steps": [
+			{
+				"say": "here's a song I wrote, put it on the op-xy",
+				"files": ["evals/agent/out/probe/fixtures/rainy-song.mid"]
+			},
+			{ "why": true },
+			{ "say": "make the drums hit harder and the lead a bit quieter" },
+			{ "why": true },
+			{ "say": "play it from the part where the melody comes in" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sheet-music",
+		"about": "A photo of sheet music: play the melody, then harmonize it.",
+		"steps": [
+			{
+				"say": "can you play this melody on a nice lead sound?",
+				"files": ["evals/agent/fixtures/ode-c.png"]
+			},
+			{ "why": true },
+			{ "say": "now add simple chords under it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "edit-existing",
+		"about": "Make a beat, then edit it piece by piece, then take a change back.",
+		"steps": [
+			{ "say": "make a house beat at 124 bpm with a bassline" },
+			{
+				"say": "the hats are too busy. put them on every other step and add an open hat on the off-beats"
+			},
+			{ "why": true },
+			{ "say": "transpose the bassline down an octave" },
+			{ "why": true },
+			{ "say": "actually undo that last change" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arrangement",
+		"about": "A groove turned into a long arrangement, looped, and measured.",
+		"steps": [
+			{ "say": "make a four on the floor techno groove at 130" },
+			{
+				"say": "now arrange it: 8 bars intro with just kick and hats, 16 bars full, an 8 bar breakdown without the kick, then 16 bars full again with an extra percussion layer"
+			},
+			{ "why": true },
+			{ "say": "loop the whole song, and tell me how long it is" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sound-diagnose",
+		"about": "Diagnose a sound from its settings, change it, add movement.",
+		"steps": [
+			{ "say": "why does track 3 sound so dark? make it brighter and punchier" },
+			{ "why": true },
+			{ "say": "now add a slow filter sweep to it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sidechain",
+		"about": "A pad that pumps with the kick: the duck LFO, then listening for it.",
+		"steps": [
+			{ "say": "write a four on the floor kick and a long held pad chord on track 8" },
+			{
+				"say": "make the pad duck every time the kick hits, like a sidechain pump. then listen and tell me if it pumps"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-player",
+		"about": "Chords, then the player's arpeggio on them.",
+		"steps": [
+			{ "say": "write some chords on track 4 and arpeggiate them with the player" },
+			{ "why": true },
+			{ "say": "make the arpeggio faster and have it go up and down" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "vague-requests",
+		"about": "Vague asks: does it pick sensibly, ask, or flounder?",
+		"steps": [
+			{ "say": "make something cool" },
+			{ "why": true },
+			{ "say": "it sounds kind of weird, fix it" },
+			{ "why": true },
+			{ "say": "more energy!" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-turns",
+		"about": "A walkthrough that ends in an encoder turn, followed by the user's presses.",
+		"steps": [
+			{
+				"say": "walk me through changing the filter cutoff on track 3 myself, light the keys"
+			},
+			{ "press": ["track.3"] },
+			{ "press": ["key.m3"] },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "no-device",
+		"about": "Requests that need the real OP-XY, with none connected.",
+		"steps": [
+			{ "say": "make a quick beat and send it to my op-xy" },
+			{ "why": true },
+			{ "say": "why can't I hear anything coming out of my op-xy?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-bulk",
+		"about": "Bulk work that the lab is for: variations across scenes, humanized hats.",
+		"steps": [
+			{ "say": "make a boom bap beat at 90" },
+			{
+				"say": "make four variations of this beat, one per scene, each a bit busier than the last, and put them in a song"
+			},
+			{ "why": true },
+			{ "say": "humanize the hats in all of them" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "user-edits",
+		"about": "The user changes the replica by hand mid-chat, then asks about it.",
+		"steps": [
+			{ "say": "make a simple drum beat on track 1" },
+			{ "press": ["key.instrument", "track.1", "step.3", "step.11"] },
+			{
+				"say": "I just changed something on the replica. what did I change, and does it sound better?"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "spanish",
+		"about": "A request in Spanish, answered in Spanish, with the work done.",
+		"steps": [{ "say": "hazme un ritmo de reguetón a 95 bpm con un bajo" }, { "why": true }]
+	},
+	{
+		"name": "memory",
+		"about": "A stated preference, remembered and applied.",
+		"steps": [
+			{ "say": "remember that I always want my beats around 88 bpm with a lazy swing" },
+			{ "say": "make me a beat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "boundaries",
+		"about": "Out of scope and risky asks: handled plainly.",
+		"steps": [
+			{ "say": "can you update my op-xy's firmware to the newest version?" },
+			{ "why": true },
+			{ "say": "what's a good laptop for music production?" },
+			{ "why": true }
+		]
+	}
+]

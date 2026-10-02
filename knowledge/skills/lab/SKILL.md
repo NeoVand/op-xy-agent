@@ -47,7 +47,7 @@ lab.log(...values)         // or console.log
 
 fork.status()  fork.readPattern(track, pattern?)  fork.writePattern(track, { pattern?, bars?,
   length?, scale?, notes: [{ step, note, velocity?, length? }] })  fork.readArrangement()
-fork.writeArrangement({ scenes?: [{ scene, patterns: [{ track, pattern }] | null }],
+fork.writeArrangement({ scenes?: [{ scene, patterns: [{ track, pattern }] | number[] | null }],
   song?: { order, loop } })  fork.readSound(track)  fork.setTempo(bpm)  fork.setMetronome(on)
 fork.setMuted(track, muted)  fork.selectTrack(track)
 fork.set({ param, value, track?, area?, page?, key? })   // or an array, in order
@@ -61,7 +61,14 @@ setting as plan_steps does and plays the navigator's key steps on the fork, so t
 the way a person would reach it; it throws, changing nothing, when the setting cannot be reached.
 `press` plays a combo in the key grammar (a turn takes its detents: `press('turn E2', 5)`) and
 returns what the screen shows. `diff` says what changed in the device's words ("T3 M3 filter:
-cutoff 70 → 40", "scene 2: new, T1 p2"); with another fork it says how this one differs from it.
+cutoff 70 → 40", "scene 2: new, T1 p2"); with another fork it says how this one differs from
+it.
+
+`readPattern` gives `{ track, pattern, patterns, current, bars, length, scale, notes: [{ step,
+note, velocity, length, sound? }] }` (`patterns`: how many the track has; `current`: it plays).
+`readArrangement` gives `{ scene, plays, scenes: [{ scene, patterns, bars }], song }`, `patterns`
+every track's by index (0 = track 1); `writeArrangement` takes a scene back in that shape. Pattern
+0 in a scene rests a track.
 
 `plan` is the planner behind import_midi, and it writes nothing. Each entry of `plan.tracks` tells
 you, per OP-XY track, how many notes it holds (`notes`), how many blocks play the closest of its
@@ -89,9 +96,10 @@ four.
 
 ## Examples
 
-Three worked programs are in the skill's file `examples.md` (the skill tool with name lab and file
+Four worked programs are in the skill's file `examples.md` (the skill tool with name lab and file
 examples.md): two mappings of a MIDI file compared by how much of each part plays as written, a
-chorus made from a verse with its scenes and song, and a pad brightened by ear. Read them before
+chorus made from a verse with its scenes and song, a pad brightened by ear, and hats humanised in
+every scene with their accents kept. Read them before
 your first program in a conversation; they show the shapes programs take, not templates.
 
 ## Things that trip programs up
@@ -105,21 +113,18 @@ forks that change different things both land; when two commits change the same v
 one wins. Forks made after a commit start from the committed state. `fork.diff()` compares with
 where the fork started, so it is the quickest way to say what a commit will do.
 
-`writePattern` makes the pattern it writes the one the track plays, as the device does when you
-pick a pattern, and the current scene follows what its tracks play. So after writing new patterns,
-set every scene you mean with `writeArrangement`, the current one included, or the verse ends up
-playing the chorus.
+With one scene, `writePattern` makes the pattern it writes the one the track plays, as the device
+does when you pick a pattern. Once scenes are set, it leaves what plays and every scene as they
+were: put the new pattern in its scenes with `writeArrangement`, or no scene plays it.
 
 `set` refuses a value the device cannot take, and `writePattern` refuses a step outside its bars;
 both throw with the reason, and the program stops there unless you catch it. When you probe
 ("does this preset exist?"), wrap the attempt in try/catch and log what happened.
 
 Listening renders from the top, as play would start it, and the song does not move on to its next
-scene while it renders; to hear a later part, name its scene. Each render takes a moment (about as
-long as a second or two of audio takes to render, per render), a program hears at most 24 renders
-and 240 seconds in all, and the whole program has its time limit (20 s unless timeout_s says
-otherwise, 60 at most). A new project's metronome is on, and its click is in what you hear (`fork.setMetronome(false)`
-leaves it out).
+scene while it renders; to hear a later part, name its scene. A program hears at most 24 renders
+and 240 seconds in all, within its time limit (20 s unless timeout_s says otherwise, 60 at most). A
+new project's metronome is on, and its click is in what you hear (`fork.setMetronome(false)`).
 
 What the program prints and returns comes back cut at about 10,000 characters, so print counts,
 scores and the few notes that matter rather than whole patterns. Returned values come back as

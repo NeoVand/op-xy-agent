@@ -147,11 +147,14 @@ export function createIdbMemoryStore(): MemoryStore {
 
 /**
  * What memory holds for a conversation's first message: the profile in full and the other files
- * by name, or null when memory is empty.
+ * by name, or that it is empty (an agent with nothing said looked for a profile it might have
+ * missed).
  */
 export async function memoryBriefing(store: MemoryStore): Promise<string | null> {
 	const files = await store.list();
-	if (files.length === 0) return null;
+	if (files.length === 0) {
+		return `<memory>\nYou remember nothing from earlier conversations yet: there is no ${PROFILE_PATH} and no other file. Create the profile with the memory tool once the user tells you something worth keeping.\n</memory>`;
+	}
 	const profile = files.find((f) => f.path === PROFILE_PATH);
 	const others = files.filter((f) => f.path !== PROFILE_PATH);
 	const parts = [

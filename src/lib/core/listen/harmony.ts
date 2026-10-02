@@ -83,6 +83,14 @@ const MIN_KEY_CORRELATION = 0.5;
 const CLEAR_CORRELATION = 0.75;
 const CLEAR_MARGIN = 0.05;
 
+/**
+ * Scale degrees for written notes: major, and minor with both sevenths (the raised one is the
+ * leading note minor keys borrow).
+ */
+const SCALE_DEGREES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10, 11] } as const;
+/** How much more of the notes' time a key may leave out of its scale and still be in the running. */
+const SCALE_SLACK = 0.02;
+
 /** Chord templates: intervals from the root, and the name's suffix. */
 const CHORDS = [
 	{ suffix: '', intervals: [0, 4, 7] },
@@ -209,7 +217,10 @@ export interface KeyEstimate {
 }
 
 /** The key whose profile best fits `chroma` (twelve values, C first), or null for none. */
-export function estimateKey(chroma: ArrayLike<number>): KeyEstimate | null {
+export function estimateKey(
+	chroma: ArrayLike<number>,
+	options: { readonly written?: boolean } = {}
+): KeyEstimate | null {
 	let sum = 0;
 	for (let i = 0; i < 12; i++) sum += chroma[i];
 	if (!(sum > 0)) return null;
@@ -224,7 +235,26 @@ export function estimateKey(chroma: ArrayLike<number>): KeyEstimate | null {
 		}
 	}
 	fits.sort((a, b) => b.r - a.r);
-	const [best, next] = fits;
+	// written notes are exact: a key whose scale holds them all goes before one that leaves some
+	// out (C, E, G, B, D and an F natural are C major, however much G sounds)
+	let ranked = fits;
+	let decided = false;
+	if (options.written) {
+		const outside = (f: (typeof fits)[number]) => {
+			let w = 0;
+			for (let pc = 0; pc < 12; pc++) {
+				if (!(SCALE_DEGREES[f.mode] as readonly number[]).includes((pc - f.tonic + 12) % 12)) {
+					w += chroma[pc];
+				}
+			}
+			return w / sum;
+		};
+		const least = Math.min(...fits.map(outside));
+		const holds = fits.filter((f) => outside(f) <= least + SCALE_SLACK);
+		ranked = [...holds, ...fits.filter((f) => !holds.includes(f))];
+		decided = holds.length === 1;
+	}
+	const [best, next] = ranked;
 	if (best.r < MIN_KEY_CORRELATION) return null;
 	const tonic = (f: (typeof fits)[number]) => keySpelling(f.tonic, f.mode)[f.tonic];
 	const name = (f: (typeof fits)[number]) => `${tonic(f)} ${f.mode}`;
@@ -237,7 +267,7 @@ export function estimateKey(chroma: ArrayLike<number>): KeyEstimate | null {
 		correlation: best.r,
 		runnerUp: name(next),
 		margin,
-		clear: best.r >= CLEAR_CORRELATION && margin >= CLEAR_MARGIN
+		clear: best.r >= CLEAR_CORRELATION && (decided || margin >= CLEAR_MARGIN)
 	};
 }
 

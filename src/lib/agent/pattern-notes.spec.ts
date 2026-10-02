@@ -1,7 +1,13 @@
 // write_pattern's short forms: a compact string (step:note[:length[:velocity]], chords joined by +)
 // and a grid as read_pattern shows drums, read into plain notes; mistakes name the word or line.
 import { describe, expect, it } from 'vitest';
-import { compactNotes, gridHits, markVelocity, PatternNotesError } from './pattern-notes';
+import {
+	compactNotes,
+	gridHits,
+	gridMiscount,
+	markVelocity,
+	PatternNotesError
+} from './pattern-notes';
 
 describe('compactNotes', () => {
 	it('reads a word per note, chords, lengths and velocities, either left out', () => {
@@ -61,5 +67,14 @@ describe('gridHits', () => {
 			100, 125, 55
 		]);
 		expect(markVelocity('X', 120)).toBe(127);
+	});
+});
+
+describe('gridMiscount', () => {
+	it('names the bar or the group a line miscounts, by its own spacing', () => {
+		expect(gridMiscount('x... x... x... x... | x... x... x... x....')).toBe('bar 2 has 17');
+		expect(gridMiscount('x... x... x.... x...')).toBe('group 3 ("x....") has 5, the others 4');
+		expect(gridMiscount('x...x...x...x...x')).toBeNull();
+		expect(gridMiscount('x... x... x... x...')).toBeNull();
 	});
 });

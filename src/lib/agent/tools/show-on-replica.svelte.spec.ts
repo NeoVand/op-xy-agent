@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { createVirtualOpxy } from '$lib/app/virtual';
 import { AppSimulator, type FrameClock } from '$lib/app/simulator.svelte';
 import { ReplicaState } from '$lib/replica';
+import { buildFrame } from '$lib/sim/frames';
+import { describeFrame } from '$lib/sim/screen/render';
 import { createFakeRig } from '../../../../test/fakes/rig';
 import type { AgentEnvironment, ToolContext } from './define';
 import { showOnReplicaTool } from './knowledge';
@@ -24,6 +26,7 @@ function setup() {
 	const env = {
 		device: null,
 		replica,
+		screen: { read: () => ({ shows: describeFrame(buildFrame(simulator.sim.state)) }) },
 		virtual: createVirtualOpxy({ sim: simulator.sim }),
 		manual: null,
 		timers: rig.time,
@@ -54,6 +57,8 @@ describe('show_on_replica', () => {
 		await rig.time.advance(3000);
 		const result = JSON.parse(String((await pending).content));
 		expect(result).toMatchObject({ shown: true, replica: expect.stringMatching(/^back where/) });
+		// what the demo led to, read before the replica went back
+		expect(result.screenAtEnd).toMatch(/mix/);
 		expect(sim.state.mode).toBe('instrument');
 		expect(sim.state.tracks[1].mix.muted).toBe(false);
 	});

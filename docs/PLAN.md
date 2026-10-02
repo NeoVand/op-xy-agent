@@ -31,6 +31,15 @@
   debrief question. Its first rounds fixed grounding (whether the replica plays, and from where),
   device-only approvals, section-by-section listening, a key-heard-versus-written note, readable
   results, screen values the pages draw, and a walkthrough that guides any key sequence key by key.
+- **Probe round two (2026-10-02), 16 scenarios (`evals/agent/probe-scenarios.json`), each step
+  followed by "what confused you?":** write_pattern keeps an arranged project's scenes (it rewrote
+  the current one) and transposes in place; the agent sees what the user changed between turns;
+  `take_back` undoes an earlier answer; `transport` plays one scene from its top; scenes say their
+  bars and the song its length; scenes change track by track, pattern 0 rests a track; a ducked
+  track heard alone keeps its source playing unheard, so its take pumps; LFO speeds reach the
+  synced range ("sync 16", "1 bar"); drum marks are absolute (X 115+, o 75 and under); a pattern's
+  key counts the other parts and the scale; calls after a change in one batch wait for it (a status
+  read ran mid-animation); player, scene and pattern-switch changes are named.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

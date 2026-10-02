@@ -78,7 +78,7 @@ describe('buildRequest', () => {
 			betas: ['thinking-display-updates-2026-08-18', 'server-side-fallback-2026-07-01']
 		});
 		expect(params.tool_choice).toBeUndefined();
-		expect(params.tools?.length).toBe(29);
+		expect(params.tools?.length).toBe(30);
 	});
 
 	it('omits what Haiku 4.5 does not accept and caps max_tokens', () => {

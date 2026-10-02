@@ -11,7 +11,10 @@ import type { VirtualPattern } from './virtual-opxy';
 
 /** What a pitched pattern plays. */
 export interface PatternReading {
-	/** The key the notes suggest ("F minor"), marked "(a guess)" when two keys fit about as well. */
+	/**
+	 * The key the notes suggest with the parts that play alongside ("F minor"), marked "(a guess)"
+	 * when two keys fit about as well.
+	 */
 	readonly key?: string;
 	/**
 	 * Each bar, four steps a group: a note ("F2"), a chord of three notes or more ("Dm7") or notes
@@ -24,13 +27,22 @@ export interface PatternReading {
 
 const ascii = (name: string) => name.replace(/♯/g, '#').replace(/♭/g, 'b');
 
-/** The reading of a pitched pattern, or null for an empty one. */
-export function readPattern(p: VirtualPattern): PatternReading | null {
+/**
+ * The reading of a pitched pattern, or null for an empty one. The key counts the pitched parts that
+ * play `alongside` it too (the scene's other tracks): a melody's first bars alone once read as E
+ * minor in C major, chords of C and G as G major.
+ */
+export function readPattern(
+	p: VirtualPattern,
+	alongside: readonly VirtualPattern[] = []
+): PatternReading | null {
 	if (p.notes.length === 0) return null;
-	// the key from how long each pitch class sounds
+	// the key from how long each pitch class sounds, in this part and those with it
 	const chroma = new Array<number>(12).fill(0);
-	for (const n of p.notes) chroma[n.note % 12] += Math.max(0.25, n.length);
-	const found = new Set(p.notes.map((n) => n.note % 12)).size >= 3 ? estimateKey(chroma) : null;
+	const all = [p, ...alongside].flatMap((q) => q.notes);
+	for (const n of all) chroma[n.note % 12] += Math.max(0.25, n.length);
+	const found =
+		new Set(all.map((n) => n.note % 12)).size >= 3 ? estimateKey(chroma, { written: true }) : null;
 	const names = found ? keySpelling(found.pitchClass, found.mode) : keySpelling(0, 'major');
 	const noteName = (note: number) => `${names[note % 12]}${Math.floor(note / 12) - 1}`;
 
@@ -69,14 +81,18 @@ export function readPattern(p: VirtualPattern): PatternReading | null {
 	};
 }
 
+/** At or over this velocity a hit reads as an accent, X. */
+export const ACCENT_VELOCITY = 115;
+/** At or under this, a soft hit, o. */
+export const SOFT_VELOCITY = 75;
+
 /**
- * A drum hit on the grid by how hard it is next to the sound's other hits: X accented, o soft,
- * x the rest, and x for all when they are about as loud.
+ * A drum hit on the grid by how hard it is: X an accent, o a soft hit, x the rest, by fixed lines,
+ * so a grid reads back as written (marked against each other, a line of soft hats came back as x,
+ * and an agent thought they played at full velocity).
  */
-export function hitMark(velocity: number, low: number, high: number): string {
-	if (high - low < 15) return 'x';
-	const third = (high - low) / 3;
-	if (velocity >= high - third) return 'X';
-	if (velocity <= low + third) return 'o';
+export function hitMark(velocity: number): string {
+	if (velocity >= ACCENT_VELOCITY) return 'X';
+	if (velocity <= SOFT_VELOCITY) return 'o';
 	return 'x';
 }

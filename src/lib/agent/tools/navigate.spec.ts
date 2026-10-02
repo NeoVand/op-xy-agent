@@ -7,6 +7,7 @@ import { playStep } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { FakeTime } from '../../../../test/fakes/fake-time';
 import { NO_MANUAL } from '../manual-source';
+import type { RehearsedStep } from '../virtual-opxy';
 import type { AgentEnvironment, AnyTool, ToolContext, ToolResult } from './define';
 import { planStepsTool } from './navigate';
 
@@ -27,7 +28,7 @@ function setup(withReplica = false) {
 			};
 		}
 	} as unknown as ReplicaState;
-	const guided: { goal: string; steps: readonly { keys: string }[] }[] = [];
+	const guided: { goal: string; steps: readonly RehearsedStep[] }[] = [];
 	const stops: number[] = [];
 	const env: AgentEnvironment = {
 		device: null,
@@ -240,6 +241,23 @@ describe('plan_steps with show', () => {
 		expect(guided[0].steps.map((s) => s.keys)).toEqual(['T3', 'M3', 'turn E1']);
 		expect(animated).toEqual([]);
 		expect(sim.state.track).toBe(0);
+		expect(result.walkthrough).toMatch(/The keys are lit on the replica now/);
+		// where it starts, so a plan without a track key is not read as that track selected
+		expect(result.from).toBe('track 1 (drum) selected');
+	});
+
+	it('walks to a value with none given, ending on the turn, its note kept', async () => {
+		const { run, guided } = setup(true);
+		const result = json(
+			await run(planStepsTool, { show: false, guide: true, track: 3, param: 'cutoff' })
+		);
+		expect(result.note).toBe('E1 turns it');
+		expect(result.walkthrough).toMatch(/The keys are lit on the replica now/);
+		const steps = guided[0].steps;
+		expect(steps.map((s) => s.keys)).toEqual(['T3', 'M3', 'turn E1']);
+		// the turn is done once the value has moved from where it stands
+		expect(steps.at(-1)).toMatchObject({ leave: steps.at(-2)!.screen });
+		expect(result.steps.at(-1)).toEqual({ keys: 'turn E1', until: 'the value changes' });
 	});
 
 	it('only returns the plan without a replica', async () => {
@@ -247,5 +265,22 @@ describe('plan_steps with show', () => {
 		const result = json(await run(planStepsTool, { show: true, area: 'mix', page: 2 }));
 		expect(result).toMatchObject({ shown: false, reached: true });
 		expect(sim.state.mode).toBe('instrument');
+	});
+});
+
+describe('plan_steps settings', () => {
+	it('name a track only for what belongs to one (not the tempo page)', async () => {
+		const { run } = setup();
+		const plan = json(
+			await run(planStepsTool, {
+				show: false,
+				settings: [
+					{ param: 'tempo', value: 100 },
+					{ param: 'cutoff', value: 40, track: 3 }
+				]
+			})
+		);
+		expect(plan.settings[0].track).toBeUndefined();
+		expect(plan.settings[1].track).toBe(3);
 	});
 });

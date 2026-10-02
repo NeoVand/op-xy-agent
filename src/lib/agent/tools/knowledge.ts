@@ -194,9 +194,14 @@ export const showOnReplicaTool = defineTool({
 		const onAbort = () => handle.cancel();
 		ctx.signal.addEventListener('abort', onAbort, { once: true });
 		let outcome: 'finished' | 'cancelled';
+		// what the demo leads to, read before the replica goes back (an agent described it blind)
+		let ended: string | null = null;
 		try {
 			outcome = await handle.done;
-			if (outcome === 'finished') await sleep(DEMO_HOLD_MS, ctx.env.timers, ctx.signal);
+			if (outcome === 'finished') {
+				ended = ctx.env.screen?.read().shows ?? null;
+				await sleep(DEMO_HOLD_MS, ctx.env.timers, ctx.signal);
+			}
 		} catch {
 			outcome = 'cancelled';
 		} finally {
@@ -215,6 +220,7 @@ export const showOnReplicaTool = defineTool({
 				shown: outcome === 'finished',
 				keys,
 				seconds: Math.round(handle.plan.duration / 100) / 10,
+				...(ended ? { screenAtEnd: ended } : {}),
 				replica: putBack
 					? 'back where it was: the user can try it from there'
 					: tookOver

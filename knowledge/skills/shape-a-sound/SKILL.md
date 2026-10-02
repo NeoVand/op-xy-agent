@@ -30,6 +30,11 @@ OP-XY connected, the parameters MIDI reaches can be sent to it directly (the use
 Afterwards say what each change does, so they learn the sound and not just the result, and give the
 keys to make it on their own unit in order, from the plan's steps.
 
+An LFO's speed is synced first, a cycle of 1–8, 12, 16, 24 or 32 sixteenths (the key planner takes
+"sync 16", "1 bar", "2 bars" or "1/4"), then free, 0–99 (a number, or "free 20"). Free rates climb
+steeply: on the replica free 10 is a cycle of about five seconds, 20 about one a second, 45 a fast
+wobble. A slow sweep is synced over a bar or two, or free below about 12.
+
 ## The pump (the duck LFO)
 
 The duck dips the track that should make room (usually the bass or a pad) whenever its source plays.
@@ -39,10 +44,11 @@ The source is a track or the metronome.
   the kick shares its track with the hats (every kit in a new project does), the drum track's audio
   ducks on every hat too. The metronome as source pumps on every beat instead, which is what a
   four-on-the-floor kick wants. With a kick on its own track, that track is the natural source.
-- Hear a duck in the whole mix. Hearing tracks one at a time mutes the others, the source too, so
-  the duck does not move there; that is no sign it does not work. Listening names a pump it hears
-  (how far the level falls after each beat and swells back); short, gapped bass notes show little
-  of one, a held note all of it.
+- Hear a duck by listening with tracks: the ducked track is heard alone, its source playing on
+  unheard, so its take shows the pump (how far its level falls after each hit and swells back). In
+  the whole mix the hits mask the dip and a pump is easy to miss. Hearing tracks on the unit mutes
+  the others, the source too, so the duck does not move there. Short, gapped bass notes show little
+  of a pump, a held note all of it.
 - On the replica a metronome duck pumps whether the click is on or off. Whether the unit does the
   same with its click off has not been checked; do not claim either way for the unit.
 - A track has one LFO, so a duck replaces the LFO its sound had. In a new project only the bass on

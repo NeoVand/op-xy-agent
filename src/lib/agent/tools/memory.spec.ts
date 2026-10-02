@@ -108,7 +108,9 @@ describe('the memory tool', () => {
 
 describe('a conversation starts with what memory holds', () => {
 	it('the profile in full and the other files by name', async () => {
-		expect(await memoryBriefing(createMemoryStore())).toBeNull();
+		expect(await memoryBriefing(createMemoryStore())).toMatch(
+			/^<memory>\nYou remember nothing from earlier conversations yet: there is no \/memories\/user\.md/
+		);
 		const briefing = await memoryBriefing(
 			createMemoryStore([
 				{ path: '/memories/user.md', text: 'Level: beginner' },

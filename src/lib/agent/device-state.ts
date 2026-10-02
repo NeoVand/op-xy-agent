@@ -88,7 +88,7 @@ const SOURCE_TEXT = {
 export function describeDevice(s: DeviceSnapshot): string {
 	if (!s.connected) {
 		const why = s.phase === 'disconnected' ? 'The OP-XY disconnected.' : 'No OP-XY is connected.';
-		return `Device note from the app: ${why} Device tools will fail until the user connects it with the connect button on the device stage. Teaching and the replica still work.`;
+		return `Device note from the app: ${why} Device tools will fail until the user connects it with the connect button on the device stage. Teaching and the replica still work. A new device note comes with the next message when that changes, so this one holds until then.`;
 	}
 	const parts: string[] = [];
 	const firmware = s.firmware
@@ -114,5 +114,6 @@ export function describeDevice(s: DeviceSnapshot): string {
 	if (sent.length > 0)
 		parts.push(`Last sent by this app (may have changed by hand since): ${sent.join(', ')}.`);
 	if (s.firmwareWarnings.length > 0) parts.push(s.firmwareWarnings.join(' '));
+	parts.push('A new device note comes with the next message when any of this changes.');
 	return `Device note from the app: ${parts.join(' ')}`;
 }

@@ -179,6 +179,7 @@ describe('the conductor tool set', () => {
 			listen_tracks: 'mutate',
 			import_midi: 'mutate',
 			skill: 'read',
+			take_back: 'mutate',
 			memory: 'mutate',
 			run_lab: 'mutate'
 		});

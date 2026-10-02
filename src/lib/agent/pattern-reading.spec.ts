@@ -7,7 +7,7 @@ function pattern(notes: readonly Omit<VirtualNote, 'velocity'>[], bars = 1): Vir
 		track: 3,
 		pattern: 1,
 		patterns: 1,
-		playing: true,
+		current: true,
 		bars,
 		length: bars * 16,
 		scale: 1,
@@ -62,10 +62,47 @@ describe('readPattern', () => {
 });
 
 describe('hitMark', () => {
-	it('marks accents and soft hits against the sound’s other hits', () => {
-		expect(hitMark(70, 45, 70)).toBe('X');
-		expect(hitMark(45, 45, 70)).toBe('o');
-		expect(hitMark(58, 45, 70)).toBe('x');
-		expect(hitMark(100, 95, 105)).toBe('x');
+	it('marks accents and soft hits by fixed lines, so a grid reads back as written', () => {
+		expect(hitMark(120)).toBe('X');
+		expect(hitMark(115)).toBe('X');
+		expect(hitMark(100)).toBe('x');
+		expect(hitMark(76)).toBe('x');
+		expect(hitMark(75)).toBe('o');
+		// a line of soft hits stays soft, whatever the other hits
+		expect([55, 55, 55].map(hitMark)).toEqual(['o', 'o', 'o']);
+	});
+});
+
+describe('the key of a pattern with the parts alongside it', () => {
+	it('counts the chords under a melody that alone suggests another key', () => {
+		const at = (notes: [number, number, number][], track: number): VirtualPattern => ({
+			track,
+			pattern: 1,
+			patterns: 1,
+			current: true,
+			bars: 1,
+			length: 16,
+			scale: 1,
+			notes: notes.map(([step, note, length]) => ({ step, note, velocity: 100, length }))
+		});
+		// E E F G G F E D: alone, no C to settle it
+		const melody = at(
+			[64, 64, 65, 67, 67, 65, 64, 62].map((note, i) => [i * 2 + 1, note, 2]),
+			5
+		);
+		const chords = at(
+			[
+				[1, 48, 8],
+				[1, 52, 8],
+				[1, 55, 8],
+				[9, 43, 8],
+				[9, 47, 8],
+				[9, 50, 8]
+			],
+			7
+		);
+		expect(readPattern(melody, [chords])?.key).toMatch(/^C major/);
+		// alone, the melody's E, F, G and D still fit no key better than C major (F rules G out)
+		expect(readPattern(melody)?.key ?? '').not.toMatch(/^(G|E) /);
 	});
 });

@@ -29,10 +29,21 @@ export function tracksPlaying(state: SimState): number[] {
 	});
 }
 
-/** `state` (a copy) with every instrument track but `track` (1–8) muted. */
+/**
+ * `state` (a copy) with every instrument track but `track` (1–8) muted. When `track` ducks from
+ * another instrument track, that one plays on at level 0, unheard (its sends are after the fader),
+ * so the duck moves as it does in the mix: muted, its notes would never start it.
+ */
 export function alone(state: SimState, track: number): SimState {
 	const copy = JSON.parse(JSON.stringify(state)) as SimState;
 	copy.tracks.forEach((t, i) => (t.mix.muted = i !== track - 1));
+	const lfo = copy.tracks[track - 1]?.lfo;
+	const from = lfo?.type === 'duck' && lfo.on ? Math.round(lfo.source) : 0;
+	if (from >= 1 && from <= 8 && from !== track) {
+		const source = copy.tracks[from - 1].mix;
+		source.muted = false;
+		source.level = 0;
+	}
 	return copy;
 }
 

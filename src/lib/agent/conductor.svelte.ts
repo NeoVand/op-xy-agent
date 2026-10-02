@@ -204,9 +204,14 @@ function playingNow(virtual: VirtualOpxy): string {
 	try {
 		if (!virtual.status().playing) return 'the replica is stopped.';
 		const a = virtual.readArrangement();
-		return a.song.order.length > 1
-			? `the replica is playing its song (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now.`
-			: `the replica is playing scene ${a.scene}, looping.`;
+		const queued = a.queued
+			? ` Scene ${a.queued} is queued: it takes over when this one ends.`
+			: '';
+		if (a.plays === 'song') {
+			return `the replica is playing its song (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now.${queued}`;
+		}
+		const held = a.song.order.length > 1 ? ' (picked, so the song does not move on)' : '';
+		return `the replica is playing scene ${a.scene}, looping${held}.${queued}`;
 	} catch {
 		return 'unknown.';
 	}
@@ -294,6 +299,8 @@ export class Conductor {
 	readonly #manualMode: 'full' | 'map';
 	/** The replica when the user's message arrived, and the changes last reported against it. */
 	#checkpoint: VirtualCheckpoint | null = null;
+	/** The replica when the agent last finished: what the user changed since is theirs to tell. */
+	#lastSeen: VirtualCheckpoint | null = null;
 	#reported = '';
 	/** Each turn's replica before and after it, for its take-back (this page session only). */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
@@ -376,6 +383,7 @@ export class Conductor {
 			listen: options.listen ?? null,
 			memory: options.memory ?? null,
 			lab: options.lab ?? null,
+			answers: { takeBack: (answer) => this.#takeBack(answer) },
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,
@@ -459,6 +467,7 @@ export class Conductor {
 		this.status = 'running';
 		this.litChanges = null;
 		this.activity = startActivity(this.#now(), !this.#answered);
+		const hands = this.#userChanges();
 		this.#checkpoint = this.#env.virtual?.checkpoint() ?? null;
 		this.#reported = '';
 		const context = await this.#turnContext(trimmed, attachments);
@@ -466,7 +475,7 @@ export class Conductor {
 		for (const a of attachments) if (a.midi) this.#files.set(a.view.name, a.midi);
 		if (options.via === 'voice') this.#pendingNotes.push(VOICE_NOTE);
 		// one system message: two in a row would reach the model as two user turns
-		const note = [this.#deviceUpdate(), context].filter(Boolean).join('\n\n');
+		const note = [this.#deviceUpdate(), hands, context].filter(Boolean).join('\n\n');
 		if (note) this.#messages.push({ role: 'system', content: note });
 		await this.#run();
 	}
@@ -489,9 +498,10 @@ export class Conductor {
 		this.litChanges = null;
 		this.activity = startActivity(this.#now(), !this.#answered);
 		// what the user did is theirs: only the agent's own changes from here are reported
+		const hands = this.#userChanges();
 		this.#checkpoint = this.#env.virtual?.checkpoint() ?? null;
 		this.#reported = '';
-		this.#messages.push({ role: 'system', content: note });
+		this.#messages.push({ role: 'system', content: [note, hands].filter(Boolean).join('\n\n') });
 		await this.#run();
 	}
 
@@ -803,6 +813,41 @@ export class Conductor {
 		return true;
 	}
 
+	/**
+	 * take_back: what the agent's `answer`-th last answer that changed the replica changed, taken
+	 * back as its changes note's undo would (the note then offers to put it back).
+	 */
+	#takeBack(answer: number): { undone: readonly string[] } | { error: string } {
+		const virtual = this.#env.virtual;
+		const notes = this.entries.filter(
+			(e): e is Extract<ChatEntry, { kind: 'changes' }> => e.kind === 'changes'
+		);
+		const entry = notes.at(-answer);
+		if (!virtual || !entry) {
+			return {
+				error:
+					notes.length === 0
+						? 'None of your answers in this conversation changed the replica, so there is nothing to take back.'
+						: `Only ${notes.length} of your answers changed the replica (answer 1 is the last).`
+			};
+		}
+		const turn = this.#turns.get(entry.id);
+		if (!turn || !entry.undo) {
+			return {
+				error:
+					'That answer came before the page was loaded, so its changes can no longer be taken back: write the old values again.'
+			};
+		}
+		if (entry.undo === 'undone') {
+			return { error: `That answer is taken back already (${entry.lines.join('; ')}).` };
+		}
+		virtual.revert(turn.before, turn.after);
+		turn.undone = virtual.checkpoint();
+		entry.undo = 'undone';
+		if (this.litChanges?.id === entry.id) this.litChanges = null;
+		return { undone: entry.lines };
+	}
+
 	/** The takes a lab run's chip shows, when it offered some and none is kept yet. */
 	#takesOf(entryId: string) {
 		const entry = this.entries.find((e) => e.kind === 'tool' && e.id === entryId);
@@ -912,6 +957,24 @@ export class Conductor {
 				? `The replica is as it was before the user\u2019s message: nothing on it changed.\n${now}`
 				: `What changed on the replica since the user\u2019s message, yours and anything the user did on it meanwhile (describe the outcome from this):\n${marked.map((l) => `- ${l}`).join('\n')}\n${now}`;
 		return [{ type: 'text', text: `<replica-changes>\n${text}\n</replica-changes>` }];
+	}
+
+	/**
+	 * What changed on the replica since the agent last finished (the user's hands, playback they
+	 * started), for the next message: an agent once told a user who had taken two hats out that
+	 * nothing had changed, since its own list counts only from the new message.
+	 */
+	#userChanges(): string | null {
+		const virtual = this.#env.virtual;
+		if (!virtual || !this.#lastSeen) return null;
+		let lines: readonly string[];
+		try {
+			lines = virtual.changesSince(this.#lastSeen);
+		} catch {
+			return null;
+		}
+		if (lines.length === 0) return null;
+		return `<user-changes>\nSince your last answer, the replica changed (the user's own hands, or playback they started or stopped):\n${lines.map((l) => `- ${l}`).join('\n')}\n</user-changes>`;
 	}
 
 	/** Whether the model has called the tool `name` since the user's message. */
@@ -1025,6 +1088,7 @@ export class Conductor {
 			const failed = result.error !== null && result.error.code !== 'aborted';
 			this.lastError = failed ? result.error : null;
 			this.#noteChanges();
+			this.#lastSeen = this.#env.virtual?.checkpoint() ?? null;
 			this.status = failed ? 'error' : 'idle';
 		} catch (error) {
 			const info = normalizeError(error);

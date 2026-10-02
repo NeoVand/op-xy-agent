@@ -80,8 +80,37 @@ describe('replica changes', () => {
 		const lines = virtual.changesSince(start);
 		expect(lines).toContain('T1 pattern 1: 0 → 4 notes');
 		expect(lines).toContain('T1 pattern 2: new, 5 notes');
-		expect(lines.some((l) => /^scenes: 1 → 2/.test(l))).toBe(true);
+		// writing pattern 2 played it; the arrangement put T1 back on pattern 1 in scene 1
+		expect(lines).not.toContain('T1 plays pattern 1 → 2');
+		expect(lines).toContain('scene 2: new, T1 p2');
 		expect(lines).toContain('song: 1 → 1 2 2');
+		const next = virtual.checkpoint();
+		virtual.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 1, pattern: 1 }] }] });
+		expect(virtual.changesSince(next)).toEqual(['scene 2: T1 p2 → p1']);
+	});
+
+	it('say which pattern a track plays, and its player as the page reads', () => {
+		const { sim, virtual, start } = setup();
+		const chord = [60, 64, 67].map((note) => ({ step: 1, note, velocity: 100, length: 16 }));
+		virtual.writePattern(4, { pattern: 2, bars: 1, notes: chord });
+		expect(virtual.changesSince(start)).toEqual([
+			'T4 plays pattern 1 → 2',
+			'T4 pattern 2: new, 3 notes'
+		]);
+		const next = virtual.checkpoint();
+		const player = sim.state.tracks[3].sequence.patterns[1].player;
+		player.on = true;
+		player.arp.speed = 3;
+		const lines = virtual.changedSince(next);
+		expect(lines.map((c) => c.line)).toEqual([
+			'T4 player: arpeggio player off: speed 1/8, pattern up, range 1 oct, hold off → arpeggio player on: speed 1/16, pattern up, range 1 oct, hold off'
+		]);
+		expect(lines[0].brief).toBe('T4 player: arpeggio player off → on, speed 1/8 → 1/16');
+		expect(lines[0].controls).toEqual(['track.4', 'key.player']);
+		// a pattern that does not play says only that its player changed
+		const other = virtual.checkpoint();
+		sim.state.tracks[3].sequence.patterns[0].player.on = true;
+		expect(virtual.changesSince(other)).toEqual(['T4 pattern 1: its player changed']);
 	});
 
 	it('say how the notes changed: a transposition, new velocities', () => {

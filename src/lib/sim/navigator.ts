@@ -28,6 +28,7 @@ import { currentGroup, groups, presetKey, presetsIn } from './areas/system/prese
 import {
 	FILTER_TYPES,
 	GROOVES,
+	LFO_SYNC_STEPS,
 	LFO_TYPES,
 	PLAY_MODES,
 	SAMPLER_TUNE_RANGE,
@@ -699,6 +700,34 @@ function readingNumber(reading: string): number {
 	return m ? Number(m[1].replace(/^[–−]/, '-').replace(/^\+/, '')) : NaN;
 }
 
+/**
+ * An LFO speed as people say it, as the stored value (the synced steps, then the free range): a
+ * number is the free range's, as the page reads it ("free 45"), and so is "free 45"; a synced speed
+ * goes by its count of sixteenths ("sync 16", "16 steps", "16 sixteenths"), in bars ("1 bar") or as
+ * a note ("1/4"). Null for anything else. Both halves read 16 at some point, so a plain reading
+ * cannot tell them apart: an agent asked for 16 sixteenths and got the free range's 16.
+ */
+export function lfoSpeedTarget(value: number | string): number | null {
+	const synced = LFO_SYNC_STEPS.length;
+	const free = (n: number) =>
+		Number.isFinite(n) && n >= 0 && n <= 99 ? synced + Math.round(n) : null;
+	if (typeof value === 'number') return free(value);
+	const v = value.trim().toLowerCase();
+	const plain = /^(?:free\s*)?(\d+(?:\.\d+)?)$/.exec(v);
+	if (plain) return free(Number(plain[1]));
+	const count = (sixteenths: number) => {
+		const at = LFO_SYNC_STEPS.findIndex((s) => Number(s) === sixteenths);
+		return at >= 0 ? at : null;
+	};
+	const sync = /^(?:sync(?:ed)?\s*)?(\d+)\s*(?:steps?|sixteenths?|16ths?)?$/.exec(v);
+	if (sync && /sync|step|sixteenth|16th/.test(v)) return count(Number(sync[1]));
+	const bars = /^(\d+(?:\.\d+)?)\s*bars?$/.exec(v);
+	if (bars) return count(Number(bars[1]) * 16);
+	const note = /^1\/(\d+)$/.exec(v);
+	if (note) return count(16 / Number(note[1]));
+	return null;
+}
+
 /** The value `goal` names, in the parameter's units (a number, or the reading that matches). */
 function targetValue(
 	goal: number | string,
@@ -1079,17 +1108,26 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 		);
 	}
 	const lock = where.lock;
-	const target = targetValue(goal.value, lock.format, lock.min, lock.max, lock.step);
-	if (target === null) return rec.plan(false, `"${goal.value}" is not a value of ${id}`);
+	const speed = lock.id === 'lfo.speed';
+	const target = speed
+		? lfoSpeedTarget(goal.value)
+		: targetValue(goal.value, lock.format, lock.min, lock.max, lock.step);
+	if (target === null) {
+		const ways = speed
+			? ': a free speed 0–99 ("free 45", or 45), or a synced one by its sixteenths ("sync 16", "1 bar", "1/4": 1–8, 12, 16, 24 or 32 sixteenths)'
+			: '';
+		return rec.plan(false, `"${goal.value}" is not a value of ${id}${ways}`);
+	}
 	const read = (sim: OpxySim) => lock.get(sim.state.tracks[track - 1]);
-	// compare as the screen shows it, so 40 on a 0–99 lane stops where the page reads 40
+	// compare as the screen shows it, so 40 on a 0–99 lane stops where the page reads 40 (a speed
+	// by its place: synced 16 and free 16 read alike)
 	const ok = turnTo(
 		rec,
 		where.e,
 		where.shift,
 		read,
 		target,
-		readsAs(lock.format, target, goal.value)
+		speed ? (v) => Math.round(v) === target : readsAs(lock.format, target, goal.value)
 	);
 	return rec.plan(ok, ok ? undefined : `${id} stopped at ${lock.format(read(rec.sim))}`);
 }
@@ -1144,6 +1182,10 @@ export function reads(state: SimState, goal: SettingGoal): boolean {
 	if (!p || !placeOfParam(lockId, track)) return false;
 	if (lockId.startsWith('filter.') && !t.filter.on) return false;
 	if (lockId.startsWith('lfo.') && !t.lfo.on) return false;
+	if (p.id === 'lfo.speed') {
+		const speed = lfoSpeedTarget(goal.value);
+		return speed !== null && Math.round(p.get(t)) === speed;
+	}
 	const target = targetValue(goal.value, p.format, p.min, p.max, p.step);
 	return target !== null && readsAs(p.format, target, goal.value)(p.get(t));
 }

@@ -284,4 +284,22 @@ describe('arguments', () => {
 		f.writeArrangement({ song: { scenes: [1, 1], loop: false } } as never);
 		expect(f.readArrangement().song).toEqual({ order: [1, 1], loop: false });
 	});
+
+	it('take a scene back as readArrangement gives it, pattern 0 resting a track', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(1, { notes: [{ step: 1, note: 53 }] });
+		f.writePattern(3, { notes: [{ step: 1, note: 48 }] });
+		const verse = f.readArrangement().scenes[0];
+		const patterns = verse.patterns.map((p, i) => (i === 0 ? 0 : p));
+		f.writeArrangement({ scenes: [verse, { scene: 2, patterns }] } as never);
+		const scenes = f.readArrangement().scenes;
+		expect(scenes[1].patterns.slice(0, 3)).toEqual([2, 1, 1]);
+		expect(f.readPattern(1, 2).notes).toEqual([]);
+		expect(() =>
+			f.writeArrangement({
+				scenes: [{ scene: 2, patterns: [1, { track: 2, pattern: 1 }] }]
+			} as never)
+		).toThrow(/writeArrangement/);
+	});
 });

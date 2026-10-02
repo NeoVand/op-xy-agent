@@ -189,6 +189,8 @@ function forkState(json: string): SimState {
 const track16 = z.int().min(1).max(16);
 const track8 = z.int().min(1).max(8);
 const patternNumber = z.int().min(1).max(16);
+/** A scene's pattern for a track: 1–16, or 0 for an empty one (the track rests). */
+const scenePattern = z.int().min(0).max(16);
 const sceneNumber = z.int().min(1).max(99);
 const scales = TRACK_SCALES.map((s) => z.literal(s));
 
@@ -216,10 +218,15 @@ const arrangementWrite = z.strictObject({
 		.array(
 			z.strictObject({
 				scene: sceneNumber,
+				// by track, or as readArrangement gives them: every track's pattern, index 0 = track 1
 				patterns: z
-					.array(z.strictObject({ track: track16, pattern: patternNumber }))
-					.max(16)
-					.nullable()
+					.union([
+						z.array(z.strictObject({ track: track16, pattern: scenePattern })).max(16),
+						z.array(scenePattern).max(16)
+					])
+					.nullable(),
+				// what readArrangement says a scene lasts; ignored here (its patterns decide)
+				bars: z.number().optional()
 			})
 		)
 		.max(99)
@@ -428,8 +435,14 @@ export function createLab(options: LabOptions): LabSession {
 			const w = check(arrangementWrite, write, 'writeArrangement');
 			const order = w.song ? (w.song.order ?? w.song.scenes) : undefined;
 			if (w.song && !order) throw new LabError('writeArrangement: song needs its order (scenes)');
+			const scenes = w.scenes?.map(({ scene, patterns }) => ({
+				scene,
+				patterns:
+					patterns?.map((p, i) => (typeof p === 'number' ? { track: i + 1, pattern: p } : p)) ??
+					null
+			}));
 			return virtual.writeArrangement({
-				scenes: w.scenes,
+				scenes,
 				song: order ? { order, loop: w.song?.loop ?? true } : undefined
 			});
 		}

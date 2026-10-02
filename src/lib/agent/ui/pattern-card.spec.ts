@@ -9,7 +9,7 @@ const pattern = (notes: VirtualNote[]): VirtualPattern => ({
 	track: 1,
 	pattern: 1,
 	patterns: 1,
-	playing: true,
+	current: true,
 	bars: 1,
 	length: 16,
 	scale: 1,
