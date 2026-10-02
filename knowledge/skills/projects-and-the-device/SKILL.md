@@ -24,7 +24,8 @@ when it matters.
 ## The project key and files
 
 The "project" key under the replica opens a `.xy` file from disk, downloads the replica's project as
-one, loads the project the OP-XY has open, or saves the replica's project to it. A loaded project
+one, loads the project the OP-XY has open, or saves the replica's project to it; the last two read
+and write the unit over USB, so it must be in MTP mode (`com → M4`) first, as for sending. A loaded project
 brings each track's own sound settings (engine values, envelopes, filter, LFO, sends, FX I and II)
 but not TE's factory samples: drum kits and sampler presets play the replica's stand-ins, while the
 user's own recordings and community kits come across.

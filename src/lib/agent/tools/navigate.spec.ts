@@ -324,6 +324,21 @@ describe('plan_steps with show', () => {
 		expect(result.from).toBe('track 1 (drum) selected');
 	});
 
+	it('walks to a value already set: the way to its page and encoder, said so', async () => {
+		const { sim, run, guided } = setup(true);
+		// on the filter page of track 3 already, the cutoff at 40 (just set, as an agent had)
+		playStep(sim, { keys: 'T3' });
+		playStep(sim, { keys: 'M3' });
+		sim.state.tracks[2].filter.cutoff = 40;
+		const result = json(
+			await run(planStepsTool, { show: false, guide: true, track: 3, param: 'cutoff', value: 40 })
+		);
+		expect(result.guided).toBe(true);
+		expect(result.already).toMatch(/^The value is already 40: the walkthrough lights the way/);
+		// already on its page: the encoder alone is lit
+		expect(guided[0].steps.map((s) => s.keys)).toEqual(['turn E1']);
+	});
+
 	it('walks to a value with none given, ending on the turn, its note kept', async () => {
 		const { run, guided } = setup(true);
 		const result = json(

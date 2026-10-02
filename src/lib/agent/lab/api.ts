@@ -235,6 +235,8 @@ export interface PatternWrite {
 	readonly stay?: boolean;
 	/** This pattern's own groove, −99 (shuffle) … 99 (swing), as write_pattern's (0: the tempo page's). */
 	readonly groove?: number;
+	/** Every note's velocity that gives none, 1–127 (default 100). */
+	readonly velocity?: number;
 	/** Chords by name, as write_pattern takes them ("1:Am7 17:F"), voiced smoothly (or voicing root). */
 	readonly chords?: string;
 	readonly voicing?: 'smooth' | 'root';

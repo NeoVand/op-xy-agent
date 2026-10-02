@@ -46,7 +46,13 @@ import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { drumKeysSet } from './drum-keys';
 import { replicaChangeList, replicaChanges } from './replica-diff';
-import { AUX_NAMES, DEFAULT_METRONOME_LEVEL, GROOVES, type SimState } from '$lib/sim/params';
+import {
+	AUX_NAMES,
+	DEFAULT_METRONOME_LEVEL,
+	GROOVES,
+	PLAY_MODES,
+	type SimState
+} from '$lib/sim/params';
 import { takeBack } from '$lib/sim/merge';
 import {
 	MAX_BARS,
@@ -354,7 +360,9 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					current: seq.current + 1,
 					notes: noteCount(currentPattern(seq)),
 					byPattern: seq.patterns.map(noteCount),
-					muted: mix.muted
+					muted: mix.muted,
+					// one note at a time, or all of a chord (chords on a mono bass once played one note)
+					...(t < 8 ? { playMode: PLAY_MODES[s.tracks[t].playMode.mode] ?? 'poly' } : {})
 				};
 			});
 			const sound = options.sound;

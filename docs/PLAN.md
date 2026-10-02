@@ -245,6 +245,18 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   note says together is a choice of style; the walkthrough status says which keys are held down;
   make_kit's `crackle` voice (vinyl dust, an even bed of pops, also in the preset maker); the manual:
   the tempo is one value a project, no lock or LFO reaches it (derived).
+- **Probe round twenty (2026-10-02), 16 scenarios (`probe-scenarios-20.json`: re-checks (a beat
+  reversed into a copy, vinyl crackle, notes bar by bar) and new kinds of request: "no, the other
+  way", teaching what was just done, slang and typos, French, a remembered tempo, "what can you
+  do", loading from a device not connected, a pluck sound, an arp down and faster, the knobs of the
+  page on screen, a Bach invention, four songs at once, drums in the chorus alone):** crackle,
+  reverse, French (answered in French), memory and "what can you do" all worked; one failed call
+  (velocity in a lab write). Fixes: a reversed drum beat mirrors about the downbeat (hits on the
+  beat stay on beats, a fill at the end opens the bar); a walkthrough to a value already set lights
+  the way to its page and encoder instead of nothing; write_pattern says when chords land on a mono
+  track (status tracks carry `playMode`) and when step components sit on steps with no notes; the
+  lab's writePattern takes `velocity`; the projects skill says loading from or saving to the unit
+  needs MTP mode.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

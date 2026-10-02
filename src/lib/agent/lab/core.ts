@@ -251,7 +251,9 @@ const patternWrite = z.strictObject({
 	// chords by name, as write_pattern takes them ("1:Am7 17:F"; an agent wrote a lab's chords out
 	// note by note, unsure the lab took names)
 	chords: z.string().max(2000).optional(),
-	voicing: z.enum(['smooth', 'root']).optional()
+	voicing: z.enum(['smooth', 'root']).optional(),
+	// every note's velocity that gives none, as write_pattern's (a program failed on it)
+	velocity: z.int().min(1).max(127).optional()
 });
 
 const arrangementWrite = z.strictObject({
@@ -503,7 +505,7 @@ export function createLab(options: LabOptions): LabSession {
 				return {
 					step: n.step,
 					note,
-					velocity: n.velocity ?? 100,
+					velocity: n.velocity ?? w.velocity ?? 100,
 					length: n.length ?? 1,
 					...(offset ? { offset } : {})
 				};

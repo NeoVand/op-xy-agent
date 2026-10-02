@@ -196,6 +196,8 @@ export interface VirtualTrack {
 	/** Notes in each of its patterns, pattern 1 first (0: an empty pattern, where it rests). */
 	readonly byPattern: readonly number[];
 	readonly muted: boolean;
+	/** An instrument track's play mode (shift M2): poly sounds chords, mono and legato one note. */
+	readonly playMode?: 'poly' | 'mono' | 'legato';
 }
 
 /** The virtual OP-XY at a glance. */

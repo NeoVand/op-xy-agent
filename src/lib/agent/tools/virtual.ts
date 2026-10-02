@@ -417,7 +417,7 @@ export const writePatternTool = defineTool({
 			.boolean()
 			.optional()
 			.describe(
-				'Alone, or with copy: the notes backwards, each ending where its mirror began (a melody in retrograde, a fill turned round); its locks and components go with their steps'
+				'Alone, or with copy: the notes backwards, each ending where its mirror began (a melody in retrograde); on a drum track the hits mirror about the downbeat, so the beat stays on the beat and a fill at the end opens the bar; its locks and components go with their steps'
 			),
 		humanize: z
 			.object({
@@ -891,9 +891,13 @@ export const writePatternTool = defineTool({
 				...notes.map((n) => ({ ...n, step: n.step + barFrom }))
 			);
 		}
-		// a note of length L on step s, backwards, starts where its mirror ends: fill − s − L + 2
+		// a note of length L on step s, backwards, starts where its mirror ends: fill − s − L + 2;
+		// a drum hit mirrors about the downbeat instead, so hits on the beat stay on beats (a beat
+		// reversed note for note put every hat on the off-beat sixteenths)
 		const mirror = (step: number, length = 1) =>
-			Math.max(1, fill - step - Math.max(1, Math.round(length)) + 2);
+			drums
+				? ((fill + 1 - step) % fill) + 1
+				: Math.max(1, fill - step - Math.max(1, Math.round(length)) + 2);
 		// steps where a note starts move with it; other steps mirror plainly
 		const starts = new Map(notes.map((n) => [n.step, mirror(n.step, n.length)]));
 		const mirrored = (step: number) => starts.get(step) ?? Math.max(1, fill - step + 1);
@@ -994,7 +998,13 @@ export const writePatternTool = defineTool({
 					: {})
 			});
 			const notes2: string[] = [];
-			if (reversing) notes2.push('Reversed: the notes play backwards, last to first.');
+			if (reversing) {
+				notes2.push(
+					drums
+						? 'Reversed about the downbeat: the hits play last to first, those on the beat still on beats (step 5 and 13 trade places, 1 stays).'
+						: 'Reversed: the notes play backwards, last to first.'
+				);
+			}
 			if (humanizing && input.humanize) {
 				const t = input.humanize.timing ?? 0;
 				const v = input.humanize.velocity ?? 0;
@@ -1163,6 +1173,30 @@ export const writePatternTool = defineTool({
 						);
 					}
 				}
+			}
+			// chords on a track that sounds one note at a time (an agent wrote chords on the mono bass
+			// track, and only found out by reading its sound)
+			const playMode = virtual.status().tracks[input.track - 1]?.playMode;
+			const stacked = new Set<number>();
+			const onStep = new Map<number, number>();
+			for (const n of result.notes) {
+				const count = (onStep.get(n.step) ?? 0) + 1;
+				onStep.set(n.step, count);
+				if (count > 1) stacked.add(n.step);
+			}
+			if (!drums && playMode && playMode !== 'poly' && stacked.size > 0) {
+				notes2.push(
+					`T${input.track} plays ${playMode} (its play mode, shift M2), so a chord sounds one note at a time: set its play mode to poly (plan_steps param "play mode", value poly) for the chords to sound.`
+				);
+			}
+			// step components on steps with no notes do nothing (an agent's rolls sat on rests)
+			const bare = [...new Set((result.components ?? []).map((c) => c.step))].filter(
+				(step) => !result.notes.some((n) => n.step === step)
+			);
+			if (bare.length > 0) {
+				notes2.push(
+					`Step${bare.length === 1 ? '' : 's'} ${bare.join(', ')} hold${bare.length === 1 ? 's' : ''} no notes, so ${bare.length === 1 ? 'its component does' : 'their components do'} nothing: put them on steps that play.`
+				);
 			}
 			// chords by name voiced smoothly read back as inversions, which three agents explained to
 			// the user afterwards, unaware of voicing root

@@ -45,7 +45,7 @@ lab.offer(fork, label)     // a take for the user to hear and keep (2–3 a run;
 lab.log(...values)         // or console.log
 
 fork.status()  fork.readPattern(track, pattern?)  fork.writePattern(track, { pattern?, bars?,
-  length?, scale?, stay?, groove?, notes: [{ step, note, velocity?, length? }] or "1:A2:4",
+  length?, scale?, stay?, groove?, velocity?, notes: [{ step, note, velocity?, length? }] or "1:A2:4",
   or chords: "1:Am7" })
 fork.readArrangement()
 fork.writeArrangement({ scenes?: [{ scene, patterns: [{ track, pattern }] | number[] | null }],

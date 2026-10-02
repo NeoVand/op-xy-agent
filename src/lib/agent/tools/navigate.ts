@@ -290,9 +290,22 @@ export const planStepsTool = defineTool({
 		const selected = status.tracks.find((t) => t.track === status.selectedTrack);
 		const shows = ctx.env.screen?.read().shows;
 		const from = `track ${status.selectedTrack}${selected ? ` (${selected.engine})` : ''} selected${shows ? `, the screen on ${shows}` : ''}`;
-		const plan = virtual.plan(goal);
+		let plan = virtual.plan(goal);
 		if (input.guide && !input.show) {
 			const guide = ctx.env.guide;
+			// a value already there: the way to its page and encoder, for the user to learn it (an
+			// agent asked to teach a send it had just set got "nothing to do" and no keys to light)
+			let already: string | null = null;
+			if (plan.reached && plan.steps.length === 0 && input.value !== undefined) {
+				const there = toGoal({ ...input, value: undefined }, ctx.env);
+				if (typeof there !== 'string') {
+					const path = virtual.plan(there);
+					if (path.steps.length > 0 || /turns it/.test(path.note ?? '')) {
+						plan = path;
+						already = `The value is already ${input.value}: the walkthrough lights the way to its page and the encoder, for the user to learn the keys and try it.`;
+					}
+				}
+			}
 			// to a value with none given ("walk me through the cutoff"): a last step, the turn, done
 			// once the value it turns has changed (the walkthrough once ended a step short of it)
 			const turn = /^E([1-4])( with shift held)? turns it/.exec(plan.note ?? '');
@@ -327,6 +340,7 @@ export const planStepsTool = defineTool({
 				{
 					guided: true,
 					from,
+					...(already ? { already } : {}),
 					...planView(plan),
 					...(turn
 						? {

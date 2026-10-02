@@ -1,0 +1,131 @@
+[
+	{
+		"name": "backwards-fill",
+		"about": "Re-check: a drum fill reversed into a copy.",
+		"steps": [
+			{ "say": "make a 1 bar beat with a snare fill at the end" },
+			{ "say": "make pattern 2 the same beat but backwards" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "crackle-2",
+		"about": "Re-check: vinyl crackle from the crackle voice.",
+		"steps": [
+			{ "say": "make a lofi hip hop beat" },
+			{ "say": "add vinyl crackle under it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "no-the-other-way",
+		"about": "A correction that reverses the last change.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "make the bass brighter" },
+			{ "say": "no, the other way, darker than it was at first" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-after-doing",
+		"about": "A request to learn the steps of something already done.",
+		"steps": [
+			{ "say": "put a reverb on the chords on track 7" },
+			{ "say": "now tell me exactly how to do that myself on my op-xy, key by key" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "slang-typos",
+		"about": "A request full of typos and slang.",
+		"steps": [
+			{ "say": "yo mak me a hard bet wit sum heavy 808 bass n hats rollin" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "french",
+		"about": "A request in another language.",
+		"steps": [{ "say": "fais-moi un beat house avec une basse, s'il te plaît" }, { "why": true }]
+	},
+	{
+		"name": "remember-tempo",
+		"about": "A preference kept in memory and used later.",
+		"steps": [
+			{ "say": "remember that I always work at 92 bpm" },
+			{ "say": "make me a beat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-can-you-do",
+		"about": "A question about the agent itself.",
+		"steps": [{ "say": "what can you do?" }, { "why": true }]
+	},
+	{
+		"name": "load-from-device",
+		"about": "A device request with nothing connected.",
+		"steps": [{ "say": "load the project that's on my op-xy right now" }, { "why": true }]
+	},
+	{
+		"name": "pluck-sound",
+		"about": "A preset choice for a track.",
+		"steps": [
+			{ "say": "put a chord progression on track 3" },
+			{ "say": "change track 3's sound to a pluck" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-down",
+		"about": "A player setting changed.",
+		"steps": [
+			{ "say": "put Am F C G on track 4 and arpeggiate them" },
+			{ "say": "make the arp go down instead of up, and faster" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-knob",
+		"about": "A question about the screen the user is on.",
+		"steps": [
+			{ "press": ["track.3", "key.m2"] },
+			{ "say": "what do the knobs do on this page?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bach",
+		"about": "A style that needs counterpoint.",
+		"steps": [
+			{ "say": "write something in the style of a Bach two-part invention on tracks 4 and 5" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bar-pipes-notes",
+		"about": "Re-check: notes written with | between bars.",
+		"steps": [
+			{ "say": "write a 2 bar bassline on track 3, give me the notes bar by bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "four-songs",
+		"about": "A request past what fits one answer.",
+		"steps": [
+			{ "say": "make me four different songs, each with an intro, verse and chorus" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "drums-only-in-chorus",
+		"about": "A part present in only one section.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus" },
+			{ "say": "take the drums out of the verse, keep them in the chorus" },
+			{ "why": true }
+		]
+	}
+]

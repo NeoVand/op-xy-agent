@@ -724,6 +724,37 @@ describe('write_pattern on drums', () => {
 		// backwards twice is forwards
 		await run(writePatternTool, { track: 5, pattern: 2, reverse: true, stay: true });
 		expect(virtual.readPattern(5, 2).notes.map((n) => n.step)).toEqual([1, 5, 9]);
+		// a beat mirrors about the downbeat: the kick stays on 1, a fill on 15–16 opens the bar
+		await run(writePatternTool, {
+			track: 1,
+			grid: { kick: 'x... .... x... ....', snare: '.... x... .... x.xx' }
+		});
+		const beat = json(await run(writePatternTool, { track: 1, reverse: true }));
+		expect(beat.written.grid).toEqual({
+			'kick 1': 'x... .... x... ....',
+			'snare 1': '.xx. x... .... x...'
+		});
+		expect(beat.note).toMatch(/Reversed about the downbeat/);
+	});
+
+	it('says when chords land on a mono track, and components on steps with no notes', async () => {
+		const { run } = setup();
+		// T3, the bass, plays mono in a new project
+		const chords = json(await run(writePatternTool, { track: 3, chords: '1:Am 9:F' }));
+		expect(chords.note).toMatch(
+			/T3 plays mono \(its play mode, shift M2\), so a chord sounds one note/
+		);
+		const rolls = json(
+			await run(writePatternTool, {
+				track: 1,
+				grid: { 'closed hat': 'x.x. x.x. x.x. x.x.' },
+				components: [
+					{ step: 13, kind: 'multiply', value: 3 },
+					{ step: 14, kind: 'multiply', value: 3 }
+				]
+			})
+		);
+		expect(rolls.note).toMatch(/Step 14 holds no notes, so its component does nothing/);
 	});
 
 	it('gives a pattern its own groove, confirmed and undone with it', async () => {
