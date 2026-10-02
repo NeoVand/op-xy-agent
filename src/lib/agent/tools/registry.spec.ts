@@ -118,6 +118,17 @@ describe('ToolRegistry', () => {
 		expect(!bad.ok && bad.error).toMatch(/scene takes: A scene of the replica to hear looping/);
 	});
 
+	it('reads a nested value sent as JSON text (a drum grid as one string)', () => {
+		const registry = createConductorRegistry();
+		const grid = { kick: 'x... x... x... x...' };
+		const parsed = registry.parse('write_pattern', { track: 1, grid: JSON.stringify(grid) });
+		expect(parsed).toMatchObject({ ok: true, input: { grid } });
+		// text that is no JSON still says what the field takes
+		const bad = registry.parse('write_pattern', { track: 1, grid: '{"kick": "x..."' });
+		expect(bad.ok).toBe(false);
+		if (!bad.ok) expect(bad.error).toMatch(/grid takes:/);
+	});
+
 	it('re-validates input with zod, including ranges strict schemas cannot express', () => {
 		const registry = createConductorRegistry();
 		expect(registry.parse('set_tempo', { bpm: 96 })).toMatchObject({
@@ -180,6 +191,7 @@ describe('the conductor tool set', () => {
 			import_midi: 'mutate',
 			skill: 'read',
 			take_back: 'mutate',
+			keep_take: 'mutate',
 			memory: 'mutate',
 			run_lab: 'mutate'
 		});

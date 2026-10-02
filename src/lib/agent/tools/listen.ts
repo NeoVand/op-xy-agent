@@ -36,6 +36,7 @@ import type { ListenFrom, ListenHost } from '../listen-host';
 import {
 	alone,
 	keyNote,
+	mixDuckNote,
 	renderRequest,
 	sceneState,
 	tracksPlaying,
@@ -180,6 +181,8 @@ function notesFor(target: Target, analysis: ListenAnalysis, from: number | null)
 		const state = JSON.parse(target.virtual.checkpoint().state) as SimState;
 		const key = keyNote(writtenKey(state), analysis.harmony?.key);
 		if (key) notes.push(key);
+		const duck = mixDuckNote(state, analysis.pump !== null);
+		if (duck) notes.push(duck);
 		const arrangement = target.virtual.readArrangement();
 		if (from !== null && arrangement.scene !== from) {
 			notes.push(
@@ -440,11 +443,12 @@ async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResul
 			const analysis = await host.analyze(recording, { expectedBpm });
 			const summary = summarize(analysis, { focus: input.focus, source });
 			const key = keyNote(writtenKey(state), analysis.harmony?.key);
+			const duck = mixDuckNote(state, analysis.pump !== null);
 			const legend = flagLegend(summary.flags);
 			return {
 				content: [
 					summary.text,
-					...[...notes, ...(key ? [key] : [])].map((n) => `note: ${n}`),
+					...[...notes, ...(key ? [key] : []), ...(duck ? [duck] : [])].map((n) => `note: ${n}`),
 					...(legend ? [legend] : []),
 					`numbers: ${JSON.stringify(summary.data)}`
 				].join('\n'),

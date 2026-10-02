@@ -74,6 +74,8 @@ export interface AgentEnvironment {
 	readonly lab?: LabHost | null;
 	/** The replica changes of the agent's earlier answers, to take back (`take_back`). */
 	readonly answers?: AnswerHistory | null;
+	/** The takes lab runs offered, to keep one on the user's word (`keep_take`). */
+	readonly takes?: TakesHost | null;
 	readonly manual: ManualSource;
 	readonly timers: AgentTimers;
 	/** How long device tools wait to see the device confirm a change (e.g. echoed start); 0 = no wait. */
@@ -88,6 +90,17 @@ export interface AgentEnvironment {
 		description: string,
 		ctx: ToolContext
 	) => Promise<SubagentResult>;
+}
+
+/** The takes a lab run offered, as keep_take sees them. */
+export interface TakesHost {
+	/**
+	 * Puts take `take` (its letter, its number from 1 or its label) of the latest offer with none
+	 * kept on the replica and keeps it, as the user's tap would; or says why not.
+	 */
+	keep(
+		take: string
+	): { readonly kept: string; readonly changes: readonly string[] } | { readonly error: string };
 }
 
 /** The conductor's per-answer take-back, as take_back sees it. */
@@ -138,6 +151,18 @@ export interface GuideHost {
 	start(goal: string, steps: readonly RehearsedStep[]): void;
 	/** Ends a walkthrough (an animation on the replica would clear its marks). */
 	stop(): void;
+	/** Where a walkthrough stands while one runs: its goal, the steps done, the next; else null. */
+	progress?(): GuideProgress | null;
+}
+
+/** A walkthrough under way, as the agent hears of it. */
+export interface GuideProgress {
+	readonly goal: string;
+	/** The steps the user has done so far, in key grammar. */
+	readonly done: readonly string[];
+	readonly total: number;
+	/** The step lit now. */
+	readonly next: string | null;
 }
 
 /** What the replica's screen shows now (the app's UI simulator, not the real device's screen). */
@@ -509,6 +534,13 @@ export class ToolRegistry {
 		}
 		const result = tool.input.safeParse(input);
 		if (result.success) return { ok: true, tool, input: result.data };
+		// a nested value sent as JSON text (models do it with loose schemas: a drum grid as one
+		// string): read it, and try once more
+		const unwrapped = unstringFields(input, result.error.issues);
+		if (unwrapped) {
+			const again = tool.input.safeParse(unwrapped);
+			if (again.success) return { ok: true, tool, input: again.data };
+		}
 		// what each field that failed takes, from its description: a bare "Invalid input → at
 		// scene" once made an agent give up on listening instead of sending it again
 		const shape =
@@ -526,6 +558,35 @@ export class ToolRegistry {
 			error: `Invalid input for ${name}:\n${z.prettifyError(result.error)}${takes.length > 0 ? `\n${takes.join('\n')}` : ''}`
 		};
 	}
+}
+
+/**
+ * `input` with each top-level field that failed as the wrong type, but is a string of JSON for an
+ * object or a list, read as that; null when there is none.
+ */
+function unstringFields(
+	input: unknown,
+	issues: readonly z.core.$ZodIssue[]
+): Record<string, unknown> | null {
+	if (typeof input !== 'object' || input === null || Array.isArray(input)) return null;
+	const out: Record<string, unknown> = { ...(input as Record<string, unknown>) };
+	let changed = false;
+	for (const issue of issues) {
+		if (issue.code !== 'invalid_type' || issue.path.length !== 1) continue;
+		const key = String(issue.path[0]);
+		const value = out[key];
+		if (typeof value !== 'string') continue;
+		try {
+			const parsed: unknown = JSON.parse(value);
+			if (typeof parsed === 'object' && parsed !== null) {
+				out[key] = parsed;
+				changed = true;
+			}
+		} catch {
+			// not JSON: the error says what the field takes
+		}
+	}
+	return changed ? out : null;
 }
 
 /**

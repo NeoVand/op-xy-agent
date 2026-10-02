@@ -68,6 +68,17 @@ export class ReplicaGuide {
 		return this.status === 'running' ? (this.steps[this.index] ?? null) : null;
 	}
 
+	/** Where the walkthrough stands, for the agent (it once could not tell how far the user got). */
+	progress(): { goal: string; done: string[]; total: number; next: string | null } | null {
+		if (this.status !== 'running') return null;
+		return {
+			goal: this.goal,
+			done: this.steps.slice(0, this.index).map((s) => s.keys),
+			total: this.steps.length,
+			next: this.steps[this.index]?.keys ?? null
+		};
+	}
+
 	/** Starts a walkthrough (ending any other); steps already done on screen are passed at once. */
 	start(goal: string, steps: readonly GuideStep[]): void {
 		this.stop();

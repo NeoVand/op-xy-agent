@@ -46,7 +46,8 @@ lab.offer(fork, label)     // a take for the user to hear and keep (2–3 a run;
 lab.log(...values)         // or console.log
 
 fork.status()  fork.readPattern(track, pattern?)  fork.writePattern(track, { pattern?, bars?,
-  length?, scale?, notes: [{ step, note, velocity?, length? }] })  fork.readArrangement()
+  length?, scale?, notes: [{ step, note, velocity?, length? }] or "1:A2:4 5:C3+E3:2" })
+fork.readArrangement()
 fork.writeArrangement({ scenes?: [{ scene, patterns: [{ track, pattern }] | number[] | null }],
   song?: { order, loop } })  fork.readSound(track)  fork.setTempo(bpm)  fork.setMetronome(on)
 fork.setMuted(track, muted)  fork.selectTrack(track)
@@ -126,9 +127,8 @@ scene while it renders; to hear a later part, name its scene. A program hears at
 and 240 seconds in all, within its time limit (20 s unless timeout_s says otherwise, 60 at most). A
 new project's metronome is on, and its click is in what you hear (`fork.setMetronome(false)`).
 
-What the program prints and returns comes back cut at about 10,000 characters, so print counts,
-scores and the few notes that matter rather than whole patterns. Returned values come back as
-JSON; a fork prints as its name.
+What the program prints and returns comes back cut at about 10,000 characters: print counts,
+scores and the few notes that matter, not whole patterns. Returns come back as JSON.
 
 There is nothing outside the lab in scope: no network, no storage, no page, no timers for strings,
 no imports, and no connected OP-XY. A device only hears what the user sends to it afterwards; say

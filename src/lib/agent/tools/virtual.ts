@@ -50,7 +50,9 @@ const patternNoteSchema = z.object({
 		.min(0.05)
 		.max(64)
 		.optional()
-		.describe('How long, in steps (default 1; 4 = a quarter note at track scale 1)')
+		.describe(
+			"How long, in steps (default 1; 4 = a quarter note at track scale 1): the note's own length; the bar menu's note length only shapes notes entered with the step keys"
+		)
 });
 
 function virtualOf(env: AgentEnvironment) {
@@ -128,12 +130,18 @@ function drumGrid(p: VirtualPattern): Record<string, string> | null {
 			const velocity = steps.get(step);
 			return velocity === undefined ? '.' : hitMark(velocity);
 		};
-		// four steps a beat, so where a hit falls in the bar reads without counting
+		// four steps a beat, so where a hit falls in the bar reads without counting; only the steps
+		// that play (a 14-step pattern read as 16 once, and an agent could not tell it was 14)
 		const bars = Array.from({ length: p.bars }, (_, bar) =>
 			Array.from({ length: 4 }, (_, beat) =>
-				Array.from({ length: 4 }, (_, i) => mark(bar * 16 + beat * 4 + i + 1)).join('')
-			).join(' ')
-		);
+				Array.from({ length: 4 }, (_, i) => bar * 16 + beat * 4 + i + 1)
+					.filter((step) => step <= p.length)
+					.map(mark)
+					.join('')
+			)
+				.filter(Boolean)
+				.join(' ')
+		).filter(Boolean);
 		grid[sound] = bars.join(' | ');
 	}
 	return grid;
@@ -207,7 +215,7 @@ export const writePatternTool = defineTool({
 	approval: 'auto',
 	// a string or a list for notes, and a grid's lines: more than the API's strict grammar takes
 	strict: false,
-	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held; in a project with one scene it becomes the pattern the track plays, and with an arrangement (more than one scene) the scenes stay as they are and the result says which play it. transpose alone shifts the pattern as it is (a bassline down an octave). Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short: notes as one string, a word per note, step:note[:length[:velocity]] with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), and drums as grid, a line per sound by its name on this track (as read_pattern, read_sound or make_kit list them; a new project's kits number them, "kick 1", "closed hat 2", and a name without its number finds the lowest), its note or its number ({"kick": "x... x... x... x...", "62": "..x. ..x. ..x. ..x."}: x a hit, X an accent, o a soft hit, . a rest, four steps a beat). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. The result reads the pattern back: a drum track as a grid, any other as its bars and chords, spelled in the key its notes and the parts playing with it suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
+	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held; in a project with one scene it becomes the pattern the track plays, and with an arrangement (more than one scene) the scenes stay as they are and the result says which play it. transpose alone shifts the pattern as it is (a bassline down an octave); bar writes one bar alone, keeping the others. Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short: notes as one string, a word per note, step:note[:length[:velocity]] with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), and drums as grid, a line per sound by its name on this track (as read_pattern, read_sound or make_kit list them; a new project's kits number them, "kick 1", "closed hat 2", and a name without its number finds the lowest) or its MIDI note, 53–76 ({"kick": "x... x... x... x...", "62": "..x. ..x. ..x. ..x."}: x a hit, X an accent, o a soft hit, . a rest, four steps a beat; spaces and | are only for reading). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. The result reads the pattern back: a drum track as a grid, any other as its bars and chords, spelled in the key its notes and the parts playing with it suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16 (1–8 instrument, 9–16 auxiliary)'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default 1)'),
@@ -254,6 +262,14 @@ export const writePatternTool = defineTool({
 			.optional()
 			.describe(
 				'Semitones to shift by: alone, it shifts the pattern as it is now (12 = up an octave), keeping everything else; with notes, it shifts those'
+			),
+		bar: z
+			.int()
+			.min(1)
+			.max(4)
+			.optional()
+			.describe(
+				'Write one bar only: the notes or grid count steps 1–16 from its first step and replace that bar alone, the other bars staying as they are (change one chord without resending the rest); with transpose alone, shifts that bar'
 			)
 	}),
 	snapshot(input, env): VirtualPattern | null {
@@ -309,7 +325,21 @@ export const writePatternTool = defineTool({
 		// transpose alone shifts the pattern as it is now (an agent rewrote a bassline from memory
 		// to move it an octave, which would have undone anything the user changed since)
 		const shifting = transpose !== 0 && input.notes === undefined && input.grid === undefined;
-		const was = shifting ? virtual.readPattern(input.track, pattern) : null;
+		// one bar: written as its own steps 1–16, the pattern's other bars kept (an agent resent four
+		// chords to change one, and risked a typo in the three it meant to keep)
+		const current = input.bar !== undefined ? virtual.readPattern(input.track, pattern) : null;
+		const barFrom = input.bar !== undefined ? (input.bar - 1) * 16 : 0;
+		const inBar = (step: number) => step > barFrom && step <= barFrom + 16;
+		const whole = shifting ? virtual.readPattern(input.track, pattern) : null;
+		const was =
+			whole && current
+				? {
+						...whole,
+						notes: whole.notes
+							.filter((n) => inBar(n.step))
+							.map((n) => ({ ...n, step: n.step - barFrom }))
+					}
+				: whole;
 		if (input.notes === undefined && input.grid === undefined && !shifting) {
 			return errorResult(
 				'Nothing to write: give notes (a string or a list; an empty one clears the pattern), grid, or transpose to shift the pattern as it is.',
@@ -359,8 +389,17 @@ export const writePatternTool = defineTool({
 			])
 		);
 		const lastNote = notes.reduce((max, n) => Math.max(max, n.step), 1);
-		const bars = input.bars ?? was?.bars ?? Math.ceil(Math.max(lastNote, written.steps || 1) / 16);
+		const bars =
+			input.bars ??
+			(current && input.bar !== undefined
+				? Math.max(current.bars, input.bar)
+				: (was?.bars ?? Math.ceil(Math.max(lastNote, written.steps || 1) / 16)));
 		const span = bars * 16;
+		// the steps that play: a shorter last bar (length 14 for a 7/8 groove) is what lines fill;
+		// one bar's lines fill that bar
+		const fill = current
+			? 16
+			: Math.min(span, input.length ?? (input.bars === undefined && was ? was.length : span));
 		if (written.hits.length > 0) {
 			const kit = input.track <= 8 ? virtual.readSound(input.track).kit : undefined;
 			const keys = new Map<string, number | null>();
@@ -369,8 +408,8 @@ export const writePatternTool = defineTool({
 				const note = keys.get(hit.key);
 				if (note === null || note === undefined) continue;
 				// a line that divides the pattern repeats to fill it (a bar of hats for four bars)
-				const n = lineSteps[hit.key] ?? span;
-				const times = n < span && span % n === 0 ? span / n : 1;
+				const n = lineSteps[hit.key] ?? fill;
+				const times = n < fill && fill % n === 0 ? fill / n : 1;
 				for (let k = 0; k < times; k++) {
 					notes.push({
 						step: hit.step + k * n,
@@ -391,6 +430,24 @@ export const writePatternTool = defineTool({
 				);
 			}
 		}
+		if (current) {
+			const past = notes.find((n) => n.step > 16);
+			if (past) {
+				return errorResult(
+					`Nothing was written: with bar, steps count 1–16 inside that bar, and step ${past.step} is past it.`,
+					'step outside the bar'
+				);
+			}
+			const kept = current.notes
+				.filter((n) => !inBar(n.step))
+				.map((n) => ({ step: n.step, note: n.note, velocity: n.velocity, length: n.length }));
+			notes.splice(
+				0,
+				notes.length,
+				...kept,
+				...notes.map((n) => ({ ...n, step: n.step + barFrom }))
+			);
+		}
 		if (notes.length > MAX_NOTES) {
 			return errorResult(
 				`Nothing was written: ${notes.length} notes, and a pattern holds ${MAX_NOTES}. Spread them over more patterns (and scenes), or fewer bars.`,
@@ -405,25 +462,28 @@ export const writePatternTool = defineTool({
 			);
 		}
 		try {
+			// a transpose or one bar keeps the pattern's own length and scale
+			const keep = was ?? current;
 			const result = virtual.writePattern(input.track, {
 				pattern,
 				bars,
-				length: input.length ?? was?.length,
-				scale: input.scale === undefined ? (was ? was.scale : undefined) : scaleValue(input.scale),
+				length: input.length ?? (keep && keep.bars === bars ? keep.length : undefined),
+				scale: input.scale === undefined ? keep?.scale : scaleValue(input.scale),
 				notes
 			});
 			const notes2: string[] = [];
 			// a line that neither fills the pattern nor divides it is often a miscount (an agent wrote
 			// 30 marks for 32 steps): the rest of it plays as rests
 			const uneven = Object.entries(lineSteps)
-				.filter(([, n]) => n !== span && !(n < span && span % n === 0))
+				.filter(([, n]) => n !== fill && !(n < fill && fill % n === 0))
 				.map(([key, n]) => {
 					const where = gridMiscount(input.grid?.[key] ?? '');
-					return `${key} has ${n}${where ? ` (${where})` : ''}`;
+					const past = n > fill ? `, the last ${n - fill} past its end and silent` : '';
+					return `${key} has ${n}${where ? ` (${where})` : ''}${past}`;
 				});
 			if (uneven.length > 0) {
 				notes2.push(
-					`Grid lines that neither fill the pattern's ${span} steps nor repeat into them: ${uneven.join(', ')} (the rest of each is rests); check them against the grid above.`
+					`Grid lines that neither fill the pattern's ${fill} steps nor repeat into them: ${uneven.join(', ')}; what a line leaves is rests. Check them against the grid above.`
 				);
 			}
 			// a closed and an open hat on one step: a drummer plays one or the other (an agent wrote
@@ -439,8 +499,14 @@ export const writePatternTool = defineTool({
 				)
 			];
 			if (both.length > 0) {
+				// where in the bar, as a drummer counts it (an agent fixed the step next to the one meant)
+				const count = (step: number) => {
+					const at = (step - 1) % 16;
+					const beat = `${Math.floor(at / 4) + 1}${['', 'e', '&', 'a'][at % 4]}`;
+					return `${step} (${beat} of bar ${Math.ceil(step / 16)})`;
+				};
 				notes2.push(
-					`A closed and an open hat both hit on step${both.length === 1 ? '' : 's'} ${both.join(', ')}: a drummer plays one or the other there, so keep one unless the stack is the sound you want.`
+					`A closed and an open hat both hit on step${both.length === 1 ? '' : 's'} ${both.map(count).join(', ')}: a drummer plays one or the other there, so keep one unless the stack is the sound you want.`
 				);
 			}
 			// with an arrangement the scenes stay as they are: say where this pattern plays
@@ -528,7 +594,15 @@ export const readSoundTool = defineTool({
 		if (!virtual) return errorResult(NO_VIRTUAL, 'no virtual op-xy');
 		try {
 			const sound = virtual.readSound(input.track);
-			return jsonResult(sound, `track ${sound.track}: ${sound.preset ?? sound.engine}`);
+			return jsonResult(
+				{
+					...sound,
+					// what the numbers are on (an agent called 99 "a lot" unsure of the scale)
+					reading:
+						'Values as the pages show them: most run 00–99; tune is in semitones, pan −100…100, an LFO amount −99…99. A send of 99 is full, and the tape send at 99 is the normal path to the output, not a sound taken away.'
+				},
+				`track ${sound.track}: ${sound.preset ?? sound.engine}`
+			);
 		} catch (error) {
 			return errorResult(error instanceof Error ? error.message : String(error), 'not read');
 		}
@@ -674,7 +748,11 @@ export const writeArrangementTool = defineTool({
 			});
 			return jsonResult(
 				{
-					arrangement: arrangementView(result, virtual.status().bpm),
+					arrangement: arrangementView(
+						result,
+						virtual.status().bpm,
+						new Map(virtual.status().tracks.map((t) => [t.track, t.byPattern]))
+					),
 					...(added.length ? { addedEmpty: added } : {}),
 					note: 'On the replica.'
 				},
@@ -702,25 +780,40 @@ const barsText = (bars: number) => `${Math.round(bars * 100) / 100} bar${bars ==
  * found sixteen numbers a scene hard to read, could not tell the auxiliary tracks among them, and
  * worked a song's length out by hand).
  */
-function arrangementView(a: VirtualArrangement, bpm: number) {
-	const name = (index: number) => (index < 8 ? `T${index + 1}` : `aux T${index - 7}`);
+/** How long the song plays at `bpm` ("20 bars, 0:46 at 104 bpm, then it stops"), or its loop. */
+export function songLength(a: VirtualArrangement, bpm: number): string {
 	const bars = new Map(a.scenes.map((s) => [s.scene, s.bars]));
 	const order = a.song.order;
 	// a bar of sixteen steps at track scale 1 lasts 240 / bpm seconds
 	const seconds = (n: number) => (n * 240) / bpm;
-	let length: string;
 	if (order.length > 1) {
 		const total = order.reduce((sum, scene) => sum + (bars.get(scene) ?? 1), 0);
-		length = `${barsText(total)}, ${clock(seconds(total))} at ${bpm} bpm${a.song.loop ? ', then it starts over' : ', then it stops'}`;
-	} else {
-		const loop = bars.get(a.scene) ?? 1;
-		length = `no song: scene ${a.scene} loops, ${barsText(loop)} (${clock(seconds(loop))}) each time round`;
+		return `${barsText(total)}, ${clock(seconds(total))} at ${bpm} bpm${a.song.loop ? ', then it starts over' : ', then it stops'}`;
 	}
+	const loop = bars.get(a.scene) ?? 1;
+	return `no song: scene ${a.scene} loops, ${barsText(loop)} (${clock(seconds(loop))}) each time round`;
+}
+
+function arrangementView(
+	a: VirtualArrangement,
+	bpm: number,
+	byPattern: ReadonlyMap<number, readonly number[]> = new Map()
+) {
+	const name = (index: number) => (index < 8 ? `T${index + 1}` : `aux T${index - 7}`);
+	const length = songLength(a, bpm);
+	// a track on an empty pattern rests there (pattern 0 picks one): said so, not as "T1 p3"
+	const empty = (track: number, pattern: number) => byPattern.get(track)?.[pattern - 1] === 0;
 	return {
 		scene: a.scene,
 		scenes: Object.fromEntries(
 			a.scenes.map((s) => {
-				const others = s.patterns.flatMap((p, i) => (p !== 1 ? [`${name(i)} p${p}`] : []));
+				const others = s.patterns.flatMap((p, i) =>
+					p === 1
+						? []
+						: empty(i + 1, p)
+							? [`${name(i)} rests (p${p}, empty)`]
+							: [`${name(i)} p${p}`]
+				);
 				const which = others.length > 0 ? `${others.join(', ')}; the rest p1` : 'every track p1';
 				return [`scene ${s.scene}`, `${which} (${barsText(s.bars)})`];
 			})
@@ -755,7 +848,7 @@ export const takeBackTool = defineTool({
 		return jsonResult(
 			{
 				takenBack: outcome.undone,
-				note: 'The replica reads as it did before that answer, apart from what changed since; the changes list says what moved.'
+				note: 'The replica reads as it did before that answer, apart from what changed since. The changes list after this call is the take-back itself, each change reversed ("up an octave" undoing "down an octave").'
 			},
 			`took back ${n} change${n === 1 ? '' : 's'}`,
 			{ applied: true }

@@ -186,7 +186,16 @@ export interface Setting {
 	readonly track?: number;
 	/** Where it lives when not an instrument track's parameter. */
 	readonly area?:
-		'instrument' | 'tempo' | 'auxiliary' | 'mix' | 'player' | 'arrange' | 'bar' | 'sample' | 'com';
+		| 'instrument'
+		| 'tempo'
+		| 'auxiliary'
+		| 'mix'
+		| 'player'
+		| 'arrange'
+		| 'bar'
+		| 'sample'
+		| 'com'
+		| 'project';
 	/** The M-page, 1–4. */
 	readonly page?: number;
 	/** A sampler track's key: "G3", its sample's name ("snare 1"), or 1–24. */

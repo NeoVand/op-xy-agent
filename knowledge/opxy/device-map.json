@@ -2758,7 +2758,7 @@
 					"keys": "M4"
 				}
 			],
-			"screen": "tremolo lfo: speed free 66, amount 0, destination syn",
+			"screen": "tremolo lfo: speed free 66, amount 0 (pitch), volume -3, envelope -2",
 			"note": "off in a new project: M4 on this page switches it on and off",
 			"units": [
 				"instrument.lfo-tremolo",
@@ -3721,7 +3721,7 @@
 					"keys": "click E1",
 					"layer": "click",
 					"encoder": 1,
-					"does": "opens tremolo lfo: speed free 66, amount 0, destination syn"
+					"does": "opens tremolo lfo: speed free 66, amount 0 (pitch), volume -3, envelope -2"
 				}
 			]
 		},

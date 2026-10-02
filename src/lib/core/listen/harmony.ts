@@ -52,8 +52,22 @@ const PLAIN_KEYS = { major: 0, minor: 9 };
  * Ab, not C# and G#.
  */
 export function keySpelling(tonic: number, mode: 'major' | 'minor'): readonly string[] {
-	if (tonic === PLAIN_KEYS[mode]) return PITCH_CLASSES;
-	return SHARP_KEYS[mode].has(tonic) ? SHARP_NAMES : FLAT_NAMES;
+	const names: readonly string[] =
+		tonic === PLAIN_KEYS[mode]
+			? PITCH_CLASSES
+			: SHARP_KEYS[mode].has(tonic)
+				? SHARP_NAMES
+				: FLAT_NAMES;
+	if (mode === 'major') return names;
+	// the leading note a minor key raises is its seventh letter sharpened: C# in D minor, not Db
+	// (an agent wrote C# and read it back as Db); E# and B# stay F and C
+	const letters = 'CDEFGAB';
+	const naturals = [0, 2, 4, 5, 7, 9, 11];
+	const seventh = (letters.indexOf(names[tonic][0]) + 6) % 7;
+	const lead = (tonic + 11) % 12;
+	const sharp = (lead - naturals[seventh] + 12) % 12 === 1 ? `${letters[seventh]}#` : null;
+	if (!sharp || sharp === 'E#' || sharp === 'B#' || sharp === names[lead]) return names;
+	return names.map((name, pc) => (pc === lead ? sharp : name));
 }
 
 /** A chord's name ("C#m7") with its root spelled from `names` ("Dbm7"); "N" stays. */

@@ -208,4 +208,37 @@ export const runLabTool = defineTool({
 });
 
 /** The lab's tools. */
-export const LAB_TOOLS = [runLabTool];
+export const keepTakeTool = defineTool({
+	name: 'keep_take',
+	label: 'keep take',
+	kind: 'mutate',
+	approval: 'auto',
+	// one string: kept out of the strict grammar's budget
+	strict: false,
+	description:
+		'Keep one of the takes your last lab run offered when the user names it in words ("the second one", "B", "the walking one") instead of tapping it: it goes on the replica and stays, as their tap would do, and the rest are dropped. The next message says whether takes are waiting; once one is kept, write further changes as usual.',
+	input: z.object({
+		take: z
+			.string()
+			.min(1)
+			.max(60)
+			.describe('The take: its letter (A, B, …), its number from 1, or its label')
+	}),
+	async run(input, ctx) {
+		const takes = ctx.env.takes;
+		if (!takes) return errorResult('There are no takes in this session.', 'no takes');
+		const outcome = takes.keep(input.take);
+		if ('error' in outcome) return errorResult(outcome.error, 'not kept');
+		return jsonResult(
+			{
+				kept: outcome.kept,
+				changes: outcome.changes,
+				note: 'On the replica now, as one change the user can undo; the other takes are gone.'
+			},
+			`kept “${outcome.kept}”`,
+			{ applied: true }
+		);
+	}
+});
+
+export const LAB_TOOLS = [runLabTool, keepTakeTool];

@@ -39,6 +39,7 @@ import {
 	type ToolContext,
 	type ToolResult
 } from './define';
+import { songLength } from './virtual';
 
 // ─── helpers ────────────────────────────────────────────────────────────────────────────────────
 
@@ -186,7 +187,7 @@ function playingFrom(virtual: VirtualOpxy): string {
 			a.song.order.length > 16
 				? `${a.song.order.slice(0, 16).join(' ')} …`
 				: a.song.order.join(' ');
-		return `the song from its first scene (${order}), ${a.song.loop ? 'looping' : 'once through, then it stops'}`;
+		return `the song from its first scene (${order}), ${songLength(a, virtual.status().bpm)}`;
 	}
 	return `scene ${a.scene}, looping`;
 }

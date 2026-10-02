@@ -196,10 +196,17 @@ export const showOnReplicaTool = defineTool({
 		let outcome: 'finished' | 'cancelled';
 		// what the demo leads to, read before the replica goes back (an agent described it blind)
 		let ended: string | null = null;
+		// and what it did, before it is put back (a mute shown left an agent unsure it muted)
+		let did: readonly string[] = [];
 		try {
 			outcome = await handle.done;
 			if (outcome === 'finished') {
 				ended = ctx.env.screen?.read().shows ?? null;
+				try {
+					did = before ? (virtual?.changesSince(before) ?? []) : [];
+				} catch {
+					did = [];
+				}
 				await sleep(DEMO_HOLD_MS, ctx.env.timers, ctx.signal);
 			}
 		} catch {
@@ -221,6 +228,7 @@ export const showOnReplicaTool = defineTool({
 				keys,
 				seconds: Math.round(handle.plan.duration / 100) / 10,
 				...(ended ? { screenAtEnd: ended } : {}),
+				...(did.length ? { whileShown: did } : {}),
 				replica: putBack
 					? 'back where it was: the user can try it from there'
 					: tookOver

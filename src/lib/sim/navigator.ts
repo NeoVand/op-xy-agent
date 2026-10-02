@@ -24,6 +24,7 @@ import { MAX_SLICES } from './areas/sample/slicer';
 import { SLICE_MODES, type Region } from './areas/sample/state';
 import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
 import type { PresetEntry } from './areas/system/catalogue';
+import { PROJECT_SECTIONS } from './areas/system/settings';
 import { currentGroup, groups, presetKey, presetsIn } from './areas/system/presets';
 import {
 	FILTER_TYPES,
@@ -895,7 +896,13 @@ function presetNamed(s: SimState, value: number | string): PresetEntry | string 
 	if (named.length === 1) return named[0];
 	if (named.length > 1)
 		return `"${value}" names ${named.map(presetKey).join(', ')}: give its folder`;
-	return `no preset "${value}" in the library`;
+	// what is near it, so the next try is not a guess
+	const words = want.split(/[/\s_-]+/).filter((w) => w.length > 1);
+	const near = library
+		.filter((p) => words.some((w) => presetKey(p).toLowerCase().includes(w)))
+		.slice(0, 12)
+		.map(presetKey);
+	return `no preset "${value}" in the library${near.length ? `; near it: ${near.join(', ')}` : ''}`;
 }
 
 /**
@@ -993,6 +1000,10 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 		return { ...amount, note: amount.note ? `${note}; ${amount.note}` : note };
 	}
 	const rec = new Recorder(copy(state));
+	// a project setting named without its area ("time signature")
+	if (!id && projectRow(state, goal.param)) {
+		return PROJECT_SETTING.plan(state, { area: 'project', label: goal.param, value: goal.value });
+	}
 	if (!id) {
 		// not a sound parameter: a value one of the track's pages shows by that name (the midi
 		// engine's channel and CC slots, a duck's source type, a sampler's loop type)
@@ -1140,6 +1151,9 @@ export function reads(state: SimState, goal: SettingGoal): boolean {
 	if ('label' in goal) return readsPage(state, goal);
 	const track = goal.track ?? state.track + 1;
 	const id = findParam(goal.param, state, track, goal.value);
+	if (!id && projectRow(state, goal.param)) {
+		return PROJECT_SETTING.reads(state, { area: 'project', label: goal.param, value: goal.value });
+	}
 	if (!id) {
 		return readsPage(state, {
 			area: 'instrument',
@@ -1261,6 +1275,10 @@ export function planToSetting(state: SimState, goal: SettingGoal): NavPlan {
 	}
 	const track = goal.track ?? state.track + 1;
 	const id = findParam(goal.param, state, track);
+	// a project setting named without its area ("time signature")
+	if (!id && projectRow(state, goal.param)) {
+		return PROJECT_SETTING.plan(state, { area: 'project', label: goal.param, value: goal.value });
+	}
 	if (!id) {
 		return planToSetting(state, {
 			area: 'instrument',
@@ -1299,7 +1317,7 @@ export function planToSetting(state: SimState, goal: SettingGoal): NavPlan {
 
 /** The parts of the device {@link planPageValue} finds values on by name. */
 export type PageArea =
-	'instrument' | 'auxiliary' | 'mix' | 'player' | 'arrange' | 'bar' | 'sample' | 'com';
+	'instrument' | 'auxiliary' | 'mix' | 'player' | 'arrange' | 'bar' | 'sample' | 'com' | 'project';
 
 /**
  * A value a page shows, named the way the page's screen names it ("size" on FX II, "speed" on the
@@ -1782,6 +1800,9 @@ function walkToPage(rec: Recorder, goal: PageValueGoal, page: PageNumber): strin
 		case 'auxiliary':
 			walk(rec, { area: 'auxiliary', track: goal.track ?? s.auxTrack + 1, page });
 			return null;
+		case 'project':
+			// its settings are a list, walked by PROJECT_SETTING
+			return 'the project settings are a list: name a row of it';
 		case 'com':
 			walk(rec, { area: 'com' });
 			return null;
@@ -2250,6 +2271,83 @@ const BAR: Readonly<Record<string, Special>> = {
 
 const SLICES = { even: slices('even'), transient: slices('transient') };
 
+/** Other names for a project setting's row. */
+const PROJECT_ROW_NAMES: Readonly<Record<string, string>> = {
+	'time signature': 'signature',
+	meter: 'signature',
+	autosave: 'auto save',
+	groove: 'groove type'
+};
+
+/** A project setting's row by its name: its section and place in it (project → M4). */
+function projectRow(state: SimState, label: string): { section: number; row: number } | null {
+	const want = PROJECT_ROW_NAMES[word(label)] ?? word(label);
+	for (const [section, s] of PROJECT_SECTIONS.entries()) {
+		const row = s.rows(state).findIndex((r) => r.label.toLowerCase() === want);
+		if (row >= 0) return { section, row };
+	}
+	return null;
+}
+
+/** The value of a project setting's row, as its page shows it. */
+const projectValue = (state: SimState, at: { section: number; row: number }) =>
+	PROJECT_SECTIONS[at.section].rows(state)[at.row]?.value(state) ?? '';
+
+/**
+ * A project setting (manual: project/settings): `project`, then `M4` opens the list; E1 picks the
+ * section, E2 the row and E3 turns its value. The time signature could not be set from a chat
+ * before: no page the planner walks showed it.
+ */
+const PROJECT_SETTING: Special = {
+	plan(state, goal) {
+		const rec = new Recorder(copy(state));
+		const at = projectRow(state, goal.label);
+		if (!at) {
+			const names = PROJECT_SECTIONS.flatMap((s) => s.rows(state).map((r) => r.label));
+			return rec.plan(
+				false,
+				`the project settings have no "${goal.label}"; they hold ${[...new Set(names)].join(', ')}`
+			);
+		}
+		const s = () => rec.sim.state;
+		if (!(s().overlay === 'project' && s().areas.system.page === 'project-settings')) {
+			// from the project page's first view: closed first when another of its pages is open
+			if (s().overlay === 'project') rec.do('project');
+			rec.do('project');
+			rec.do('M4');
+		}
+		if (s().areas.system.page !== 'project-settings') {
+			return rec.plan(false, 'the project settings did not open');
+		}
+		const cursor = () => s().areas.system.projectCursor;
+		if (cursor().section !== at.section) rec.do('turn E1', at.section - cursor().section);
+		if (cursor().row !== at.row) rec.do('turn E2', at.row - cursor().row);
+		if (hit(projectValue(s(), at), goal.value)) return rec.plan(true);
+		// the value: tried a detent at a time on a copy, each way, until it reads the goal
+		for (const way of [1, -1]) {
+			const trial = copy(s());
+			for (let n = 1; n <= 60; n++) {
+				const was = projectValue(trial.state, at);
+				play(trial, 'turn E3', way);
+				const now = projectValue(trial.state, at);
+				if (hit(now, goal.value)) {
+					rec.do('turn E3', way * n);
+					return rec.plan(true);
+				}
+				if (now === was) break;
+			}
+		}
+		return rec.plan(
+			false,
+			`${goal.label} never reads ${goal.value} (it reads ${projectValue(s(), at)})`
+		);
+	},
+	reads(state, goal) {
+		const at = projectRow(state, goal.label);
+		return at !== null && hit(projectValue(state, at), goal.value);
+	}
+};
+
 /** The keys of its own that set a goal's value, or null for a value an encoder sets. */
 function specialOf(goal: PageValueGoal): Special | null {
 	const label = word(goal.label);
@@ -2268,6 +2366,8 @@ function specialOf(goal: PageValueGoal): Special | null {
 					: null;
 		case 'bar':
 			return BAR[label] ?? null;
+		case 'project':
+			return PROJECT_SETTING;
 		default:
 			return null;
 	}

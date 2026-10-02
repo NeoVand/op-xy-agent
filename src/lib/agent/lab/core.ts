@@ -62,6 +62,7 @@ import type {
 } from './api';
 import { applyProject } from './apply';
 import { diffReplica, type DiffSide } from './diff';
+import { compactNotes, PatternNotesError, type WrittenNote } from '../pattern-notes';
 
 /** A program's mistake, in words it can act on. */
 export class LabError extends Error {
@@ -199,18 +200,22 @@ const patternWrite = z.strictObject({
 	bars: z.int().min(1).max(4).optional(),
 	length: z.int().min(1).max(64).optional(),
 	scale: z.union(scales).optional(),
-	notes: z
-		.array(
-			z.strictObject({
-				step: z.int().min(1).max(64),
-				note: z.union([z.int().min(0).max(127), z.string().min(2).max(4)]),
-				velocity: z.int().min(1).max(127).optional(),
-				length: z.number().min(0.05).max(64).optional(),
-				// what readPattern says a drum note plays: notes read back are written as they are
-				sound: z.string().optional()
-			})
-		)
-		.max(120)
+	// a list, or write_pattern's short form ("1:A2:4 5:C3+E3+G3:2:70"), which an agent carried over
+	notes: z.union([
+		z
+			.array(
+				z.strictObject({
+					step: z.int().min(1).max(64),
+					note: z.union([z.int().min(0).max(127), z.string().min(2).max(4)]),
+					velocity: z.int().min(1).max(127).optional(),
+					length: z.number().min(0.05).max(64).optional(),
+					// what readPattern says a drum note plays: notes read back are written as they are
+					sound: z.string().optional()
+				})
+			)
+			.max(120),
+		z.string().max(4000)
+	])
 });
 
 const arrangementWrite = z.strictObject({
@@ -414,7 +419,16 @@ export function createLab(options: LabOptions): LabSession {
 		function writePattern(track: number, write: PatternWrite) {
 			const t = check(track16, track, 'writePattern track');
 			const w = check(patternWrite, write, 'writePattern');
-			const notes = w.notes.map((n) => {
+			let given: readonly WrittenNote[];
+			try {
+				given = typeof w.notes === 'string' ? compactNotes(w.notes) : w.notes;
+			} catch (error) {
+				if (error instanceof PatternNotesError)
+					throw new LabError(`writePattern: ${error.message}`);
+				throw error;
+			}
+			if (given.length > 120) throw new LabError('writePattern: a pattern holds 120 notes');
+			const notes = given.map((n) => {
 				const note = typeof n.note === 'number' ? n.note : parseNoteName(n.note, 'c4');
 				if (note === null || note < 0 || note > 127) {
 					throw new LabError(`writePattern: "${n.note}" is not a note (60, "C4", "F#3")`);

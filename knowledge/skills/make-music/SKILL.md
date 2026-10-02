@@ -43,11 +43,14 @@ learning or playing along keeps time by it).
 
 Musical words mean what a drummer or producer means: a fill fills its bar (sixteenths building in
 velocity into the next downbeat, toms at the end if you like), four-on-the-floor is a kick on every
-beat, a backbeat is the snare on 2 and 4. Velocity per step is a step component
+beat, a backbeat is the snare on 2 and 4, and a closed and an open hat do not share a step (a
+drummer plays one or the other). Velocity per step is a step component
 ([sequencer.component-velocity]), not a parameter lock.
 
 A kit made from generated sounds can be put straight onto a drum track, so a beat written there
-plays with it at once.
+plays with it at once. A style's signature sound is part of the request too (trap's long, low 808
+bass, a techno rumble, a house organ stab): the notes alone keep the track's preset, so shape its
+sound for the style (the shape-a-sound skill) and say what you set.
 
 Many edits at once (the whole song transposed, the hats of every pattern humanised, a variation of
 each part) are one lab program, exact to the note and one change to undo; the lab skill has the

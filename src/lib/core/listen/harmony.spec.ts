@@ -190,7 +190,12 @@ describe('spelling', () => {
 		expect(keySpelling(5, 'minor')[1]).toBe('Db'); // F minor
 		expect(keySpelling(3, 'major')[8]).toBe('Ab'); // Eb major
 		expect(keySpelling(0, 'major')).toBe(PITCH_CLASSES);
-		expect(keySpelling(9, 'minor')).toBe(PITCH_CLASSES);
+		// A minor: the usual names, its raised seventh G# (not Ab); D minor's C#, G minor's F#
+		expect(keySpelling(9, 'minor')).toEqual(PITCH_CLASSES.map((n) => (n === 'Ab' ? 'G#' : n)));
+		expect(keySpelling(2, 'minor')[1]).toBe('C#');
+		expect(keySpelling(7, 'minor')[6]).toBe('F#');
+		// F# minor keeps F, not E#
+		expect(keySpelling(6, 'minor')[5]).toBe('F');
 	});
 
 	it('respells the root of a chord and keeps its quality', () => {

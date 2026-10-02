@@ -302,6 +302,8 @@ export class Conductor {
 	/** The replica when the agent last finished: what the user changed since is theirs to tell. */
 	#lastSeen: VirtualCheckpoint | null = null;
 	#reported = '';
+	/** The change lines already given in this answer's earlier lists. */
+	#reportedLines: readonly string[] = [];
 	/** Each turn's replica before and after it, for its take-back (this page session only). */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	readonly #turns = new Map<
@@ -384,6 +386,7 @@ export class Conductor {
 			memory: options.memory ?? null,
 			lab: options.lab ?? null,
 			answers: { takeBack: (answer) => this.#takeBack(answer) },
+			takes: { keep: (take) => this.#keepByWord(take) },
 			manual: options.manual,
 			timers: this.#timers,
 			confirmWindowMs: options.confirmWindowMs ?? 150,
@@ -470,12 +473,15 @@ export class Conductor {
 		const hands = this.#userChanges();
 		this.#checkpoint = this.#env.virtual?.checkpoint() ?? null;
 		this.#reported = '';
+		this.#reportedLines = [];
 		const context = await this.#turnContext(trimmed, attachments);
 		this.#messages.push({ role: 'user', content: userContent(trimmed, attachments) });
 		for (const a of attachments) if (a.midi) this.#files.set(a.view.name, a.midi);
 		if (options.via === 'voice') this.#pendingNotes.push(VOICE_NOTE);
 		// one system message: two in a row would reach the model as two user turns
-		const note = [this.#deviceUpdate(), hands, context].filter(Boolean).join('\n\n');
+		const note = [this.#deviceUpdate(), hands, this.#takesWaiting(), context]
+			.filter(Boolean)
+			.join('\n\n');
 		if (note) this.#messages.push({ role: 'system', content: note });
 		await this.#run();
 	}
@@ -501,6 +507,7 @@ export class Conductor {
 		const hands = this.#userChanges();
 		this.#checkpoint = this.#env.virtual?.checkpoint() ?? null;
 		this.#reported = '';
+		this.#reportedLines = [];
 		this.#messages.push({ role: 'system', content: [note, hands].filter(Boolean).join('\n\n') });
 		await this.#run();
 	}
@@ -890,6 +897,57 @@ export class Conductor {
 		return true;
 	}
 
+	/** The latest offer of takes none of which is kept yet, with its chip's entry. */
+	#pendingOffer() {
+		for (let i = this.entries.length - 1; i >= 0; i--) {
+			const e = this.entries[i];
+			if (e.kind !== 'tool' || e.display?.kind !== 'takes') continue;
+			return e.display.kept === undefined ? { entry: e, display: e.display } : null;
+		}
+		return null;
+	}
+
+	/**
+	 * keep_take: the user named a take ("the second one") rather than tapping it; it goes on the
+	 * replica and stays, as the tap would have done (an agent wrote the notes out again instead).
+	 */
+	#keepByWord(word: string): { kept: string; changes: readonly string[] } | { error: string } {
+		const lab = this.#env.lab;
+		const found = this.#pendingOffer();
+		if (!lab?.hear || !lab.keep || !found) {
+			return { error: 'No offer of takes is waiting: none was made, or one is kept already.' };
+		}
+		const { display } = found;
+		const w = word.trim().toLowerCase();
+		const letter = /^[a-z]$/.test(w) ? w.charCodeAt(0) - 97 : -1;
+		const number = /^\d+$/.test(w) ? Number(w) - 1 : -1;
+		const named = display.takes.findIndex((t) => t.label.toLowerCase().includes(w));
+		const index = [letter, number, named].find((i) => i >= 0 && i < display.takes.length) ?? -1;
+		if (index < 0) {
+			return {
+				error: `No take "${word}": the takes are ${display.takes.map((t, i) => `${i + 1} "${t.label}"`).join(', ')}.`
+			};
+		}
+		if (!lab.hear(display.offer, index))
+			return { error: 'That take could not be put on the replica.' };
+		const kept = lab.keep(display.offer);
+		if (!kept) return { error: 'That take could not be kept.' };
+		display.kept = kept.index;
+		delete this.takesOn[display.offer];
+		const take = display.takes[kept.index];
+		return { kept: take?.label ?? String(kept.index + 1), changes: take?.changes ?? [] };
+	}
+
+	/** Takes waiting to be heard and kept, for the next message: the agent could not tell. */
+	#takesWaiting(): string | null {
+		const found = this.#pendingOffer();
+		if (!found) return null;
+		const { display } = found;
+		const on = this.takesOn[display.offer];
+		const list = display.takes.map((t, i) => `${i + 1} "${t.label}"`).join(', ');
+		return `<takes>\nYour lab run's takes wait to be kept: ${list}; none is kept yet${on !== undefined ? `, and the user is hearing ${on + 1} "${display.takes[on]?.label}" on the replica now` : ''}. When the user names one, keep_take keeps it.\n</takes>`;
+	}
+
 	/** Keeps every take left on the replica (the user went on with it playing). */
 	#keepTakesOn(): void {
 		for (const offer of Object.keys(this.takesOn)) {
@@ -948,14 +1006,38 @@ export class Conductor {
 		);
 		// where playback stands, so an answer never says it plays when it does not (an agent once
 		// told a user "playback is running" on a stopped replica)
-		const now = `Now: ${playingNow(virtual)}`;
+		const walk = this.#walkthrough();
+		const now = `Now: ${playingNow(virtual)}${walk ? ` ${walk}` : ''}`;
 		const report = [...marked, now].join('\n');
 		if (report === this.#reported) return [];
 		this.#reported = report;
+		// later lists in an answer give what is new and count the rest, which the earlier lists
+		// gave word for word (an agent found each list repeating all the earlier changes noisy)
+		const before = this.#reportedLines;
+		const fresh = marked.filter((l) => !before.includes(l));
+		const standing = marked.length - fresh.length;
+		// an earlier line that no longer holds: taken back, or changed again (its new line is above)
+		const gone = before.filter((l) => !marked.includes(l));
+		this.#reportedLines = marked;
+		const listed = [
+			...fresh.map((l) => `- ${l}`),
+			...(gone.length
+				? [
+						`- no longer as an earlier list gave it (taken back, or changed again above): ${gone.join('; ')}`
+					]
+				: []),
+			...(standing > 0
+				? [
+						`- and ${standing} change${standing === 1 ? '' : 's'} from the earlier list${before.length === 1 ? '' : 's'}, still as given there`
+					]
+				: [])
+		];
 		const text =
-			marked.length === 0
-				? `The replica is as it was before the user\u2019s message: nothing on it changed.\n${now}`
-				: `What changed on the replica since the user\u2019s message, yours and anything the user did on it meanwhile (describe the outcome from this):\n${marked.map((l) => `- ${l}`).join('\n')}\n${now}`;
+			marked.length === 0 && before.length === 0
+				? `Nothing changed on the replica during this answer, by your calls or the user (it is as it was when the user\u2019s message came).\n${now}`
+				: fresh.length === 0 && gone.length === 0
+					? `Nothing more changed on the replica since the last list: its ${standing} change${standing === 1 ? '' : 's'} still stand${standing === 1 ? 's' : ''}.\n${now}`
+					: `What changed on the replica since the user\u2019s message, yours and anything the user did on it meanwhile (describe the outcome from this${before.length ? ', with the earlier lists' : ''}):\n${listed.join('\n')}\n${now}`;
 		return [{ type: 'text', text: `<replica-changes>\n${text}\n</replica-changes>` }];
 	}
 
@@ -973,8 +1055,20 @@ export class Conductor {
 		} catch {
 			return null;
 		}
-		if (lines.length === 0) return null;
-		return `<user-changes>\nSince your last answer, the replica changed (the user's own hands, or playback they started or stopped):\n${lines.map((l) => `- ${l}`).join('\n')}\n</user-changes>`;
+		const walk = this.#walkthrough();
+		if (lines.length === 0) return walk ? `<user-changes>\n${walk}\n</user-changes>` : null;
+		return `<user-changes>\nSince your last answer, the replica changed (the user's own hands, or playback they started or stopped):\n${lines.map((l) => `- ${l}`).join('\n')}${walk ? `\n${walk}` : ''}\n</user-changes>`;
+	}
+
+	/**
+	 * A walkthrough lit on the replica, in a sentence: how far the user is (an agent could not tell
+	 * mid-way, and read "nothing changed" after lighting one as a failure).
+	 */
+	#walkthrough(): string | null {
+		const p = this.#env.guide?.progress?.() ?? null;
+		if (!p) return null;
+		const done = p.done.length;
+		return `A walkthrough is lit (${p.goal}): ${done} of ${p.total} steps done${done ? ` (${p.done.join(', ')})` : ''}${p.next ? `, waiting for the user to do ${p.next}` : ''}.`;
 	}
 
 	/** Whether the model has called the tool `name` since the user's message. */

@@ -91,7 +91,7 @@ describe('describeNoteChange', () => {
 			[15, 57],
 			[16, 58]
 		]);
-		expect(describeNoteChange(bass, more)).toBe('5 → 7 notes (2 added)');
+		expect(describeNoteChange(bass, more)).toBe('5 → 7 notes (2 added on steps 15, 16)');
 		expect(describeNoteChange(emptyPattern(), bass)).toBe('0 → 5 notes');
 		expect(describeNoteChange(undefined, bass)).toBe('new, 5 notes');
 		expect(describeNoteChange(bass, undefined)).toBe('removed');

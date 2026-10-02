@@ -264,6 +264,59 @@ describe('the conductor grounds its answer', () => {
 		expect(conductor.hearTake(run!.id, 0)).toBe(false);
 	});
 
+	it('keeps a take the user names in words, with keep_take, and says when takes wait', async () => {
+		const offer = [
+			'for (const note of ["A1", "D2", "E2"]) {',
+			'  const f = lab.fork();',
+			'  f.writePattern(3, { notes: [{ step: 1, note, length: 4 }] });',
+			'  lab.offer(f, `${note} root`);',
+			'}'
+		].join('\n');
+		const api = scriptedApi([
+			{
+				content: [
+					{
+						type: 'tool_use',
+						id: 'toolu_lab',
+						name: 'run_lab',
+						input: { purpose: 'three basslines', code: offer }
+					}
+				],
+				stop_reason: 'tool_use'
+			},
+			answer('Three basslines wait under the run.'),
+			{
+				content: [{ type: 'tool_use', id: 'toolu_k', name: 'keep_take', input: { take: '2' } }],
+				stop_reason: 'tool_use'
+			},
+			answer('The D2 line is yours.')
+		]);
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			lab: createNodeLabHost({ sim }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('give me three basslines to choose from');
+		await conductor.send('I like the second one');
+		// the message said the takes were waiting, none kept
+		const asked = JSON.stringify(api.messageRequests[2].body.messages);
+		expect(asked).toMatch(/<takes>.*1 \\"A1 root\\", 2 \\"D2 root\\".*none is kept yet/);
+		expect(virtual.readPattern(3).notes[0].note).toBe(38);
+		const run = conductor.entries.find((e) => e.kind === 'tool' && e.name === 'run_lab');
+		expect(run?.kind === 'tool' && run.display?.kept).toBe(1);
+		const result = JSON.stringify(api.messageRequests[3].body.messages.at(-1));
+		expect(result).toMatch(/kept.*D2 root/);
+	});
+
 	it('lets a turn be heard as it was while its before key is held, telling the model nothing', async () => {
 		const api = scriptedApi([
 			{
@@ -297,6 +350,38 @@ describe('the conductor grounds its answer', () => {
 		expect(JSON.stringify(api.messageRequests.at(-1)?.body.messages.at(-1))).not.toMatch(
 			/took back/
 		);
+	});
+
+	it('gives later change lists in an answer what is new, counting what still stands', async () => {
+		const use = (id: string, name: string, input: unknown): ScriptedTurn => ({
+			content: [{ type: 'tool_use', id, name, input }],
+			stop_reason: 'tool_use'
+		});
+		const api = scriptedApi([
+			use('toolu_1', 'set_tempo', { bpm: 100 }),
+			use('toolu_2', 'write_pattern', { track: 3, notes: [{ step: 1, note: 48 }] }),
+			use('toolu_3', 'set_tempo', { bpm: 120 }),
+			answer('Done.')
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim: new OpxySim({ now: () => 0 }) }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('try a few things');
+		const list = (i: number) => JSON.stringify(api.messageRequests[i].body.messages.at(-1));
+		expect(list(1)).toMatch(/- tempo 120 → 100 bpm/);
+		expect(list(2)).toMatch(/- T3 pattern 1: 0 → 1 note/);
+		expect(list(2)).toMatch(/and 1 change from the earlier list, still as given there/);
+		expect(list(2)).not.toMatch(/- tempo 120 → 100 bpm/);
+		// the tempo back where it was: said, not dropped
+		expect(list(3)).toMatch(/no longer as an earlier list gave it .*tempo 120 → 100 bpm/);
 	});
 
 	it('lets the agent take its last answer back with take_back, as the note would', async () => {

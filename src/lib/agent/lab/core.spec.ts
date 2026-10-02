@@ -285,6 +285,18 @@ describe('arguments', () => {
 		expect(f.readArrangement().song).toEqual({ order: [1, 1], loop: false });
 	});
 
+	it("take write_pattern's short note form too", () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		const p = f.writePattern(3, { notes: '1:A2:4 5:C3+E3:2:70' } as never);
+		expect(p.notes.map((n) => [n.step, n.note, n.velocity])).toEqual([
+			[1, 45, 100],
+			[5, 48, 70],
+			[5, 52, 70]
+		]);
+		expect(() => f.writePattern(3, { notes: '1-A2' } as never)).toThrow(/writePattern: /);
+	});
+
 	it('take a scene back as readArrangement gives it, pattern 0 resting a track', () => {
 		const { lab } = labOn();
 		const f = lab.fork();

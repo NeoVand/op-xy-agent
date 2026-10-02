@@ -46,6 +46,28 @@ function unmatched(a: readonly string[], b: readonly string[]): number {
 	return missing;
 }
 
+/** The steps of `a`'s notes with no partner in `b`, in order and once each. */
+function unmatchedSteps(a: readonly Placed[], b: readonly Placed[]): number[] {
+	const left = new Map<string, number>();
+	for (const n of b) left.set(where(n), (left.get(where(n)) ?? 0) + 1);
+	const steps = new Set<number>();
+	for (const n of a) {
+		const k = left.get(where(n)) ?? 0;
+		if (k > 0) left.set(where(n), k - 1);
+		else steps.add(n.step);
+	}
+	return [...steps].sort((p, q) => p - q);
+}
+
+/** "added on step 3", "removed on steps 7, 15": where, when few (an agent read the pattern to find out). */
+function onSteps(count: number, verb: string, steps: readonly number[]): string {
+	const at =
+		steps.length > 0 && steps.length <= 8
+			? ` on step${steps.length === 1 ? '' : 's'} ${steps.join(', ')}`
+			: '';
+	return `${count} ${verb}${at}`;
+}
+
 /** "100" or "72–108". */
 function range(values: readonly number[]): string {
 	const low = Math.min(...values);
@@ -93,10 +115,15 @@ export function describeNoteChange(
 	if (x.length !== y.length) {
 		const added = unmatched(y.map(where), x.map(where));
 		const removed = unmatched(x.map(where), y.map(where));
-		const how = [added ? `${added} added` : '', removed ? `${removed} removed` : '']
+		const notes = `${x.length} → ${plural(y.length, 'note')}`;
+		// most of it new: "14 added, 15 removed" read as a puzzle for one rewritten grid
+		if (x.length && removed * 2 > x.length && added * 2 > y.length) return `${notes}, rewritten`;
+		const how = [
+			added ? onSteps(added, 'added', unmatchedSteps(y, x)) : '',
+			removed ? onSteps(removed, 'removed', unmatchedSteps(x, y)) : ''
+		]
 			.filter(Boolean)
 			.join(', ');
-		const notes = `${x.length} → ${plural(y.length, 'note')}`;
 		return x.length && how ? `${notes} (${how})` : notes;
 	}
 	const count = plural(y.length, 'note');

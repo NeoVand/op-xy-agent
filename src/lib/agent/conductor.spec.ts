@@ -108,6 +108,7 @@ describe('conductor: requests and streaming', () => {
 	const LOOSE_TOOLS = [
 		'device_map',
 		'import_midi',
+		'keep_take',
 		'listen',
 		'listen_tracks',
 		'make_kit',

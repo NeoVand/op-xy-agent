@@ -10,7 +10,9 @@ description: Use when the user asks why a track sounds the way it does (dull, ha
 Read the track's sound first, so you speak from its real values rather than from what the preset's
 name suggests. Then name the one setting that causes what they hear (a cutoff at 00 is why track 3
 sounds dark in a new project) and the keys to change it (`T3 → M3`, then `turn E1`). One clear cause,
-plainly stated, is a better answer than a survey of every value.
+plainly stated, is a better answer than a survey of every value. A lowpass at cutoff 00 still lets
+the lowest part through (dark, not silent), a highpass at 00 lets everything through, and a filter
+that reads off does nothing whatever its cutoff.
 
 Say what a value does only when you know it. The filter, envelopes, LFO, sends and mix mean the same
 on every track, and the manual explains them. An engine's own four values (a prism's shape or ratio,
@@ -49,6 +51,8 @@ The source is a track or the metronome.
   the whole mix the hits mask the dip and a pump is easy to miss. Hearing tracks on the unit mutes
   the others, the source too, so the duck does not move there. Short, gapped bass notes show little
   of a pump, a held note all of it.
+- The source card says what starts the dip (`click E1` switches it): audio, the source's sound, or
+  notes, which duck even when the source is silent or muted. The replica ducks on notes either way.
 - On the replica a metronome duck pumps whether the click is on or off. Whether the unit does the
   same with its click off has not been checked; do not claim either way for the unit.
 - A track has one LFO, so a duck replaces the LFO its sound had. In a new project only the bass on

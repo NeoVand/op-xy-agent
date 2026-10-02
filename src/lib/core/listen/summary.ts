@@ -585,7 +585,11 @@ export function summarizeTracks(
 					`${a.rhythm.onsets} onsets${g ? `, grid ${r1(g.tightnessMs)} ms rms` : ''}${g?.swing !== null && g?.swing !== undefined && Math.abs(g.swing - 50) >= 2 ? `, swing ${r1(g.swing)} %` : ''}`
 				);
 			}
-			if (a.pump) parts.push(`pumps with the beat, ${r1(a.pump.depthDb)} dB`);
+			if (a.pump) {
+				parts.push(
+					`pumps with the beat, ${r1(a.pump.depthDb)} dB (its level's fall after each hit)`
+				);
+			}
 			const harmony = take.percussive ? null : a.harmony;
 			const chords = harmony?.chords.filter((c) => c.chord !== 'N') ?? [];
 			if (harmony?.key?.clear) parts.push(`key ${harmony.key.key}`);

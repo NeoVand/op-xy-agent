@@ -124,7 +124,35 @@ async function runScenario(scenario, dir) {
 		let title;
 		let report;
 		try {
-			if (step.press) {
+			if (step.follow) {
+				// a user following the walkthrough: press what it lights, a step at a time (held keys
+				// latched around the press, an encoder to turn turned a few detents)
+				title = `follow the lit keys (up to ${step.follow} steps)`;
+				const done = [];
+				for (let k = 0; k < step.follow; k++) {
+					const { keys } = await call('/lit', { session });
+					const of = (kind) =>
+						keys.filter((x) => x.endsWith(`:${kind}`)).map((x) => x.split(':')[0]);
+					const hold = of('hold');
+					const press = of('press');
+					const turns = of('turn');
+					if (press.length === 0 && turns.length === 0) break;
+					const ids = [
+						...hold.map((id) => `latch:${id}`),
+						...press,
+						...turns.map((id) => `turn:${id}:${step.detents ?? 4}`),
+						...hold.map((id) => `latch:${id}`)
+					];
+					const result = await call('/press', { session, ids, timeoutMs: 5 * 60_000 });
+					done.push(`${ids.join(' ')} → lit after: ${result.lit.keys.join(', ') || '(nothing)'}`);
+					if (result.turn) report = result.turn;
+				}
+				out.push(`## ${i + 1}. ${title}`, '', ...done.map((d) => `- ${d}`), '');
+				if (!report) {
+					out.push('(no agent turn followed)', '');
+					continue;
+				}
+			} else if (step.press) {
 				title = `press ${step.press.join(', ')}`;
 				const result = await call('/press', { session, ids: step.press });
 				out.push(

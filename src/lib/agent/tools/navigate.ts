@@ -42,7 +42,18 @@ const goalInput = z.object({
 			'true (with show false): walk the user through the steps on the replica instead: it lights one step at a time, with the turn direction for encoders, and waits until the user has done it; for someone who wants to learn by doing it themselves'
 		),
 	area: z
-		.enum(['instrument', 'auxiliary', 'mix', 'arrange', 'tempo', 'player', 'sample', 'com', 'bar'])
+		.enum([
+			'instrument',
+			'auxiliary',
+			'mix',
+			'arrange',
+			'tempo',
+			'player',
+			'sample',
+			'com',
+			'bar',
+			'project'
+		])
 		.optional()
 		.describe(
 			"Which part of the device: for a page (sample is the record page), or where param lives (not needed for an instrument track's parameter)"
@@ -164,6 +175,8 @@ function toGoal(input: GoalInput, env: AgentEnvironment): NavGoal | string {
 			break;
 		case 'bar':
 			return 'the bar menu shows while bar is held: give a param (track scale, bars, quant, length, groove, shape) and a value';
+		case 'project':
+			return 'the project settings are a list: give a param (signature, transpose, auto save, scene length, groove type, or a track\'s voices such as "track 3") and a value';
 		default:
 			return 'give an area (for a page) or a param and value';
 	}
@@ -178,14 +191,15 @@ const stepView = (s: NavStep) => ({
 	screen: s.screen
 });
 
-/** The plan as the model reads it; several settings come grouped by the parameter they set. */
-/** A setting's track, or none where it belongs to no track (the tempo page, com). */
+/** A setting's track, or none where it belongs to no track (the tempo page, com, the project). */
 function trackOf(goal: SettingGoal): number | undefined {
-	if ('area' in goal) return goal.area === 'com' ? undefined : goal.track;
+	if ('area' in goal)
+		return goal.area === 'com' || goal.area === 'project' ? undefined : goal.track;
 	const id = findParam(goal.param);
 	return id !== null && TEMPO_PARAMS[id] ? undefined : goal.track;
 }
 
+/** The plan as the model reads it; several settings come grouped by the parameter they set. */
 function planView(plan: NavPlan | SettingsPlan) {
 	// in a batch, what did not land, up front (an agent once had to read every entry to find it)
 	const failed =
@@ -247,7 +261,7 @@ export const planStepsTool = defineTool({
 	// its optional goal fields would push the strict grammar over the API's size limit
 	strict: false,
 	description:
-		'The exact steps from where the replica stands now to a page ("the filter page of track 3", "mix M2", "the tempo page", "track 4\'s player") or to a parameter set to a value ("track 3 cutoff 40", "tempo 128", "amp release 60"), tried on a copy of the simulator first so they are known to work. Each step is a key combo in the key grammar; turns carry the number of detents and the direction; each step says what the screen shows after it. Use it for every "how do I get to / set …" question instead of working the keys out yourself. With show, it also animates the steps on the replica (it ends up there, as if the user had pressed the keys); nothing is sent to a connected device.',
+		'The exact steps from where the replica stands now to a page ("the filter page of track 3", "mix M2", "the tempo page", "track 4\'s player") or to a parameter set to a value ("track 3 cutoff 40", "tempo 128", "amp release 60", the project setting "time signature 7/8"), tried on a copy of the simulator first so they are known to work. Each step is a key combo in the key grammar; turns carry the number of detents and the direction; each step says what the screen shows after it. Use it for every "how do I get to / set …" question instead of working the keys out yourself. With show, it also animates the steps on the replica (it ends up there, as if the user had pressed the keys); nothing is sent to a connected device.',
 	input: goalInput,
 	async run(input, ctx) {
 		const virtual = ctx.env.virtual;
@@ -318,16 +332,18 @@ export const planStepsTool = defineTool({
 			const setsValues = input.settings !== undefined || input.value !== undefined;
 			return jsonResult(
 				{
-					from,
-					...planView(plan),
+					// first, so it is not read past (an agent took a plan for the groove as set)
 					...(setsValues
 						? {
-								changed: false,
-								planned: 'Only planned: the replica is unchanged. show true sets it on the replica.'
+								planned:
+									'Only planned: the replica is unchanged. show true sets it on the replica.',
+								changed: false
 							}
-						: {})
+						: {}),
+					from,
+					...planView(plan)
 				},
-				summaryOf(plan)
+				setsValues ? `planned only: ${summaryOf(plan)}` : summaryOf(plan)
 			);
 		}
 		const replica = ctx.env.replica;

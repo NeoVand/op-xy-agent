@@ -155,11 +155,22 @@ export function describeFrame(frame: ScreenFrame): string {
 						: `, hold ${Math.round(frame.hold * 99)}, release ${Math.round(frame.release * 99)}`;
 				return `duck lfo${frame.off ? ' off' : ''}: source ${frame.source} (${kind}), amount ${Math.round(frame.amount)}${shape}`;
 			}
+			if (frame.type === 'tremolo') {
+				// wired to pitch and volume, with no destination card: its four values as the page
+				// names them (a generic reading once gave it a destination it does not have)
+				const speed = frame.speed.synced
+					? `sync ${frame.speed.label}`
+					: `free ${Math.round(frame.speed.position * 99)}`;
+				const envelope =
+					frame.envelope === undefined ? '' : `, envelope ${Math.round(frame.envelope * 99)}`;
+				return `tremolo lfo${frame.off ? ' off' : ''}: speed ${speed}, amount ${Math.round(frame.amount)} (pitch), volume ${Math.round(frame.volume)}${envelope}`;
+			}
 			return (
 				`${frame.type} lfo${frame.off ? ' off' : ''}: ` +
 				(frame.type === 'element' ? `source ${frame.source}, ` : '') +
-				// the speed: a count when synced to the tempo, else the free dial (drawn, on its lane)
-				`speed ${frame.speed.synced ? frame.speed.label : `free ${Math.round(frame.speed.position * 99)}`}, ` +
+				// the speed: a count of sixteenths when synced to the tempo ("sync 32", as the key planner
+				// takes it: a bare 32 was read as the free dial's), else the free dial (drawn, on its lane)
+				`speed ${frame.speed.synced ? `sync ${frame.speed.label}` : `free ${Math.round(frame.speed.position * 99)}`}, ` +
 				`amount ${Math.round(frame.amount)}, destination ${frame.destination.label}`
 			);
 		case 'mix': {

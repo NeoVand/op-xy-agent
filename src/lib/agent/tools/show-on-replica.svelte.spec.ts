@@ -57,8 +57,9 @@ describe('show_on_replica', () => {
 		await rig.time.advance(3000);
 		const result = JSON.parse(String((await pending).content));
 		expect(result).toMatchObject({ shown: true, replica: expect.stringMatching(/^back where/) });
-		// what the demo led to, read before the replica went back
+		// what the demo led to, read before the replica went back, and what it did there
 		expect(result.screenAtEnd).toMatch(/mix/);
+		expect(result.whileShown).toContain('T2 muted');
 		expect(sim.state.mode).toBe('instrument');
 		expect(sim.state.tracks[1].mix.muted).toBe(false);
 	});

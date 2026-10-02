@@ -68,7 +68,8 @@ describe('plan_steps', () => {
 		expect(plan.steps.map((s: { keys: string }) => s.keys)).toEqual(['T3', 'M3', 'turn E1']);
 		expect(plan.steps[2]).toMatchObject({ clicks: 40, direction: 'clockwise' });
 		expect(plan.screen).toContain('cutoff 40');
-		expect(result.summary).toBe('3 steps: T3, M3, turn E1 ×40');
+		expect(result.summary).toBe('planned only: 3 steps: T3, M3, turn E1 ×40');
+		expect(Object.keys(plan)[0]).toBe('planned');
 		expect(sim.state.track).toBe(0);
 	});
 
@@ -282,5 +283,26 @@ describe('plan_steps settings', () => {
 		);
 		expect(plan.settings[0].track).toBeUndefined();
 		expect(plan.settings[1].track).toBe(3);
+	});
+});
+
+describe('plan_steps to the project settings', () => {
+	it('sets the time signature through project, M4 and the list', async () => {
+		const { sim, run } = setup(true);
+		const plan = json(
+			await run(planStepsTool, { show: true, param: 'time signature', value: '7/8' })
+		);
+		expect(plan).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(plan.steps.map((s: { keys: string }) => s.keys)).toEqual([
+			'project',
+			'M4',
+			'turn E1',
+			'turn E3'
+		]);
+		expect(sim.state.areas.system.projectSettings.signature).toBeGreaterThan(0);
+		const named = json(
+			await run(planStepsTool, { show: false, area: 'project', param: 'nope', value: 1 })
+		);
+		expect(named.note).toMatch(/the project settings have no "nope"; they hold transpose/);
 	});
 });

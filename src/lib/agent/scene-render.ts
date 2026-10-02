@@ -47,6 +47,20 @@ export function alone(state: SimState, track: number): SimState {
 	return copy;
 }
 
+/**
+ * A note for a whole-mix take that heard no pump while a track ducks: the hits that start a duck
+ * hide its dip in the mix (an agent read "no pump" there as a duck that did not work).
+ */
+export function mixDuckNote(state: SimState, pumped: boolean): string | null {
+	if (pumped) return null;
+	const ducking = state.tracks.flatMap((t, i) =>
+		t.lfo.type === 'duck' && t.lfo.on && !t.mix.muted ? [i + 1] : []
+	);
+	if (ducking.length === 0) return null;
+	const list = ducking.map((t) => `T${t}`).join(', ');
+	return `${list} duck${ducking.length === 1 ? 's' : ''}, and the whole mix shows no pump: the hits that start a duck cover its dip here. Listen with tracks [${ducking.join(', ')}] to hear ${ducking.length === 1 ? 'its' : 'their'} pump alone.`;
+}
+
 /** Whether `state`'s metronome clicks in what plays: on, and at a level above 0. */
 export const clickHeard = (state: SimState): boolean =>
 	state.tempo.metronome.on && state.tempo.metronome.level > 0;

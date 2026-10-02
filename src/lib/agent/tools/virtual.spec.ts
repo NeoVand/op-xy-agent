@@ -256,7 +256,50 @@ describe('write_pattern in an arrangement', () => {
 	});
 });
 
+describe('write_pattern one bar at a time', () => {
+	it('replaces one bar, keeping the others, its steps counted from the bar', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, {
+			track: 7,
+			pattern: 1,
+			notes: '1:D3+F3+A3:16 17:Bb2+D3+F3:16 33:G2+Bb2+D3:16 49:A2+C#3+E3:16'
+		});
+		const one = json(
+			await run(writePatternTool, { track: 7, pattern: 1, bar: 4, notes: '1:A2+C#3+E3+G3:16' })
+		);
+		expect(one.written.bars).toBe(4);
+		const notes = virtual.readPattern(7, 1).notes;
+		expect(notes.filter((n) => n.step === 1).map((n) => n.note)).toEqual([50, 53, 57]);
+		expect(notes.filter((n) => n.step === 49).map((n) => n.note)).toEqual([45, 49, 52, 55]);
+		// a step past the bar is refused, nothing written
+		const past = await run(writePatternTool, { track: 7, pattern: 1, bar: 2, notes: '17:C3' });
+		expect(past.isError).toBe(true);
+		// transpose with bar shifts that bar alone
+		await run(writePatternTool, { track: 7, pattern: 1, bar: 1, transpose: 12 });
+		const shifted = virtual.readPattern(7, 1).notes;
+		expect(shifted.filter((n) => n.step === 1).map((n) => n.note)).toEqual([62, 65, 69]);
+		expect(shifted.filter((n) => n.step === 17).map((n) => n.note)).toEqual([46, 50, 53]);
+	});
+});
+
 describe('write_pattern on drums', () => {
+	it('fills a shorter pattern by its length, and reads back only the steps that play', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 1,
+				pattern: 1,
+				length: 14,
+				grid: { kick: 'x... ..x. .... ..', '61': 'x.x.x.x' }
+			})
+		);
+		expect(result.note).not.toMatch(/neither fill/);
+		expect(result.written.length).toBe(14);
+		expect(result.written.grid['kick 1']).toBe('x... ..x. .... ..');
+		// the seven-step hat line plays twice in the fourteen steps
+		expect(result.written.grid['closed hat 1']).toBe('x.x. x.xx .x.x .x');
+	});
+
 	it('says where a closed and an open hat hit on one step', async () => {
 		const { run } = setup();
 		const result = json(
@@ -266,7 +309,9 @@ describe('write_pattern on drums', () => {
 				grid: { '61': 'x.x. x.x. x.x. x.x.', '63': '..x. ..x. .... ....' }
 			})
 		);
-		expect(result.note).toMatch(/A closed and an open hat both hit on steps 3, 7:/);
+		expect(result.note).toMatch(
+			/A closed and an open hat both hit on steps 3 \(1& of bar 1\), 7 \(2& of bar 1\):/
+		);
 		const apart = json(
 			await run(writePatternTool, {
 				track: 1,
@@ -352,6 +397,13 @@ describe('write_arrangement', () => {
 			'scene 1': 'every track p1 (1 bar)',
 			'scene 2': 'T1 p2; the rest p1 (1 bar)'
 		});
+		// a rest reads as one
+		const rest = json(
+			await run(writeArrangementTool, {
+				scenes: [{ scene: 3, patterns: [{ track: 1, pattern: 0 }] }]
+			})
+		);
+		expect(rest.arrangement.scenes['scene 3']).toBe('T1 rests (p3, empty); the rest p1 (1 bar)');
 		// the loop alone: an empty order keeps the order
 		const loop = json(await run(writeArrangementTool, { song: { scenes: [], loop: true } }));
 		expect(loop.arrangement.song).toMatchObject({ order: [1, 2, 1], loop: true });
@@ -567,7 +619,7 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 			song: { order: [1, 2], loop: false }
 		});
 		expect(json(await run(transportTool, { action: 'play' })).from).toBe(
-			'the song from its first scene (1 2), once through, then it stops'
+			'the song from its first scene (1 2), 2 bars, 0:04 at 120 bpm, then it stops'
 		);
 	});
 

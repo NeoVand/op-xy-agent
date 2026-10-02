@@ -1,0 +1,166 @@
+[
+	{
+		"name": "undo-transpose",
+		"about": "Re-check: a transpose in place, then 'undo that' through take_back.",
+		"steps": [
+			{ "say": "make a deep house groove at 122 with a bassline on track 3" },
+			{ "say": "take the bassline down an octave" },
+			{ "say": "hmm no, undo that" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "play-the-chorus",
+		"about": "Re-check: an arrangement, then hear one part of it, then its length.",
+		"steps": [
+			{
+				"say": "make a pop song arrangement at 104: an intro of 4 bars with just keys, a verse with drums bass and keys, and a chorus where a lead comes in. verse and chorus twice"
+			},
+			{ "say": "play me just the chorus" },
+			{ "why": true },
+			{ "say": "now play the whole song again. how long is it?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "duck-heard",
+		"about": "Re-check: a pumping pad, judged by listening to the pad alone.",
+		"steps": [
+			{
+				"say": "four on the floor kick on track 1 and a held pad chord on track 8. make the pad pump with the kick, then listen and tell me how much it pumps"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "slow-sweep",
+		"about": "Re-check: an LFO filter sweep at a synced, slow rate.",
+		"steps": [
+			{ "say": "put a long chord on track 4 and give it a slow filter sweep that takes two bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "first-beat-lesson",
+		"about": "A beginner taught to enter a kick themselves; the probe follows the lit keys.",
+		"steps": [
+			{
+				"say": "I just got my OP-XY and I've never used a sequencer. teach me to put a kick on every beat myself, light the keys for me"
+			},
+			{ "follow": 8 },
+			{ "say": "did I do it right? what's next?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "mix-fix",
+		"about": "A mix problem: diagnose by listening, fix levels and tone.",
+		"steps": [
+			{ "say": "make a lo-fi beat at 80 with drums, a bass and some keys" },
+			{ "say": "the bass is way too loud and boomy and the kick gets lost. fix the mix" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "genre-change",
+		"about": "Turn one style into another, keeping what fits.",
+		"steps": [
+			{ "say": "make a house beat with a bassline" },
+			{ "say": "now turn it into drum and bass" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "theory-chords",
+		"about": "Theory: a progression written and explained.",
+		"steps": [
+			{
+				"say": "write a sad chord progression in D minor on track 7 and explain why it sounds sad"
+			},
+			{ "why": true },
+			{ "say": "make the last chord more tense so it pulls back to the start" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "impossible-asks",
+		"about": "Asks the OP-XY cannot do: handled plainly, with the closest thing.",
+		"steps": [
+			{ "say": "make a 10 bar long melody on track 4" },
+			{ "why": true },
+			{ "say": "put a hi hat on track 20" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-options",
+		"about": "Takes to choose from, then a pick by words.",
+		"steps": [
+			{ "say": "make a funk beat at 100" },
+			{ "say": "give me three different basslines for it to choose from" },
+			{ "why": true },
+			{ "say": "I like the second one best, use that" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "odd-meter",
+		"about": "A groove in 7/8.",
+		"steps": [{ "say": "make me a groove in 7/8 at 140" }, { "why": true }]
+	},
+	{
+		"name": "kit-808",
+		"about": "A kit made, then a beat on it.",
+		"steps": [
+			{ "say": "make me an 808 style drum kit and a trap beat that uses it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "live-performance",
+		"about": "Teaching performance moves on the replica.",
+		"steps": [
+			{ "say": "make a techno loop at 128" },
+			{
+				"say": "how do I perform this live? I want to drop the kick out and bring it back, and do a filter sweep on everything"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "explain-sound",
+		"about": "A sound read and explained to a beginner.",
+		"steps": [
+			{ "say": "what is the sound on track 6? explain each page to me like I'm new to synths" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "changed-mind",
+		"about": "The user changes their mind mid-way.",
+		"steps": [
+			{ "say": "make a techno beat at 130" },
+			{ "say": "wait, actually I wanted trap at 140, sorry" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "edits-then-undo",
+		"about": "The user edits by hand, then asks to undo the agent's last change only.",
+		"steps": [
+			{ "say": "make a simple rock beat on track 1" },
+			{ "say": "add a crash on the first step" },
+			{ "press": ["key.instrument", "track.1", "step.7", "step.15"] },
+			{ "say": "undo your last change but keep what I just did" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "french-bass",
+		"about": "French: a bassline, answered in French.",
+		"steps": [
+			{ "say": "fais-moi une ligne de basse funky en mi mineur sur la piste 3" },
+			{ "why": true }
+		]
+	}
+]

@@ -582,7 +582,29 @@ export async function main(args: readonly string[]): Promise<void> {
 				await sleep(150);
 				continue;
 			}
-			const key = s.page.locator(`[data-id="${id}"]`).first();
+			// latch:key.shift holds a key (⌥-click, as the walkthrough card says) until latched again;
+			// turn:enc.1:3 turns an encoder three detents with the wheel (negative: anticlockwise)
+			const latch = /^latch:(.+)$/.exec(id);
+			const turn = /^turn:(.+?):(-?\d+)$/.exec(id);
+			const target = latch?.[1] ?? turn?.[1] ?? id;
+			const key = s.page.locator(`[data-id="${target}"]`).first();
+			if (latch || turn) {
+				if ((await key.count()) === 0) {
+					missing.push(id);
+					continue;
+				}
+				if (latch) await key.click({ modifiers: ['Alt'] });
+				else {
+					await key.hover();
+					const n = Number(turn![2]);
+					for (let i = 0; i < Math.abs(n); i++) {
+						await s.page.mouse.wheel(0, n > 0 ? -40 : 40);
+						await sleep(60);
+					}
+				}
+				await sleep(250);
+				continue;
+			}
 			if ((await key.count()) === 0) {
 				missing.push(id);
 				continue;

@@ -21,7 +21,8 @@ export const SETTING_AREAS: readonly SettingArea[] = [
 	'arrange',
 	'bar',
 	'sample',
-	'com'
+	'com',
+	'project'
 ];
 
 /** A setting as plan_steps takes it and a recipe's step writes it. */
