@@ -31,10 +31,11 @@
   - The five conformance suites (503 `it` cases) are written from the guide. About 100 case titles
     pin a choice of ours, and about 30 cite a capture.
 - **Things that look wrong, not just unverified:**
-  1. **The FX sound ignores the FX pages.** FX I is always a fixed dotted-eighth delay and FX II a
-     fixed 2.2 s hall. They are built once (`sound/engine.ts:251-252`). The effect type, its four
-     parameters, the FX filters and LFOs, and FX I → FX II never reach the sound. A new project's
-     tracks already send to both.
+  1. **The FX sound ignored the FX pages.** FX I was always a fixed dotted-eighth delay and FX II
+     a fixed 2.2 s hall, built once. A new project's tracks already send to both. _Since
+     2026-10-02 all six effects are built and follow their type, four values and the tempo
+     (`sound/fx.ts`), on laws of our own that Session 2 fits; the FX filters and LFOs, and FX I →
+     FX II, still never reach the sound._
   2. **Stored LFO speeds are decoded on a scale that conflicts with the measured law.**
      `sim/defaults.ts:55` spreads the lane evenly over 111 positions, but the unit is synced below
      CC 64 (60 §4). A new project's T4, T6 and T8 tremolos therefore play at rates the measured law
@@ -235,8 +236,8 @@
 | Effect labels: chorus, delay, dist, phaser, reverb       | yes     | DEV-CAMERA                                                   | `sim/areas/auxiliary/state.ts:114-127`                       | —                                                                                                                          |
 | lofi labels                                              | partial | GUIDE                                                        | `sim/areas/auxiliary/state.ts:124`                           | never filmed                                                                                                               |
 | Delay size in eight zones, 1/32…1/2                      | yes     | DEV-CAMERA (CC12 sweep)                                      | `sim/areas/auxiliary/state.ts:129-143`                       | the "1/8" zone is ours                                                                                                     |
-| FX sound                                                 | partial | OURS (a fixed ping-pong delay and a fixed 2.2 s hall)        | `sound/engine.ts:251-252`; `sound/fx.ts:21-101`              | type, parameters, filter, LFO and FX I → FX II never reach the sound; the reverb's tail is shorter than the unit's (62 §3) |
-| FX returns on aux T7/T8                                  | partial | OURS                                                         | `sound/engine.ts:253-257,429-436`                            | a muted FX track cuts its return (ours)                                                                                    |
+| FX sound: the six effects, their values, the tempo       | partial | OURS (every law and how dry acts, to fit in Session 2)       | `sound/fx.ts`; `sound/engine.ts:251-262,420-422`             | filters, LFOs, FX I → FX II and FX locks never reach the sound; the reverb's tail is still shorter than the unit's (62 §3) |
+| FX returns on aux T7/T8                                  | partial | OURS                                                         | `sound/engine.ts:251-262,441-450`                            | a muted FX track cuts its return (ours); dry's share of the sends goes round it                                            |
 | The midi engine's CC pages                               | yes     | OURS                                                         | `sim/areas/mixer/draw.ts:455-487`                            | the engine itself may be gone on 1.1.33 (Q10)                                                                              |
 
 ### 2.7 Tempo, groove and metronome
@@ -488,8 +489,8 @@ project already exercises everything in the first group.
 
 **Every session (the first minutes on a new project)**
 
-1. **The FX sound.** A fixed delay and hall whatever the FX pages say (`sound/engine.ts:251-252`).
-   A new project's tracks send to both. → S3 #2.
+1. **The FX sound.** All six effects follow the FX pages since 2026-10-02, but every law is ours,
+   and so is how dry acts (`sound/fx.ts`). A new project's tracks send to both. → S3 #2.
 2. **TE's factory drum kits are synthesized stand-ins** (`sound/kit.ts`). Their levels were never
    compared, and T1 and T2 of every new project play them. → S3 #9.
 3. **The tremolos play at the wrong rates.** The stored LFO speed decode (`sim/defaults.ts:55`)
@@ -887,6 +888,8 @@ reach. Record at 44.1 kHz.
      zones.
    - FX II's reverb values; FX I → FX II at 99; CC39; and whether CC12–15 reach FX II on channel 16
      (new: announce it).
+   - The delay's and the reverb's dry at 0, 50 and 99, T3 sent at 99 and at 50: is T3's own sound
+     kept, doubled or gone? (The replica takes the sent share out of the mix as dry falls.)
 3. **Master:**
    - The compressor at 0, 10, 40, 80 and 99 by hand on a chord with drums (Q15).
    - CC90 on channels 1–3 at 0, 32, 96 and 127 on full noise.
@@ -1028,9 +1031,9 @@ The app sends; the owner watches or listens.
   - `arrange-mix.cases.ts:732`: the camera saw the shift footer;
   - `arrange-mix.cases.ts:1665,1732,1766`: those defaults come from the owner's file;
   - `system-sample.cases.ts:728`: those stock MIDI values were read off the unit.
-- **`sound/fx.ts:1-7`:**
-  - says the FX parameters are not in the simulator; they are;
-  - says unbuilt effects return nothing; the fixed delay and reverb play instead.
+- **`sound/fx.ts:1-7`** (fixed 2026-10-02, when the six effects were built):
+  - said the FX parameters are not in the simulator; they are;
+  - said unbuilt effects return nothing; the fixed delay and reverb played instead.
 - **Other stale claims:**
   - `sound/engine.ts:125` says every default track is within 0.5 dB; 62 §3 lists larger residuals.
   - 57 §4 says decay and release use the attack's law; 60 §3 superseded that.
