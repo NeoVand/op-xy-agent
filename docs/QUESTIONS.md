@@ -26,6 +26,12 @@ answer and date (and into `DECISIONS.md` when they shape the project).
      bend range read (we expect 2 semitones)? On T8 (we expect an octave)?
    - ~~Are presets inside a category listed alphabetically, or in some other order?~~ By name,
      factory and user presets together (camera, 2026-09-28; note 59 §2.6).
+   - With headphones in the audio out jack: is the speaker silent, and does the volume knob set
+     the headphones too? (The agent's "no sound in my headphones" checklist could not say; the
+     guide only implies it.)
+   - The brain's routing page (auxiliary → T1 → M2): does turning an encoder clockwise take its
+     track in and counter-clockwise leave it out, as we derived? (The agent left the direction
+     out of a lesson because nothing confirms it.)
 5. ~~**Filter and LFO session**~~ Done on 2026-09-28 (note 60): the four filters, both envelopes'
    time laws, the LFO rates and depths and the duck, measured and now in the replica's sound.
    Still open from it: the synced LFO steps between the multiples of 8, the random LFO's steps and

@@ -18,6 +18,12 @@ facts:
   - id: what
     text: Each key holds its own one-shot sample — built for kits, fine for any set of separate sounds.
     source: https://teenage.engineering/guides/op-xy/sample#drum-sampler
+  - id: record-order
+    text: On the record page, press the key the take should land on (it lights up), then `hold M1`; the recording itself starts once the input passes the threshold.
+    source: https://teenage.engineering/guides/op-xy/sample#drum-sampler
+  - id: key-pitch
+    text: The guide ties no root note to a drum key — the key you choose is where the take goes, and tune on the `M1` page (`turn E1`) changes its pitch afterwards.
+    source: https://teenage.engineering/guides/op-xy/sample#drum-sampler
   - id: notes
     text: Over MIDI the 24 keys are notes 53–76 (F3–E5 with C4 = 60), left to right.
     source: docs/research/20-midi-control.md#42-drum-key-mapping
@@ -52,12 +58,15 @@ procedures:
     preconditions: [the track uses the drum sampler]
     steps:
       - keys: sample
+        note: set source, gain and threshold here (`turn E1`, `turn E3`, `turn E4`)
       - keys: key
-        note: the key lights up
+        note: the key lights up; choose it after `sample`, since a key held while pressing `sample` browses samples instead
       - keys: hold M1
+        note: the take starts once the input passes the threshold
     source: https://teenage.engineering/guides/op-xy/sample#drum-sampler
 related: [sampler.drum-key-settings, sampler.slicing, sampler.sampling]
 ---
 
-Treat the keyboard as 24 pads: select a key, `hold M1`, make the sound, move on. Takes also land in
-the library, so clearing a key never loses a recording.
+Treat the keyboard as 24 pads: on the record page press a key, `hold M1` and make the sound; the
+recorder waits for the threshold, so the take starts on the hit. Takes also land in the library, so
+clearing a key never loses a recording.

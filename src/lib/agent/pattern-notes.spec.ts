@@ -58,7 +58,7 @@ describe('gridHits', () => {
 	});
 
 	it('refuses marks it does not know and lines past four bars', () => {
-		expect(() => gridHits({ snare: 'x..1' })).toThrow(/"1" is not a mark/);
+		expect(() => gridHits({ snare: 'x..y' })).toThrow(/"y" is not a mark/);
 		expect(() => gridHits({ snare: 'x'.repeat(65) })).toThrow(/65 steps/);
 	});
 
@@ -76,5 +76,17 @@ describe('gridMiscount', () => {
 		expect(gridMiscount('x... x... x.... x...')).toBe('group 3 ("x....") has 5, the others 4');
 		expect(gridMiscount('x...x...x...x...x')).toBeNull();
 		expect(gridMiscount('x... x... x... x...')).toBeNull();
+	});
+});
+
+describe('grid digits', () => {
+	it('set a hit velocity outright', () => {
+		const { hits } = gridHits({ snare: '..3. x... ..4. X...' });
+		expect(hits.map((h) => [h.step, markVelocity(h.mark, 100)])).toEqual([
+			[3, 42],
+			[5, 100],
+			[11, 56],
+			[13, 125]
+		]);
 	});
 });

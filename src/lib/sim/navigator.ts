@@ -13,10 +13,12 @@
  * a few are set with keys of their own rather than an encoder: the player type, arrange's patterns,
  * scenes and song, slicing a drum key, and the bar menu's track scale and bars.
  */
+import { parseNoteName } from '$lib/core/midi/notes';
 import { KEYBOARD_FIRST_NOTE, parseKeys, targetIds, type KeySequence } from '$lib/core/opxy';
 import { OpxySim } from './opxy-sim.svelte';
 import { buildFrame } from './frames';
 import { trackSequence } from './areas/arrange/model';
+import { trackOctave } from './areas/sequencer/model';
 import { FX_NAMES, FX_TYPES } from './areas/auxiliary/state';
 import { activeRegion, tuneText, zoneOf } from './areas/sample/m1';
 import { keyNote } from './areas/sample/record';
@@ -25,6 +27,7 @@ import { SLICE_MODES, type Region } from './areas/sample/state';
 import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
 import type { PresetEntry } from './areas/system/catalogue';
 import { PROJECT_SECTIONS } from './areas/system/settings';
+import { findProject, snapshot } from './areas/system/projects';
 import { currentGroup, groups, presetKey, presetsIn } from './areas/system/presets';
 import {
 	FILTER_TYPES,
@@ -97,6 +100,8 @@ export interface NavPlan {
 	readonly screen: string;
 	/** Why the goal was not reached, or a note on the result. */
 	readonly note?: string;
+	/** Done by its steps, with no state to arrive at that a second plan would read (a save as). */
+	readonly action?: true;
 }
 
 /** A parameter goal: `value` as a number in the parameter's own units, or as the screen shows it. */
@@ -1258,7 +1263,11 @@ export function planSettings(state: SimState, goals: readonly SettingGoal[]): Se
 export function planToSetting(state: SimState, goal: SettingGoal): NavPlan {
 	const rec = new Recorder(copy(state));
 	if ('label' in goal) {
-		if (specialOf(goal)) {
+		// an action is planned whole (a save: project, M2), unless the replica reads it done
+		const special = specialOf(goal);
+		if (special?.action)
+			return special.reads(state, goal) ? rec.plan(true) : special.plan(state, goal);
+		if (special) {
 			const refused = walkToPage(rec, goal, goal.page ?? 1);
 			return refused ? rec.plan(false, refused) : rec.plan(true);
 		}
@@ -1969,6 +1978,8 @@ function readsPage(state: SimState, goal: PageValueGoal): boolean {
 interface Special {
 	plan(state: SimState, goal: PageValueGoal): NavPlan;
 	reads(state: SimState, goal: PageValueGoal): boolean;
+	/** A press that does something (a save) rather than a value: planned whole, with none given. */
+	readonly action?: true;
 }
 
 /** A whole number from a goal's value, or null. */
@@ -1984,6 +1995,75 @@ const sceneKeys = (n: number): string[] =>
 	n <= 9
 		? [`shift + accidental ${n}`]
 		: ['shift + accidental 0', `accidental ${Math.floor(n / 10)}`, `accidental ${n % 10}`];
+
+/** Two lists of notes alike, in order. */
+const sameNotes = (a: readonly number[], b: readonly number[]) =>
+	a.length === b.length && a.every((n, i) => n === b[i]);
+
+/** A chord as notes ("C4 Eb4 G4", "A3+C4+E4", MIDI numbers), or null when one is not a note. */
+function chordNotes(value: number | string): number[] | null {
+	const words = String(value)
+		.split(/[\s,+]+/)
+		.filter(Boolean);
+	const notes = words.map((w) => (/^\d+$/.test(w) ? Number(w) : parseNoteName(w, 'c4')));
+	return notes.length > 0 && notes.every((n): n is number => n !== null && n >= 0 && n <= 127)
+		? [...new Set(notes)].sort((a, b) => a - b)
+		: null;
+}
+
+/**
+ * Maestro's chord (manual: players/maestro): its keys pressed with shift held on its page, the
+ * player on. An agent could switch maestro on but not give it a chord.
+ */
+const MAESTRO_CHORD: Special = {
+	plan(state, goal) {
+		const rec = new Recorder(copy(state));
+		const notes = chordNotes(goal.value);
+		if (!notes) return rec.plan(false, 'give the chord as its notes, "A3 C4 E4"');
+		const track = goal.track ?? state.track + 1;
+		if (track > 8) return rec.plan(false, 'players are on instrument tracks 1–8');
+		walk(rec, { area: 'player', track, type: 'maestro' });
+		const player = () => currentPattern(rec.sim.state.tracks[track - 1].sequence).player;
+		if (!player().on) rec.do('player');
+		if (!player().on) return rec.plan(false, 'the maestro player did not switch on');
+		// maestro plays the chord's shape from any key: moved by whole octaves onto the keys the
+		// keyboard plays now (a track an octave up starts at F4)
+		const low = KEYBOARD_FIRST_NOTE + 12 * trackOctave(rec.sim.state);
+		if (notes[notes.length - 1] - notes[0] > 23) {
+			return rec.plan(false, 'the chord spans more than the keyboard’s two octaves');
+		}
+		const shift = 12 * Math.ceil((low - notes[0]) / 12);
+		const fits = shift + notes[notes.length - 1] <= low + 23 ? shift : shift - 12;
+		const entered = notes.map((n) => n + fits);
+		if (entered[0] < low)
+			return rec.plan(false, 'the chord does not fit the keyboard at its octave');
+		rec.do(`shift + ${entered.map((n) => `key ${keyName(n - low)}`).join(' → + ')}`);
+		const ok = sameNotes(player().maestro.chord, entered);
+		const moved =
+			fits !== 0
+				? `entered ${fits > 0 ? 'up' : 'down'} ${Math.abs(fits) / 12} octave${Math.abs(fits) === 12 ? '' : 's'}, where the keyboard plays`
+				: undefined;
+		return rec.plan(ok, ok ? moved : `the chord reads ${player().maestro.chord.join(' ')}`);
+	},
+	reads(state, goal) {
+		const notes = chordNotes(goal.value);
+		const track = goal.track ?? state.track + 1;
+		const t = state.tracks[track - 1];
+		if (!notes || !t) return false;
+		const player = currentPattern(t.sequence).player;
+		// the same shape in any octave is the same chord to maestro
+		const chord = player.maestro.chord;
+		const shape = (list: readonly number[]) => list.map((n) => n - list[0]);
+		return (
+			player.type === 'maestro' &&
+			player.on &&
+			chord.length === notes.length &&
+			chord.length > 0 &&
+			(chord[0] - notes[0]) % 12 === 0 &&
+			sameNotes(shape(chord), shape(notes))
+		);
+	}
+};
 
 /** The player a track uses: arpeggio, hold or maestro, picked from the list shift + player shows. */
 const PLAYER_TYPE: Special = {
@@ -2307,6 +2387,63 @@ const projectValue = (state: SimState, at: { section: number; row: number }) =>
  * section, E2 the row and E3 turns its value. The time signature could not be set from a chat
  * before: no page the planner walks showed it.
  */
+/** The project page's first view, closed first when another of its pages is open. */
+function toProjectView(rec: Recorder): boolean {
+	const s = () => rec.sim.state;
+	if (s().overlay === 'project' && s().areas.system.page === null) return true;
+	if (s().overlay === 'project') rec.do('project');
+	rec.do('project');
+	return s().overlay === 'project' && s().areas.system.page === null;
+}
+
+/** Whether the project is stored as it stands now (a save leaves nothing unsaved). */
+function savedAsIs(state: SimState): boolean {
+	return findProject(state, 'user', state.project.name)?.snapshot === snapshot(state);
+}
+
+/**
+ * Saving the project (`M2` on the project page) and saving a copy under a new name (`shift + M2`,
+ * then `M1` on the naming screen): an agent asked for the save steps once and got none.
+ */
+const PROJECT_SAVE: Readonly<Record<'save' | 'save as', Special>> = {
+	save: {
+		plan(state) {
+			const rec = new Recorder(copy(state));
+			if (!toProjectView(rec)) return rec.plan(false, 'the project page did not open');
+			rec.do('M2');
+			const ok = savedAsIs(rec.sim.state);
+			return rec.plan(ok, ok ? 'the project page flashes "saved"' : 'the project did not save');
+		},
+		reads: (state) => savedAsIs(state),
+		action: true
+	},
+	'save as': {
+		plan(state) {
+			const rec = new Recorder(copy(state));
+			const was = state.project.name;
+			if (!toProjectView(rec)) return rec.plan(false, 'the project page did not open');
+			rec.do('shift + M2');
+			if (rec.sim.state.areas.system.page !== 'naming') {
+				return rec.plan(false, 'the naming screen did not open');
+			}
+			const offered = rec.sim.state.areas.system.naming?.text ?? '';
+			rec.do('M1');
+			const now = rec.sim.state.project.name;
+			const ok = now !== was && savedAsIs(rec.sim.state);
+			const plan = rec.plan(
+				ok,
+				ok
+					? `saved as "${now}", the name the naming screen offers ("${offered}"): to type another, change it there before M1 (M2 next character, M4 deletes, M3 cancels)`
+					: 'the copy did not save'
+			);
+			return { ...plan, action: true };
+		},
+		// a copy is a new project: there is no state that says it is done
+		reads: () => false,
+		action: true
+	}
+};
+
 const PROJECT_SETTING: Special = {
 	plan(state, goal) {
 		const rec = new Recorder(copy(state));
@@ -2315,7 +2452,7 @@ const PROJECT_SETTING: Special = {
 			const names = PROJECT_SECTIONS.flatMap((s) => s.rows(state).map((r) => r.label));
 			return rec.plan(
 				false,
-				`the project settings have no "${goal.label}"; they hold ${[...new Set(names)].join(', ')}`
+				`the project settings have no "${goal.label}"; they hold ${[...new Set(names)].join(', ')}; the project page's own actions are "save" and "save as"`
 			);
 		}
 		const s = () => rec.sim.state;
@@ -2362,6 +2499,7 @@ function specialOf(goal: PageValueGoal): Special | null {
 	const label = word(goal.label);
 	switch (goal.area) {
 		case 'player':
+			if (label === 'chord' || label === 'maestro chord') return MAESTRO_CHORD;
 			return label === 'type' || label === 'player type' ? PLAYER_TYPE : null;
 		case 'auxiliary':
 			return label === 'effect' || label === 'fx type' ? EFFECT : null;
@@ -2376,6 +2514,9 @@ function specialOf(goal: PageValueGoal): Special | null {
 		case 'bar':
 			return BAR[label] ?? null;
 		case 'project':
+			if (label === 'save' || label === 'save project') return PROJECT_SAVE.save;
+			if (label === 'save as' || label === 'save a copy' || label === 'save copy')
+				return PROJECT_SAVE['save as'];
 			return PROJECT_SETTING;
 		default:
 			return null;

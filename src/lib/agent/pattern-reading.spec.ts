@@ -39,6 +39,38 @@ describe('readPattern', () => {
 		expect(minor?.chords).toEqual(['step 1: Gm7 (G Bb D F)']);
 	});
 
+	it('names the progression plainly and as degrees, with the inversions apart', () => {
+		const chord = (step: number, notes: number[]) =>
+			notes.map((note) => ({ step, note, length: 16 }));
+		// Let It Be's turn voiced smoothly: C, G/B, Am/C, F/C
+		const reading = readPattern(
+			pattern(
+				[
+					...chord(1, [60, 64, 67]),
+					...chord(17, [59, 62, 67]),
+					...chord(33, [60, 64, 69]),
+					...chord(49, [60, 65, 69])
+				],
+				4
+			),
+			[],
+			undefined,
+			parseKey('C major')
+		);
+		expect(reading?.progression).toBe('C G Am F: I V vi IV in C major; inverted: G/B, Am/C, F/C');
+		// a minor key's degrees as a major scale counts them
+		const minor = readPattern(
+			pattern(
+				[...chord(1, [57, 60, 64]), ...chord(17, [53, 57, 60]), ...chord(33, [55, 59, 62, 65])],
+				3
+			),
+			[],
+			undefined,
+			parseKey('A minor')
+		);
+		expect(minor?.progression).toBe('Am F G7: i ♭VI ♭VII7 in A minor');
+	});
+
 	it('shows rests, held notes and notes that make no chord', () => {
 		const reading = readPattern(
 			pattern([
@@ -134,9 +166,19 @@ describe('a chord named over the bass another part plays', () => {
 
 describe('parseKey', () => {
 	it('reads a key and spells a mode as its parent', () => {
-		expect(parseKey('A minor')).toEqual({ label: 'A minor', pitchClass: 9, mode: 'minor' });
-		expect(parseKey('D dorian')).toEqual({ label: 'D dorian', pitchClass: 0, mode: 'major' });
-		expect(parseKey('eb')).toEqual({ label: 'Eb major', pitchClass: 3, mode: 'major' });
+		expect(parseKey('A minor')).toEqual({
+			label: 'A minor',
+			pitchClass: 9,
+			mode: 'minor',
+			tonic: 9
+		});
+		expect(parseKey('D dorian')).toEqual({
+			label: 'D dorian',
+			pitchClass: 0,
+			mode: 'major',
+			tonic: 2
+		});
+		expect(parseKey('eb')).toEqual({ label: 'Eb major', pitchClass: 3, mode: 'major', tonic: 3 });
 		expect(parseKey('H minor')).toBeNull();
 	});
 });

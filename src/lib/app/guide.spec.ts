@@ -192,3 +192,16 @@ describe('turnHint', () => {
 		expect(turnHint(step, step.screen, from)).toBeNull();
 	});
 });
+
+describe('a walkthrough that arms recording', () => {
+	it('waits for record + play itself, though the screen reads the same', async () => {
+		const { createVirtualOpxy } = await import('$lib/app/virtual');
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const steps = virtual.rehearse('T4 → record + play');
+		const after = steps.at(-1)!;
+		// the screen alone would call it done after T4: the mark tells armed from not
+		expect(after.screen).toBe(steps[0].screen);
+		expect(after.music).not.toBe(steps[0].music);
+	});
+});

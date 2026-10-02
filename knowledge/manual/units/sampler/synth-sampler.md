@@ -1,22 +1,41 @@
 ---
 id: sampler.synth-sampler
 title: Synth sampler
-aliases: [sampler engine, one shot synth sampler, loop points, loop type]
+aliases:
+  [sampler engine, one shot synth sampler, loop points, loop type, record into the synth sampler]
 area: sampler
 order: 20
 context:
   modes: [instrument]
-  screens: [M1]
-summary: Plays one sample across the keyboard; `M1` sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.
+  screens: [M1, sample]
+summary: Plays one sample across the keyboard. On its record page a keyboard key starts sampling and becomes the root note; `M1` sets start, loop and end points, and its shift layer direction, tune, loop crossfade, gain and loop type.
 status: current
 firmware:
   min: '1.0.9'
-  changed_in: ['1.1.0']
+  changed_in: ['1.0.45', '1.1.0']
   guide_version: '1.1.15'
   verified_on: null
 facts:
   - id: record-key
-    text: On the synth sampler's record page, pressing a key starts sampling, and that key becomes the note the sample is tuned to.
+    text: On the synth sampler's record page you start sampling by pressing a keyboard key; the guide gives this page no `M1` gesture.
+    source: https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler
+  - id: root
+    text: The key you press becomes the sample's root, the note the sampler tunes the recording to.
+    source: https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler
+  - id: threshold
+    text: The page has the same source, gain and threshold controls as the other record pages (`E1`, `E3`, `E4`), so the key arms the recorder and the take begins once the input passes the threshold.
+    source: https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler
+    confidence: derived
+  - id: prompt
+    text: TE's picture of this record page reads "press key to sample" and labels none of `M1`…`M4`.
+    source: https://teenage.engineering/guides/op-xy/sample#arrange
+    confidence: derived
+  - id: latch-text
+    text: OS 1.0.45 corrected a latch text that the sample screen shows for the synth sampler; the changelog gives no wording, so the prompt on OS 1.1.33 may differ from TE's picture.
+    source: https://teenage.engineering/downloads/op-xy#1.0.45
+    firmware_min: '1.0.45'
+  - id: open
+    text: Not documented and not yet checked on a unit — whether `hold M1` also records here, whether the key has to stay held, and what ends a take before 20 seconds.
     source: https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler
   - id: fine
     text: Pushing the encoder in while moving one of the four points gives finer steps.
@@ -59,6 +78,19 @@ facts:
     source: docs/research/60-sound-session.md#5-samplers
     confidence: verified
     verified_on: '1.1.33'
+procedures:
+  - id: record
+    goal: Record a new sample into the synth sampler
+    preconditions: [the track uses the synth sampler]
+    steps:
+      - keys: sample
+        note: the synth sampler's record page
+      - keys: turn E1
+        note: the source; `turn E3` sets the gain and `turn E4` the threshold
+      - keys: key
+        note: the note the sample should play at; this starts sampling
+    result: The sampler tunes the take to the key you pressed.
+    source: https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler
 parameters:
   - screen: M1
     encoder: E1
@@ -108,8 +140,10 @@ parameters:
     name: loop type
     range: loop forever / loop until release / loop off
     source: https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler
-related: [sampler.overview, sampler.sampling, sampler.multisampler]
+related: [sampler.overview, sampler.sampling, sampler.multisampler, sampler.sample-files]
 ---
 
-TE's guide calls it the one shot synth sampler. Loop forever suits drones and pads, loop until
+TE's guide calls it the one shot synth sampler. To record, open `sample`, set source, gain and
+threshold, then press the key whose pitch matches the sound you are about to play: the take is
+tuned to that key, so the keyboard plays it in tune. Loop forever suits drones and pads, loop until
 release leaves a natural tail when you let go, and loop off makes the sample a one-shot.

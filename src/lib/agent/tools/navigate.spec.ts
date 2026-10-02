@@ -305,6 +305,20 @@ describe('plan_steps to the project settings', () => {
 		);
 		expect(named.note).toMatch(/the project settings have no "nope"; they hold transpose/);
 	});
+
+	it('saves the project with M2, and a copy with shift + M2 and M1', async () => {
+		const { sim, run } = setup(true);
+		const keys = (plan: { steps: { keys: string }[] }) => plan.steps.map((s) => s.keys);
+		const saved = json(await run(planStepsTool, { show: true, area: 'project', param: 'save' }));
+		expect(saved).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(keys(saved)).toEqual(['project', 'M2']);
+		const name = sim.state.project.name;
+		const copy = json(await run(planStepsTool, { show: true, area: 'project', param: 'save as' }));
+		expect(copy).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(keys(copy).slice(-2)).toEqual(['shift + M2', 'M1']);
+		expect(sim.state.project.name).not.toBe(name);
+		expect(copy.note).toMatch(/^saved as "project 2"/);
+	});
 });
 
 describe('plan_steps guiding to a page value with none given', () => {
@@ -329,5 +343,24 @@ describe('plan_steps guiding to a page value with none given', () => {
 		expect(result.guided).toBe(true);
 		expect(guided.at(-1)?.steps.map((s) => s.keys)).toEqual(['turn E1']);
 		expect(sim.state.overlay).toBe('players');
+	});
+});
+
+describe('plan_steps to a maestro chord', () => {
+	it('enters the chord with shift held on the maestro page, the player on', async () => {
+		const { sim, run } = setup(true);
+		const plan = json(
+			await run(planStepsTool, {
+				show: true,
+				settings: [
+					{ area: 'player', track: 4, param: 'type', value: 'maestro' },
+					{ area: 'player', track: 4, param: 'chord', value: 'A3 C4 E4' }
+				]
+			})
+		);
+		expect(plan).toMatchObject({ shown: true, arrived: true, reached: true });
+		const player = sim.state.tracks[3].sequence.patterns[0].player;
+		expect(player).toMatchObject({ type: 'maestro', on: true });
+		expect(player.maestro.chord).toEqual([69, 72, 76]); // an octave up, where the keyboard plays
 	});
 });

@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "093117d9",
+	"bundle_hash": "935f00b0",
 	"stats": {
 		"units": 166,
-		"facts": 1184,
-		"procedures": 205,
+		"facts": 1215,
+		"procedures": 207,
 		"parameters": 207,
-		"verified_items": 247,
-		"words": 44766,
+		"verified_items": 251,
+		"words": 46150,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -11934,6 +11934,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "channel",
+					"text": "A midi-engine track sends on the channel chosen with `E1` on its `M1` page; the guide does not tie it to the project's MIDI channels.",
+					"source": "https://teenage.engineering/guides/op-xy/synth-engines#external",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
 					"id": "renamed",
 					"text": "OS 1.0.15 renamed the engine from external to midi; the guide (v1.1.15) and its MIDI how-to still use the old name.",
 					"source": "https://teenage.engineering/downloads/op-xy#1.0.15",
@@ -12099,6 +12107,7 @@
 				"instrument.engine",
 				"auxiliary.external-midi",
 				"howto.control-synth-midi",
+				"project.midi-channels",
 				"com.midi-settings",
 				"sequencer.parameter-locks"
 			],
@@ -14258,7 +14267,9 @@
 				"record a sample",
 				"sample key",
 				"sample mode",
-				"sampling threshold"
+				"sampling threshold",
+				"record page",
+				"arm the recorder"
 			],
 			"area": "sampler",
 			"order": 10,
@@ -14269,7 +14280,7 @@
 					"sample"
 				]
 			},
-			"summary": "`sample` opens a record page from any screen: pick the source — mic, line in or USB — set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.",
+			"summary": "`sample` opens a record page from any screen: set source, gain and threshold, then arm the recorder — `hold M1` on the library page, a key and then `hold M1` on the drum sampler and multisampler, a keyboard key on the synth sampler. The take starts once the input passes the threshold.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -14297,16 +14308,56 @@
 					"confidence": "official"
 				},
 				{
-					"id": "threshold",
-					"text": "Holding `M1` arms the recorder; capture starts once the input passes the threshold.",
+					"id": "arm",
+					"text": "On the library record page (a track without a sampler engine), holding `M1` arms the recorder.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
 				},
 				{
+					"id": "threshold",
+					"text": "Every record page has a threshold on `E4`, the level at which recording begins, so arming alone does not start the take; it starts when the input rises past that level.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "arm-keyed",
+					"text": "On the drum sampler and multisampler record pages you first press the keyboard key the take should go to (it lights up), then `hold M1`.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "arm-synth",
+					"text": "The synth sampler's record page starts sampling from a keyboard key, which also becomes the sample's root note; the guide gives that page no `M1` gesture.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "end",
+					"text": "The guide does not say what ends a take before the 20-second limit, such as whether letting go of `M1` stops it; not yet checked on a unit.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "meter",
+					"text": "The level meter previews the input while you set the gain, and TE's pictures draw the threshold as an orange line across it.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
 					"id": "keep-or-bin",
-					"text": "`M2` plays the take back; `M4` deletes it before it reaches the library.",
+					"text": "On the library record page, `M2` plays the take back and `M4` deletes it before it reaches the library.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14383,8 +14434,28 @@
 							"set": null
 						},
 						{
+							"keys": "turn E1",
+							"note": "the source; `shift + turn E1` picks the channel of line in or USB",
+							"set": null
+						},
+						{
+							"keys": "turn E3",
+							"note": "the gain, watching the level meter",
+							"set": null
+						},
+						{
+							"keys": "turn E4",
+							"note": "the threshold, just above the room's noise",
+							"set": null
+						},
+						{
 							"keys": "hold M1",
-							"note": "after setting source, gain and threshold",
+							"note": "arms the recorder; the take starts when the sound passes the threshold",
+							"set": null
+						},
+						{
+							"keys": "M2",
+							"note": "listen back; `M4` throws the take away instead",
 							"set": null
 						}
 					],
@@ -14454,7 +14525,7 @@
 					"default": null,
 					"cc": null,
 					"cc_confidence": null,
-					"note": null,
+					"note": "the input level at which an armed recorder starts the take",
 					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14463,15 +14534,25 @@
 			],
 			"related": [
 				"sampler.overview",
+				"sampler.synth-sampler",
 				"sampler.drum-sampler",
+				"sampler.multisampler",
 				"sampler.sample-files",
 				"sampler.sample-library",
 				"auxiliary.external-audio"
 			],
-			"body": "The recorder waits for the sound, so set the threshold just above the room noise and the take\nstarts with the first note. On sampler tracks the page adds key handling: the synth sampler tunes to\nthe key you press; the drum sampler and multisampler record onto a selected key.",
+			"body": "Every record page runs in the same order: choose the source, set the gain against the meter, put\nthe threshold just above the room noise, then arm. Arming only readies the recorder; the take\nbegins with the first sound that passes the threshold, so it starts on the note rather than on\nsilence. Each engine's unit has its own key handling.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
 					"kind": "guide"
 				},
 				{
@@ -14498,11 +14579,12 @@
 			"official_url": "https://teenage.engineering/guides/op-xy/sample#arrange",
 			"controls": [
 				"key.sample",
-				"key.m1",
 				"encoder.1",
-				"key.shift",
 				"encoder.3",
-				"encoder.4"
+				"encoder.4",
+				"key.m1",
+				"key.m2",
+				"key.shift"
 			]
 		},
 		{
@@ -14512,7 +14594,8 @@
 				"sampler engine",
 				"one shot synth sampler",
 				"loop points",
-				"loop type"
+				"loop type",
+				"record into the synth sampler"
 			],
 			"area": "sampler",
 			"order": 20,
@@ -14522,14 +14605,16 @@
 					"instrument"
 				],
 				"screens": [
-					"M1"
+					"M1",
+					"sample"
 				]
 			},
-			"summary": "Plays one sample across the keyboard; `M1` sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.",
+			"summary": "Plays one sample across the keyboard. On its record page a keyboard key starts sampling and becomes the root note; `M1` sets start, loop and end points, and its shift layer direction, tune, loop crossfade, gain and loop type.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
 				"changed_in": [
+					"1.0.45",
 					"1.1.0"
 				],
 				"guide_version": "1.1.15",
@@ -14538,7 +14623,47 @@
 			"facts": [
 				{
 					"id": "record-key",
-					"text": "On the synth sampler's record page, pressing a key starts sampling, and that key becomes the note the sample is tuned to.",
+					"text": "On the synth sampler's record page you start sampling by pressing a keyboard key; the guide gives this page no `M1` gesture.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "root",
+					"text": "The key you press becomes the sample's root, the note the sampler tunes the recording to.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "threshold",
+					"text": "The page has the same source, gain and threshold controls as the other record pages (`E1`, `E3`, `E4`), so the key arms the recorder and the take begins once the input passes the threshold.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "prompt",
+					"text": "TE's picture of this record page reads \"press key to sample\" and labels none of `M1`…`M4`.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "latch-text",
+					"text": "OS 1.0.45 corrected a latch text that the sample screen shows for the synth sampler; the changelog gives no wording, so the prompt on OS 1.1.33 may differ from TE's picture.",
+					"source": "https://teenage.engineering/downloads/op-xy#1.0.45",
+					"firmware_min": "1.0.45",
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "open",
+					"text": "Not documented and not yet checked on a unit — whether `hold M1` also records here, whether the key has to stay held, and what ends a take before 20 seconds.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14625,7 +14750,37 @@
 					"confidence": "verified"
 				}
 			],
-			"procedures": [],
+			"procedures": [
+				{
+					"id": "record",
+					"goal": "Record a new sample into the synth sampler",
+					"preconditions": [
+						"the track uses the synth sampler"
+					],
+					"steps": [
+						{
+							"keys": "sample",
+							"note": "the synth sampler's record page",
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "the source; `turn E3` sets the gain and `turn E4` the threshold",
+							"set": null
+						},
+						{
+							"keys": "key",
+							"note": "the note the sample should play at; this starts sampling",
+							"set": null
+						}
+					],
+					"result": "The sampler tunes the take to the key you pressed.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				}
+			],
 			"parameters": [
 				{
 					"screen": "M1",
@@ -14775,13 +14930,22 @@
 			"related": [
 				"sampler.overview",
 				"sampler.sampling",
-				"sampler.multisampler"
+				"sampler.multisampler",
+				"sampler.sample-files"
 			],
-			"body": "TE's guide calls it the one shot synth sampler. Loop forever suits drones and pads, loop until\nrelease leaves a natural tail when you let go, and loop off makes the sample a one-shot.",
+			"body": "TE's guide calls it the one shot synth sampler. To record, open `sample`, set source, gain and\nthreshold, then press the key whose pitch matches the sound you are about to play: the take is\ntuned to that key, so the keyboard plays it in tune. Loop forever suits drones and pads, loop until\nrelease leaves a natural tail when you let go, and loop off makes the sample a one-shot.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
 					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/downloads/op-xy#1.0.45",
+					"kind": "changelog"
 				},
 				{
 					"url": "docs/research/30-presets-samples.md#27-region-fields-by-type",
@@ -14802,7 +14966,32 @@
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/sample#one-shot-synth-sampler",
 			"controls": [
+				"key.sample",
 				"encoder.1",
+				"keyboard.f3",
+				"keyboard.fs3",
+				"keyboard.g3",
+				"keyboard.gs3",
+				"keyboard.a3",
+				"keyboard.as3",
+				"keyboard.b3",
+				"keyboard.c4",
+				"keyboard.cs4",
+				"keyboard.d4",
+				"keyboard.ds4",
+				"keyboard.e4",
+				"keyboard.f4",
+				"keyboard.fs4",
+				"keyboard.g4",
+				"keyboard.gs4",
+				"keyboard.a4",
+				"keyboard.as4",
+				"keyboard.b4",
+				"keyboard.c5",
+				"keyboard.cs5",
+				"keyboard.d5",
+				"keyboard.ds5",
+				"keyboard.e5",
 				"encoder.2",
 				"encoder.3",
 				"encoder.4",
@@ -14845,6 +15034,22 @@
 				{
 					"id": "what",
 					"text": "Each key holds its own one-shot sample — built for kits, fine for any set of separate sounds.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "record-order",
+					"text": "On the record page, press the key the take should land on (it lights up), then `hold M1`; the recording itself starts once the input passes the threshold.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "key-pitch",
+					"text": "The guide ties no root note to a drum key — the key you choose is where the take goes, and tune on the `M1` page (`turn E1`) changes its pitch afterwards.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14925,17 +15130,17 @@
 					"steps": [
 						{
 							"keys": "sample",
-							"note": null,
+							"note": "set source, gain and threshold here (`turn E1`, `turn E3`, `turn E4`)",
 							"set": null
 						},
 						{
 							"keys": "key",
-							"note": "the key lights up",
+							"note": "the key lights up; choose it after `sample`, since a key held while pressing `sample` browses samples instead",
 							"set": null
 						},
 						{
 							"keys": "hold M1",
-							"note": null,
+							"note": "the take starts once the input passes the threshold",
 							"set": null
 						}
 					],
@@ -14952,7 +15157,7 @@
 				"sampler.slicing",
 				"sampler.sampling"
 			],
-			"body": "Treat the keyboard as 24 pads: select a key, `hold M1`, make the sound, move on. Takes also land in\nthe library, so clearing a key never loses a recording.",
+			"body": "Treat the keyboard as 24 pads: on the record page press a key, `hold M1` and make the sound; the\nrecorder waits for the threshold, so the take starts on the hit. Takes also land in the library, so\nclearing a key never loses a recording.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
@@ -15578,11 +15783,27 @@
 				},
 				{
 					"id": "record-keys",
-					"text": "The record page works like the drum sampler's — `M1` records, `M2` / `M3` step through filled keys, `M4` unassigns; takes go to the user folder.",
+					"text": "The record page works like the drum sampler's — press a key to choose the zone (it lights up), then `hold M1`; `M2` / `M3` step through filled keys, `M4` unassigns, and takes also go to the user folder.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#multisampler",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "threshold",
+					"text": "As on every record page, the take starts only once the input passes the threshold set with `E4`.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#multisampler",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "root",
+					"text": "The key you record on becomes the zone's top key and root (presets the unit writes set each zone's root to its top key), so play that key's note into the input.",
+					"source": "docs/research/30-presets-samples.md#27-region-fields-by-type",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				},
 				{
 					"id": "editing",
@@ -15643,17 +15864,17 @@
 					"steps": [
 						{
 							"keys": "sample",
-							"note": null,
+							"note": "set source, gain and threshold here (`turn E1`, `turn E3`, `turn E4`)",
 							"set": null
 						},
 						{
 							"keys": "key",
-							"note": "start low, work to the right",
+							"note": "start low and work to the right; the key lights up",
 							"set": null
 						},
 						{
 							"keys": "hold M1",
-							"note": "play the matching note, then repeat on the next key",
+							"note": "play that key's note; the take starts once it passes the threshold. Repeat on the next key",
 							"set": null
 						}
 					],
@@ -16908,7 +17129,7 @@
 					"M4"
 				]
 			},
-			"summary": "`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; `M1` sets channel, bank and program, `M2` and `M3` hold eight CC slots, and `M4` has an LFO.",
+			"summary": "`T3` plays and sequences outside MIDI gear over USB-C or the multi-out, sending on the channel set on `M1` (with bank and program); `M2` and `M3` hold eight CC slots and `M4` an LFO.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -16931,6 +17152,22 @@
 					"id": "ports",
 					"text": "Gear connects through the USB-C port, or through the multi-out jack set to midi.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "send-channel",
+					"text": "Notes and CC values leave on the channel set with `E1` on `M1`, so set it to the channel the outside synth listens on.",
+					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "no-project-channel",
+					"text": "TE's MIDI how-to sets only this `M1` channel; the project's midi page plays no part in it.",
+					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
@@ -16969,7 +17206,7 @@
 				},
 				{
 					"id": "midi",
-					"text": "Over MIDI on channel 11, CC12–14 set channel, bank and program and CC40–43 drive the `M4` LFO; CC15 does nothing.",
+					"text": "Received on channel 11, CC12–14 set the track's channel, bank and program and CC40–43 drive the `M4` LFO; CC15 does nothing.",
 					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
@@ -17005,7 +17242,8 @@
 					"id": "setup",
 					"goal": "Play an outside synth from the OP-XY",
 					"preconditions": [
-						"the synth is connected over USB-C or the multi-out"
+						"the synth is connected over USB-C",
+						"or to the multi-out set to midi"
 					],
 					"steps": [
 						{
@@ -17015,7 +17253,7 @@
 						},
 						{
 							"keys": "turn E1",
-							"note": "the synth's MIDI channel, on `M1`",
+							"note": "on `M1`, the channel the synth listens on",
 							"set": null
 						},
 						{
@@ -17083,13 +17321,19 @@
 			],
 			"related": [
 				"instrument.engine-midi",
+				"howto.control-synth-midi",
+				"project.midi-channels",
 				"com.multi-out",
 				"sequencer.parameter-locks"
 			],
-			"body": "`T3` is a track whose sound lives in another box: set its channel, pick a sound with bank and\nprogram, and map the CC slots to the controls you want to move. For more devices at once, use\ninstrument tracks with the midi engine.",
+			"body": "`T3` is a track whose sound lives in another box: set its channel to the synth's, pick a sound with\nbank and program, and map the CC slots to the controls you want to move. Channel 11 is only where\nthe OP-XY listens for the track's own controls; the notes go out on the `M1` channel. For more\ndevices at once, use instrument tracks with the midi engine (which OS 1.1.33's preset browser did\nnot list).",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
 					"kind": "guide"
 				},
 				{
@@ -17103,10 +17347,6 @@
 				{
 					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
 					"kind": "research"
-				},
-				{
-					"url": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
-					"kind": "guide"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/auxiliary#external-midi",
@@ -23107,7 +23347,8 @@
 				"track channels",
 				"midi out channel",
 				"send notes over midi",
-				"sequence external gear"
+				"sequence external gear",
+				"project midi channel"
 			],
 			"area": "project",
 			"order": 70,
@@ -23118,7 +23359,7 @@
 					"project"
 				]
 			},
-			"summary": "The midi page of the project settings gives each of the 16 tracks a MIDI channel, which it needs before its sequenced notes go out over MIDI.",
+			"summary": "The midi page of the project settings gives each of the 16 tracks a MIDI channel. Community tools say it lets a track on one of the OP-XY's own engines send its sequenced notes out; the external MIDI track and midi-engine tracks send on the channel set on their own `M1` page.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -23144,12 +23385,52 @@
 					"confidence": "community"
 				},
 				{
+					"id": "midi-tracks",
+					"text": "The external MIDI track and instrument tracks on the midi engine send on the channel chosen with `E1` on their own `M1` page; TE's MIDI how-to sets only that channel and never visits this page.",
+					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "midi-tracks-community",
+					"text": "Community tools say the external MIDI track and midi-engine tracks send their notes without a channel here; not yet checked on a unit.",
+					"source": "docs/research/20-midi-control.md#81-normal-operation",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "community"
+				},
+				{
 					"id": "send",
-					"text": "A track sends its sequenced notes over MIDI only once it has a channel here and notes output is allowed in the MIDI settings.",
+					"text": "Community tools report that a track on one of the OP-XY's own engines sends its sequenced notes over MIDI only once it has a channel here and notes output is allowed in the MIDI settings.",
 					"source": "docs/research/20-midi-control.md#23-transmit-routing",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "community"
+				},
+				{
+					"id": "keeps-sound",
+					"text": "Community tools report that a track given a channel here keeps playing through its own engine while its notes also go out.",
+					"source": "https://github.com/jshph/opxy-reactive/blob/master/DESIGN.md",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "community"
+				},
+				{
+					"id": "both-set",
+					"text": "The guide does not say what happens when a midi-engine or external MIDI track also has a channel here — which channel wins, or whether its notes go out twice.",
+					"source": "https://teenage.engineering/guides/op-xy/project#project-settings",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "live-notes",
+					"text": "The guide speaks only of sequencing gear from this page; whether notes played live on the keyboard also go out on the channel is not documented.",
+					"source": "https://teenage.engineering/guides/op-xy/project#project-settings",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
 				},
 				{
 					"id": "receive",
@@ -23171,7 +23452,7 @@
 			"procedures": [
 				{
 					"id": "assign",
-					"goal": "Give a track a MIDI output channel",
+					"goal": "Give a track a MIDI channel in the project",
 					"preconditions": [],
 					"steps": [
 						{
@@ -23205,9 +23486,12 @@
 			"parameters": [],
 			"related": [
 				"project.settings",
-				"com.midi-settings"
+				"com.midi-settings",
+				"auxiliary.external-midi",
+				"instrument.engine-midi",
+				"howto.control-synth-midi"
 			],
-			"body": "These channels are per project. The unit-wide MIDI switches — clock, notes and other messages in\nand out — live in the system settings, and both have to allow a message before it leaves.",
+			"body": "Two kinds of channel can be in play. The external MIDI track (`T3` in auxiliary mode) and\nmidi-engine tracks carry their own channel on `M1`: that is the one the outside synth must listen\non, and TE's steps set nothing on this page. This page serves the other tracks: by community\naccounts it makes a track on one of the OP-XY's own engines send its sequenced notes as well, while\nit keeps sounding. These channels are per project; the unit-wide notes switch in `com → M1` must\nalso allow sending, which it does on a stock unit.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/project#project-settings",
@@ -23218,8 +23502,20 @@
 					"kind": "research"
 				},
 				{
+					"url": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
+					"kind": "guide"
+				},
+				{
+					"url": "docs/research/20-midi-control.md#81-normal-operation",
+					"kind": "research"
+				},
+				{
 					"url": "docs/research/20-midi-control.md#23-transmit-routing",
 					"kind": "research"
+				},
+				{
+					"url": "https://github.com/jshph/opxy-reactive/blob/master/DESIGN.md",
+					"kind": "web"
 				},
 				{
 					"url": "docs/research/20-midi-control.md#21-the-16-tracks-and-their-default-channels",
@@ -25020,7 +25316,7 @@
 				},
 				{
 					"id": "midi",
-					"text": "In midi mode a type A TRS-to-DIN adapter cable reaches synths with DIN MIDI sockets.",
+					"text": "In midi mode the jack is a MIDI output; a type A TRS-to-DIN cable reaches synths with DIN MIDI sockets, played from the external MIDI track (`T3`) or a midi-engine track.",
 					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
 					"firmware_min": null,
 					"verified_on": null,
@@ -25028,7 +25324,7 @@
 				},
 				{
 					"id": "cv-gate",
-					"text": "In cv/gate mode the tip carries pitch CV and the ring the gate.",
+					"text": "In cv/gate mode the tip carries pitch CV and the ring the gate, played from the external CV track (`T4`) for synths with CV and gate inputs.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-cv",
 					"firmware_min": null,
 					"verified_on": null,
@@ -26736,8 +27032,10 @@
 			"aliases": [
 				"control a synth",
 				"sequence external synth",
+				"sequence a hardware synth",
 				"trs midi",
 				"din midi",
+				"midi out",
 				"external midi track"
 			],
 			"area": "howto",
@@ -26749,7 +27047,7 @@
 				],
 				"screens": []
 			},
-			"summary": "Connect the synth through the multi-out (set to midi) or USB, then play and sequence it from the external MIDI track, `T3` in auxiliary mode, on the synth's channel.",
+			"summary": "Set the multi-out to midi before plugging in a TRS-to-DIN cable (USB gear needs no setting), then play and sequence the synth from `T3` in auxiliary mode on the synth's channel, set on `M1`. TE's steps set no project MIDI channel; set clock to both only if the synth should follow the tempo.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -26769,8 +27067,24 @@
 					"confidence": "official"
 				},
 				{
+					"id": "one-job",
+					"text": "The multi-out does one job at a time, so in midi mode it carries no CV, gate, sync pulse or audio.",
+					"source": "https://teenage.engineering/guides/op-xy/hardware-overview#inputs-outputs",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
 					"id": "usb",
 					"text": "Synths with USB MIDI plug into the OP-XY's USB-C port (through an adapter if needed), need no multi-out setting and appear under `com → M3`.",
+					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "devices-din",
+					"text": "TE's how-tos point to the devices page (`com → M3`) only for USB gear; whether a synth on the multi-out appears there is not documented.",
 					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
 					"firmware_min": null,
 					"verified_on": null,
@@ -26793,6 +27107,46 @@
 					"confidence": "official"
 				},
 				{
+					"id": "no-project-channel",
+					"text": "TE's steps set only that `M1` channel; the project's midi page (`project → M4`) is not part of them.",
+					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "no-project-community",
+					"text": "Community tools also report that the external MIDI track and midi-engine tracks send without a project MIDI channel; not yet checked on a unit.",
+					"source": "docs/research/20-midi-control.md#81-normal-operation",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "community"
+				},
+				{
+					"id": "notes-on",
+					"text": "On a unit with stock settings, notes in the midi section of the system settings (`com → M1`) is at both, which includes sending.",
+					"source": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "clock",
+					"text": "Clock is its own switch in the same section; at the stock setting (in) `play` and `stop` send no start, stop or clock ticks, and set to both they send start and stop with a constant tick stream (seen over USB).",
+					"source": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "clock-jack",
+					"text": "Community tools report that clock, start and stop go out over TRS MIDI as well as USB under that switch; only USB has been checked on a unit.",
+					"source": "https://github.com/jshph/opxy-reactive/blob/master/DESIGN.md",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "community"
+				},
+				{
 					"id": "ccs",
 					"text": "`M2` and `M3` hold eight CC slots: `shift` plus an encoder switches a slot on and picks its CC number, turning the encoder sends values, and the moves can be sequenced and recorded.",
 					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
@@ -26807,6 +27161,22 @@
 					"firmware_min": "1.0.15",
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "engine-1133",
+					"text": "On OS 1.1.33 the preset browser listed no midi engine, so `T3` is the route to use on that firmware.",
+					"source": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "own-engine",
+					"text": "To send the notes of a track on one of the OP-XY's own engines as well, community tools say to give it a channel on the project's midi page.",
+					"source": "docs/research/20-midi-control.md#23-transmit-routing",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "community"
 				}
 			],
 			"procedures": [
@@ -26860,20 +27230,58 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "send-clock",
+					"goal": "Let the synth follow the OP-XY's tempo and transport",
+					"preconditions": [],
+					"steps": [
+						{
+							"keys": "com → M1",
+							"note": null,
+							"set": null
+						},
+						{
+							"keys": "turn E1",
+							"note": "the midi section",
+							"set": null
+						},
+						{
+							"keys": "turn E2",
+							"note": "clock",
+							"set": null
+						},
+						{
+							"keys": "turn E3",
+							"note": "both",
+							"set": null
+						}
+					],
+					"result": "`play` and `stop` send start and stop, and clock ticks run continuously (checked over USB).",
+					"source": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"parameters": [],
 			"related": [
 				"com.multi-out",
 				"com.devices",
+				"com.midi-settings",
 				"com.bluetooth-midi",
+				"project.midi-channels",
 				"instrument.engine-midi",
 				"auxiliary.overview"
 			],
-			"body": "If nothing sounds, check the channel first, then the cable route (multi-out mode, adapter type) and,\nfor USB gear, the device's switches under `com → M3`. Bluetooth MIDI synths work too once the\nOP-XY advertises itself from the com page.",
+			"body": "If nothing sounds, check the channel first, then the cable route (multi-out mode, adapter type)\nand, for USB gear, the device's switches under `com → M3`. Leave the project's midi page alone\nunless a track on an OP-XY engine should send its notes too. Notes need no clock: switch clock to\nboth only when the synth's tempo-synced parts should lock to the OP-XY. Bluetooth MIDI synths work\ntoo once the OP-XY advertises itself from the com page.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/hardware-overview#inputs-outputs",
 					"kind": "guide"
 				},
 				{
@@ -26881,8 +27289,28 @@
 					"kind": "guide"
 				},
 				{
+					"url": "docs/research/20-midi-control.md#81-normal-operation",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
+					"kind": "research"
+				},
+				{
+					"url": "https://github.com/jshph/opxy-reactive/blob/master/DESIGN.md",
+					"kind": "web"
+				},
+				{
 					"url": "https://teenage.engineering/downloads/op-xy#1.0.15",
 					"kind": "changelog"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#26-preset-browser-shift--m1",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/20-midi-control.md#23-transmit-routing",
+					"kind": "research"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi",
@@ -30151,7 +30579,7 @@
 				},
 				{
 					"id": "record-onto-key",
-					"text": "On a drum track the record page records onto the selected key; press the key first, then `sample`.",
+					"text": "On a drum track the take goes to the key you press on the record page (it lights up), so open `sample` first and choose the key there.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#drum-sampler",
 					"firmware_min": null,
 					"verified_on": null,
@@ -30231,13 +30659,13 @@
 					],
 					"steps": [
 						{
-							"keys": "T1 → key E5",
-							"note": "the drum track and its top key",
+							"keys": "T1",
+							"note": "the drum track",
 							"set": null
 						},
 						{
 							"keys": "sample",
-							"note": "the record page, recording onto E5",
+							"note": "its record page",
 							"set": null
 						},
 						{
@@ -30261,12 +30689,17 @@
 							}
 						},
 						{
+							"keys": "key E5",
+							"note": "the top key lights up; the take will land here",
+							"set": null
+						},
+						{
 							"keys": "hold M1",
-							"note": "start the loop playing, and let go once it has played through",
+							"note": "start the loop playing and hold until it has played through; the take starts at its first hit",
 							"set": null
 						}
 					],
-					"result": "E5 holds the loop; `M2` plays the take back.",
+					"result": "E5 holds the loop, and a copy is kept in the user sample folder.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
 					"firmware_min": null,
 					"verified_on": null,
@@ -30278,8 +30711,8 @@
 					"preconditions": [],
 					"steps": [
 						{
-							"keys": "sample",
-							"note": "leave the record page for the drum page first; on the record page the next combo records again",
+							"keys": "T1",
+							"note": "the lit track key leaves the record page for the drum page; on the record page the next combo would record again",
 							"set": null
 						},
 						{
@@ -30345,10 +30778,10 @@
 			"official_url": "https://teenage.engineering/guides/op-xy/sample#sample-slicer",
 			"controls": [
 				"track.1",
-				"keyboard.e5",
 				"key.sample",
 				"encoder.1",
 				"encoder.4",
+				"keyboard.e5",
 				"key.m1",
 				"key.m4"
 			]

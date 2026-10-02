@@ -46,6 +46,18 @@
   grids by the pattern's length, later change lists give only what is new, the walkthrough's
   progress reaches the agent, a whole-mix listen points a duck to a per-track listen, tremolo and
   synced LFO speed read as their pages are, minor keys spell their leading note.
+- **Probe round four (2026-10-02), 16 scenarios (`probe-scenarios-4.json`):** the round-three
+  fixes held (takes picked in words, one bar of a progression, the time signature, the tremolo).
+  New: readings in the project's meter, step components in write_pattern and read_pattern, chords
+  named over another track's bass, a key to spell a pattern in, the walkthrough card's value and
+  turn direction, the Now line's song entry and bar, rests named in the scene on screen.
+- **Probe round five (2026-10-02), 16 scenarios (`probe-scenarios-5.json`: typos, German, a
+  compound request, contradictions, a device problem, famous chords, an open question):** the
+  song moving on reads as a scene change, not as user edits; recording counts only when armed;
+  grids take velocity digits 1–9 (ghost notes); the planner enters a maestro chord (by octaves
+  onto the keyboard) and plans save and save as; a grid line of rests is noted; a pattern switch
+  names its scene; readings give the progression as degrees ("I V vi IV in C major"). The manual
+  now says what arms each sampler page and how external MIDI gear is sequenced.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

@@ -28,8 +28,15 @@ facts:
     text: Up to 24 zones fit, about three samples per octave.
     source: https://teenage.engineering/guides/op-xy/sample#multisampler
   - id: record-keys
-    text: The record page works like the drum sampler's — `M1` records, `M2` / `M3` step through filled keys, `M4` unassigns; takes go to the user folder.
+    text: The record page works like the drum sampler's — press a key to choose the zone (it lights up), then `hold M1`; `M2` / `M3` step through filled keys, `M4` unassigns, and takes also go to the user folder.
     source: https://teenage.engineering/guides/op-xy/sample#multisampler
+  - id: threshold
+    text: As on every record page, the take starts only once the input passes the threshold set with `E4`.
+    source: https://teenage.engineering/guides/op-xy/sample#multisampler
+  - id: root
+    text: The key you record on becomes the zone's top key and root (presets the unit writes set each zone's root to its top key), so play that key's note into the input.
+    source: docs/research/30-presets-samples.md#27-region-fields-by-type
+    confidence: derived
   - id: editing
     text: The multisampler's `M1` page has the synth sampler's layout, loop type included (`shift + click E3`).
     source: https://teenage.engineering/guides/op-xy/sample#multisampler
@@ -61,10 +68,11 @@ procedures:
     preconditions: [the track uses the multisampler]
     steps:
       - keys: sample
+        note: set source, gain and threshold here (`turn E1`, `turn E3`, `turn E4`)
       - keys: key
-        note: start low, work to the right
+        note: start low and work to the right; the key lights up
       - keys: hold M1
-        note: play the matching note, then repeat on the next key
+        note: play that key's note; the take starts once it passes the threshold. Repeat on the next key
     source: https://teenage.engineering/guides/op-xy/sample#multisampler
 related: [sampler.synth-sampler, sampler.sampling]
 ---

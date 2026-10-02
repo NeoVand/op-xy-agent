@@ -1,0 +1,135 @@
+[
+	{
+		"name": "six-eight",
+		"about": "Re-check: a 6/8 groove, read in beats of six.",
+		"steps": [{ "say": "make a lilting 6/8 groove at 100 with a bass" }, { "why": true }]
+	},
+	{
+		"name": "random-hats",
+		"about": "Re-check: step components for variation.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "make the hi-hats vary on their own so it never sounds exactly the same" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "where-in-song",
+		"about": "Re-check: the playhead's place in a song.",
+		"steps": [
+			{ "say": "make a song with an intro, a verse and a chorus, 4 bars each, and play it" },
+			{ "say": "which part is playing right now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "typos",
+		"about": "Casual input with typos.",
+		"steps": [{ "say": "cn u mak a beet lik daft punk pls" }, { "why": true }]
+	},
+	{
+		"name": "everything-at-once",
+		"about": "One long compound request.",
+		"steps": [
+			{
+				"say": "make a beat at 120, add a bass in E minor on track 3, chords on track 7, a lead on track 5, arrange it in 4 scenes as intro verse chorus outro, add some swing, turn off the click, and tell me how to save it on my op-xy"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "contradictions",
+		"about": "Contradictory and shifting instructions.",
+		"steps": [
+			{ "say": "make a beat at 100" },
+			{ "say": "faster" },
+			{ "say": "no wait, slower than before but faster than it is now" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "church-organ",
+		"about": "A sound by reference.",
+		"steps": [
+			{ "say": "make track 4 sound like a church organ and play a few chords on it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "too-bassy",
+		"about": "A mix question settled by listening.",
+		"steps": [
+			{ "say": "make a hip hop beat with a deep bass" },
+			{ "say": "is my mix too bassy? listen and tell me, and fix it if it is" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "record-live-lesson",
+		"about": "Teaching live recording; the probe follows the lit keys.",
+		"steps": [
+			{
+				"say": "teach me how to record a melody live by playing the keyboard on track 4, light the keys for me"
+			},
+			{ "follow": 8 },
+			{ "say": "what now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "no-sound-headphones",
+		"about": "A device problem with no device connected.",
+		"steps": [
+			{ "say": "I plugged my headphones into the op-xy and there's no sound, help" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "let-it-be-chords",
+		"about": "Chords in the style of a famous song.",
+		"steps": [
+			{ "say": "write a chord progression like the one in Let It Be on track 7 and play it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "german-techno",
+		"about": "German: a techno beat, answered in German.",
+		"steps": [
+			{ "say": "Mach mir bitte einen Techno-Beat mit 130 BPM und einer Bassline." },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "maestro-chords",
+		"about": "The maestro player: chords from single notes.",
+		"steps": [
+			{
+				"say": "use the maestro player on track 4 so single notes play full chords, and write a melody of single notes for it"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "brain-key",
+		"about": "Teaching: the brain makes tracks follow a key.",
+		"steps": [
+			{ "say": "how do I make all my tracks follow one key with the brain?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ghost-notes",
+		"about": "Dynamics: accents and ghost notes, then a velocity change.",
+		"steps": [
+			{ "say": "make a funky drum groove with ghost notes on the snare" },
+			{ "say": "make the ghost notes a bit louder" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-can-you-do",
+		"about": "An open question about the agent itself.",
+		"steps": [{ "say": "what can you do? I just opened this app" }, { "why": true }]
+	}
+]

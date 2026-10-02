@@ -193,6 +193,17 @@ export function replicaChangeList(
 	if (before.transport.playing !== after.transport.playing) {
 		add(after.transport.playing ? 'playback started' : 'playback stopped', ['key.play']);
 	}
+	// the scene playing moved on (the song went to its next part, or one was picked): said once,
+	// for the tracks' pattern switches it brings, which once read as the user's own edits
+	const sceneMoved =
+		before.areas.arrange.scene !== after.areas.arrange.scene && after.transport.playing;
+	if (sceneMoved) {
+		const how = after.areas.arrange.playing ? 'the song moved on' : 'another scene was picked';
+		add(
+			`playing scene ${after.areas.arrange.scene + 1} now, was ${before.areas.arrange.scene + 1} (${how})`,
+			['key.arrange']
+		);
+	}
 	const t0 = before.tempo;
 	const t1 = after.tempo;
 	const tempo: ControlId[] = ['key.tempo'];
@@ -253,10 +264,13 @@ export function replicaChangeList(
 		if (round(m0.pan) !== round(m1.pan))
 			add(`${label} pan ${round(m0.pan)} → ${round(m1.pan)}`, mix);
 		if (m0.muted !== m1.muted) add(`${label} ${m1.muted ? 'muted' : 'unmuted'}`, mix);
-		if (was.sequence.current !== now.sequence.current) {
-			add(`${label} plays pattern ${was.sequence.current + 1} → ${now.sequence.current + 1}`, [
-				track
-			]);
+		// in the scene on screen, which an agent once took for the whole song
+		if (was.sequence.current !== now.sequence.current && !sceneMoved) {
+			add(
+				`${label} plays pattern ${was.sequence.current + 1} → ${now.sequence.current + 1} in scene ${after.areas.arrange.scene + 1}, the one on screen`,
+				[track],
+				`${label} plays pattern ${was.sequence.current + 1} → ${now.sequence.current + 1}`
+			);
 		}
 		// a drum note by its key's sound ("closed hat 1")
 		const keys = now.engine === 'drum' ? after.areas.sample.tracks[t]?.keys : undefined;

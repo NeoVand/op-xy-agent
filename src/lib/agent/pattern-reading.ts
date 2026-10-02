@@ -23,6 +23,11 @@ export interface PatternReading {
 	readonly bars: readonly string[];
 	/** The chords, each where it starts and with its notes: "step 17: G7 (G B D F)". */
 	readonly chords?: readonly string[];
+	/**
+	 * The chords by their plain names and as degrees of the key, with the inversions apart: "C G Am
+	 * F: I V vi IV in C major; inverted: G/B, Am/C, F/C".
+	 */
+	readonly progression?: string;
 }
 
 const ascii = (name: string) => name.replace(/♯/g, '#').replace(/♭/g, 'b');
@@ -38,6 +43,8 @@ export interface MeantKey {
 	readonly label: string;
 	readonly pitchClass: number;
 	readonly mode: 'major' | 'minor';
+	/** The key's own tonic (D for D dorian, whose spelling is C major's). */
+	readonly tonic: number;
 }
 
 /** Modes by name: the major or minor key they spell as, and how far below its tonic theirs is. */
@@ -67,8 +74,24 @@ export function parseKey(text: string): MeantKey | null {
 	return {
 		label: `${letter}${m[2] ? (accidental > 0 ? '#' : 'b') : ''} ${word}`,
 		pitchClass: (tonic - kind.down + 12) % 12,
-		mode: kind.mode
+		mode: kind.mode,
+		tonic
 	};
+}
+
+/** Degrees as a major scale counts them, the pop convention: a minor key's VI reads ♭VI. */
+const DEGREES = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII'];
+
+/** A chord as a degree of the key on `tonic`: "vi", "V7", "♭VII", "iiø7". */
+export function numeral(root: number, suffix: string, tonic: number): string {
+	const degree = DEGREES[(root - tonic + 12) % 12];
+	const minor = /^m(?!aj)/.test(suffix) || suffix.includes('°');
+	const rest = /^m7(♭|b)5$/.test(suffix)
+		? 'ø7'
+		: minor && suffix.startsWith('m')
+			? suffix.slice(1)
+			: suffix;
+	return (minor ? degree.toLowerCase() : degree) + rest;
 }
 
 /** Four beats of four steps. */
@@ -139,6 +162,8 @@ export function readPattern(
 		for (let s = n.step + 1; s < n.step + n.length && s <= slots; s++) sounding[s] = true;
 	}
 	const chords: string[] = [];
+	// each chord where it changes, for the progression: its plain name, root and whether inverted
+	const heard: { plain: string; name: string; root: number; suffix: string }[] = [];
 	let lastChord = '';
 	// the lowest note another part sounds under a step, below this one's: a bass the chord is over
 	const under = (step: number, below: number): { note: number; track: number } | null => {
@@ -167,11 +192,24 @@ export function readPattern(
 		// the root as the key spells it ("Db", not "C#", in F minor)
 		const name = respellChord(ascii(chord.name), names);
 		const with_ = over && bass ? ` over T${bass.track}'s ${names[bass.note % 12]}` : '';
-		if (name !== lastChord) chords.push(`step ${step}: ${name} (${tones.join(' ')}${with_})`);
+		if (name !== lastChord) {
+			chords.push(`step ${step}: ${name} (${tones.join(' ')}${with_})`);
+			const plain = name.split('/')[0];
+			heard.push({ plain, name, root: chord.root, suffix: plain.slice(names[chord.root].length) });
+		}
 		lastChord = name;
 		return name;
 	};
 	const bars = meterBars(p.length, meter, (step) => slot(step), ' ', ' | ');
+	// the progression as a musician names it: an agent once could not say "C G Am F" for chords
+	// that read C, G/B, Am/C and F/C
+	const tonic = meant ? meant.tonic : found?.pitchClass;
+	const keyName = meant ? meant.label : found?.key;
+	const inverted = heard.filter((h) => h.name !== h.plain).map((h) => h.name);
+	const progression =
+		heard.length >= 2 && tonic !== undefined && keyName
+			? `${heard.map((h) => h.plain).join(' ')}: ${heard.map((h) => numeral(h.root, h.suffix, tonic)).join(' ')} in ${keyName}${inverted.length ? `; inverted: ${inverted.join(', ')}` : ''}`
+			: null;
 	return {
 		...(meant
 			? { key: `${meant.label} (as written)` }
@@ -179,7 +217,8 @@ export function readPattern(
 				? { key: found.clear ? found.key : `${found.key} (a guess)` }
 				: {}),
 		bars,
-		...(chords.length ? { chords } : {})
+		...(chords.length ? { chords } : {}),
+		...(progression ? { progression } : {})
 	};
 }
 

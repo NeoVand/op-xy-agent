@@ -382,7 +382,34 @@ describe('the conductor grounds its answer', () => {
 		expect(list(2)).not.toMatch(/- tempo 120 → 100 bpm/);
 		// the tempo back where it was: said, not dropped
 		expect(list(3)).toMatch(
-			/no longer as an earlier list gave it \(taken back\): tempo 120 → 100 bpm/
+			/back as it was at the user’s message, so no longer a change \(an earlier list gave it\): tempo 120 → 100 bpm/
+		);
+	});
+
+	it('says a demo puts the replica back when nothing changed', async () => {
+		const api = scriptedApi([
+			{
+				content: [
+					{ type: 'tool_use', id: 'toolu_s', name: 'show_on_replica', input: { keys: 'shift' } }
+				],
+				stop_reason: 'tool_use'
+			},
+			answer('Hold shift.')
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim: new OpxySim({ now: () => 0 }) }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('how do I get to the shift layer?');
+		expect(JSON.stringify(api.messageRequests[1].body.messages.at(-1))).toMatch(
+			/Nothing changed on the replica during this answer.*show_on_replica puts the replica back after its demo/
 		);
 	});
 

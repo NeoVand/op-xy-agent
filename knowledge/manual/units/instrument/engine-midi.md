@@ -18,6 +18,9 @@ facts:
   - id: what
     text: The midi engine makes no sound; the track's notes and settings go out as MIDI to an external instrument.
     source: https://teenage.engineering/guides/op-xy/synth-engines#external
+  - id: channel
+    text: A midi-engine track sends on the channel chosen with `E1` on its `M1` page; the guide does not tie it to the project's MIDI channels.
+    source: https://teenage.engineering/guides/op-xy/synth-engines#external
   - id: renamed
     text: OS 1.0.15 renamed the engine from external to midi; the guide (v1.1.15) and its MIDI how-to still use the old name.
     source: https://teenage.engineering/downloads/op-xy#1.0.15
@@ -91,6 +94,7 @@ related:
     instrument.engine,
     auxiliary.external-midi,
     howto.control-synth-midi,
+    project.midi-channels,
     com.midi-settings,
     sequencer.parameter-locks
   ]

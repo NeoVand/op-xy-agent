@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1184 facts, 205 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1215 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -2138,6 +2138,7 @@ program pick its sound, and the CC slots send controller values that can be lock
 
 Facts:
 - The midi engine makes no sound; the track's notes and settings go out as MIDI to an external instrument. [#what] [s1]
+- A midi-engine track sends on the channel chosen with `E1` on its `M1` page; the guide does not tie it to the project's MIDI channels. [#channel] [s1]
 - OS 1.0.15 renamed the engine from external to midi; the guide (v1.1.15) and its MIDI how-to still use the old name. [#renamed] (since 1.0.15) [s2]
 - `M2` and `M3` hold eight CC slots: turn an encoder to set a value, or hold `shift` and turn it to switch the slot on and choose its CC number. [#cc-slots] [s1]
 - Several instrument tracks can run the midi engine at once, one per device or channel, where the external MIDI track in auxiliary mode offers only one. [#several-devices] [s3]
@@ -2166,7 +2167,7 @@ Parameters:
 | M1 | `turn E2` | bank | – | – | – | s1 |
 | M1 | `turn E3` | program | – | – | – | s1 |
 
-Related: [instrument.engine], [auxiliary.external-midi], [howto.control-synth-midi], [com.midi-settings], [sequencer.parameter-locks]
+Related: [instrument.engine], [auxiliary.external-midi], [howto.control-synth-midi], [project.midi-channels], [com.midi-settings], [sequencer.parameter-locks]
 
 Sources: s1 guide:synth-engines#external · s2 changelog:1.0.15 · s3 guide:how-to#how-to-control-a-synth-with-midi · s4 changelog:1.0.45 · s5 changelog:1.0.50 · s6 changelog:1.1.15 · s7 note 59 · s8 changelog:1.1.32
 
@@ -2590,33 +2591,43 @@ Sources: s1 guide:sample#one-shot-synth-sampler · s2 guide:sample#drum-sampler 
 
 ### Sampling with the sample key [sampler.sampling]
 current · OS ≥ 1.0.9 · changed in 1.0.29 · guide v1.1.15
-Also called: record a sample, sample key, sample mode, sampling threshold
+Also called: record a sample, sample key, sample mode, sampling threshold, record page, arm the recorder
 Where: screens sample
 
-`sample` opens a record page from any screen: pick the source — mic, line in or USB — set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.
+`sample` opens a record page from any screen: set source, gain and threshold, then arm the recorder — `hold M1` on the library page, a key and then `hold M1` on the drum sampler and multisampler, a keyboard key on the synth sampler. The take starts once the input passes the threshold.
 
-The recorder waits for the sound, so set the threshold just above the room noise and the take
-starts with the first note. On sampler tracks the page adds key handling: the synth sampler tunes to
-the key you press; the drum sampler and multisampler record onto a selected key.
+Every record page runs in the same order: choose the source, set the gain against the meter, put
+the threshold just above the room noise, then arm. Arming only readies the recorder; the take
+begins with the first sound that passes the threshold, so it starts on the note rather than on
+silence. Each engine's unit has its own key handling.
 
 Facts:
 - On a sampler track, `sample` opens that engine's record page; on other tracks it records a stand-alone sample for the library. [#which-page] [s1]
 - A sample can be at most 20 seconds long, in every sampler. [#limit] [s1]
-- Holding `M1` arms the recorder; capture starts once the input passes the threshold. [#threshold] [s1]
-- `M2` plays the take back; `M4` deletes it before it reaches the library. [#keep-or-bin] [s1]
-- A stand-alone take should land in the library's user folder (samples → user over MTP). The sample chapter says only that it goes to the library, but TE's load-samples how-to names user as the folder for samples recorded on the unit; not yet checked on a unit. [#where] (derived) [s2]
+- On the library record page (a track without a sampler engine), holding `M1` arms the recorder. [#arm] [s1]
+- Every record page has a threshold on `E4`, the level at which recording begins, so arming alone does not start the take; it starts when the input rises past that level. [#threshold] [s1]
+- On the drum sampler and multisampler record pages you first press the keyboard key the take should go to (it lights up), then `hold M1`. [#arm-keyed] [s2]
+- The synth sampler's record page starts sampling from a keyboard key, which also becomes the sample's root note; the guide gives that page no `M1` gesture. [#arm-synth] [s3]
+- The guide does not say what ends a take before the 20-second limit, such as whether letting go of `M1` stops it; not yet checked on a unit. [#end] [s1]
+- The level meter previews the input while you set the gain, and TE's pictures draw the threshold as an orange line across it. [#meter] (derived) [s1]
+- On the library record page, `M2` plays the take back and `M4` deletes it before it reaches the library. [#keep-or-bin] [s1]
+- A stand-alone take should land in the library's user folder (samples → user over MTP). The sample chapter says only that it goes to the library, but TE's load-samples how-to names user as the folder for samples recorded on the unit; not yet checked on a unit. [#where] (derived) [s4]
 - Pressing the lit track key closes the record page. [#exit] [s1]
 - The sources TE documents for the sample page are the built-in mic, line in and USB; the guide names line in and USB as the ones with an input channel and draws the page with the mic selected. [#sources] [s1]
-- Headset and main output belong to the external audio track's input list (`T5`); the guide never offers them on the sample page, and the page's full list has not been checked on a unit. [#not-t5-inputs] (derived) [s3]
-- The built-in microphone can be the source, so sampling needs no cable. [#mic] [s4]
-- Picking the input channel for line in and USB arrived in OS 1.0.29. [#channel-since] (since 1.0.29) [s5]
-- TE's audio-interface how-to picks the USB channel with `turn E2` instead; not yet checked on a unit. [#channel-conflict] (conflicting) [s6]
+- Headset and main output belong to the external audio track's input list (`T5`); the guide never offers them on the sample page, and the page's full list has not been checked on a unit. [#not-t5-inputs] (derived) [s5]
+- The built-in microphone can be the source, so sampling needs no cable. [#mic] [s6]
+- Picking the input channel for line in and USB arrived in OS 1.0.29. [#channel-since] (since 1.0.29) [s7]
+- TE's audio-interface how-to picks the USB channel with `turn E2` instead; not yet checked on a unit. [#channel-conflict] (conflicting) [s8]
 
 Procedures:
 - Record a sample into the library [#record] [s1]
   Needs: the selected track does not use a sampler engine
   1. `sample`
-  2. `hold M1` — after setting source, gain and threshold
+  2. `turn E1` — the source; `shift + turn E1` picks the channel of line in or USB
+  3. `turn E3` — the gain, watching the level meter
+  4. `turn E4` — the threshold, just above the room's noise
+  5. `hold M1` — arms the recorder; the take starts when the sound passes the threshold
+  6. `M2` — listen back; `M4` throws the take away instead
   Result: The take is saved to the library (by TE's how-to, in its user folder) unless you press `M4`.
 
 Parameters:
@@ -2626,34 +2637,49 @@ Parameters:
 | sample | `turn E1` | source | mic / line in / USB | – | – | the documented sources; headset and main output are inputs of the external audio track, not of this page s1 |
 | sample | `shift + turn E1` | input channel | – | – | – | line in and USB only s1 |
 | sample | `turn E3` | gain | – | – | – | shown on the meter s1 |
-| sample | `turn E4` | threshold | – | – | – | s1 |
+| sample | `turn E4` | threshold | – | – | – | the input level at which an armed recorder starts the take s1 |
 
-Related: [sampler.overview], [sampler.drum-sampler], [sampler.sample-files], [sampler.sample-library], [auxiliary.external-audio]
+Related: [sampler.overview], [sampler.synth-sampler], [sampler.drum-sampler], [sampler.multisampler], [sampler.sample-files], [sampler.sample-library], [auxiliary.external-audio]
 
-Sources: s1 guide:sample#arrange · s2 guide:how-to#how-to-load-samples · s3 guide:auxiliary#external-audio · s4 teenage.engineering/products/op-xy · s5 changelog:1.0.29 · s6 guide:how-to#use-an-audio-interface-with-op-xy
+Sources: s1 guide:sample#arrange · s2 guide:sample#drum-sampler · s3 guide:sample#one-shot-synth-sampler · s4 guide:how-to#how-to-load-samples · s5 guide:auxiliary#external-audio · s6 teenage.engineering/products/op-xy · s7 changelog:1.0.29 · s8 guide:how-to#use-an-audio-interface-with-op-xy
 
 ### Synth sampler [sampler.synth-sampler]
-current · OS ≥ 1.0.9 · changed in 1.1.0 · guide v1.1.15
-Also called: sampler engine, one shot synth sampler, loop points, loop type
-Where: modes instrument; screens M1
+current · OS ≥ 1.0.9 · changed in 1.0.45, 1.1.0 · guide v1.1.15
+Also called: sampler engine, one shot synth sampler, loop points, loop type, record into the synth sampler
+Where: modes instrument; screens M1, sample
 
-Plays one sample across the keyboard; `M1` sets start, loop and end points, and its shift layer sets direction, tune, loop crossfade, gain and loop type.
+Plays one sample across the keyboard. On its record page a keyboard key starts sampling and becomes the root note; `M1` sets start, loop and end points, and its shift layer direction, tune, loop crossfade, gain and loop type.
 
-TE's guide calls it the one shot synth sampler. Loop forever suits drones and pads, loop until
+TE's guide calls it the one shot synth sampler. To record, open `sample`, set source, gain and
+threshold, then press the key whose pitch matches the sound you are about to play: the take is
+tuned to that key, so the keyboard plays it in tune. Loop forever suits drones and pads, loop until
 release leaves a natural tail when you let go, and loop off makes the sample a one-shot.
 
 Facts:
-- On the synth sampler's record page, pressing a key starts sampling, and that key becomes the note the sample is tuned to. [#record-key] [s1]
+- On the synth sampler's record page you start sampling by pressing a keyboard key; the guide gives this page no `M1` gesture. [#record-key] [s1]
+- The key you press becomes the sample's root, the note the sampler tunes the recording to. [#root] [s1]
+- The page has the same source, gain and threshold controls as the other record pages (`E1`, `E3`, `E4`), so the key arms the recorder and the take begins once the input passes the threshold. [#threshold] (derived) [s1]
+- TE's picture of this record page reads "press key to sample" and labels none of `M1`…`M4`. [#prompt] (derived) [s2]
+- OS 1.0.45 corrected a latch text that the sample screen shows for the synth sampler; the changelog gives no wording, so the prompt on OS 1.1.33 may differ from TE's picture. [#latch-text] (since 1.0.45) [s3]
+- Not documented and not yet checked on a unit — whether `hold M1` also records here, whether the key has to stay held, and what ends a take before 20 seconds. [#open] [s1]
 - Pushing the encoder in while moving one of the four points gives finer steps. [#fine] [s1]
 - Loop start at the very end of the sample means no loop. [#no-loop] [s1]
 - Loop forever keeps cycling after release, loop until release stops cycling when you let go, loop off plays straight through. [#loop-types] [s1]
-- After sampling on the unit, the loop runs from 20 % to 80 % of the sample, set to loop forever. [#defaults] (community-verified) [s2]
-- Tune works in cents; sample gain spans −30 to +20 dB. [#ranges] (community-verified) [s2]
-- Synth sampler settings accept parameter locks. [#p-locks] (since 1.1.0) [s3]
-- The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers. [#screen] (verified 1.1.33) [s4]
-- With `shift` held it shows direction, tune as a note symbol and a value such as −12.00, crossfade as a percentage drawn as a dark wedge at the loop, and gain. [#shift-screen] (verified 1.1.33) [s4]
-- CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s4]
-- Loop crossfade runs from 0 to 75 %, drawn as a dark wedge sloping down into the loop end over that share of the loop. [#crossfade-range] (verified 1.1.33) [s5]
+- After sampling on the unit, the loop runs from 20 % to 80 % of the sample, set to loop forever. [#defaults] (community-verified) [s4]
+- Tune works in cents; sample gain spans −30 to +20 dB. [#ranges] (community-verified) [s4]
+- Synth sampler settings accept parameter locks. [#p-locks] (since 1.1.0) [s5]
+- The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers. [#screen] (verified 1.1.33) [s6]
+- With `shift` held it shows direction, tune as a note symbol and a value such as −12.00, crossfade as a percentage drawn as a dark wedge at the loop, and gain. [#shift-screen] (verified 1.1.33) [s6]
+- CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s6]
+- Loop crossfade runs from 0 to 75 %, drawn as a dark wedge sloping down into the loop end over that share of the loop. [#crossfade-range] (verified 1.1.33) [s7]
+
+Procedures:
+- Record a new sample into the synth sampler [#record] [s1]
+  Needs: the track uses the synth sampler
+  1. `sample` — the synth sampler's record page
+  2. `turn E1` — the source; `turn E3` sets the gain and `turn E4` the threshold
+  3. `key` — the note the sample should play at; this starts sampling
+  Result: The sampler tunes the take to the key you pressed.
 
 Parameters:
 
@@ -2669,9 +2695,9 @@ Parameters:
 | M1 | `shift + turn E4` | sample gain | – | – | – | s1 |
 | M1 | `shift + click E3` | loop type | loop forever / loop until release / loop off | – | – | s1 |
 
-Related: [sampler.overview], [sampler.sampling], [sampler.multisampler]
+Related: [sampler.overview], [sampler.sampling], [sampler.multisampler], [sampler.sample-files]
 
-Sources: s1 guide:sample#one-shot-synth-sampler · s2 note 30 · s3 changelog:1.1.0 · s4 note 59 · s5 note 60
+Sources: s1 guide:sample#one-shot-synth-sampler · s2 guide:sample#arrange · s3 changelog:1.0.45 · s4 note 30 · s5 changelog:1.1.0 · s6 note 59 · s7 note 60
 
 ### Drum sampler [sampler.drum-sampler]
 current · OS ≥ 1.0.9 · changed in 1.0.29, 1.0.32 · guide v1.1.15
@@ -2680,11 +2706,14 @@ Where: modes instrument; screens M1, sample
 
 Gives each of the 24 keys its own one-shot sample; record straight onto a chosen key, step between filled keys, and copy, paste or multi-select keys on the `M1` page.
 
-Treat the keyboard as 24 pads: select a key, `hold M1`, make the sound, move on. Takes also land in
-the library, so clearing a key never loses a recording.
+Treat the keyboard as 24 pads: on the record page press a key, `hold M1` and make the sound; the
+recorder waits for the threshold, so the take starts on the hit. Takes also land in the library, so
+clearing a key never loses a recording.
 
 Facts:
 - Each key holds its own one-shot sample — built for kits, fine for any set of separate sounds. [#what] [s1]
+- On the record page, press the key the take should land on (it lights up), then `hold M1`; the recording itself starts once the input passes the threshold. [#record-order] [s1]
+- The guide ties no root note to a drum key — the key you choose is where the take goes, and tune on the `M1` page (`turn E1`) changes its pitch afterwards. [#key-pitch] [s1]
 - Over MIDI the 24 keys are notes 53–76 (F3–E5 with C4 = 60), left to right. [#notes] (community-verified) [s2]
 - Every drum sampler recording is also saved to the samples folder named user. [#saved] [s1]
 - On the record page, `M2` and `M3` jump to the previous or next key holding a sample; `M4` clears the current key but keeps its file. [#step-keys] [s1]
@@ -2697,9 +2726,9 @@ Facts:
 Procedures:
 - Record a sample onto one key [#record] [s1]
   Needs: the track uses the drum sampler
-  1. `sample`
-  2. `key` — the key lights up
-  3. `hold M1`
+  1. `sample` — set source, gain and threshold here (`turn E1`, `turn E3`, `turn E4`)
+  2. `key` — the key lights up; choose it after `sample`, since a key held while pressing `sample` browses samples instead
+  3. `hold M1` — the take starts once the input passes the threshold
 
 Related: [sampler.drum-key-settings], [sampler.slicing], [sampler.sampling]
 
@@ -2793,7 +2822,9 @@ Facts:
 - While recording, select keys from left to right; every key that gets a sample becomes a zone. [#zones] [s1]
 - Zones fill downwards — a sample also covers the empty keys below it, pitched down, as far as the next zone. [#fill-down] [s1]
 - Up to 24 zones fit, about three samples per octave. [#max] [s1]
-- The record page works like the drum sampler's — `M1` records, `M2` / `M3` step through filled keys, `M4` unassigns; takes go to the user folder. [#record-keys] [s1]
+- The record page works like the drum sampler's — press a key to choose the zone (it lights up), then `hold M1`; `M2` / `M3` step through filled keys, `M4` unassigns, and takes also go to the user folder. [#record-keys] [s1]
+- As on every record page, the take starts only once the input passes the threshold set with `E4`. [#threshold] [s1]
+- The key you record on becomes the zone's top key and root (presets the unit writes set each zone's root to its top key), so play that key's note into the input. [#root] (derived) [s2]
 - The multisampler's `M1` page has the synth sampler's layout, loop type included (`shift + click E3`). [#editing] [s1]
 - The guide titles `shift + turn E2` and `shift + turn E3` pan and sample fade but describes tune and loop crossfade; zones store tune and crossfade, not pan. [#caption-mixup] (derived) [s2]
 - There are no velocity layers or round robins — one sample per zone. [#no-layers] (community) [s3]
@@ -2804,9 +2835,9 @@ Facts:
 Procedures:
 - Multisample an instrument [#record-zones] [s1]
   Needs: the track uses the multisampler
-  1. `sample`
-  2. `key` — start low, work to the right
-  3. `hold M1` — play the matching note, then repeat on the next key
+  1. `sample` — set source, gain and threshold here (`turn E1`, `turn E3`, `turn E4`)
+  2. `key` — start low and work to the right; the key lights up
+  3. `hold M1` — play that key's note; the take starts once it passes the threshold. Repeat on the next key
 
 Related: [sampler.synth-sampler], [sampler.sampling]
 
@@ -3013,29 +3044,33 @@ current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15 · verified on 1.1
 Also called: midi track, ext midi, control a synth, midi cc slots
 Where: modes auxiliary; screens M1, M2, M3, M4
 
-`T3` plays and sequences outside MIDI gear over USB-C or the multi-out; `M1` sets channel, bank and program, `M2` and `M3` hold eight CC slots, and `M4` has an LFO.
+`T3` plays and sequences outside MIDI gear over USB-C or the multi-out, sending on the channel set on `M1` (with bank and program); `M2` and `M3` hold eight CC slots and `M4` an LFO.
 
-`T3` is a track whose sound lives in another box: set its channel, pick a sound with bank and
-program, and map the CC slots to the controls you want to move. For more devices at once, use
-instrument tracks with the midi engine.
+`T3` is a track whose sound lives in another box: set its channel to the synth's, pick a sound with
+bank and program, and map the CC slots to the controls you want to move. Channel 11 is only where
+the OP-XY listens for the track's own controls; the notes go out on the `M1` channel. For more
+devices at once, use instrument tracks with the midi engine (which OS 1.1.33's preset browser did
+not list).
 
 Facts:
 - The external MIDI track (`T3`) sends its keyboard and sequencer notes to connected MIDI gear. [#track] [s1]
 - Gear connects through the USB-C port, or through the multi-out jack set to midi. [#ports] [s1]
+- Notes and CC values leave on the channel set with `E1` on `M1`, so set it to the channel the outside synth listens on. [#send-channel] [s1]
+- TE's MIDI how-to sets only this `M1` channel; the project's midi page plays no part in it. [#no-project-channel] [s2]
 - `M2` and `M3` hold four CC slots each; turning sends a slot's value, `shift + turn E1…E4` switches a slot on and picks its CC number, and the values can be sequenced and recorded. [#slots] [s1]
 - The external MIDI track's LFO (`M4`) modulates the track's own parameters, such as a CC slot. [#lfo] [s1]
-- Program changes can be parameter-locked; OS 1.1.15 fixed such locks not working. [#program-locks] (since 1.1.15) [s2]
-- Community charts put the slot values on CC20–23 and CC32–35 of channel 11 and the slot numbers on CC28–31 and CC36–39. [#ccs] (community) [s3]
-- Over MIDI on channel 11, CC12–14 set channel, bank and program and CC40–43 drive the `M4` LFO; CC15 does nothing. [#midi] (verified 1.1.33) [s4]
-- The `M1` page is headed midi with a DIN socket icon; channel reads 01–16, and bank and program show a crossed box at 0, then 1–128. [#screen] (verified 1.1.33) [s4]
-- `M2` and `M3` slide in sideways from `M1`; each CC slot is a crossed box while off, or a large value with cc and its number underneath. [#slot-pages] (verified 1.1.33) [s4]
-- The `M4` LFO offers the CC slots as its destinations; a slot without a CC shows no cc set as the parameter. [#lfo-screen] (verified 1.1.33) [s4]
+- Program changes can be parameter-locked; OS 1.1.15 fixed such locks not working. [#program-locks] (since 1.1.15) [s3]
+- Community charts put the slot values on CC20–23 and CC32–35 of channel 11 and the slot numbers on CC28–31 and CC36–39. [#ccs] (community) [s4]
+- Received on channel 11, CC12–14 set the track's channel, bank and program and CC40–43 drive the `M4` LFO; CC15 does nothing. [#midi] (verified 1.1.33) [s5]
+- The `M1` page is headed midi with a DIN socket icon; channel reads 01–16, and bank and program show a crossed box at 0, then 1–128. [#screen] (verified 1.1.33) [s5]
+- `M2` and `M3` slide in sideways from `M1`; each CC slot is a crossed box while off, or a large value with cc and its number underneath. [#slot-pages] (verified 1.1.33) [s5]
+- The `M4` LFO offers the CC slots as its destinations; a slot without a CC shows no cc set as the parameter. [#lfo-screen] (verified 1.1.33) [s5]
 
 Procedures:
-- Play an outside synth from the OP-XY [#setup] [s5]
-  Needs: the synth is connected over USB-C or the multi-out
+- Play an outside synth from the OP-XY [#setup] [s2]
+  Needs: the synth is connected over USB-C; or to the multi-out set to midi
   1. `auxiliary → T3`
-  2. `turn E1` — the synth's MIDI channel, on `M1`
+  2. `turn E1` — on `M1`, the channel the synth listens on
   3. `keys`
 
 Parameters:
@@ -3043,12 +3078,12 @@ Parameters:
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | M1 | `turn E1` | channel | 1–16 | – | 12 | s1 |
-| M1 | `turn E2` | bank | off, 1–128 | – | 13 | (verified 1.1.33) s4 |
-| M1 | `turn E3` | program | off, 1–128 | – | 14 | (verified 1.1.33) s4 |
+| M1 | `turn E2` | bank | off, 1–128 | – | 13 | (verified 1.1.33) s5 |
+| M1 | `turn E3` | program | off, 1–128 | – | 14 | (verified 1.1.33) s5 |
 
-Related: [instrument.engine-midi], [com.multi-out], [sequencer.parameter-locks]
+Related: [instrument.engine-midi], [howto.control-synth-midi], [project.midi-channels], [com.multi-out], [sequencer.parameter-locks]
 
-Sources: s1 guide:auxiliary#external-midi · s2 changelog:1.1.15 · s3 note 20 · s4 note 59 · s5 guide:how-to#how-to-control-a-synth-with-midi
+Sources: s1 guide:auxiliary#external-midi · s2 guide:how-to#how-to-control-a-synth-with-midi · s3 changelog:1.1.15 · s4 note 20 · s5 note 59
 
 ### External CV track [auxiliary.external-cv]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -4167,31 +4202,40 @@ Sources: s1 guide:project#project-settings · s2 changelog:1.0.9 · s3 changelog
 
 ### Track MIDI channels (project) [project.midi-channels]
 current · OS ≥ 1.0.9 · guide v1.1.15
-Also called: midi channels, track channels, midi out channel, send notes over midi, sequence external gear
+Also called: midi channels, track channels, midi out channel, send notes over midi, sequence external gear, project midi channel
 Where: screens project
 
-The midi page of the project settings gives each of the 16 tracks a MIDI channel, which it needs before its sequenced notes go out over MIDI.
+The midi page of the project settings gives each of the 16 tracks a MIDI channel. Community tools say it lets a track on one of the OP-XY's own engines send its sequenced notes out; the external MIDI track and midi-engine tracks send on the channel set on their own `M1` page.
 
-These channels are per project. The unit-wide MIDI switches — clock, notes and other messages in
-and out — live in the system settings, and both have to allow a message before it leaves.
+Two kinds of channel can be in play. The external MIDI track (`T3` in auxiliary mode) and
+midi-engine tracks carry their own channel on `M1`: that is the one the outside synth must listen
+on, and TE's steps set nothing on this page. This page serves the other tracks: by community
+accounts it makes a track on one of the OP-XY's own engines send its sequenced notes as well, while
+it keeps sounding. These channels are per project; the unit-wide notes switch in `com → M1` must
+also allow sending, which it does on a stock unit.
 
 Facts:
 - The midi page of the project settings assigns a MIDI channel to each of the 16 tracks, for example to sequence external MIDI gear. [#page] [s1]
 - In a fresh project every track's channel is off, according to decoded OS 1.1.4 project files. [#fresh-off] (community) [s2]
-- A track sends its sequenced notes over MIDI only once it has a channel here and notes output is allowed in the MIDI settings. [#send] (community) [s3]
-- Incoming notes and CCs on channel N reach track N by default, channels 9–16 being the auxiliary tracks. [#receive] (community-verified) [s4]
+- The external MIDI track and instrument tracks on the midi engine send on the channel chosen with `E1` on their own `M1` page; TE's MIDI how-to sets only that channel and never visits this page. [#midi-tracks] [s3]
+- Community tools say the external MIDI track and midi-engine tracks send their notes without a channel here; not yet checked on a unit. [#midi-tracks-community] (community) [s4]
+- Community tools report that a track on one of the OP-XY's own engines sends its sequenced notes over MIDI only once it has a channel here and notes output is allowed in the MIDI settings. [#send] (community) [s5]
+- Community tools report that a track given a channel here keeps playing through its own engine while its notes also go out. [#keeps-sound] (community) [s6]
+- The guide does not say what happens when a midi-engine or external MIDI track also has a channel here — which channel wins, or whether its notes go out twice. [#both-set] [s1]
+- The guide speaks only of sequencing gear from this page; whether notes played live on the keyboard also go out on the channel is not documented. [#live-notes] [s1]
+- Incoming notes and CCs on channel N reach track N by default, channels 9–16 being the auxiliary tracks. [#receive] (community-verified) [s7]
 - Whether a channel set here also changes what the track receives is not known yet. [#open-question] (speculative) [s2]
 
 Procedures:
-- Give a track a MIDI output channel [#assign] [s1]
+- Give a track a MIDI channel in the project [#assign] [s1]
   1. `project → M4`
   2. `turn E1` — midi page
   3. `turn E2` — the track
   4. `turn E3` — the channel
 
-Related: [project.settings], [com.midi-settings]
+Related: [project.settings], [com.midi-settings], [auxiliary.external-midi], [instrument.engine-midi], [howto.control-synth-midi]
 
-Sources: s1 guide:project#project-settings · s2 note 20 · s3 note 20 · s4 note 20
+Sources: s1 guide:project#project-settings · s2 note 20 · s3 guide:how-to#how-to-control-a-synth-with-midi · s4 note 20 · s5 note 20 · s6 github.com/jshph/opxy-reactive/blob/master/DESIGN.md · s7 note 20
 
 ## Tempo
 
@@ -4546,8 +4590,8 @@ Facts:
 - The multi-out has six modes: midi, cv/gate, audio and three sync rates (sync8, sync16, sync24). [#modes] [s1]
 - The mode is chosen on the com page by turning `E3`. [#select] [s2]
 - The mode cannot change while a cable is in the jack, so set it before connecting. [#unplug-first] [s2]
-- In midi mode a type A TRS-to-DIN adapter cable reaches synths with DIN MIDI sockets. [#midi] [s3]
-- In cv/gate mode the tip carries pitch CV and the ring the gate. [#cv-gate] [s4]
+- In midi mode the jack is a MIDI output; a type A TRS-to-DIN cable reaches synths with DIN MIDI sockets, played from the external MIDI track (`T3`) or a midi-engine track. [#midi] [s3]
+- In cv/gate mode the tip carries pitch CV and the ring the gate, played from the external CV track (`T4`) for synths with CV and gate inputs. [#cv-gate] [s4]
 - The sync modes send a clock pulse while the OP-XY plays — sync8, an eighth-note pulse, suits pocket operators and sync24 suits DIN-sync drum machines. [#sync] [s5]
 - In audio mode the jack is an auxiliary audio output, fed by the external audio track's routing and the tracks' aux sends. [#audio] [s6]
 
@@ -4880,22 +4924,33 @@ Sources: s1 guide:how-to#how-to-enable-velocity · s2 guide:instrument#preset-se
 
 ### Recipe — play an external synth over MIDI [howto.control-synth-midi]
 current · OS ≥ 1.0.9 · changed in 1.0.15 · guide v1.1.15
-Also called: control a synth, sequence external synth, trs midi, din midi, external midi track
+Also called: control a synth, sequence external synth, sequence a hardware synth, trs midi, din midi, midi out, external midi track
 Where: modes auxiliary
 
-Connect the synth through the multi-out (set to midi) or USB, then play and sequence it from the external MIDI track, `T3` in auxiliary mode, on the synth's channel.
+Set the multi-out to midi before plugging in a TRS-to-DIN cable (USB gear needs no setting), then play and sequence the synth from `T3` in auxiliary mode on the synth's channel, set on `M1`. TE's steps set no project MIDI channel; set clock to both only if the synth should follow the tempo.
 
-If nothing sounds, check the channel first, then the cable route (multi-out mode, adapter type) and,
-for USB gear, the device's switches under `com → M3`. Bluetooth MIDI synths work too once the
-OP-XY advertises itself from the com page.
+If nothing sounds, check the channel first, then the cable route (multi-out mode, adapter type)
+and, for USB gear, the device's switches under `com → M3`. Leave the project's midi page alone
+unless a track on an OP-XY engine should send its notes too. Notes need no clock: switch clock to
+both only when the synth's tempo-synced parts should lock to the OP-XY. Bluetooth MIDI synths work
+too once the OP-XY advertises itself from the com page.
 
 Facts:
 - Synths with DIN MIDI sockets need the multi-out set to midi and a type A TRS-to-DIN cable, DIN end into the synth, jack into the multi-out. [#din] [s1]
+- The multi-out does one job at a time, so in midi mode it carries no CV, gate, sync pulse or audio. [#one-job] [s2]
 - Synths with USB MIDI plug into the OP-XY's USB-C port (through an adapter if needed), need no multi-out setting and appear under `com → M3`. [#usb] [s1]
-- The external MIDI track is `T3` in auxiliary mode; its keyboard and sequencer play the connected synth. [#track] [s2]
-- On the track's `M1` page, `E1` sets the MIDI channel — match the channel the synth listens on — while `E2` and `E3` pick bank and program. [#channel] [s2]
+- TE's how-tos point to the devices page (`com → M3`) only for USB gear; whether a synth on the multi-out appears there is not documented. [#devices-din] [s1]
+- The external MIDI track is `T3` in auxiliary mode; its keyboard and sequencer play the connected synth. [#track] [s3]
+- On the track's `M1` page, `E1` sets the MIDI channel — match the channel the synth listens on — while `E2` and `E3` pick bank and program. [#channel] [s3]
+- TE's steps set only that `M1` channel; the project's midi page (`project → M4`) is not part of them. [#no-project-channel] [s1]
+- Community tools also report that the external MIDI track and midi-engine tracks send without a project MIDI channel; not yet checked on a unit. [#no-project-community] (community) [s4]
+- On a unit with stock settings, notes in the midi section of the system settings (`com → M1`) is at both, which includes sending. [#notes-on] (verified 1.1.33) [s5]
+- Clock is its own switch in the same section; at the stock setting (in) `play` and `stop` send no start, stop or clock ticks, and set to both they send start and stop with a constant tick stream (seen over USB). [#clock] (verified 1.1.33) [s5]
+- Community tools report that clock, start and stop go out over TRS MIDI as well as USB under that switch; only USB has been checked on a unit. [#clock-jack] (community) [s6]
 - `M2` and `M3` hold eight CC slots: `shift` plus an encoder switches a slot on and picks its CC number, turning the encoder sends values, and the moves can be sequenced and recorded. [#ccs] [s1]
-- To sequence several synths, instrument tracks can run the midi engine too; TE's guide still calls it "external", its name before OS 1.0.15. [#several-synths] (since 1.0.15) [s3]
+- To sequence several synths, instrument tracks can run the midi engine too; TE's guide still calls it "external", its name before OS 1.0.15. [#several-synths] (since 1.0.15) [s7]
+- On OS 1.1.33 the preset browser listed no midi engine, so `T3` is the route to use on that firmware. [#engine-1133] (verified 1.1.33) [s8]
+- To send the notes of a track on one of the OP-XY's own engines as well, community tools say to give it a channel on the project's midi page. [#own-engine] (community) [s9]
 
 Procedures:
 - Point the external MIDI track at a synth [#connect] [s1]
@@ -4906,10 +4961,16 @@ Procedures:
   1. `M2/M3`
   2. `shift + turn E1…E4` — switch the slot on, choose the CC number
   3. `turn E1…E4` — send values
+- Let the synth follow the OP-XY's tempo and transport [#send-clock] (verified 1.1.33) [s5]
+  1. `com → M1`
+  2. `turn E1` — the midi section
+  3. `turn E2` — clock
+  4. `turn E3` — both
+  Result: `play` and `stop` send start and stop, and clock ticks run continuously (checked over USB).
 
-Related: [com.multi-out], [com.devices], [com.bluetooth-midi], [instrument.engine-midi], [auxiliary.overview]
+Related: [com.multi-out], [com.devices], [com.midi-settings], [com.bluetooth-midi], [project.midi-channels], [instrument.engine-midi], [auxiliary.overview]
 
-Sources: s1 guide:how-to#how-to-control-a-synth-with-midi · s2 guide:auxiliary#external-midi · s3 changelog:1.0.15
+Sources: s1 guide:how-to#how-to-control-a-synth-with-midi · s2 guide:hardware-overview#inputs-outputs · s3 guide:auxiliary#external-midi · s4 note 20 · s5 note 90 · s6 github.com/jshph/opxy-reactive/blob/master/DESIGN.md · s7 changelog:1.0.15 · s8 note 59 · s9 note 20
 
 ### Recipe — play an analog synth with CV and gate [howto.control-cv-synth]
 current · OS ≥ 1.0.9 · guide v1.1.15
@@ -5540,7 +5601,7 @@ the sequencer's steps; tap mode suits phrases that do not sit on a grid.
 
 Facts:
 - Slicing is the drum sampler's, and a new project has drum kits on `T1` and `T2`. [#drum-track] [s1]
-- On a drum track the record page records onto the selected key; press the key first, then `sample`. [#record-onto-key] [s2]
+- On a drum track the take goes to the key you press on the record page (it lights up), so open `sample` first and choose the key there. [#record-onto-key] [s2]
 - On the record page `turn E1` picks the source (the built-in mic, line in or USB), `turn E3` the gain and `turn E4` the threshold. [#inputs] [s3]
 - Holding `M1` arms the recorder and the take begins once the input passes the threshold, so a low threshold catches the loop's first hit. [#threshold] (derived) [s3]
 - Holding a key and pressing `M1` opens the slicer on that key's sample. [#open] [s1]
@@ -5553,14 +5614,15 @@ Facts:
 Procedures:
 - Record a loop onto the drum track's top key [#record] (derived) [s3]
   Needs: the loop plays into line in
-  1. `T1 → key E5` — the drum track and its top key
-  2. `sample` — the record page, recording onto E5
+  1. `T1` — the drum track
+  2. `sample` — its record page
   3. `turn E1` — line in {set source = line in (area sample, track 1)}
   4. `turn E4` — a low threshold, around 10 {set threshold = 10 (area sample, track 1)}
-  5. `hold M1` — start the loop playing, and let go once it has played through
-  Result: E5 holds the loop; `M2` plays the take back.
+  5. `key E5` — the top key lights up; the take will land here
+  6. `hold M1` — start the loop playing and hold until it has played through; the take starts at its first hit
+  Result: E5 holds the loop, and a copy is kept in the user sample folder.
 - Cut the loop into sixteen even slices [#slice] (derived) [s1]
-  1. `sample` — leave the record page for the drum page first; on the record page the next combo records again
+  1. `T1` — the lit track key leaves the record page for the drum page; on the record page the next combo would record again
   2. `key E5 + M1` — hold the loop's key; the slicer opens on it
   3. `turn E1` — even
   4. `turn E4` — sixteen slices

@@ -44,7 +44,7 @@
 		{
 			"ref": "howto.slice-a-loop#slice",
 			"finding": "manual",
-			"note": "The recipe's #record ends on the record page, where `key E5 + M1` re-arms recording instead of opening the slicer, and the closing `M4` there emptied E5 (step 4). By hand: `sample` again first (back on the drum page), then `key E5 + M1` opens the slicer. Add that step (sampler.slicing starts from the M1 page). Check on the unit, since the M4 there may clear the take."
+			"note": "The recipe's #record ends on the record page, where `key E5 + M1` re-arms recording instead of opening the slicer, and the closing `M4` there emptied E5 (step 4). By hand: `sample` again first (back on the drum page), then `key E5 + M1` opens the slicer. Add that step (sampler.slicing starts from the M1 page). Check on the unit, since the M4 there may clear the take. Addressed 2026-10-02: #slice now starts with `T1`, the lit track key, which the guide gives as the way off the record page."
 		}
 	],
 	"parameters": [

@@ -27,7 +27,7 @@ facts:
     text: Slicing is the drum sampler's, and a new project has drum kits on `T1` and `T2`.
     source: https://teenage.engineering/guides/op-xy/sample#sample-slicer
   - id: record-onto-key
-    text: On a drum track the record page records onto the selected key; press the key first, then `sample`.
+    text: On a drum track the take goes to the key you press on the record page (it lights up), so open `sample` first and choose the key there.
     source: https://teenage.engineering/guides/op-xy/sample#drum-sampler
   - id: inputs
     text: On the record page `turn E1` picks the source (the built-in mic, line in or USB), `turn E3` the gain and `turn E4` the threshold.
@@ -63,26 +63,28 @@ procedures:
     goal: Record a loop onto the drum track's top key
     preconditions: [the loop plays into line in]
     steps:
-      - keys: T1 → key E5
-        note: the drum track and its top key
+      - keys: T1
+        note: the drum track
       - keys: sample
-        note: the record page, recording onto E5
+        note: its record page
       - keys: turn E1
         note: line in
         set: { param: source, value: line in, area: sample, track: 1 }
       - keys: turn E4
         note: a low threshold, around 10
         set: { param: threshold, value: 10, area: sample, track: 1 }
+      - keys: key E5
+        note: the top key lights up; the take will land here
       - keys: hold M1
-        note: start the loop playing, and let go once it has played through
-    result: E5 holds the loop; `M2` plays the take back.
+        note: start the loop playing and hold until it has played through; the take starts at its first hit
+    result: E5 holds the loop, and a copy is kept in the user sample folder.
     source: https://teenage.engineering/guides/op-xy/sample#arrange
     confidence: derived
   - id: slice
     goal: Cut the loop into sixteen even slices
     steps:
-      - keys: sample
-        note: leave the record page for the drum page first; on the record page the next combo records again
+      - keys: T1
+        note: the lit track key leaves the record page for the drum page; on the record page the next combo would record again
       - keys: key E5 + M1
         note: hold the loop's key; the slicer opens on it
       - keys: turn E1

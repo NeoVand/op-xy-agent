@@ -81,12 +81,30 @@ describe('replica changes', () => {
 		expect(lines).toContain('T1 pattern 1: 0 → 4 notes');
 		expect(lines).toContain('T1 pattern 2: new, 5 notes');
 		// writing pattern 2 played it; the arrangement put T1 back on pattern 1 in scene 1
-		expect(lines).not.toContain('T1 plays pattern 1 → 2');
+		expect(lines.filter((l) => l.startsWith('T1 plays pattern'))).toEqual([]);
 		expect(lines).toContain('scene 2: new, T1 p2');
 		expect(lines).toContain('song: 1 → 1 2 2');
 		const next = virtual.checkpoint();
 		virtual.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 1, pattern: 1 }] }] });
 		expect(virtual.changesSince(next)).toEqual(['scene 2: T1 p2 → p1']);
+	});
+
+	it('say the song moving on once, not as each track switching pattern', () => {
+		const { sim, virtual } = setup();
+		const kick = [1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 100, length: 1 }));
+		virtual.writePattern(1, { pattern: 1, bars: 1, notes: kick });
+		virtual.writePattern(1, { pattern: 2, bars: 1, notes: kick.slice(0, 2) });
+		virtual.writeArrangement({
+			scenes: [
+				{ scene: 1, patterns: [{ track: 1, pattern: 1 }] },
+				{ scene: 2, patterns: [{ track: 1, pattern: 2 }] }
+			],
+			song: { order: [1, 2], loop: true }
+		});
+		virtual.transport('play');
+		const start = virtual.checkpoint();
+		for (let i = 0; i < 21; i++) sim.advance(100); // past the first bar: scene 2
+		expect(virtual.changesSince(start)).toEqual(['playing scene 2 now, was 1 (the song moved on)']);
 	});
 
 	it('say a project setting as its page reads, and a drum note by its sound', () => {
@@ -107,7 +125,7 @@ describe('replica changes', () => {
 		const chord = [60, 64, 67].map((note) => ({ step: 1, note, velocity: 100, length: 16 }));
 		virtual.writePattern(4, { pattern: 2, bars: 1, notes: chord });
 		expect(virtual.changesSince(start)).toEqual([
-			'T4 plays pattern 1 → 2',
+			'T4 plays pattern 1 → 2 in scene 1, the one on screen',
 			'T4 pattern 2: new, 3 notes'
 		]);
 		const next = virtual.checkpoint();

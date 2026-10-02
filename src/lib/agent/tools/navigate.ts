@@ -375,8 +375,11 @@ export const planStepsTool = defineTool({
 		// the replica's simulator followed the animation: check that it got there
 		const after = virtual.plan(goal);
 		// several settings: every reachable one reads its value (the rest say why in the plan)
+		// a save as leaves nothing a second plan reads as done: done when it can still be done
 		const arrived =
-			'settings' in goal ? after.steps.length === 0 : after.reached && after.steps.length === 0;
+			'settings' in goal
+				? after.steps.length === 0
+				: after.reached && (after.steps.length === 0 || plan.action === true);
 		return jsonResult({ shown: true, arrived, ...planView(plan) }, `shown: ${summaryOf(plan)}`);
 	}
 });

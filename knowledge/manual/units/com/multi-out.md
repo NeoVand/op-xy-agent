@@ -24,10 +24,10 @@ facts:
     text: The mode cannot change while a cable is in the jack, so set it before connecting.
     source: https://teenage.engineering/guides/op-xy/com#setting-the-multi-out-port-and-bluetooth-midi
   - id: midi
-    text: In midi mode a type A TRS-to-DIN adapter cable reaches synths with DIN MIDI sockets.
+    text: In midi mode the jack is a MIDI output; a type A TRS-to-DIN cable reaches synths with DIN MIDI sockets, played from the external MIDI track (`T3`) or a midi-engine track.
     source: https://teenage.engineering/guides/op-xy/how-to#how-to-control-a-synth-with-midi
   - id: cv-gate
-    text: In cv/gate mode the tip carries pitch CV and the ring the gate.
+    text: In cv/gate mode the tip carries pitch CV and the ring the gate, played from the external CV track (`T4`) for synths with CV and gate inputs.
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-cv
   - id: sync
     text: The sync modes send a clock pulse while the OP-XY plays — sync8, an eighth-note pulse, suits pocket operators and sync24 suits DIN-sync drum machines.

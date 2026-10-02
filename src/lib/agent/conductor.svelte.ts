@@ -1022,7 +1022,8 @@ export class Conductor {
 		const fresh = marked.filter((l) => !before.includes(l));
 		const standing = marked.length - fresh.length;
 		// an earlier line that no longer holds and has no newer line about the same thing (a pattern
-		// written twice reads as its latest line alone): taken back
+		// written twice reads as its latest line alone): back as it was, which an agent once could
+		// not place when the line said only "taken back"
 		const about = (l: string) =>
 			l.includes(':') ? l.slice(0, l.indexOf(':')) : l.replace(/\s\d.*$/, '');
 		const renewed = fresh.map(about);
@@ -1031,7 +1032,9 @@ export class Conductor {
 		const listed = [
 			...fresh.map((l) => `- ${l}`),
 			...(gone.length
-				? [`- no longer as an earlier list gave it (taken back): ${gone.join('; ')}`]
+				? [
+						`- back as it was at the user\u2019s message, so no longer a change (an earlier list gave it): ${gone.join('; ')}`
+					]
 				: []),
 			...(standing > 0
 				? [
@@ -1039,9 +1042,13 @@ export class Conductor {
 					]
 				: [])
 		];
+		// a demo puts the replica back, which once read as if it never ran
+		const shown = this.#calledSinceMessage('show_on_replica')
+			? '; show_on_replica puts the replica back after its demo, so a demo leaves nothing here'
+			: '';
 		const text =
 			marked.length === 0 && before.length === 0
-				? `Nothing changed on the replica during this answer, by your calls or the user (it is as it was when the user\u2019s message came).\n${now}`
+				? `Nothing changed on the replica during this answer, by your calls or the user (it is as it was when the user\u2019s message came${shown}).\n${now}`
 				: fresh.length === 0 && gone.length === 0
 					? `Nothing more changed on the replica since the last list: its ${standing} change${standing === 1 ? '' : 's'} still stand${standing === 1 ? 's' : ''}.\n${now}`
 					: `What changed on the replica since the user\u2019s message, yours and anything the user did on it meanwhile (describe the outcome from this${before.length ? ', with the earlier lists' : ''}):\n${listed.join('\n')}\n${now}`;

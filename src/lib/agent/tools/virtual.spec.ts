@@ -366,6 +366,19 @@ describe('write_pattern on drums', () => {
 		expect(result.written.grid['closed hat 1']).toBe('x.x. x.xx .x.x .x');
 	});
 
+	it('says a grid line of rests alone plays nothing', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 1,
+				pattern: 1,
+				grid: { kick: 'x... x... x... x...', 'open hat': '.... .... .... ....' }
+			})
+		);
+		expect(result.note).toMatch(/open hat: no hits, so it plays nothing here/);
+		expect(Object.keys(result.written.grid)).toEqual(['kick 1']);
+	});
+
 	it('says where a closed and an open hat hit on one step', async () => {
 		const { run } = setup();
 		const result = json(

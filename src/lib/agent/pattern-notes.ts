@@ -23,11 +23,13 @@ export interface WrittenNote {
 }
 
 /** A grid line's hit: the line's key (a sound's name, a note name or a number) and its step. */
+type Digit = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+
 export interface GridHit {
 	readonly key: string;
 	readonly step: number;
-	/** The mark: a hit, an accent or a soft hit. */
-	readonly mark: 'x' | 'X' | 'o';
+	/** The mark: a hit, an accent, a soft hit, or a digit 1–9 for a velocity of its own. */
+	readonly mark: 'x' | 'X' | 'o' | Digit;
 }
 
 /** Steps a pattern holds: four bars of 16. */
@@ -141,15 +143,16 @@ export function gridHits(grid: Readonly<Record<string, string>>): {
 				`grid "${key}": ${marks.length} steps, past the ${MAX_STEPS} a pattern holds${where ? ` (${where})` : ''}`
 			);
 		}
-		const bad = marks.match(/[^xXo.-]/);
+		const bad = marks.match(/[^xXo1-9.-]/);
 		if (bad) {
 			throw new PatternNotesError(
-				`grid "${key}": "${bad[0]}" is not a mark (x a hit, X an accent, o a soft hit, . a rest)`
+				`grid "${key}": "${bad[0]}" is not a mark (x a hit, X an accent, o a soft hit, 1–9 a hit that loud, . a rest)`
 			);
 		}
 		steps = Math.max(steps, marks.length);
 		[...marks].forEach((mark, i) => {
-			if (mark === 'x' || mark === 'X' || mark === 'o') hits.push({ key, step: i + 1, mark });
+			if (mark !== '.' && mark !== '-')
+				hits.push({ key, step: i + 1, mark: mark as GridHit['mark'] });
 		});
 	}
 	return { hits, steps };
@@ -160,6 +163,8 @@ export function gridHits(grid: Readonly<Record<string, string>>): {
  * half, each where read_pattern reads it back as the same mark (X from 115, o up to 75).
  */
 export function markVelocity(mark: GridHit['mark'], velocity: number): number {
+	// a digit is a velocity outright: 1 soft (14) … 9 full (127), a ghost note at 3 or 4
+	if (/^[1-9]$/.test(mark)) return Math.round((Number(mark) * 127) / 9);
 	if (mark === 'X') return Math.min(127, Math.max(velocity + 25, 115));
 	if (mark === 'o') return Math.max(1, Math.min(Math.round(velocity * 0.55), 75));
 	return velocity;

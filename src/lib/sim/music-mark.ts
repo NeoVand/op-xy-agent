@@ -6,14 +6,18 @@
 import type { SimState } from './params';
 
 /**
- * The selected track and each drum track's key, every track's playing pattern and its notes, and
- * whether the transport runs.
+ * The selected track and each drum track's key, every track's playing pattern and its notes,
+ * whether the transport runs, and whether it records (armed for the first note, latched or
+ * counting in): `record + play` reads the same on the screen, and a walkthrough once took it as
+ * done the moment the track key before it was pressed.
  */
 export function musicMark(s: SimState): string {
+	const rec = s.areas.sequencer;
 	return JSON.stringify({
 		track: s.track,
 		keys: s.tracks.map((t) => t.drumKey),
 		playing: s.transport.playing,
+		recording: rec.armed ? 'armed' : rec.countIn ? 'count-in' : rec.recLatch ? 'on' : 'off',
 		notes: s.tracks.map((t) => {
 			const p = t.sequence.patterns[t.sequence.current];
 			return [
