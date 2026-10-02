@@ -350,6 +350,16 @@ describe('commits', () => {
 		expect(f.readSound(7).pages['M3 filter']).toMatch(/cutoff 25/);
 	});
 
+	it('counts the chords when a write passes the 120 notes', () => {
+		// a gated pad's 48 triads read as 144 notes, the program left to find out why
+		const { lab } = labOn();
+		const f = lab.fork();
+		const gate = Array.from({ length: 48 }, (_, i) => `${i + 1}:A3+C4+E4:1`).join(' ');
+		expect(() => f.writePattern(8, { bars: 3, notes: gate })).toThrow(
+			/writePattern: 144 notes \(48 chords of about 3 notes: each note of a chord counts\), and a pattern holds 120/
+		);
+	});
+
 	it('names the key a write meant, for the readings once it lands', () => {
 		// a song's program named its keys, as write_pattern takes them, and failed
 		const { lab, session } = labOn();

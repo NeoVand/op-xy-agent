@@ -283,7 +283,7 @@ function patternView(
 			? { locks: p.locks.map((l) => `step ${l.step}: ${l.values.join(', ')}`) }
 			: {}),
 		// notes off the grid (a live take), which neither the grid nor the notes form shows
-		...offGrid(p, meant?.prefer === 'flats'),
+		...offGrid(p, meant?.prefer === 'flats', bpm),
 		...(p.quantise !== undefined ? { quantise: p.quantise } : {}),
 		...(grid ? { grid, hits: drumHits(p) ?? '', beats: drumBeats(p, meter) ?? '' } : {}),
 		...('bars' in reading ? { reading } : {}),
@@ -356,30 +356,37 @@ function drumBeats(p: VirtualPattern, meter: BarMeter): string | null {
 	const steps = soundSteps(p);
 	if (steps.size === 0) return null;
 	const fours = meter.beats.every((b) => b === 4);
-	const name = (inBar: number) =>
-		fours
-			? `${Math.floor((inBar - 1) / 4) + 1}${['', 'e', '&', 'a'][(inBar - 1) % 4]}`
-			: String(inBar);
-	const bars = Math.max(1, Math.ceil(p.length / meter.bar));
+	// in time, at the track scale: a step lasts scale sixteenths (a ride at 1/2 read "1 3 4e", as
+	// though its thirty-second steps were sixteenths)
+	const scale = fours ? p.scale : 1;
+	const name = (sixteenth: number) => {
+		if (!fours) return String(sixteenth + 1);
+		const whole = Math.floor(sixteenth);
+		return `${Math.floor(whole / 4) + 1}${['', 'e', '&', 'a'][whole % 4]}${sixteenth > whole ? '+' : ''}`;
+	};
+	const bars = Math.max(1, Math.ceil((p.length * scale) / meter.bar));
 	const lines = [...steps].map(([sound, at]) => {
 		const byBar = Array.from({ length: bars }, () => [] as number[]);
 		for (const step of at) {
-			const bar = Math.min(Math.floor((step - 1) / meter.bar), bars - 1);
-			byBar[bar].push(step - bar * meter.bar);
+			const time = (step - 1) * scale;
+			const bar = Math.min(Math.floor(time / meter.bar), bars - 1);
+			byBar[bar].push(time - bar * meter.bar);
 		}
 		const said = byBar.map((list) => list.map(name).join(' '));
 		if (bars === 1) return `${sound}: ${said[0]}`;
 		if (said.every((line) => line === said[0])) return `${sound}: ${said[0]} every bar`;
 		return `${sound}: ${said.flatMap((line, i) => (line ? [`bar ${i + 1}: ${line}`] : [])).join(', ')}`;
 	});
-	return `${lines.join('; ')}${fours ? ' (beats of each bar; e, & and a the sixteenths after a beat)' : ` (steps of each ${meter.bar}-step bar)`}`;
+	const scaled = scale !== 1 ? ` of time at track scale ${scaleName(scale)}` : '';
+	const thirtySeconds = scale < 1 ? ', + the thirty-second after' : '';
+	return `${lines.join('; ')}${fours ? ` (beats of each bar${scaled}; e, & and a the sixteenths after a beat${thirtySeconds})` : ` (steps of each ${meter.bar}-step bar)`}`;
 }
 
 /**
  * The notes that play off the grid, by how far, each by name, a step at a time: "3 notes off the
  * grid (…): step 5: C4 +0.10, E4 +0.04; …". Flats where the key spells with them.
  */
-function offGrid(p: VirtualPattern, flats = false): { offGrid?: string } {
+function offGrid(p: VirtualPattern, flats = false, bpm?: number): { offGrid?: string } {
 	const off = p.notes.filter((n) => n.offset);
 	if (off.length === 0) return {};
 	const sign = (x: number) => `${x > 0 ? '+' : '−'}${Math.abs(x).toFixed(2)}`;
@@ -399,7 +406,10 @@ function offGrid(p: VirtualPattern, flats = false): { offGrid?: string } {
 	// which sounds, on a drum track (an agent humanizing the hats alone could not confirm it)
 	const sounds = [...new Set(off.flatMap((n) => (n.sound ? [n.sound] : [])))];
 	return {
-		offGrid: `${off.length} note${off.length === 1 ? '' : 's'}${sounds.length ? ` (${sounds.join(', ')})` : ''} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern; the notes on the grid stay there): ${shown.join('; ')}${steps.length > 16 ? '; …' : ''}${on > 0 ? `; ${on} on the grid` : ''}`
+		offGrid: `${off.length} note${off.length === 1 ? '' : 's'}${sounds.length ? ` (${sounds.join(', ')})` : ''} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern; the notes on the grid stay there): ${shown.join('; ')}${steps.length > 16 ? '; …' : ''}${on > 0 ? `; ${on} on the grid` : ''}${
+			// in time too (an agent converted the fractions of a step by hand)
+			bpm ? `; a step lasts ${Math.round((60_000 / bpm / 4) * p.scale)} ms at ${bpm} bpm` : ''
+		}`
 	};
 }
 

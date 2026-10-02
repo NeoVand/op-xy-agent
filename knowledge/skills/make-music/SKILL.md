@@ -7,7 +7,7 @@ description: Use when the user wants something made or changed on the replica - 
 
 ## What the sequencer holds
 
-Each instrument track has up to 16 patterns of up to 4 bars (64 steps) and 120 notes. A scene says
+Each instrument track has up to 16 patterns of up to 4 bars (64 steps) and 120 notes (each note of a chord counts). A scene says
 which pattern every track plays (99 scenes); the song plays scenes in order (96 entries) and loops or
 not. A scene lasts as long as its longest pattern. Plain play runs the song from its first scene.
 

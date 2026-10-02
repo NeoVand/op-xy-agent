@@ -492,6 +492,20 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   bars at another track scale says bars counts 16 steps; chords transposed alone say the lines under
   them are read as they stand; transpose with copy_track and key with transpose described; the
   manual states the tempo range, 40–220 BPM.
+- **Probe round thirty-five (2026-10-02), 18 scenarios (`probe-scenarios-35.json`: re-checks (the
+  guided mute and save, named offsets, the note limit, a ride at scale 1/2, two parts transposed,
+  the tempo floor) and new kinds: Hindi hip hop, lo-fi chords with crackle, a sidechained pad, a
+  song adding a part each scene, the arpeggio against maestro, reverb on the snare alone, a scene
+  copied and changed, MIDI export, a harder kick, half the tempo at the same feel, a melody ending
+  on its root):** one failed call (the lab's 120-note limit). The re-checks held: the guided mute
+  and save each waited for the press (a guided save had passed at `project`, fixed between rounds
+  with the last save in the walkthrough's mark), and device_status read the save. Fixes: the lab's
+  note limit counts the chords too, and the music skill says each note of a chord counts; a
+  scaled pattern's hits are named by their place in time ("2&+", the thirty-second after the "&");
+  off-grid offsets give a step's length in ms; a change undone within an answer reads with its
+  value now ("groove amount 0 again, not 40", where an agent read the old line as 40 again); a
+  filter switched on by the steps is named by type, with a warning when it is a highpass (an
+  agent darkening an epiano turned its highpass on).
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

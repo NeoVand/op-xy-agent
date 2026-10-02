@@ -682,9 +682,16 @@ export const planStepsTool = defineTool({
 					`T${track}'s filter is off, so its values do nothing until it is on: plan_steps param "filter", value on (its page key pressed again switches it).`
 				];
 			}
+			// which filter: a highpass switched on thins the sound (an agent darkening an epiano's
+			// chords turned on the preset's highpass and only saw it in the screen text)
+			const page = virtual.readSound(track).pages['M3 filter'] ?? '';
+			const type = /^(.*?) filter\b/.exec(page)?.[1]?.trim() ?? 'its';
+			const high = /hi\s?pass|high\s?pass|\bhp\b/i.test(type)
+				? ` It is a highpass: raising its cutoff takes away the lows and thins the sound; to darken it, set a lowpass type first (filter type, such as ladder).`
+				: '';
 			return filterWasOff.has(track)
 				? [
-						`T${track}'s filter was off, so the steps switched it on first (M3 pressed again on its page): say so, since a filter that is off does nothing whatever its cutoff.`
+						`T${track}'s ${type} filter was off, so the steps switched it on first (M3 pressed again on its page): say so, since a filter that is off does nothing whatever its cutoff.${high}`
 					]
 				: [];
 		});

@@ -513,7 +513,7 @@ describe('the conductor grounds its answer', () => {
 		expect(list(2)).not.toMatch(/- tempo 120 → 100 bpm/);
 		// the tempo back where it was: said, not dropped
 		expect(list(3)).toMatch(
-			/no longer so, back as at the user’s message \(an earlier list gave it\): tempo 120 → 100 bpm/
+			/no longer so, back as at the user’s message \(an earlier list gave it\): tempo 120 bpm again, not 100 bpm/
 		);
 	});
 

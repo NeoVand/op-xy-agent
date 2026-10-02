@@ -768,7 +768,15 @@ describe('plan_steps to the project settings', () => {
 		);
 		// the steps switch it on first (M3 again), said so
 		expect(off.steps.map((s: { keys: string }) => s.keys)).toEqual(['T7', 'M3', 'M3', 'turn E1']);
-		expect(off.filterOff).toMatch(/^T7's filter was off, so the steps switched it on first/);
+		expect(off.filterOff).toMatch(/^T7's ladder filter was off, so the steps switched it on first/);
+		expect(off.filterOff).not.toMatch(/highpass/);
+		// T4's epiano has a highpass, off: switched on to darken, it would thin the chords
+		const high = json(
+			await run(planStepsTool, { show: true, track: 4, param: 'cutoff', value: 55 })
+		);
+		expect(high.filterOff).toMatch(
+			/^T4's z hipass filter was off, .* It is a highpass: raising its cutoff takes away the lows/
+		);
 		const on = json(
 			await run(planStepsTool, {
 				show: true,

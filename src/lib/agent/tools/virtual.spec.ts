@@ -668,6 +668,24 @@ describe('write_pattern on drums', () => {
 		expect(estimated.written.reading.key).toBe('Bb major (C major moved down 2 semitones)');
 	});
 
+	it('names a scaled pattern’s hits by their place in time', async () => {
+		// a ride at scale 1/2 read "1 3 4e every bar", as though its steps were sixteenths
+		const { run } = setup();
+		const ride = json(
+			await run(writePatternTool, {
+				track: 2,
+				bars: 4,
+				scale: '1/2',
+				grid: {
+					ride: '7... .... 7... .4.. 7... .... 7... .4.. | 7... .... 7... .4.. 7... .... 7... .4..'
+				}
+			})
+		);
+		expect(ride.written.beats).toBe(
+			'ride 1: 1 2 2&+ 3 4 4&+ every bar (beats of each bar of time at track scale 1/2; e, & and a the sixteenths after a beat, + the thirty-second after)'
+		);
+	});
+
 	it('says why a write does not fit: chords counted, bars against the track scale', async () => {
 		const { run } = setup();
 		// a gated pad: 48 three-note chords read as 144 notes, the agent left to work out why
@@ -791,7 +809,7 @@ describe('write_pattern on drums', () => {
 		expect(virtual.readPattern(3).notes.find((n) => n.step === 23)?.offset).toBe(0.125);
 		expect(up.written.locks).toEqual(['step 7: cutoff 40']);
 		expect(up.written.offGrid).toMatch(
-			/^1 note off the grid .*: step 23: A3 \+0\.13; \d+ on the grid$/
+			/^1 note off the grid .*: step 23: A3 \+0\.13; \d+ on the grid; a step lasts 125 ms at 120 bpm$/
 		);
 		// a whole rewrite drops them, and says so
 		const anew = json(await run(writePatternTool, { track: 3, notes: '1:D2:4' }));

@@ -593,7 +593,19 @@ export function createLab(options: LabOptions): LabSession {
 					throw new LabError(`writePattern: ${error.message}`);
 				throw error;
 			}
-			if (given.length > 120) throw new LabError('writePattern: a pattern holds 120 notes');
+			if (given.length > 120) {
+				// the chords counted, a note each (a gated pad's 48 triads read as 144 notes)
+				const at = new Map<number, number>();
+				for (const n of given) at.set(n.step, (at.get(n.step) ?? 0) + 1);
+				const chords = [...at.values()].filter((k) => k >= 3);
+				const of =
+					chords.length >= 2
+						? ` (${chords.length} chords of about ${Math.round(chords.reduce((a, b) => a + b, 0) / chords.length)} notes: each note of a chord counts)`
+						: '';
+				throw new LabError(
+					`writePattern: ${given.length} notes${of}, and a pattern holds 120: fewer hits, fewer notes a chord, or more patterns`
+				);
+			}
 			const notes = given.map((n) => {
 				const note = typeof n.note === 'number' ? n.note : parseNoteName(n.note, 'c4');
 				if (note === null || note < 0 || note > 127) {

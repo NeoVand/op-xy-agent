@@ -1,0 +1,151 @@
+[
+	{
+		"name": "teach-mute-again",
+		"about": "Re-check: a guided mute waits for the press.",
+		"steps": [
+			{ "say": "make a beat with a bass and play it" },
+			{ "say": "teach me to mute the bass live, light the keys" },
+			{ "follow": 2 },
+			{ "say": "did it work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-save",
+		"about": "Re-check: a guided save waits for M2.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "teach me how to save my project, light the keys" },
+			{ "follow": 3 },
+			{ "say": "is it saved now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "offsets-named",
+		"about": "Re-check: each off-grid note named.",
+		"steps": [
+			{ "say": "write a melody on track 5, humanize it, and list each note's timing offset" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "gate-limit",
+		"about": "Re-check: the note limit with chords counted.",
+		"steps": [
+			{ "say": "make a 4 bar trance gate with sixteenth chord stabs on track 8" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ride-scale",
+		"about": "Re-check: bars against the track scale.",
+		"steps": [
+			{
+				"say": "make a jazz ride pattern on track 2 at double speed, track scale 1/2, two bars of time long"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "transpose-both",
+		"about": "Re-check: transposing two parts one after the other.",
+		"steps": [
+			{ "say": "make chords and a bass in E minor" },
+			{ "say": "move both up a whole step" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tempo-floor",
+		"about": "Re-check: the tempo range.",
+		"steps": [{ "say": "can the op-xy go down to 30 bpm?" }, { "why": true }]
+	},
+	{
+		"name": "hindi-hiphop",
+		"about": "A request in Hindi.",
+		"steps": [{ "say": "एक धीमी हिप हॉप बीट बनाओ, बेस के साथ" }, { "why": true }]
+	},
+	{
+		"name": "lofi-crackle",
+		"about": "A texture request.",
+		"steps": [{ "say": "make lofi chords with vinyl crackle under them" }, { "why": true }]
+	},
+	{
+		"name": "sidechain-pad",
+		"about": "A duck on a pad.",
+		"steps": [
+			{ "say": "make a beat with a kick and a pad on track 8" },
+			{ "say": "sidechain the pad to the kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "build-four-scenes",
+		"about": "A song that adds a part each scene.",
+		"steps": [
+			{
+				"say": "make a song over 4 scenes that adds one instrument each time, drums first"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-vs-maestro",
+		"about": "A concept question.",
+		"steps": [
+			{ "say": "what's the difference between the arpeggio and the maestro player?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snare-reverb-only",
+		"about": "An effect on one drum sound.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "put more reverb on the snare only" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "copy-scene-change",
+		"about": "A scene copied and changed.",
+		"steps": [
+			{ "say": "make a scene with drums, bass and chords" },
+			{ "say": "copy scene 1 to scene 3 and change the chords there" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "export-midi",
+		"about": "An export question.",
+		"steps": [
+			{ "say": "make a bassline" },
+			{ "say": "can I export this as a midi file?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "kick-harder",
+		"about": "Shaping one drum sound.",
+		"steps": [{ "say": "make a beat" }, { "say": "make the kick hit harder" }, { "why": true }]
+	},
+	{
+		"name": "half-tempo-same-feel",
+		"about": "A tempo change that keeps the feel.",
+		"steps": [
+			{ "say": "make a beat at 140 bpm" },
+			{ "say": "halve the tempo but keep the beat feeling the same speed" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "melody-ends-root",
+		"about": "An edit by musical role.",
+		"steps": [
+			{ "say": "write a melody in G major on track 5" },
+			{ "say": "make it end on the root note" },
+			{ "why": true }
+		]
+	}
+]

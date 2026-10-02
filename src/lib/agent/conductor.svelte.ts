@@ -273,7 +273,15 @@ export function askedTempo(text: string): number | null {
  */
 function backAgain(line: string): string {
 	const m = /^(.+?) plays pattern (\d+) → (\d+)/.exec(line);
-	return m ? `${m[1]} plays pattern ${m[2]} again, not ${m[3]}` : line;
+	if (m) return `${m[1]} plays pattern ${m[2]} again, not ${m[3]}`;
+	// one value back as it was, said with the value it has now (an agent read "groove amount 0 →
+	// 40" under "no longer so" as the amount being 40 again)
+	const one = /^([^:→]+?) (\S+) → (\S+)( [a-z]+)?$/.exec(line);
+	if (one) {
+		const unit = one[4] ?? '';
+		return `${one[1]} ${one[2]}${unit} again, not ${one[3]}${unit}`;
+	}
+	return `${line}, undone`;
 }
 
 /** The agent behind the panel. Create with {@link Conductor.create}. */
