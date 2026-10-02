@@ -59,7 +59,8 @@ it), and the result says so. Readings then group the bars that way. Double time 
 
 Parts sit where the presets sound best: a bass mostly between E1 and E3 (a sub bass C1–C2), chords
 and pads around middle C (C3–C5), a lead or melody above them (C4–C6), so the parts do not crowd one
-another.
+another. A harmony in the key is the melody copied with scale_steps (copy_track, key; 2 a third up,
+−5 a sixth down), and the result reads it against the melody, so say the intervals it gives.
 
 A feel against the tempo is the parts, not the tempo: faster at the same tempo is busier hats
 (sixteenths), less swing, a busier bass; slower is the reverse, or half time (the snare on 3).

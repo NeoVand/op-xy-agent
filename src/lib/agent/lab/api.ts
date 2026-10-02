@@ -245,6 +245,8 @@ export interface PatternWrite {
 	 * x a hit at velocity, X an accent, o soft, 1–9 a hit that loud, . a rest), with notes or alone.
 	 */
 	readonly grid?: Readonly<Record<string, string>>;
+	/** With grid: the sounds its lines name are replaced, every other note of the pattern stays. */
+	readonly merge?: boolean;
 	/**
 	 * At most 120, in any order; an empty list clears the pattern. Or one string, a word a note
 	 * ("1:A2:4 5:C3+E3:2"), as write_pattern takes it.

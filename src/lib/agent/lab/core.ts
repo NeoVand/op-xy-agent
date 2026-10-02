@@ -267,7 +267,10 @@ const patternWrite = z.strictObject({
 	velocity: z.int().min(1).max(127).optional(),
 	// a drum track's lines by sound name, as write_pattern's grid ({"closed hat": "x.x. x.x."}): an
 	// agent's hats went in by number, unsure the kit put them there
-	grid: z.record(z.string().min(1).max(40), z.string().max(400)).optional()
+	grid: z.record(z.string().min(1).max(40), z.string().max(400)).optional(),
+	// with a grid, the sounds it names replace theirs and the rest of the pattern stays, as
+	// write_pattern's merge (a program's hat takes failed on it twice)
+	merge: z.boolean().optional()
 });
 
 const arrangementWrite = z.strictObject({
@@ -548,11 +551,33 @@ export function createLab(options: LabOptions): LabSession {
 					...(offset ? { offset } : {})
 				};
 			});
+			if (w.merge && !w.grid) {
+				throw new LabError(
+					'writePattern: merge goes with a grid (the sounds its lines name are replaced, the rest kept)'
+				);
+			}
+			// merge: the pattern's notes of the sounds no grid line names, kept as they are
+			const before = w.merge ? virtual.readPattern(t, w.pattern ?? 1) : null;
+			if (before) {
+				const kit = t <= 8 ? virtual.readSound(t).kit : undefined;
+				const named = new Set(Object.keys(w.grid ?? {}).map((key) => gridKey(key, kit)));
+				for (const n of before.notes) {
+					if (named.has(n.note)) continue;
+					notes.push({
+						step: n.step,
+						note: n.note,
+						velocity: n.velocity,
+						length: n.length,
+						...(n.offset ? { offset: n.offset } : {})
+					});
+				}
+			}
 			const last = notes.reduce((max, n) => Math.max(max, n.step), 1);
 			return virtual.writePattern(t, {
 				pattern: w.pattern ?? 1,
-				bars: w.bars ?? Math.ceil(last / 16),
-				length: w.length,
+				bars:
+					w.bars ?? (before ? Math.max(before.bars, Math.ceil(last / 16)) : Math.ceil(last / 16)),
+				length: w.length ?? (before && w.bars === undefined ? before.length : undefined),
 				scale: w.scale,
 				...(w.stay ? { play: false } : {}),
 				...(w.groove !== undefined ? { groove: w.groove } : {}),

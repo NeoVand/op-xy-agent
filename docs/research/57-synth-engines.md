@@ -538,6 +538,13 @@ Our models:
   - The voice icon appears at 17 voices and blinks red on a steal.
   - A CPU limiter cuts notes under load.
 - Stealing order [I]: released voices first, then the track's own oldest, then others (`allocator.ts`).
+- Play modes as the replica plays them [I] (synth convention; the unit check is in §6, still to do):
+  poly gives every note a voice. Mono gives the track one voice, each note starting its envelopes
+  afresh, and with portamento up every note glides from the last. Legato gives one voice too, but a
+  note that starts while the last still sounds carries on from it without a new attack, gliding
+  there with portamento up; a note that starts just as the last ends (touching, not overlapping)
+  starts afresh, and when the newest key lets go the voice falls back to one still held
+  (`sound/engine.ts`).
 
 **FX** (send effects, established parameters):
 

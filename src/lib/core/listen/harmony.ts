@@ -55,9 +55,15 @@ export function keySpelling(
 	tonic: number,
 	mode: 'major' | 'minor',
 	/** Sharps or flats as a key's name gives them ("D# minor" spells sharps, Eb minor's twin). */
-	prefer?: 'sharps' | 'flats'
+	prefer?: 'sharps' | 'flats',
+	/**
+	 * The letter its tonic is named by, 0 (C) … 6 (B): its seven notes then take seven letters, as
+	 * its key signature spells them, E# in F# major and Cb in Gb major (a V chord in F# major read
+	 * C# F G#). Without it, E# and B# read F and C.
+	 */
+	letter?: number
 ): readonly string[] {
-	const names: readonly string[] = prefer
+	const family: readonly string[] = prefer
 		? prefer === 'sharps'
 			? SHARP_NAMES
 			: FLAT_NAMES
@@ -66,16 +72,40 @@ export function keySpelling(
 			: SHARP_KEYS[mode].has(tonic)
 				? SHARP_NAMES
 				: FLAT_NAMES;
-	if (mode === 'major') return names;
-	// the leading note a minor key raises is its seventh letter sharpened: C# in D minor, not Db
-	// (an agent wrote C# and read it back as Db); E# and B# stay F and C
 	const letters = 'CDEFGAB';
 	const naturals = [0, 2, 4, 5, 7, 9, 11];
+	let names: readonly string[] = family;
+	if (letter !== undefined) {
+		const own = [...family];
+		const steps = mode === 'major' ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+		steps.forEach((step, i) => {
+			const pc = (tonic + step) % 12;
+			const l = (letter + i) % 7;
+			const shift = (pc - naturals[l] + 12) % 12;
+			// one sharp or flat at most: a double one keeps the family's name
+			const accidental = shift === 0 ? '' : shift === 1 ? '#' : shift === 11 ? 'b' : null;
+			if (accidental !== null) own[pc] = `${letters[l]}${accidental}`;
+		});
+		names = own;
+	}
+	if (mode === 'major') return names;
+	// the leading note a minor key raises is its seventh letter sharpened: C# in D minor, not Db
+	// (an agent wrote C# and read it back as Db); E# and B# stay F and C unless the key's letter is
+	// known
 	const seventh = (letters.indexOf(names[tonic][0]) + 6) % 7;
 	const lead = (tonic + 11) % 12;
 	const sharp = (lead - naturals[seventh] + 12) % 12 === 1 ? `${letters[seventh]}#` : null;
-	if (!sharp || sharp === 'E#' || sharp === 'B#' || sharp === names[lead]) return names;
+	if (!sharp || sharp === names[lead]) return names;
+	if (letter === undefined && (sharp === 'E#' || sharp === 'B#')) return names;
 	return names.map((name, pc) => (pc === lead ? sharp : name));
+}
+
+/** A spelled note with its octave: B#3 is C4 and Cb4 is B3, so their octaves count from the letter. */
+export function spelledNote(names: readonly string[], note: number): string {
+	const name = names[note % 12];
+	const octave =
+		Math.floor(note / 12) - 1 + (name.startsWith('B#') ? -1 : name.startsWith('Cb') ? 1 : 0);
+	return `${name}${octave}`;
 }
 
 /** A chord's name ("C#m7") with its root spelled from `names` ("Dbm7"); "N" stays. */

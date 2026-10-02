@@ -155,7 +155,7 @@ describe('the conductor grounds its answer', () => {
 		const text = JSON.stringify(api.messageRequests[1].body.messages);
 		expect(text).toContain('<user-changes>');
 		expect(text).toContain('tempo 120 → 97 bpm');
-		expect(text).toContain('Now: the replica is stopped.');
+		expect(text).toContain('Now: the replica is stopped, at 97 bpm.');
 		// a project with nothing written, said so (the scripted turns write no notes)
 		expect(text).toContain('Its project holds no notes yet: every pattern is empty.');
 		// and nothing when they changed nothing
@@ -297,14 +297,14 @@ describe('the conductor grounds its answer', () => {
 		expect(note.text).toContain('anything the user did on it meanwhile');
 		// and where playback stands, so the answer never guesses
 		expect(note.text).toContain(
-			'Now: the replica is playing scene 1, looping. Sounding: no track (no notes in the patterns playing).'
+			'Now: the replica is playing scene 1 at 100 bpm, looping. Sounding: no track (no notes in the patterns playing).'
 		);
 		// its own transport call needs no word
 		await conductor.send('stop it');
 		const own = api.messageRequests[3].body.messages.at(-1).content.at(-1);
 		expect(own.text).toContain('- playback stopped\n');
 		expect(own.text).not.toContain('by the user');
-		expect(own.text).toContain('Now: the replica is stopped.');
+		expect(own.text).toMatch(/Now: the replica is stopped, at \d+ bpm\./);
 	});
 
 	it('puts a lab run’s takes on the replica one at a time, and keeps the one on as the user goes on', async () => {

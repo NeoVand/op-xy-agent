@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "a2043445",
+	"bundle_hash": "71d4cea5",
 	"stats": {
 		"units": 166,
-		"facts": 1229,
+		"facts": 1230,
 		"procedures": 207,
 		"parameters": 207,
 		"verified_items": 261,
-		"words": 46733,
+		"words": 46814,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -9482,6 +9482,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "mono-legato",
+					"text": "Mono and legato both play one note at a time. Mono starts every note afresh, its envelopes from the top, and with portamento up every note glides from the last. Legato carries on from a note still sounding when the next starts, with no new attack, and glides there with portamento up; a note that starts just as the last ends starts afresh. This is how the replica plays them, from synth convention; it is not yet checked on a unit.",
+					"source": "docs/research/57-synth-engines.md#4-the-shared-voice",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
 					"id": "portamento-style",
 					"text": "The curve of the portamento glide (portamento style) is set separately in the preset settings.",
 					"source": "https://teenage.engineering/guides/op-xy/instrument#preset-settings",
@@ -9617,6 +9625,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#envelopes",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/57-synth-engines.md#4-the-shared-voice",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#preset-settings",

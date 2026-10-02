@@ -256,6 +256,17 @@ describe('commits', () => {
 		expect(p.notes.filter((n) => n.sound === 'snare 1').map((n) => n.step)).toEqual([5, 13]);
 		expect(p.notes.filter((n) => n.sound === 'open hat 1')).toHaveLength(4);
 		expect(p.notes.every((n) => n.velocity === 90)).toBe(true);
+		// merge: the hats replaced, the snare and open hat kept
+		const merged = f.writePattern(1, {
+			grid: { 'closed hat': 'x.x. x.x. x.x. x.x.' },
+			merge: true
+		});
+		expect(merged.notes.filter((n) => n.sound === 'snare 1')).toHaveLength(2);
+		expect(merged.notes.filter((n) => n.sound === 'closed hat 1')).toHaveLength(8);
+		expect(merged.notes.filter((n) => n.sound === 'open hat 1')).toHaveLength(4);
+		expect(() => f.writePattern(1, { notes: '1:53', merge: true })).toThrow(
+			/merge goes with a grid/
+		);
 		expect(() => f.writePattern(1, { grid: { gong: 'x...' } })).toThrow(
 			/writePattern: grid "gong" is no sound, note name or number of track 1 \(its sounds: kick 1/
 		);

@@ -6,6 +6,8 @@
  * those pages are read; a change no page shows is still named, so `same` never hides one.
  */
 import { describeNoteChange } from '$lib/sim/pattern-change';
+import { noteName } from '$lib/core/midi/notes';
+import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
 import { AUX_NAMES, GROOVES, type SimState, type TrackState } from '$lib/sim/params';
 import { extrasChange } from '$lib/app/replica-diff';
 import { planPlace, playStep, pageValues, type Place } from '$lib/sim/navigator';
@@ -149,7 +151,12 @@ function patternText(p: Pattern): string {
 }
 
 /** What changed in a pattern: its notes, bars, length and scale by value, the rest by name. */
-function patternChange(x: Pattern, y: Pattern, track?: TrackState): string {
+function patternChange(
+	x: Pattern,
+	y: Pattern,
+	track?: TrackState,
+	soundOf?: (note: number) => string | null
+): string {
 	const parts: string[] = [];
 	const nx = noteCount(x);
 	const ny = noteCount(y);
@@ -158,7 +165,8 @@ function patternChange(x: Pattern, y: Pattern, track?: TrackState): string {
 	// changed" left an agent unsure its humanize had done anything
 	if (notes(x) !== notes(y)) {
 		parts.push(
-			describeNoteChange(x, y) ??
+			// on a drum track, the sounds by name: a hat moved to the open hat read "new pitches"
+			describeNoteChange(x, y, soundOf, track?.engine === 'drum') ??
 				(nx !== ny ? `${nx} → ${plural(ny, 'note')}` : `notes changed (${plural(ny, 'note')})`)
 		);
 	}
@@ -184,6 +192,18 @@ function patternChange(x: Pattern, y: Pattern, track?: TrackState): string {
 	return parts.join(', ') || 'changed';
 }
 
+/** A note's sound on a drum track ("closed hat 1"), its name on any other ("B1"). */
+function soundsOf(s: SimState, t: number): (note: number) => string | null {
+	const keys = s.tracks[t]?.engine === 'drum' ? s.areas.sample.tracks[t]?.keys : undefined;
+	return keys
+		? (note) => {
+				const file = keys[note - FIRST_NOTE];
+				return file ? soundName(file.name) : null;
+			}
+		: (note) =>
+				note >= 0 && note <= 127 ? noteName(note, { ascii: true, convention: 'c4' }) : null;
+}
+
 function patternLines(a: SimState, b: SimState, t: number): string[] {
 	const x = trackSequence(a, t);
 	const y = trackSequence(b, t);
@@ -196,7 +216,7 @@ function patternLines(a: SimState, b: SimState, t: number): string[] {
 		const label = `${trackName(t)} pattern ${i + 1}`;
 		if (!now) out.push(`${label}: removed`);
 		else if (!was) out.push(`${label}: new, ${patternText(now)}`);
-		else out.push(`${label}: ${patternChange(was, now, b.tracks[t])}`);
+		else out.push(`${label}: ${patternChange(was, now, b.tracks[t], soundsOf(b, t))}`);
 	}
 	if (x.current !== y.current) {
 		out.push(`${trackName(t)} plays pattern ${y.current + 1} (was ${x.current + 1})`);

@@ -277,6 +277,25 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   the lab's takes read back their drum lines and notes, and its writePattern takes a drum grid by
   sound name; transport's description asks for the click off before playing; the projects skill
   names the project card's buttons.
+- **Probe round twenty-two (2026-10-02), 18 scenarios (`probe-scenarios-22.json`: re-checks (slides
+  that glide, a fresh project, a harmony a sixth below, a two-second swell, the swing already at 0,
+  three lab hat takes, how the arpeggiator works, a roll taken off, F# major) and new kinds: an open
+  hat on the last sixteenth, a song built over four turns, polyphony, mono against legato, a
+  question-and-answer melody, variation every fourth bar, an external synth on channel 3, Dilla
+  swing, a filter opening over four bars):** the re-checks held (new project, harmony read, times in
+  seconds, `none`); two failed calls (merge in the lab). Fixes: step locks shown while the replica
+  plays pin the step keys first (a bar tap, as on the device), since the keys follow the playhead
+  and every lock of a cutoff ramp had landed a bar early, and a show that misses names what it
+  missed; write_pattern `bar` with `merge` keeps that bar's other sounds (it took the kick and hats
+  of a bar given a snare fill); the lab's take read-backs now cross the worker (its message schema
+  dropped them), its writePattern takes `merge`, and its change lines name drum sounds; "groove 0"
+  walks to the groove amount (E3) like the plan that sets it; envelope stages take a time ("2 s");
+  write_pattern `scale_steps` with key writes a harmony along the scale (a sixth below from
+  copy_track); a named key spells its seven notes on seven letters (E# in F# major, Cb in Gb
+  major); the groove note names the sounds it leaves straight; the Now line gives the tempo; change
+  lines say first when another project opened, and name the bar menu's shape and note length; the
+  midi engine's load says the unit's browser did not list it; the manual: mono and legato as the
+  replica plays them (derived, the unit check pending).
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

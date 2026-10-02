@@ -79,6 +79,8 @@ const resultSchema = z.object({
 			z.object({
 				label: text(60),
 				changes: z.array(text(2_000)).max(200),
+				// what each take holds, read back (dropped here once, so no agent ever saw it)
+				reads: z.array(text(2_000)).max(8).optional(),
 				base: text(MAX_PROJECT_CHARS),
 				project: text(MAX_PROJECT_CHARS)
 			})

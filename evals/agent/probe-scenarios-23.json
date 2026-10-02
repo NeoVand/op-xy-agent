@@ -1,0 +1,154 @@
+[
+	{
+		"name": "ramp-while-playing",
+		"about": "Re-check: step locks set while the replica plays land on their steps.",
+		"steps": [
+			{ "say": "make a 4 bar chord loop on track 7 and play it" },
+			{ "say": "while it plays, make the filter open a bit more each bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fill-in-bar-2",
+		"about": "Re-check: one bar merged, the rest of that bar kept.",
+		"steps": [
+			{ "say": "make a 2 bar beat" },
+			{ "say": "add a snare fill only at the end of bar 2, keep everything else in that bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-merge-takes",
+		"about": "Re-check: lab takes written with merge, read back.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "try two different kick patterns for me to compare, keep the rest" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swell-3-seconds",
+		"about": "Re-check: an envelope stage set by its time.",
+		"steps": [
+			{ "say": "make the pad on track 8 swell in over 3 seconds, and put a chord on it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "thirds-above",
+		"about": "Re-check: a harmony by scale steps.",
+		"steps": [
+			{ "say": "write a 2 bar melody on track 5 in A minor" },
+			{ "say": "add a harmony a third above on track 6" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "gb-major",
+		"about": "Re-check: a flat key's own letters (Cb).",
+		"steps": [
+			{ "say": "write a melody in Gb major on track 5 and name its notes" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lofi-swung-hats",
+		"about": "Re-check: the groove note by sound.",
+		"steps": [{ "say": "make a lofi beat where the hats really swing" }, { "why": true }]
+	},
+	{
+		"name": "synth-on-channel-2",
+		"about": "Re-check: the midi engine and the unit's own browser.",
+		"steps": [{ "say": "use track 6 to play my synth on midi channel 2" }, { "why": true }]
+	},
+	{
+		"name": "groove-amount-walk",
+		"about": "Re-check: a walkthrough to the groove amount.",
+		"steps": [
+			{ "say": "light the keys so I can set the groove to 40 myself" },
+			{ "follow": 3 },
+			{ "say": "did I do it right?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "beat-lesson",
+		"about": "A lesson followed by hand over several steps.",
+		"steps": [
+			{ "say": "teach me to put a kick on every beat on track 1, light the keys" },
+			{ "follow": 6 },
+			{ "say": "what next?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "busier-copy",
+		"about": "A variation in another pattern.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "copy it to pattern 2 and make pattern 2 busier, then play pattern 1 then 2" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-too-loud",
+		"about": "A balance between tracks.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "the bass is too loud compared to the drums" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "crash-every-4",
+		"about": "A song-level accent: a crash every four bars.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus, 4 bars each" },
+			{ "say": "put a crash on the first beat of every 4 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "breakdown-song",
+		"about": "A structure asked for at once.",
+		"steps": [
+			{
+				"say": "set up a song: 4 bars of just drums, then 8 bars with everything, then a 4 bar breakdown with only the chords"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-bpm",
+		"about": "A question about the state after building.",
+		"steps": [
+			{ "say": "make a drum and bass beat" },
+			{ "say": "what bpm is this at, and how long is one loop?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "daft-punk-like",
+		"about": "A style reference without copying.",
+		"steps": [
+			{
+				"say": "make something in the spirit of Daft Punk, a filtered disco loop, without copying a song"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "funk-carioca",
+		"about": "A request in Portuguese, a genre not tried yet.",
+		"steps": [{ "say": "faça uma batida de funk carioca com um baixo" }, { "why": true }]
+	},
+	{
+		"name": "stop-and-reset-tempo",
+		"about": "Two small asks at once.",
+		"steps": [
+			{ "say": "make a beat at 140" },
+			{ "say": "stop it and put the tempo back to the default" },
+			{ "why": true }
+		]
+	}
+]

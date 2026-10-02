@@ -21,6 +21,7 @@ import { BAR } from '$lib/sim/areas/arrange/model';
 import { grooveReachAll } from '../groove-reach';
 import { lockReach } from '../lock-reach';
 import { slidesNote } from '../slides';
+import { nearestStage, stageSeconds, timeText, type EnvelopeStage } from '$lib/sound/times';
 import type { TimeSignature } from '$lib/sim/areas/arrange/state';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
 import type { NavGoal } from '../virtual-opxy';
@@ -79,7 +80,7 @@ const goalInput = z.object({
 		.max(60)
 		.optional()
 		.describe(
-			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack", "portamento", "fx ii send", "lfo amount", "lfo speed" (a number is a free speed, 0–99; synced to the tempo: "sync 16", "1 bar", "1/4"), "tempo", "groove", "metronome" (on or off; a number is its level, and 0 is silent with it still on), an engine parameter such as "shape" or "detune"), "filter" and "lfo" (on, off: their page key pressed again switches them), a list or a load ("engine", "preset", "filter type", "lfo type": value is the name, e.g. "wavetable", "pluck/beach bum", "ladder", "duck"; an engine or preset is loaded from the preset browser shift + M1 brings up, which replaces the whole sound; the replica lists the external midi engine last, which OS 1.1.33 does not show), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome") and "source type" (audio, notes), the value and random LFOs\' "lfo destination" (syn, env, filter, or their free twins "syn free"…; a new project’s is syn, so name it) and "lfo parameter" (the destination page\'s encoder 1–4, or by name: cutoff, resonance, env amount, key tracking; attack, decay, sustain, release), a sampler track\'s own values with key naming the key ("tune", "start", "end", "play mode" (key, oneshot, mute group, loop), "direction", "pan", "fade", "gain" of a drum key; "start", "loop start", "loop end", "end", "tune", "loop crossfade", "gain", "loop type" of the synth sampler or a multisampler zone), any value a page of the track shows (the midi engine\'s "channel", "bank", "cc slot 1", "cc slot 1 number"), or an id ("filter.cutoff"); "sound from" copies another track\'s whole sound onto this one (value: that track, 1–8; its notes and mixer strip stay). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II and their "effect": chorus, delay, dist, lofi, phaser, reverb; "speed" on the tape; the brain\'s "mode" (auto, manual), "root", "scale", "link"; a routing page\'s "track 1"…"track 8" (the brain: in or out; tape, FX and external audio: the send level; tracks 5–8 are a click away, which the plan does); an LFO\'s "lfo speed", "lfo amount"; "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii", "mute"; "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). With area player: "type" (arpeggio, hold, maestro), "player" (on, off), maestro\'s "chord" (its notes, "A3 C4 E4": stored with shift held on the keyboard, in the octave the keyboard plays) and the page\'s values (the arpeggio\'s "speed": 1/4, 1/8, 1/8t, 1/16, 1/16t, 1/32, 1/32t, 1/64; "pattern": up, down, up/down, up/repeat/down, random, play order; "range", "hold"; its shift layer "length", "style", "glide", "stereo"). With area arrange: "pattern" (the pattern the track plays; new ones are added as needed), "scene" (1–99; an empty one starts as a copy of the current), "song" (its scenes in order, e.g. "1 1 2 2") and "loop" (on, off). With area bar (the bar menu, bar held): "track scale" (1–8, 16, 1/2), "bars" (1–4), "quant", "length", "groove", "shape". With area sample: the record page\'s "source" (mic, line in, usb), "gain", "threshold", and on a drum track "even slices" or "transient slices" (value: how many; key: the key whose sample is cut; the slices land on the keys from F3). With area com: "multi-out", "bluetooth advertising", "charging". With area project: a project setting ("time signature", "transpose", "autosave"…) or "save", "save as" and "new project" (no value: M2 on the project page, shift + M2 and M1 under the name it offers, or hold M1: starting over with a new project\'s sounds and nothing written, the open one saved first; for "delete everything", "start over"). Without page, the page that shows it.'
+			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack" (an envelope stage takes a time too, "2 s" or "300 ms": the nearest value is set and said), "portamento", "fx ii send", "lfo amount", "lfo speed" (a number is a free speed, 0–99; synced to the tempo: "sync 16", "1 bar", "1/4"), "tempo", "groove", "metronome" (on or off; a number is its level, and 0 is silent with it still on), an engine parameter such as "shape" or "detune"), "filter" and "lfo" (on, off: their page key pressed again switches them), a list or a load ("engine", "preset", "filter type", "lfo type": value is the name, e.g. "wavetable", "pluck/beach bum", "ladder", "duck"; an engine or preset is loaded from the preset browser shift + M1 brings up, which replaces the whole sound; the replica lists the external midi engine last, which OS 1.1.33 does not show), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome") and "source type" (audio, notes), the value and random LFOs\' "lfo destination" (syn, env, filter, or their free twins "syn free"…; a new project’s is syn, so name it) and "lfo parameter" (the destination page\'s encoder 1–4, or by name: cutoff, resonance, env amount, key tracking; attack, decay, sustain, release), a sampler track\'s own values with key naming the key ("tune", "start", "end", "play mode" (key, oneshot, mute group, loop), "direction", "pan", "fade", "gain" of a drum key; "start", "loop start", "loop end", "end", "tune", "loop crossfade", "gain", "loop type" of the synth sampler or a multisampler zone), any value a page of the track shows (the midi engine\'s "channel", "bank", "cc slot 1", "cc slot 1 number"), or an id ("filter.cutoff"); "sound from" copies another track\'s whole sound onto this one (value: that track, 1–8; its notes and mixer strip stay). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II and their "effect": chorus, delay, dist, lofi, phaser, reverb; "speed" on the tape; the brain\'s "mode" (auto, manual), "root", "scale", "link"; a routing page\'s "track 1"…"track 8" (the brain: in or out; tape, FX and external audio: the send level; tracks 5–8 are a click away, which the plan does); an LFO\'s "lfo speed", "lfo amount"; "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii", "mute"; "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). With area player: "type" (arpeggio, hold, maestro), "player" (on, off), maestro\'s "chord" (its notes, "A3 C4 E4": stored with shift held on the keyboard, in the octave the keyboard plays) and the page\'s values (the arpeggio\'s "speed": 1/4, 1/8, 1/8t, 1/16, 1/16t, 1/32, 1/32t, 1/64; "pattern": up, down, up/down, up/repeat/down, random, play order; "range", "hold"; its shift layer "length", "style", "glide", "stereo"). With area arrange: "pattern" (the pattern the track plays; new ones are added as needed), "scene" (1–99; an empty one starts as a copy of the current), "song" (its scenes in order, e.g. "1 1 2 2") and "loop" (on, off). With area bar (the bar menu, bar held): "track scale" (1–8, 16, 1/2), "bars" (1–4), "quant", "length", "groove", "shape". With area sample: the record page\'s "source" (mic, line in, usb), "gain", "threshold", and on a drum track "even slices" or "transient slices" (value: how many; key: the key whose sample is cut; the slices land on the keys from F3). With area com: "multi-out", "bluetooth advertising", "charging". With area project: a project setting ("time signature", "transpose", "autosave"…) or "save", "save as" and "new project" (no value: M2 on the project page, shift + M2 and M1 under the name it offers, or hold M1: starting over with a new project\'s sounds and nothing written, the open one saved first; for "delete everything", "start over"). Without page, the page that shows it.'
 		),
 	value: settingValue
 		.optional()
@@ -280,10 +281,37 @@ export const planStepsTool = defineTool({
 	description:
 		'The exact steps from where the replica stands now to a page ("the filter page of track 3", "mix M2", "the tempo page", "track 4\'s player") or to a parameter set to a value ("track 3 cutoff 40", "tempo 128", "amp release 60", the project setting "time signature 7/8"), tried on a copy of the simulator first so they are known to work. Each step is a key combo in the key grammar; turns carry the number of detents and the direction; each step says what the screen shows after it. Use it for every "how do I get to / set …" question instead of working the keys out yourself. With show, it also animates the steps on the replica (it ends up there, as if the user had pressed the keys); nothing is sent to a connected device.',
 	input: goalInput,
-	async run(input, ctx) {
+	async run(asked, ctx) {
 		const virtual = ctx.env.virtual;
 		if (!virtual)
 			return errorResult('There is no replica to plan from in this session.', 'no replica');
+		// the groove's type is a list of names, and a number is its amount (E3, swing), as the planner
+		// reads it: planned as swing throughout, so a walkthrough to "groove 0" no longer lit E2
+		const amount =
+			asked.value !== undefined &&
+			/^(groove|groove type)$/i.test((asked.param ?? '').trim()) &&
+			/^[+\-−]?\d+(\.\d+)?$/.test(String(asked.value).trim());
+		const grooved = amount ? { ...asked, param: 'swing' } : asked;
+		// an envelope stage by its time ("amp attack", "2 s"): the nearest value, said (an agent wanting
+		// a swell of about two seconds guessed 54 from two anchors and got 2.3 s)
+		const timings: string[] = [];
+		const timed = <T extends { param?: string; value?: string | number }>(s: T): T => {
+			const stage = /\b(attack|decay|release)\b/i.exec(s.param ?? '')?.[1].toLowerCase();
+			const time = /^(\d+(?:\.\d+)?)\s*(ms|s|sec|secs|seconds?)$/i.exec(
+				String(s.value ?? '').trim()
+			);
+			if (!stage || !time) return s;
+			const seconds = Number(time[1]) / (time[2].toLowerCase() === 'ms' ? 1000 : 1);
+			const value = nearestStage(stage as EnvelopeStage, seconds);
+			timings.push(
+				`${s.param} ${s.value}: ${value} is the nearest (${timeText(stageSeconds(stage as EnvelopeStage, value))})`
+			);
+			return { ...s, value };
+		};
+		const input = {
+			...timed(grooved),
+			...(grooved.settings ? { settings: grooved.settings.map(timed) } : {})
+		};
 		const goal = toGoal(input, ctx.env);
 		if (typeof goal === 'string') return errorResult(goal, 'bad goal');
 		// where the plan starts: a plan with no track key once read as "track 3 is selected" unseen
@@ -295,7 +323,7 @@ export const planStepsTool = defineTool({
 		// a value already set: its plan goes only to its page, the keys the way there takes with no
 		// value (tempo 120 on a new project lit the tempo key, and nothing said it was 120 already; an
 		// agent asked to teach a send it had just set got "nothing to do" and no keys to light)
-		const what = input.param ?? 'the value';
+		const what = amount ? 'swing (the groove amount, E3)' : (input.param ?? 'the value');
 		let already: string | null = null;
 		if (!('settings' in goal) && plan.reached && input.value !== undefined) {
 			const there = toGoal({ ...input, value: undefined }, ctx.env);
@@ -350,6 +378,7 @@ export const planStepsTool = defineTool({
 				{
 					guided: true,
 					from,
+					...(timings.length ? { times: timings.join('; ') } : {}),
 					...(alreadyText ? { already: alreadyText } : {}),
 					...planView(plan),
 					...(turn
@@ -375,6 +404,7 @@ export const planStepsTool = defineTool({
 					...(already
 						? { already: `${already}: the steps only go to its page; nothing needs turning.` }
 						: {}),
+					...(timings.length ? { times: timings.join('; ') } : {}),
 					// first, so it is not read past (an agent took a plan for the groove as set)
 					...(setsValues && !already
 						? {
@@ -403,6 +433,18 @@ export const planStepsTool = defineTool({
 			);
 		}
 		ctx.env.guide?.stop();
+		// step locks while the replica plays: the step keys follow the playhead from bar to bar, so
+		// a plan made a moment before lands a bar off (an agent's four cutoff locks each went a bar
+		// early). A bar tap pins the keys, as picking a bar during playback does on the device, and
+		// the plan is made again from there.
+		const locking =
+			'settings' in goal
+				? goal.settings.some((g) => 'step' in g && g.step !== undefined)
+				: 'step' in goal && goal.step !== undefined;
+		if (locking && virtual.status().playing && !ctx.signal.aborted) {
+			await replica.animate('bar').done;
+			plan = virtual.plan(goal);
+		}
 		for (const step of plan.steps) {
 			if (ctx.signal.aborted) break;
 			const clicks = Math.abs(step.clicks ?? 0);
@@ -423,6 +465,22 @@ export const planStepsTool = defineTool({
 			'settings' in goal
 				? after.steps.length === 0
 				: after.reached && (after.steps.length === 0 || plan.action === true);
+		// which settings do not read their value on the replica now, named (an agent took each
+		// setting's reached for landed, with arrived false beside it)
+		const missed =
+			!arrived && 'parts' in after
+				? after.parts
+						.filter((p) => p.steps.length > 0)
+						.map((p) => {
+							const g = p.goal as {
+								param?: string;
+								label?: string;
+								value?: unknown;
+								step?: number;
+							};
+							return `${g.label ?? g.param ?? '?'} ${String(g.value ?? '')}${g.step !== undefined ? ` on step ${g.step}` : ''}`.trim();
+						})
+				: [];
 		// a new time signature regroups the bars and leaves the patterns' steps as they were (an
 		// agent turning a song into a waltz could not tell whether its patterns had been reflowed)
 		const signature = virtual.status().signature;
@@ -489,10 +547,21 @@ export const planStepsTool = defineTool({
 				const sound = virtual.readSound(track);
 				return { track, preset: sound.preset, pages: sound.pages };
 			});
+		// the midi engine, which OS 1.1.33's preset browser did not list (an agent told the user a
+		// track "is now on the midi engine" and only remembered that afterwards)
+		const midi = loaded.some((l) => l.pages['M1 engine']?.startsWith('midi:'))
+			? 'The replica lists the midi engine, but the preset browser on OS 1.1.33 showed none: on the unit, the external MIDI track (auxiliary T3, its channel on M1) is the sure way, so say so.'
+			: null;
 		return jsonResult(
 			{
 				shown: true,
 				arrived,
+				...(missed.length
+					? {
+							missed: `NOT ON THE REPLICA NOW: ${missed.join('; ')}. Their plans above were made on a copy; plan them again (show) and check before you answer.`
+						}
+					: {}),
+				...(timings.length ? { times: timings.join('; ') } : {}),
 				...(already
 					? { already: `${already}: the steps only went to its page; nothing was turned.` }
 					: {}),
@@ -501,6 +570,7 @@ export const planStepsTool = defineTool({
 				...(reach.length ? { groove: reach.join(' ') } : {}),
 				...(shared.length ? { locks: shared.join(' ') } : {}),
 				...(slides.length ? { slides: slides.join(' ') } : {}),
+				...(midi ? { unit: midi } : {}),
 				...(loaded.length
 					? {
 							loaded: loaded.length === 1 ? loaded[0] : loaded,

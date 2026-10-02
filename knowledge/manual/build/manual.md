@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1229 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1230 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -1692,10 +1692,11 @@ mixer. All four are saved with the preset.
 
 Facts:
 - Play mode (poly, mono or legato) sets both how notes are articulated and how many can sound at once. [#play-mode] [s1]
-- The curve of the portamento glide (portamento style) is set separately in the preset settings. [#portamento-style] [s2]
-- Turning bend range fully anti-clockwise switches pitch bending off, which is what you want when the pitchbend strip is routed to another target. [#bend-off] [s3]
-- Over MIDI, CC28–31 reach these four settings; play mode reads the value as one of three steps. [#midi-ccs] (community-verified) [s4]
-- Holding `shift` on `M2` brings up a white card of four rows over the dimmed page, each with its encoder's dot — play mode (poly, mono or legato), portamento (off, then numbers), bend range (semitones, up to an octave) and preset volume (a number). [#card] (verified 1.1.33) [s5]
+- Mono and legato both play one note at a time. Mono starts every note afresh, its envelopes from the top, and with portamento up every note glides from the last. Legato carries on from a note still sounding when the next starts, with no new attack, and glides there with portamento up; a note that starts just as the last ends starts afresh. This is how the replica plays them, from synth convention; it is not yet checked on a unit. [#mono-legato] (derived) [s2]
+- The curve of the portamento glide (portamento style) is set separately in the preset settings. [#portamento-style] [s3]
+- Turning bend range fully anti-clockwise switches pitch bending off, which is what you want when the pitchbend strip is routed to another target. [#bend-off] [s4]
+- Over MIDI, CC28–31 reach these four settings; play mode reads the value as one of three steps. [#midi-ccs] (community-verified) [s5]
+- Holding `shift` on `M2` brings up a white card of four rows over the dimmed page, each with its encoder's dot — play mode (poly, mono or legato), portamento (off, then numbers), bend range (semitones, up to an octave) and preset volume (a number). [#card] (verified 1.1.33) [s6]
 
 Procedures:
 - Switch a track between poly, mono and legato [#set-mode] [s1]
@@ -1714,7 +1715,7 @@ Parameters:
 
 Related: [instrument.envelopes], [instrument.preset-settings], [instrument.overview]
 
-Sources: s1 guide:instrument#envelopes · s2 guide:instrument#preset-settings · s3 guide:how-to#pitch-bend · s4 note 20 · s5 note 59
+Sources: s1 guide:instrument#envelopes · s2 note 57 · s3 guide:instrument#preset-settings · s4 guide:how-to#pitch-bend · s5 note 20 · s6 note 59
 
 ### Filter (M3) [instrument.filter]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33

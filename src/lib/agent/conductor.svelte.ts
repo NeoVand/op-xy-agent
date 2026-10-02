@@ -221,7 +221,9 @@ function playingNow(virtual: VirtualOpxy): string {
 		const empty = status.tracks.every((t) => t.notes === 0)
 			? ' Its project holds no notes yet: every pattern is empty.'
 			: '';
-		if (!status.playing) return `the replica is stopped.${empty}${recording}`;
+		// and the tempo (an agent wrote "at the default tempo" without knowing it)
+		const bpm = `${Math.round(status.bpm * 10) / 10} bpm`;
+		if (!status.playing) return `the replica is stopped, at ${bpm}.${empty}${recording}`;
 		// which tracks play notes now, and which are muted (an agent told of a loud hat could check
 		// only the track it wrote)
 		const name = (t: { track: number }) => (t.track <= 8 ? `T${t.track}` : `aux T${t.track - 8}`);
@@ -240,10 +242,10 @@ function playingNow(virtual: VirtualOpxy): string {
 			const entry = a.at?.entry ? `entry ${a.at.entry} of ${a.song.order.length}` : '';
 			const parts = [entry, bar].filter(Boolean);
 			const where = parts.length ? ` (${parts.join(', ')})` : '';
-			return `the replica is playing its song (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now${where}.${tracks}${queued}${recording}`;
+			return `the replica is playing its song at ${bpm} (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now${where}.${tracks}${queued}${recording}`;
 		}
 		const held = a.song.order.length > 1 ? ' (picked, so the song does not move on)' : '';
-		return `the replica is playing scene ${a.scene}, looping${held}${bar ? `, at ${bar}` : ''}.${tracks}${queued}${recording}`;
+		return `the replica is playing scene ${a.scene} at ${bpm}, looping${held}${bar ? `, at ${bar}` : ''}.${tracks}${queued}${recording}`;
 	} catch {
 		return 'unknown.';
 	}

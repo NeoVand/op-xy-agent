@@ -184,6 +184,8 @@ describe('applyProject', () => {
 		expect(outcome.landed).toBeNull();
 		expect(outcome.result.takes?.map((t) => t.label)).toEqual(['A1 bass', 'D2 bass']);
 		expect(outcome.result.takes?.[0].changes[0]).toMatch(/^T3 pattern 1/);
+		// what each holds, read back across the worker's messages (once dropped there)
+		expect(outcome.result.takes?.[0].reads).toEqual(['T3 p1: 1:A1:4:100']);
 		const offer = outcome.offer!;
 		expect(replica.readPattern(3).notes).toHaveLength(0);
 		// one take on, then the other in its place, then none

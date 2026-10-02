@@ -763,6 +763,56 @@ describe('write_pattern on drums', () => {
 		expect(rolls.written.components).toEqual(['step 13: multiply 3']);
 	});
 
+	it('merges one bar: the sounds the grid names change there, the bar keeps the rest', async () => {
+		// a snare fill merged into bar 2 once took that bar's kick and hats with it
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			grid: {
+				kick: 'x... x... x... x... | x... x... x... x...',
+				'closed hat': 'x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x.'
+			}
+		});
+		const fill = json(
+			await run(writePatternTool, {
+				track: 1,
+				bar: 2,
+				merge: true,
+				grid: { snare: '.... x... .... x.xx' }
+			})
+		);
+		expect(fill.written.grid).toEqual({
+			'kick 1': 'x... x... x... x... | x... x... x... x...',
+			'snare 1': '.... .... .... .... | .... x... .... x.xx',
+			'closed hat 1': 'x.x. x.x. x.x. x.x. | x.x. x.x. x.x. x.x.'
+		});
+	});
+
+	it('writes a harmony in the key by scale steps, from another track', async () => {
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 5,
+			key: 'D major',
+			notes: '1:F#4:2 3:A4:2 5:B4:3 8:A4:1 9:F#4:2 11:E4:2 13:D4:4'
+		});
+		const sixth = json(
+			await run(writePatternTool, { track: 6, copy_track: 5, scale_steps: -5, key: 'D major' })
+		);
+		expect(sixth.written.notes).toBe(
+			'1:A3:2:100 3:C#4:2:100 5:D4:3:100 8:C#4:1:100 9:A3:2:100 11:G3:2:100 13:F#3:4:100'
+		);
+		expect(sixth.note).toMatch(/Moved 7 notes a sixth down along D major's scale \(5 steps\)/);
+		expect(sixth.note).toMatch(
+			/Against T5's line on the same steps \(7 of its 7 notes\): a sixth below throughout/
+		);
+		const keyless = await run(writePatternTool, { track: 6, scale_steps: 2 });
+		expect(keyless.isError).toBe(true);
+		expect(String(keyless.content)).toMatch(
+			/scale_steps moves notes along a key's scale, so give key too/
+		);
+	});
+
 	it('reads a harmony against the line it moves with', async () => {
 		const { run } = setup();
 		await run(writePatternTool, {
@@ -868,6 +918,21 @@ describe('write_pattern on drums', () => {
 			})
 		);
 		expect(swung.note).not.toMatch(/moves none|hardly swings/);
+		// kicks and snares between the eighths swing, the hats on them do not: said by sound
+		const kicks = json(
+			await run(writePatternTool, {
+				track: 1,
+				grid: {
+					kick: 'x..x ..x. .x.x ..x.',
+					snare: '.... x..x .... x...',
+					'closed hat': 'x.x. x.x. x.x. x.x.'
+				}
+			})
+		);
+		expect(kicks.note).toMatch(
+			/moves 4 of T1's 17 notes: kick 1 3 of 6, snare 1 1 of 3; none of closed hat 1's 8, which plays straight: shuffle moves the even sixteenths/
+		);
+		expect(kicks.note).toMatch(/Say only what swings/);
 		sim.state.tempo.swing = 0;
 		const none = json(
 			await run(writePatternTool, { track: 1, grid: { kick: 'x... x... x... x...' } })

@@ -218,6 +218,16 @@ function patternChanges(
 				if (was.groove !== now.groove) parts.push(`groove ${was.groove} → ${now.groove}`);
 				const quant = (p: Pattern) => (p.quantiseOn ? String(p.quantise) : 'off');
 				if (quant(was) !== quant(now)) parts.push(`quantise ${quant(was)} → ${quant(now)}`);
+				// the bar menu's shape, which glides from lock to lock (an agent set it for a smooth
+				// filter sweep and found no line saying it had landed)
+				if (was.smoothing !== now.smoothing) {
+					parts.push(`shape ${was.smoothing} → ${now.smoothing} (the glide between its locks)`);
+				}
+				if (was.noteLength !== now.noteLength) {
+					parts.push(
+						`note length ${Math.round(was.noteLength * 100)} → ${Math.round(now.noteLength * 100)}`
+					);
+				}
 				parts.push(...extrasChange(was, now, track));
 				if (n !== shown && !same(was.player, now.player)) parts.push('its player changed');
 			} else if (now && now.length !== now.bars * 16) parts.push(`${now.length} steps`);
@@ -334,6 +344,15 @@ export function replicaChangeList(
 	const changes: ReplicaChange[] = [];
 	const add = (line: string, controls: readonly ControlId[], brief = line) =>
 		changes.push({ line, brief, controls });
+	// another project open, said first: what follows comes with it (an agent that started a new
+	// project read the lines after as settings reverted one by one)
+	if (before.project.name !== after.project.name) {
+		add(
+			`project "${before.project.name}" → "${after.project.name}": another project is open, and the changes below are what it brought`,
+			['key.project'],
+			`project "${before.project.name}" → "${after.project.name}"`
+		);
+	}
 	if (before.transport.playing !== after.transport.playing) {
 		add(after.transport.playing ? 'playback started' : 'playback stopped', ['key.play']);
 	}

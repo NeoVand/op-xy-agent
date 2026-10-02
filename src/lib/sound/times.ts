@@ -29,3 +29,13 @@ export function envelopeTimes(reading: string): string | null {
 	});
 	return parts.length > 0 ? parts.join(', ') : null;
 }
+
+/** The page value 0–99 whose stage time is nearest `seconds` (the attack's 2 s is about 53). */
+export function nearestStage(stage: EnvelopeStage, seconds: number): number {
+	let best = 0;
+	for (let v = 1; v <= 99; v++) {
+		const err = Math.abs(Math.log(stageSeconds(stage, v) / seconds));
+		if (err < Math.abs(Math.log(stageSeconds(stage, best) / seconds))) best = v;
+	}
+	return best;
+}

@@ -24,6 +24,19 @@ describe('readPattern', () => {
 		expect(reading?.chords).toBeUndefined();
 	});
 
+	it('spells a key’s own seven notes on seven letters: E# in F# major, Cb in Gb major', () => {
+		// a V chord in F# major read C# F G#
+		const fifth = [61, 65, 68].map((note) => ({ step: 1, note, length: 4 }));
+		expect(readPattern(pattern(fifth), [], undefined, parseKey('F# major'))?.chords).toEqual([
+			'step 1: C# (C# E# G#)'
+		]);
+		const cb = [71, 75, 78].map((note) => ({ step: 1, note, length: 4 }));
+		const gb = readPattern(pattern(cb), [], undefined, parseKey('Gb major'));
+		expect(gb?.chords).toEqual(['step 1: Cb (Cb Eb Gb)']);
+		// Cb5 is B4's key (71): its octave counts from its letter
+		expect(gb?.notes).toBe('1:Cb5+Eb5+Gb5:4:100');
+	});
+
 	it('spells a key named with a sharp in sharps, its flat twin in flats', () => {
 		// the black keys in D# minor read as Bb Ab Gb Db Eb, "as D# minor spells them"
 		const notes = [70, 68, 66, 61, 63].map((note, i) => ({ step: 1 + i * 2, note, length: 2 }));
@@ -272,20 +285,23 @@ describe('parseKey', () => {
 			label: 'A minor',
 			pitchClass: 9,
 			mode: 'minor',
-			tonic: 9
+			tonic: 9,
+			letter: 5
 		});
 		expect(parseKey('D dorian')).toEqual({
 			label: 'D dorian',
 			pitchClass: 0,
 			mode: 'major',
-			tonic: 2
+			tonic: 2,
+			letter: 0
 		});
 		expect(parseKey('eb')).toEqual({
 			label: 'Eb major',
 			pitchClass: 3,
 			mode: 'major',
 			tonic: 3,
-			prefer: 'flats'
+			prefer: 'flats',
+			letter: 2
 		});
 		expect(parseKey('D# minor')?.prefer).toBe('sharps');
 		expect(parseKey('H minor')).toBeNull();

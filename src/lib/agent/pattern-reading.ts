@@ -5,7 +5,7 @@
  * the pattern plays, not what the agent meant it to play, and a chord that came out wrong (G7 where
  * it meant Gm7) shows by its name.
  */
-import { estimateKey, keySpelling, respellChord } from '$lib/core/listen/harmony';
+import { estimateKey, keySpelling, respellChord, spelledNote } from '$lib/core/listen/harmony';
 import { chordFromSymbol, chordName } from '$lib/core/music/harmony';
 import type { VirtualPattern } from './virtual-opxy';
 
@@ -72,20 +72,23 @@ export interface MeantKey {
 	 * agent's black-key melody in D# minor read back as Bb Ab Gb, "as D# minor spells them").
 	 */
 	readonly prefer?: 'sharps' | 'flats';
+	/** The letter the spelling's tonic takes, 0 (C) … 6 (B): C for D dorian, F for F# major. */
+	readonly letter?: number;
 }
 
 /** Modes by name: the major or minor key they spell as, and how far below its tonic theirs is. */
-const MODES: Readonly<Record<string, { mode: 'major' | 'minor'; down: number }>> = {
-	major: { mode: 'major', down: 0 },
-	ionian: { mode: 'major', down: 0 },
-	minor: { mode: 'minor', down: 0 },
-	aeolian: { mode: 'minor', down: 0 },
-	dorian: { mode: 'major', down: 2 },
-	phrygian: { mode: 'major', down: 4 },
-	lydian: { mode: 'major', down: 5 },
-	mixolydian: { mode: 'major', down: 7 },
-	locrian: { mode: 'major', down: 11 }
-};
+const MODES: Readonly<Record<string, { mode: 'major' | 'minor'; down: number; letters: number }>> =
+	{
+		major: { mode: 'major', down: 0, letters: 0 },
+		ionian: { mode: 'major', down: 0, letters: 0 },
+		minor: { mode: 'minor', down: 0, letters: 0 },
+		aeolian: { mode: 'minor', down: 0, letters: 0 },
+		dorian: { mode: 'major', down: 2, letters: 1 },
+		phrygian: { mode: 'major', down: 4, letters: 2 },
+		lydian: { mode: 'major', down: 5, letters: 3 },
+		mixolydian: { mode: 'major', down: 7, letters: 4 },
+		locrian: { mode: 'major', down: 11, letters: 6 }
+	};
 
 /** "A minor", "F# major", "D dorian", "Bb" (major) as a key to spell in; null for anything else. */
 export function parseKey(text: string): MeantKey | null {
@@ -105,8 +108,42 @@ export function parseKey(text: string): MeantKey | null {
 		tonic,
 		...(accidental !== 0
 			? { prefer: accidental > 0 ? ('sharps' as const) : ('flats' as const) }
-			: {})
+			: {}),
+		letter: ('CDEFGAB'.indexOf(letter) - kind.letters + 7) % 7
 	};
+}
+
+/**
+ * A note moved `steps` steps along the scale of `key` (2 a third up, −5 a sixth down), as a harmony
+ * in the key is written: an agent harmonizing a melody a sixth below worked each note out by hand.
+ * A note outside the key moves with the nearest scale note below it, keeping its distance.
+ */
+export function moveInKey(note: number, steps: number, key: MeantKey): number {
+	if (steps === 0) return note;
+	const scale = (key.mode === 'major' ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10]).map(
+		(i) => (key.pitchClass + i) % 12
+	);
+	const inKey: number[] = [];
+	for (let n = 0; n <= 127; n++) if (scale.includes(n % 12)) inKey.push(n);
+	let below = note;
+	while (below > 0 && !scale.includes(below % 12)) below--;
+	const at = inKey.indexOf(below);
+	const to = inKey[Math.max(0, Math.min(inKey.length - 1, at + steps))];
+	return to + (note - below);
+}
+
+/** Scale steps as an interval said: "a third up", "a sixth down", "an octave up". */
+export function stepsInterval(steps: number): string {
+	const size = Math.abs(steps);
+	const names = ['an octave', 'a second', 'a third', 'a fourth', 'a fifth', 'a sixth', 'a seventh'];
+	const octaves = Math.floor(size / 7);
+	const name =
+		size % 7 === 0
+			? octaves === 1
+				? 'an octave'
+				: `${octaves} octaves`
+			: `${names[size % 7]}${octaves ? ` and ${octaves === 1 ? 'an octave' : `${octaves} octaves`}` : ''}`;
+	return `${name} ${steps > 0 ? 'up' : 'down'}`;
 }
 
 /** Degrees as a major scale counts them, the pop convention: a minor key's VI reads ♭VI. */
@@ -182,11 +219,11 @@ export function readPattern(
 			? estimateKey(chroma, { written: true })
 			: null;
 	const names = meant
-		? keySpelling(meant.pitchClass, meant.mode, meant.prefer)
+		? keySpelling(meant.pitchClass, meant.mode, meant.prefer, meant.letter)
 		: found
 			? keySpelling(found.pitchClass, found.mode)
 			: keySpelling(0, 'major');
-	const noteName = (note: number) => `${names[note % 12]}${Math.floor(note / 12) - 1}`;
+	const noteName = (note: number) => spelledNote(names, note);
 
 	const slots = p.bars * 16;
 	const starting = new Map<number, number[]>();

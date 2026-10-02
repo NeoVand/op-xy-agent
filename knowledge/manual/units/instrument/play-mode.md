@@ -19,6 +19,10 @@ facts:
   - id: play-mode
     text: Play mode (poly, mono or legato) sets both how notes are articulated and how many can sound at once.
     source: https://teenage.engineering/guides/op-xy/instrument#envelopes
+  - id: mono-legato
+    text: Mono and legato both play one note at a time. Mono starts every note afresh, its envelopes from the top, and with portamento up every note glides from the last. Legato carries on from a note still sounding when the next starts, with no new attack, and glides there with portamento up; a note that starts just as the last ends starts afresh. This is how the replica plays them, from synth convention; it is not yet checked on a unit.
+    source: docs/research/57-synth-engines.md#4-the-shared-voice
+    confidence: derived
   - id: portamento-style
     text: The curve of the portamento glide (portamento style) is set separately in the preset settings.
     source: https://teenage.engineering/guides/op-xy/instrument#preset-settings

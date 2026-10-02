@@ -11,7 +11,7 @@ import type { RehearsedStep } from '../virtual-opxy';
 import type { AgentEnvironment, AnyTool, ToolContext, ToolResult } from './define';
 import { planStepsTool } from './navigate';
 
-function setup(withReplica = false) {
+function setup(withReplica = false, drift = 0) {
 	const time = new FakeTime();
 	const sim = new OpxySim({ now: () => time.now() });
 	const virtual = createVirtualOpxy({ sim });
@@ -19,6 +19,8 @@ function setup(withReplica = false) {
 	const replica = {
 		animate: (keys: string, timing: { turnSteps?: number; direction?: 1 | -1 } = {}) => {
 			animated.push({ keys, ...timing });
+			// time passing as each step animates (the playhead moves on while it plays)
+			if (drift) sim.advance(drift);
 			const clicks = timing.turnSteps ? timing.turnSteps * (timing.direction ?? 1) : undefined;
 			playStep(sim, { keys, clicks });
 			return {
@@ -369,6 +371,22 @@ describe('plan_steps with show', () => {
 		expect(other.planned).toMatch(/^NOT SET/);
 	});
 
+	it('walks "groove 0" to the groove amount, the encoder it sets (E3)', async () => {
+		// the value plan took the amount (E3) while the walkthrough lit the groove type's E2
+		const { run, guided } = setup(true);
+		const result = json(
+			await run(planStepsTool, {
+				show: false,
+				guide: true,
+				area: 'tempo',
+				param: 'groove',
+				value: '0'
+			})
+		);
+		expect(result.already).toMatch(/^swing \(the groove amount, E3\) is already 0: say so/);
+		expect(guided[0].steps.map((s) => s.keys)).toEqual(['tempo', 'turn E3']);
+	});
+
 	it('walks to a value with none given, ending on the turn, its note kept', async () => {
 		const { run, guided } = setup(true);
 		const result = json(
@@ -523,6 +541,50 @@ describe('plan_steps to the project settings', () => {
 		expect(result.loaded.pages['M1 engine']).toMatch(/^axis:/);
 		expect(result.loaded.pages['M2 amp envelope']).toMatch(/attack 50/);
 		expect(result.sound).toMatch(/^A load sets every page anew/);
+		expect(result.unit).toBeUndefined();
+		// the midi engine: the unit's own browser did not list it
+		const midi = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 4,
+				settings: [{ param: 'engine', value: 'midi' }]
+			})
+		);
+		expect(midi.unit).toMatch(/preset browser on OS 1\.1\.33 showed none/);
+	});
+
+	it('sets an envelope stage by its time, the nearest value said', async () => {
+		const { sim, run } = setup(true);
+		const result = json(
+			await run(planStepsTool, { show: true, track: 8, param: 'amp attack', value: '2 s' })
+		);
+		expect(result.times).toMatch(/^amp attack 2 s: 5\d is the nearest \(2(\.\d)? s\)$/);
+		expect(sim.state.tracks[7].amp.attack).toBeGreaterThanOrEqual(52);
+		expect(sim.state.tracks[7].amp.attack).toBeLessThanOrEqual(54);
+	});
+
+	it('pins the step keys before locking steps while the replica plays', async () => {
+		// a bar passes as each step animates: unpinned, the step keys follow the playhead and every
+		// lock lands a bar off (an agent's cutoff ramp did)
+		const { virtual, run } = setup(true, 2000);
+		virtual.writePattern(7, {
+			pattern: 1,
+			bars: 4,
+			notes: [1, 17, 33, 49].map((step) => ({ step, note: 60, velocity: 90, length: 16 }))
+		});
+		virtual.transport('play');
+		await run(planStepsTool, {
+			show: true,
+			track: 7,
+			settings: [1, 17, 33, 49].map((step, i) => ({ param: 'cutoff', value: 10 + i * 25, step }))
+		});
+		const locks = virtual.readPattern(7).locks ?? [];
+		expect(locks.map((l) => [l.step, l.values.join(', ')])).toEqual([
+			[1, 'cutoff 10'],
+			[17, 'cutoff 35'],
+			[33, 'cutoff 60'],
+			[49, 'cutoff 85']
+		]);
 	});
 
 	it('starts over with a new project: project, then hold M1', async () => {

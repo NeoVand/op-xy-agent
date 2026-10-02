@@ -127,6 +127,25 @@ describe('replica changes', () => {
 		expect(lines.join('\n')).not.toMatch(/presets for|starting up/);
 	});
 
+	it('say the bar menu’s shape and note length as they move', () => {
+		const { sim, virtual } = setup();
+		const from = virtual.checkpoint();
+		const pattern = sim.state.tracks[6].sequence.patterns[0];
+		pattern.smoothing = 60;
+		expect(virtual.changesSince(from)).toEqual([
+			expect.stringMatching(/^T7 pattern 1: shape 0 → 60 \(the glide between its locks\)/)
+		]);
+	});
+
+	it('say first when another project is open', () => {
+		const { sim, virtual } = setup();
+		const from = virtual.checkpoint();
+		sim.state.project.name = 'project 2';
+		expect(virtual.changesSince(from)[0]).toBe(
+			'project "project 1" → "project 2": another project is open, and the changes below are what it brought'
+		);
+	});
+
 	it('say an envelope stage in seconds as it moves', () => {
 		// attack 75 for "a slow swell" is about 24 s, which the agent did not know
 		const { sim, virtual } = setup();

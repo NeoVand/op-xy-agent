@@ -30,11 +30,26 @@ export function grooveReach(
 ): string | null {
 	if (amount === 0 || pattern.notes.length === 0) return null;
 	const g = { type: Math.max(0, GROOVES.indexOf(type as never)), amount };
-	const moved = pattern.notes.filter((n) => {
+	const moves = (n: { step: number }) => {
 		const at = (n.step - 1) * pattern.scale;
 		return Math.abs(grooveTime(at, g) - at) > 0.02;
-	}).length;
+	};
+	const moved = pattern.notes.filter(moves).length;
 	const label = `The groove (${type}, ${amount > 0 ? '+' : ''}${amount})`;
+	// on a drum track, which sounds it moves and which it leaves (an agent said its hats swung when
+	// the groove moved a few kicks and snares, the hats all on the eighths)
+	const bySound = new Map<string, { all: number; moved: number }>();
+	for (const n of pattern.notes) {
+		if (!('sound' in n) || !n.sound) continue;
+		const c = bySound.get(n.sound) ?? { all: 0, moved: 0 };
+		bySound.set(n.sound, { all: c.all + 1, moved: c.moved + (moves(n) ? 1 : 0) });
+	}
+	const swung = [...bySound].filter(([, c]) => c.moved > 0);
+	const straight = [...bySound].filter(([, c]) => c.moved === 0);
+	const sounds =
+		bySound.size > 1 && moved > 0 && straight.length > 0
+			? `: ${swung.map(([name, c]) => `${name} ${c.moved} of ${c.all}`).join(', ')}; none of ${straight.map(([name, c]) => `${name}'s ${c.all}`).join(', ')}, which ${straight.length === 1 ? 'plays' : 'play'} straight: ${where(type)}`
+			: '';
 	// what to do about it, before the answer (agents told the user the swing would not be heard
 	// instead of making it heard)
 	const fix =
@@ -46,8 +61,13 @@ export function grooveReach(
 	if (moved < 4 && moved / pattern.notes.length < FEW) {
 		return `${label} moves only ${moved} of T${pattern.track}'s ${pattern.notes.length} notes, so it hardly swings: ${where(type)}. ${fix}`;
 	}
+	// the sound with the most notes left straight: said even when enough moves overall
+	const busiest = [...bySound].sort((a, b) => b[1].all - a[1].all)[0];
+	if (sounds && busiest && busiest[1].moved === 0) {
+		return `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${sounds}. Say only what swings; ${fix.charAt(0).toLowerCase()}${fix.slice(1)}`;
+	}
 	return always
-		? `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes.`
+		? `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${sounds}.`
 		: null;
 }
 
