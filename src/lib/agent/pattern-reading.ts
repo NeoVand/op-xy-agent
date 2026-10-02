@@ -387,27 +387,41 @@ export function readPattern(
 		const outside: string[] = [];
 		let passing = 0;
 		const chordTracks = new Set<number>();
-		for (const n of [...p.notes].sort((a, b) => a.step - b.step)) {
-			const chord = chordAt(n.step);
-			if (!chord) continue;
-			under++;
-			chordTracks.add(chord.track);
-			const pcs = new Set(chord.notes.map((x) => x % 12));
-			if (pcs.has(n.note % 12)) {
-				tones++;
-				continue;
+		// a line shorter than the chords loops under them: each pass against the chords it meets (a
+		// one-bar bass under four bars of chords was read against the first bar's alone)
+		const span = Math.max(p.length, ...alongside.map((q) => q.length));
+		const passes = p.length > 0 ? Math.min(16, Math.ceil(span / p.length)) : 1;
+		const where = (at: number) =>
+			passes > 1
+				? `bar ${Math.ceil(at / meter.bar)} step ${((at - 1) % meter.bar) + 1}`
+				: `step ${at}`;
+		const line = [...p.notes].sort((a, b) => a.step - b.step);
+		for (let pass = 0; pass < passes; pass++) {
+			for (const n of line) {
+				const at = n.step + pass * p.length;
+				if (at > span) continue;
+				const chord = chordAt(at);
+				if (!chord) continue;
+				under++;
+				chordTracks.add(chord.track);
+				const pcs = new Set(chord.notes.map((x) => x % 12));
+				if (pcs.has(n.note % 12)) {
+					tones++;
+					continue;
+				}
+				if (beatStarts.has((at - 1) % meter.bar)) {
+					const named = chordName(chord.notes);
+					const sorted = [...pcs].sort((a, b) => a - b).map((pc) => names[pc]);
+					outside.push(
+						`${where(at)}: ${noteName(n.note)} over ${named ? respellChord(ascii(named.name), names) : sorted.join(' ')} (${sorted.join(' ')})`
+					);
+				} else passing++;
 			}
-			if (beatStarts.has((n.step - 1) % meter.bar)) {
-				const named = chordName(chord.notes);
-				const sorted = [...pcs].sort((a, b) => a - b).map((pc) => names[pc]);
-				outside.push(
-					`step ${n.step}: ${noteName(n.note)} over ${named ? respellChord(ascii(named.name), names) : sorted.join(' ')} (${sorted.join(' ')})`
-				);
-			} else passing++;
 		}
 		if (under >= 2) {
 			const by = [...chordTracks].map((t) => `T${t}`).join(' and ');
-			againstChords = `${tones} of the ${under} notes over ${by}'s chords are chord tones${outside.length ? `; on a beat and outside the chord: ${outside.slice(0, 8).join(', ')}${outside.length > 8 ? ', …' : ''}` : '; none on a beat is outside its chord'}${passing ? `; ${passing} off the beat ${passing === 1 ? 'is a passing note' : 'are passing notes'}` : ''}`;
+			const looped = passes > 1 ? ` (the line plays ${passes} times under them)` : '';
+			againstChords = `${tones} of the ${under} notes over ${by}'s chords${looped} are chord tones${outside.length ? `; on a beat and outside the chord: ${outside.slice(0, 8).join(', ')}${outside.length > 8 ? ', …' : ''}` : '; none on a beat is outside its chord'}${passing ? `; ${passing} off the beat ${passing === 1 ? 'is a passing note' : 'are passing notes'}` : ''}`;
 		}
 	}
 	// what the chords make over the other part's bass, apart, when any differs from its own name

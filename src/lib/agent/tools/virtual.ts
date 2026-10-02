@@ -144,6 +144,18 @@ const keysOf = (virtual: object) => {
 	return map;
 };
 
+/**
+ * The names each pattern's chords were written by (track:pattern → step → "Em7"), per replica: a
+ * later reading names a chord so where its notes are still the name's (an Em7 written by name read
+ * back as G6 once a groove change rewrote the pattern).
+ */
+const namedChords = new WeakMap<object, Map<string, Map<number, string>>>();
+const chordsOf = (virtual: object) => {
+	let map = namedChords.get(virtual);
+	if (!map) namedChords.set(virtual, (map = new Map()));
+	return map;
+};
+
 /** The keys a lab run's commits named (track:pattern → "A minor"; null: written with none). */
 export function nameKeys(virtual: object, keys: Readonly<Record<string, string | null>>): void {
 	const map = keysOf(virtual);
@@ -481,7 +493,7 @@ export const writePatternTool = defineTool({
 			.max(127)
 			.optional()
 			.describe(
-				`Velocity of every note that gives none, and of a grid's x (default ${DEFAULT_VELOCITY})`
+				`Velocity of every note that gives none, and of a grid's x (default ${DEFAULT_VELOCITY}); with the pattern as it is (copy, copy_track, transpose, humanize, or velocity alone), every note's`
 			),
 		notes: z
 			.union([z.string().max(6000), z.array(patternNoteSchema).max(MAX_NOTES)])
@@ -763,7 +775,7 @@ export const writePatternTool = defineTool({
 		// the track scale or the groove alone, onto the notes as they are (an agent rewrote two
 		// patterns note by note to double their scale, unsure a scale alone would keep them)
 		const restyling =
-			(input.scale !== undefined || input.groove !== undefined) &&
+			(input.scale !== undefined || input.groove !== undefined || input.velocity !== undefined) &&
 			!given &&
 			input.grid === undefined &&
 			copied === undefined &&
@@ -825,6 +837,9 @@ export const writePatternTool = defineTool({
 			return errorResult(`Nothing was written: ${error.message}.`, 'notes not read');
 		}
 		const velocity = input.velocity ?? DEFAULT_VELOCITY;
+		// with the pattern as it is (a copy, a transpose, humanize…), velocity is every note's (a
+		// soft pad copied from the strings kept their velocities, the one given unused)
+		const restamp = was !== null && input.velocity !== undefined;
 		const invalid: string[] = [];
 		const notes = written.notes.map((n) => {
 			const note = typeof n.note === 'number' ? n.note : parseNoteName(n.note, 'c4');
@@ -835,7 +850,7 @@ export const writePatternTool = defineTool({
 				step: n.step,
 				note:
 					(inKey && scaleSteps ? moveInKey(note ?? 0, scaleSteps, inKey) : (note ?? 0)) + transpose,
-				velocity: n.velocity ?? velocity,
+				velocity: restamp ? velocity : (n.velocity ?? velocity),
 				length: n.length ?? 1,
 				...(offset ? { offset } : {})
 			};
@@ -914,9 +929,13 @@ export const writePatternTool = defineTool({
 		// a line of rests alone plays nothing however long it is (two agents' calls failed on an
 		// empty open-hat line of 30 and 48 dots)
 		const restsOnly = (key: string) => !/[xXo1-9]/.test(input.grid?.[key] ?? '');
-		// and rests past the pattern's end lose nothing (a 7/8 bar's snare line ran two dots long)
+		// and rests past the pattern's end lose nothing (a 7/8 bar's snare line ran two dots long),
+		// unless a group of the line is miscounted, which moved the hits after it (an open hat's
+		// "..... .... .... ..x." put its hit a step late)
 		const restsPast = (key: string, n: number) =>
-			n > fill && !/[xXo1-9]/.test((input.grid?.[key] ?? '').replace(/[\s|]/g, '').slice(fill));
+			n > fill &&
+			!/[xXo1-9]/.test((input.grid?.[key] ?? '').replace(/[\s|]/g, '').slice(fill)) &&
+			gridMiscount(input.grid?.[key] ?? '', meter.bar) === null;
 		// whole bars and then rests, short of the pattern: its hits once, silent after (a crash on bar
 		// 1 alone, "X... .... .... .... | ....", and open hats in bars 1 to 3 with "...." for bar 4
 		// were refused as miscounts)
@@ -1135,7 +1154,7 @@ export const writePatternTool = defineTool({
 			const playedBefore = virtual.status().tracks[input.track - 1]?.current;
 			// components: as given (one bar's from its first step), the rest kept where a transpose or
 			// one bar keeps the pattern
-			const given = (input.components ?? []).map((c) => ({
+			const givenComponents = (input.components ?? []).map((c) => ({
 				step: c.step + barFrom,
 				kind: c.kind,
 				value: c.value ?? componentDefault(c.kind)
@@ -1168,14 +1187,14 @@ export const writePatternTool = defineTool({
 			// the earlier on its step, and one on a step with no notes is left out, as it does
 			// nothing (an agent's rolls sat on rests, out of its reach to take off)
 			const placed = reversing
-				? [...kept, ...given].map((c) =>
+				? [...kept, ...givenComponents].map((c) =>
 						!current
 							? { ...c, step: mirrored(c.step) }
 							: inBar(c.step)
 								? { ...c, step: barFrom + mirrored(c.step - barFrom) }
 								: c
 					)
-				: [...kept, ...given];
+				: [...kept, ...givenComponents];
 			const laid: { step: number; kind: string; value: number }[] = [];
 			for (const c of placed) {
 				const others = laid.filter(
@@ -1304,7 +1323,7 @@ export const writePatternTool = defineTool({
 						? `The closed hat line is left out entirely: every hit of it falls where the open hat hits (step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}), and the grid keeps one hat a step, as a drummer plays one or the other (the OP-XY plays both: the notes form stacks them). Give the closed hat steps of its own, or leave it out.`
 						: // the grid's choice, said as one (agents told users a closed and an open hat "can't
 							// share a step")
-							`Closed hat left out on step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}, under the open hat: the grid keeps one hat a step, as a drummer plays them (not a limit of the OP-XY: the notes form stacks both). A normal hat line; mention it only if the user asked for closed hats there.`
+							`Closed hat left out on step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}, under the open hat: the grid keeps one hat a step, as a drummer plays them (not a limit of the OP-XY: the notes form stacks both). The usual hat line: describe the hats as the grid above has them.`
 				);
 			}
 			// a closed and an open hat on one step: a drummer plays one or the other (an agent wrote
@@ -1383,11 +1402,32 @@ export const writePatternTool = defineTool({
 				!input.key && !drums && transpose === 0 && scaleSteps === 0 && (was || existing)
 					? keysOf(virtual).get(keyFrom)
 					: undefined;
+			// the names its chords go by now: those given (a bar written alone keeps the other bars'),
+			// none for notes given without names, else the source's (a write that moves no note
+			// keeps them; where a write moved the notes, the names no longer match and go unused)
+			const otherBars = [...(chordsOf(virtual).get(slot) ?? [])].filter(
+				([step]) => input.bar !== undefined && !inBar(step)
+			);
+			const names = new Map<number, string>(
+				input.chords
+					? [
+							...otherBars,
+							...[...chordSymbols(input.chords)].map(
+								([step, symbol]) => [step + barFrom, symbol] as [number, string]
+							)
+						]
+					: given || input.grid !== undefined
+						? otherBars
+						: // where the write starts from: the pattern, or the copy (one bar of it
+							// alone keeps the names only where they still match)
+							[...(chordsOf(virtual).get(keyFrom) ?? [])]
+			);
+			chordsOf(virtual).set(slot, names);
 			// the key this pattern is in now, for the next write
 			if (input.key && parseKey(input.key)) keysOf(virtual).set(slot, parseKey(input.key)!.label);
 			else if (carried) keysOf(virtual).set(slot, carried.key.label);
 			else if (stayed) keysOf(virtual).set(slot, stayed);
-			else if (given || input.grid !== undefined) keysOf(virtual).delete(slot);
+			else keysOf(virtual).delete(slot);
 			const view = patternView(result, {
 				drumSteps: false,
 				alongside: partsAlongside(virtual, input.track, pattern),
@@ -1398,12 +1438,8 @@ export const writePatternTool = defineTool({
 					: (carried?.key ?? (stayed ? parseKey(stayed) : null)),
 				written: writtenAccidentals(input.notes),
 				plain: velocity,
-				// the chords by the names given, where the notes are theirs
-				named: input.chords
-					? new Map(
-							[...chordSymbols(input.chords)].map(([step, symbol]) => [step + barFrom, symbol])
-						)
-					: new Map()
+				// the chords by the names they were written by, where the notes are theirs
+				named: names
 			});
 			if (carried && view.reading && 'key' in view.reading) {
 				(view.reading as { key?: string }).key = `${carried.key.label} (${carried.from})`;
@@ -1619,13 +1655,16 @@ export const readPatternTool = defineTool({
 			const p = virtual.readPattern(input.track, input.pattern);
 			// the key its write named, as the write's own reading had it (a D dorian line read back
 			// alone was guessed afresh as D minor)
-			const named = keysOf(virtual).get(`${input.track}:${p.pattern}`);
+			const slot = `${input.track}:${p.pattern}`;
+			const named = keysOf(virtual).get(slot);
 			return jsonResult(
 				patternView(p, {
 					alongside: partsAlongside(virtual, input.track, p.pattern),
 					meter: meterNow(virtual),
 					bpm: virtual.status().bpm,
-					...(named ? { meant: parseKey(named) } : {})
+					...(named ? { meant: parseKey(named) } : {}),
+					// and its chords by the names they were written by
+					named: chordsOf(virtual).get(slot) ?? new Map()
 				}),
 				`track ${p.track} pattern ${p.pattern}: ${p.notes.length} notes`
 			);

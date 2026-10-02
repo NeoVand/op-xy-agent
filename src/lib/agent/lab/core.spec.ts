@@ -345,6 +345,8 @@ describe('commits', () => {
 		);
 		const page = Number(/page value (\d+)/.exec(result.note ?? '')?.[1]);
 		expect(f.readSound(7).pages['M2 amp envelope']).toMatch(new RegExp(`attack ${page},`));
+		// and read back in seconds (a program set a 2 s attack and read back 53)
+		expect(f.readSound(7).times).toMatch(/^amp envelope attack 0\.3 s, decay [\d.]+ s, release /);
 		expect(f.readSound(7).pages['M3 filter']).toMatch(/cutoff 25/);
 	});
 
@@ -516,6 +518,37 @@ describe('listen', () => {
 		);
 		await expect(lab.listen(f, { song: { entry: 3 } })).rejects.toThrow(/2 entries/);
 		await expect(lab.listen(f, { song: {}, scene: 2 })).rejects.toThrow(/song goes alone/);
+	});
+
+	it('joins the parts of a song through the master’s ceiling, as one render would', async () => {
+		// a part's tail summed onto the next part's crash read as clipping the unit would not make
+		const tone = (seconds: number) =>
+			Float32Array.from(
+				{ length: Math.round(seconds * 48_000) },
+				(_, i) => 0.9 * Math.sin((2 * Math.PI * 100 * i) / 48_000)
+			);
+		const { lab } = labOn({
+			render: {
+				async render(request) {
+					const c = tone(request.seconds);
+					return { sampleRate: 48_000, channels: [c, c.slice()] };
+				}
+			}
+		});
+		const f = lab.fork();
+		f.setTempo(120);
+		f.writePattern(3, { pattern: 1, notes: [{ step: 1, note: 45 }] });
+		f.writePattern(3, { pattern: 2, notes: [{ step: 1, note: 45 }] });
+		f.writeArrangement({
+			scenes: [
+				{ scene: 1, patterns: [{ track: 3, pattern: 1 }] },
+				{ scene: 2, patterns: [{ track: 3, pattern: 2 }] }
+			],
+			song: { order: [1, 2], loop: false }
+		});
+		const heard = await lab.listen(f, { song: {}, seconds: 6 });
+		// each part alone peaks at 0.9; summed where the first one's tail rings on, 1.8 unlimited
+		expect(heard.text).toMatch(/peak -0\.4 dBFS, .*no clipping/);
 	});
 
 	it('says plainly when there is no renderer', async () => {

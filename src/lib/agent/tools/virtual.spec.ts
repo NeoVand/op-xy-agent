@@ -955,6 +955,16 @@ describe('write_pattern on drums', () => {
 		expect(sixth.note).toMatch(
 			/Against T5's line on the same steps \(7 of its 7 notes\): a sixth below throughout/
 		);
+		// a copy at another velocity (a soft pad copied from the strings kept theirs), and velocity
+		// alone onto the pattern as it is
+		const soft = json(
+			await run(writePatternTool, { track: 8, copy_track: 5, transpose: 12, velocity: 60 })
+		);
+		expect(soft.written.notes).toBe(
+			'1:F#5:2:60 3:A5:2:60 5:B5:3:60 8:A5:1:60 9:F#5:2:60 11:E5:2:60 13:D5:4:60'
+		);
+		const louder = json(await run(writePatternTool, { track: 8, velocity: 90 }));
+		expect(louder.written.notes).toMatch(/^1:F#5:2:90 3:A5:2:90 /);
 		const keyless = await run(writePatternTool, { track: 6, scale_steps: 2 });
 		expect(keyless.isError).toBe(true);
 		expect(String(keyless.content)).toMatch(
@@ -1481,6 +1491,17 @@ describe('write_pattern, short', () => {
 		expect(chords).toMatch(/step 17: Em7(\/G)? \(/);
 		expect(chords).not.toMatch(/G6/);
 		expect(result.written.reading.progression).toMatch(/^Fmaj9 Em7 Dm9 Cmaj9: /);
+		// and by them after: a groove change, a read (an Em7 read back as G6 after a groove)
+		const grooved = json(await run(writePatternTool, { track: 7, groove: 30 }));
+		expect(grooved.written.reading.progression).toMatch(/^Fmaj9 Em7 Dm9 Cmaj9: /);
+		const read = json(await run(readPatternTool, { track: 7 }));
+		expect(read.reading.progression).toMatch(/^Fmaj9 Em7 Dm9 Cmaj9: /);
+		// one bar rewritten by name keeps the others' names
+		const bar = json(await run(writePatternTool, { track: 7, bar: 2, chords: '1:Am7:16:60' }));
+		expect(bar.written.reading.progression).toMatch(/^Fmaj9 Am7 Dm9 Cmaj9: /);
+		// notes written without names: the reading names them afresh
+		const plain = json(await run(writePatternTool, { track: 7, notes: '17:G3+B3+D4+E4:16' }));
+		expect(plain.written.reading.chords.join(' | ')).not.toMatch(/Em7/);
 	});
 
 	it('says how the reading spells sharps given in a flat key', async () => {
@@ -1628,6 +1649,16 @@ describe('write_pattern, short', () => {
 			grid: { kick: 'x... x... x... x... ....' }
 		});
 		expect(long.isError).toBeFalsy();
+		// unless a group is miscounted: the hits after it moved (an open hat a step late)
+		const shifted = await run(writePatternTool, {
+			track: 1,
+			bars: 1,
+			grid: { 'open hat': '..... .... .... ..x.' }
+		});
+		expect(shifted.isError).toBe(true);
+		expect(String(shifted.content)).toMatch(
+			/open hat has 17 \(group 1 \("\.\.\.\.\."\) has 5, the others 4\), the last 1 past its end/
+		);
 		// a made kit's "kick", written as the new project's "kick 1"
 		sim.state.areas.sample.tracks[0].keys[0] = {
 			...sim.state.areas.sample.tracks[0].keys[0]!,

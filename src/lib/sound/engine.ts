@@ -26,6 +26,7 @@ import { VOICE_LIMIT, victim } from './allocator';
 import { Channel } from './channel';
 import { createEffect, type SendEffect } from './fx';
 import { FIRST_DRUM_NOTE, kitSound } from './kit';
+import { softLimitCurve } from './limit';
 import {
 	EQ_BANDS,
 	bendCents,
@@ -146,15 +147,6 @@ function bufferAmp(settings: TrackState) {
 /** How long the send effects ring on after the last note (for idle detection). */
 const FX_TAIL = 3.5;
 
-/** A soft ceiling: straight up to 0.8, then rounding off so nothing passes 0.96. */
-function softClip(): Float32Array<ArrayBuffer> {
-	return Float32Array.from({ length: 2049 }, (_, i) => {
-		const x = (i - 1024) / 1024;
-		const a = Math.abs(x);
-		return a <= 0.8 ? x : Math.sign(x) * (0.8 + 0.2 * Math.tanh((a - 0.8) / 0.2));
-	});
-}
-
 /** A note as a voice starts it: the request, and whether the punch-in soft attack holds. */
 interface Started extends NoteRequest {
 	readonly soft?: boolean;
@@ -244,7 +236,7 @@ export class SoundEngine {
 		});
 		this.#master = context.createGain();
 		const limiter = context.createWaveShaper();
-		limiter.curve = softClip();
+		limiter.curve = softLimitCurve();
 		limiter.oversample = '2x';
 		this.#out = context.createGain();
 		this.#analyser = context.createAnalyser();

@@ -36,7 +36,8 @@ import { describeFrame } from '$lib/sim/screen/render';
 import { TRACK_SCALES } from '$lib/sim/sequencer';
 import { settleSession } from '$lib/sim/session';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
-import { stageSetting } from '$lib/sound/times';
+import { softLimit } from '$lib/sound/limit';
+import { envelopeTimes, stageSetting } from '$lib/sound/times';
 import { MidiImportError, planMidiImport, type ImportPlan } from '../midi-import';
 import { pitchRange, trackShapes } from '../midi-text';
 import {
@@ -347,8 +348,17 @@ const listenOptions = z.strictObject({
 	scene: sceneNumber.optional(),
 	song: z
 		.strictObject({
-			entry: z.int().min(1).max(96).optional(),
-			bar: z.int().min(1).max(64).optional()
+			// both count from 1 (a program's entry 0, bar 0 failed with "too small")
+			entry: z
+				.int()
+				.min(1, { error: "entries count from 1: the song's first entry is 1" })
+				.max(96)
+				.optional(),
+			bar: z
+				.int()
+				.min(1, { error: "bars count from 1: an entry's first bar is 1" })
+				.max(64)
+				.optional()
 		})
 		.optional()
 });
@@ -870,7 +880,17 @@ export function createLab(options: LabOptions): LabSession {
 			writePattern,
 			readArrangement: () => virtual.readArrangement(),
 			writeArrangement,
-			readSound: (track: number) => virtual.readSound(check(track8, track, 'readSound track')),
+			// the envelopes in seconds too, as read_sound gives them (a program set a 2 s attack and
+			// read back 53, unable to check it)
+			readSound: (track: number) => {
+				const sound = virtual.readSound(check(track8, track, 'readSound track'));
+				const times = (['amp', 'filter'] as const).flatMap((name) => {
+					const page = sound.pages[`M2 ${name} envelope`];
+					const t = page ? envelopeTimes(page) : null;
+					return t ? [`${name} envelope ${t}`] : [];
+				});
+				return times.length ? { ...sound, times: times.join('; ') } : sound;
+			},
 			setTempo: (bpm: number) =>
 				virtual.setTempo(check(z.number().min(40).max(220), bpm, 'setTempo')),
 			setMetronome: (on: boolean) => virtual.setMetronome(check(z.boolean(), on, 'setMetronome')),
@@ -1068,13 +1088,22 @@ export function createLab(options: LabOptions): LabSession {
 		const rate = pieces[0].audio.sampleRate;
 		const frames = Math.round(at * rate);
 		const out = [new Float32Array(frames), new Float32Array(frames)];
+		// where a part's tail overlaps the next part's start, the sum goes through the master's
+		// ceiling, as one render would (each part was limited alone, and a tail summed onto the
+		// next part's crash read as clipping)
+		const layers = new Uint8Array(frames);
 		for (const piece of pieces) {
 			const from0 = Math.round(piece.start * rate);
+			const n = Math.min(frames - from0, piece.audio.channels[0]?.length ?? 0);
+			for (let i = 0; i < n; i++) layers[from0 + i]++;
 			out.forEach((channel, c) => {
 				const source = piece.audio.channels[c] ?? piece.audio.channels[0];
 				for (let i = 0; i < source.length && from0 + i < frames; i++)
 					channel[from0 + i] += source[i];
 			});
+		}
+		for (const channel of out) {
+			for (let i = 0; i < frames; i++) if (layers[i] > 1) channel[i] = softLimit(channel[i]);
 		}
 		const analysis = analyzeAudio(out, rate, { expectedBpm: base.tempo.bpm });
 		const summary = summarize(analysis, { source: f.name });

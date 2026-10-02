@@ -447,6 +447,24 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   lists its sync values and says there are no triplets; make_kit says where each given voice went,
   by key number and note name; the kits skill puts TE's factory kits first (stand-ins on the
   replica), and the music skill has a bossa nova clave and a plainer double-time rule.
+- **Probe round thirty-two (2026-10-02), 18 scenarios (`probe-scenarios-32.json`: re-checks (panic
+  on the replica, keys named in the lab, envelope times in the lab, one scene's chords swung, a
+  one-bar bass under four bars of chords, a made kit's keys, a factory kit, quarter-note-triplet
+  wobble) and new kinds: Japanese lo-fi, synthwave, hats and a shaker panned apart, 7/8, a fresh
+  project, an arrange lesson followed, slower at the same tempo, chords copied up as a pad, swing on
+  the hats alone, phrygian chords):** two failed calls (a lab song listen from entry 0, a grid passed
+  as text with code in it). Fixes: chords keep the names they were written by through later writes
+  and reads (an Em7 read back as G6 after a groove change; a shadowed variable had made the keep
+  path dead); a velocity given with a copy or another change of the pattern as it is sets every
+  note's, and velocity alone restyles (a soft pad copied from the strings kept their 70); the lab's
+  readSound gives the envelopes in seconds, and its song listen says entries and bars count from 1;
+  a line shorter than the chords is checked against each pass of them (a one-bar bass under four
+  bars of chords was checked against bar 1's); a song heard across parts goes through the master's
+  ceiling where a part's tail overlaps the next (each part was limited alone, and the sum read as
+  clipping at the change of scene), one shared limiter curve; a grid line's spare rests at the end
+  are refused when a group of it is miscounted (an open hat had moved a step late); the hat note
+  says to describe the hats as the grid has them (an agent read "mention it only if" as hiding
+  them); the groove's other types are said to move other steps.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

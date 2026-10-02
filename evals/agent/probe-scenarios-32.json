@@ -1,0 +1,162 @@
+[
+	{
+		"name": "panic-loud",
+		"about": "Re-check: panic on the replica with no device.",
+		"steps": [
+			{ "say": "make a busy techno beat with a rolling bass and play it" },
+			{ "say": "argh, kill the sound right now" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-song-keys",
+		"about": "Re-check: keys named in the lab reach the readings.",
+		"steps": [
+			{
+				"say": "use the lab to build a 2 scene song in Eb major with drums, bass, chords and a melody"
+			},
+			{ "say": "what key is the melody in? spell its notes for me" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-attack-time",
+		"about": "Re-check: envelope times in the lab's set.",
+		"steps": [
+			{
+				"say": "in the lab, give track 8's pad a 2 second attack and a 4 second release, and write a slow chord loop for it"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "groove-scene-two",
+		"about": "Re-check: another pattern's bar menu, there and back.",
+		"steps": [
+			{
+				"say": "make a 2 scene song with chords on track 7, a different chord pattern in scene 2"
+			},
+			{ "say": "give only scene 2's chord pattern a swing of 30" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-loop-under-chords",
+		"about": "Re-check: a shorter bass read under longer chords.",
+		"steps": [
+			{
+				"say": "write a one bar bassline on track 3 in A minor and four bars of chords on track 7 over it"
+			},
+			{ "say": "do the chords fit the bass in every bar?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "custom-kit-keys",
+		"about": "Re-check: make_kit says where each voice went.",
+		"steps": [
+			{
+				"say": "make me a custom kit on track 1 with a deep kick, a snappy snare and a clap, and tell me which keys they are on"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "factory-kit",
+		"about": "Re-check: a factory kit first, stand-ins said.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "load one of the other factory kits for it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "wobble-quarter-triplets",
+		"about": "Re-check: triplets the LFO cannot sync to.",
+		"steps": [
+			{ "say": "make a bass on track 3 that wobbles in quarter-note triplets" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "japanese-lofi",
+		"about": "A request in Japanese.",
+		"steps": [{ "say": "ゆったりしたローファイのビートを作って、コードも入れて" }, { "why": true }]
+	},
+	{
+		"name": "synthwave",
+		"about": "A genre not tried yet.",
+		"steps": [
+			{ "say": "make a synthwave groove with a driving bass and big pads" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "pan-hats",
+		"about": "Panning drum sounds apart.",
+		"steps": [
+			{ "say": "make a beat with hats and a shaker" },
+			{ "say": "pan the hats a bit left and the shaker a bit right" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "seven-eight",
+		"about": "An odd meter with a bass.",
+		"steps": [{ "say": "make a groove in 7/8 with a bassline" }, { "why": true }]
+	},
+	{
+		"name": "fresh-start",
+		"about": "Starting over.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "I messed up, start over with a fresh empty project" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-arrange-pattern",
+		"about": "A hands-on lesson in arrange, followed.",
+		"steps": [
+			{ "say": "teach me how to switch track 3 to a new pattern in arrange, light the keys" },
+			{ "follow": 4 },
+			{ "say": "did that work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "slower-feel",
+		"about": "A feel change without a tempo change.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "make it feel slower without changing the tempo" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chords-up-as-pad",
+		"about": "Chords copied to another track an octave up.",
+		"steps": [
+			{ "say": "make a chord progression on track 7" },
+			{ "say": "copy it to track 8 an octave higher as a soft pad" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-hats-only",
+		"about": "Swing on one part of a kit.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "swing only the hats" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "phrygian-chords",
+		"about": "A theory question, then writing.",
+		"steps": [
+			{ "say": "what chords work well in E phrygian? write a short progression on track 7" },
+			{ "why": true }
+		]
+	}
+]

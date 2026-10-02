@@ -293,7 +293,8 @@ export type Pattern = VirtualPattern;
 /** Scenes (each the pattern of every track, index 0 = track 1) and the song (order, loop). */
 export type Arrangement = VirtualArrangement;
 /** An instrument track's sound: engine, preset, each page as its screen reads, mix, a drum track's kit. */
-export type TrackSound = VirtualTrackSound;
+/** A track's sound, its envelopes also in seconds ("amp envelope attack 2 s, … release 4 s"). */
+export type TrackSound = VirtualTrackSound & { readonly times?: string };
 export type { ArrangementWrite };
 
 /** A copy of the replica with the replica's own calls, the keys and the navigator. */
