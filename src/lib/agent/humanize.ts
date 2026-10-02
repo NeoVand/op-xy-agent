@@ -11,6 +11,11 @@ export interface Humanize {
 	readonly timing?: number;
 	/** Up to this much up or down, 1–127 kept. */
 	readonly velocity?: number;
+	/**
+	 * A steady lean on top, in part of a step: positive behind the beat (a snare laid back),
+	 * negative ahead of it (hats pushing), −0.3 … 0.3.
+	 */
+	readonly late?: number;
 }
 
 interface Loosened {
@@ -55,11 +60,15 @@ export function humanizeNotes<T extends Loosened>(
 	const random = seeded(seed);
 	const timing = Math.max(0, Math.min(0.4, amount.timing ?? 0));
 	const spread = Math.max(0, Math.round(amount.velocity ?? 0));
+	const late = Math.max(-0.3, Math.min(0.3, amount.late ?? 0));
 	return notes.map((n) => {
 		if (!pick(n)) return n;
 		const onBeat = (n.step - 1) % 4 === 0;
 		const reach = onBeat ? timing / 2 : timing;
-		const drift = timing > 0 ? (random() * 2 - 1) * reach : (n.offset ?? 0);
+		const moved = timing > 0 || late !== 0;
+		const drift = moved
+			? Math.max(-0.5, Math.min(0.5, (timing > 0 ? (random() * 2 - 1) * reach : 0) + late))
+			: (n.offset ?? 0);
 		// three decimals of a step (the sequencer's ticks are finer than that)
 		const offset = Math.round((n.step === 1 ? Math.max(0, drift) : drift) * 1000) / 1000;
 		const velocity =

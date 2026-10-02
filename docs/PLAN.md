@@ -220,6 +220,19 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   writePattern takes chords by name; the skills: humanize, a groove is the whole pattern's (hats
   alone on T2), a smooth fade from volume locks with the bar menu's shape, LFO sync note values;
   the manual: a new project's tape sends at 99.
+- **Probe round eighteen (2026-10-02), 16 scenarios (`probe-scenarios-18.json`: re-checks (humanized
+  hats, D minor's dorian B, resting tracks, chord takes from the lab) and new ones: a live
+  drummer's feel, everything down a minor third, a punchier kit, a lead turned arpeggio, each
+  track explained, a filter opening every two bars, "too repetitive", double-time hats, a bass off
+  the kick, call and response, a smooth fade, a snare like a clap):** humanize, the outside-the-key
+  reading and the smooth fade (volume locks with the bar menu's shape, from the lab) worked; five
+  sessions lost turns to the API reporting "overloaded" mid-stream. Fixes: **the loop asks again,
+  twice, when an answer is overloaded before it showed anything** (`overloadRetries`, the browser
+  conductor's 2); humanize `late` (a steady lean behind or ahead of the beat); a bass written on
+  the kick's steps says which; the groove note says to put hits on the swung steps before
+  answering; "live drummer" no longer loads the performance skill; scale alone says 1/2 is double
+  time; the skill's open-hat rule says the grid drops the closed hat and to show the grid as it
+  came back.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

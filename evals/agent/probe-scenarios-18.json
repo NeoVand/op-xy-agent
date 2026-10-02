@@ -1,0 +1,145 @@
+[
+	{
+		"name": "humanize-hats-2",
+		"about": "Re-check: robotic hats loosened with humanize.",
+		"steps": [
+			{ "say": "make a house beat with sixteenth hats" },
+			{ "say": "the hats sound robotic, humanize them" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "live-drummer",
+		"about": "A feel request: a live drummer.",
+		"steps": [
+			{ "say": "make a funk beat" },
+			{ "say": "make it sound like a live drummer played it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "dorian-chords",
+		"about": "Re-check: notes outside a named key, read back.",
+		"steps": [
+			{ "say": "put Dm7 G7 Dm7 G7 on track 7, a chord a bar, in D minor" },
+			{ "say": "what mode is this really?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "transpose-all",
+		"about": "Everything moved down a minor third.",
+		"steps": [
+			{ "say": "make a beat with a bass, chords and a lead in E minor" },
+			{ "say": "transpose everything down a minor third" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "punchier-kit",
+		"about": "A kit swapped for a punchier one.",
+		"steps": [
+			{ "say": "make a hip hop beat" },
+			{ "say": "change the drum kit to something punchier, keep the beat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lead-to-arp",
+		"about": "A lead turned into an arpeggio by the player.",
+		"steps": [
+			{ "say": "put a slow chord melody on track 5, a chord every 2 beats" },
+			{ "say": "turn it into an arpeggio" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "explain-project",
+		"about": "Explaining what each track does.",
+		"steps": [
+			{ "say": "make a song with drums, bass, chords and a lead, verse and chorus" },
+			{ "say": "explain what each track does in this song, simply" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "filter-every-2-bars",
+		"about": "An LFO synced to a long cycle on the filter.",
+		"steps": [
+			{ "say": "make a pad on track 8" },
+			{ "say": "make the filter open and close once every 2 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "too-repetitive",
+		"about": "Vague feedback on a loop.",
+		"steps": [
+			{ "say": "make a techno loop with drums and a bass" },
+			{ "say": "it's too repetitive" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "double-time-hats",
+		"about": "One part at double time, the rest kept.",
+		"steps": [
+			{ "say": "make a trap beat" },
+			{ "say": "make just the hats play at double time" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-off-the-beat",
+		"about": "A rhythmic fix between two parts.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "the bass and kick hit together on every beat, move the bass notes off the beat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "call-response",
+		"about": "Two melodic parts that alternate.",
+		"steps": [
+			{ "say": "write a call and response melody between track 4 and track 5, 4 bars, in C major" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "smooth-fade",
+		"about": "A smooth fade-out from volume locks.",
+		"steps": [
+			{ "say": "make a 4 bar chord loop on track 7" },
+			{ "say": "make it fade out smoothly over the 4 bars, not in steps" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snare-like-clap",
+		"about": "One sound of a kit replaced by another kind.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "I want the snare to sound like a clap instead" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "rest-in-bridge",
+		"about": "Re-check: resting tracks named in the scene lines.",
+		"steps": [
+			{ "say": "make a verse and a chorus with drums, bass and a lead" },
+			{ "say": "add a bridge with only the lead, then the chorus again" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-chords-takes",
+		"about": "Re-check: two chord takes from the lab, by chord name.",
+		"steps": [
+			{ "say": "make a slow beat with a bass in A minor" },
+			{ "say": "offer me two chord progressions for track 7 to compare" },
+			{ "why": true }
+		]
+	}
+]

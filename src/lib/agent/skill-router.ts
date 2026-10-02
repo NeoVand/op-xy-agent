@@ -60,8 +60,9 @@ const DAW =
 	/\b((to|with|into|from|and) (my |a |the )?(daw|ableton|logic( pro)?|bitwig|fl studio|cubase)|(daw|ableton|bitwig) (sync|clock|midi))\b/i;
 const FORM =
 	/\b(song|sections?|intro|verse|chorus|bridge|outro|break(down)?|build ?up|drop|arrange|arrangement|structure)\b/i;
+// "live" as playing live, not a live drummer's feel (which loaded the performance skill)
 const LIVE =
-	/\b(live|jam (over|along|with)|jamming|perform|performance|gig|punch-?in|on the fly)\b/i;
+	/\b(live(?! (drummers?|bands?|feel|sound|instruments?|players?|drums|recording))|jam (over|along|with)|jamming|perform|performance|gig|punch-?in|on the fly)\b/i;
 /** Options for the user to choose between by ear: takes offered from the lab. */
 const TAKES =
 	/\b((two|three|four|a few|a couple( of)?|several|\d) (options|versions|takes|variations|variants|alternatives|ideas|bass ?lines?|beats|grooves|kits|melodies|patterns|sounds)|to (choose|pick) (from|between)|(let|help) me (choose|pick)|compare (them|options|versions))\b/i;

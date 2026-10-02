@@ -87,6 +87,14 @@ export interface LoopConfig {
 	readonly makeTurnId?: () => string;
 	/** Models that rejected a feature at runtime; the loop stops using it for them. */
 	readonly quirks?: ModelQuirks;
+	/**
+	 * Times an overloaded answer is asked for again before it has shown anything (default none):
+	 * the API can report "overloaded" mid-stream, past the client's own retries, and the user saw
+	 * an error they had to retry by hand.
+	 */
+	readonly overloadRetries?: number;
+	/** Waits before such a retry (injectable for tests). */
+	readonly wait?: (ms: number) => Promise<void>;
 }
 
 /** Features a model turned out not to accept (learned from 400s, kept per session). */
@@ -406,11 +414,15 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 		return { stopReason, text, citations, error, tokens: totals, usd, iterations };
 	};
 
+	let overloaded = 0;
 	while (iterations < config.maxIterations) {
 		if (signal.aborted) return finish('aborted', ABORTED);
 		iterations++;
 		const turn = makeTurnId();
 		let message: BetaMessage;
+		// whether this turn showed anything yet (text, thinking or a tool call): then a retry would
+		// repeat it, so an error ends the answer
+		let shown = false;
 		/** Tool calls whose input streamed to the end of their block (the others were cut off). */
 		const complete = new Set<string>();
 		try {
@@ -431,6 +443,12 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 				if (input !== undefined) emit({ type: 'tool_input', agent, id: call.id, input, parent });
 			};
 			for await (const event of stream) {
+				if (
+					event.type === 'content_block_delta' ||
+					(event.type === 'content_block_start' && event.content_block.type === 'tool_use')
+				) {
+					shown = true;
+				}
 				if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
 					// Only the chat changes: the transcript keeps the text as the model wrote it.
 					texts.forEach((text, block) => {
@@ -505,7 +523,17 @@ export async function runLoop(config: LoopConfig, transcript: Transcript): Promi
 				iterations--;
 				continue;
 			}
-			return finish('error', normalizeError(error));
+			const info = normalizeError(error);
+			if (info.code === 'overloaded' && !shown && overloaded < (config.overloadRetries ?? 0)) {
+				overloaded++;
+				iterations--;
+				emit({ type: 'notice', agent, text: 'Anthropic is busy right now: asking again.' });
+				await (config.wait ?? ((ms) => new Promise((done) => setTimeout(done, ms))))(
+					1000 * overloaded
+				);
+				continue;
+			}
+			return finish('error', info);
 		}
 
 		const counts = tokenCounts(message.usage);

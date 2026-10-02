@@ -92,10 +92,16 @@ function meterNow(virtual: VirtualOpxy): BarMeter {
 }
 
 /** The pitched parts the other instrument tracks play now, for a pattern's key. */
-function partsAlongside(virtual: VirtualOpxy, track: number, pattern?: number): VirtualPattern[] {
+function partsAlongside(
+	virtual: VirtualOpxy,
+	track: number,
+	pattern?: number,
+	/** The drum tracks' parts instead (a bass checked against the kick). */
+	drumParts = false
+): VirtualPattern[] {
 	const status = virtual.status();
 	const pitched = status.tracks.filter(
-		(t) => t.track <= 8 && t.track !== track && t.engine !== 'drum'
+		(t) => t.track <= 8 && t.track !== track && (t.engine === 'drum') === drumParts
 	);
 	// the parts that play with this pattern: those of a scene it plays in, the one on screen
 	// first (a chord pattern read against a bass from another part once named the wrong chords)
@@ -347,7 +353,9 @@ export const writePatternTool = defineTool({
 		scale: z
 			.enum(SCALES)
 			.optional()
-			.describe('Track scale: how many sixteenths one step lasts (default: unchanged)'),
+			.describe(
+				'Track scale: how many sixteenths one step lasts (default: unchanged); alone it keeps the notes, so 1/2 plays the same pattern at double time and 2 at half time'
+			),
 		velocity: z
 			.int()
 			.min(1)
@@ -421,6 +429,14 @@ export const writePatternTool = defineTool({
 					.max(40)
 					.optional()
 					.describe('How far each velocity may move up or down (8 subtle, 15 clear)'),
+				late: z
+					.number()
+					.min(-0.3)
+					.max(0.3)
+					.optional()
+					.describe(
+						'A steady lean on top, as part of a step: positive plays behind the beat (a laid-back snare, 0.05–0.1), negative ahead of it (pushing hats)'
+					),
 				sounds: z
 					.array(z.string())
 					.optional()
@@ -942,15 +958,18 @@ export const writePatternTool = defineTool({
 				components: [...kept, ...given],
 				...(locks.length ? { locks } : {}),
 				// notes moved off the grid play there only with quantise below 100
-				...(humanizing && (input.humanize?.timing ?? 0) > 0 ? { quantise: 0 } : {})
+				...(humanizing && ((input.humanize?.timing ?? 0) > 0 || (input.humanize?.late ?? 0) !== 0)
+					? { quantise: 0 }
+					: {})
 			});
 			const notes2: string[] = [];
 			if (humanizing && input.humanize) {
 				const t = input.humanize.timing ?? 0;
 				const v = input.humanize.velocity ?? 0;
+				const lean = input.humanize.late ?? 0;
 				const quant = prior.quantise === undefined ? 100 : prior.quantise;
 				notes2.push(
-					`Loosened ${loosened} note${loosened === 1 ? '' : 's'}${t > 0 ? `: up to ${t} of a step off the grid (the beats half that)` : ''}${v > 0 ? `${t > 0 ? ',' : ':'} velocities up to ${v} either way` : ''}${t > 0 && quant !== 0 ? `; the pattern's quantise ${quant} → 0, so they play where they sit` : ''}.`
+					`Loosened ${loosened} note${loosened === 1 ? '' : 's'}${t > 0 ? `: up to ${t} of a step off the grid (the beats half that)` : ''}${lean !== 0 ? `${t > 0 ? ',' : ':'} ${Math.abs(lean)} of a step ${lean > 0 ? 'behind' : 'ahead of'} the beat` : ''}${v > 0 ? `${t > 0 || lean !== 0 ? ',' : ':'} velocities up to ${v} either way` : ''}${(t > 0 || lean !== 0) && quant !== 0 ? `; the pattern's quantise ${quant} → 0, so they play where they sit` : ''}.`
 				);
 			}
 			// the locks it took with the notes it replaced (an agent could not tell whether a
@@ -1094,6 +1113,25 @@ export const writePatternTool = defineTool({
 						)
 					: new Map()
 			});
+			// a bass on the kick's steps (an agent moving a bass off the kick worked the overlaps out by
+			// hand, from a grid and a list of steps)
+			if (!drums && result.scale === 1 && result.notes.some((n) => n.note < 48)) {
+				for (const kit of partsAlongside(virtual, input.track, pattern, true)) {
+					if (kit.scale !== 1) continue;
+					const kicks = new Set(
+						kit.notes.filter((n) => /kick/.test(n.sound ?? '')).map((n) => n.step)
+					);
+					if (kicks.size === 0) continue;
+					// the kick's pattern repeats under a longer bass
+					const on = (step: number) => kicks.has(((step - 1) % kit.length) + 1);
+					const shared = [...new Set(result.notes.filter((n) => on(n.step)).map((n) => n.step))];
+					if (shared.length > 0) {
+						notes2.push(
+							`It hits with T${kit.track}'s kick on step${shared.length === 1 ? '' : 's'} ${shared.slice(0, 12).join(', ')}${shared.length > 12 ? ', …' : ''} (${shared.length} of its ${new Set(result.notes.map((n) => n.step)).size} steps).`
+						);
+					}
+				}
+			}
 			// chords by name voiced smoothly read back as inversions, which three agents explained to
 			// the user afterwards, unaware of voicing root
 			if (

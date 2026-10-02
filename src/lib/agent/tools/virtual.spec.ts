@@ -690,6 +690,22 @@ describe('write_pattern on drums', () => {
 		expect(String(none.content)).toMatch(/"kazoo" is no sound of this track/);
 	});
 
+	it('says where a bass hits with the kick', async () => {
+		const { run } = setup();
+		await run(writePatternTool, { track: 1, grid: { kick: 'x... x... x... x...' } });
+		const bass = json(
+			await run(writePatternTool, {
+				track: 3,
+				bars: 2,
+				notes: '1:A1:2 3:A1:2 9:C2:2 19:E2:2 25:G1:2'
+			})
+		);
+		expect(bass.note).toMatch(/It hits with T1's kick on steps 1, 9, 25 \(3 of its 5 steps\)\./);
+		// a lead high above it says nothing of the kick
+		const lead = json(await run(writePatternTool, { track: 5, notes: '1:C5:2 9:E5:2' }));
+		expect(lead.note).not.toMatch(/kick/);
+	});
+
 	it('gives a pattern its own groove, confirmed and undone with it', async () => {
 		const { sim, env, run } = setup();
 		sim.state.tempo.groove = 0; // shuffle, at the tempo page's 0: straight

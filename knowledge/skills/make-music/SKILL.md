@@ -72,8 +72,9 @@ the whole pattern, then the fill's bar alone with bar, rather than counting a 64
 every fourth bar is a one-bar groove, a copy of it with the fill (copy and bar), two scenes and the
 song 1 1 1 2), four-on-the-floor is a kick on every
 beat, a backbeat is the snare on 2 and 4, and a closed and an open hat do not share a step (a
-drummer plays one or the other: a grid leaves the closed one out under the open one, so a steady
-closed-hat line with open hats on top is fine). Velocity per step is a step component
+drummer plays one or the other: write a steady closed-hat line with open hats on top if you like,
+and the grid leaves each closed hat under an open one out, as its result says; show the grid as it
+came back). Velocity per step is a step component
 ([sequencer.component-velocity]), not a parameter lock. To arpeggiate chords, turn on the track's
 arpeggio player (area player: type arpeggio, its speed and pattern) over the chords as written, as
 the device does it; writing the arpeggio out note by note is for a line the player cannot make.

@@ -163,7 +163,9 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 		manual,
 		store: createIdbThreadStore(),
 		memory: createIdbMemoryStore(),
-		preferences: browserPreferences()
+		preferences: browserPreferences(),
+		// an overloaded API, mid-stream, asked again twice before the user sees an error
+		overloadRetries: 2
 	});
 	// stored work still going back is no change of the user's: seen again once it is back
 	const persistence = options.persistence;

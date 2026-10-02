@@ -23,6 +23,14 @@ describe('humanize', () => {
 		expect(new Set(a.map((n) => n.offset ?? 0)).size).toBeGreaterThan(4);
 	});
 
+	it('leans every note behind the beat by the same amount, the first never early', () => {
+		const back = humanizeNotes(hats, { late: 0.08 }, () => true, 3);
+		expect(back.every((n) => n.offset === 0.08)).toBe(true);
+		const ahead = humanizeNotes(hats, { late: -0.05 }, () => true, 3);
+		expect(ahead[0].offset ?? 0).toBe(0);
+		expect(ahead.slice(1).every((n) => n.offset === -0.05)).toBe(true);
+	});
+
 	it('leaves the notes it does not pick, and velocities alone when asked for timing only', () => {
 		const out = humanizeNotes(hats, { timing: 0.1 }, (n) => n.step % 2 === 0, 7);
 		expect(out.filter((n) => n.step % 2 === 1)).toEqual(hats.filter((n) => n.step % 2 === 1));

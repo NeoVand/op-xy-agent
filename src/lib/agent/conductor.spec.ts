@@ -60,6 +60,7 @@ interface SetupOptions {
 	readonly connect?: boolean;
 	/** Another fake API (a paced one) instead of the script. */
 	readonly fetch?: typeof fetch;
+	readonly overloadRetries?: number;
 }
 
 async function setup(script: ScriptStep[], options: SetupOptions = {}) {
@@ -81,7 +82,9 @@ async function setup(script: ScriptStep[], options: SetupOptions = {}) {
 		confirmWindowMs: 0,
 		autoApprove: options.autoApprove,
 		model: options.model,
-		session: 'session-test'
+		session: 'session-test',
+		overloadRetries: options.overloadRetries,
+		timers: { setTimeout: (callback) => setTimeout(callback, 0), clearTimeout: () => {} }
 	});
 	const events: AgentEvent[] = [];
 	const bus: MidiEvent[] = [];
@@ -769,6 +772,19 @@ describe('conductor: errors, stop and persistence', () => {
 		if (code === 'rate-limit') expect(conductor.lastError?.retryAfter).toBe(7);
 		const notice = conductor.entries.find((e) => e.kind === 'notice');
 		expect(notice).toMatchObject({ tone: 'error' });
+	});
+
+	it('asks again when the API is overloaded before the answer showed anything', async () => {
+		const { conductor } = await setup(
+			[
+				{ error: { status: 529, type: 'overloaded_error', message: 'Overloaded' } },
+				{ content: [{ type: 'text', text: 'Here.' }], stop_reason: 'end_turn' }
+			],
+			{ overloadRetries: 2 }
+		);
+		await conductor.send('hi');
+		expect(conductor.status).not.toBe('error');
+		expect(JSON.stringify(conductor.entries)).toContain('Here.');
 	});
 
 	it('stops a streaming turn without appending a partial answer', async () => {

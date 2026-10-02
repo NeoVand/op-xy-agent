@@ -35,11 +35,15 @@ export function grooveReach(
 		return Math.abs(grooveTime(at, g) - at) > 0.02;
 	}).length;
 	const label = `The groove (${type}, ${amount > 0 ? '+' : ''}${amount})`;
+	// what to do about it, before the answer (agents told the user the swing would not be heard
+	// instead of making it heard)
+	const fix =
+		'If the swing is meant to be heard, put hits there before you answer (hats or ghost snares between the eighths, written with merge).';
 	if (moved === 0) {
-		return `${label} moves none of T${pattern.track}'s notes, so it plays straight: ${where(type)}; put hits there to hear it.`;
+		return `${label} moves none of T${pattern.track}'s notes, so it plays straight: ${where(type)}. ${fix}`;
 	}
 	if (moved / pattern.notes.length < FEW) {
-		return `${label} moves only ${moved} of T${pattern.track}'s ${pattern.notes.length} notes, so it hardly swings: ${where(type)}; put hits there (hats or ghost snares between the eighths) to hear it.`;
+		return `${label} moves only ${moved} of T${pattern.track}'s ${pattern.notes.length} notes, so it hardly swings: ${where(type)}. ${fix}`;
 	}
 	return always
 		? `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes.`

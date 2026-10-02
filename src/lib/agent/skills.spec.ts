@@ -137,6 +137,8 @@ describe('routing', () => {
 		// the sends and the pan are the sound skill's (it says a send is the whole track's)
 		expect(route('put a delay on the snare only')).toEqual(['shape-a-sound']);
 		expect(route('put the hi-hats on the left')).toEqual(['make-music', 'shape-a-sound']);
+		// a live drummer's feel is no live performance
+		expect(route('make it sound like a live drummer played it')).not.toContain('perform-live');
 		// notes by name are music to write, whatever the verb
 		expect(route('play this on track 4: E4 G4 A4 B4 A4 G4 E4 D4 in quarter notes')).toEqual([
 			'make-music'

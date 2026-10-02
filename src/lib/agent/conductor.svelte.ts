@@ -119,6 +119,8 @@ export interface ConductorOptions {
 	/** Remembers the last thread and the chosen model; memory-only when absent. */
 	readonly preferences?: PreferenceStore;
 	readonly timers?: AgentTimers;
+	/** Times an overloaded answer that showed nothing yet is asked for again (default none). */
+	readonly overloadRetries?: number;
 	/** Conductor model (default: the saved preference, else `claude-sonnet-5-5`). */
 	readonly model?: string;
 	/** Model for every subagent (default: each subagent's own). */
@@ -312,6 +314,7 @@ export class Conductor {
 	readonly #store: ThreadStore;
 	readonly #preferences: PreferenceStore;
 	readonly #timers: AgentTimers;
+	readonly #overloadRetries: number;
 	readonly #subagentModel: string | null;
 	readonly #effort: Effort;
 	readonly #maxIterations: number;
@@ -378,6 +381,7 @@ export class Conductor {
 		this.#store = options.store;
 		this.#preferences = options.preferences ?? memoryPreferences();
 		this.#timers = options.timers ?? GLOBAL_TIMERS;
+		this.#overloadRetries = options.overloadRetries ?? 0;
 		this.#subagentModel = options.subagentModel ?? null;
 		this.#effort = options.effort ?? 'medium';
 		this.#maxIterations = options.maxIterations ?? 16;
@@ -1340,7 +1344,9 @@ export class Conductor {
 							signal: controller.signal
 						}),
 					afterTools: () => this.#grounding(),
-					quirks: this.#quirks
+					quirks: this.#quirks,
+					overloadRetries: this.#overloadRetries,
+					wait: (ms) => new Promise((done) => this.#timers.setTimeout(done, ms))
 				},
 				this.#transcript()
 			);
