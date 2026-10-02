@@ -6,7 +6,7 @@
  * writes back what was there before.
  */
 import { z } from 'zod';
-import { parseNoteName } from '$lib/core/midi/notes';
+import { noteName, parseNoteName } from '$lib/core/midi/notes';
 import { grooveReach } from '../groove-reach';
 import { humanizeNotes, seedOf } from '../humanize';
 import { slidesNote } from '../slides';
@@ -194,6 +194,30 @@ function movedKey(
 }
 
 /**
+ * Chords in a note count, said (" (48 chords of 3 notes)"): a gated pad's 48 three-note chords
+ * read as 144 notes, and the agent worked out why itself.
+ */
+function stackCount(notes: readonly { step: number }[]): string {
+	const sizes = new Map<number, number>();
+	for (const n of notes) sizes.set(n.step, (sizes.get(n.step) ?? 0) + 1);
+	const chords = [...sizes.values()].filter((n) => n >= 3);
+	if (chords.length < 2) return '';
+	const most = Math.round(chords.reduce((a, b) => a + b, 0) / chords.length);
+	return ` (${chords.length} chords of about ${most} notes)`;
+}
+
+/**
+ * bars counts steps, not time: at a track scale of 1/2 two bars of time are 64 steps (an agent
+ * wrote bars 2 at scale 1/2 for two bars of a ride and was told its step 62 did not fit).
+ */
+function scaleBars(step: number, scale: number | string | undefined): string {
+	const s = scale === '1/2' || scale === 0.5 ? 0.5 : Number(scale ?? 1);
+	if (!(s > 0) || s === 1) return '';
+	const need = Math.ceil(step / 16);
+	return `: bars counts bars of 16 steps whatever the track scale, so step ${step} needs bars ${Math.min(4, need)} (at scale ${scale}, ${need} bars of steps last ${Math.round(need * s * 100) / 100} bar${need * s === 1 ? '' : 's'} of time)`;
+}
+
+/**
  * A pattern as the model reads it: a drum pattern as its grid, a pitched one as its reading with
  * its notes in write_pattern's own form. `drumSteps: false` leaves a drum pattern as its grid alone
  * (write_pattern's result: the steps again, note by note, made an agent's drum results twice as
@@ -259,7 +283,7 @@ function patternView(
 			? { locks: p.locks.map((l) => `step ${l.step}: ${l.values.join(', ')}`) }
 			: {}),
 		// notes off the grid (a live take), which neither the grid nor the notes form shows
-		...offGrid(p),
+		...offGrid(p, meant?.prefer === 'flats'),
 		...(p.quantise !== undefined ? { quantise: p.quantise } : {}),
 		...(grid ? { grid, hits: drumHits(p) ?? '', beats: drumBeats(p, meter) ?? '' } : {}),
 		...('bars' in reading ? { reading } : {}),
@@ -351,31 +375,31 @@ function drumBeats(p: VirtualPattern, meter: BarMeter): string | null {
 	return `${lines.join('; ')}${fours ? ' (beats of each bar; e, & and a the sixteenths after a beat)' : ` (steps of each ${meter.bar}-step bar)`}`;
 }
 
-/** The notes that play off the grid, by how far: "3 notes off the grid (…): step 5 +0.10, …". */
-function offGrid(p: VirtualPattern): { offGrid?: string } {
+/**
+ * The notes that play off the grid, by how far, each by name, a step at a time: "3 notes off the
+ * grid (…): step 5: C4 +0.10, E4 +0.04; …". Flats where the key spells with them.
+ */
+function offGrid(p: VirtualPattern, flats = false): { offGrid?: string } {
 	const off = p.notes.filter((n) => n.offset);
 	if (off.length === 0) return {};
 	const sign = (x: number) => `${x > 0 ? '+' : '−'}${Math.abs(x).toFixed(2)}`;
-	// by step, a chord's notes low to high (asked for chords "exactly", an agent got 8 of the 18
-	// offsets and could not tell which note stayed on the grid)
+	// by step, a chord's notes low to high, each named (asked for chords "exactly", an agent got 8
+	// of the 18 offsets, then a list it had to pair with the notes itself)
 	const byStep = new Map<number, VirtualNote[]>();
 	for (const n of off) byStep.set(n.step, [...(byStep.get(n.step) ?? []), n]);
 	const steps = [...byStep].sort((a, b) => a[0] - b[0]);
 	const shown = steps.slice(0, 16).map(
 		([step, notes]) =>
-			`step ${step} ${[...notes]
+			`step ${step}: ${[...notes]
 				.sort((a, b) => a.note - b.note)
-				.map((n) => sign(n.offset ?? 0))
-				.join(' ')}`
+				.map((n) => `${n.sound ?? noteName(n.note, { ascii: true, flats })} ${sign(n.offset ?? 0)}`)
+				.join(', ')}`
 	);
-	const stacked = steps.some(([, notes]) => notes.length > 1)
-		? " (a step's notes low to high)"
-		: '';
 	const on = p.notes.length - off.length;
 	// which sounds, on a drum track (an agent humanizing the hats alone could not confirm it)
 	const sounds = [...new Set(off.flatMap((n) => (n.sound ? [n.sound] : [])))];
 	return {
-		offGrid: `${off.length} note${off.length === 1 ? '' : 's'}${sounds.length ? ` (${sounds.join(', ')})` : ''} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern; the notes on the grid stay there): ${shown.join(', ')}${steps.length > 16 ? ', …' : ''}${stacked}${on > 0 ? `; ${on} on the grid` : ''}`
+		offGrid: `${off.length} note${off.length === 1 ? '' : 's'}${sounds.length ? ` (${sounds.join(', ')})` : ''} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern; the notes on the grid stay there): ${shown.join('; ')}${steps.length > 16 ? '; …' : ''}${on > 0 ? `; ${on} on the grid` : ''}`
 	};
 }
 
@@ -633,7 +657,7 @@ export const writePatternTool = defineTool({
 			.max(48)
 			.optional()
 			.describe(
-				'Semitones to shift by: alone, it shifts the pattern as it is now (12 = up an octave), keeping everything else; with notes, it shifts those'
+				"Semitones to shift by: alone, it shifts the pattern as it is now (12 = up an octave), keeping everything else; with notes, it shifts those; with copy or copy_track, the copy (T5's melody an octave up on T6: track 6, copy_track 5, transpose 12)"
 			),
 		scale_steps: z
 			.int()
@@ -648,7 +672,7 @@ export const writePatternTool = defineTool({
 			.max(24)
 			.optional()
 			.describe(
-				'The key you mean ("A minor", "D dorian", "Eb major"): the reading spells notes and chords in it rather than guessing one; give it on every pitched pattern of a song (a bass written before its chords has nothing else to read its key by)'
+				'The key you mean ("A minor", "D dorian", "Eb major"): the reading spells notes and chords in it rather than guessing one; give it on every pitched pattern of a song (a bass written before its chords has nothing else to read its key by); with transpose, the key it lands in, or none: the key the pattern was written in moves with it'
 			),
 		components: z
 			.array(
@@ -1153,14 +1177,14 @@ export const writePatternTool = defineTool({
 		}
 		if (notes.length > MAX_NOTES) {
 			return errorResult(
-				`Nothing was written: ${notes.length} notes, and a pattern holds ${MAX_NOTES}. Spread them over more patterns (and scenes), or fewer bars.`,
+				`Nothing was written: ${notes.length} notes${stackCount(notes)}, and a pattern holds ${MAX_NOTES}. Spread them over more patterns (and scenes), or fewer bars${stackCount(notes) ? ', fewer hits, or fewer notes a chord' : ''}.`,
 				'too many notes'
 			);
 		}
 		const lastStep = notes.reduce((max, n) => Math.max(max, n.step), 1);
 		if (lastStep > span) {
 			return errorResult(
-				`Step ${lastStep} does not fit in ${bars} bar${bars === 1 ? '' : 's'} (${span} steps).`,
+				`Step ${lastStep} does not fit in ${bars} bar${bars === 1 ? '' : 's'} (${span} steps)${scaleBars(lastStep, input.scale)}.`,
 				'step outside the pattern'
 			);
 		}
@@ -1494,8 +1518,13 @@ export const writePatternTool = defineTool({
 				for (const q of partsAlongside(virtual, input.track, pattern)) {
 					const named = keysOf(virtual).get(`${q.track}:${q.pattern}`);
 					const line = readPattern(q, [result], meterNow(virtual), named ? parseKey(named) : null);
+					// moved alone, the chords meet the line as it stands (an agent transposing two tracks
+					// one after the other read clashes that were gone once the second moved too)
+					const moved = shifting
+						? ` (as T${q.track} stands now: if it moves too, its own write reads it against these again)`
+						: '';
 					if (line?.againstChords) {
-						notes2.push(`T${q.track}'s line against these chords: ${line.againstChords}.`);
+						notes2.push(`T${q.track}'s line against these chords${moved}: ${line.againstChords}.`);
 					}
 				}
 			}

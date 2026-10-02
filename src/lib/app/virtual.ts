@@ -53,6 +53,7 @@ import {
 	PLAY_MODES,
 	type SimState
 } from '$lib/sim/params';
+import { findProject, sameContent, snapshot } from '$lib/sim/areas/system/projects';
 import { takeBack } from '$lib/sim/merge';
 import {
 	MAX_BARS,
@@ -725,6 +726,17 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			if ('to' in goal) return planToSetting(sim.state, goal.to);
 			if ('label' in goal) return planPageValue(sim.state, goal);
 			return planParam(sim.state, goal);
+		},
+
+		project() {
+			const stored = findProject(s, 'user', s.project.name)?.snapshot;
+			const saved =
+				stored == null
+					? ('never' as const)
+					: sameContent(stored, snapshot(s))
+						? ('as it stands' as const)
+						: ('changed since' as const);
+			return { name: s.project.name, saved };
 		},
 
 		checkpoint() {

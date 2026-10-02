@@ -125,12 +125,22 @@ function formatBpm(bpm: number): string {
 
 // ─── device_status ──────────────────────────────────────────────────────────────────────────────
 
+/** The replica's open project and whether its edits are stored, in words. */
+function projectLine(p: ReturnType<VirtualOpxy['project']>): string {
+	const said = {
+		'as it stands': 'saved as it stands',
+		'changed since': 'changed since its last save: saving (project → M2) stores the edits',
+		never: 'never saved: it is in the projects folder once saved (project → M2)'
+	}[p.saved];
+	return `"${p.name}", ${said}`;
+}
+
 export const deviceStatusTool = defineTool({
 	name: 'device_status',
 	label: 'device status',
 	kind: 'read',
 	description:
-		'Read what the app knows about the OP-XY right now: whether it is connected, firmware, play state and who reported it, whether the device sends clock (and the measured tempo), and the sent-state cache (tempo, selected track and mutes as this app last sent them; the user may have changed them by hand). Also the replica on screen: tempo, transport, tracks (engine, patterns, notes, mutes), scenes and song, and whether the browser sound is on. Sends nothing.',
+		'Read what the app knows about the OP-XY right now: whether it is connected, firmware, play state and who reported it, whether the device sends clock (and the measured tempo), and the sent-state cache (tempo, selected track and mutes as this app last sent them; the user may have changed them by hand). Also the replica on screen: tempo, transport, tracks (engine, patterns, notes, mutes), scenes and song, whether the browser sound is on, and whether the open project is saved as it stands (or changed since its last save). Sends nothing.',
 	input: z.object({}),
 	async run(_input, ctx) {
 		const s = deviceSnapshot(ctx.env.device);
@@ -150,6 +160,9 @@ export const deviceStatusTool = defineTool({
 			clock: { deviceSendsClock: s.clockOut, measuredBpm: s.measuredBpm },
 			sentState: { tempoBpm: s.tempoSent, selectedTrack: s.selectedTrack, mutes: s.mutes },
 			virtual: ctx.env.virtual?.status() ?? null,
+			// whether the open project's edits are stored (an agent asked "is that change saved?"
+			// could only reason from the order of its own calls)
+			...(ctx.env.virtual ? { project: projectLine(ctx.env.virtual.project()) } : {}),
 			// what sending the replica's project needs (an agent could not tell before trying)
 			...(ctx.env.projects
 				? {

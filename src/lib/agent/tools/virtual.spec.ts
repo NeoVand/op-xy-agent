@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { createVirtualOpxy, type VirtualSound } from '$lib/app/virtual';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { saveProject } from '$lib/sim/areas/system/projects';
 import { currentPattern } from '$lib/sim/sequencer';
 import { FakeTime } from '../../../../test/fakes/fake-time';
 import { NO_MANUAL } from '../manual-source';
@@ -667,6 +668,26 @@ describe('write_pattern on drums', () => {
 		expect(estimated.written.reading.key).toBe('Bb major (C major moved down 2 semitones)');
 	});
 
+	it('says why a write does not fit: chords counted, bars against the track scale', async () => {
+		const { run } = setup();
+		// a gated pad: 48 three-note chords read as 144 notes, the agent left to work out why
+		const gate = Array.from({ length: 48 }, (_, i) => `${i + 1}:A3+C4+E4:1`).join(' ');
+		const many = await run(writePatternTool, { track: 8, bars: 3, notes: gate });
+		expect(String(many.content)).toMatch(
+			/144 notes \(48 chords of about 3 notes\), and a pattern holds 120\. .*fewer hits, or fewer notes a chord/
+		);
+		// bars 2 at scale 1/2 for two bars of a ride: bars counts steps, not time
+		const ride = await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			scale: '1/2',
+			notes: '1:66 62:66'
+		});
+		expect(String(ride.content)).toMatch(
+			/Step 62 does not fit in 2 bars \(32 steps\): bars counts bars of 16 steps whatever the track scale, so step 62 needs bars 4 \(at scale 1\/2, 4 bars of steps last 2 bars of time\)/
+		);
+	});
+
 	it('reads a line already there against chords written over it', async () => {
 		// chords over a one-bar riff: the clash in bar 4 was found only when the user asked
 		const { run } = setup();
@@ -679,6 +700,12 @@ describe('write_pattern on drums', () => {
 			await run(writePatternTool, { track: 7, key: 'E minor', chords: '1:Em 17:C 33:G 49:D' })
 		);
 		// the G under D/F# rubs (a half step above its F#); the D under Em is a 7th, a colour
+		// transposed alone, the chords meet the line as it stands, said so
+		const up = json(await run(writePatternTool, { track: 7, transpose: 2 }));
+		expect(up.note).toMatch(
+			/T3's line against these chords \(as T3 stands now: if it moves too, its own write reads it against these again\): /
+		);
+		await run(writePatternTool, { track: 7, transpose: -2 });
 		expect(chords.note).toMatch(
 			/T3's line against these chords: 17 of the 32 notes over T7's chords \(the line plays 4 times under them\) are chord tones; on a beat and outside the chord \(1 a half step above a chord tone, which rubs; .*\): .*bar 1 step 9: D2 over Em\/G \(E G B\), .*bar 4 step 5: G2 over D\/F# \(D F# A, a half step above its F#\)/
 		);
@@ -764,7 +791,7 @@ describe('write_pattern on drums', () => {
 		expect(virtual.readPattern(3).notes.find((n) => n.step === 23)?.offset).toBe(0.125);
 		expect(up.written.locks).toEqual(['step 7: cutoff 40']);
 		expect(up.written.offGrid).toMatch(
-			/^1 note off the grid .*: step 23 \+0\.13; \d+ on the grid$/
+			/^1 note off the grid .*: step 23: A3 \+0\.13; \d+ on the grid$/
 		);
 		// a whole rewrite drops them, and says so
 		const anew = json(await run(writePatternTool, { track: 3, notes: '1:D2:4' }));
@@ -1513,7 +1540,7 @@ describe('write_pattern, short', () => {
 		// humanized, every chord's offsets by step, low note to high, and how many stayed on the grid
 		const loose = json(await run(writePatternTool, { track: 7, humanize: { timing: 0.08 } }));
 		expect(loose.written.offGrid).toMatch(
-			/off the grid .*: step 1 [+−]\d\.\d\d( [+−]\d\.\d\d){1,4}, step 17 .* \(a step's notes low to high\)(; \d+ on the grid)?$/
+			/off the grid .*: step 1: F3 [+−]\d\.\d\d, G3 [+−]\d\.\d\d, A3 [+−]\d\.\d\d, C4 [+−]\d\.\d\d, E4 [+−]\d\.\d\d; step 17: G3 /
 		);
 		// and by them after: a groove change, a read (an Em7 read back as G6 after a groove)
 		const grooved = json(await run(writePatternTool, { track: 7, groove: 30 }));
@@ -1738,6 +1765,17 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		const next = json(await run(setTempoTool, { bpm: 100 }));
 		expect(next).toMatchObject({ target: 'virtual', tempoBpm: 100 });
 		expect(next.note).toBeUndefined();
+	});
+
+	it('says whether the open project is saved as it stands', async () => {
+		// "is that change saved?" was answered from the order of the agent's own calls
+		const { sim, run } = setup();
+		const status = async () => json(await run(deviceStatusTool, {})).project;
+		expect(await status()).toMatch(/^"project 1", never saved/);
+		saveProject(sim.state);
+		expect(await status()).toBe('"project 1", saved as it stands');
+		await run(writePatternTool, { track: 1, grid: { kick: 'x... x... x... x...' } });
+		expect(await status()).toMatch(/^"project 1", changed since its last save: saving/);
 	});
 
 	it('panics on the replica with no OP-XY: playback stopped, every note cut', async () => {

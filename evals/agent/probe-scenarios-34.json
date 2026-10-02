@@ -1,0 +1,149 @@
+[
+	{
+		"name": "bass-then-chords-fit",
+		"about": "Re-check: chords over a bass read the bass against them.",
+		"steps": [
+			{ "say": "write a bass riff on track 3 in D minor, then chords on track 7 over it" },
+			{ "say": "does everything fit together?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "danish-groove",
+		"about": "Re-check: a groove's moved hits by sound.",
+		"steps": [
+			{ "say": "make a beat with hats and some percussion" },
+			{ "say": "use the danish groove and tell me exactly which hits move" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "octave-double",
+		"about": "Re-check: an octave doubling read as one.",
+		"steps": [
+			{ "say": "write a melody on track 5 and double it an octave up on track 6" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "humanize-offsets",
+		"about": "Re-check: every off-grid offset by step.",
+		"steps": [
+			{ "say": "write a chord loop on track 7 and humanize it" },
+			{ "say": "tell me each note's timing offset" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "save-then-change",
+		"about": "Re-check: what keeps edits after a save.",
+		"steps": [
+			{ "say": "make a beat and save the project" },
+			{ "say": "now move the snare to beat 3 only. is that change saved?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "jazz-voicings",
+		"about": "Re-check: rootless jazz voicings named.",
+		"steps": [
+			{
+				"say": "write a ii-V-I in C on track 7 with rootless jazz piano voicings and name each chord"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arabic-hiphop",
+		"about": "A request in Arabic.",
+		"steps": [{ "say": "اصنع إيقاع هيب هوب مع باس" }, { "why": true }]
+	},
+	{
+		"name": "trance-gate",
+		"about": "A gated pad.",
+		"steps": [
+			{ "say": "make a trance pad with a gated sixteenth rhythm on track 8" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "footwork",
+		"about": "A genre not tried yet.",
+		"steps": [{ "say": "make a footwork beat at 160 bpm" }, { "why": true }]
+	},
+	{
+		"name": "live-fill-howto",
+		"about": "A performance question.",
+		"steps": [{ "say": "how do I play a drum fill live on the op-xy?" }, { "why": true }]
+	},
+	{
+		"name": "teach-mute",
+		"about": "A hands-on lesson, followed.",
+		"steps": [
+			{ "say": "make a beat with a bass and play it" },
+			{ "say": "teach me how to mute and unmute the bass live, light the keys" },
+			{ "follow": 3 },
+			{ "say": "did that work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "max-tempo",
+		"about": "A device fact question.",
+		"steps": [{ "say": "what's the fastest tempo the op-xy can do?" }, { "why": true }]
+	},
+	{
+		"name": "whats-on-track",
+		"about": "A state question.",
+		"steps": [
+			{ "say": "make a beat with bass and chords" },
+			{ "say": "what's on track 4 right now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "drums-swing-not-bass",
+		"about": "Swing on one track only.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "make the drums swing but keep the bass straight" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "correction",
+		"about": "The user corrects the request.",
+		"steps": [
+			{ "say": "make a beat with the snare on beat 3 only" },
+			{ "say": "no sorry, I meant on 2 and 4" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "transpose-song",
+		"about": "Transposing everything.",
+		"steps": [
+			{ "say": "make chords and a bass in A minor" },
+			{ "say": "transpose everything up 2 semitones" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "loop-scene-two",
+		"about": "Looping one scene of a song.",
+		"steps": [
+			{ "say": "make a 3 scene song" },
+			{ "say": "loop only scene 2 for now" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "add-ride",
+		"about": "Adding a sound to a beat.",
+		"steps": [
+			{ "say": "make a jazz beat" },
+			{ "say": "add a ride cymbal pattern" },
+			{ "why": true }
+		]
+	}
+]

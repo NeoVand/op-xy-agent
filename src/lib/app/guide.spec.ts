@@ -230,6 +230,25 @@ describe('turnHint', () => {
 });
 
 describe('a walkthrough that arms recording', () => {
+	it('waits for a mute, though the screen reads the same', async () => {
+		// a lesson's instrument + T3 passed before the user pressed anything: a mute leaves the
+		// screen as it was
+		const { sim, replica, guide } = setup();
+		const virtual = createVirtualOpxy({ sim });
+		virtual.selectTrack(3);
+		const steps = virtual.rehearse('instrument + T3');
+		expect(steps[0].screen).toBe(describeFrame(buildFrame(sim.state)));
+		guide.start('mute the bass', steps);
+		expect(guide.status).toBe('running');
+		replica.press('key.instrument', 'pointer');
+		replica.press('track.3', 'pointer');
+		replica.release('track.3', 'pointer');
+		replica.release('key.instrument', 'pointer');
+		await settle();
+		expect(sim.state.tracks[2].mix.muted).toBe(true);
+		expect(guide.status).toBe('done');
+	});
+
 	it('waits for record + play itself, though the screen reads the same', async () => {
 		const { createVirtualOpxy } = await import('$lib/app/virtual');
 		const sim = new OpxySim({ now: () => 0 });

@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1230 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1231 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -4262,6 +4262,7 @@ groove settings on `E2` and `E3` are explained under grooves.
 
 Facts:
 - `tempo` opens the tempo screen from any screen. [#open] [s1]
+- The tempo runs from 40 to 220 BPM, the ends of the metronome weight's travel and of the range CC80 is held to. [#range] (derived) [s2]
 - Tapping `tempo` repeatedly in time with the music sets the tempo. [#tap] (verified 1.1.33) [s2]
 - `turn E4` sets the metronome volume and `click E4` switches the metronome on or off. [#metronome] [s3]
 - Over MIDI, CC80 on any channel sets the tempo; on OS 1.1.33 the result is twice the value in BPM, held within 40–220, so only even tempos can be sent. [#cc80] (verified 1.1.33) [s4]

@@ -479,6 +479,19 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   high, with how many stay on the grid; a save says what keeps the edits after it (autosave when
   another project opens, or save again); the chord namer knows the jazz voicings of a 13th (no
   fifth, with the ninth; the shell) and m13 (an F13 of F A E♭ G D read as no chord).
+- **Probe round thirty-four (2026-10-02), 18 scenarios (`probe-scenarios-34.json`: re-checks
+  (chords over a bass reading the bass, the danish groove by sound, an octave doubling, humanized
+  chords' offsets, a save then an edit, rootless jazz voicings) and new kinds: Arabic hip hop, a
+  trance gate, footwork, a live fill, a mute lesson followed, the top tempo, "what's on track 4", the
+  drums swung and the bass straight, a corrected request, a whole-song transpose, one scene looped, a
+  ride added):** two failed calls (a gated pad past 120 notes, a ride at scale 1/2 with bars 2).
+  Fixes: a lesson's `instrument + T3` mute passed before the user pressed anything, since a mute
+  leaves the screen as it was — the walkthrough's music mark now holds the mutes; device_status says
+  whether the open project is saved as it stands or changed since its last save; off-grid offsets
+  name each note; the note limit counts the chords ("48 chords of about 3 notes"); a step past the
+  bars at another track scale says bars counts 16 steps; chords transposed alone say the lines under
+  them are read as they stand; transpose with copy_track and key with transpose described; the
+  manual states the tempo range, 40–220 BPM.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

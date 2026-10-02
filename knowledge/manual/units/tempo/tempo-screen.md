@@ -17,6 +17,10 @@ facts:
   - id: open
     text: '`tempo` opens the tempo screen from any screen.'
     source: https://teenage.engineering/guides/op-xy/tempo#project
+  - id: range
+    text: The tempo runs from 40 to 220 BPM, the ends of the metronome weight's travel and of the range CC80 is held to.
+    source: docs/research/59-screen-profiling.md#211-tempo
+    confidence: derived
   - id: tap
     text: Tapping `tempo` repeatedly in time with the music sets the tempo.
     source: docs/research/59-screen-profiling.md#211-tempo

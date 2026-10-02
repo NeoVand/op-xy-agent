@@ -336,6 +336,12 @@ export interface VirtualOpxy {
 	 * detents are a value's: plan one with plan_steps).
 	 */
 	rehearse(keys: string): readonly RehearsedStep[];
+	/**
+	 * The open project's name and whether its stored copy holds it as it stands: saved, changed
+	 * since its last save, or never saved (an agent asked "is that change saved?" answered from the
+	 * order of its own calls).
+	 */
+	project(): { readonly name: string; readonly saved: 'as it stands' | 'changed since' | 'never' };
 	/** The replica as it stands, to compare with later (a turn's grounding, the lab). */
 	checkpoint(): VirtualCheckpoint;
 	/**
