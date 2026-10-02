@@ -456,7 +456,17 @@ export class Conductor {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		conductor.#catalog = new Map(catalog.map((entry) => [entry.id.toLowerCase(), entry]));
 		await conductor.#restore();
+		conductor.seeReplica();
 		return conductor;
+	}
+
+	/**
+	 * Takes the replica as it stands as seen: what changes on it from here, before a message, is
+	 * the user's (an agent asked "what did I just make?" after the user's first key presses could
+	 * not tell who had made it). The app calls it again once stored work is back.
+	 */
+	seeReplica(): void {
+		this.#lastSeen = this.#env.virtual?.checkpoint() ?? null;
 	}
 
 	/**
@@ -1123,7 +1133,13 @@ export class Conductor {
 				: []),
 			...(standing > 0
 				? [
-						`- and ${standing} change${standing === 1 ? '' : 's'} from the earlier list${before.length === 1 ? '' : 's'}, still as given there (${standingAbout(marked.filter((l) => before.includes(l)).map(about))})`
+						`- and ${standing} change${standing === 1 ? '' : 's'} from the earlier list${before.length === 1 ? '' : 's'}, still as given there (${standingAbout(
+							marked
+								.filter((l) => before.includes(l))
+								.map(about)
+								// "T5 plays pattern 1 → 2" is about which pattern T5 plays, not "T5 plays pattern"
+								.map((l) => l.replace(/^(T\d+) plays pattern$/, 'which pattern $1 plays'))
+						)})`
 					]
 				: [])
 		];
@@ -1168,7 +1184,8 @@ export class Conductor {
 			const parts = [walk, recording ? now : null].filter(Boolean);
 			return parts.length ? `<user-changes>\n${parts.join('\n')}\n</user-changes>` : null;
 		}
-		return `<user-changes>\nSince your last answer, the replica changed (the user's own hands, or playback they started or stopped):\n${lines.map((l) => `- ${l}`).join('\n')}${walk ? `\n${walk}` : ''}\n${now}\n</user-changes>`;
+		const since = this.#answered ? 'Since your last answer' : 'Since the chat opened';
+		return `<user-changes>\n${since}, the replica changed (the user's own hands, or playback they started or stopped):\n${lines.map((l) => `- ${l}`).join('\n')}${walk ? `\n${walk}` : ''}\n${now}\n</user-changes>`;
 	}
 
 	/**

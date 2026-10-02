@@ -90,6 +90,8 @@ Many edits at once (the whole song transposed, the hats of every pattern humanis
 each part) are one lab program, exact to the note and one change to undo; the lab skill has the
 shapes. A pattern or two are clearer written directly.
 
+"Play this" with the notes given asks for both: write them and start playback, so they hear it.
+
 ## Say what you made
 
 Describe what you made from what the write returned, not from what you meant: a drum pattern comes

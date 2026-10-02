@@ -39,6 +39,11 @@ export interface PatternReading {
 	 * spells them (the same notes)".
 	 */
 	readonly spelled?: string;
+	/**
+	 * Every note in write_pattern's own form, step:note:length:velocity, the notes of a step with
+	 * one length and velocity joined by + ("1:A1:2:95 17:G3+B3+E4:16:70"), spelled as the bars are.
+	 */
+	readonly notes: string;
 }
 
 const ascii = (name: string) => name.replace(/♯/g, '#').replace(/♭/g, 'b');
@@ -284,8 +289,10 @@ export function readPattern(
 				.map((n) => n.note)
 				.sort((x, y) => x - y);
 			const tones = [...new Set(notes.map((n) => names[n % 12]))];
-			// three or four notes outline a chord; more are a run (a melody read Am7(add11), no help)
-			const chord = tones.length >= 3 && tones.length <= 4 ? chordName(notes) : null;
+			// three or four notes outline a chord; more are a run (a melody read Am7(add11), no help),
+			// and a triad or a seventh is what a line outlines (a melody's C D E G read Cadd9/G)
+			const named = tones.length >= 3 && tones.length <= 4 ? chordName(notes) : null;
+			const chord = named && !/add|sus|9|11|13/.test(named.name) ? named : null;
 			if (chord) {
 				outlines.push(
 					`bar ${b + 1}: ${respellChord(ascii(chord.name), names)} (${tones.join(' ')})`
@@ -306,6 +313,27 @@ export function readPattern(
 	const spelled = respelled.length
 		? `${respelled.map((r) => r.name).join(' ')} read as ${respelled.map((r) => r.as).join(' ')}, as ${keyName ?? 'the reading'} spells ${respelled.length === 1 ? 'it' : 'them'} (the same note${respelled.length === 1 ? '' : 's'})`
 		: null;
+	// the notes as a write gives them: a 64-note bassline read back as an object a note was five
+	// times its write, and an agent changing it bar by bar read all of it after every bar
+	const atStep = new Map<number, Map<string, number[]>>();
+	for (const n of p.notes) {
+		const groups = atStep.get(n.step) ?? new Map<string, number[]>();
+		const at = `${n.length}:${n.velocity}`;
+		groups.set(at, [...(groups.get(at) ?? []), n.note]);
+		atStep.set(n.step, groups);
+	}
+	const notes = [...atStep.entries()]
+		.sort(([a], [b]) => a - b)
+		.flatMap(([step, groups]) =>
+			[...groups].map(
+				([at, pitches]) =>
+					`${step}:${pitches
+						.sort((a, b) => a - b)
+						.map(noteName)
+						.join('+')}:${at}`
+			)
+		)
+		.join(' ');
 	return {
 		...(meant
 			? { key: `${meant.label} (as written)` }
@@ -316,7 +344,8 @@ export function readPattern(
 		...(chords.length ? { chords } : {}),
 		...(progression ? { progression } : {}),
 		...(outlines.length ? { outlines } : {}),
-		...(spelled ? { spelled } : {})
+		...(spelled ? { spelled } : {}),
+		notes
 	};
 }
 

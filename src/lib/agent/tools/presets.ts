@@ -106,6 +106,9 @@ export const makeKitTool = defineTool({
 			audible: boolean;
 			sounds?: Readonly<Record<string, string>>;
 		} | null = null;
+		// whether the track has notes the kit's sounds take over (an agent rewrote a beat by its
+		// note numbers after a new kit, unsure the grid's names still found the sounds)
+		const playing = !!(track && virtual && (virtual.status().tracks[track - 1]?.notes ?? 0) > 0);
 		if (track && virtual) {
 			try {
 				const load = virtual.loadKit(track, {
@@ -135,7 +138,7 @@ export const makeKitTool = defineTool({
 				...(inbox ? { preset_maker: inbox.href } : {}),
 				...(loaded ? { on_replica: loaded } : {}),
 				note: loaded
-					? `On the replica's track ${loaded.track} now${loaded.engine_changed ? ' (it was another engine; it is a drum sampler now)' : ''}: write a pattern there and play it.${loaded.audible ? '' : ' This browser cannot make sound, so the kit is silent here.'} It also waits in the preset maker to download or install.`
+					? `On the replica's track ${loaded.track} now${loaded.engine_changed ? ' (it was another engine; it is a drum sampler now)' : ''}: ${playing ? 'the notes there play its sounds, key by key' : 'write a pattern there and play it'}.${loaded.audible ? '' : ' This browser cannot make sound, so the kit is silent here.'} A grid names its keys as sounds lists them, or by what they are: "kick", "snare 1" or "closed hat" find the first of that kind, so the names a grid used before still work. It also waits in the preset maker to download or install.`
 					: 'The kit waits in the preset maker: link the user there to play, download or install it.'
 			},
 			loaded

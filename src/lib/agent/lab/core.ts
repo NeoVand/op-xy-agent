@@ -24,6 +24,7 @@ import {
 } from '$lib/core/listen';
 import { loudness } from '$lib/core/listen/level';
 import { grooveReachAll } from '../groove-reach';
+import { lockReach } from '../lock-reach';
 import { BAR, lengthSettings, sceneLength } from '$lib/sim/areas/arrange/model';
 import { KeyParseError, parseKeys } from '$lib/core/opxy';
 import { snapshot } from '$lib/sim/areas/system/projects';
@@ -538,11 +539,23 @@ export function createLab(options: LabOptions): LabSession {
 			const reach = list.some((s) => /groove|swing|shuffle/i.test(s.param))
 				? grooveReachAll(virtual, true)
 				: [];
+			// a lock on a drum track's step reaches every sound on it
+			const locked = new Map<number, number[]>();
+			for (const s of list) {
+				if (s.step === undefined) continue;
+				const track = s.track ?? virtual.status().selectedTrack;
+				locked.set(track, [...(locked.get(track) ?? []), s.step]);
+			}
+			const shared = [...locked].flatMap(([track, steps]) => {
+				const line = lockReach(virtual, track, steps);
+				return line ? [line] : [];
+			});
+			const notes = [...reach, ...shared];
 			return {
 				reached: true,
 				steps: plan.steps.map(stepText),
 				screen: screenOf(sim),
-				...(reach.length ? { note: reach.join(' ') } : {})
+				...(notes.length ? { note: notes.join(' ') } : {})
 			};
 		}
 

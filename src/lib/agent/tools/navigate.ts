@@ -19,6 +19,7 @@ import {
 } from '$lib/sim/navigator';
 import { BAR } from '$lib/sim/areas/arrange/model';
 import { grooveReachAll } from '../groove-reach';
+import { lockReach } from '../lock-reach';
 import type { TimeSignature } from '$lib/sim/areas/arrange/state';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
 import type { NavGoal } from '../virtual-opxy';
@@ -417,13 +418,27 @@ export const planStepsTool = defineTool({
 		const reach = params.some((p) => /groove|swing|shuffle/i.test(p))
 			? grooveReachAll(virtual, true)
 			: [];
+		// a lock on a drum track's step reaches every sound on it (an agent locked a send on the
+		// snare's steps and said the hats stayed dry)
+		const goals = 'settings' in goal ? goal.settings : 'param' in goal ? [goal] : [];
+		const locked = new Map<number, number[]>();
+		for (const g of goals) {
+			if (!('step' in g) || g.step === undefined) continue;
+			const track = g.track ?? status.selectedTrack;
+			locked.set(track, [...(locked.get(track) ?? []), g.step]);
+		}
+		const shared = [...locked].flatMap(([track, steps]) => {
+			const line = lockReach(virtual, track, steps);
+			return line ? [line] : [];
+		});
 		return jsonResult(
 			{
 				shown: true,
 				arrived,
 				...planView(plan),
 				...(meter ? { meter } : {}),
-				...(reach.length ? { groove: reach.join(' ') } : {})
+				...(reach.length ? { groove: reach.join(' ') } : {}),
+				...(shared.length ? { locks: shared.join(' ') } : {})
 			},
 			`shown: ${summaryOf(plan)}`
 		);

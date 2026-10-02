@@ -25,10 +25,16 @@ little between neighbouring sections and a lot at the big moments:
   or opens the filter.
 - **Break or breakdown:** take the kick and bass out; keep one melodic part and space.
 - **Build:** a pattern with a snare roll or rising hats in its last bar, just before the drop.
-- **Outro:** the intro's tracks, or a fade built from mutes.
+- **Outro:** the intro's tracks, or a fade: short scenes of the last section, each with its levels a
+  step lower (write_arrangement's mix, 74 is unity; 62, 48, 32, 16 is a four-step fade), the song
+  not looping so it ends on the quietest. More, shorter scenes make a smoother fade.
 
 Four-bar scenes give a clear form; repeat a scene in the song rather than lengthening its patterns.
 A part left out of a section rests: pattern 0 for its track in that scene (an empty pattern).
+A scene's mutes and levels hold for all of it; a change for one bar of a section (the drums out for
+the chorus's first bar) is a pattern of its own: copy the part's pattern and write that bar anew
+in the copy (write_pattern copy with bar; notes "" clears that bar), then let that
+scene play the copy.
 
 ## Building it
 

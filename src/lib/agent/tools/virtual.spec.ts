@@ -127,27 +127,23 @@ describe('write_pattern', () => {
 		expect(p.steps[8].notes).toEqual([]);
 	});
 
-	it('reads a pattern back by step', async () => {
+	it('reads a pattern back in the notes form a write takes, the same notes again', async () => {
 		const { run } = setup();
 		await run(writePatternTool, {
 			track: 4,
 			notes: [
 				{ step: 1, note: 60 },
 				{ step: 1, note: 64 },
+				{ step: 1, note: 48, length: 4, velocity: 80 },
 				{ step: 3, note: 67 }
 			]
 		});
 		const read = json(await run(readPatternTool, { track: 4 }));
-		expect(read.steps).toEqual([
-			{
-				step: 1,
-				notes: [
-					{ note: 60, velocity: 100, length: 1 },
-					{ note: 64, velocity: 100, length: 1 }
-				]
-			},
-			{ step: 3, notes: [{ note: 67, velocity: 100, length: 1 }] }
-		]);
+		expect(read.steps).toBeUndefined();
+		expect(read.notes).toBe('1:C4+E4:1:100 1:C3:4:80 3:G4:1:100');
+		// written back as read, it reads the same
+		await run(writePatternTool, { track: 4, pattern: 2, notes: read.notes });
+		expect(json(await run(readPatternTool, { track: 4, pattern: 2 })).notes).toBe(read.notes);
 	});
 
 	it('names the sound on each drum key it reads back', async () => {
@@ -535,14 +531,10 @@ describe('write_pattern on drums', () => {
 			})
 		);
 		expect(result.written.reading.progression).toMatch(/^Am F C G: i ♭VI ♭III ♭VII in A minor/);
-		const steps = result.written.steps as {
-			step: number;
-			notes: { note: number; length: number }[];
-		}[];
-		expect(steps.map((s) => s.step)).toEqual([1, 17, 33, 49]);
-		expect(steps[0].notes.map((n) => n.note)).toEqual([57, 60, 64]);
-		// until the next chord, the last to its bar's end
-		expect(steps.every((s) => s.notes.every((n) => n.length === 16))).toBe(true);
+		// A3 C4 E4 is 57 60 64; each until the next chord, the last to its bar's end
+		expect(result.written.notes).toBe(
+			'1:A3+C4+E4:16:100 17:A3+C4+F4:16:100 33:G3+C4+E4:16:100 49:G3+B3+D4:16:100'
+		);
 		const bad = await run(writePatternTool, { track: 7, chords: '1:Hm7' });
 		expect(bad.isError).toBe(true);
 		expect(String(bad.content)).toMatch(/"Hm7" is not a chord name/);
@@ -579,6 +571,10 @@ describe('write_pattern on drums', () => {
 		await run(writePatternTool, { track: 3, pattern: 3, copy: 1, stay: true });
 		expect(virtual.readPattern(3, 3).notes).toEqual(virtual.readPattern(3, 1).notes);
 		expect(virtual.readPattern(3, 3).bars).toBe(4);
+		// a bar of the copy cleared, as the arrangement skill says (the drums out for one bar)
+		await run(writePatternTool, { track: 3, pattern: 4, copy: 1, stay: true, bar: 1, notes: '' });
+		expect(virtual.readPattern(3, 4).notes.map((n) => n.step)).toEqual([17, 33, 49]);
+		expect(virtual.readPattern(3, 4).bars).toBe(4);
 	});
 
 	it('gives a pattern its own groove, confirmed and undone with it', async () => {
@@ -643,7 +639,7 @@ describe('write_pattern on drums', () => {
 		const result = json(
 			await run(writePatternTool, { track: 3, bars: 4, repeat: true, notes: '1:A2:4 9:C3:4' })
 		);
-		const steps = (result.written.steps as { step: number }[]).map((s) => s.step);
+		const steps = (result.written.notes as string).split(' ').map((w) => Number(w.split(':')[0]));
 		expect(steps).toEqual([1, 9, 17, 25, 33, 41, 49, 57]);
 	});
 
@@ -673,6 +669,17 @@ describe('write_pattern on drums', () => {
 		expect(merged.written.grid['open hat 1']).toBeUndefined();
 	});
 
+	it('sets the track scale alone with the notes kept, and says so in the changes', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, { track: 3, notes: '1:A1:3 7:A1:2 11:C2:2' });
+		const start = virtual.checkpoint();
+		const slower = json(await run(writePatternTool, { track: 3, scale: '2' }));
+		expect(slower.written.scale).toBe('2');
+		expect(slower.written.notes).toBe('1:A1:3:100 7:A1:2:100 11:C2:2:100');
+		expect(slower.written.lasts).toBe('2 bars of time at track scale 2, 4 s at 120 bpm');
+		expect(virtual.changesSince(start)).toEqual(['T3 pattern 1: track scale 1 → 2']);
+	});
+
 	it('writes a pattern for a part to come and leaves the track on its own with stay', async () => {
 		const { virtual, run } = setup();
 		await run(writePatternTool, { track: 3, notes: '1:A1:4' });
@@ -682,6 +689,18 @@ describe('write_pattern on drums', () => {
 		expect(virtual.status().tracks[2].current).toBe(1);
 		expect(later.note).toMatch(/T3 still plays pattern 1: pattern 2 waits/);
 		expect(later.note).not.toMatch(/plays pattern 2 now/);
+		// without stay the track moves on, and the pattern it played is still there
+		const next = json(await run(writePatternTool, { track: 3, pattern: 3, notes: '1:E2:4' }));
+		expect(next.note).toMatch(
+			/T3 plays pattern 3 now; pattern 1, which it played, is still on the track as it was\./
+		);
+		// with scenes, the scenes' sentence alone
+		virtual.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 3, pattern: 2 }] }] });
+		const unplayed = json(
+			await run(writePatternTool, { track: 3, pattern: 4, stay: true, notes: '1:G2:4' })
+		);
+		expect(unplayed.note).toMatch(/none plays this pattern yet: write_arrangement puts it in one/);
+		expect(unplayed.note).not.toMatch(/waits until/);
 	});
 
 	it('leaves a merged closed hat out under an open hat the pattern keeps', async () => {
@@ -708,7 +727,7 @@ describe('write_pattern on drums', () => {
 		const fast = json(
 			await run(writePatternTool, { track: 4, bars: 4, scale: '1/2', notes: '1:A3 64:C4' })
 		);
-		expect(fast.written.lasts).toBe('2 bars of time at track scale 1/2');
+		expect(fast.written.lasts).toBe('2 bars of time at track scale 1/2, 4 s at 120 bpm');
 		const plain = json(await run(writePatternTool, { track: 5, bars: 1, notes: '1:A3' }));
 		expect(plain.written.lasts).toBeUndefined();
 	});

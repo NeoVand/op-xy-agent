@@ -33,7 +33,7 @@ export interface BrowserConductorOptions {
 	/** Its sound in the browser (the agent's note previews with no device connected). */
 	readonly sound?: VirtualSound | null;
 	/** Told after every change the agent makes to the virtual OP-XY, so it is saved. */
-	readonly persistence?: { markDirty(): void } | null;
+	readonly persistence?: { markDirty(): void; readonly ready?: boolean } | null;
 	/** The replica walkthrough that plan_steps with guide starts. */
 	readonly guide?: GuideHost | null;
 	/** The preset maker's inbox, where make_kit leaves a kit. */
@@ -137,7 +137,7 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 	const client = createAnthropicClient({ apiKey: options.apiKey });
 	const manual = await loadManualSource();
 	const render = labRenderer(options.samples ?? null);
-	return Conductor.create({
+	const conductor = await Conductor.create({
 		client,
 		device: options.device,
 		replica: options.replica,
@@ -165,4 +165,15 @@ export async function createBrowserConductor(options: BrowserConductorOptions): 
 		memory: createIdbMemoryStore(),
 		preferences: browserPreferences()
 	});
+	// stored work still going back is no change of the user's: seen again once it is back
+	const persistence = options.persistence;
+	if (persistence && persistence.ready === false) {
+		const wait = setInterval(() => {
+			if (!persistence.ready) return;
+			clearInterval(wait);
+			conductor.seeReplica();
+		}, 50);
+		setTimeout(() => clearInterval(wait), 10_000);
+	}
+	return conductor;
 }

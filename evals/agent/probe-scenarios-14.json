@@ -1,0 +1,142 @@
+[
+	{
+		"name": "refine-bassline",
+		"about": "One part refined over four turns.",
+		"steps": [
+			{ "say": "make a bassline on track 3" },
+			{ "say": "more syncopated" },
+			{ "say": "add a couple of slides" },
+			{ "say": "make it twice as long, with a different ending" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "plain-text-notes",
+		"about": "A melody given as note names in text.",
+		"steps": [
+			{
+				"say": "play this on track 5 in eighth notes: C4 D4 E4 G4 E4 D4 C4 G3, then hold C4 for a bar"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "save-both",
+		"about": "Saving, on the device and in the app.",
+		"steps": [
+			{ "say": "how do I save my project on the op-xy, and how do I keep this one from the app?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "add-bar-lesson",
+		"about": "A multi-step lesson followed by hand.",
+		"steps": [
+			{ "say": "make a 1 bar beat on track 1" },
+			{ "say": "teach me to add a second bar to it myself, light the keys" },
+			{ "follow": 6 },
+			{ "say": "did it work? how many bars does it have now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "you-deleted-it",
+		"about": "A user upset that a rewrite lost their beat.",
+		"steps": [
+			{ "say": "make a funky beat" },
+			{ "say": "now make a totally different beat" },
+			{ "say": "wait, you deleted my first beat! I wanted to keep it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hats-left",
+		"about": "Panning one part of a kit.",
+		"steps": [{ "say": "make a beat" }, { "say": "put the hi-hats on the left" }, { "why": true }]
+	},
+	{
+		"name": "delay-snare-only",
+		"about": "An effect on one sound of a kit.",
+		"steps": [{ "say": "make a beat" }, { "say": "put a delay on the snare only" }, { "why": true }]
+	},
+	{
+		"name": "more-80s",
+		"about": "A style shift by decade.",
+		"steps": [
+			{ "say": "make a synth pop beat with chords" },
+			{ "say": "make it sound more 80s" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "double-tempo-same",
+		"about": "Tempo doubled, the music kept at the same speed.",
+		"steps": [
+			{ "say": "make a beat with a bass at 80 bpm" },
+			{ "say": "set it to 160 but keep it sounding the same speed" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fade-out",
+		"about": "An ending that fades.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus" },
+			{ "say": "make it end with a fade out" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-follows-chords",
+		"about": "A part derived from another track's chords.",
+		"steps": [
+			{ "say": "put Em C G D on track 7, a chord a bar" },
+			{ "say": "now write a bassline that follows those chords" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-did-i-make",
+		"about": "The user's own key presses, explained.",
+		"steps": [
+			{ "press": ["key.instrument", "track.1", "step.1", "step.5", "step.9", "step.13"] },
+			{ "say": "what did I just make?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "shuffle-scenes",
+		"about": "The song order changed.",
+		"steps": [
+			{ "say": "make a song with an intro, a verse and a chorus" },
+			{ "say": "play the chorus twice before the verse comes back, and end on the intro" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "three-basslines",
+		"about": "Options to choose between by ear.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "give me three different bassline ideas to pick from" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "drop-out-first-bar",
+		"about": "A one-bar drop in a part.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus, 4 bars each" },
+			{ "say": "mute the drums for the first bar of the chorus only" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "patterns-limit",
+		"about": "A fact question about limits.",
+		"steps": [
+			{ "say": "how many patterns can one track have, and how long can a pattern be?" },
+			{ "why": true }
+		]
+	}
+]

@@ -162,6 +162,30 @@ describe('the conductor grounds its answer', () => {
 		expect(JSON.stringify(third.slice(-2))).not.toContain('<user-changes>');
 	});
 
+	it('tells the first message what the user did before it, since the chat opened', async () => {
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const api = scriptedApi([answer('Four kicks.')]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		// the user's own hands before they write anything
+		virtual.setTempo(97);
+		await conductor.send('what did I just make?');
+		const text = JSON.stringify(api.messageRequests[0].body.messages);
+		expect(text).toContain('<user-changes>');
+		expect(text).toContain('Since the chat opened');
+		expect(text).toContain('tempo 120 → 97 bpm');
+	});
+
 	it('says where the song is, entry by entry, with the tracks sounding', async () => {
 		const sim = new OpxySim({ now: () => 0 });
 		const virtual = createVirtualOpxy({ sim });

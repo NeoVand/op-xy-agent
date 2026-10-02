@@ -44,6 +44,7 @@ import {
 } from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { drumKeysSet } from './drum-keys';
 import { replicaChangeList, replicaChanges } from './replica-diff';
 import { AUX_NAMES, DEFAULT_METRONOME_LEVEL, GROOVES, type SimState } from '$lib/sim/params';
 import { takeBack } from '$lib/sim/merge';
@@ -213,6 +214,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			({ area: 'instrument', track, page, ...extra }) as Place;
 		const preset = s.areas.system.trackPresets[track - 1] ?? null;
 		const keys = t.engine === 'drum' ? s.areas.sample.tracks[track - 1].keys : null;
+		// each key's own values where they are not a new key's (a key panned left read as nothing)
+		const keySettings = drumKeysSet(s, track - 1);
 		return {
 			track,
 			engine: t.engine,
@@ -248,7 +251,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 							)
 						)
 					}
-				: {})
+				: {}),
+			...(Object.keys(keySettings).length ? { keys: keySettings } : {})
 		};
 	}
 

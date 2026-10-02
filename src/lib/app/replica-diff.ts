@@ -9,10 +9,12 @@
  */
 import type { ControlId } from '$lib/core/opxy';
 import type { ReplicaChange, VirtualOpxy, VirtualScene } from '$lib/agent/virtual-opxy';
-import { GROOVES, type SimState, type TrackState } from '$lib/sim/params';
+import { DEFAULT_LEVEL, GROOVES, type SimState, type TrackState } from '$lib/sim/params';
 import { lockLabel, lockParam } from '$lib/sim/areas/sequencer/locks';
+import { drumKeyChanges } from './drum-keys';
 import { brainSettings, KEYS, SCALES, type BrainSettings } from '$lib/sim/areas/auxiliary/state';
 import { trackSequence } from '$lib/sim/areas/arrange/model';
+import { formatScale } from '$lib/sim/sequencer';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
 import { PROJECT_SECTIONS } from '$lib/sim/areas/system/settings';
@@ -90,12 +92,29 @@ export function briefChange(was: string, now: string): string {
 }
 
 /**
+ * A page's change as the agent reads it: what moved, then the page as it reads now ("fx II 00 →
+ * 45 (now aux 00, tape 99, fx I 00, fx II 45)"). Both whole readings, the page's name twice
+ * ("sends: sends: aux 00…"), made the value that moved hard to find among the ones that did not.
+ */
+function pageChange(page: string, was: string | undefined, now: string): string {
+	if (was === undefined) return `— → ${now}`;
+	const brief = briefChange(was, now);
+	if (brief === `${was} → ${now}`) return brief;
+	// the reading's own name where it is the page's ("sends: aux 00…" on shift M3 sends)
+	const at = now.indexOf(': ');
+	const shown = at > 0 && page.endsWith(now.slice(0, at)) ? now.slice(at + 2) : now;
+	return `${brief} (now ${shown})`;
+}
+
+/**
  * A pattern's locks and step components, changed: each lock by its step, name and value ("step 5
  * cutoff locked at 80"), the components by their steps (one line once said only "step components
  * or locks changed", and an agent could not tell whether a user's lock had landed).
  */
-function extrasChange(was: Pattern, now: Pattern, track: TrackState | undefined): string[] {
-	const locks: string[] = [];
+export function extrasChange(was: Pattern, now: Pattern, track: TrackState | undefined): string[] {
+	// the same change on several steps reads as one ("fx i send locked at 60 on steps 5, 13, 21"):
+	// a count alone ("5 locks changed") left an agent unsure which steps took what
+	const groups = new Map<string, number[]>();
 	const components: number[] = [];
 	for (let i = 0; i < Math.max(was.steps.length, now.steps.length); i++) {
 		const a = was.steps[i]?.locks ?? {};
@@ -105,18 +124,24 @@ function extrasChange(was: Pattern, now: Pattern, track: TrackState | undefined)
 			const param = lockParam(id);
 			const name = track ? lockLabel(id, track) : (param?.label ?? id);
 			const shown = (v: number) => (param ? param.format(v) : String(Math.round(v)));
-			locks.push(
+			const what =
 				b[id] === undefined
-					? `step ${i + 1} ${name} lock off`
+					? `${name} lock off`
 					: a[id] === undefined
-						? `step ${i + 1} ${name} locked at ${shown(b[id])}`
-						: `step ${i + 1} ${name} lock ${shown(a[id])} → ${shown(b[id])}`
-			);
+						? `${name} locked at ${shown(b[id])}`
+						: `${name} lock ${shown(a[id])} → ${shown(b[id])}`;
+			groups.set(what, [...(groups.get(what) ?? []), i + 1]);
 		}
 		if (!same(was.steps[i]?.components, now.steps[i]?.components)) components.push(i + 1);
 	}
+	const locks = [...groups].map(
+		([what, steps]) =>
+			`${what} on step${steps.length === 1 ? '' : 's'} ${steps.length > 8 ? `${steps.slice(0, 8).join(', ')}…` : steps.join(', ')}`
+	);
 	return [
-		...(locks.length > 4 ? [`${locks.length} locks changed`] : locks),
+		...(locks.length > 4
+			? [...locks.slice(0, 4), `and ${locks.length - 4} more lock changes`]
+			: locks),
 		...(components.length
 			? [
 					`step components changed on step${components.length === 1 ? '' : 's'} ${components.join(', ')}`
@@ -160,6 +185,12 @@ function patternChanges(
 			if (was && now) {
 				if (was.bars !== now.bars) parts.push(`${was.bars} → ${now.bars} bars`);
 				if (was.length !== now.length) parts.push(`${was.length} → ${now.length} steps`);
+				// what the bar menu sets, by name (a scale doubled for a doubled tempo read "its
+				// settings changed", and the agent could not tell it had landed)
+				if (was.scale !== now.scale) {
+					parts.push(`track scale ${formatScale(was.scale)} → ${formatScale(now.scale)}`);
+				}
+				if (was.groove !== now.groove) parts.push(`groove ${was.groove} → ${now.groove}`);
 				parts.push(...extrasChange(was, now, track));
 				if (n !== shown && !same(was.player, now.player)) parts.push('its player changed');
 			} else if (now && now.length !== now.bars * 16) parts.push(`${now.length} steps`);
@@ -178,37 +209,73 @@ const trackName = (index: number) => (index < 8 ? `T${index + 1}` : `aux T${inde
 
 /**
  * Scenes set, changed or cleared, as the lab's diffs say them: "scene 2: T1 p1 → p2, T3 p1 → p3";
- * a new scene by the tracks that leave pattern 1 ("scene 3: new, T1 p2, T5 p4"). Only once there
- * are scenes to tell apart.
+ * a new scene by the tracks that leave pattern 1 ("scene 3: new, T1 p2, T5 p4"), and each scene's
+ * mix where it moved ("T1, T3 level 74 → 48"; the scene on screen's, `onScreen`, is the mix lines'
+ * own). Only once there are scenes to tell apart.
  */
-function sceneChanges(before: readonly VirtualScene[], after: readonly VirtualScene[]): string[] {
+function sceneChanges(
+	before: readonly VirtualScene[],
+	after: readonly VirtualScene[],
+	onScreen: number | null = null
+): string[] {
 	// one scene is only what the tracks play, which their own lines say
 	if (before.length <= 1 && after.length <= 1) return [];
-	const was = new Map(before.map((scene) => [scene.scene, scene.patterns]));
-	const now = new Map(after.map((scene) => [scene.scene, scene.patterns]));
+	const was = new Map(before.map((scene) => [scene.scene, scene]));
+	const now = new Map(after.map((scene) => [scene.scene, scene]));
 	const numbers = [...new Set([...was.keys(), ...now.keys()])].sort((a, b) => a - b);
 	const lines: string[] = [];
 	for (const n of numbers) {
 		const a = was.get(n);
 		const b = now.get(n);
-		if (same(a, b)) continue;
 		if (!b) {
 			lines.push(`scene ${n}: cleared`);
 			continue;
 		}
-		const moved = b.flatMap((pattern, t) => {
-			if (a) return a[t] === pattern ? [] : [`${trackName(t)} p${a[t]} → p${pattern}`];
+		const moved = b.patterns.flatMap((pattern, t) => {
+			if (a)
+				return a.patterns[t] === pattern ? [] : [`${trackName(t)} p${a.patterns[t]} → p${pattern}`];
 			return pattern === 1 ? [] : [`${trackName(t)} p${pattern}`];
 		});
-		const list =
+		// a fade's scenes differ by their levels alone, and four of them read "T1 p3, T3 p3"
+		const mixed = n === onScreen ? [] : sceneMix(a, b);
+		if (a && moved.length === 0 && mixed.length === 0) continue;
+		const list = [
 			moved.length > 8
 				? `${moved.slice(0, 8).join(', ')} … (${moved.length} tracks)`
-				: moved.join(', ');
+				: moved.join(', '),
+			...mixed
+		]
+			.filter(Boolean)
+			.join(', ');
 		lines.push(
-			a ? `scene ${n}: ${list}` : `scene ${n}: new, ${list || 'every track on pattern 1'}`
+			a
+				? `scene ${n}: ${list}`
+				: `scene ${n}: new, ${moved.length ? list : `every track on pattern 1${mixed.length ? `, ${list}` : ''}`}`
 		);
 	}
 	return lines;
+}
+
+/** A scene's levels and mutes, against the scene it was or, new, a new scene's. */
+function sceneMix(a: VirtualScene | undefined, b: VirtualScene): string[] {
+	const unity = Math.round(DEFAULT_LEVEL);
+	const levels = new Map<string, string[]>();
+	(b.levels ?? []).forEach((level, t) => {
+		const from = a?.levels?.[t] ?? unity;
+		if (level === from) return;
+		const as = a ? `level ${from} → ${level}` : `at level ${level}`;
+		levels.set(as, [...(levels.get(as) ?? []), trackName(t)]);
+	});
+	const mutedA = new Set(a?.muted ?? []);
+	const mutedB = new Set(b.muted ?? []);
+	const mutes = [...new Set([...mutedA, ...mutedB])]
+		.sort((x, y) => x - y)
+		.flatMap((track) =>
+			mutedA.has(track) === mutedB.has(track)
+				? []
+				: [`${trackName(track - 1)} ${mutedB.has(track) ? 'muted' : 'unmuted'}`]
+		);
+	return [...[...levels].map(([as, tracks]) => `${tracks.join(', ')} ${as}`), ...mutes];
 }
 
 /**
@@ -297,10 +364,17 @@ export function replicaChangeList(
 				if (!wanted || a[page] === b[page]) continue;
 				const key = pageKey(page);
 				add(
-					`${label} ${page}: ${a[page] ?? '—'} → ${b[page]}`,
+					`${label} ${page}: ${pageChange(page, a[page], b[page])}`,
 					key ? [track, key] : [track],
 					`${label} ${page}: ${a[page] === undefined ? `— → ${b[page]}` : briefChange(a[page], b[page])}`
 				);
+			}
+		}
+		// a drum key's own values (a key panned left once left no line, and the agent could not tell
+		// whether its setting had landed)
+		if (soundChanged && !newSound) {
+			for (const line of drumKeyChanges(before, after, t)) {
+				add(`${label} key ${line}`, [track], `${label} key ${line}`);
 			}
 		}
 		// a kit's samples, key by key (a new kit on a drum track once left no line at all)
@@ -403,7 +477,10 @@ export function replicaChangeList(
 	const a0 = read.before.readArrangement();
 	const a1 = read.after.readArrangement();
 	const arrange: ControlId[] = ['key.arrange'];
-	for (const line of sceneChanges(a0.scenes, a1.scenes)) add(line, arrange);
+	// the scene on screen's mix is the mix lines' own, when it is the same scene before and after
+	const onScreen =
+		before.areas.arrange.scene === after.areas.arrange.scene ? after.areas.arrange.scene + 1 : null;
+	for (const line of sceneChanges(a0.scenes, a1.scenes, onScreen)) add(line, arrange);
 	if (!same(a0.song, a1.song)) {
 		const order = (o: readonly number[]) =>
 			o.length > 12 ? `${o.slice(0, 12).join(' ')} … (${o.length} entries)` : o.join(' ');

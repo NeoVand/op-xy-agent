@@ -75,7 +75,7 @@ describe('replica changes', () => {
 		for (const step of plan.steps) playStep(sim, step);
 		const lines = virtual.changesSince(start);
 		expect(lines.find((l) => l.startsWith('T3 M3 filter:'))).toMatch(
-			/^T3 M3 filter: svf filter on: cutoff 00.* → svf filter on: cutoff 40/
+			/^T3 M3 filter: cutoff 00 → 40 \(now svf filter on: cutoff 40, /
 		);
 		expect(lines.every((l) => l.startsWith('T3 '))).toBe(true);
 	});
@@ -90,9 +90,7 @@ describe('replica changes', () => {
 		expect(sim.state.areas.system.page).toBe('presets');
 		const lines = virtual.changesSince(start);
 		expect(lines.filter((l) => l.startsWith('T1 '))).toEqual([
-			expect.stringMatching(
-				/^T1 M2 amp envelope: amp envelope: .*release 03 → amp envelope: .*release 40$/
-			)
+			expect.stringMatching(/^T1 M2 amp envelope: release 03 → 40 \(now attack .*, release 40\)$/)
 		]);
 		sim.state.areas.system.power = { on: true, booting: true, elapsed: 0, since: 0 };
 		expect(virtual.changesSince(start)).toEqual(lines);
@@ -121,6 +119,33 @@ describe('replica changes', () => {
 		const next = virtual.checkpoint();
 		virtual.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 1, pattern: 1 }] }] });
 		expect(virtual.changesSince(next)).toEqual(['scene 2: T1 p2 → p1']);
+	});
+
+	it('tell scenes apart by their mix: a fade’s scenes differ by their levels alone', () => {
+		const { virtual } = setup();
+		const kick = [1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 100, length: 1 }));
+		virtual.writePattern(1, { pattern: 1, bars: 1, notes: kick });
+		virtual.writePattern(1, { pattern: 2, bars: 1, notes: kick.slice(0, 2) });
+		virtual.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 1, pattern: 2 }] }] });
+		const start = virtual.checkpoint();
+		const fade = (scene: number, level: number) => ({
+			scene,
+			patterns: [{ track: 1, pattern: 2 }],
+			mix: [
+				{ track: 1, level },
+				{ track: 3, level }
+			]
+		});
+		virtual.writeArrangement({ scenes: [fade(3, 48), fade(4, 16)] });
+		expect(virtual.changesSince(start)).toEqual([
+			'scene 3: new, T1 p2, T1, T3 at level 48',
+			'scene 4: new, T1 p2, T1, T3 at level 16'
+		]);
+		const next = virtual.checkpoint();
+		virtual.writeArrangement({
+			scenes: [{ scene: 3, patterns: [{ track: 1, pattern: 2 }], mix: [{ track: 3, muted: true }] }]
+		});
+		expect(virtual.changesSince(next)).toEqual(['scene 3: T3 muted']);
 	});
 
 	it('say the song moving on once, not as each track switching pattern', () => {
@@ -168,7 +193,7 @@ describe('replica changes', () => {
 		player.arp.speed = 3;
 		const lines = virtual.changedSince(next);
 		expect(lines.map((c) => c.line)).toEqual([
-			'T4 player: arpeggio player off: speed 1/8, pattern up, range 1 oct, hold off → arpeggio player on: speed 1/16, pattern up, range 1 oct, hold off'
+			'T4 player: arpeggio player off → on, speed 1/8 → 1/16 (now arpeggio player on: speed 1/16, pattern up, range 1 oct, hold off)'
 		]);
 		expect(lines[0].brief).toBe('T4 player: arpeggio player off → on, speed 1/8 → 1/16');
 		expect(lines[0].controls).toEqual(['track.4', 'key.player']);

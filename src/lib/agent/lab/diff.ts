@@ -6,7 +6,8 @@
  * those pages are read; a change no page shows is still named, so `same` never hides one.
  */
 import { describeNoteChange } from '$lib/sim/pattern-change';
-import { AUX_NAMES, GROOVES, type SimState } from '$lib/sim/params';
+import { AUX_NAMES, GROOVES, type SimState, type TrackState } from '$lib/sim/params';
+import { extrasChange } from '$lib/app/replica-diff';
 import { planPlace, playStep, pageValues, type Place } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { buildFrame } from '$lib/sim/frames';
@@ -148,7 +149,7 @@ function patternText(p: Pattern): string {
 }
 
 /** What changed in a pattern: its notes, bars, length and scale by value, the rest by name. */
-function patternChange(x: Pattern, y: Pattern): string {
+function patternChange(x: Pattern, y: Pattern, track?: TrackState): string {
 	const parts: string[] = [];
 	const nx = noteCount(x);
 	const ny = noteCount(y);
@@ -169,7 +170,8 @@ function patternChange(x: Pattern, y: Pattern): string {
 	}
 	if (x.scale !== y.scale) parts.push(`scale ${x.scale} → ${y.scale}`);
 	const locks = (p: Pattern) => json(p.steps.map((s) => [s.locks, s.components]));
-	if (locks(x) !== locks(y)) parts.push('step locks or components changed');
+	// each lock by its step and value, as the replica's changes say it
+	if (locks(x) !== locks(y)) parts.push(...extrasChange(x, y, track));
 	const known = new Set(['steps', 'bars', 'length', 'scale']);
 	for (const key of Object.keys(y) as (keyof Pattern)[]) {
 		if (known.has(key) || json(x[key]) === json(y[key])) continue;
@@ -194,7 +196,7 @@ function patternLines(a: SimState, b: SimState, t: number): string[] {
 		const label = `${trackName(t)} pattern ${i + 1}`;
 		if (!now) out.push(`${label}: removed`);
 		else if (!was) out.push(`${label}: new, ${patternText(now)}`);
-		else out.push(`${label}: ${patternChange(was, now)}`);
+		else out.push(`${label}: ${patternChange(was, now, b.tracks[t])}`);
 	}
 	if (x.current !== y.current) {
 		out.push(`${trackName(t)} plays pattern ${y.current + 1} (was ${x.current + 1})`);

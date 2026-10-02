@@ -30,6 +30,17 @@ describe('forks', () => {
 		expect(JSON.stringify({ a })).toBe('{"a":"[fork 1]"}');
 	});
 
+	it('says when a lock on a drum step reaches more sounds than one', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		// a snare and a closed hat on step 5
+		f.writePattern(1, { notes: '1:53 5:55+61 13:55' });
+		const result = f.set({ param: 'fx i send', value: 60, track: 1, step: 5 });
+		expect(result.note).toMatch(/reaches every sound there: step 5: snare 1, closed hat 1/);
+		// a step with one sound alone says nothing
+		expect(f.set({ param: 'fx i send', value: 60, track: 1, step: 13 }).note).toBeUndefined();
+	});
+
 	it('says when a groove set hardly reaches the notes', () => {
 		const { lab } = labOn();
 		const f = lab.fork();

@@ -68,6 +68,13 @@ load their engine's starting sound, so choosing one by name will not sound like 
 A new project's FX I is a delay set to a dotted eighth and FX II a reverb, which makes the sends an
 easy way to add an echo or a space to a part.
 
+A send, like every sound setting, is the whole track's: on a drum track it reaches every sound of
+the kit. One sound alone (the snare's delay, the hats' pan) takes a key setting where the key's page
+has it (each drum key has its own pan and gain), or a track of its own: write that sound's line on
+T2, the second drum track, and set the send there (a new project's T2 holds another kit, in phase,
+so say the sound there is its own). A parameter lock is no way round it, since a lock is the whole
+step's and every sound on that step takes it.
+
 When the sound matters, listen to it after you change it (the listening skill), and adjust: listen
 with its scene and the track (tracks) hears it alone even while stopped. When the user asks how it
 sounds, listen before you say.

@@ -409,7 +409,7 @@ describe('plan_steps to the project settings', () => {
 		expect(step.notes.map((n) => n.note)).toEqual([48]);
 		// read back with the pattern, and named in the change list
 		expect(virtual.readPattern(3).locks).toEqual([{ step: 7, values: ['cutoff 60'] }]);
-		expect(virtual.changesSince(start)).toContain('T3 pattern 1: step 7 cutoff locked at 60');
+		expect(virtual.changesSince(start)).toContain('T3 pattern 1: cutoff locked at 60 on step 7');
 	});
 
 	it('copies one track’s sound onto another with Tn + M2 and Tn + M3', async () => {

@@ -239,6 +239,8 @@ export interface VirtualTrackSound {
 	readonly fx?: { readonly 'FX I': string; readonly 'FX II': string };
 	/** On a drum track, the sound on each key ("F3": "kick 1"). */
 	readonly kit?: Readonly<Record<string, string>>;
+	/** On a drum track, the keys whose own values are not a new key's ("C#4 closed hat 1": "pan -70"). */
+	readonly keys?: Readonly<Record<string, string>>;
 }
 
 /** A step of a walkthrough: its keys, a turn's detents, and what the replica shows after it. */

@@ -151,6 +151,25 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   user's message names; `.replace("•", ".")` in a JSON input is worked out; the LFO page reading
   names its parameter; the prompt says not to mention not listening; the skill arpeggiates with the
   player and lays out a fill every fourth bar.
+- **Probe round fourteen (2026-10-02), 16 scenarios (`probe-scenarios-14.json`: a bassline refined
+  over four turns, a melody given as note names, saving on the device and in the app, a lesson to
+  add a bar followed by hand, "you deleted my beat", hats panned left, a delay on the snare alone,
+  "more 80s", the tempo doubled at the same speed, a fade-out, a bass that follows chords, the
+  user's own key presses explained, the song order shuffled, three bassline options, the drums out
+  for one bar, the pattern limits):** most worked; the debriefs found what results left unsaid.
+  Fixes: read_sound and the change lists give a drum key's own settings ("C#4 closed hat 1: pan 0 →
+  -70"); a lock on a drum step that reaches more sounds than one says so (plan_steps, the lab), and
+  equal locks group by value; the user's changes before their first message reach it ("Since the
+  chat opened"); a pitched pattern reads back in write_pattern's own notes form instead of a JSON
+  object a note (a 64-note bassline five times shorter, and editable as it stands); `scale` or
+  `groove` alone keep the notes, the change list names a scale or groove change, and a scaled
+  pattern says its seconds; a page change gives what moved, then the page ("fx II 00 → 45 (now …)");
+  scenes in the change list differ by their levels and mutes (a fade's four scenes read alike);
+  "pattern 1 is still on the track" when a write moves a track on; make_kit says the old grid names
+  still find its sounds; the step length is in the write description; the skills: a send is the
+  whole track's (one sound alone on T2), "play this" means write and play, fades from stepped
+  scene levels, one bar changed by a copy; the prompt: say which reading of a two-way request you
+  took.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).
