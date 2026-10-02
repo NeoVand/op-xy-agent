@@ -166,10 +166,11 @@ describe('the device map', () => {
 			expect(page('instrument.m2').altScreen).toMatch(/^filter envelope: /);
 			expect(control('instrument.m2', 'click E1').does).toBe('amp envelope → filter envelope');
 			expect(values('instrument.m2', 'shift + turn E1')).toEqual(['poly', 'mono', 'legato']);
-			expect(range('instrument.m2', 'shift + turn E2')?.shows?.[0]).toEqual({
-				from: '00',
-				to: '00',
-				shows: 'off'
+			// portamento reads off, then plain numbers up to 127 (camera b1-2797…2803)
+			expect(range('instrument.m2', 'shift + turn E2')).toMatchObject({
+				first: 'off',
+				last: '127',
+				step: 1
 			});
 			expect(range('instrument.m2', 'shift + turn E3')?.shows?.at(-1)?.shows).toBe('octave');
 		});

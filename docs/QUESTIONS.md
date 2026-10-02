@@ -22,8 +22,10 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    - While playing: does the playhead dim a step that has notes, and light an empty one?
    - ~~How do you switch a filter or an LFO off, and what does its page show then?~~ `M3` / `M4`
      again on its own page; the page dims under an "off" box (camera, 2026-09-28).
-   - On a new project's T3, hold shift on M2: does portamento read `00` or `off`, and what does the
-     bend range read (we expect 2 semitones)? On T8 (we expect an octave)?
+   - On a new project's T3, hold shift on M2: does portamento read `off`, `0` or `1`? Its preset
+     stores the least glide above none (128 of 32767), and the replica shows `0`. ~~T8~~ reads
+     poly · off · octave · 71, as the replica has it, and portamento runs off, then plain numbers
+     up to 127 (camera b1-2788…2803, read 2026-10-02).
    - ~~Are presets inside a category listed alphabetically, or in some other order?~~ By name,
      factory and user presets together (camera, 2026-09-28; note 59 §2.6).
    - With headphones in the audio out jack: is the speaker silent, and does the volume knob set
@@ -70,8 +72,7 @@ answer and date (and into `DECISIONS.md` when they shape the project).
    formulas fitted to the device's harmonics, not its data. For crush, geometric and basic the
    fitted rules reproduce the device's frames closely; drawbars uses a measured registration (nine
    bar levels per tenth of position). Fine to ship as is (D2 by analogy), or should ours diverge?
-   And the eighth table, never seen on screen: we call it "primes" (a sine joined by the prime
-   harmonics); what does the device call it?
+   ~~And the eighth table's name?~~ The device calls it **primes** too (camera, `steps-356`).
 10. **The midi engine on OS 1.1.33** (read-only look). shift + M1 brings up the preset browser, and
     its engine view listed eleven engines with no midi (note 59 §2.6), yet TE's guide still runs
     instrument tracks on the external (midi) engine. How does 1.1.33 put a track on midi: is it
@@ -106,7 +107,8 @@ answer and date (and into `DECISIONS.md` when they shape the project).
     project on 2026-09-29 (note 62): velocity, the decay, every engine's level, epiano's tine and
     the multisampler's pad now follow the unit. Next, the same for "agent" and each preset we load.
     What the takes could not settle needs a short **sound session** in a throwaway project (CCs on
-    its tracks, as on 2026-09-28): the preset highpass (shift + M2) on a saw at a few values; the
+    its tracks, as on 2026-09-28): the preset high pass (preset settings, shift + the instrument key)
+    on a saw at a few values; the
     filter envelope's sustain on the ladder and svf (cutoff 0, amount 48, sustain 0 / 39 / 100 %);
     axis with its LFO on and off (is its top the element LFO's or the engine's?); and the master
     compressor at 0, 10 and 80 on a loud chord (the owner turns mix M4).

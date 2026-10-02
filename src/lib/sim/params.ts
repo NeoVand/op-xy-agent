@@ -16,7 +16,9 @@ import {
 } from '$lib/core/opxy';
 import { initialAreaStates, type AreaStates } from './areas/state';
 import type { MotionState } from './motion';
-import { engineInitM1, NEW_PROJECT_TRACKS, soundOf } from './defaults';
+import { engineInitM1, NEW_PROJECT_TRACKS, PORTAMENTO_MAX, soundOf } from './defaults';
+
+export { PORTAMENTO_MAX };
 import { emptySequence, type Sequence } from './sequencer';
 import type { HeaderCell } from './screen/draw';
 import type { FilterType, LfoType, MultiOutMode } from './screen/frame';
@@ -304,6 +306,25 @@ export const two = (v: number) => String(shown(v)).padStart(2, '0');
 /** The number a 0–99 value shows as (see {@link two}). */
 export const shown = (v: number): number =>
 	Math.min(99, Math.floor(clamp(v, 0, 99) * (100 / 99) * (32767 / 32768) + 1e-6));
+
+/**
+ * The number a portamento (0–127) shows as: whole steps show themselves, and a stored value between
+ * two (a preset's) the floor on a 0–128 scale, as the 0–99 lanes floor on 0–100 ({@link shown}; by
+ * analogy, ours).
+ */
+export const portamentoShown = (v: number): number =>
+	Math.min(
+		PORTAMENTO_MAX,
+		Math.floor(clamp(v, 0, PORTAMENTO_MAX) * (128 / 127) * (32767 / 32768) + 1e-6)
+	);
+
+/**
+ * Portamento as the M2 shift card reads it: "off" at 0, then plain numbers ("2", "127"). A preset's
+ * least glide above 0 reads "0" here (a new project's T3); what the unit shows for it is Q4.
+ */
+export function portamentoText(v: number): string {
+	return v <= 0 ? 'off' : String(portamentoShown(v));
+}
 
 /**
  * A value turned `delta` detents within `min`…`max`: the number on screen moves by `delta`, as the

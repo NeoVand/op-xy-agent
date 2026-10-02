@@ -850,6 +850,22 @@ for now, and pushing it further while the replica is incomplete makes no sense.
 The plan is note 67. Its inputs are the changelog audit (64), thirty videos (65) and the coverage
 matrix (66).
 
+- [x] **G0 — What the research settled, applied first** (2026-10-02, at the owner's ask). Each fix
+      has a test that fails without it; the sessions still check each on the unit.
+  - From the changelog:
+    - a held arpeggio lets go when its pattern changes (1.1.21);
+    - a still-sounding note as long as its pattern is held on, not struck again (1.0.40);
+    - a note sounds on top of the same note (1.0.38);
+    - the project and preset transpose are heard on every track but a drum track's (1.0.9; the
+      guide says drums follow, D54);
+    - the synth sampler's region takes parameter locks (1.1.0); the multisampler, which the
+      changelog does not name, takes none.
+  - From the guide and our own manual:
+    - linked tracks sound for the keys played, each in its own keyboard octave (ours until D16);
+    - "loop until release" stops looping at the release and plays on to the region's end.
+  - From the camera: portamento reads off, then plain numbers up to 127 (b1-2796…2803), on the
+    page, in locks, in `.xy` lock lanes and in the glide law.
+
 - **G1 — The ledger.** Note 66's 271 rows go into `knowledge/opxy/fidelity.json`, each with status,
   evidence ids, test and manual unit. A test refuses "verified" without a capture and a pinning
   test, and a report counts the open rows.

@@ -143,7 +143,8 @@ E3 light grey, E4 white).
     frames with a cleaner tracer.
 - **Shift layer** (hold shift): a white card over the dimmed page with four icon rows:
   - play mode (poly / mono / legato icons);
-  - portamento (off, then numbers);
+  - portamento (off, then plain numbers up to 127: a hand turn in b1-2796…2803 reads off, 2, 14,
+    26, 73, 127, 55, off, so its range is not the 00–99 of the other rows);
   - bend range (semitones, up to an octave);
   - preset volume (number).
     Each row carries a dot in its encoder's shade.

@@ -14,7 +14,8 @@ import {
 } from './components';
 import { figuresLayout } from './device-text';
 import { flashing } from './leds';
-import { lockParam, lockTarget, lockedTrack, turnedValue } from './locks';
+import { lockParam, lockTarget, lockedRegion, lockedTrack, turnedValue } from './locks';
+import { defaultRegion } from '../sample/state';
 import {
 	BAR_FADE_MS,
 	BAR_SLIDE_MS,
@@ -26,6 +27,7 @@ import {
 	trackOctave
 } from './model';
 import { COUNT_IN } from './recording';
+import { playPattern } from '../arrange/model';
 
 /** A simulator on a clock the test moves. */
 function rig() {
@@ -451,24 +453,81 @@ describe('parameter locks (manual: sequencer/parameter-locks)', () => {
 		expect(pattern(sim).steps[0].locks).toEqual({ 'midi.program': 5 });
 	});
 
-	it('locks nothing on the synth sampler’s and multisampler’s M1, never a drum key’s value', () => {
+	it('locks nothing on a multisampler zone, never a drum key’s value', () => {
 		const { sim } = rig();
 		const s = sim.state;
 		sim.press('track.8'); // a new project's T8: the multisampler pad
 		sim.press('key.m1');
 		expect(s.tracks[7].engine).toBe('multisampler');
 		expect([0, 1, 2, 3].map((e) => lockTarget(s, e))).toEqual([null, null, null, null]);
-		s.tracks[7].engine = 'sampler';
 		s.shift = true;
 		expect([0, 1, 2, 3].map((e) => lockTarget(s, e))).toEqual([null, null, null, null]);
 		s.shift = false;
-		// a turn with a step held still turns the region, and stores no lock
+		// a turn with a step held still turns the zone, and stores no lock
 		const keys = JSON.stringify(s.tracks[7].drumKeys);
 		down(sim, 'step.3');
 		sim.turn(2, 2);
 		up(sim, 'step.3');
 		expect(s.tracks[7].sequence.patterns[0].steps[2].locks).toEqual({});
 		expect(JSON.stringify(s.tracks[7].drumKeys)).toBe(keys);
+	});
+
+	it('locks the synth sampler’s region per step and shows it held (OS 1.1.0)', () => {
+		const { sim } = rig();
+		const s = sim.state;
+		s.tracks[7].engine = 'sampler';
+		sim.press('track.8');
+		sim.press('key.m1');
+		expect([0, 1, 2, 3].map((e) => lockTarget(s, e)?.id)).toEqual([
+			'sample.start',
+			'sample.loopStart',
+			'sample.loopEnd',
+			'sample.end'
+		]);
+		s.shift = true;
+		expect([0, 1, 2, 3].map((e) => lockTarget(s, e)?.id)).toEqual([
+			'sample.reverse',
+			'sample.tune',
+			'sample.crossfade',
+			'sample.gain'
+		]);
+		s.shift = false;
+		const region = s.areas.sample.tracks[7].synth.region;
+		const locks = () => s.tracks[7].sequence.patterns[0].steps[2].locks;
+		down(sim, 'step.3');
+		sim.turn(2, 30); // loop start, 20 % → 50 %
+		sim.turn(1, 60); // start to 60 %, which pushes the loop start along as a turn does
+		const lock = page(sim, 'lock');
+		expect(lock.base.page === 'drum' && [lock.base.start, lock.base.sampler?.loop?.start]).toEqual([
+			0.6, 0.6
+		]);
+		expect(lock.last).toEqual({ label: 'start', value: '60%' });
+		down(sim, 'key.shift');
+		sim.turn(2, -5); // tune, a tenth of a semitone a detent
+		sim.turn(1, -1); // backwards
+		up(sim, 'key.shift');
+		up(sim, 'step.3');
+		expect(locks()).toEqual({
+			'sample.loopStart': 0.5,
+			'sample.start': 0.6,
+			'sample.tune': -0.5,
+			'sample.reverse': 1
+		});
+		// the track's own region stays as it was
+		expect(region).toEqual(defaultRegion());
+		expect(lockedRegion(region, locks())).toEqual({
+			...defaultRegion(),
+			start: 0.6,
+			loopStart: 0.6,
+			tune: -0.5,
+			reverse: true
+		});
+		// an end locked below the loop takes the loop points with it, as turning it does
+		expect(lockedRegion(region, { 'sample.end': 0.5 })).toMatchObject({
+			loopStart: 0.2,
+			loopEnd: 0.5,
+			end: 0.5
+		});
 	});
 
 	it('maps encoders to lock ids like the core, and applies locks to a copy of the track', () => {
@@ -1019,6 +1078,25 @@ describe('players (manual: players/*)', () => {
 		expect(litKeys(sim)).toEqual(['a4']);
 		up(sim, 'keyboard.d4');
 		up(sim, 'keyboard.a4');
+	});
+
+	it('lets a held arpeggio go when its pattern changes (OS 1.1.21)', () => {
+		const { sim } = rig();
+		sim.press('track.3');
+		sim.press('key.player');
+		sim.press('key.player');
+		sim.turn(4, 1); // hold on
+		sim.press('key.m1');
+		for (const key of ['c4', 'e4', 'g4']) down(sim, `keyboard.${key}`);
+		for (const key of ['c4', 'e4', 'g4']) up(sim, `keyboard.${key}`);
+		sim.press('key.play');
+		expect(litKeys(sim)).toEqual(['c4']);
+		// pattern 2 a copy of pattern 1, its held arpeggio and all: the kept notes still stop
+		const sequence = sim.state.tracks[2].sequence;
+		sequence.patterns.push(structuredClone(sequence.patterns[0]));
+		playPattern(sim.state, 2, 1);
+		expect(sim.state.areas.sequencer.sustained).toEqual([]);
+		expect(litKeys(sim)).toEqual([]);
 	});
 
 	it('holds notes until the next ones with the hold player', () => {

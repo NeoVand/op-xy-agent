@@ -64,6 +64,11 @@ export interface SourceGraph {
 	dispose(): void;
 	/** Re-tunes what does not scale with pitch (a pulse's delay) to `hz`. */
 	retune?(hz: number, time: number, tau: number): void;
+	/**
+	 * The key lets go at `time` (Infinity: held on after all, a legato note carrying it): a loop that
+	 * lasts until release plays on from there to its region's end. A later call replaces an earlier.
+	 */
+	leave?(time: number): void;
 	/** Live M1 changes on a sounding note, where the engine can take them. */
 	update?(controls: EngineControls, hz: number, time: number): void;
 }
@@ -670,6 +675,8 @@ export interface BufferPlay {
 	readonly fade: number;
 	/** Seconds of the loop's end crossfaded into what precedes its start (synth sampler). */
 	readonly crossfade?: number;
+	/** The loop ends when the key lets go, and the region plays on to its end (synth sampler). */
+	readonly untilRelease?: boolean;
 	/** Follows portamento (samplers) or keeps its tune (drums). */
 	readonly glides: boolean;
 	/** Level of the recording (drum key gain). */
@@ -700,7 +707,10 @@ export function bufferSource(
 	g.buffer(source, play.region.start, play.loop ? undefined : length);
 	if (play.glides) g.pitched.push({ param: source.playbackRate, ratio: play.rate / hz });
 	const level = g.gain(play.gain);
-	source.connect(level);
+	// a loop until release goes through a gain of its own, which hands over to the tail at release
+	const looped = play.loop && play.untilRelease ? g.gain(1) : null;
+	if (looped) source.connect(looped).connect(level);
+	else source.connect(level);
 	if (play.fade > 0) {
 		// a linear fade-in of a fixed time from the start marker, as the device plays it
 		level.gain.setValueAtTime(0, start);
@@ -708,7 +718,103 @@ export function bufferSource(
 	}
 	let out: AudioNode = level;
 	if (play.pan !== 0) out = level.connect(g.panner(play.pan));
-	return g.finish(out, 1);
+	const graph = g.finish(out, 1);
+	return looped && play.loop
+		? untilRelease(graph, context, source, looped, level, { ...play, loop: play.loop }, start)
+		: graph;
+}
+
+/** The crossfade (s) from a loop until release to the rest of its region. */
+const LEAVE_FADE = 0.004;
+
+/**
+ * Where a buffer started at `start` from `region.start` stands at `time`, looping over `loop`
+ * (seconds of the buffer, at `rate`).
+ */
+export function loopPosition(
+	play: { readonly region: Region; readonly loop: Region; readonly rate: number },
+	start: number,
+	time: number
+): number {
+	const at = play.region.start + Math.max(0, time - start) * play.rate;
+	const span = play.loop.end - play.loop.start;
+	if (at < play.loop.end || span <= 0) return at;
+	return play.loop.start + ((at - play.loop.end) % span);
+}
+
+/**
+ * A loop until release: when the key lets go, a second source plays on from where the loop stands
+ * to the region's end, faded in over a few milliseconds while the loop fades out. The voice ends
+ * with that tail (or its release, whichever is first).
+ */
+function untilRelease(
+	graph: SourceGraph,
+	context: BaseAudioContext,
+	source: AudioBufferSourceNode,
+	looped: GainNode,
+	level: GainNode,
+	play: BufferPlay & { readonly loop: Region },
+	start: number
+): SourceGraph {
+	let tail: { node: AudioBufferSourceNode; fade: GainNode; at: number } | null = null;
+	let stopAt = Infinity;
+	const ended = () => graph.onended?.();
+	const drop = () => {
+		if (!tail) return;
+		try {
+			// not started yet: it never sounds
+			tail.node.stop(tail.at);
+		} catch {
+			// already stopped
+		}
+		tail.node.onended = null;
+		tail = null;
+	};
+	const base = { stop: graph.stop, dispose: graph.dispose };
+	const leaving: SourceGraph = {
+		...graph,
+		start: (time) => graph.start(time),
+		stop(time) {
+			stopAt = time;
+			base.stop(time);
+			if (tail) tail.node.stop(Math.max(time, tail.at));
+		},
+		dispose() {
+			base.dispose();
+			if (tail) {
+				tail.node.disconnect();
+				tail.fade.disconnect();
+			}
+		},
+		leave(time) {
+			drop();
+			looped.gain.cancelScheduledValues(0);
+			looped.gain.setValueAtTime(1, start);
+			if (!Number.isFinite(time)) {
+				// held on after all: the loop sounds on, and its own end ends the voice
+				source.onended = ended;
+				return;
+			}
+			const at = Math.max(time, start);
+			const from = loopPosition(play, start, at);
+			const node = context.createBufferSource();
+			node.buffer = source.buffer;
+			node.playbackRate.value = play.rate;
+			const fade = context.createGain();
+			fade.gain.setValueAtTime(0, at);
+			fade.gain.linearRampToValueAtTime(1, at + LEAVE_FADE);
+			node.connect(fade).connect(level);
+			node.start(at, from, Math.max(0.001, play.region.end - from));
+			if (Number.isFinite(stopAt)) node.stop(Math.max(stopAt, at));
+			looped.gain.setValueAtTime(1, at);
+			looped.gain.linearRampToValueAtTime(0, at + LEAVE_FADE);
+			source.onended = null;
+			source.stop(at + LEAVE_FADE);
+			node.onended = ended;
+			tail = { node, fade, at };
+		}
+	};
+	return leaving;
 }
 
 /** An envelope shape for voices whose sound ends with their buffer: no sustain to speak of. */

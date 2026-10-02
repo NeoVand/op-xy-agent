@@ -172,6 +172,26 @@ describe('simToXy', () => {
 		expect(project.settings.midiChannels.slice(1, 15).every((c) => c === null)).toBe(true);
 	});
 
+	it('keeps a portamento lock on its 0–127 lane, as its card reads (OS 1.1.33)', () => {
+		const s = defaultState();
+		const p = s.tracks[2].sequence.patterns[0];
+		toggleStep(p, 0, [36]);
+		setLock(p, 0, 'playMode.portamento', 127);
+		setLock(p, 1, 'playMode.portamento', 2);
+		setLock(p, 1, 'filter.cutoff', 99);
+		const { bytes, project } = simToXy(s, blank);
+		expect(project.tracks[2].patterns[0].locks).toEqual([
+			{ step: 0, column: 14, value: 32767 },
+			{ step: 1, column: 14, value: Math.round((2 / 127) * 32767) },
+			{ step: 1, column: 17, value: 32767 }
+		]);
+		// the file keeps 0–32767: a lock reads back within a hundredth
+		const back = xyToSim(bytes).state.tracks[2].sequence.patterns[0].steps;
+		expect(back[0].locks['playMode.portamento']).toBeCloseTo(127, 2);
+		expect(back[1].locks['playMode.portamento']).toBeCloseTo(2, 2);
+		expect(back[1].locks['filter.cutoff']).toBeCloseTo(99, 2);
+	});
+
 	it('writes patterns, notes, components and locks, and reads them back', () => {
 		const { bytes, project } = simToXy(composed(), blank);
 		expect(readProject(bytes)).toEqual(project);

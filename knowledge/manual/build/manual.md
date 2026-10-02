@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1231 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1234 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -1697,6 +1697,7 @@ Facts:
 - Turning bend range fully anti-clockwise switches pitch bending off, which is what you want when the pitchbend strip is routed to another target. [#bend-off] [s4]
 - Over MIDI, CC28–31 reach these four settings; play mode reads the value as one of three steps. [#midi-ccs] (community-verified) [s5]
 - Holding `shift` on `M2` brings up a white card of four rows over the dimmed page, each with its encoder's dot — play mode (poly, mono or legato), portamento (off, then numbers), bend range (semitones, up to an octave) and preset volume (a number). [#card] (verified 1.1.33) [s6]
+- Portamento reads off at 0, then plain numbers without a leading zero (2, 14, 73) up to 127, the one value on the card that goes past 99. [#portamento-range] (verified 1.1.33) [s6]
 
 Procedures:
 - Switch a track between poly, mono and legato [#set-mode] [s1]
@@ -1709,7 +1710,7 @@ Parameters:
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | M2 | `shift + turn E1` | play mode | poly / mono / legato | – | 28 | s1 |
-| M2 | `shift + turn E2` | portamento | – | – | 29 | how long a note takes to slide to the next s1 |
+| M2 | `shift + turn E2` | portamento | off, 1–127 | – | 29 | how long a note takes to slide to the next s1 |
 | M2 | `shift + turn E3` | bend range | – | – | 30 | pitch reach of the pitchbend strip s1 |
 | M2 | `shift + turn E4` | preset volume | – | – | 31 | level stored with the sound, apart from the mixer, for matching presets s1 |
 
@@ -2677,6 +2678,7 @@ Facts:
 - After sampling on the unit, the loop runs from 20 % to 80 % of the sample, set to loop forever. [#defaults] (community-verified) [s4]
 - Tune works in cents; sample gain spans −30 to +20 dB. [#ranges] (community-verified) [s4]
 - Synth sampler settings accept parameter locks. [#p-locks] (since 1.1.0) [s5]
+- In the replica a held step locks what `M1` turns, start, loop start, loop end and end, and with `shift` direction, tune, loop crossfade and gain, but not the loop type, which is a click; the changelog does not list them, and they are not yet checked on a unit. [#p-lock-values] (since 1.1.0) (derived) [s5]
 - The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers. [#screen] (verified 1.1.33) [s6]
 - With `shift` held it shows direction, tune as a note symbol and a value such as −12.00, crossfade as a percentage drawn as a dark wedge at the loop, and gain. [#shift-screen] (verified 1.1.33) [s6]
 - CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s6]
@@ -2818,7 +2820,7 @@ Related: [sampler.drum-sampler], [sampler.drum-key-settings]
 Sources: s1 changelog:1.1.0 · s2 guide:sample#sample-slicer · s3 note 30 · s4 note 50
 
 ### Multisampler [sampler.multisampler]
-current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
+current · OS ≥ 1.0.9 · changed in 1.1.0, 1.1.25 · guide v1.1.15
 Also called: multisample, multi sampler, key zones, sampled instrument
 Where: modes instrument; screens M1, sample
 
@@ -2840,6 +2842,7 @@ Facts:
 - OS 1.1.25 improved how multisamples follow global transpose. [#transpose] (since 1.1.25) [s4]
 - The top strip is a full keyboard on which the zone of the sample being played lights up, jumping with the octave; each zone brings its own waveform and markers, and the shift layer matches the synth sampler's. [#screen] (verified 1.1.33) [s5]
 - CC12–15 on the track's channel move nothing on this page. [#no-cc] (verified 1.1.33) [s5]
+- OS 1.1.0 gave parameter locks to the drum and synth samplers and does not name the multisampler; the replica gives its zones none, which is not yet checked on a unit. [#no-locks] (since 1.1.0) (derived) [s6]
 
 Procedures:
 - Multisample an instrument [#record-zones] [s1]
@@ -2850,7 +2853,7 @@ Procedures:
 
 Related: [sampler.synth-sampler], [sampler.sampling]
 
-Sources: s1 guide:sample#multisampler · s2 note 30 · s3 note 30 · s4 changelog:1.1.25 · s5 note 59
+Sources: s1 guide:sample#multisampler · s2 note 30 · s3 note 30 · s4 changelog:1.1.25 · s5 note 59 · s6 changelog:1.1.0
 
 ### Sample library [sampler.sample-library]
 outdated-in-guide · OS ≥ 1.0.9 · changed in 1.1.0, 1.1.15, 1.1.17 · guide v1.1.15

@@ -20,6 +20,7 @@
 import { TRACKS, type EngineId } from '$lib/core/opxy';
 import { soloed } from '$lib/sim/areas/mixer/meters';
 import { zoneOf } from '$lib/sim/areas/sample/m1';
+import { lockedRegion } from '$lib/sim/areas/sequencer/locks';
 import type { Region as SampleRegion, SampleState } from '$lib/sim/areas/sample/state';
 import { defaultDrumKey, type SimState, type TrackState } from '$lib/sim/params';
 import { VOICE_LIMIT, victim } from './allocator';
@@ -59,7 +60,12 @@ import {
 import { Resources } from './resources';
 import { DEVICE_GAIN_DB } from './synth/engines/device';
 import type { SampleRegistry, SampleSource } from './samples';
-import { lockedSettings, type ClickEvent, type SchedulerSink } from './scheduler';
+import {
+	lockedSettings,
+	type ClickEvent,
+	type NoteSettings,
+	type SchedulerSink
+} from './scheduler';
 import {
 	DRUM_PANS,
 	SHORT_SECONDS,
@@ -81,8 +87,8 @@ type AnyVoice = Voice | WorkletVoice;
 export interface NoteRequest {
 	/** Instrument track 0–7. */
 	readonly track: number;
-	/** The track's settings as the note starts. */
-	readonly settings: TrackState;
+	/** The track's settings as the note starts (with its step's locks, when it has some). */
+	readonly settings: NoteSettings;
 	readonly note: number;
 	/** 1–127. */
 	readonly velocity: number;
@@ -98,6 +104,8 @@ export interface NoteRequest {
 	readonly bend?: Float32Array;
 	/** The note's own place in the stereo field, −1…1, on top of the strip's pan (arpeggio stereo). */
 	readonly pan?: number;
+	/** A sequenced drone's step ({@link ScheduledNote.origin}): still sounding, it is held on. */
+	readonly origin?: string;
 	/** Semitones on top of a drum key's tune (the punch-in octave on the percussion group). */
 	readonly tune?: number;
 }
@@ -179,6 +187,8 @@ export class SoundEngine {
 	readonly #channels: Channel[];
 	readonly #limit: number;
 	#voices: AnyVoice[] = [];
+	/** The voice each sequenced drone's step last started ({@link NoteRequest.origin}). */
+	readonly #drones = new Map<string, AnyVoice>();
 	/** The synth core in its worklet, once the app has loaded it, and the engines it plays. */
 	#synth: SynthHost | null = null;
 	#coreEngines: ReadonlySet<EngineId> = CORE_ENGINES;
@@ -192,6 +202,8 @@ export class SoundEngine {
 	readonly #base: (TrackState | null)[];
 	/** Each track's preset velocity sensitivity (0–99, shift + M2), as last seen. */
 	readonly #sensitivity: number[];
+	/** Semitones every note of a track moves: the project's transpose and its sound's own. */
+	readonly #transpose: number[];
 	/** What was last applied to sounding voices, per track. */
 	readonly #shown: { filter: string; m1: string }[];
 	/** The settings each voice started with (its step's locks applied): what automation returns to. */
@@ -266,6 +278,7 @@ export class SoundEngine {
 		this.#settings = this.#channels.map(() => null);
 		this.#base = this.#channels.map(() => null);
 		this.#sensitivity = this.#channels.map(() => 99);
+		this.#transpose = this.#channels.map(() => 0);
 		this.#shown = this.#channels.map(() => ({ filter: '', m1: '' }));
 		this.sink = {
 			note: (event, settings) =>
@@ -279,7 +292,8 @@ export class SoundEngine {
 					glide: event.glide,
 					bend: event.bend,
 					pan: event.pan,
-					tune: event.tune
+					tune: event.tune,
+					origin: event.origin
 				}),
 			click: (event) => this.click(event),
 			beat: (time, position) => {
@@ -442,6 +456,9 @@ export class SoundEngine {
 			this.#settings[k] = track;
 			this.#base[k] = track;
 			this.#sensitivity[k] = state.areas?.system?.presetSettings?.[k]?.velocity ?? 99;
+			this.#transpose[k] =
+				(state.areas?.system?.projectSettings?.transpose ?? 0) +
+				(state.areas?.system?.presetSettings?.[k]?.transpose ?? 0);
 			const group = mixer
 				? groupGain(track.engine === 'drum' ? mixer.master.percussion : mixer.master.melodic)
 				: 1;
@@ -483,10 +500,16 @@ export class SoundEngine {
 	}
 
 	/** Plays a note: live (held until {@link noteOff}) or sequenced (with its duration). */
-	noteOn(request: NoteRequest): void {
-		const { track: k, settings } = request;
+	noteOn(given: NoteRequest): void {
+		const { track: k, settings } = given;
 		const channel = this.#channels[k];
 		if (!channel || settings.engine === 'midi') return;
+		// the project's transpose and the sound's own move every note but a drum track's (manual:
+		// project/transpose, instrument/preset-settings; both were stored and never heard; whether
+		// drums follow the project's is open, note 64 D54)
+		const shift = settings.engine === 'drum' ? 0 : (this.#transpose[k] ?? 0);
+		const request =
+			shift === 0 ? given : { ...given, note: Math.max(0, Math.min(127, given.note + shift)) };
 		this.#settings[k] = settings;
 		const time = Math.max(request.time, this.context.currentTime);
 		const effects = this.#punch.at(k, time);
@@ -504,22 +527,29 @@ export class SoundEngine {
 			this.#drum({ ...request, pan }, time, gate, { short: effects.includes('short'), soft });
 			return;
 		}
+		// a drone the loop comes round to while it still sounds is held on, not struck again
+		// (OS 1.0.40: "prevent sequencer from retriggering already active drone notes")
+		const drone = request.origin ? this.#drones.get(request.origin) : undefined;
+		if (drone && !drone.disposed && drone.off > time && drone.note === request.note) {
+			drone.extend(gate);
+			return;
+		}
 		// soft: the note's attack takes at least SOFT_SECONDS
 		const note: Started = soft ? { ...request, soft } : request;
 		const mode = playMode(settings.playMode.mode);
 		// a portamento component glides this note in whatever the track's portamento says
 		const glide = request.glide ?? glideSeconds(settings.playMode.portamento);
 		const hz = noteHz(request.note);
+		// the same note again on a poly track sounds on top of the one before (OS 1.0.38: "allow
+		// playing same note on top of another"); it once let the earlier one go
+		let voice: AnyVoice | null;
 		if (mode === 'poly') {
-			// the same note again on this track lets the one before go
-			for (const v of this.#voices) {
-				if (v.track === k && v.note === request.note && v.off > time) v.release(time);
-			}
-			const from = glide > 0 ? (this.#last[k] ?? hz) : hz;
-			this.#spawn(note, time, gate, hz, from, glide);
-			return;
+			voice = this.#spawn(note, time, gate, hz, glide > 0 ? (this.#last[k] ?? hz) : hz, glide);
+		} else {
+			this.#monoOn(note, time, gate, hz, mode, glide);
+			voice = this.#mono[k].voice;
 		}
-		this.#monoOn(note, time, gate, hz, mode, glide);
+		if (request.origin && voice) this.#drones.set(request.origin, voice);
 	}
 
 	/** A replica key came up. */
@@ -810,8 +840,12 @@ export class SoundEngine {
 		if (settings.engine === 'sampler' || settings.engine === 'multisampler') {
 			const loaded = this.#loaded(track, settings, note);
 			if (loaded) {
-				// the region is what the synth samplers' M1 page edits: points, loop, direction, tune, gain
-				const { region } = loaded;
+				// the region is what the synth samplers' M1 page edits: points, loop, direction, tune,
+				// gain; the synth sampler's step locks them (OS 1.1.0)
+				const region =
+					settings.engine === 'sampler' && settings.locks
+						? lockedRegion(loaded.region, settings.locks)
+						: loaded.region;
 				const buffer = this.resources.sample(loaded.source, region.reverse);
 				const play = regionSeconds(region, buffer.duration);
 				const rate = tuneRate(note - loaded.root + region.tune);
@@ -823,6 +857,7 @@ export class SoundEngine {
 						rate,
 						region: play,
 						loop: play.loop,
+						untilRelease: play.untilRelease,
 						crossfade: play.crossfade,
 						pan: 0,
 						fade: 0,

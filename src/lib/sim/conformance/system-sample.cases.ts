@@ -1975,7 +1975,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(d.frame.page).toBe('envelope');
 			await d.withShift(async () => {
 				await d.turn(3, -2); // a new project's shoulder bends 2 semitones: 1, then off
-				expect(d.screen()).toBe('play mode mono, portamento 00, bend off, volume 75');
+				expect(d.screen()).toBe('play mode mono, portamento 0, bend off, volume 75');
 			});
 			await d.holding('track.3', () => d.click('key.m4'));
 			// the saved sound brings its preset settings and bend range along to another track
@@ -1990,7 +1990,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 			expect(picks(d)).toEqual(['mod', 'pitchbend target', 'cutoff']);
 			await d.click('key.m2');
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('play mode mono, portamento 00, bend off, volume 75');
+				expect(d.screen()).toBe('play mode mono, portamento 0, bend off, volume 75');
 			});
 		});
 

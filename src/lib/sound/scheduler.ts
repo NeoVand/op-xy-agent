@@ -36,7 +36,7 @@
  * pass, as on the device, instead of playing the first pass again every time the scene comes round.
  */
 import { brainInfluence, brainShift } from '$lib/sim/areas/auxiliary/sim';
-import { lockParam } from '$lib/sim/areas/sequencer/locks';
+import { isRegionLock, lockParam } from '$lib/sim/areas/sequencer/locks';
 import { sceneLength } from '$lib/sim/areas/arrange/model';
 import { activeTrack, heldNotes, seq } from '$lib/sim/areas/sequencer/model';
 import { playerOf } from '$lib/sim/areas/sequencer/players';
@@ -85,6 +85,11 @@ export interface ScheduledNote {
 	readonly pan?: number;
 	/** Semitones on top of a drum key's tune (the punch-in octave on the percussion group). */
 	readonly tune?: number;
+	/**
+	 * The step a note longer than its pattern comes from (track, pattern, step, note): when the loop
+	 * comes round to it while it still sounds, it is held on, not struck again (OS 1.0.40).
+	 */
+	readonly origin?: string;
 }
 
 /**
@@ -200,17 +205,23 @@ export function firstIndex(position: number, size: number, tolerance = size / 2)
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
 /**
+ * A track's settings as a note starts, with the step's locks it was made with: those the track does
+ * not hold (the synth sampler's region, which the sample area keeps) the engine applies itself.
+ */
+export type NoteSettings = TrackState & { readonly locks?: Readonly<Record<string, number>> };
+
+/**
  * The settings a step's notes start with: the track's, with the step's parameter locks applied
- * through the sequencer's own table (`lockParam(id).set`). Only what a voice reads is copied; the
- * patterns are shared, untouched.
+ * through the sequencer's own table (`lockParam(id).set`), and kept. Only what a voice reads is
+ * copied; the patterns are shared, untouched.
  */
 export function lockedSettings(
 	track: TrackState,
 	locks: Readonly<Record<string, number>>
-): TrackState {
+): NoteSettings {
 	const ids = Object.keys(locks);
 	if (ids.length === 0) return track;
-	const copy: TrackState = {
+	const copy: NoteSettings = {
 		...track,
 		m1: [...track.m1],
 		amp: { ...track.amp },
@@ -220,7 +231,8 @@ export function lockedSettings(
 		sends: [...track.sends],
 		lfo: { ...track.lfo },
 		mix: { ...track.mix },
-		drumKeys: track.drumKeys.map((key) => ({ ...key }))
+		drumKeys: track.drumKeys.map((key) => ({ ...key })),
+		locks
 	};
 	for (const id of ids) lockParam(id)?.set(copy, locks[id]);
 	return copy;
@@ -625,8 +637,11 @@ export class Scheduler {
 			due.push({ kind: 'automate', event: { track: k, locks: target, time } });
 			return;
 		}
-		// a parameter without a lock on one side moves from or to the track's own value
-		const ids = [...new Set([...Object.keys(from), ...Object.keys(locks)])];
+		// a parameter without a lock on one side moves from or to the track's own value; the synth
+		// sampler's region locks set where a note's sample plays as it starts (ours), so none glide
+		const ids = [...new Set([...Object.keys(from), ...Object.keys(locks)])].filter(
+			(id) => !isRegionLock(id)
+		);
 		const own = (id: string) => lockParam(id)?.get(track) ?? 0;
 		for (let i = 1; i <= SHAPE_POINTS; i++) {
 			const u = i / SHAPE_POINTS;
@@ -697,6 +712,11 @@ export class Scheduler {
 						)
 					: undefined;
 			const note = clamp(n.note + shift, 0, 127);
+			// a note longer than its pattern meets itself on the next pass: a drone, held on there
+			const drone =
+				n.length >= pattern.length
+					? `${k}:${track.sequence.patterns.indexOf(pattern)}:${walk.head.step}`
+					: null;
 			// maestro's random order has a source of its own, so the walk stays the LEDs' walk
 			const hit = player?.type === 'maestro' ? walk.hits++ : 0;
 			const chord =
@@ -718,7 +738,8 @@ export class Scheduler {
 					time: at,
 					duration: Math.max(0.01, end - at),
 					glide: n.glide > 0 ? n.glide * stepSeconds : undefined,
-					bend
+					bend,
+					...(drone ? { origin: `${drone}:${hit.note}` } : {})
 				};
 				this.#emit(due, event, settings, from + hit.time * scale, stepSeconds);
 			}

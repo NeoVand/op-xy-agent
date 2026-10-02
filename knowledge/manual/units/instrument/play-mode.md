@@ -38,6 +38,11 @@ facts:
     source: docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2
     confidence: verified
     verified_on: '1.1.33'
+  - id: portamento-range
+    text: Portamento reads off at 0, then plain numbers without a leading zero (2, 14, 73) up to 127, the one value on the card that goes past 99.
+    source: docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2
+    confidence: verified
+    verified_on: '1.1.33'
 procedures:
   - id: set-mode
     goal: Switch a track between poly, mono and legato
@@ -58,6 +63,7 @@ parameters:
     encoder: E2
     layer: shift
     name: portamento
+    range: off, 1–127
     note: how long a note takes to slide to the next
     cc: 29
     source: https://teenage.engineering/guides/op-xy/instrument#envelopes

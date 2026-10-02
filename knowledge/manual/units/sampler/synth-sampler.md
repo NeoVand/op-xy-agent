@@ -58,6 +58,11 @@ facts:
     text: Synth sampler settings accept parameter locks.
     source: https://teenage.engineering/downloads/op-xy#1.1.0
     firmware_min: '1.1.0'
+  - id: p-lock-values
+    text: In the replica a held step locks what `M1` turns, start, loop start, loop end and end, and with `shift` direction, tune, loop crossfade and gain, but not the loop type, which is a click; the changelog does not list them, and they are not yet checked on a unit.
+    source: https://teenage.engineering/downloads/op-xy#1.1.0
+    confidence: derived
+    firmware_min: '1.1.0'
   - id: screen
     text: The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers.
     source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1

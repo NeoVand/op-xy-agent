@@ -32,6 +32,7 @@ import { SCENE_LENGTH_MODES, SIGNATURES } from '$lib/sim/areas/system/catalogue'
 import { loadEngineSound, loadPreset, presetKey } from '$lib/sim/areas/system/presets';
 import {
 	NEW_PROJECT_PRESETS,
+	PORTAMENTO_MAX,
 	fromQ15,
 	presetSettingsOf,
 	soundOf,
@@ -130,8 +131,14 @@ const LOCK_COLUMNS: Readonly<Record<string, number>> = {
 /** The lock columns the simulator has an id for; locks in the others stay as the template has them. */
 const KNOWN_COLUMNS: ReadonlySet<number> = new Set(Object.values(LOCK_COLUMNS));
 
-/** A 0–99 lane as the device stores it (the inverse of the simulator's `fromQ15`). */
-const toQ15 = (value: number) => Math.round((value / 99) * 32767);
+/** Lock lanes past 0–99: portamento runs 0–127, as its card reads. */
+const LANE_MAX: Readonly<Record<string, number>> = { 'playMode.portamento': PORTAMENTO_MAX };
+
+/** A lock's value as the device stores it, 0–32767 over its lane (the inverse of {@link laneOf}). */
+const toQ15 = (id: string, value: number) => Math.round((value / (LANE_MAX[id] ?? 99)) * 32767);
+
+/** A stored lock value on its lane (0–99, or portamento's 0–127). */
+const laneOf = (id: string, raw: number) => (raw / 32767) * (LANE_MAX[id] ?? 99);
 
 /** The template's raw value when it reads as `value`, else `value` encoded. */
 function keep<T>(raw: number, decode: (raw: number) => T, value: T, encode: (v: T) => number) {
@@ -326,13 +333,13 @@ function writeLocks(p: Pattern, was: XyPattern, where: string, skipped: string[]
 	p.steps.forEach((step, i) => {
 		for (const [id, value] of Object.entries(step.locks)) {
 			const column = LOCK_COLUMNS[id];
-			if (column === undefined || !(value >= 0 && value <= 99)) {
+			if (column === undefined || !(value >= 0 && value <= (LANE_MAX[id] ?? 99))) {
 				unmapped.set(id, (unmapped.get(id) ?? 0) + 1);
 				continue;
 			}
 			const old = was.locks.find((l) => l.step === i && l.column === column);
-			const same = old !== undefined && Math.abs(fromQ15(old.value) - value) < 1e-9;
-			locks.push({ step: i, column, value: same ? old.value : toQ15(value) });
+			const same = old !== undefined && Math.abs(laneOf(id, old.value) - value) < 1e-9;
+			locks.push({ step: i, column, value: same ? old.value : toQ15(id, value) });
 		}
 	});
 	for (const [id, count] of unmapped) {
@@ -682,7 +689,7 @@ function readPattern(p: XyPattern, where: string, skipped: string[]): Pattern {
 			unmapped.set(lock.column, (unmapped.get(lock.column) ?? 0) + 1);
 			continue;
 		}
-		pattern.steps[lock.step].locks[id] = fromQ15(lock.value);
+		pattern.steps[lock.step].locks[id] = laneOf(id, lock.value);
 	}
 	for (const [column, count] of unmapped) {
 		skipped.push(

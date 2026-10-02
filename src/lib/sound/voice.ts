@@ -187,6 +187,8 @@ export class Voice implements VoiceSlot {
 		graph.start(start);
 		this.off = this.#amp.gate;
 		this.end = this.#amp.end;
+		// a sequenced note knows when its key lets go: a loop until release leaves there
+		if (Number.isFinite(this.off)) graph.leave?.(this.off);
 		if (Number.isFinite(this.end)) graph.stop(this.end + STOP_PAD);
 	}
 
@@ -203,6 +205,7 @@ export class Voice implements VoiceSlot {
 			env.release(this.#filters[i].frequency, time, seconds);
 		this.off = this.#amp.gate;
 		this.end = this.#amp.end;
+		this.#graph.leave?.(time);
 		this.#graph.stop(this.end + STOP_PAD);
 	}
 
@@ -227,6 +230,7 @@ export class Voice implements VoiceSlot {
 		for (const [i, env] of this.#cutoff.entries()) env.extend(this.#filters[i].frequency, gate);
 		this.off = this.#amp.gate;
 		this.end = this.#amp.end;
+		this.#graph.leave?.(this.off);
 		// held on by a key: push the scheduled stop out of the way until that key lets go
 		this.#graph.stop(Number.isFinite(this.end) ? this.end + STOP_PAD : FOREVER);
 	}

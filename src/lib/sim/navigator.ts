@@ -674,7 +674,12 @@ export function planPlace(state: SimState, place: Place): NavPlan {
 
 /** Where an instrument parameter lives: its page, layer and envelope. */
 function placeOfParam(id: string, track: number): Place | null {
-	if (/^m1\.[1-4]$/.test(id) || id === 'midi.program' || /^key\d*\./.test(id)) {
+	if (
+		/^m1\.[1-4]$/.test(id) ||
+		id === 'midi.program' ||
+		/^key\d*\./.test(id) ||
+		id.startsWith('sample.')
+	) {
 		return { area: 'instrument', track, page: 1 };
 	}
 	const env = /^(amp|filterEnv)\./.exec(id);
@@ -769,6 +774,8 @@ function targetValue(
 	}
 	const n = typeof goal === 'number' ? goal : readingNumber(goal);
 	if (!Number.isFinite(n)) return null;
+	// the bottom of a range that reads as a word there (portamento 0 reads "off")
+	if (Math.abs(n - min) < 1e-9 && !Number.isFinite(readingNumber(format(min)))) return min;
 	// the number as the screen shows it (parameter 1 is stored as 0, a synced speed as its place
 	// in the list, a sample's point as a percentage): the reading nearest it; where the readings
 	// are words, the parameter's own units, and only inside its range (70 is not a groove type, and
@@ -1152,7 +1159,17 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 		);
 	}
 	const region = regionParam(id);
-	if (region) return planRegion(rec, track, key, region, goal.value);
+	// on a step, the synth sampler's region values lock like any other parameter (OS 1.1.0); a
+	// multisampler zone takes no locks
+	if (region && goal.step !== undefined && engine === 'multisampler') {
+		return rec.plan(
+			false,
+			`a multisampler zone takes no parameter locks (the drum and synth samplers do), so ${id} cannot be set for one step`
+		);
+	}
+	if (region && (goal.step === undefined || engine !== 'sampler')) {
+		return planRegion(rec, track, key, region, goal.value);
+	}
 	// a drum key's setting: the key goes first (pressed on M1, it is the one the page edits)
 	let lockId = id;
 	const drum = /^key(\d*)\.(\w+)$/.exec(id);
@@ -1287,7 +1304,7 @@ export function reads(state: SimState, goal: SettingGoal): boolean {
 	const key = goal.key === undefined ? null : keyIndexOf(state, track, goal.key);
 	if (goal.key !== undefined && key === null) return false;
 	const region = regionParam(id);
-	if (region) {
+	if (region && (goal.step === undefined || t.engine !== 'sampler')) {
 		const r = regionOf(state, track, key);
 		const target = targetValue(goal.value, region.format, region.min, region.max, region.step);
 		return (

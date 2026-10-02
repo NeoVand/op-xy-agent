@@ -6,9 +6,11 @@
  * encoders, so any page can show a step's locked values ({@link lockedTrack}) and the sound engine
  * can apply a step's locks to its track when the step plays.
  *
- * Lockable: the four module pages and their shift layers on instrument tracks, sampler keys
- * included (OS 1.1.0), and the midi engine's program (OS 1.1.15). Not lockable: the midi engine's
- * channel and bank, and players (manual: "players cannot").
+ * Lockable: the four module pages and their shift layers on instrument tracks, the drum sampler's
+ * keys and the synth sampler's region included (OS 1.1.0, "drum & synth sampler parameter locks"),
+ * and the midi engine's program (OS 1.1.15). Not lockable: the midi engine's channel and bank, the
+ * multisampler's zones (the changelog names the drum and synth samplers only), and players (manual:
+ * "players cannot").
  */
 import {
 	DRUM_PLAY_MODES,
@@ -20,14 +22,18 @@ import {
 	detent,
 	engineParams,
 	formatTune,
+	PORTAMENTO_MAX,
 	SAMPLER_TUNE_RANGE,
 	isSampler,
+	portamentoText,
 	two,
 	type Envelope99,
 	type SimState,
 	type TrackState
 } from '../../params';
 import { DESTINATIONS, SENSOR_DESTINATIONS } from '../../screen/pages/lfo';
+import { activeRegion, turnRegion } from '../sample/m1';
+import type { Region, SampleState } from '../sample/state';
 
 /** One lockable parameter. */
 export interface LockParam {
@@ -46,6 +52,11 @@ export interface LockParam {
 	set(t: TrackState, value: number): void;
 	/** The value as the page shows it. */
 	format(value: number): string;
+	/**
+	 * A turn of `delta` detents from the step's locks, for a value that turns in its own way (the
+	 * synth sampler's points push each other along); else {@link turnedValue} steps it.
+	 */
+	turn?(locks: Readonly<Record<string, number>>, delta: number, fine: boolean): number;
 }
 
 type Spec = Omit<LockParam, 'id' | 'fine' | 'format'> & Partial<Pick<LockParam, 'fine' | 'format'>>;
@@ -105,7 +116,194 @@ export function lockParam(id: string): LockParam | null {
 	if (key && (SAMPLER_FIELDS as readonly string[]).includes(key[2])) {
 		return samplerParam(id, Number(key[1]), key[2] as (typeof SAMPLER_FIELDS)[number]);
 	}
+	const field = REGION_FIELDS.find((f) => f.id === id);
+	if (field) return regionLock(field, null);
 	return TRACK_PARAMS[id] ?? null;
+}
+
+/** One of the synth sampler's region values, as its M1 page turns it (`turnRegion`). */
+interface RegionField {
+	readonly id: string;
+	readonly label: string;
+	readonly encoder: number;
+	readonly shift: boolean;
+	readonly min: number;
+	readonly max: number;
+	readonly step: number;
+	readonly fine: number;
+	get(r: Region): number;
+	set(r: Region, value: number): void;
+	format(value: number): string;
+}
+
+/** A share of the sample, to the tenth of a percent. */
+const percent = (share: number) => `${Math.round(share * 1000) / 10}%`;
+
+const point = (
+	id: string,
+	label: string,
+	encoder: number,
+	key: 'start' | 'loopStart' | 'loopEnd' | 'end'
+): RegionField => ({
+	id,
+	label,
+	encoder,
+	shift: false,
+	min: 0,
+	max: 1,
+	step: 0.01,
+	fine: 0.001,
+	get: (r) => r[key],
+	set: (r, v) => {
+		r[key] = v;
+	},
+	format: percent
+});
+
+/**
+ * The synth sampler's region values a step locks (OS 1.1.0): M1's four points, and with shift the
+ * direction, tune, loop crossfade and gain. The loop type is a click, not a turn, and stays
+ * unlocked. The ids are the navigator's names for the same values.
+ */
+const REGION_FIELDS: readonly RegionField[] = [
+	point('sample.start', 'start', 0, 'start'),
+	point('sample.loopStart', 'loop start', 1, 'loopStart'),
+	point('sample.loopEnd', 'loop end', 2, 'loopEnd'),
+	point('sample.end', 'end', 3, 'end'),
+	{
+		id: 'sample.reverse',
+		label: 'direction',
+		encoder: 0,
+		shift: true,
+		min: 0,
+		max: 1,
+		step: 1,
+		fine: 1,
+		get: (r) => (r.reverse ? 1 : 0),
+		set: (r, v) => {
+			r.reverse = v >= 0.5;
+		},
+		format: (v) => (v >= 0.5 ? 'reverse' : 'forward')
+	},
+	{
+		id: 'sample.tune',
+		label: 'tune',
+		encoder: 1,
+		shift: true,
+		min: -SAMPLER_TUNE_RANGE,
+		max: SAMPLER_TUNE_RANGE,
+		step: 0.1,
+		fine: 0.01,
+		get: (r) => r.tune,
+		set: (r, v) => {
+			r.tune = v;
+		},
+		format: formatTune
+	},
+	{
+		id: 'sample.crossfade',
+		label: 'loop crossfade',
+		encoder: 2,
+		shift: true,
+		min: 0,
+		// the owner's unit stops at 75 % (research 60 §5)
+		max: 75,
+		step: 1,
+		fine: 1,
+		get: (r) => r.crossfade,
+		set: (r, v) => {
+			r.crossfade = v;
+		},
+		format: (v) => `${Math.round(v)}%`
+	},
+	{
+		id: 'sample.gain',
+		label: 'gain',
+		encoder: 3,
+		shift: true,
+		min: -30,
+		max: 20,
+		step: 1,
+		fine: 1,
+		get: (r) => r.gain,
+		set: (r, v) => {
+			r.gain = v;
+		},
+		format: (v) => String(Math.round(v))
+	}
+];
+
+/** Whether a lock id is one of the synth sampler's region values (`sample.start` …). */
+export const isRegionLock = (id: string): boolean => REGION_FIELDS.some((f) => f.id === id);
+
+/**
+ * A region value as a lock parameter. The sample area keeps the region, not the track, so on a
+ * track it writes nothing ({@link lockedRegion} applies it) and reads the region it was given:
+ * {@link lockTarget}'s, the one on screen, or NaN for an id alone.
+ */
+function regionLock(f: RegionField, region: Region | null): LockParam {
+	return {
+		id: f.id,
+		label: f.label,
+		min: f.min,
+		max: f.max,
+		step: f.step,
+		fine: f.fine,
+		format: f.format,
+		get: () => (region ? f.get(region) : NaN),
+		set: () => {
+			// the region is the sample area's: lockedRegion applies the lock
+		},
+		...(region
+			? {
+					turn: (locks: Readonly<Record<string, number>>, delta: number, fine: boolean) => {
+						// turned on the region as the step plays it, the way the page turns it: a point
+						// pushes the loop points it passes, start and end stop short of each other
+						const r = { ...lockedRegion(region, locks) };
+						turnRegion(r, f.encoder, delta, fine, f.shift);
+						return f.get(r);
+					}
+				}
+			: {})
+	};
+}
+
+/**
+ * A synth sampler region with a step's locks on it: what the M1 page shows while the step is held,
+ * and what the step's notes play. The points keep their order (start ≤ loop start ≤ loop end ≤
+ * end) as turning them does; a locked start past an end turned down later pushes the end (ours).
+ */
+export function lockedRegion(region: Region, locks: Readonly<Record<string, number>>): Region {
+	const fields = REGION_FIELDS.filter((f) => locks[f.id] !== undefined);
+	if (fields.length === 0) return region;
+	const r = { ...region };
+	for (const f of fields) f.set(r, clamp(locks[f.id], f.min, f.max));
+	r.end = clamp(r.end, Math.min(r.start + 0.001, 1), 1);
+	r.loopStart = clamp(r.loopStart, r.start, r.end);
+	r.loopEnd = clamp(r.loopEnd, r.start, r.end);
+	if (r.loopEnd < r.loopStart) {
+		const loopEnd =
+			locks['sample.loopEnd'] !== undefined && locks['sample.loopStart'] === undefined;
+		if (loopEnd) r.loopStart = r.loopEnd;
+		else r.loopEnd = r.loopStart;
+	}
+	return r;
+}
+
+/** The sample area with a step's locks on track `track`'s synth sampler region (a held step's view). */
+export function lockedSample(
+	area: SampleState,
+	track: number,
+	locks: Readonly<Record<string, number>>
+): SampleState {
+	const held = area.tracks[track];
+	if (!held) return area;
+	const region = lockedRegion(held.synth.region, locks);
+	if (region === held.synth.region) return area;
+	return {
+		...area,
+		tracks: area.tracks.map((t, i) => (i === track ? { ...t, synth: { ...t.synth, region } } : t))
+	};
 }
 
 /** A sampler key's parameter (the M1 page's two layers). */
@@ -206,12 +404,13 @@ const TRACK_PARAMS: Readonly<Record<string, LockParam>> = Object.fromEntries(
 		param('playMode.portamento', {
 			label: 'portamento',
 			min: 0,
-			max: 99,
+			max: PORTAMENTO_MAX,
 			step: 1,
 			get: (t) => t.playMode.portamento,
 			set: (t, v) => {
 				t.playMode.portamento = v;
-			}
+			},
+			format: portamentoText
 		}),
 		param('playMode.bend', {
 			label: 'bend',
@@ -408,9 +607,13 @@ export function lockTarget(s: SimState, e: number): LockParam | null {
 	switch (s.pages.instrument) {
 		case 1: {
 			if (isSampler(t.engine)) {
-				// the synth sampler and the multisampler turn a sample region here (start, loop, end;
-				// shift: direction, tune, crossfade, gain), which the locks cannot hold yet: no lock
-				// rather than one of the drum key's values
+				// the synth sampler turns its sample's region here (start, loop, end; shift: direction,
+				// tune, crossfade, gain); a multisampler zone takes no lock, rather than a drum key's
+				if (t.engine === 'sampler') {
+					const region = activeRegion(s);
+					const f = REGION_FIELDS.find((r) => r.encoder === e && r.shift === s.shift);
+					return region && f ? regionLock(f, region) : null;
+				}
 				if (t.engine !== 'drum') return null;
 				const fields = s.shift
 					? (['reverse', 'pan', 'fade', 'gain'] as const)
@@ -474,6 +677,7 @@ export function turnedValue(
 	delta: number,
 	fine: boolean
 ): number {
+	if (p.turn) return p.turn(locks, delta, fine);
 	const from = locks[p.id] ?? p.get(t);
 	if (p.id.endsWith('.reverse')) return delta < 0 ? 1 : 0;
 	const by = fine ? p.fine : p.step;

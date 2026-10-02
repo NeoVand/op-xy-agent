@@ -13,6 +13,7 @@ import {
 	DUCK_METRONOME,
 	ELEMENT_SOURCES,
 	LFO_SYNC_STEPS,
+	PORTAMENTO_MAX,
 	type Envelope99,
 	type Lfo
 } from '$lib/sim/params';
@@ -189,9 +190,9 @@ export type PlayMode = (typeof PLAY_MODE_NAMES)[number];
 export const playMode = (index: number): PlayMode =>
 	PLAY_MODE_NAMES[clamp(Math.round(index), 0, PLAY_MODE_NAMES.length - 1)];
 
-/** Portamento: off at 0, then 5 ms … 2.5 s. */
+/** Portamento (0–127): off at 0, then 5 ms … 2.5 s (ours). */
 export const glideSeconds = (v: number): number =>
-	v <= 0 ? 0 : 0.005 * Math.pow(500, (clamp(v, 1, 99) - 1) / 98);
+	v <= 0 ? 0 : 0.005 * Math.pow(500, (clamp(v, 1, PORTAMENTO_MAX) - 1) / (PORTAMENTO_MAX - 1));
 
 /** A q15 lane on the 0–99 scale. */
 const q99 = (raw: number) => (raw / 32767) * 99;
@@ -338,6 +339,8 @@ export const fadeSeconds = (fade: number): number => 0.95 * unit(fade) ** 2;
 export interface RegionPlay extends Region {
 	/** The stretch that repeats, or null. */
 	readonly loop: Region | null;
+	/** The loop lasts until the key lets go, then the region plays on to its end ("until release"). */
+	readonly untilRelease: boolean;
 	/** Seconds of the loop's end crossfaded into what precedes its start (0: none). */
 	readonly crossfade: number;
 }
@@ -348,9 +351,11 @@ export const CROSSFADE_MAX = 75;
 /**
  * A synth sampler's or multisampler zone's region (manual: synth-sampler; points 0–1 of the
  * sample) in seconds of a buffer `duration` long, never shorter than 5 ms. A loop plays while it is
- * set (loop start at the end, or no length, means none; "until release" loops like "forever", its
- * tail fading with the release). Reversed, the same stretch plays backwards, so the points mirror
- * onto the reversed buffer.
+ * set (loop start at the end, or no length, means none). "forever" keeps looping through the
+ * release; "until release" loops while the key is held, then plays on past the loop to the region's
+ * end (the guide: forever "will use the looped section even upon release"; until release once looped
+ * on here too). Reversed, the same stretch plays backwards, so the points mirror onto the reversed
+ * buffer.
  */
 export function regionSeconds(region: SampleRegion, duration: number): RegionPlay {
 	const at = (v: number) => clamp(region.reverse ? 1 - v : v, 0, 1) * duration;
@@ -367,6 +372,7 @@ export function regionSeconds(region: SampleRegion, duration: number): RegionPla
 		start: from,
 		end: to,
 		loop: repeats ? loop : null,
+		untilRelease: repeats && region.loop === 'release',
 		crossfade: repeats ? share * (loop.end - loop.start) : 0
 	};
 }

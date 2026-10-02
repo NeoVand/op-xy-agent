@@ -235,6 +235,70 @@ describe('the sound engine, rendered offline', () => {
 		expect(after).toBeLessThan(locked / 2);
 	});
 
+	it("moves every note but a drum track's by the project's transpose and the sound's own", async () => {
+		const run = async (project: number, preset: number, engine: EngineId, note: number) => {
+			const s = defaultState();
+			s.areas.system.projectSettings.transpose = project;
+			s.areas.system.presetSettings[2].transpose = preset;
+			s.tracks[2] = track(engine, (t) => (t.amp.sustain = 99));
+			const { buffer } = await render(0.6, (e) => {
+				e.sync(s, 0);
+				e.noteOn({ track: 2, settings: s.tracks[2], note, velocity: 100, time: 0, duration: 0.5 });
+			});
+			return buffer;
+		};
+		// an octave up doubles the zero crossings of a plain wave
+		const plain = crossings(await run(0, 0, 'simple', 57), 0.1);
+		expect(crossings(await run(12, 0, 'simple', 57), 0.1) / plain).toBeCloseTo(2, 0);
+		expect(crossings(await run(7, 5, 'simple', 57), 0.1) / plain).toBeCloseTo(2, 0);
+		// a drum track plays the key it is given
+		const kick = measure(await run(0, 0, 'drum', 53), 0, 0.5).rms;
+		expect(measure(await run(12, 0, 'drum', 53), 0, 0.5).rms).toBeCloseTo(kick, 4);
+	});
+
+	it('sounds the same note on top of one still held, letting neither go (OS 1.0.38)', async () => {
+		const settings = track('simple', (t) => {
+			t.amp.sustain = 99;
+			t.amp.release = 97; // short: a note let go is gone within the window measured
+		});
+		const { buffer } = await render(1.2, (engine) => {
+			engine.noteOn({ track: 2, settings, note: 60, velocity: 100, time: 0, duration: 1 });
+			engine.noteOn({ track: 2, settings, note: 60, velocity: 100, time: 0.3, duration: 0.1 });
+		});
+		// the first is still held after the second has ended (it was once let go at 0.3 s)
+		expect(measure(buffer, 0.6, 0.9).rms).toBeGreaterThan(0.01);
+	});
+
+	it('holds a note longer than its pattern on as the loop comes round (OS 1.0.40)', async () => {
+		const s = defaultState();
+		// it decays to a low sustain, so a fresh attack would stand out
+		s.tracks[3] = track('simple', (t) => {
+			t.amp.attack = 0;
+			t.amp.decay = 30;
+			t.amp.sustain = 15;
+			t.amp.release = 97;
+		});
+		const p = currentPattern(s.tracks[3].sequence);
+		toggleStep(p, 0, [60]);
+		p.steps[0].notes[0].length = 32; // two passes of the 16-step pattern
+		s.tempo.metronome.on = false;
+		s.transport.playing = true;
+		const { buffer } = await render(2.6, (engine, context) => {
+			engine.sync(s);
+			new Scheduler({
+				state: () => s,
+				now: () => context.currentTime,
+				sink: engine.sink,
+				lookahead: 2.6
+			}).tick();
+		});
+		// the loop comes round at 2 s (16 sixteenths at 120 bpm): no new attack there
+		const before = measure(buffer, 1.85, 1.98).rms;
+		const after = measure(buffer, 2.02, 2.15).rms;
+		expect(before).toBeGreaterThan(0.002);
+		expect(after).toBeLessThan(before * 1.5);
+	});
+
 	it('sends to the reverb on FX II: a tail rings on after the note', async () => {
 		const tail = async (send: number) => {
 			const { buffer } = await render(1.5, (engine) => {
@@ -347,6 +411,88 @@ describe('the sound engine, rendered offline', () => {
 			r.reverse = true;
 		});
 		expect(measure(back, 0, 0.05).rms).toBeGreaterThan(measure(once, 0, 0.05).rms * 3);
+	});
+
+	it('loops until release only while the key is held, then plays on to the region end', async () => {
+		// the guide: forever "will use the looped section even upon release"; until release once
+		// looped on through the release too
+		const run = async (loop: SampleRegion['loop']) => {
+			const samples = new SampleRegistry();
+			const s = defaultState();
+			s.tracks[7] = track('sampler', (t) => (t.amp.release = 30)); // a release of about 3 s
+			const synth = s.areas.sample.tracks[7].synth;
+			synth.root = 57;
+			// 0.6 s with its loop over 0.12–0.48 s (the default points, 0.2–0.8)
+			Object.assign(synth.region, { start: 0, end: 1, loopStart: 0.2, loopEnd: 0.8, loop });
+			samples.setFile(synth.file!.id, { sampleRate: SR, channels: [tone(220, 0.6)] });
+			const { buffer } = await render(
+				1.6,
+				(engine) => {
+					engine.sync(s, 0);
+					engine.noteOn({
+						track: 7,
+						settings: s.tracks[7],
+						note: 57,
+						velocity: 127,
+						time: 0,
+						duration: 0.5
+					});
+				},
+				samples
+			);
+			return buffer;
+		};
+		const forever = await run('forever');
+		const untilRelease = await run('release');
+		// held, both loop alike
+		expect(measure(untilRelease, 0.3, 0.45).rms).toBeGreaterThan(0.05);
+		// let go at 0.5 s: forever loops on through the release, until release plays out its region
+		// (0.14 s of it was left: it ends by about 1 s) and falls silent
+		expect(measure(forever, 1.1, 1.5).rms).toBeGreaterThan(0.01);
+		expect(measure(untilRelease, 1.1, 1.5).rms).toBeLessThan(1e-4);
+		expect(measure(untilRelease, 0.55, 0.9).rms).toBeGreaterThan(0.01);
+	});
+
+	it("plays a step's locks on the synth sampler's region (OS 1.1.0)", async () => {
+		// a second of sample: silent for its first half, a tone in its second
+		const samples = new SampleRegistry();
+		const s = defaultState();
+		// release 99 is the shortest (the handle sits on the end)
+		s.tracks[7] = track(
+			'sampler',
+			(t) => (t.amp = { attack: 0, decay: 0, sustain: 99, release: 99 })
+		);
+		const synth = s.areas.sample.tracks[7].synth;
+		synth.root = 57;
+		Object.assign(synth.region, { start: 0, end: 1, loop: 'off' });
+		const wave = new Float32Array(SR);
+		wave.set(tone(220, 0.5), SR / 2);
+		samples.setFile(synth.file!.id, { sampleRate: SR, channels: [wave] });
+		const p = currentPattern(s.tracks[7].sequence);
+		toggleStep(p, 0, [57]);
+		toggleStep(p, 2, [57]);
+		setLock(p, 2, 'sample.start', 0.5);
+		s.tempo.metronome.on = false;
+		s.transport.playing = true;
+		const { buffer } = await render(
+			0.8,
+			(engine, context) => {
+				engine.sync(s);
+				new Scheduler({
+					state: () => s,
+					now: () => context.currentTime,
+					sink: engine.sink,
+					lookahead: 0.8
+				}).tick();
+			},
+			samples
+		);
+		// a sixteenth is 0.125 s: step 1 plays the silent half, step 3 starts halfway in, before
+		// any note played from the start could reach the tone
+		expect(measure(buffer, 0.02, 0.2).rms).toBeLessThan(1e-4);
+		expect(measure(buffer, 0.27, 0.36).rms).toBeGreaterThan(0.05);
+		// the track's own region is untouched
+		expect(synth.region.start).toBe(0);
 	});
 
 	it('plays the multisampler zone covering each note, from the note it was sampled on', async () => {

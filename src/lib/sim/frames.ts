@@ -29,6 +29,7 @@ import {
 	engineParams,
 	formatBpm,
 	isSampler,
+	portamentoText,
 	two,
 	type Envelope99,
 	type SimState,
@@ -188,7 +189,7 @@ function instrumentFrame(s: SimState): ScreenFrame {
 					envelope: envelopeView(t),
 					values: [
 						PLAY_MODES[clamp(p.mode, 0, 2)],
-						p.portamento === 0 ? 'off' : two(p.portamento),
+						portamentoText(p.portamento),
 						bendLabel(p.bend),
 						two(p.volume)
 					]

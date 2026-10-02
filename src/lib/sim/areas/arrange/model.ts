@@ -133,6 +133,12 @@ export function playPattern(s: SimState, t: number, index: number): void {
 	const seq = trackSequence(s, t);
 	const target = clamp(Math.round(index), 0, seq.patterns.length - 1);
 	if (target === seq.current) return;
+	// the notes a held arpeggio kept stop when its pattern changes (OS 1.1.21); a track change lets
+	// them go too (sequencer area), so only the track on the keys has any
+	const player = currentPattern(seq).player;
+	if (t === s.track && player.on && player.type === 'arpeggio' && player.arp.hold) {
+		s.areas.sequencer.sustained = [];
+	}
 	if (t < 8) {
 		const a = s.areas.arrange;
 		keepSound(s, t);

@@ -24,7 +24,7 @@ import {
 	type LaneLayer
 } from '$lib/core/opxy';
 import { FX_TYPES, type FxType } from './areas/auxiliary/state';
-import { lockTarget } from './areas/sequencer/locks';
+import { isRegionLock, lockTarget } from './areas/sequencer/locks';
 import { activeRegion } from './areas/sample/m1';
 import { NEW_PROJECT_TRACKS } from './defaults';
 import { buildFrame } from './frames';
@@ -332,7 +332,8 @@ function written(sim: OpxySim, e: number, label: string): string | undefined {
  */
 function lockReader(p: Probe, e: number): Reader | null {
 	const lock = lockTarget(p.fork.state, e);
-	if (!lock) return null;
+	// the synth sampler's region values read off each copy's own region ({@link regionReader})
+	if (!lock || isRegionLock(lock.id)) return null;
 	const param = lock.id.replace(/^key\d+\./, 'key.');
 	return {
 		label: lock.label,
@@ -608,19 +609,24 @@ function evenSteps(numbers: readonly number[]): boolean {
 
 function rangeOf(s: Sweep, fine: number | undefined): MapRange {
 	const { readings } = s;
-	const numbers = readings.map(numberOf);
+	// a word at the bottom and even numbers past it (portamento: off, then 1–127)
+	const all = readings.map(numberOf);
+	const lead = readings.length > 2 && !Number.isFinite(all[0]) ? 1 : 0;
+	const numbers = all.slice(lead);
 	const steps = numbers.slice(1).map((n, i) => n - numbers[i]);
 	const even = evenSteps(numbers);
 	const shows = showsOf(s);
-	const values = !even && readings.length <= 16 ? readings : undefined;
+	// a short list is given whole (the brain's link: off, 01, 02 …)
+	const values = (!even || lead > 0) && readings.length <= 16 ? readings : undefined;
+	const stepped = even && !values;
 	return {
 		first: readings[0],
 		last: readings[readings.length - 1],
 		detents: s.at[s.at.length - 1],
 		...(values ? { values } : {}),
-		...(even ? { step: rounded(steps[0]) } : {}),
-		...(even && fine !== undefined ? { fine } : {}),
-		...(!even && !values ? { examples: examplesOf(readings, numbers) } : {}),
+		...(stepped ? { step: rounded(steps[0]) } : {}),
+		...(stepped && fine !== undefined ? { fine } : {}),
+		...(!even && !values ? { examples: examplesOf(readings, all) } : {}),
 		...(shows ? { shows } : {})
 	};
 }

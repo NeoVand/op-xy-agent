@@ -211,6 +211,30 @@ describe('AppSound: the replica sounds while simulated', () => {
 		expect(engines[0].calls.slice(2)).toEqual(['on 2 45 prism keyboard.a3', 'off 2 keyboard.a3']);
 	});
 
+	it('plays the tracks linked to the one held, each in its own octave', async () => {
+		// the guide: the track held down controls all linked tracks (they once made no sound)
+		const { press, release, engines, settle, simulator } = setup();
+		press('keyboard.c4');
+		await settle();
+		release('keyboard.c4');
+		const before = engines[0].calls.length;
+		// T3 holds T4: T4 follows T3's keys
+		simulator.sim.input({ type: 'press', id: 'track.3' });
+		simulator.sim.input({ type: 'press', id: 'track.4' });
+		simulator.sim.input({ type: 'release', id: 'track.4' });
+		simulator.sim.input({ type: 'release', id: 'track.3' });
+		expect(simulator.sim.state.tracks[2].links).toEqual([3]);
+		press('keyboard.a3');
+		release('keyboard.a3');
+		// T3's keyboard sits an octave down and T4's an octave up in a new project
+		expect(engines[0].calls.slice(before)).toEqual([
+			'on 2 45 prism keyboard.a3',
+			'on 3 69 epiano keyboard.a3@3',
+			'off 2 keyboard.a3',
+			'off 3 keyboard.a3@3'
+		]);
+	});
+
 	it('still plays a key pressed while the engine was loading', async () => {
 		const { press, engines, settle, finishLoading } = setup({ slowLoad: true });
 		press('keyboard.e4');

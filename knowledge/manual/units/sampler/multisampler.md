@@ -11,7 +11,7 @@ summary: Up to 24 samples of one instrument, each on its own zone of the keyboar
 status: current
 firmware:
   min: '1.0.9'
-  changed_in: ['1.1.25']
+  changed_in: ['1.1.0', '1.1.25']
   guide_version: '1.1.15'
   verified_on: null
 facts:
@@ -62,6 +62,11 @@ facts:
     source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
     confidence: verified
     verified_on: '1.1.33'
+  - id: no-locks
+    text: OS 1.1.0 gave parameter locks to the drum and synth samplers and does not name the multisampler; the replica gives its zones none, which is not yet checked on a unit.
+    source: https://teenage.engineering/downloads/op-xy#1.1.0
+    confidence: derived
+    firmware_min: '1.1.0'
 procedures:
   - id: record-zones
     goal: Multisample an instrument

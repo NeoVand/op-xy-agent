@@ -521,6 +521,43 @@ describe('the navigator: sampler keys', () => {
 			/track 3 runs prism/
 		);
 	});
+
+	it('sets portamento up to 127, and 0 to off (its card reads off, then numbers)', () => {
+		const sim = boot();
+		const up = planParam(sim.state, { track: 4, param: 'portamento', value: 127 });
+		expect(up.reached).toBe(true);
+		expect(up.steps.at(-1)).toMatchObject({ keys: 'shift + turn E2', clicks: 127 });
+		for (const step of up.steps) playStep(sim, step);
+		expect(sim.state.tracks[3].playMode.portamento).toBe(127);
+		const off = planParam(sim.state, { track: 4, param: 'portamento', value: 0 });
+		expect(off.reached).toBe(true);
+		for (const step of off.steps) playStep(sim, step);
+		expect(sim.state.tracks[3].playMode.portamento).toBe(0);
+		expect(reads(sim.state, { track: 4, param: 'portamento', value: 'off' })).toBe(true);
+		expect(reads(sim.state, { track: 4, param: 'portamento', value: 0 })).toBe(true);
+	});
+
+	it('locks a synth sampler value on one step (OS 1.1.0), and no multisampler zone’s', () => {
+		const sim = boot();
+		sim.state.tracks[7].engine = 'sampler';
+		const goal = { track: 8, param: 'loop start', value: '50%', step: 3 };
+		const plan = planParam(sim.state, goal);
+		expect(plan.reached).toBe(true);
+		expect(plan.note).toMatch(/step 3 locked, the track's own value kept/);
+		expect(plan.steps.at(-1)).toMatchObject({ keys: 'step 3 + turn E2', clicks: 30 });
+		grammatical(plan);
+		for (const step of plan.steps) playStep(sim, step);
+		const steps = currentPattern(sim.state.tracks[7].sequence).steps;
+		expect(steps[2].locks).toEqual({ 'sample.loopStart': 0.5 });
+		expect(sim.state.areas.sample.tracks[7].synth.region.loopStart).toBe(0.2);
+		expect(reads(sim.state, goal)).toBe(true);
+		expect(reads(sim.state, { ...goal, step: 4 })).toBe(false);
+		sim.state.tracks[7].engine = 'multisampler';
+		expect(planParam(sim.state, goal)).toMatchObject({
+			reached: false,
+			note: expect.stringMatching(/a multisampler zone takes no parameter locks/)
+		});
+	});
 });
 
 describe('the navigator: values by the names the pages use', () => {

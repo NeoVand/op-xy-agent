@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "d8b81402",
+	"bundle_hash": "6e49ee90",
 	"stats": {
 		"units": 166,
-		"facts": 1231,
+		"facts": 1234,
 		"procedures": 207,
 		"parameters": 207,
-		"verified_items": 261,
-		"words": 46864,
+		"verified_items": 262,
+		"words": 46975,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -9520,6 +9520,14 @@
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "portamento-range",
+					"text": "Portamento reads off at 0, then plain numbers without a leading zero (2, 14, 73) up to 127, the one value on the card that goes past 99.",
+					"source": "docs/research/59-screen-profiling.md#22-envelope-editor-instrument-m2",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
 				}
 			],
 			"procedures": [
@@ -9572,7 +9580,7 @@
 					"layer": "shift",
 					"keys": "shift + turn E2",
 					"name": "portamento",
-					"range": null,
+					"range": "off, 1–127",
 					"default": null,
 					"cc": 29,
 					"cc_confidence": "community-verified",
@@ -14804,6 +14812,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "p-lock-values",
+					"text": "In the replica a held step locks what `M1` turns, start, loop start, loop end and end, and with `shift` direction, tune, loop crossfade and gain, but not the loop type, which is a click; the changelog does not list them, and they are not yet checked on a unit.",
+					"source": "https://teenage.engineering/downloads/op-xy#1.1.0",
+					"firmware_min": "1.1.0",
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
 					"id": "screen",
 					"text": "The page shows an overview strip of the sample on top (base layer only), the left and right waveforms, and start, loop and end markers.",
 					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
@@ -15829,6 +15845,7 @@
 			"firmware": {
 				"min": "1.0.9",
 				"changed_in": [
+					"1.1.0",
 					"1.1.25"
 				],
 				"guide_version": "1.1.15",
@@ -15938,6 +15955,14 @@
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
+				},
+				{
+					"id": "no-locks",
+					"text": "OS 1.1.0 gave parameter locks to the drum and synth samplers and does not name the multisampler; the replica gives its zones none, which is not yet checked on a unit.",
+					"source": "https://teenage.engineering/downloads/op-xy#1.1.0",
+					"firmware_min": "1.1.0",
+					"verified_on": null,
+					"confidence": "derived"
 				}
 			],
 			"procedures": [
@@ -15997,6 +16022,10 @@
 				{
 					"url": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
 					"kind": "research"
+				},
+				{
+					"url": "https://teenage.engineering/downloads/op-xy#1.1.0",
+					"kind": "changelog"
 				}
 			],
 			"official_url": "https://teenage.engineering/guides/op-xy/sample#multisampler",

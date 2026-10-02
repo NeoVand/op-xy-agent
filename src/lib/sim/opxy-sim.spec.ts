@@ -68,9 +68,32 @@ describe('OpxySim: navigation', () => {
 		sim.press('key.m2');
 		expect(page(sim, 'envelope').selected).toBe('amp');
 		sim.input({ type: 'press', id: 'key.shift' });
-		expect(page(sim, 'playmode').values).toEqual(['mono', '00', '2 semitones', '75']);
+		// T3's preset glides the least bit: a plain 0, not off (Q4)
+		expect(page(sim, 'playmode').values).toEqual(['mono', '0', '2 semitones', '75']);
 		sim.input({ type: 'release', id: 'key.shift' });
 		expect(sim.frame.page).toBe('envelope');
+	});
+
+	it('turns portamento from off through plain numbers up to 127 (camera, OS 1.1.33)', () => {
+		const sim = new OpxySim();
+		sim.press('track.4'); // a new project's keys: no glide
+		sim.press('key.m2');
+		sim.input({ type: 'press', id: 'key.shift' });
+		const portamento = () => page(sim, 'playmode').values[1];
+		expect(portamento()).toBe('off');
+		sim.turn(2, 2);
+		expect(portamento()).toBe('2');
+		sim.turn(2, 200);
+		expect(portamento()).toBe('127');
+		expect(sim.state.tracks[3].playMode.portamento).toBe(127);
+		sim.turn(2, -127);
+		expect(portamento()).toBe('off');
+		sim.input({ type: 'release', id: 'key.shift' });
+		// a new project's T7 stores 12032: 47 on the card
+		sim.press('track.7');
+		sim.input({ type: 'press', id: 'key.shift' });
+		expect(portamento()).toBe('47');
+		sim.input({ type: 'release', id: 'key.shift' });
 	});
 
 	it('shows the filter on M3, the sends with shift, the LFO on M4', () => {

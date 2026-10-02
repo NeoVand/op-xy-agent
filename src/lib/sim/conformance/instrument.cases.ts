@@ -948,9 +948,9 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			const d = await start();
 			await d.click('track.3');
 			await d.click('key.m2');
-			// (its preset glides the least bit: portamento shows 00, not off)
+			// (its preset glides the least bit: portamento shows 0, not off; Q4 asks the unit)
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('play mode mono, portamento 00, bend 2 semitones, volume 75');
+				expect(d.screen()).toBe('play mode mono, portamento 0, bend 2 semitones, volume 75');
 			});
 		});
 

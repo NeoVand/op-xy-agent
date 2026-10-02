@@ -1598,14 +1598,7 @@
 						"first": "none",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 13,
@@ -1650,7 +1643,7 @@
 				}
 			],
 			"screen": "amp envelope: attack 00, decay 31, sustain 38, release 79",
-			"shiftScreen": "play mode mono, portamento 00, bend 2 semitones, volume 75",
+			"shiftScreen": "play mode mono, portamento 0, bend 2 semitones, volume 75",
 			"altScreen": "filter envelope: attack 00, decay 63, sustain 67, release 28",
 			"units": [
 				"instrument.envelopes",
@@ -1772,19 +1765,12 @@
 					"encoder": 2,
 					"label": "portamento",
 					"param": "playMode.portamento",
-					"value": "00",
+					"value": "0",
 					"range": {
-						"first": "00",
-						"last": "99",
-						"detents": 99,
-						"step": 1,
-						"shows": [
-							{
-								"from": "00",
-								"to": "00",
-								"shows": "off"
-							}
-						]
+						"first": "off",
+						"last": "127",
+						"detents": 127,
+						"step": 1
 					},
 					"midi": {
 						"cc": 29,
@@ -3156,14 +3142,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					}
 				},
 				{
@@ -3177,14 +3156,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					}
 				},
 				{
@@ -3198,14 +3170,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					}
 				},
 				{
@@ -3219,14 +3184,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					}
 				}
 			]
@@ -3331,14 +3289,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					}
 				},
 				{
@@ -3352,14 +3303,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					}
 				},
 				{
@@ -3373,14 +3317,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					}
 				},
 				{
@@ -3394,14 +3331,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					}
 				}
 			]
@@ -4093,14 +4023,7 @@
 						"first": "none",
 						"last": "128",
 						"detents": 128,
-						"examples": [
-							"18",
-							"37",
-							"55",
-							"73",
-							"91",
-							"110"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 13,
@@ -4120,14 +4043,7 @@
 						"first": "none",
 						"last": "128",
 						"detents": 128,
-						"examples": [
-							"18",
-							"37",
-							"55",
-							"73",
-							"91",
-							"110"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 14,
@@ -4255,14 +4171,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 28,
@@ -4282,14 +4191,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 29,
@@ -4309,14 +4211,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 30,
@@ -4336,14 +4231,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 31,
@@ -4471,14 +4359,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 36,
@@ -4498,14 +4379,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 37,
@@ -4525,14 +4399,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 38,
@@ -4552,14 +4419,7 @@
 						"first": "off",
 						"last": "127",
 						"detents": 128,
-						"examples": [
-							"17",
-							"36",
-							"54",
-							"72",
-							"90",
-							"109"
-						]
+						"step": 1
 					},
 					"midi": {
 						"cc": 39,

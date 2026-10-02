@@ -40,6 +40,13 @@ export type StoredSound = Pick<
 /** An unsigned lane (0–32767) on our 0–99 scale, unrounded. */
 export const fromQ15 = (raw: number): number => (raw / MAX) * 99;
 
+/**
+ * Portamento's scale: the M2 shift card reads it off at 0, then plain numbers up to 127, the one
+ * value of the card past 99 (camera, OS 1.1.33: b1-2797…2803 read 2, 14, 26, 73, 127, 55), as
+ * CC29 runs 0–127.
+ */
+export const PORTAMENTO_MAX = 127;
+
 /** A signed lane (16384 = 0) on −99…99. */
 export const fromSignedQ15 = (raw: number): number => ((raw - 16384) / 16383) * 99;
 
@@ -145,7 +152,7 @@ export function soundOf(stored: StoredSound, base: TrackState, synced: number): 
 		filterEnv: envelopeOf(stored.filterEnv),
 		playMode: {
 			mode: PLAY_MODE_INDEX[stored.playMode],
-			portamento: fromQ15(stored.portamento.amount),
+			portamento: (stored.portamento.amount / MAX) * PORTAMENTO_MAX,
 			bend: BEND_RANGES[stepOf(stored.bend, BEND_RANGES.length)],
 			volume: fromQ15(stored.volume)
 		},

@@ -31,11 +31,13 @@ import {
 	LFO_SYNC_STEPS,
 	LFO_TYPES,
 	MULTI_OUT_MODES,
+	PORTAMENTO_MAX,
 	TEMPO_RANGE,
 	clamp,
 	defaultState,
 	detent,
 	isSampler,
+	portamentoShown,
 	type Bank,
 	type Overlay,
 	type PageNumber,
@@ -582,7 +584,8 @@ export class OpxySim {
 				if (s.shift) {
 					const p = t.playMode;
 					if (e === 0) p.mode = clamp(p.mode + delta, 0, 2);
-					else if (e === 1) p.portamento = step(p.portamento, 0, 99);
+					else if (e === 1)
+						p.portamento = clamp(portamentoShown(p.portamento) + delta, 0, PORTAMENTO_MAX);
 					else if (e === 2) p.bend = nextBendRange(p.bend, delta);
 					else p.volume = step(p.volume, 0, 99);
 					return;

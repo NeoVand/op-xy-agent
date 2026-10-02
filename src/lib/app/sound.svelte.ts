@@ -766,13 +766,33 @@ export class AppSound {
 		this.#live.set(key, event);
 		this.#unlock();
 		this.#send(event);
+		if (!activeTrack(state)) return;
+		// the track held to link others plays them too (manual: basics/linked-tracks: "the track
+		// you are holding down will then control all linked tracks"; they were stored and lit, but
+		// never sounded). Each plays in its own keyboard octave (ours, until note 64's D16), and a
+		// player's notes stay on the primary (OS 1.0.15)
+		for (const t of state.tracks[state.track]?.links ?? []) {
+			const linked = state.tracks[t];
+			if (!linked || linked.engine === 'midi') continue;
+			const octave = seq(state).octaves[octaveKey('instrument', t)] ?? 0;
+			const at: LiveEvent = {
+				kind: 'on',
+				key: `${key}@${t}`,
+				track: t,
+				note: KEYBOARD_BASE + index + (linked.engine === 'drum' ? 0 : 12 * octave)
+			};
+			this.#live.set(at.key, at);
+			this.#send(at);
+		}
 	}
 
 	#noteOff(key: string): void {
-		const on = this.#live.get(key);
-		if (!on) return;
-		this.#live.delete(key);
-		this.#send({ ...on, kind: 'off' });
+		// the key and what it played on linked tracks
+		for (const [id, on] of this.#live) {
+			if (id !== key && !id.startsWith(`${key}@`)) continue;
+			this.#live.delete(id);
+			this.#send({ ...on, kind: 'off' });
+		}
 	}
 
 	/** Plays a live event now, or keeps it until the engine has loaded. */

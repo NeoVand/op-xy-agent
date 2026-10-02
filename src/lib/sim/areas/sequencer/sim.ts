@@ -21,7 +21,7 @@ import {
 	selectStep
 } from './components';
 import type { LockFrame, PopupFrame } from './frames';
-import { lockLabel, lockParam, lockedTrack } from './locks';
+import { lockLabel, lockParam, lockedSample, lockedTrack } from './locks';
 import {
 	CLEAR_MS,
 	POPUP_FADE_MS,
@@ -85,7 +85,9 @@ function lockFrame(s: SimState): LockFrame {
 	const view: SimState = {
 		...s,
 		held: s.held.filter((id) => !id.startsWith('step.')),
-		tracks: s.tracks.map((t, i) => (i === s.track ? lockedTrack(t, step.locks) : t))
+		tracks: s.tracks.map((t, i) => (i === s.track ? lockedTrack(t, step.locks) : t)),
+		// the synth sampler's region is the sample area's
+		areas: { ...s.areas, sample: lockedSample(s.areas.sample, s.track, step.locks) }
 	};
 	const last = st.lastLock?.step === index ? lockParam(st.lastLock.id) : null;
 	return {
@@ -212,8 +214,8 @@ function claimPress(ctx: AreaContext, id: string): boolean {
 		return false;
 	}
 	// another track: a copied step stays with the one it came from, and so do a player's kept
-	// notes (ours; OS 1.1.21 also lets them go when the pattern changes); steps held belong to the
-	// track they were pressed on
+	// notes (ours; a held arpeggio's also go when its pattern changes, OS 1.1.21: arrange's
+	// playPattern); steps held belong to the track they were pressed on
 	if (/^track\.[1-8]$/.test(id)) {
 		st.clipboard = null;
 		st.sustained = [];

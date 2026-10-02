@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultRegion, type Region } from '$lib/sim/areas/sample/state';
 import { DUCK_METRONOME, defaultTrack, type Lfo } from '$lib/sim/params';
+import { loopPosition } from './synths';
 import {
 	DUCK_ON_BEAT,
 	DUCK_ON_NOTHING,
@@ -131,7 +132,9 @@ describe('mapping: envelopes, filter and voice settings', () => {
 		expect([0, 1, 2, 7].map(playMode)).toEqual(['poly', 'mono', 'legato', 'legato']);
 		expect(glideSeconds(0)).toBe(0);
 		expect(glideSeconds(1)).toBeCloseTo(0.005);
-		expect(glideSeconds(99)).toBeCloseTo(2.5);
+		// portamento runs to 127, as its card reads (camera, OS 1.1.33)
+		expect(glideSeconds(127)).toBeCloseTo(2.5);
+		expect(glideSeconds(99)).toBeLessThan(1);
 		expect(bendCents(1, 2)).toBe(200);
 		expect(bendCents(-0.5, 12)).toBe(-600);
 		expect(bendCents(1, 0)).toBe(0);
@@ -316,6 +319,18 @@ describe("mapping: the synth sampler's region", () => {
 		expect(regionSeconds(region({ loopStart: 1, loopEnd: 1 }), 2).loop).toBeNull();
 		expect(regionSeconds(region({ loopStart: 0.5, loopEnd: 0.5 }), 2).loop).toBeNull();
 		expect(regionSeconds(region({ loop: 'release' }), 2).loop).not.toBeNull();
+		// only until release lets the loop go when the key does
+		expect(regionSeconds(region({ loop: 'release' }), 2).untilRelease).toBe(true);
+		expect(regionSeconds(region({ loop: 'forever' }), 2).untilRelease).toBe(false);
+	});
+
+	it('finds where a looping region stands at a time, wrapping inside its loop', () => {
+		const play = { region: { start: 0, end: 2 }, loop: { start: 0.4, end: 1.6 }, rate: 1 };
+		expect(loopPosition(play, 0, 1)).toBeCloseTo(1);
+		// 0.4 s past the loop's end: 0.4 s into the loop again
+		expect(loopPosition(play, 0, 2)).toBeCloseTo(0.8);
+		expect(loopPosition({ ...play, rate: 2 }, 0, 1)).toBeCloseTo(0.8);
+		expect(loopPosition(play, 1, 0.5)).toBe(0);
 	});
 
 	it('crossfades that share of the loop, up to 75 % (research 60 §5), and nothing without a loop', () => {
