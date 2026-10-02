@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { createVirtualOpxy } from '$lib/app/virtual';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { createAnthropicClient } from './client';
-import { Conductor } from './conductor.svelte';
+import { askedTempo, Conductor } from './conductor.svelte';
 import { createNodeLabHost } from './lab/node';
 import { createUnitSource } from './manual-index';
 import { createMemoryStore } from './memory';
@@ -458,6 +458,36 @@ describe('the conductor grounds its answer', () => {
 		expect(list(3)).toMatch(
 			/no longer so, back as at the user’s message \(an earlier list gave it\): tempo 120 → 100 bpm/
 		);
+	});
+
+	it('says when the tempo is not the one the user asked for', async () => {
+		expect(askedTempo('make a beat at 100 bpm')).toBe(100);
+		expect(askedTempo('100 bpm, then 120 bpm')).toBeNull();
+		expect(askedTempo('make a beat')).toBeNull();
+		const use = (id: string, name: string, input: unknown): ScriptedTurn => ({
+			content: [{ type: 'tool_use', id, name, input }],
+			stop_reason: 'tool_use'
+		});
+		const api = scriptedApi([
+			use('toolu_1', 'write_pattern', { track: 3, notes: [{ step: 1, note: 45 }] }),
+			use('toolu_2', 'set_tempo', { bpm: 100 }),
+			answer('Done.')
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim: new OpxySim({ now: () => 0 }) }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('a bass at 100 bpm');
+		const list = (i: number) => JSON.stringify(api.messageRequests[i].body.messages.at(-1));
+		expect(list(1)).toMatch(/asks for 100 bpm; the tempo is 120/);
+		expect(list(2)).not.toMatch(/asks for 100 bpm/);
 	});
 
 	it('says a track is back on its pattern when a switch is undone', async () => {

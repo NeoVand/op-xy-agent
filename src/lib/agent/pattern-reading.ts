@@ -6,7 +6,7 @@
  * it meant Gm7) shows by its name.
  */
 import { estimateKey, keySpelling, respellChord } from '$lib/core/listen/harmony';
-import { chordName } from '$lib/core/music/harmony';
+import { chordFromSymbol, chordName } from '$lib/core/music/harmony';
 import type { VirtualPattern } from './virtual-opxy';
 
 /** What a pitched pattern plays. */
@@ -148,7 +148,9 @@ export function readPattern(
 	/** The key the writer means: spelled in, and named, instead of guessed. */
 	meant: MeantKey | null = null,
 	/** Note names with a sharp or flat as the writer gave them ("G#"), to say how they read. */
-	written: readonly string[] = []
+	written: readonly string[] = [],
+	/** Chords given by name, by step ("Em7" on 17): read by that name when the notes are its. */
+	named: ReadonlyMap<number, string> = new Map()
 ): PatternReading | null {
 	if (p.notes.length === 0) return null;
 	// the key from how long each pitch class sounds, in this part and those with it
@@ -194,6 +196,35 @@ export function readPattern(
 		if (notes.length === 0) return sounding[step] ? '–' : '·';
 		if (notes.length === 1) return noteName(notes[0]);
 		const tones = [...new Set(notes.map((n) => names[n % 12]))];
+		// a chord given by its name reads by that name when its notes are the name's (an Em7 voiced
+		// over its G read G6, and an agent passed the other name on)
+		const symbol = named.get(step);
+		const meantChord = symbol && tones.length >= 3 ? chordFromSymbol(symbol) : null;
+		if (symbol && meantChord) {
+			const pcs = new Set(notes.map((n) => n % 12));
+			const want = new Set([
+				...meantChord.tones.map((t) => (meantChord.root + t) % 12),
+				...(meantChord.bass !== null ? [meantChord.bass] : [])
+			]);
+			if (pcs.size === want.size && [...pcs].every((pc) => want.has(pc))) {
+				const lowest = notes[0] % 12;
+				const plain = respellChord(ascii(symbol.split('/')[0]), names);
+				const shown = lowest === meantChord.root ? plain : `${plain}/${names[lowest]}`;
+				const bass = under(step, notes[0]);
+				const with_ = bass ? ` over T${bass.track}'s ${names[bass.note % 12]}` : '';
+				if (shown !== lastChord) {
+					chords.push(`step ${step}: ${shown} (${tones.join(' ')}${with_})`);
+					heard.push({
+						plain,
+						name: shown,
+						root: meantChord.root,
+						suffix: plain.slice(names[meantChord.root].length)
+					});
+				}
+				lastChord = shown;
+				return shown;
+			}
+		}
 		// two notes are an interval, not a chord ("C5" would read as a note)
 		const alone = tones.length >= 3 ? chordName(notes) : null;
 		// named over the bass another track plays under it, as a musician hears it (a rootless Am9
@@ -253,7 +284,8 @@ export function readPattern(
 				.map((n) => n.note)
 				.sort((x, y) => x - y);
 			const tones = [...new Set(notes.map((n) => names[n % 12]))];
-			const chord = tones.length >= 3 ? chordName(notes) : null;
+			// three or four notes outline a chord; more are a run (a melody read Am7(add11), no help)
+			const chord = tones.length >= 3 && tones.length <= 4 ? chordName(notes) : null;
 			if (chord) {
 				outlines.push(
 					`bar ${b + 1}: ${respellChord(ascii(chord.name), names)} (${tones.join(' ')})`
@@ -299,10 +331,21 @@ export const SOFT_VELOCITY = 75;
  * against each other, a line of soft hats came back as x, and an agent thought they played at full
  * velocity; an o for every soft hit hid ghost notes made softer).
  */
-export function hitMark(velocity: number): string {
+export function hitMark(
+	velocity: number,
+	/** The velocity a plain x was written at (a write's own), which reads back as x. */
+	plain?: number
+): string {
+	if (velocity === plain && velocity < ACCENT_VELOCITY && velocity > SOFT_VELOCITY) return 'x';
 	if (velocity >= ACCENT_VELOCITY) return 'X';
 	if (velocity <= SOFT_VELOCITY) {
 		return String(Math.min(5, Math.max(1, Math.round((velocity * 9) / 127))));
 	}
-	return 'x';
+	// a loud digit's own velocity (6 = 85, 7 = 99, 8 = 113) reads back as that digit: a graded
+	// build written "3456" came back "345x" and read as a flat hit, twice
+	const digit = LOUD_DIGITS.indexOf(velocity);
+	return digit >= 0 ? String(digit + 6) : 'x';
 }
+
+/** The velocities the loud digits 6, 7 and 8 write. */
+const LOUD_DIGITS = [6, 7, 8].map((d) => Math.round((d * 127) / 9));

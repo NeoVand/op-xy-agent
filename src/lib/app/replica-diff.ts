@@ -310,9 +310,10 @@ export function replicaChangeList(
 		for (let k = 0; k < Math.max(keysWere.length, keysNow.length); k++) {
 			const a = keysWere[k]?.name ?? null;
 			const b = keysNow[k]?.name ?? null;
-			if (a === b) continue;
+			if ((keysWere[k]?.id ?? null) === (keysNow[k]?.id ?? null)) continue;
 			const name = (file: string | null) => (file ? soundName(file) : 'empty');
-			swapped.push(`${name(a)} → ${name(b)}`);
+			// the same name on a new file: the sound remade (a shorter snare)
+			swapped.push(a === b ? `${name(b)} remade` : `${name(a)} → ${name(b)}`);
 		}
 		if (swapped.length > 0) {
 			add(

@@ -309,6 +309,37 @@ describe('a scene’s own mix', () => {
 		expect(sim.state.areas.arrange.scenes[1]?.mix[2].muted).toBe(true);
 	});
 
+	it('finds a made kit’s sounds by what they are: "kick 1" for "808 kick"', async () => {
+		const { virtual, run } = setup();
+		const audio = { sampleRate: 44100, channels: [new Float32Array(100)] };
+		// a whole made kit, as make_kit puts one on a track: every key named by its style
+		const kinds = ['kick', 'kick', 'snare', 'snare', 'rim', 'clap', 'tamb', 'shaker'];
+		const hats = ['closed hat', 'closed hat', 'open hat', 'clave', 'low tom', 'ride'];
+		const rest = ['mid tom', 'crash', 'high tom', 'triangle', 'low conga', 'high conga'];
+		const last = ['cowbell', 'guiro', 'metal', 'chi'];
+		virtual.loadKit(1, {
+			name: '808 kit',
+			sounds: [...kinds, ...hats, ...rest, ...last].map((kind, i) => ({
+				key: 53 + i,
+				name: `808 ${kind}`,
+				audio
+			}))
+		});
+		const result = json(
+			await run(writePatternTool, {
+				track: 1,
+				grid: {
+					'kick 1': 'x... x... x... x...',
+					snare: '.... x... .... x...',
+					'closed hat 2': 'x.x. x.x. x.x. x.x.'
+				}
+			})
+		);
+		expect(result.written.grid['808 kick']).toBe('x... x... x... x...');
+		expect(result.written.grid['808 snare']).toBe('.... x... .... x...');
+		expect(result.written.grid['808 closed hat']).toBe('x.x. x.x. x.x. x.x.');
+	});
+
 	it('says when the whole closed hat line falls under the open hats', async () => {
 		const { run } = setup();
 		const result = json(
@@ -325,15 +356,18 @@ describe('a scene’s own mix', () => {
 		expect(result.note).toMatch(/The closed hat line is left out entirely/);
 	});
 
-	it('says loud digits read back as x, the hits as written', async () => {
+	it('reads loud digits back as written, a 9 as X', async () => {
 		const { run } = setup();
 		const result = json(
-			await run(writePatternTool, { track: 1, grid: { snare: '.... .... 3456 ....' } })
+			await run(writePatternTool, { track: 1, grid: { snare: '.... .... 3456 7899' } })
 		);
-		expect(result.written.grid['snare 1']).toBe('.... .... 345x ....');
-		expect(result.note).toMatch(
-			/Digit 6 \(velocity 85\) reads back as x: the hits play as written/
+		expect(result.written.grid['snare 1']).toBe('.... .... 3456 78XX');
+		expect(result.note).toMatch(/Digit 9 \(velocity 127\) reads back as X/);
+		// a write at velocity 85 reads its plain hits as x, though 85 is a 6
+		const plain = json(
+			await run(writePatternTool, { track: 1, velocity: 85, grid: { kick: 'x... x... 6... ....' } })
 		);
+		expect(plain.written.grid['kick 1']).toBe('x... x... x... ....');
 	});
 
 	it('says a track rests in a scene on its empty first pattern, when it plays in another', async () => {
@@ -904,6 +938,22 @@ describe('write_arrangement', () => {
 });
 
 describe('write_pattern, short', () => {
+	it('reads chords given by name by those names, inverted where voiced so', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 7,
+				key: 'C major',
+				chords: '1:Fmaj9:16:60 17:Em7:16:60 33:Dm9:16:60 49:Cmaj9:16:60'
+			})
+		);
+		const chords = result.written.reading.chords.join(' | ');
+		// the Em7 voiced over its G is Em7/G, not G6
+		expect(chords).toMatch(/step 17: Em7(\/G)? \(/);
+		expect(chords).not.toMatch(/G6/);
+		expect(result.written.reading.progression).toMatch(/^Fmaj9 Em7 Dm9 Cmaj9: /);
+	});
+
 	it('says how the reading spells sharps given in a flat key', async () => {
 		const { run } = setup();
 		const result = json(

@@ -138,6 +138,19 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   (cutoff, attack…) and its destination is described; plan_steps' show says it sets and stays
   (how-to questions take a demo or guide); make_kit says voices alone remake only their keys; the
   grid's description says a closed hat under an open one is left out.
+- **Probe round thirteen (2026-10-02), 16 scenarios (`probe-scenarios-13.json`: a fill every
+  fourth bar, swing on the chorus alone, a wobbling pad, a snappier snare, a tempo lesson followed
+  by hand, a change of mind, a remembered dislike of reverb, "will it sound the same", "track 3
+  louder", 3 against 4, arpeggiated chords, MIDI for Ableton, a long spec in one message, a kit
+  layout question, a generative melody, a kick and bass clash):** the chorus swung through its
+  pattern's groove, the lesson worked end to end, the reverb taste was kept. Fixes: grid names find
+  a made kit's sounds by what they are ("kick 1" → "808 kick"); a remade voice keeps its key's name
+  on a file of its own, and kit changes are compared by file; digits 6–8 read back as written (a
+  write's own velocity as x); chords given by name read back by those names (Em7/G, not G6);
+  outlines only for three- or four-note bars; the grounding says when the tempo is not the one the
+  user's message names; `.replace("•", ".")` in a JSON input is worked out; the LFO page reading
+  names its parameter; the prompt says not to mention not listening; the skill arpeggiates with the
+  player and lays out a fill every fourth bar.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

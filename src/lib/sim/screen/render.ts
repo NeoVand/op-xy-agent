@@ -207,6 +207,8 @@ export function describeFrame(frame: ScreenFrame): string {
 				// takes it: a bare 32 was read as the free dial's), else the free dial (drawn, on its lane)
 				`speed ${frame.speed.synced ? `sync ${frame.speed.label}` : `free ${Math.round(frame.speed.position * 99)}`}, ` +
 				`amount ${Math.round(frame.amount)}, destination ${frame.destination.label}` +
+				// the fourth card names what it moves there (an agent could not confirm "cutoff")
+				(frame.fourth && frame.type !== 'element' ? `, parameter ${frame.fourth}` : '') +
 				(frame.type === 'random' ? envelopeText(frame.envelope) : '')
 			);
 		case 'mix': {

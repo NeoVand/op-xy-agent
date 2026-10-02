@@ -1,0 +1,147 @@
+[
+	{
+		"name": "fill-every-fourth",
+		"about": "Re-check: a copied pattern with a fill, used every fourth time through.",
+		"steps": [
+			{
+				"say": "make a 1 bar rock beat, then make a copy with a fill and play the fill every 4th bar"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-the-chorus",
+		"about": "Re-check: one part of a song swung through its own pattern's groove.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus, 4 bars each, drums and bass" },
+			{ "say": "swing only the chorus drums" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "wobbly-pad",
+		"about": "Re-check: a value LFO on the filter cutoff, by name.",
+		"steps": [
+			{ "say": "put a long pad chord on track 7 and make its filter wobble slowly" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snappier-snare",
+		"about": "Re-check: one voice of a generated kit remade alone.",
+		"steps": [
+			{ "say": "make a beat with an 808 style kit" },
+			{ "say": "make the snare snappier and shorter, leave the rest" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tempo-lesson",
+		"about": "A walkthrough followed key by key, then checked.",
+		"steps": [
+			{ "say": "teach me how to set the tempo to 100 myself, light up the keys for me" },
+			{ "follow": 6, "detents": 30 },
+			{ "say": "did I get it?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "change-of-mind",
+		"about": "The user changes the request after the first build.",
+		"steps": [
+			{ "say": "make a chill beat" },
+			{ "say": "actually no, I meant drum and bass. faster and with a rolling bass" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "no-reverb-taste",
+		"about": "A taste kept in memory and honoured later.",
+		"steps": [
+			{ "say": "remember that I hate reverb on everything" },
+			{ "say": "make me a dreamy pad on track 7" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "same-on-device",
+		"about": "Honesty about the replica's stand-in sounds.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "will this sound exactly the same on my real op-xy?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "track-louder",
+		"about": "An ambiguous 'louder': the mixer or the notes.",
+		"steps": [
+			{ "say": "make a beat with a bass and chords" },
+			{ "say": "make track 3 louder" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "polyrhythm",
+		"about": "Three against four, by pattern lengths.",
+		"steps": [
+			{
+				"say": "make a 3 against 4 polyrhythm: a percussion part in threes over a straight four on the floor"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-the-chords",
+		"about": "The arpeggiator over written chords.",
+		"steps": [
+			{ "say": "put Dm Bb F C on track 4, one chord a bar" },
+			{ "say": "now arpeggiate them, sixteenths going up" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "midi-for-ableton",
+		"about": "The app's MIDI download, asked for a DAW.",
+		"steps": [
+			{ "say": "make a short song with two parts" },
+			{ "say": "I want to finish this in Ableton. how do I get it there as MIDI?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "everything-spec",
+		"about": "A long spec in one message.",
+		"steps": [
+			{
+				"say": "A minor, 100 bpm, three parts of 4 bars: intro with drums and pad only, verse adds the bass, chorus adds a lead and is louder. loop it."
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "which-key-kick",
+		"about": "A question about the kit layout.",
+		"steps": [
+			{ "say": "which key on track 1 is the kick and which is the snare?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "generative-melody",
+		"about": "A melody that changes each time round, by step components.",
+		"steps": [
+			{ "say": "make a melody on track 5 that changes a little every time it loops" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "kick-bass-clash",
+		"about": "A mix problem to judge and fix.",
+		"steps": [
+			{ "say": "make a techno beat with a bass" },
+			{ "say": "the kick and the bass are fighting, fix it" },
+			{ "why": true }
+		]
+	}
+]

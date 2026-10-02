@@ -85,11 +85,17 @@ export const makeKitTool = defineTool({
 		}
 		const byKey = new Map<number, SampleInput>();
 		for (const sample of style ? generateKit(style) : []) byKey.set(sample.key as number, sample);
+		// voices alone remake keys of the kit a track has: each keeps the name its key had when it is
+		// the same kind of sound ("808 snare" stays "808 snare"), so grids that name it still find it
+		// (an agent was unsure whether its pattern followed a snare renamed "snare")
+		const had = !style && track && virtual ? (virtual.readSound(track).kit ?? {}) : {};
 		for (const [i, v] of voices.entries()) {
 			// the voice travels with its sound, so the preset maker's knobs can turn it
 			const { key, ...rest } = v;
 			const voice = { ...rest, seed: i + 1 };
-			byKey.set(key, { name: v.type, audio: renderVoice(voice), key, voice });
+			const old = had[noteName(key)];
+			const name = old && old.toLowerCase().includes(v.type) ? old : v.type;
+			byKey.set(key, { name, audio: renderVoice(voice), key, voice });
 		}
 		const samples = [...byKey.values()].sort((a, b) => (a.key as number) - (b.key as number));
 		inbox?.put({ name, samples });
@@ -140,6 +146,10 @@ export const makeKitTool = defineTool({
 });
 
 export const PRESET_TOOLS = [makeKitTool] as const;
+
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+/** A MIDI note as the kit lists keys: 55 is "G3". */
+const noteName = (note: number) => `${NOTE_NAMES[note % 12]}${Math.floor(note / 12) - 1}`;
 
 /** The user's kit from the preset maker, onto a replica track. */
 function fromPresetMaker(

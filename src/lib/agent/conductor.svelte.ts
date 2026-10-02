@@ -242,6 +242,14 @@ function playingNow(virtual: VirtualOpxy): string {
 	}
 }
 
+/** The one tempo a message names in bpm ("at 100 bpm"), or null for none or several. */
+export function askedTempo(text: string): number | null {
+	const named = [...text.matchAll(/\b(\d{2,3}(?:\.\d)?)\s*bpm\b/gi)]
+		.map((m) => Number(m[1]))
+		.filter((n) => n >= 30 && n <= 300);
+	return named.length > 0 && named.every((n) => n === named[0]) ? named[0] : null;
+}
+
 /**
  * An earlier change line that no longer holds, as what holds now where that reads plainer: "T3
  * plays pattern 1 → 2" gone is T3 on pattern 1 again (an agent misread the bare line after it had
@@ -337,6 +345,8 @@ export class Conductor {
 	/** The replica when the agent last finished: what the user changed since is theirs to tell. */
 	#lastSeen: VirtualCheckpoint | null = null;
 	#reported = '';
+	/** What the user's message says, for checks against it (a tempo it names). */
+	#asked = '';
 	/** The change lines already given in this answer's earlier lists. */
 	#reportedLines: readonly string[] = [];
 	/** Each turn's replica before and after it, for its take-back (this page session only). */
@@ -512,6 +522,7 @@ export class Conductor {
 		this.#reported = '';
 		this.#reportedLines = [];
 		const context = await this.#turnContext(trimmed, attachments);
+		this.#asked = trimmed;
 		this.#messages.push({ role: 'user', content: userContent(trimmed, attachments) });
 		for (const a of attachments) if (a.midi) this.#files.set(a.view.name, a.midi);
 		if (options.via === 'voice') this.#pendingNotes.push(VOICE_NOTE);
@@ -1078,7 +1089,15 @@ export class Conductor {
 			(shaped || parts >= 2) && !this.#heardSinceMessage()
 				? ' Not heard in this answer: describe what you wrote or set, not how it sounds (the balance, warmth, the feel), unless you listen first (listen, or lab.listen in run_lab); if you do not, leave listening unmentioned.'
 				: '';
-		const now = `Now: ${playingNow(virtual)}${walk ? ` ${walk}` : ''}${unheard}`;
+		// a tempo the user named that the replica is not at (an agent built a song "at 100 bpm" at
+		// 120 and noticed only in its last line)
+		const asked = askedTempo(this.#asked);
+		const bpm = virtual.status().bpm;
+		const tempo =
+			asked !== null && Math.abs(bpm - asked) >= 0.5
+				? ` The user's message asks for ${asked} bpm; the tempo is ${bpm}.`
+				: '';
+		const now = `Now: ${playingNow(virtual)}${walk ? ` ${walk}` : ''}${tempo}${unheard}`;
 		const report = [...marked, now].join('\n');
 		if (report === this.#reported) return [];
 		this.#reported = report;

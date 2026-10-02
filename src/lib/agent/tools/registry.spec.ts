@@ -141,6 +141,12 @@ describe('ToolRegistry', () => {
 			ok: true,
 			input: { grid: { 'closed hat': '7.3.5.4. 7.3.5.4. ', kick: 'x... x...' } }
 		});
+		// a replace of one text by another works out, everywhere
+		const swapped = registry.parse('write_pattern', {
+			track: 1,
+			grid: '{"closed hat": "x.•. x.•.".replace("•",".")}'
+		});
+		expect(swapped).toMatchObject({ ok: true, input: { grid: { 'closed hat': 'x... x...' } } });
 		// text that is no JSON still says what the field takes
 		const bad = registry.parse('write_pattern', { track: 1, grid: '{"kick": "x..."' });
 		expect(bad.ok).toBe(false);

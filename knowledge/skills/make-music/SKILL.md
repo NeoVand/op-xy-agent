@@ -65,11 +65,15 @@ the scale is the whole track's.
 
 Musical words mean what a drummer or producer means: a fill fills its bar (sixteenths building in
 velocity into the next downbeat, toms at the end if you like; write the groove's one-bar lines for
-the whole pattern, then the fill's bar alone with bar, rather than counting a 64-mark line), four-on-the-floor is a kick on every
+the whole pattern, then the fill's bar alone with bar, rather than counting a 64-mark line; a fill
+every fourth bar is a one-bar groove, a copy of it with the fill (copy and bar), two scenes and the
+song 1 1 1 2), four-on-the-floor is a kick on every
 beat, a backbeat is the snare on 2 and 4, and a closed and an open hat do not share a step (a
 drummer plays one or the other: a grid leaves the closed one out under the open one, so a steady
 closed-hat line with open hats on top is fine). Velocity per step is a step component
-([sequencer.component-velocity]), not a parameter lock.
+([sequencer.component-velocity]), not a parameter lock. To arpeggiate chords, turn on the track's
+arpeggio player (area player: type arpeggio, its speed and pattern) over the chords as written, as
+the device does it; writing the arpeggio out note by note is for a line the player cannot make.
 
 A kit made from generated sounds can be put straight onto a drum track, so a beat written there
 plays with it at once. A style's signature sound is part of the request too (trap's long, low 808
@@ -89,7 +93,7 @@ shapes. A pattern or two are clearer written directly.
 ## Say what you made
 
 Describe what you made from what the write returned, not from what you meant: a drum pattern comes
-back as a grid (a line per drum sound, x a hit, X an accent, a soft hit as its digit 1–5, four steps a beat), any
+back as a grid (a line per drum sound, x a hit, X an accent, a digit its loudness, four steps a beat), any
 other pattern as a reading of its bars and chords, spelled in the key its notes suggest. Show a drum
 grid as it came back, in a code block with one sentence on the feel, or say it in a sentence or two;
 say a bassline, chords or a melody in a sentence from the reading, never as a grid you draw

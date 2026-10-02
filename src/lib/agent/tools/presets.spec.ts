@@ -130,6 +130,26 @@ describe('make_kit', () => {
 		);
 		expect(sim.state.areas.sample.tracks[0].keys[0]?.id).toContain('kits/dust boom/');
 		expect(sim.state.areas.sample.tracks[0].keys[2]?.id).toBe(snare);
+		// remade under the same kit name, a voice keeps its key's name and gets a file of its own
+		const before = sim.state.areas.sample.tracks[0].keys[2];
+		const remade = await makeKitTool.run(
+			makeKitTool.input.parse({
+				name: 'dust',
+				voices: [{ key: 55, type: 'snare', decay: 0.1, snap: 0.9 }],
+				track: 1
+			}),
+			{
+				toolCallId: 'toolu_n',
+				agent: 'conductor',
+				env: { presets: host, virtual }
+			} as unknown as ToolContext
+		);
+		const after = sim.state.areas.sample.tracks[0].keys[2];
+		expect(after?.name).toBe(before?.name);
+		expect(after?.id).not.toBe(before?.id);
+		// the grid name it had ("lo-fi snare"), not the bare voice type
+		const g3 = JSON.parse(String(remade.content)).on_replica.sounds.G3;
+		expect(g3).toMatch(/.+ snare$/);
 	});
 
 	it('puts the user’s kit from the preset maker on a track, edits and all', async () => {

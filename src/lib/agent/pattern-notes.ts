@@ -150,6 +150,20 @@ export function compactChords(text: string, options: { root?: boolean } = {}): W
 	});
 }
 
+/** The chord names a chords text gives, by step, as written ("Em7" on step 17), for the reading. */
+export function chordSymbols(text: string): Map<number, string> {
+	const out = new Map<number, string>();
+	for (const word of text.split(/[\s,;]+/).filter(Boolean)) {
+		try {
+			const part = wordParts(word, 'step:chord');
+			if (chordFromSymbol(part.token)) out.set(part.step, part.token);
+		} catch {
+			// compactChords says what is wrong with it
+		}
+	}
+	return out;
+}
+
 /** Reads a grid: each line's marks, one per step; returns the hits and how many steps it spans. */
 /**
  * Where a grid line's count goes wrong, by its own spacing: a bar (between |) that is not 16 steps,

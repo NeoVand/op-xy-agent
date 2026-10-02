@@ -2614,7 +2614,7 @@
 					"keys": "click E1"
 				}
 			],
-			"screen": "random lfo: speed free 66, amount 0, destination syn, envelope -2",
+			"screen": "random lfo: speed free 66, amount 0, destination syn, parameter shape, envelope -2",
 			"units": [
 				"instrument.lfo-random",
 				"instrument.lfo"
@@ -2710,7 +2710,29 @@
 						"first": "1",
 						"last": "4",
 						"detents": 3,
-						"step": 1
+						"step": 1,
+						"shows": [
+							{
+								"from": "1",
+								"to": "1",
+								"shows": "shape"
+							},
+							{
+								"from": "2",
+								"to": "2",
+								"shows": "ratio"
+							},
+							{
+								"from": "3",
+								"to": "3",
+								"shows": "detune"
+							},
+							{
+								"from": "4",
+								"to": "4",
+								"shows": "stereo"
+							}
+						]
 					},
 					"midi": {
 						"cc": 43,
@@ -2899,7 +2921,7 @@
 					"keys": "click E1"
 				}
 			],
-			"screen": "value lfo: speed free 66, amount 0, destination syn",
+			"screen": "value lfo: speed free 66, amount 0, destination syn, parameter shape",
 			"units": [
 				"instrument.lfo-value",
 				"instrument.lfo"
@@ -2995,7 +3017,29 @@
 						"first": "1",
 						"last": "4",
 						"detents": 3,
-						"step": 1
+						"step": 1,
+						"shows": [
+							{
+								"from": "1",
+								"to": "1",
+								"shows": "shape"
+							},
+							{
+								"from": "2",
+								"to": "2",
+								"shows": "ratio"
+							},
+							{
+								"from": "3",
+								"to": "3",
+								"shows": "detune"
+							},
+							{
+								"from": "4",
+								"to": "4",
+								"shows": "stereo"
+							}
+						]
 					},
 					"midi": {
 						"cc": 43,

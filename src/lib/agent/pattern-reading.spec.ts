@@ -158,8 +158,11 @@ describe('hitMark', () => {
 		expect(hitMark(75)).toBe('5');
 		// a line of soft hits stays soft, whatever the other hits
 		expect([55, 55, 55].map(hitMark)).toEqual(['4', '4', '4']);
-		// each soft digit reads back as written
-		for (const d of [1, 2, 3, 4, 5]) expect(hitMark(Math.round((d * 127) / 9))).toBe(String(d));
+		// each digit reads back as written, the loud ones too (a plain hit at 100 stays x)
+		for (const d of [1, 2, 3, 4, 5, 6, 7, 8]) {
+			expect(hitMark(Math.round((d * 127) / 9))).toBe(String(d));
+		}
+		expect(hitMark(90)).toBe('x');
 	});
 });
 

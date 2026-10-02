@@ -1548,7 +1548,9 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			addMidiPreset(d);
 			await loadEngine(d, 'midi');
 			await d.click('key.m4');
-			expect(d.screen()).toBe('value lfo: speed sync 4, amount 0, destination syn');
+			expect(d.screen()).toBe(
+				'value lfo: speed sync 4, amount 0, destination syn, parameter midi channel'
+			);
 		});
 
 		it('takes the next preset’s own sound after the midi engine (OS 1.1.33 loads presets: the synth set aside by OS 1.0.50’s engine list does not come back)', async () => {

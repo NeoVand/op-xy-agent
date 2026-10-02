@@ -424,7 +424,14 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			const engineChanged = s.tracks[t].engine !== 'drum';
 			if (engineChanged) loadEngineSound(s, t, 'drum');
 			const held = s.areas.sample.tracks[t];
-			const folder = `kits/${kit.name}`;
+			// a key remade under the name it had gets a file of its own, so the new sound reads as a
+			// change and the old recording is not replaced under the keys that still hold it
+			const ids = new Set(held.keys.flatMap((f) => (f ? [f.id] : [])));
+			const base = `kits/${kit.name}`;
+			const clashes = (at: string) =>
+				kit.sounds.some((sound) => ids.has(`${at}/${sound.key} ${sound.name}.wav`));
+			let folder = base;
+			for (let n = 2; clashes(folder); n++) folder = `${base} (${n})`;
 			let keys = 0;
 			for (const sound of kit.sounds) {
 				const index = sound.key - FIRST_NOTE;

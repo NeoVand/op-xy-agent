@@ -12,6 +12,7 @@ import { meterOf } from '$lib/sim/areas/arrange/model';
 import { STEP_COMPONENTS, type StepComponentKind } from '$lib/sim/sequencer';
 import { TIME_SIGNATURES, type TimeSignature } from '$lib/sim/areas/arrange/state';
 import {
+	chordSymbols,
 	compactChords,
 	compactNotes,
 	gridHits,
@@ -130,7 +131,9 @@ function patternView(
 		alongside = [] as readonly VirtualPattern[],
 		meter = FOUR_FOUR as BarMeter,
 		meant = null as MeantKey | null,
-		written = [] as readonly string[]
+		written = [] as readonly string[],
+		plain = undefined as number | undefined,
+		named = new Map() as ReadonlyMap<number, string>
 	} = {}
 ) {
 	const byStep = new Map<
@@ -147,8 +150,8 @@ function patternView(
 		});
 		byStep.set(n.step, list);
 	}
-	const grid = drumGrid(p, meter);
-	const reading = grid ? null : readPattern(p, alongside, meter, meant, written);
+	const grid = drumGrid(p, meter, plain);
+	const reading = grid ? null : readPattern(p, alongside, meter, meant, written, named);
 	return {
 		track: p.track,
 		pattern: p.pattern,
@@ -185,7 +188,12 @@ function patternView(
  * hit, X an accent (velocity 115 and over), 1–5 a soft hit by its loudness (75 and under), . a rest):
  * "closed hat 1": "X.x. X.x. X.x. X.x.", so what plays where, and how hard, reads at a glance.
  */
-function drumGrid(p: VirtualPattern, meter: BarMeter = FOUR_FOUR): Record<string, string> | null {
+function drumGrid(
+	p: VirtualPattern,
+	meter: BarMeter = FOUR_FOUR,
+	/** The velocity the write's plain hits took, read back as x whatever digit it equals. */
+	plain?: number
+): Record<string, string> | null {
 	const sounds = new Map<string, { note: number; steps: Map<number, number> }>();
 	for (const n of p.notes) {
 		if (!n.sound) continue;
@@ -198,7 +206,7 @@ function drumGrid(p: VirtualPattern, meter: BarMeter = FOUR_FOUR): Record<string
 	for (const [sound, { steps }] of [...sounds].sort((a, b) => a[1].note - b[1].note)) {
 		const mark = (step: number) => {
 			const velocity = steps.get(step);
-			return velocity === undefined ? '.' : hitMark(velocity);
+			return velocity === undefined ? '.' : hitMark(velocity, plain);
 		};
 		// a beat a group, bars as the time signature counts them, so where a hit falls reads without
 		// counting; only the steps that play (a 14-step pattern read as 16 once)
@@ -264,10 +272,16 @@ function gridKey(key: string, kit: Readonly<Record<string, string>> | undefined)
 		.sort((a, b) => a.note - b.note);
 	const lower = k.toLowerCase();
 	const bare = (name: string) => name.replace(/\s+\d+$/, '');
+	// then by what it is: "kick" or "kick 1" for a made kit's "808 kick", and "808 kick" for a new
+	// project's "kick 1" (an agent's first beat on a made kit failed on every line)
+	const ends = (name: string, word: string) => bare(name).endsWith(` ${word}`);
+	const unstyled = bare(lower).replace(/^\S+\s+(?=\S)/, '');
 	return (
 		sounds.find((x) => x.name === lower)?.note ??
 		sounds.find((x) => x.name === bare(lower))?.note ??
 		sounds.find((x) => bare(x.name) === lower)?.note ??
+		sounds.find((x) => ends(x.name, bare(lower)))?.note ??
+		sounds.find((x) => bare(x.name) === unstyled)?.note ??
 		null
 	);
 }
@@ -279,7 +293,7 @@ export const writePatternTool = defineTool({
 	approval: 'auto',
 	// a string or a list for notes, and a grid's lines: more than the API's strict grammar takes
 	strict: false,
-	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held; in a project with one scene it becomes the pattern the track plays (unless stay), and with an arrangement (more than one scene) the scenes stay as they are and the result says which play it. transpose alone shifts the pattern as it is (a bassline down an octave); bar writes one bar alone, keeping the others; copy starts from another of the track's patterns (with bar, a variation of it); components puts step components on steps (random, skip trigger, multiply…), alone onto the pattern as it is; key names the key you mean, for the reading. Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short: notes as one string, a word per note, step:note[:length[:velocity]] with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), chords by name as chords ("1:Am7 17:Fmaj7", voiced smoothly for you), and drums as grid, a line per sound by its name on this track (as read_pattern, read_sound or make_kit list them; a new project's kits number them, "kick 1", "closed hat 2", and a name without its number finds the lowest) or its MIDI note, 53–76 ({"kick": "x... x... x... x...", "62": "..x. ..x. ..x. ..x."}: x a hit at the pattern's velocity, X an accent 25 above it (115 at least), o a soft hit about half of it, 1–9 a hit of that loudness (about 14 a digit: 1 = 14, 3 = 42, 5 = 71, 7 = 99, 9 = 127; ghost notes 3–4), . a rest, four steps a beat; spaces and | are only for reading; the result reads soft hits back as their digit, an o at the default velocity as 4, harder ones as x (76–114) and X (115 and over), so 6–8 read x and 9 reads X). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. The result reads the pattern back: a drum track as a grid, any other as its bars and chords, spelled in the key its notes and the parts playing with it suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
+	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held; in a project with one scene it becomes the pattern the track plays (unless stay), and with an arrangement (more than one scene) the scenes stay as they are and the result says which play it. transpose alone shifts the pattern as it is (a bassline down an octave); bar writes one bar alone, keeping the others; copy starts from another of the track's patterns (with bar, a variation of it); components puts step components on steps (random, skip trigger, multiply…), alone onto the pattern as it is; key names the key you mean, for the reading. Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76, in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short: notes as one string, a word per note, step:note[:length[:velocity]] with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), chords by name as chords ("1:Am7 17:Fmaj7", voiced smoothly for you), and drums as grid, a line per sound by its name on this track (as read_pattern, read_sound or make_kit list them; a new project's kits number them, "kick 1", "closed hat 2", and a name without its number finds the lowest) or its MIDI note, 53–76 ({"kick": "x... x... x... x...", "62": "..x. ..x. ..x. ..x."}: x a hit at the pattern's velocity, X an accent 25 above it (115 at least), o a soft hit about half of it, 1–9 a hit of that loudness (about 14 a digit: 1 = 14, 3 = 42, 5 = 71, 7 = 99, 9 = 127; ghost notes 3–4), . a rest, four steps a beat; spaces and | are only for reading; the result reads each digit back as itself (9 as X), an o at the default velocity as 4, the write's own velocity as x and other velocities as x (76–114) or X (115 and over)). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. The result reads the pattern back: a drum track as a grid, any other as its bars and chords, spelled in the key its notes and the parts playing with it suggest; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16 (1–8 instrument, 9–16 auxiliary)'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default 1)'),
@@ -381,7 +395,7 @@ export const writePatternTool = defineTool({
 			.max(24)
 			.optional()
 			.describe(
-				'The key you mean ("A minor", "D dorian", "Eb major"): the reading spells notes and chords in it rather than guessing one'
+				'The key you mean ("A minor", "D dorian", "Eb major"): the reading spells notes and chords in it rather than guessing one; give it on every pitched pattern of a song (a bass written before its chords has nothing else to read its key by)'
 			),
 		components: z
 			.array(
@@ -751,19 +765,9 @@ export const writePatternTool = defineTool({
 					`Lines shorter than a bar repeat to fill the pattern: ${repeated.join(', ')}. For a hit that plays once, write its line out in full, rests to the end.`
 				);
 			}
-			// digits past 5 read back as x or X, which made a graded snare build ("3456") look as if
-			// its top had gone flat
-			const loud = [
-				...new Set(
-					Object.values(input.grid ?? {})
-						.join('')
-						.match(/[6-9]/g) ?? []
-				)
-			].sort();
-			if (loud.length > 0) {
-				notes2.push(
-					`Digit${loud.length === 1 ? '' : 's'} ${loud.map((d) => `${d} (velocity ${Math.round((Number(d) * 127) / 9)})`).join(', ')} read${loud.length === 1 ? 's' : ''} back as ${loud.every((d) => d === '9') ? 'X' : loud.includes('9') ? 'x (6–8) and X (9)' : 'x'}: the hits play as written.`
-				);
+			// a 9 reads back as X (its 127 is an accent's), which looked like a mark changed
+			if (/9/.test(Object.values(input.grid ?? {}).join(''))) {
+				notes2.push('Digit 9 (velocity 127) reads back as X: the hits play as written.');
 			}
 			// a line of rests alone plays nothing, and the grid above leaves it out (an agent could not
 			// tell whether its empty open-hat line was read)
@@ -860,7 +864,14 @@ export const writePatternTool = defineTool({
 						alongside: partsAlongside(virtual, input.track, pattern),
 						meter: meterNow(virtual),
 						meant: input.key ? parseKey(input.key) : null,
-						written: writtenAccidentals(input.notes)
+						written: writtenAccidentals(input.notes),
+						plain: velocity,
+						// the chords by the names given, where the notes are theirs
+						named: input.chords
+							? new Map(
+									[...chordSymbols(input.chords)].map(([step, symbol]) => [step + barFrom, symbol])
+								)
+							: new Map()
 					}),
 					// the meter it was read in, outside 4/4 (an agent unsure whether a change of time
 					// signature in the same answer had reached the write)

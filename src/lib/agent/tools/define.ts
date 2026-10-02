@@ -601,6 +601,12 @@ function withoutStringMethods(text: string): string {
 			if (call[1] === 'repeat' && Number.isInteger(times) && times > 0 && times <= 64) {
 				value = value.repeat(times);
 			}
+			// a replace of one text by another, everywhere, as it was meant ("•" for ".")
+			const swap = /^\s*("(?:[^"\\]|\\.)*")\s*,\s*("(?:[^"\\]|\\.)*")\s*$/.exec(call[2]);
+			if ((call[1] === 'replace' || call[1] === 'replaceAll') && swap) {
+				const [from, to] = [JSON.parse(swap[1]) as string, JSON.parse(swap[2]) as string];
+				if (from) value = value.split(from).join(to);
+			}
 		}
 		return JSON.stringify(value);
 	});
