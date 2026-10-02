@@ -333,6 +333,11 @@ export interface VirtualOpxy {
 	 */
 	plan(goal: NavGoal): NavPlan | SettingsPlan;
 	/**
+	 * The same plan from where `steps` leave a copy of the replica (a lock planned while it plays,
+	 * walked through after a stop: the step keys show another bar then).
+	 */
+	planAfter(steps: readonly RehearsedStep[], goal: NavGoal): NavPlan | SettingsPlan;
+	/**
 	 * A key sequence played on a copy, chord by chord (the virtual OP-XY does not move): each
 	 * step's keys (held keys written out), and the screen and music it leaves, for a walkthrough
 	 * the user follows key by key. Throws for keys outside the grammar, and for turns (their

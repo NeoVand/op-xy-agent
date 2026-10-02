@@ -587,6 +587,24 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   its loudness bar by bar too (a build was checked by rendering each bar alone); rootless voicings
   are said as such over the bass; a lean alone keeps the notes' drift (a second humanize set every
   snare to the lean); boomy, boxy, tinny and the like route the sound skill.
+- **Probe round forty (2026-10-02), 18 scenarios (`probe-scenarios-40.json`: re-checks (a guided
+  lock while the bass plays, four bass scenes written in turn, a reggae skank by rhythm, a build
+  heard bar by bar, rootless ii-V-I voicings, a snare laid back after humanize, tinny hats) and new
+  kinds: house asked in Italian, the brain as a progression, an afrobeat groove, a scene copied
+  without its kick, a deeper kick, a tempo ramp, a song as a wav, clearing a pattern, a melody made
+  to follow the chords, a delay on the snare alone, a loop saved by name):** no failed calls. Held:
+  four patterns no longer read as undone, the skank in one write, rootless voicings said, the build's
+  bars heard. Fixes: a guided lock while playing now **plans its keys from the stopped replica**
+  (the stop moved the cursor, and the lock landed on step 19, not 3); two grid lines on one sound
+  are **refused, naming it** ("conga 1" and "conga 2" both played the low conga, and the agent told
+  of interlocking congas), and a number the kit lacks counts that kind low to high ("conga 2" is
+  the high conga, "tom 2" the mid tom); a merge or one-bar write takes the pattern's usual velocity
+  (a bar rewritten at 100 stood out of a pattern at 85); a rhythm miscount names the meter's bar; a
+  lean alone says what it moved and what drift it kept; set_tempo says a project has one tempo (no
+  ramp); a scene listen hears the whole scene (a 4-bar build at 90 bpm was cut off in bar 3) and
+  says its first bar starts from silence; rootless voicings over a bass count away from its onsets
+  too (a Charleston comp); a voices-alone kit says the other keys kept their sounds; only strikes
+  sound under a rhythm (a chord from step 1 under "..x-" first plays on step 3).
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval); multiply at `accidental 9`

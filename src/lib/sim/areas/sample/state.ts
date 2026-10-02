@@ -48,9 +48,11 @@ export const soundName = (file: string) =>
 /**
  * The key (0–23) a sound's name means, as an agent or a user says it: the name ("kick 1"), the name
  * without its number ("open hat" for the lowest "open hat 1"), or what the sound is ("kick" for a
- * made kit's "808 kick", "808 kick" for a new project's "kick 1"); null for none. `sounds` are the
- * keys' sound names in key order, null for an empty key. The pattern grid and the key planner both
- * find keys this way (the planner once refused "open hat", which the grid took).
+ * made kit's "808 kick", "808 kick" for a new project's "kick 1"); a number the kit does not name
+ * counts that kind's keys, low to high ("conga 2" for the "high conga 1" above "low conga 1"; both
+ * congas once landed on the low one); null for none. `sounds` are the keys' sound names in key order,
+ * null for an empty key. The pattern grid and the key planner both find keys this way (the planner
+ * once refused "open hat", which the grid took).
  */
 export function soundKeyOf(sounds: readonly (string | null)[], wanted: string): number | null {
 	const lower = wanted.trim().toLowerCase();
@@ -58,10 +60,13 @@ export function soundKeyOf(sounds: readonly (string | null)[], wanted: string): 
 	const bare = (name: string) => name.replace(/\s+\d+$/, '');
 	const ends = (name: string, word: string) => bare(name).endsWith(` ${word}`);
 	const unstyled = bare(lower).replace(/^\S+\s+(?=\S)/, '');
+	const nth = Number(/\s(\d+)$/.exec(lower)?.[1] ?? 0);
+	const kind = named.filter((x) => bare(x.name) === bare(lower) || ends(x.name, bare(lower)));
 	return (
 		named.find((x) => x.name === lower)?.at ??
 		named.find((x) => x.name === bare(lower))?.at ??
 		named.find((x) => bare(x.name) === lower)?.at ??
+		(nth >= 1 ? kind[nth - 1]?.at : undefined) ??
 		named.find((x) => ends(x.name, bare(lower)))?.at ??
 		named.find((x) => bare(x.name) === unstyled)?.at ??
 		null

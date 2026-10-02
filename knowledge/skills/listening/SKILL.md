@@ -16,8 +16,8 @@ an intro). To hear one part, listen with its scene: the replica renders that sce
 so nothing has to play and the song, the transport and the mutes stay as they are. To hear a change
 of part (does the fill lead in, does the chorus lift), the lab's listen takes song with an entry and a
 bar: it renders the song on from there across the parts that follow and says how loud each one is,
-and bar by bar within a part of 2 to 8 bars; a scene heard alone gives its bars too, so a build or a
-fade is checked in one listen. A new project's
+and bar by bar within a part of 2 to 8 bars; listen with a scene (the listen tool's, no lab needed)
+gives that scene's bars too, so a build or a fade is checked in one listen. A new project's
 metronome clicks on every beat, and you hear it too: when the user does not want it, set_metronome
 switches it off.
 

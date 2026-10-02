@@ -360,7 +360,7 @@ export const setTempoTool = defineTool({
 	approval: 'device',
 	device: true,
 	description:
-		'Set the project tempo: on the replica on screen when no OP-XY is connected (to a tenth of a BPM; the way to set it there, rather than the key planner), or on the connected OP-XY over MIDI (CC80). On the device it changes the project (autosave keeps it), so the user approves it in the app; the device steps in 2 BPM, odd tempos round to the nearest even BPM, and the result says which tempo was sent.',
+		'Set the project tempo: on the replica on screen when no OP-XY is connected (to a tenth of a BPM; the way to set it there, rather than the key planner), or on the connected OP-XY over MIDI (CC80). On the device it changes the project (autosave keeps it), so the user approves it in the app; the device steps in 2 BPM, odd tempos round to the nearest even BPM, and the result says which tempo was sent. A project has one tempo: no ramp or per-scene tempo is stored (a slow-down over a song is made by hand on the tempo page while it plays, or felt through half-time parts).',
 	input: z.object({
 		bpm: z.number().min(CC80_TEMPO_RANGE.min).max(CC80_TEMPO_RANGE.max).describe('Tempo in BPM')
 	}),

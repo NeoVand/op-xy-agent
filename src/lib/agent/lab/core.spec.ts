@@ -272,6 +272,12 @@ describe('commits', () => {
 		expect(() => f.writePattern(1, { grid: { gong: 'x...' } })).toThrow(
 			/writePattern: grid "gong" is no sound, note name or number of track 1 \(its sounds: kick 1/
 		);
+		expect(() => f.writePattern(1, { grid: { tom: 'x...', 'tom 1': '..x.' } })).toThrow(
+			/writePattern: grid "tom" and "tom 1" both name low tom 1 of track 1, so one sound would play both lines/
+		);
+		// a number the kit does not name counts that kind's keys, low to high
+		const toms = f.writePattern(1, { grid: { 'tom 1': 'x...', 'tom 2': '.x..', 'tom 3': '..x.' } });
+		expect(toms.notes.map((n) => n.sound)).toEqual(['low tom 1', 'mid tom 1', 'high tom 1']);
 	});
 
 	it('copies a pattern, and keeps its locks and components through a merge', () => {
@@ -596,7 +602,7 @@ describe('listen', () => {
 		// a scene heard alone says it too, from its first bar
 		const scene = await lab.listen(f, { scene: 1, seconds: 8 });
 		expect(scene.text).toMatch(
-			/\nloudness by bar -?[\d.]+, -?[\d.]+, -?[\d.]+, -?[\d.]+ \(LUFS, from its first bar\)/
+			/\nloudness by bar -?[\d.]+, -?[\d.]+, -?[\d.]+, -?[\d.]+ \(LUFS, from the scene's first bar, which starts from silence\)/
 		);
 	});
 

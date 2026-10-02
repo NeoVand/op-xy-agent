@@ -24,3 +24,31 @@ export function gridKey(
 	const at = soundKeyOf(sounds, k);
 	return at === null ? null : FIRST_NOTE + at;
 }
+
+/**
+ * Grid lines that name one sound between them ("conga" and "conga 1"), said as the reason a grid is
+ * refused, or null when each line names its own: two lines on one key merged silently, and an agent
+ * told of its two interlocking congas while one conga played them both. A note name or number says
+ * its key outright, so only lines by a sound's name are compared.
+ */
+export function gridClash(
+	keys: readonly string[],
+	kit: Readonly<Record<string, string>> | undefined
+): string | null {
+	const lines = new Map<number, string[]>();
+	for (const key of keys) {
+		if (/^\d{1,3}$/.test(key.trim()) || parseNoteName(key.trim(), 'c4') !== null) continue;
+		const note = gridKey(key, kit);
+		if (note !== null) lines.set(note, [...(lines.get(note) ?? []), key]);
+	}
+	const sounds = new Map(
+		Object.entries(kit ?? {}).map(([note, name]) => [parseNoteName(note, 'c4'), name])
+	);
+	const clashes = [...lines]
+		.filter(([, named]) => named.length > 1)
+		.map(
+			([note, named]) =>
+				`${named.map((k) => `"${k}"`).join(' and ')} ${named.length === 2 ? 'both' : 'all'} name ${sounds.get(note) ?? `note ${note}`}`
+		);
+	return clashes.length > 0 ? clashes.join('; ') : null;
+}

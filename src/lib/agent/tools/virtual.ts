@@ -11,7 +11,7 @@ import { grooveReach } from '../groove-reach';
 import { humanizeNotes, seedOf } from '../humanize';
 import { slidesNote } from '../slides';
 import { swellNote, tailNote } from '../swell';
-import { gridKey } from '../grid-key';
+import { gridClash, gridKey } from '../grid-key';
 import { voicesNote } from '../voices';
 import { envelopeTimes } from '$lib/sound/times';
 import { meterOf } from '$lib/sim/areas/arrange/model';
@@ -652,7 +652,7 @@ export const writePatternTool = defineTool({
 			.string()
 			.optional()
 			.describe(
-				'A line of marks, as a grid line, that restrikes the notes: each strike plays the chord (or note) started last before it, held as the marks say until the next starts (x at their own velocity, X an accent, o soft, 1–9 that loud), - holds a strike on a step more, . is a rest; "..x- ..x- ..x- ..x-" turns chords into eighth-note stabs on the off-beats. A line shorter than the pattern that divides it repeats. With notes or chords, it restrikes those (their lengths aside); alone, the pattern as it is. Not with bar, and not on drum tracks, whose grid is their rhythm'
+				'A line of marks, as a grid line, that restrikes the notes: each strike plays the chord (or note) started last before it, held as the marks say until the next starts (x at their own velocity, X an accent, o soft, 1–9 that loud), - holds a strike on a step more, . is a rest; only strikes sound, so under "..x- ..x- ..x- ..x-" (eighth-note stabs on the off-beats) a chord from step 1 first plays on step 3. A line shorter than the pattern that divides it repeats. With notes or chords, it restrikes those (their lengths aside); alone, the pattern as it is. Not with bar, and not on drum tracks, whose grid is their rhythm'
 			),
 		humanize: z
 			.object({
@@ -713,7 +713,7 @@ export const writePatternTool = defineTool({
 			.record(z.string().min(1).max(40), z.string().max(200))
 			.optional()
 			.describe(
-				'Hits by sound, as an object of lines (not text), as read_pattern shows a drum track: its name, note name or number, then a mark a step (x hit, X accent, o soft, 1–9 loudness, . rest; spaces and | are skipped, so marks only, no code), written in groups of four marks, a beat each, with | between bars (x... ..x. x... .... | …), which keeps the count right; a line that divides the pattern repeats to fill it (one bar of hats for four bars); a closed hat on a step the open hat hits is left out, so give them different steps, e.g. {"kick": "x... ..x. x... ...."}'
+				'Hits by sound, as an object of lines (not text), as read_pattern shows a drum track: its name, note name or number (one line a sound; a number the kit lacks counts that kind, so "tom 2" is its second tom), then a mark a step (x hit, X accent, o soft, 1–9 loudness, . rest; spaces and | are skipped, so marks only, no code), written in groups of four marks, a beat each, with | between bars (x... ..x. x... .... | …), which keeps the count right; a line that divides the pattern repeats to fill it (one bar of hats for four bars); a closed hat on a step the open hat hits is left out, so give them different steps, e.g. {"kick": "x... ..x. x... ...."}'
 			),
 		transpose: z
 			.int()
@@ -1018,7 +1018,16 @@ export const writePatternTool = defineTool({
 			if (!(error instanceof PatternNotesError)) throw error;
 			return errorResult(`Nothing was written: ${error.message}.`, 'notes not read');
 		}
-		const velocity = input.velocity ?? DEFAULT_VELOCITY;
+		// a merge, or one bar written alone, strikes at the pattern's own usual velocity, not 100 (a
+		// bar 4 merged into hits at 85 came out louder than the rest)
+		const into =
+			input.merge === true && input.grid !== undefined ? (current ?? readSource()) : current;
+		const usual = (() => {
+			const counts = new Map<number, number>();
+			for (const n of into?.notes ?? []) counts.set(n.velocity, (counts.get(n.velocity) ?? 0) + 1);
+			return [...counts].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0]?.[0];
+		})();
+		const velocity = input.velocity ?? usual ?? DEFAULT_VELOCITY;
 		// with the pattern as it is (a copy, a transpose, humanize…), velocity is every note's (a
 		// soft pad copied from the strings kept their velocities, the one given unused)
 		const restamp = was !== null && input.velocity !== undefined;
@@ -1260,6 +1269,16 @@ export const writePatternTool = defineTool({
 					'unknown grid sounds'
 				);
 			}
+			const clash = gridClash([...keys.keys()], kit);
+			if (clash) {
+				const sounds = kit
+					? ` (this track's sounds: ${[...new Set(Object.values(kit))].join(', ')})`
+					: '';
+				return errorResult(
+					`Nothing was written: grid ${clash}, so one sound would play both lines; give each line a sound of its own${sounds}.`,
+					'grid sounds named twice'
+				);
+			}
 		}
 		// a note of length L on step s, backwards, starts where its mirror ends: fill − s − L + 2;
 		// a drum hit mirrors about the downbeat instead, so hits on the beat stay on beats (a beat
@@ -1323,7 +1342,7 @@ export const writePatternTool = defineTool({
 			if (n === 0 || (n !== fill && !(n < fill && fill % n === 0))) {
 				const where = gridMiscount(input.rhythm, meter.bar);
 				return errorResult(
-					`Nothing was written: the rhythm has ${n} marks${where ? ` (${where})` : ''}, which neither fill the pattern's ${fill} steps nor repeat into them.`,
+					`Nothing was written: the rhythm has ${n} marks${where ? ` (${where})` : ''}, which neither fill the pattern's ${fill} steps nor repeat into them: a bar here is ${meter.bar} marks (${meter.beats.map((b) => '.'.repeat(b)).join(' ')}), and a bar's line repeats into every bar.`,
 					'rhythm miscounted'
 				);
 			}
@@ -1645,9 +1664,22 @@ export const writePatternTool = defineTool({
 					)
 				];
 				const untouched = soundsOf(false);
-				notes2.push(
-					`Loosened ${loosened} note${loosened === 1 ? '' : 's'}${humanized ? ` of ${soundsOf(true).join(', ')}` : ''}${t > 0 && onGrid > 0 ? ` (${onGrid} of them still on the grid: no drift drawn, or an early one on step 1, which plays no earlier)` : ''}${t > 0 ? `: up to ${t} of a step off the grid (the beats half that)` : ''}${lean !== 0 ? `${t > 0 ? ',' : ':'} ${Math.abs(lean)} of a step ${lean > 0 ? 'behind' : 'ahead of'} the beat` : ''}${v > 0 ? `${t > 0 || lean !== 0 ? ',' : ':'} velocities up to ${v} either way` : ''}${(t > 0 || lean !== 0) && quant !== 0 ? `; the pattern's quantise ${quant} → 0, so they play where they sit` : ''}${untouched.length > 0 ? `; ${untouched.join(', ')} as ${untouched.length === 1 ? 'it was' : 'they were'}` : ''}.`
-				);
+				// a lean alone moved them from where they sat: said, with where they sit now (an agent
+				// could not tell the lean was added to the earlier drift)
+				if (t === 0 && lean !== 0 && prior.notes.some((n) => n.offset)) {
+					const taken = result.notes.filter((n) => (humanized ? humanized.has(n.note) : true));
+					const offsets = taken.map((n) => n.offset ?? 0);
+					const fmt = (x: number) => `${x >= 0 ? '+' : '−'}${Math.abs(x).toFixed(2)}`;
+					const range = offsets.length
+						? `${fmt(Math.min(...offsets))} to ${fmt(Math.max(...offsets))}`
+						: '';
+					notes2.push(
+						`Moved ${taken.length} note${taken.length === 1 ? '' : 's'}${humanized ? ` of ${soundsOf(true).join(', ')}` : ''} ${Math.abs(lean)} of a step ${lean > 0 ? 'later' : 'earlier'} than they sat, their drift kept: they now sit ${range} of a step off the grid${quant !== 0 ? `; the pattern's quantise ${quant} → 0, so they play where they sit` : ''}${untouched.length > 0 ? `; ${untouched.join(', ')} as ${untouched.length === 1 ? 'it was' : 'they were'}` : ''}.`
+					);
+				} else
+					notes2.push(
+						`Loosened ${loosened} note${loosened === 1 ? '' : 's'}${humanized ? ` of ${soundsOf(true).join(', ')}` : ''}${t > 0 && onGrid > 0 ? ` (${onGrid} of them still on the grid: no drift drawn, or an early one on step 1, which plays no earlier)` : ''}${t > 0 ? `: up to ${t} of a step off the grid (the beats half that)` : ''}${lean !== 0 ? `${t > 0 ? ',' : ':'} ${Math.abs(lean)} of a step ${lean > 0 ? 'behind' : 'ahead of'} the beat` : ''}${v > 0 ? `${t > 0 || lean !== 0 ? ',' : ':'} velocities up to ${v} either way` : ''}${(t > 0 || lean !== 0) && quant !== 0 ? `; the pattern's quantise ${quant} → 0, so they play where they sit` : ''}${untouched.length > 0 ? `; ${untouched.join(', ')} as ${untouched.length === 1 ? 'it was' : 'they were'}` : ''}.`
+					);
 			}
 			// the locks it took with the notes it replaced (an agent could not tell whether a
 			// rewrite had cleared the locks it had set)

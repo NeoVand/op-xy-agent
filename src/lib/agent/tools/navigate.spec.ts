@@ -428,6 +428,26 @@ describe('plan_steps with show', () => {
 		expect(guided[0].steps.at(-1)?.keys).toBe('step 7 + turn E1');
 		expect(result.steps[0].keys).toBe('stop');
 		expect(result.caution).toMatch(/the walkthrough lights stop first/);
+		// planned with the playhead in bar 2, the lit keys, played, lock the step asked for: the
+		// rest is planned from the stopped keys (a bar tap planned while it played moved them off)
+		virtual.transport('stop');
+		virtual.transport('play');
+		for (let i = 0; i < 25; i++) sim.advance(100); // into bar 2 at 120 bpm
+		await run(planStepsTool, {
+			show: false,
+			guide: true,
+			track: 3,
+			param: 'cutoff',
+			value: 70,
+			step: 3
+		});
+		const lit = guided.at(-1)!.steps;
+		expect(lit[0].keys).toBe('stop');
+		for (const step of lit) playStep(sim, step);
+		const locked = sim.state.tracks[2].sequence.patterns[0].steps
+			.map((s, i) => (s.locks && Object.keys(s.locks).length ? i + 1 : 0))
+			.filter((i) => i > 0);
+		expect(locked).toEqual([3]);
 		// stopped, it starts at the track
 		virtual.transport('stop');
 		await run(planStepsTool, {
@@ -438,7 +458,7 @@ describe('plan_steps with show', () => {
 			value: 70,
 			step: 7
 		});
-		expect(guided[1].steps[0].keys).not.toBe('stop');
+		expect(guided.at(-1)!.steps[0].keys).not.toBe('stop');
 	});
 
 	it('hands the steps to the walkthrough with guide, and moves nothing itself', async () => {

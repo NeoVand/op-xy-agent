@@ -398,6 +398,13 @@ export const planStepsTool = defineTool({
 				: null;
 		if (input.guide && !input.show) {
 			const guide = ctx.env.guide;
+			// a lock while the replica plays: stop first, lit, as the step keys follow the playhead,
+			// and the rest planned from where the stop leaves them (a user told to stop followed the
+			// lit keys alone, and the lock landed a bar late; then a bar tap planned while it played
+			// moved the stopped keys off the step's bar)
+			const stopFirst =
+				locking && virtual.status().playing ? virtual.rehearse('stop').slice(0, 1) : [];
+			if (stopFirst.length) plan = virtual.planAfter(stopFirst, goal);
 			const alreadyText = already
 				? `${already}: say so. The walkthrough lights the way to its page and the encoder, for the user to learn the keys and try it (turning it changes the value).`
 				: null;
@@ -408,6 +415,7 @@ export const planStepsTool = defineTool({
 				plan.note ?? ''
 			);
 			const steps = [
+				...stopFirst,
 				...plan.steps,
 				...(turn
 					? [
@@ -419,11 +427,6 @@ export const planStepsTool = defineTool({
 						]
 					: [])
 			];
-			// a lock while the replica plays: stop first, lit, as the step keys follow the playhead
-			// (a user told to stop followed the lit keys alone, and the lock landed a bar late)
-			const stopFirst =
-				locking && virtual.status().playing ? virtual.rehearse('stop').slice(0, 1) : [];
-			steps.unshift(...stopFirst);
 			if (!guide || steps.length === 0) {
 				return jsonResult(
 					{

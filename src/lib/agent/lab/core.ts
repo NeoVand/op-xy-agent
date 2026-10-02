@@ -76,7 +76,7 @@ import {
 	PatternNotesError,
 	type WrittenNote
 } from '../pattern-notes';
-import { gridKey } from '../grid-key';
+import { gridClash, gridKey } from '../grid-key';
 import { parseKey } from '../pattern-reading';
 import { takeReads } from './take-reads';
 
@@ -549,6 +549,13 @@ export function createLab(options: LabOptions): LabSession {
 				const sounds = kit ? ` (its sounds: ${[...new Set(Object.values(kit))].join(', ')})` : '';
 				throw new LabError(
 					`writePattern: grid ${unknown.map((k) => `"${k}"`).join(', ')} is no sound, note name or number of track ${track}${sounds}`
+				);
+			}
+			const clash = gridClash([...new Set(hits.map((hit) => hit.key))], kit);
+			if (clash) {
+				const sounds = kit ? ` (its sounds: ${[...new Set(Object.values(kit))].join(', ')})` : '';
+				throw new LabError(
+					`writePattern: grid ${clash} of track ${track}, so one sound would play both lines; give each line a sound of its own${sounds}`
 				);
 			}
 			return hits.map((hit) => ({
@@ -1181,7 +1188,10 @@ export function createLab(options: LabOptions): LabSession {
 			? '\nnote: the metronome is on, so its click is in what you heard'
 			: '';
 		if (!o.tracks) {
-			const audio = await renderAudio(state, o.seconds ?? LISTEN_SECONDS);
+			// a scene's whole length when it is longer than a usual take, as the listen tool hears it
+			const whole = (sceneLength(state) * 15) / state.tempo.bpm;
+			const seconds = o.seconds ?? Math.min(30, Math.max(LISTEN_SECONDS, whole));
+			const audio = await renderAudio(state, seconds);
 			const analysis = analyzeAudio(audio.channels, audio.sampleRate, {
 				expectedBpm: state.tempo.bpm
 			});
@@ -1196,7 +1206,9 @@ export function createLab(options: LabOptions): LabSession {
 			return {
 				text:
 					summary.text +
-					(bars ? `\nloudness ${bars} (LUFS, from its first bar)` : '') +
+					(bars
+						? `\nloudness ${bars} (LUFS, from the scene's first bar, which starts from silence)`
+						: '') +
 					click +
 					(key ? `\nnote: ${key}` : ''),
 				flags: summary.flags,

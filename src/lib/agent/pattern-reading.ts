@@ -440,13 +440,10 @@ export function readPattern(
 					tones++;
 					continue;
 				}
-				// the root a voicing leaves out: a bass starting with a chord written as notes, which
-				// with it makes a seventh chord or more on that bass (C E G over A: Am7)
-				if (
-					n.note < Math.min(...chord.notes) &&
-					chord.at === chord.start &&
-					!alongNamed(chord.track)?.has(chord.start)
-				) {
+				// the root a voicing leaves out: a bass under a chord written as notes that with it
+				// makes a seventh chord or more on that bass (C E G over A: Am7), struck with the chord
+				// or under a later hit of it (a Charleston comp's second hit read its root as a rub)
+				if (n.note < Math.min(...chord.notes) && !alongNamed(chord.track)?.has(chord.start)) {
 					const whole = chordName([n.note, ...chord.notes]);
 					const size = new Set([n.note, ...chord.notes].map((x) => x % 12)).size;
 					if (whole && whole.inversion === 0 && whole.root === n.note % 12 && size >= 4) {

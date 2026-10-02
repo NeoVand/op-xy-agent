@@ -140,7 +140,7 @@ export interface MidiWrite {
 
 /** How to listen. */
 export interface ListenOptions {
-	/** Seconds to hear, 1–30 (default 8; each track alone 4). */
+	/** Seconds to hear, 1–30 (default 8, or the scene's whole length when longer, up to 30; each track alone 4). */
 	readonly seconds?: number;
 	/** `'each'`: every instrument track that plays, heard alone; or a list of tracks 1–8. */
 	readonly tracks?: 'each' | readonly number[];

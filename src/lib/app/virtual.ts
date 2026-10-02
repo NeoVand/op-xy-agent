@@ -6,6 +6,7 @@
  * and every change tells persistence to save.
  */
 import type {
+	NavGoal,
 	RehearsedStep,
 	VirtualArrangement,
 	VirtualKitLoad,
@@ -27,8 +28,10 @@ import {
 	planPlace,
 	planSettings,
 	playStep,
+	type NavPlan,
 	type Place,
-	planToSetting
+	planToSetting,
+	type SettingsPlan
 } from '$lib/sim/navigator';
 import {
 	BAR,
@@ -148,6 +151,15 @@ function ensurePatterns(s: SimState, t: number, count: number): void {
 		const sounds = s.areas.arrange.sounds[t];
 		while (sounds.length < seq.patterns.length) sounds.push(null);
 	}
+}
+
+/** A goal planned from `state`. */
+function planOn(state: SimState, goal: NavGoal): NavPlan | SettingsPlan {
+	if ('place' in goal) return planPlace(state, goal.place);
+	if ('settings' in goal) return planSettings(state, goal.settings);
+	if ('to' in goal) return planToSetting(state, goal.to);
+	if ('label' in goal) return planPageValue(state, goal);
+	return planParam(state, goal);
 }
 
 export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
@@ -727,11 +739,16 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		},
 
 		plan(goal) {
-			if ('place' in goal) return planPlace(sim.state, goal.place);
-			if ('settings' in goal) return planSettings(sim.state, goal.settings);
-			if ('to' in goal) return planToSetting(sim.state, goal.to);
-			if ('label' in goal) return planPageValue(sim.state, goal);
-			return planParam(sim.state, goal);
+			return planOn(sim.state, goal);
+		},
+
+		planAfter(steps, goal) {
+			const trial = new HeadlessSim({
+				state: JSON.parse(JSON.stringify(s)) as SimState,
+				now: () => 0
+			});
+			for (const step of steps) playStep(trial, step);
+			return planOn(trial.state, goal);
 		},
 
 		project() {

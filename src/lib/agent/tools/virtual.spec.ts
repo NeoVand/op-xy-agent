@@ -462,9 +462,13 @@ describe('write_pattern one bar at a time', () => {
 			})
 		);
 		expect(bar2.written).toMatchObject({ bars: 1, noteCount: 64 });
-		// a miscount, drums and bar are refused
+		// a miscount, drums and bar are refused; a miscount says a bar's marks
 		const short = await run(writePatternTool, { track: 4, rhythm: 'x.x' });
 		expect(String(short.content)).toMatch(/the rhythm has 3 marks, which neither fill/);
+		const twelve = await run(writePatternTool, { track: 4, rhythm: 'x--. ..x- ....' });
+		expect(String(twelve.content)).toMatch(
+			/a bar here is 16 marks \(\.\.\.\. \.\.\.\. \.\.\.\. \.\.\.\.\)/
+		);
 		expect((await run(writePatternTool, { track: 1, rhythm: 'x...' })).isError).toBe(true);
 		expect((await run(writePatternTool, { track: 4, bar: 1, rhythm: 'x...' })).isError).toBe(true);
 	});
@@ -526,6 +530,41 @@ describe('write_pattern one bar at a time', () => {
 			ramp: { from: 1, to: 2, sounds: ['tabla'] }
 		});
 		expect(lacks.isError).toBe(true);
+	});
+
+	it('says a lean alone moved loosened notes from where they sat', async () => {
+		// an agent could not tell the lean was added to the earlier drift
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			grid: { kick: 'x... .... x... ....', snare: '.... x... .... x...' }
+		});
+		await run(writePatternTool, { track: 1, humanize: { timing: 0.08 } });
+		const lean = json(
+			await run(writePatternTool, { track: 1, humanize: { late: 0.05, sounds: ['snare'] } })
+		);
+		expect(lean.note).toMatch(
+			/Moved 2 notes of snare 1 0\.05 of a step later than they sat, their drift kept: they now sit [+−]\d\.\d\d to [+−]\d\.\d\d of a step off the grid; kick 1 as it was\./
+		);
+	});
+
+	it('strikes a merge or one bar at the pattern’s own velocity when none is given', async () => {
+		// a bar 4 merged into hits at 85 came out at 100, louder than the rest
+		const { virtual, run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			bars: 4,
+			velocity: 85,
+			grid: { kick: 'x... .... x... ....', snare: '.... x... .... x...' }
+		});
+		await run(writePatternTool, {
+			track: 1,
+			bar: 4,
+			merge: true,
+			grid: { snare: '.... x... .... xxxx' }
+		});
+		const fill = virtual.readPattern(1).notes.filter((n) => n.step > 48 && n.sound === 'snare 1');
+		expect(fill.map((n) => n.velocity)).toEqual([85, 85, 85, 85, 85]);
 	});
 
 	it('reads back the bar menu’s shape, which a fade’s locks glide by', async () => {
@@ -1031,6 +1070,17 @@ describe('write_pattern on drums', () => {
 		);
 		expect(bass.written.reading.againstChords).toMatch(
 			/^8 of the 8 notes over T7's chords are chord tones \(2 of them the root under T7's rootless voicings, which it completes\); none on a beat is outside its chord/
+		);
+		// a comp struck twice a bar (a Charleston): the bass under its second hit is the root too
+		await run(writePatternTool, {
+			track: 7,
+			notes: '1:C4+E4+G4:2 7:C4+E4+G4:4 17:A3+C4+E4:2 23:A3+C4+E4:4'
+		});
+		const comp = json(
+			await run(writePatternTool, { track: 3, notes: '1:A1:8 9:A1:8 17:F1:8 25:F1:8' })
+		);
+		expect(comp.written.reading.againstChords).toMatch(
+			/^4 of the 4 notes over T7's chords are chord tones \(all of them the root under T7's rootless voicings/
 		);
 		// the same notes named as triads: their names stand, and the bass is outside them
 		await run(writePatternTool, { track: 7, chords: '1:C:16 17:Am:16', voicing: 'root' });
@@ -1956,6 +2006,16 @@ describe('write_pattern, short', () => {
 		expect(json(result).written.grid).toBeDefined();
 	});
 
+	it('takes a numbered sound the kit does not name as that kind counted low to high', async () => {
+		// an agent wrote "conga 1" and "conga 2" for the low and high conga: both played the low one
+		const { run } = setup();
+		const congas = await run(writePatternTool, {
+			track: 1,
+			grid: { 'conga 1': 'x... x... x... x...', 'conga 2': '..x. ..x. ..x. ..x.' }
+		});
+		expect(Object.keys(json(congas).written.grid)).toEqual(['low conga 1', 'high conga 1']);
+	});
+
 	it('says what it cannot read, and writes nothing', async () => {
 		const { sim, run } = setup();
 		const before = JSON.stringify(sim.state.tracks[0].sequence);
@@ -1965,6 +2025,15 @@ describe('write_pattern, short', () => {
 		const sound = await run(writePatternTool, { track: 1, grid: { cowbel: 'x...' } });
 		expect(sound).toMatchObject({ isError: true, summary: 'unknown grid sounds' });
 		expect(String(sound.content)).toMatch(/"cowbel" is no sound.*this track's sounds: .*kick 1/);
+		// two lines on one sound merged silently: "conga 1" and "conga 2" both played the low conga
+		const twice = await run(writePatternTool, {
+			track: 1,
+			grid: { conga: 'x... x...', 'conga 1': '..x. ..x.' }
+		});
+		expect(twice).toMatchObject({ isError: true, summary: 'grid sounds named twice' });
+		expect(String(twice.content)).toMatch(
+			/"conga" and "conga 1" both name low conga 1, so one sound would play both lines; .*this track's sounds: .*high conga 1/
+		);
 		const none = await run(writePatternTool, { track: 1 });
 		expect(none).toMatchObject({ isError: true, summary: 'no notes given' });
 		const many = await run(writePatternTool, {

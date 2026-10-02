@@ -159,6 +159,9 @@ describe('make_kit', () => {
 		// the grid name it had ("lo-fi snare"), not the bare voice type
 		const g3 = JSON.parse(String(remade.content)).on_replica.sounds.G3;
 		expect(g3).toMatch(/.+ snare$/);
+		expect(JSON.parse(String(remade.content)).note).toMatch(
+			/Only the voices' key changed; the track's other \d+ keep their sounds\./
+		);
 	});
 
 	it('puts the user’s kit from the preset maker on a track, edits and all', async () => {

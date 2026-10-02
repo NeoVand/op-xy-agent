@@ -1,0 +1,146 @@
+[
+	{
+		"name": "teach-lock-playing",
+		"about": "Re-check: a guided lock while playing lights stop first.",
+		"steps": [
+			{ "say": "make a bassline on track 3 and play it" },
+			{ "say": "teach me to lock the filter cutoff on step 3, light the keys" },
+			{ "follow": 5 },
+			{ "say": "did it work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "four-bass-scenes",
+		"about": "Re-check: four patterns written in turn, none read as undone.",
+		"steps": [
+			{
+				"say": "make a 4 scene song with a different bass pattern in each scene and drums throughout"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "reggae-skank",
+		"about": "Re-check: chords by name restruck on a rhythm in one write.",
+		"steps": [
+			{ "say": "write Am F C G on track 4 as a reggae skank on the off-beats" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "build-listen",
+		"about": "Re-check: a scene's loudness bar by bar.",
+		"steps": [
+			{ "say": "make a 4 bar beat that builds up bar by bar" },
+			{ "say": "listen and tell me whether it really gets louder each bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "rootless-251",
+		"about": "Re-check: rootless voicings over a bass said as such.",
+		"steps": [
+			{
+				"say": "write a ii-V-I in F with rootless jazz voicings on track 4 over a root bass on track 3"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snare-lay-back",
+		"about": "Re-check: a lean alone keeps the drift.",
+		"steps": [
+			{ "say": "make a beat and humanize it" },
+			{ "say": "now make only the snare lay back a bit more" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tinny-hats",
+		"about": "Re-check: a sound word routes the sound skill.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "the hats sound too tinny, fix it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "italian-house",
+		"about": "A request in Italian.",
+		"steps": [{ "say": "crea un ritmo house con un basso e degli accordi" }, { "why": true }]
+	},
+	{
+		"name": "brain-progression",
+		"about": "The brain as a progression.",
+		"steps": [
+			{ "say": "how do I make my whole loop follow a chord progression with the brain?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "afrobeat",
+		"about": "A genre not tried yet.",
+		"steps": [{ "say": "make an afrobeat groove with a bass" }, { "why": true }]
+	},
+	{
+		"name": "scene-drop-kick",
+		"about": "A scene copied with one sound taken out.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "make a second scene that is the same but with no kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "deeper-kick-sample",
+		"about": "One drum sound swapped for another.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "swap the kick for a deeper one" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tempo-ramp",
+		"about": "A request the device may not do.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "slow the song down gradually over 8 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "song-wav",
+		"about": "An export, after a song.",
+		"steps": [
+			{ "say": "make a 2 scene song" },
+			{ "say": "I want this as a wav file" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "clear-pattern-howto",
+		"about": "A device how-to.",
+		"steps": [{ "say": "how do I clear a pattern on the op-xy?" }, { "why": true }]
+	},
+	{
+		"name": "melody-fit-chords",
+		"about": "An edit from the reading.",
+		"steps": [
+			{ "say": "write chords on track 4 and a melody on track 5" },
+			{ "say": "make the melody follow the chords better" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snare-delay-only",
+		"about": "An effect on one drum sound.",
+		"steps": [{ "say": "make a beat" }, { "say": "put a delay on the snare only" }, { "why": true }]
+	},
+	{
+		"name": "save-sunday",
+		"about": "Saving under a name.",
+		"steps": [{ "say": "make me an 8 bar lofi loop and save it as sunday" }, { "why": true }]
+	}
+]

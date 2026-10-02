@@ -136,6 +136,13 @@ export const makeKitTool = defineTool({
 		const yours = voices.map(
 			(v) => `${v.key} ${noteName(v.key)}: ${byKey.get(v.key)?.name ?? v.type}`
 		);
+		// voices alone change only their keys (an agent asked for a flag a key, unsure the others kept
+		// their sounds)
+		const others = loaded?.sounds ? Object.keys(loaded.sounds).length - byKey.size : 0;
+		const kept =
+			!style && loaded && others > 0
+				? ` Only the voices' ${byKey.size === 1 ? 'key' : `${byKey.size} keys`} changed; the track's other ${others} keep their sounds.`
+				: '';
 		return jsonResult(
 			{
 				kit: name,
@@ -144,7 +151,7 @@ export const makeKitTool = defineTool({
 				...(inbox ? { preset_maker: inbox.href } : {}),
 				...(loaded ? { on_replica: loaded } : {}),
 				note: loaded
-					? `On the replica's track ${loaded.track} now${loaded.engine_changed ? ' (it was another engine; it is a drum sampler now)' : ''}: ${playing ? 'the notes there play its sounds, key by key' : 'write a pattern there and play it'}.${loaded.audible ? '' : ' This browser cannot make sound, so the kit is silent here.'} A grid names its keys as sounds lists them, or by what they are: "kick", "snare 1" or "closed hat" find the first of that kind, so the names a grid used before still work. It also waits in the preset maker to download or install.`
+					? `On the replica's track ${loaded.track} now${loaded.engine_changed ? ' (it was another engine; it is a drum sampler now)' : ''}: ${playing ? 'the notes there play its sounds, key by key' : 'write a pattern there and play it'}.${loaded.audible ? '' : ' This browser cannot make sound, so the kit is silent here.'}${kept} A grid names its keys as sounds lists them, or by what they are: "kick", "snare 1" or "closed hat" find the first of that kind, so the names a grid used before still work. It also waits in the preset maker to download or install.`
 					: 'The kit waits in the preset maker: link the user there to play, download or install it.'
 			},
 			loaded
