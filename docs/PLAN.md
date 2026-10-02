@@ -623,6 +623,22 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   generated voice says it is a new sound and which hits play it; groove is the type, swing its
   amount; a soft write reads back as its nearest digit (70 is 5). The bar loudness line no longer
   says its first bar starts from silence (an agent took that for why bar 1 was quiet).
+- **Probe round forty-two (2026-10-02), 18 scenarios (`probe-scenarios-42.json`: re-checks (a hats
+  groove of 50, a lofi on FX II, a reese shaped, a pad and bass that clash, a pad slowed from 150 to
+  70, a ratchet shown on an empty step) and new kinds: reggaeton asked in Spanish, hip-hop in Korean,
+  the LFO types, a three-minute song, a melody made more interesting, three against four, a bass on
+  the kick, a key change, a sliding 808, a beat made more human, starting over, the tempo and key
+  read back):** two failed calls (a chord on step 65, a grid miscount). Held: 50 said as 49, FX II
+  read back as track 16, the clash heard alone before and after its fix, the empty step said. Fixes:
+  a progression that changes key **reads as two keys**, each with its numerals ("C Am7 Dm7 G7 | D
+  Bm7 Em7 A7: I vi7 ii7 V7 in C major, then I vi7 ii7 V7 in D major from step 33, a key change up a
+  whole step"; it read as G major, its numerals right for neither); the release note says its time
+  runs from each note's end at any tempo, and a tempo change re-says it (an agent slowed a pad to 70
+  and said its changes would ring less); chords by name take a register ("C5", off the bass); an
+  FX's effect swapped says which tracks send to it; a step past 64 names the ways to a longer part
+  (a second pattern, or track scale 2); an envelope's release set by time says which way the page
+  runs; "already set" says nothing was turned; three against four names both meanings (a polymeter,
+  or a polyrhythm in one 12-step cycle).
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval); multiply at `accidental 9`

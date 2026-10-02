@@ -15,6 +15,7 @@
 
 import { chordFromSymbol } from '$lib/core/music/harmony';
 import { voiceChords } from '$lib/core/music/voicing';
+import { parseNoteName } from '$lib/core/midi/notes';
 
 /** A note as written, before its name is read. */
 export interface WrittenNote {
@@ -57,7 +58,13 @@ function wordParts(
 	const [stepText, token, lengthText = '', velocityText = ''] = parts;
 	const step = Number(stepText);
 	if (!Number.isInteger(step) || step < 1 || step > MAX_STEPS) {
-		throw new PatternNotesError(`"${word}": the step is 1–${MAX_STEPS}`);
+		// past the end: the ways to a longer part (an agent's six bars of chords stopped at step 65,
+		// and it squeezed them into four)
+		throw new PatternNotesError(
+			step > MAX_STEPS && Number.isInteger(step)
+				? `"${word}": the step is 1–${MAX_STEPS}, a pattern's 4 bars. A longer part goes on in a second pattern that a song plays after it (write_arrangement), or at track scale 2 the ${MAX_STEPS} steps are eighths and last 8 bars (scale "2", steps and lengths then count eighths).`
+				: `"${word}": the step is 1–${MAX_STEPS}`
+		);
 	}
 	const length = lengthText === '' ? undefined : Number(lengthText);
 	if (length !== undefined && !(length >= 0.05 && length <= MAX_STEPS)) {
@@ -115,12 +122,23 @@ export function compactNotes(text: string): WrittenNote[] {
 }
 
 /**
+ * The note chords by name sit around, from a register ("C5"), or undefined for middle C (an agent
+ * rewrote a pad's chords note by note to lift them off the bass).
+ */
+export function registerNote(register: string | undefined): number | undefined {
+	return register === undefined ? undefined : (parseNoteName(register, 'c4') ?? undefined);
+}
+
+/**
  * Reads chords by name, `step:symbol[:length[:velocity]]` words ("1:Am7 17:F/A 33:C:8"), voiced
  * near middle C, each moving as little as it can from the one before, a slash chord's bass below
  * (agents voicing chords by hand once wrote A D F under "Bbmaj7"). A chord with no length lasts
  * until the next one, the last to the end of its bar.
  */
-export function compactChords(text: string, options: { root?: boolean } = {}): WrittenNote[] {
+export function compactChords(
+	text: string,
+	options: { root?: boolean; center?: number } = {}
+): WrittenNote[] {
 	const parsed = text
 		.split(/[\s,;|]+/)
 		.filter(Boolean)

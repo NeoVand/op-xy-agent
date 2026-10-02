@@ -80,7 +80,30 @@ export function tailNote(
 	}
 	if (blurred === 0) return null;
 	const at = `${Math.round(bpm * 10) / 10} bpm`;
-	return `T${track}'s amp release (${m[1]} on its page, where a lower value lasts longer) takes ${timeText(release)} to die away (${at}), so ${blurred === changes ? 'each chord rings on under the next' : `at ${blurred} of its ${changes} chord changes the old chord rings on under the new one`}: their notes sound together for a while, which blurs the change (a listen reads such blends as sus or added-note chords). A shorter release ("amp release" with a time, such as "0.5 s") keeps the changes clean; a pad often keeps some of it.`;
+	// the time is the release's own, from each note's end, whatever the tempo (an agent read "2.8 s
+	// (150 bpm)" as tempo-bound and said a slower tempo would clean the changes)
+	return `T${track}'s amp release (${m[1]} on its page, where a lower value lasts longer) takes ${timeText(release)} to die away from each note's end, at any tempo, so at ${at} ${blurred === changes ? 'each chord rings on under the next' : `at ${blurred} of its ${changes} chord changes the old chord rings on under the new one`}: their notes sound together for a while, which blurs the change (a listen reads such blends as sus or added-note chords). A slower tempo does not shorten it; a shorter release ("amp release" with a time, such as "0.5 s") keeps the changes clean; a pad often keeps some of it.`;
+}
+
+/**
+ * The tail notes of every instrument track with notes at the tempo now: a tempo change leaves a
+ * release as long as it was (an agent slowed a pad from 150 to 70 bpm and said its changes would
+ * ring less).
+ */
+export function tailsNow(virtual: VirtualOpxy): string[] {
+	const bpm = virtual.status().bpm;
+	return virtual.status().tracks.flatMap((t) => {
+		if (t.track > 8 || t.notes === 0 || t.engine === 'drum') return [];
+		const p = virtual.readPattern(t.track);
+		const line = tailNote(
+			t.track,
+			virtual.readSound(t.track).pages['M2 amp envelope'] ?? '',
+			p.notes,
+			p.scale,
+			bpm
+		);
+		return line ? [line] : [];
+	});
 }
 
 /**

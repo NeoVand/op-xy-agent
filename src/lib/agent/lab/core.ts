@@ -70,6 +70,7 @@ import { applyProject } from './apply';
 import { diffReplica, type DiffSide } from './diff';
 import {
 	compactChords,
+	registerNote,
 	compactNotes,
 	gridHits,
 	markVelocity,
@@ -268,6 +269,11 @@ const patternWrite = z.strictObject({
 	// note by note, unsure the lab took names)
 	chords: z.string().max(2000).optional(),
 	voicing: z.enum(['smooth', 'root']).optional(),
+	// where chords by name sit, as write_pattern's ("C5")
+	register: z
+		.string()
+		.regex(/^[A-Ga-g][#b]?-?\d$/)
+		.optional(),
 	// every note's velocity that gives none, as write_pattern's (a program failed on it)
 	velocity: z.int().min(1).max(127).optional(),
 	// a drum track's lines by sound name, as write_pattern's grid ({"closed hat": "x.x. x.x."}): an
@@ -593,7 +599,12 @@ export function createLab(options: LabOptions): LabSession {
 			let given: readonly WrittenNote[];
 			try {
 				const notes = typeof w.notes === 'string' ? compactNotes(w.notes) : (w.notes ?? []);
-				const chords = w.chords ? compactChords(w.chords, { root: w.voicing === 'root' }) : [];
+				const chords = w.chords
+					? compactChords(w.chords, {
+							root: w.voicing === 'root',
+							center: registerNote(w.register)
+						})
+					: [];
 				given = [...notes, ...chords, ...gridNotes(t, w.grid, w.velocity ?? 100)];
 			} catch (error) {
 				if (error instanceof PatternNotesError)

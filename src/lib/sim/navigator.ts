@@ -1336,7 +1336,7 @@ export function planSettings(state: SimState, goals: readonly SettingGoal[]): Se
 	for (const goal of goals) {
 		// one that already reads its value needs no steps, not even a trip to its page
 		if (reads(sim.state, goal)) {
-			parts.push({ goal, steps: [], reached: true, note: 'already set' });
+			parts.push({ goal, steps: [], reached: true, note: 'already at that value: nothing turned' });
 			continue;
 		}
 		const plan = planGoal(sim.state, goal);
@@ -2056,7 +2056,7 @@ export function planPageValue(state: SimState, goal: PageValueGoal): NavPlan {
 	// one that reads as done needs no steps (a copied sound replanned after it was shown read as
 	// not arrived, its keys planned again)
 	if (special && !special.action && special.reads(state, goal)) {
-		return new Recorder(copy(state)).plan(true, 'already set');
+		return new Recorder(copy(state)).plan(true, 'already at that value: nothing turned');
 	}
 	if (special) return special.plan(state, goal);
 	const access = accessOf(goal);

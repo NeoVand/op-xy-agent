@@ -856,6 +856,20 @@ describe('plan_steps to the project settings', () => {
 		);
 	});
 
+	it('says which tracks an FX reaches when its effect is swapped', async () => {
+		// FX II's reverb swapped for a lofi, and the agent was unsure who else sent there
+		const { run } = setup(true);
+		const swapped = json(
+			await run(planStepsTool, {
+				show: true,
+				settings: [{ area: 'auxiliary', track: 16, param: 'effect', value: 'lofi' }]
+			})
+		);
+		expect(swapped.fx).toMatch(
+			/^FX II's effect is every track's: (T\d \d+, )*T4 23(, T\d \d+)* send to it, through the lofi now; the rest send nothing\.$/
+		);
+	});
+
 	it('says how to hear a sound shaped on a track with notes, alone', async () => {
 		// agents set a reese bass or a radio tone by numbers and said afterwards they never listened
 		const { virtual, run } = setup(true);
@@ -935,6 +949,13 @@ describe('plan_steps to the project settings', () => {
 			/^amp release 12: about \d+(\.\d)? s \(the release runs the other way: a lower value lasts longer\)$/
 		);
 		expect(sim.state.tracks[7].amp.attack).toBeLessThanOrEqual(54);
+		// by its time, the way round too (an agent read a release of 33 as short and 78 as long)
+		const timed = json(
+			await run(planStepsTool, { show: true, track: 8, param: 'amp release', value: '0.6 s' })
+		);
+		expect(timed.times).toMatch(
+			/^amp release 0\.6 s: the page value \d+ \(of 0–99\) is the nearest, 0\.6 s; the release runs the other way, a higher value shorter$/
+		);
 	});
 
 	it('pins the step keys before locking steps while the replica plays', async () => {

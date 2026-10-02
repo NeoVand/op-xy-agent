@@ -5,7 +5,14 @@
  * the pattern plays, not what the agent meant it to play, and a chord that came out wrong (G7 where
  * it meant Gm7) shows by its name.
  */
-import { estimateKey, keySpelling, respellChord, spelledNote } from '$lib/core/listen/harmony';
+import {
+	SCALE_DEGREES,
+	estimateKey,
+	keySpelling,
+	respellChord,
+	spelledNote,
+	type KeyEstimate
+} from '$lib/core/listen/harmony';
 import { chordFromSymbol, chordName } from '$lib/core/music/harmony';
 import type { VirtualPattern } from './virtual-opxy';
 
@@ -276,6 +283,8 @@ export function readPattern(
 		root: number;
 		suffix: string;
 		together?: string;
+		/** Where it starts. */
+		step: number;
 	}[] = [];
 	const bassTracks = new Set<number>();
 	let lastChord = '';
@@ -320,7 +329,8 @@ export function readPattern(
 						plain,
 						name: shown,
 						root: meantChord.root,
-						suffix: plain.slice(names[meantChord.root].length)
+						suffix: plain.slice(names[meantChord.root].length),
+						step
 					});
 				}
 				lastChord = shown;
@@ -340,7 +350,7 @@ export function readPattern(
 			// so it does not drop out unseen (an agent could not tell an A7♭9 was unnamed)
 			const unnamed = `[${tones.join(' ')}]`;
 			if (tones.length >= 3 && unnamed !== lastChord) {
-				heard.push({ plain: unnamed, name: unnamed, root: -1, suffix: '' });
+				heard.push({ plain: unnamed, name: unnamed, root: -1, suffix: '', step });
 				lastChord = unnamed;
 			}
 			return notes.map(noteName).join('+');
@@ -360,7 +370,8 @@ export function readPattern(
 				name,
 				root: chord.root,
 				suffix: plain.slice(names[chord.root].length),
-				...(together ? { together } : {})
+				...(together ? { together } : {}),
+				step
 			});
 			if (bass && over) bassTracks.add(bass.track);
 		}
@@ -376,9 +387,20 @@ export function readPattern(
 	const unnamed = heard.filter((h) => h.root < 0).map((h) => h.plain);
 	const degree = (h: (typeof heard)[number]) =>
 		h.root < 0 || tonic === undefined ? '?' : numeral(h.root, h.suffix, tonic);
+	// a key change: each part of the chords whole in a key of its own where no one key holds them
+	// all (C Am7 Dm7 G7 then D Bm7 Em7 A7 read as G major, its numerals right for neither)
+	const change = meant ? null : keyChange(p, heard, found);
+	const degreeIn = (h: (typeof heard)[number], key: KeyEstimate) =>
+		h.root < 0 ? '?' : numeral(h.root, h.suffix, key.pitchClass);
+	const keys = change
+		? (() => {
+				const [before, after] = [heard.slice(0, change.split), heard.slice(change.split)];
+				return `${before.map((h) => h.plain).join(' ')} | ${after.map((h) => h.plain).join(' ')}: ${before.map((h) => degreeIn(h, change.first)).join(' ')} in ${change.first.key}, then ${after.map((h) => degreeIn(h, change.second)).join(' ')} in ${change.second.key} from step ${change.at} (a key change ${keyMove(change.first, change.second)})`;
+			})()
+		: null;
 	const progression =
 		heard.length >= 2 && tonic !== undefined && keyName
-			? `${heard.map((h) => h.plain).join(' ')}: ${heard.map(degree).join(' ')} in ${keyName}${inverted.length ? `; ${inverted.join(', ')} ${inverted.length === 1 ? 'is an inversion' : 'are inversions'}, the same chord${inverted.length === 1 ? '' : 's'} over another of ${inverted.length === 1 ? 'its' : 'their'} notes` : ''}${unnamed.length ? `; ${unnamed.join(', ')} ${unnamed.length === 1 ? 'is' : 'are'} no chord the reading names` : ''}`
+			? `${keys ?? `${heard.map((h) => h.plain).join(' ')}: ${heard.map(degree).join(' ')} in ${keyName}`}${inverted.length ? `; ${inverted.join(', ')} ${inverted.length === 1 ? 'is an inversion' : 'are inversions'}, the same chord${inverted.length === 1 ? '' : 's'} over another of ${inverted.length === 1 ? 'its' : 'their'} notes` : ''}${unnamed.length ? `; ${unnamed.join(', ')} ${unnamed.length === 1 ? 'is' : 'are'} no chord the reading names` : ''}`
 			: null;
 	// a single-note line against the chords sounding under it on another track
 	let againstChords: string | null = null;
@@ -602,9 +624,11 @@ export function readPattern(
 	return {
 		...(meant
 			? { key: `${meant.label} (as written)` }
-			: found
-				? { key: found.clear ? found.key : `${found.key} (a guess)` }
-				: {}),
+			: change
+				? { key: `${change.first.key}, then ${change.second.key} from step ${change.at}` }
+				: found
+					? { key: found.clear ? found.key : `${found.key} (a guess)` }
+					: {}),
 		bars,
 		...(chords.length ? { chords } : {}),
 		...(progression ? { progression } : {}),
@@ -616,6 +640,73 @@ export function readPattern(
 		...(rests ? { rests } : {}),
 		notes
 	};
+}
+
+/** Whether every note of `notes` is in the key's scale (minor with its raised seventh). */
+function inKey(
+	notes: readonly { note: number }[],
+	key: { pitchClass: number; mode: 'major' | 'minor' }
+) {
+	const degrees: readonly number[] = SCALE_DEGREES[key.mode];
+	return notes.every((n) => degrees.includes((n.note - key.pitchClass + 120) % 12));
+}
+
+/**
+ * Where a progression changes key: the split into two parts of three chords or more, each whole
+ * in a key of its own, when no one key holds all its notes; the split whose keys fit best.
+ */
+function keyChange(
+	p: VirtualPattern,
+	heard: readonly { step: number; root: number }[],
+	found: KeyEstimate | null
+): { at: number; split: number; first: KeyEstimate; second: KeyEstimate } | null {
+	if (heard.length < 6 || heard.some((h) => h.root < 0)) return null;
+	if (found && inKey(p.notes, found)) return null;
+	const keyOf = (notes: readonly { note: number; length: number }[]) => {
+		const chroma = new Array<number>(12).fill(0);
+		for (const n of notes) chroma[n.note % 12] += Math.max(0.25, n.length);
+		return estimateKey(chroma, { written: true });
+	};
+	let best: {
+		at: number;
+		split: number;
+		first: KeyEstimate;
+		second: KeyEstimate;
+		fit: number;
+	} | null = null;
+	for (let split = 3; split <= heard.length - 3; split++) {
+		const at = heard[split].step;
+		const before = p.notes.filter((n) => n.step < at);
+		const after = p.notes.filter((n) => n.step >= at);
+		const first = keyOf(before);
+		const second = keyOf(after);
+		if (!first || !second || first.key === second.key) continue;
+		if (!inKey(before, first) || !inKey(after, second)) continue;
+		const fit = first.correlation + second.correlation;
+		if (!best || fit > best.fit) best = { at, split, first, second, fit };
+	}
+	return best;
+}
+
+/** How a key change moves, tonic to tonic ("up a whole step", "to the parallel minor"). */
+function keyMove(from: KeyEstimate, to: KeyEstimate): string {
+	const up = (to.pitchClass - from.pitchClass + 12) % 12;
+	if (up === 0) return `to the parallel ${to.mode}`;
+	const moves = [
+		'',
+		'up a half step',
+		'up a whole step',
+		'up a minor third',
+		'up a major third',
+		'up a fourth',
+		'a tritone away',
+		'up a fifth',
+		'down a major third',
+		'down a minor third',
+		'down a whole step',
+		'down a half step'
+	];
+	return `${moves[up]}${from.mode === to.mode ? '' : `, ${from.mode} to ${to.mode}`}`;
 }
 
 /** At or over this velocity a hit reads as an accent, X. */

@@ -252,6 +252,8 @@ export interface PatternWrite {
 	/** Chords by name, as write_pattern takes them ("1:Am7 17:F"), voiced smoothly (or voicing root). */
 	readonly chords?: string;
 	readonly voicing?: 'smooth' | 'root';
+	/** Where chords by name sit: the note their middle stays near ("C5"; default C4). */
+	readonly register?: string;
 	/**
 	 * A drum track's lines by sound name or note, as write_pattern's grid ({"closed hat": "x.x. X.x."}:
 	 * x a hit at velocity, X an accent, o soft, 1–9 a hit that loud, . a rest), with notes or alone.

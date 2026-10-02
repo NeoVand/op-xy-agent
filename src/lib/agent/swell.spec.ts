@@ -39,7 +39,7 @@ describe('tailNote', () => {
 	it('says a long release rings each chord on under the next', () => {
 		// release 30 is about 3.2 s (an agent's pad read Csus4 at every change)
 		expect(tailNote(7, amp(35, 30), changes, 1, 120)).toMatch(
-			/^T7's amp release \(30 on its page, where a lower value lasts longer\) takes 3\.\d s to die away \(120 bpm\), so each chord rings on under the next: /
+			/^T7's amp release \(30 on its page, where a lower value lasts longer\) takes 3\.\d s to die away from each note's end, at any tempo, so at 120 bpm each chord rings on under the next: /
 		);
 	});
 

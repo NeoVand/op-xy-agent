@@ -40,7 +40,7 @@ import {
 	type ToolResult
 } from './define';
 import { songLength } from './virtual';
-import { swellsNow } from '../swell';
+import { swellsNow, tailsNow } from '../swell';
 
 // ─── helpers ────────────────────────────────────────────────────────────────────────────────────
 
@@ -419,13 +419,16 @@ export const setTempoTool = defineTool({
 			const fits = fitted.length
 				? `At ${formatBpm(bpm)} bpm ${fitted.map((t) => `T${t}'s`).join(' and ')} notes outlast ${fitted.length === 1 ? 'its' : 'their'} amp attack: the swell said at ${formatBpm(previous)} bpm is no longer so.`
 				: '';
+			// and a release that blurs chord changes stays as long in seconds
+			const tails = bpm !== previous ? tailsNow(where.virtual) : [];
 			return jsonResult(
 				{
 					target: 'virtual',
 					tempoBpm: bpm,
 					previousBpm: previous,
 					...virtualNote(ctx.env),
-					...(swells.length || fits ? { swell: [...swells, fits].filter(Boolean).join(' ') } : {})
+					...(swells.length || fits ? { swell: [...swells, fits].filter(Boolean).join(' ') } : {}),
+					...(tails.length ? { tail: tails.join(' ') } : {})
 				},
 				`tempo ${formatBpm(bpm)} bpm on the replica`,
 				{ applied: true, after: bpm }

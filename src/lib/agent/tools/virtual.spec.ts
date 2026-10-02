@@ -409,6 +409,43 @@ describe('write_pattern one bar at a time', () => {
 		expect(inverse?.input).toMatchObject({ track: 3, copy_track: 5, swap: true });
 	});
 
+	it('reads a key change in a progression as two keys, each with its numerals', async () => {
+		// C major then D major read as G major, its numerals right for neither
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 4,
+				bars: 4,
+				chords: '1:C:8 9:Am7:8 17:Dm7:8 25:G7:8 33:D:8 41:Bm7:8 49:Em7:8 57:A7:8'
+			})
+		);
+		expect(result.written.reading.key).toBe('C major, then D major from step 33');
+		expect(result.written.reading.progression).toMatch(
+			/^C Am7 Dm7 G7 \| D Bm7 Em7 A7: I vi7 ii7 V7 in C major, then I vi7 ii7 V7 in D major from step 33 \(a key change up a whole step\)/
+		);
+		// one key that holds them all stays one key, borrowed chords and all
+		const one = json(
+			await run(writePatternTool, {
+				track: 4,
+				bars: 4,
+				chords: '1:C:8 9:Am:8 17:F:8 25:G:8 33:C:8 41:Am:8 49:F:8 57:G:8'
+			})
+		);
+		expect(one.written.reading.key).toBe('C major');
+	});
+
+	it('sits chords by name where the register says', async () => {
+		// an agent rewrote a pad's chords note by note to lift them off the bass
+		const { virtual, run } = setup();
+		await run(writePatternTool, { track: 4, chords: '1:Am:16', voicing: 'root' });
+		expect(virtual.readPattern(4).notes.map((n) => n.note)).toEqual([57, 60, 64]);
+		await run(writePatternTool, { track: 4, chords: '1:Am:16', voicing: 'root', register: 'C5' });
+		expect(virtual.readPattern(4).notes.map((n) => n.note)).toEqual([69, 72, 76]);
+		expect(() =>
+			writePatternTool.input.parse({ track: 4, chords: '1:Am', register: 'high' })
+		).toThrow();
+	});
+
 	it('restrikes held chords on a rhythm line, alone or with the chords given', async () => {
 		// "make the chords play only on the off-beats": an agent wrote sixteen stabs out by hand
 		const { virtual, run } = setup();
@@ -925,7 +962,7 @@ describe('write_pattern on drums', () => {
 		);
 		// the strings' long release rings each chord on under the next (read as sus chords once)
 		expect(result.note).toMatch(
-			/T7's amp release \(\d+ on its page, where a lower value lasts longer\) takes \d+(\.\d)? s to die away \(120 bpm\), so each chord rings on under the next/
+			/T7's amp release \(\d+ on its page, where a lower value lasts longer\) takes \d+(\.\d)? s to die away from each note's end, at any tempo, so at 120 bpm each chord rings on under the next/
 		);
 		const bad = await run(writePatternTool, { track: 7, chords: '1:Hm7' });
 		expect(bad.isError).toBe(true);
@@ -2222,6 +2259,17 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		expect(silenced()).toBe(2);
 	});
 
+	it('says a release still blurs chord changes after the tempo changes', async () => {
+		// a pad slowed from 150 to 70 bpm: the agent said its changes would ring less
+		const { sim, run } = setup();
+		sim.state.tracks[7].amp.release = 30;
+		await run(writePatternTool, { track: 8, chords: '1:C:16 17:Am:16 33:F:16 49:G:16' });
+		const slow = json(await run(setTempoTool, { bpm: 70 }));
+		expect(slow.tail).toMatch(
+			/^T8's amp release \(30 on its page, where a lower value lasts longer\) takes \d+(\.\d)? s to die away from each note's end, at any tempo, so at 70 bpm each chord rings on under the next: .* A slower tempo does not shorten it/
+		);
+	});
+
 	it('re-checks slow attacks against the notes when the tempo changes', async () => {
 		// a swell that fit its notes at 72 bpm stopped reaching full level once the tempo doubled
 		const { sim, run } = setup();
@@ -2235,6 +2283,8 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		);
 		const same = json(await run(setTempoTool, { bpm: 66 }));
 		expect(same.swell).toBeUndefined();
+		// one chord held: no change for a release to blur
+		expect(same.tail).toBeUndefined();
 		const fast = json(await run(setTempoTool, { bpm: 160 }));
 		expect(fast.swell).toMatch(/^T8.s amp attack \(50 on its page\) takes/);
 	});

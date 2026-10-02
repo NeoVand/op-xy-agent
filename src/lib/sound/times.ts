@@ -70,8 +70,11 @@ export function stageSetting(
 	const time = STAGE_TIME.exec(text);
 	if (!time) return null;
 	const page = nearestStage(stage, Number(time[1]) / (time[2].toLowerCase() === 'ms' ? 1000 : 1));
+	// which way the page runs too (an agent read a release of 33 as short and 78 as long)
+	const runs =
+		stage === 'release' ? '; the release runs the other way, a higher value shorter' : '';
 	return {
 		value: page,
-		line: `${name} ${text}: the page value ${page} (of 0–99) is the nearest, ${timeText(stageSeconds(stage, page))}`
+		line: `${name} ${text}: the page value ${page} (of 0–99) is the nearest, ${timeText(stageSeconds(stage, page))}${runs}`
 	};
 }

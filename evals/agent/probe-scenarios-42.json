@@ -1,0 +1,138 @@
+[
+	{
+		"name": "hats-groove-50",
+		"about": "Re-check: a pattern's groove between the detents, said.",
+		"steps": [
+			{ "say": "make a beat with the hats on track 2" },
+			{ "say": "give the hats pattern its own groove of 50" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lofi-fx-two",
+		"about": "Re-check: an auxiliary track read back as given.",
+		"steps": [
+			{ "say": "write chords on track 4" },
+			{ "say": "put a lofi effect on FX II and send the chords to it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "reese-heard",
+		"about": "Re-check: a sound shaped, then heard alone.",
+		"steps": [
+			{ "say": "write a bassline on track 3" },
+			{ "say": "make it sound like a reese bass" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "pad-bass-clash",
+		"about": "Re-check: two parts in each other's way, heard first.",
+		"steps": [
+			{ "say": "make a beat with a bass and a pad" },
+			{ "say": "the pad and the bass are clashing, fix it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "pad-slowed",
+		"about": "Re-check: a tempo change that ends a swell.",
+		"steps": [
+			{ "say": "set the tempo to 150 and write slow pad chords on track 8" },
+			{ "say": "now slow it right down to 70" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ratchet-demo-empty",
+		"about": "Re-check: a component shown on an empty step.",
+		"steps": [{ "say": "show me how to put a ratchet on step 4" }, { "why": true }]
+	},
+	{
+		"name": "spanish-reggaeton",
+		"about": "A request in Spanish.",
+		"steps": [{ "say": "haz un ritmo de reggaetón con bajo" }, { "why": true }]
+	},
+	{
+		"name": "korean-hiphop",
+		"about": "A request in Korean.",
+		"steps": [{ "say": "드럼이랑 베이스로 힙합 비트 만들어 줘" }, { "why": true }]
+	},
+	{
+		"name": "lfo-types",
+		"about": "A concept question.",
+		"steps": [
+			{ "say": "what's the difference between the lfo types on the op-xy?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "three-minute-song",
+		"about": "A song by its length in time.",
+		"steps": [{ "say": "make a 3 minute song" }, { "why": true }]
+	},
+	{
+		"name": "melody-interesting",
+		"about": "A vague edit after a write.",
+		"steps": [
+			{ "say": "write a melody on track 5" },
+			{ "say": "make it more interesting" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "three-against-four",
+		"about": "A polyrhythm across tracks.",
+		"steps": [{ "say": "make a 3 against 4 polyrhythm" }, { "why": true }]
+	},
+	{
+		"name": "bass-follows-kick",
+		"about": "One part locked to another.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "write a bassline that plays exactly with the kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "key-change",
+		"about": "A modulation in a progression.",
+		"steps": [
+			{ "say": "write a chord progression that changes key halfway through" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sliding-808",
+		"about": "A glide on a bass.",
+		"steps": [{ "say": "make a trap beat with an 808 that slides between notes" }, { "why": true }]
+	},
+	{
+		"name": "more-human",
+		"about": "A feel edit.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "can you make it sound more human?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "start-over",
+		"about": "Starting again.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "I don't like it, remove everything and start over" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tempo-and-key",
+		"about": "Reading the state back.",
+		"steps": [
+			{ "say": "make a beat with chords" },
+			{ "say": "what tempo is it at, and what key is it in?" },
+			{ "why": true }
+		]
+	}
+]

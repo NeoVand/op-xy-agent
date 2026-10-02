@@ -146,7 +146,10 @@ const CLEAR_MARGIN = 0.05;
  * Scale degrees for written notes: major, and minor with both sevenths (the raised one is the
  * leading note minor keys borrow).
  */
-const SCALE_DEGREES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10, 11] } as const;
+export const SCALE_DEGREES = {
+	major: [0, 2, 4, 5, 7, 9, 11],
+	minor: [0, 2, 3, 5, 7, 8, 10, 11]
+} as const;
 /** How much more of the notes' time a key may leave out of its scale and still be in the running. */
 const SCALE_SLACK = 0.02;
 

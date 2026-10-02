@@ -22,7 +22,7 @@ import { grooveReachAll } from '../groove-reach';
 import { compoundPulse } from '../pattern-reading';
 import { lockReach } from '../lock-reach';
 import { slidesNote } from '../slides';
-import { swellNote, swellsNow, tailNote } from '../swell';
+import { swellNote, swellsNow, tailNote, tailsNow } from '../swell';
 import { stageSetting } from '$lib/sound/times';
 import type { TimeSignature } from '$lib/sim/areas/arrange/state';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
@@ -753,7 +753,7 @@ export const planStepsTool = defineTool({
 					: []
 			)
 		);
-		const tails = [...released].flatMap((track) => {
+		const tailsByRelease = [...released].flatMap((track) => {
 			if (track < 1 || track > 8) return [];
 			const p = virtual.readPattern(track);
 			const line = tailNote(
@@ -765,6 +765,33 @@ export const planStepsTool = defineTool({
 			);
 			return line ? [line] : [];
 		});
+		// an FX's effect swapped reaches every track that sends to it (an agent swapped FX II's reverb
+		// for a lofi, unsure who else sent there)
+		const swapped = goals.flatMap((g) => {
+			const name = 'label' in g ? g.label : 'param' in g ? g.param : '';
+			const track = 'track' in g ? g.track : undefined;
+			return /^effect$/i.test(String(name).trim()) &&
+				'area' in g &&
+				g.area === 'auxiliary' &&
+				(track === 15 || track === 16 || track === 7 || track === 8)
+				? [track === 15 || track === 7 ? 'I' : 'II']
+				: [];
+		});
+		const fxShared = [...new Set(swapped)].map((fx) => {
+			const sends = [1, 2, 3, 4, 5, 6, 7, 8].flatMap((t) => {
+				const m = new RegExp(`\\bfx ${fx} (\\d+)`).exec(
+					virtual.readSound(t).pages['shift M3 sends'] ?? ''
+				);
+				const level = m ? Number(m[1]) : 0;
+				return level > 0 ? [`T${t} ${level}`] : [];
+			});
+			const effect = /^(\w+):/.exec(virtual.readSound(1).fx?.[`FX ${fx}` as 'FX I'] ?? '')?.[1];
+			return sends.length
+				? `FX ${fx}'s effect is every track's: ${sends.join(', ')} send${sends.length === 1 ? 's' : ''} to it${effect ? `, through the ${effect} now` : ''}; the rest send nothing.`
+				: `No track sends to FX ${fx} yet: give one its fx ${fx} send to hear it.`;
+		});
+		// a tempo set leaves every release as long in seconds
+		const tails = [...new Set([...tailsByRelease, ...(tempoSet ? tailsNow(virtual) : [])])];
 		// a sound loaded (an engine, a preset, another track's) sets every page anew: its pages as
 		// they read now, after the settings that followed (an agent loading axis for a pad never saw
 		// that the load had brought its own filter and envelopes)
@@ -849,6 +876,7 @@ export const planStepsTool = defineTool({
 				...(slides.length ? { slides: slides.join(' ') } : {}),
 				...(swells.length ? { swell: swells.join(' ') } : {}),
 				...(tails.length ? { tail: tails.join(' ') } : {}),
+				...(fxShared.length ? { fx: fxShared.join(' ') } : {}),
 				...(ducks.length ? { duck: ducks.join(' ') } : {}),
 				...(filterOff.length ? { filterOff: filterOff.join(' ') } : {}),
 				...(rates.length ? { lfoRate: rates.join(' ') } : {}),

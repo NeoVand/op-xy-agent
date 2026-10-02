@@ -309,7 +309,7 @@ describe('the navigator: parameters', () => {
 			pluck.parts.map((p) => p.goal)
 		);
 		expect(again.steps).toEqual([]);
-		expect(again.parts.every((p) => p.note === 'already set')).toBe(true);
+		expect(again.parts.every((p) => p.note === 'already at that value: nothing turned')).toBe(true);
 	});
 
 	it('goes on past a goal it cannot reach and says which', () => {
