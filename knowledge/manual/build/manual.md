@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1234 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1235 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -4197,6 +4197,7 @@ changing it.
 Facts:
 - The general page of the project settings shifts the pitch of every note in the project, useful for matching the key of other music. [#what] [s1]
 - Whether drums follow is unclear — the guide says they do, while the OS 1.0.9 notes say global transpose no longer applies to drums; not yet checked on a unit. [#drums] (conflicting) [s2]
+- The replica follows the OS 1.0.9 notes, the later source. Every track but a drum track plays transposed, with the sound's own preset transpose added, and a drum track plays as it is. [#replica] (derived) [s2]
 - OS 1.1.21 simplified the global transpose without saying how. [#simplified] (since 1.1.21) [s3]
 - OS 1.1.25 improved how multisampled sounds respond to global transpose. [#multisamples] (since 1.1.25) [s4]
 - To follow a key live, or transpose only chosen tracks, use the brain track in auxiliary mode instead. [#brain] [s5]

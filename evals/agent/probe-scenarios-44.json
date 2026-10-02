@@ -1,0 +1,43 @@
+[
+	{
+		"name": "long-glide",
+		"about": "Portamento now runs off, then 1–127: the agent sets the longest glide and reads it back.",
+		"steps": [
+			{
+				"say": "my bass on track 3 should slide between every note with the longest glide the op-xy can do. set that up and tell me the number it shows"
+			},
+			{ "why": true },
+			{ "say": "now no glide at all on it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sampler-locks",
+		"about": "Region locks: the multisampler takes none, the synth sampler locks a point on one step.",
+		"steps": [
+			{
+				"say": "on track 8, can I make step 3 play from a different loop start than the other steps?"
+			},
+			{ "why": true },
+			{
+				"say": "ok then put track 8 on the synth sampler, give it notes on steps 1 to 4, and lock the loop start of step 3 to 50%"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "linked-transpose",
+		"about": "Linked tracks now sound, transpose is heard: the agent explains and sets both.",
+		"steps": [
+			{
+				"say": "link track 4 to track 3 so that when I play track 3 I hear both. how do I do that?"
+			},
+			{ "why": true },
+			{
+				"say": "transpose the whole project up 2 semitones. do my drums move too?"
+			},
+			{ "why": true },
+			{ "debrief": true }
+		]
+	}
+]

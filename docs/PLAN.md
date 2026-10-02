@@ -865,6 +865,13 @@ matrix (66).
     - "loop until release" stops looping at the release and plays on to the region's end.
   - From the camera: portamento reads off, then plain numbers up to 127 (b1-2796…2803), on the
     page, in locks, in `.xy` lock lanes and in the glide law.
+  - Probe check (`probe-scenarios-44.json`, three scenarios, one failed call: a key-grammar slip).
+    The agent:
+    - set portamento to 127 and back to off;
+    - locked a synth sampler's loop start on one step, and said a multisampler zone takes none;
+    - gave transpose's drum conflict (the manual now says what the replica does).
+  - Left for G6: the agent asked for a lockable flag per control in the device map, the sampler
+    page's loop type in read_sound, and show_on_replica's result naming a link it made.
 
 - **G1 — The ledger.** Note 66's 271 rows go into `knowledge/opxy/fidelity.json`, each with status,
   evidence ids, test and manual unit. A test refuses "verified" without a capture and a pinning

@@ -21,6 +21,10 @@ facts:
     text: Whether drums follow is unclear — the guide says they do, while the OS 1.0.9 notes say global transpose no longer applies to drums; not yet checked on a unit.
     source: https://teenage.engineering/downloads/op-xy#1.0.9
     confidence: conflicting
+  - id: replica
+    text: The replica follows the OS 1.0.9 notes, the later source. Every track but a drum track plays transposed, with the sound's own preset transpose added, and a drum track plays as it is.
+    source: https://teenage.engineering/downloads/op-xy#1.0.9
+    confidence: derived
   - id: simplified
     text: OS 1.1.21 simplified the global transpose without saying how.
     source: https://teenage.engineering/downloads/op-xy#1.1.21

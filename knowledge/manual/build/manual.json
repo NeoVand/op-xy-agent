@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "6e49ee90",
+	"bundle_hash": "91badc1f",
 	"stats": {
 		"units": 166,
-		"facts": 1234,
+		"facts": 1235,
 		"procedures": 207,
 		"parameters": 207,
 		"verified_items": 262,
-		"words": 46975,
+		"words": 47008,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -23358,6 +23358,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "conflicting"
+				},
+				{
+					"id": "replica",
+					"text": "The replica follows the OS 1.0.9 notes, the later source. Every track but a drum track plays transposed, with the sound's own preset transpose added, and a drum track plays as it is.",
+					"source": "https://teenage.engineering/downloads/op-xy#1.0.9",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				},
 				{
 					"id": "simplified",
