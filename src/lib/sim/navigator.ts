@@ -841,12 +841,14 @@ function turnTo(
 	if (clicks !== 0) {
 		// a held step's lock: the screen as it reads with the step still held (the page itself goes
 		// back to the track's value on release, which gave a walkthrough no value to turn toward),
-		// and the music, which keeps the lock
+		// and the music, which keeps the lock; a shift layer's value as it reads with shift held (a
+		// send turned on shift + M3 read back as the filter page, and an agent could not confirm it)
 		const step = hold ? /^step (\d+)$/.exec(hold) : null;
 		let screen = screenOf(sim);
-		if (step) {
+		if (step || shift) {
 			const held = copy(sim.state);
-			held.input({ type: 'press', id: `step.${step[1]}` });
+			if (step) held.input({ type: 'press', id: `step.${step[1]}` });
+			if (shift) held.input({ type: 'press', id: 'key.shift' });
 			screen = screenOf(held);
 		}
 		rec.steps.push({

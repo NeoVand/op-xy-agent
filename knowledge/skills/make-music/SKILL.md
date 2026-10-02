@@ -47,7 +47,14 @@ learning or playing along keeps time by it).
 
 Another meter is the project's time signature (the key planner sets "time signature") and a
 pattern length its bars fill: a 3/4 bar is 12 steps (three beats of four), 6/8 is 12 (two beats of
-six), 7/8 is 14, 5/4 is 20, so four bars of 3/4 are length 48. Readings then group the bars that way.
+six), 7/8 is 14, 5/4 is 20, so four bars of 3/4 are bars 3, length 48. With no length a pattern
+takes the whole bars of the meter that its bars of 16 hold (bars 4 in 7/8: 56 steps, four bars of
+it), and the result says so. Readings then group the bars that way. Double time is track scale 1/2
+(each step a thirty-second), half time scale 2.
+
+Parts sit where the presets sound best: a bass mostly between E1 and E3 (a sub bass C1–C2), chords
+and pads around middle C (C3–C5), a lead or melody above them (C4–C6), so the parts do not crowd one
+another.
 
 Musical words mean what a drummer or producer means: a fill fills its bar (sixteenths building in
 velocity into the next downbeat, toms at the end if you like; write the groove's one-bar lines for

@@ -90,9 +90,11 @@ describe('the song as a WAV', () => {
 	it('is each entry rendered from its scene, end to end, with the last ringing out', async () => {
 		const { sim } = project();
 		const rendered: number[] = [];
+		const notes: (number | undefined)[] = [];
 		const clicks: boolean[] = [];
 		const render: RenderScene = async (request) => {
 			rendered.push(request.seconds);
+			notes.push(request.notes);
 			clicks.push(JSON.parse(request.project).tempo.metronome.on);
 			const frames = Math.round(request.seconds * request.sampleRate);
 			return { sampleRate: request.sampleRate, channels: [new Float32Array(frames).fill(0.25)] };
@@ -102,8 +104,10 @@ describe('the song as a WAV', () => {
 			sampleRate: 8000,
 			onProgress: (done, of) => progress.push(`${done}/${of}`)
 		});
-		// three entries of one bar at 120 bpm (2 s), each rendered with 1.5 s to ring out
+		// three entries of one bar at 120 bpm (2 s), each rendered with 1.5 s to ring out, its notes
+		// stopping at its end (the scene would start over in the tail)
 		expect(rendered).toEqual([3.5, 3.5, 3.5]);
+		expect(notes).toEqual([1.96875, 1.96875, 1.96875]);
 		expect(progress).toEqual(['1/3', '2/3', '3/3']);
 		// the metronome is on in a new project, off in the file
 		expect(sim.state.tempo.metronome.on).toBe(true);

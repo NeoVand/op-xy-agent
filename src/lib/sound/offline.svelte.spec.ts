@@ -62,6 +62,37 @@ describe('renderOffline', () => {
 		expect(peak(silent.channels)).toBeLessThan(1e-4);
 	}, 60_000);
 
+	it('plays notes only for `notes` seconds, ringing out after', async () => {
+		// one closed hat (short) on step 1 of a one-bar scene: at 120 bpm it comes round again at 2 s
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		virtual.setMetronome(false);
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 1, note: 61, velocity: 110, length: 1 }]
+		});
+		virtual.transport('play');
+		const s = sim.state;
+		const request = {
+			project: snapshot(s),
+			transport: { ...s.transport },
+			track: s.track,
+			mode: s.mode,
+			seconds: 2.5,
+			sampleRate: 48_000
+		};
+		const window = (channels: readonly Float32Array[]) =>
+			channels.map((c) => c.subarray(Math.round(2.0 * 48_000), Math.round(2.3 * 48_000)));
+		const looped = await renderOffline(request, new SampleRegistry());
+		const stopped = await renderOffline({ ...request, notes: 1.96 }, new SampleRegistry());
+		// the hat again at 2 s, or nothing new there
+		expect(peak(window(looped.channels))).toBeGreaterThan(0.02);
+		expect(peak(window(stopped.channels))).toBeLessThan(peak(window(looped.channels)) / 10);
+		// the first hat is in both
+		expect(peak(stopped.channels)).toBeGreaterThan(0.02);
+	}, 60_000);
+
 	it('lets the lab hear a fork', async () => {
 		const sim = new OpxySim({ now: () => 0 });
 		const samples = new SampleRegistry();

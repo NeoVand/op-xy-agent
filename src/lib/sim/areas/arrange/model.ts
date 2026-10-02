@@ -83,7 +83,7 @@ export function trackSequence(s: SimState, t: number): Sequence {
 }
 
 /** The mixer strip of track `t`. */
-function trackMix(s: SimState, t: number): SceneMix {
+export function trackMix(s: SimState, t: number): SceneMix {
 	return t < 8 ? s.tracks[t].mix : s.aux[t - 8].mix;
 }
 type SceneMix = Scene['mix'][number];

@@ -1,0 +1,209 @@
+[
+	{
+		"name": "re-theory-chords",
+		"about": "Regression re-run: Theory: a progression written and explained.",
+		"steps": [
+			{
+				"say": "write a sad chord progression in D minor on track 7 and explain why it sounds sad"
+			},
+			{
+				"why": true
+			},
+			{
+				"say": "make the last chord more tense so it pulls back to the start"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "re-long-build",
+		"about": "Regression re-run: A song built over six turns, then a question about all of it.",
+		"steps": [
+			{
+				"say": "let's build a song together. start with a chill beat at 85"
+			},
+			{
+				"say": "add a warm bassline"
+			},
+			{
+				"say": "now some jazzy chords on top"
+			},
+			{
+				"say": "and a simple melody"
+			},
+			{
+				"say": "arrange it: intro, two verses, a break and an outro"
+			},
+			{
+				"say": "what did we make? describe the whole song to me"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "re-everything-at-once",
+		"about": "Regression re-run: One long compound request.",
+		"steps": [
+			{
+				"say": "make a beat at 120, add a bass in E minor on track 3, chords on track 7, a lead on track 5, arrange it in 4 scenes as intro verse chorus outro, add some swing, turn off the click, and tell me how to save it on my op-xy"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "re-relative-tweaks",
+		"about": "Regression re-run: Relative sound changes over several turns, then half of one taken back.",
+		"steps": [
+			{
+				"say": "make a bassline on track 3"
+			},
+			{
+				"say": "make it warmer"
+			},
+			{
+				"say": "a bit more"
+			},
+			{
+				"say": "too much, go halfway back"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "re-two-minute-song",
+		"about": "Regression re-run: A song of a set length: the arithmetic of scenes and the song.",
+		"steps": [
+			{
+				"say": "make a song that lasts about 2 minutes at 120 bpm, with an intro, verse, chorus and outro"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "re-phrygian-double-time",
+		"about": "Regression re-run: Many constraints in one message.",
+		"steps": [
+			{
+				"say": "make a song in 7/8 at 140 in D phrygian with a bass, a lead and chords, three parts, and the last part double time"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "teach-then-quiz",
+		"about": "Teaching, then a quiz the user answers wrong.",
+		"steps": [
+			{
+				"say": "explain how the OP-XY sequencer works in a few sentences, then quiz me with one question"
+			},
+			{
+				"say": "is it shift + record?"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "build-up-drop",
+		"about": "A transition: a build-up with a riser into a drop.",
+		"steps": [
+			{
+				"say": "make an 8 bar build-up with a snare roll and a rising filter that drops into a big 4 bar drop, and play it"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "call-response",
+		"about": "Two tracks in interplay.",
+		"steps": [
+			{
+				"say": "make a call and response between a lead on track 5 and the bass on track 3, 4 bars"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "chorus-louder",
+		"about": "A mix change for one part of a song.",
+		"steps": [
+			{
+				"say": "make a song with a verse and a chorus, 4 bars each"
+			},
+			{
+				"say": "make the chorus louder than the verse"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "mute-in-scene-2",
+		"about": "A track muted in one scene only.",
+		"steps": [
+			{
+				"say": "make a two scene song with drums, bass and chords in both"
+			},
+			{
+				"say": "mute the bass in the second scene only"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "two-envelopes",
+		"about": "A concept shown on the replica.",
+		"steps": [
+			{
+				"say": "what's the difference between the filter envelope and the amp envelope? show me both on track 3"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "sharp-notes",
+		"about": "Notes named with sharps in a flat key.",
+		"steps": [
+			{
+				"say": "write a bassline in F minor on track 3 using the notes F, G#, A#, C and D#"
+			},
+			{
+				"why": true
+			}
+		]
+	},
+	{
+		"name": "preset-maker-kit",
+		"about": "The app's preset maker, asked about.",
+		"steps": [
+			{
+				"say": "I made a kit in the preset maker, how do I get it onto track 2 here and onto my op-xy?"
+			},
+			{
+				"why": true
+			}
+		]
+	}
+]

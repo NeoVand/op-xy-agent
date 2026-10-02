@@ -29,6 +29,16 @@ export interface PatternReading {
 	 * notes".
 	 */
 	readonly progression?: string;
+	/**
+	 * A line of single notes, bar by bar: the chord each bar's notes make, where they make one ("bar
+	 * 1: Am (A C E)"), so the harmony a bassline or melody outlines can be checked.
+	 */
+	readonly outlines?: readonly string[];
+	/**
+	 * How the reading spells notes the writer named another way: "G# A# read as Ab Bb, as F minor
+	 * spells them (the same notes)".
+	 */
+	readonly spelled?: string;
 }
 
 const ascii = (name: string) => name.replace(/♯/g, '#').replace(/♭/g, 'b');
@@ -136,7 +146,9 @@ export function readPattern(
 	alongside: readonly VirtualPattern[] = [],
 	meter: BarMeter = FOUR_FOUR,
 	/** The key the writer means: spelled in, and named, instead of guessed. */
-	meant: MeantKey | null = null
+	meant: MeantKey | null = null,
+	/** Note names with a sharp or flat as the writer gave them ("G#"), to say how they read. */
+	written: readonly string[] = []
 ): PatternReading | null {
 	if (p.notes.length === 0) return null;
 	// the key from how long each pitch class sounds, in this part and those with it
@@ -229,6 +241,39 @@ export function readPattern(
 		heard.length >= 2 && tonic !== undefined && keyName
 			? `${heard.map((h) => h.plain).join(' ')}: ${heard.map(degree).join(' ')} in ${keyName}${inverted.length ? `; ${inverted.join(', ')} ${inverted.length === 1 ? 'is an inversion' : 'are inversions'}, the same chord${inverted.length === 1 ? '' : 's'} over another of ${inverted.length === 1 ? 'its' : 'their'} notes` : ''}${unnamed.length ? `; ${unnamed.join(', ')} ${unnamed.length === 1 ? 'is' : 'are'} no chord the reading names` : ''}`
 			: null;
+	// a line of single notes: the chord each bar's notes make (an agent named a bass's chords from
+	// what it meant to write, with nothing to check them by)
+	const outlines: string[] = [];
+	if (heard.length === 0 && [...starting.values()].every((notes) => notes.length === 1)) {
+		for (let b = 0; b * meter.bar < p.length; b++) {
+			const from = b * meter.bar + 1;
+			const to = Math.min(p.length, (b + 1) * meter.bar);
+			const notes = p.notes
+				.filter((n) => n.step >= from && n.step <= to)
+				.map((n) => n.note)
+				.sort((x, y) => x - y);
+			const tones = [...new Set(notes.map((n) => names[n % 12]))];
+			const chord = tones.length >= 3 ? chordName(notes) : null;
+			if (chord) {
+				outlines.push(
+					`bar ${b + 1}: ${respellChord(ascii(chord.name), names)} (${tones.join(' ')})`
+				);
+			}
+		}
+	}
+	// sharps the writer gave that the key spells as flats, or the other way (an agent thought the
+	// reading had changed the user's G# to Ab)
+	const PITCH: Readonly<Record<string, number>> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+	const respelled = [...new Set(written.map(ascii))].flatMap((name) => {
+		const m = /^([A-G])([#b]?)$/.exec(name);
+		if (!m) return [];
+		const pc = (PITCH[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + 12) % 12;
+		const as = ascii(names[pc]);
+		return as === name ? [] : [{ name, as }];
+	});
+	const spelled = respelled.length
+		? `${respelled.map((r) => r.name).join(' ')} read as ${respelled.map((r) => r.as).join(' ')}, as ${keyName ?? 'the reading'} spells ${respelled.length === 1 ? 'it' : 'them'} (the same note${respelled.length === 1 ? '' : 's'})`
+		: null;
 	return {
 		...(meant
 			? { key: `${meant.label} (as written)` }
@@ -237,7 +282,9 @@ export function readPattern(
 				: {}),
 		bars,
 		...(chords.length ? { chords } : {}),
-		...(progression ? { progression } : {})
+		...(progression ? { progression } : {}),
+		...(outlines.length ? { outlines } : {}),
+		...(spelled ? { spelled } : {})
 	};
 }
 

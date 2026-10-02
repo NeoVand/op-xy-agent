@@ -2,15 +2,26 @@
  * Where a preset the agent made waits for the preset maker (`make_kit`, M7): the agent puts a kit
  * here and the preset maker takes it when it opens (or at once, when it is open), so the user can
  * play every key, change it, download it or install it. One kit waits at a time; a newer one
- * replaces it.
+ * replaces it. The other way, the preset maker leaves the drum kit it held here when it closes, so
+ * the agent can put the user's own kit on a replica track (the chat is on another page).
  */
 import { getContext, hasContext, setContext } from 'svelte';
-import type { SampleInput } from '$lib/core/presets';
+import type { PcmAudio, SampleInput } from '$lib/core/presets';
 
 /** A kit waiting for the preset maker. */
 export interface PresetDraft {
 	readonly name: string;
 	readonly samples: readonly SampleInput[];
+}
+
+/** The drum kit the preset maker last held, its edits written in, as the replica plays it. */
+export interface KeptKit {
+	readonly name: string;
+	readonly sounds: readonly {
+		readonly key: number;
+		readonly name: string;
+		readonly audio: PcmAudio;
+	}[];
 }
 
 export class PresetInbox {
@@ -19,9 +30,20 @@ export class PresetInbox {
 	/** Where the preset maker is, for the agent to link to. */
 	readonly href: string;
 	#listener: ((draft: PresetDraft) => void) | null = null;
+	#kept: KeptKit | null = null;
 
 	constructor(href: string) {
 		this.href = href;
+	}
+
+	/** The preset maker, closing: the drum kit it held (null for none). */
+	keep(kit: KeptKit | null): void {
+		this.#kept = kit;
+	}
+
+	/** The drum kit the preset maker held when it last closed, if any. */
+	keptKit(): KeptKit | null {
+		return this.#kept;
 	}
 
 	/** Leaves a kit for the preset maker (handed over at once when it is open). */

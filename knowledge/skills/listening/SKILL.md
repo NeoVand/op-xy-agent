@@ -13,7 +13,9 @@ playing; if it is stopped, start it or ask the user to.
 
 A song moves on from scene to scene while you listen, and play starts it from its first scene (often
 an intro). To hear one part, listen with its scene: the replica renders that scene looping, offline,
-so nothing has to play and the song, the transport and the mutes stay as they are. A new project's
+so nothing has to play and the song, the transport and the mutes stay as they are. To hear a change
+of part (does the fill lead in, does the chorus lift), the lab's listen takes song with an entry and a
+bar: it renders the song on from there across the parts that follow and says how loud each one is. A new project's
 metronome clicks on every beat, and you hear it too: when the user does not want it, set_metronome
 switches it off.
 

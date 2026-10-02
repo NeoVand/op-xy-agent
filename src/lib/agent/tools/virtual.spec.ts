@@ -287,7 +287,61 @@ describe('write_pattern one bar at a time', () => {
 	});
 });
 
+describe('a scene’s own mix', () => {
+	it('keeps levels and mutes per scene, the one on screen taking them at once', async () => {
+		const { sim, run } = setup();
+		await run(writePatternTool, { track: 3, pattern: 1, notes: '1:A2:4' });
+		await run(writeArrangementTool, {
+			scenes: [
+				{ scene: 1, patterns: [{ track: 3, pattern: 1 }] },
+				{ scene: 2, patterns: [{ track: 3, pattern: 1 }], mix: [{ track: 3, muted: true }] }
+			]
+		});
+		const louder = json(
+			await run(writeArrangementTool, {
+				scenes: [{ scene: 1, patterns: [], mix: [{ track: 3, level: 90 }] }]
+			})
+		);
+		expect(sim.state.tracks[2].mix.level).toBe(90);
+		expect(sim.state.tracks[2].mix.muted).toBe(false);
+		expect(louder.arrangement.scenes['scene 2']).toMatch(/; muted T3/);
+		// scene 2 kept its own mix, the mute, when scene 1 changed
+		expect(sim.state.areas.arrange.scenes[1]?.mix[2].muted).toBe(true);
+	});
+
+	it('undoes a scene’s mix with its patterns', async () => {
+		const { env, sim, run } = setup();
+		const was = sim.state.tracks[2].mix.level;
+		const input = writeArrangementTool.input.parse({
+			scenes: [{ scene: 1, patterns: [], mix: [{ track: 3, level: 20, muted: true }] }]
+		});
+		const before = writeArrangementTool.snapshot!(input, env);
+		await run(writeArrangementTool, input);
+		expect(sim.state.tracks[2].mix).toMatchObject({ level: 20, muted: true });
+		const inverse = writeArrangementTool.inverse!(input, before, env)!;
+		await run(writeArrangementTool, inverse.input);
+		expect(sim.state.tracks[2].mix).toMatchObject({ level: Math.round(was), muted: false });
+	});
+});
+
 describe('patterns in another time signature', () => {
+	it('defaults to the whole bars of the meter: bars 4 in 7/8 are 56 steps', async () => {
+		const { sim, run } = setup();
+		sim.state.areas.system.projectSettings.signature = 4; // 7/8
+		const result = json(
+			await run(writePatternTool, { track: 3, bars: 4, notes: '1:A2:2 15:C3:2 29:E3:2 43:G3:2' })
+		);
+		expect(result.written.length).toBe(56);
+		expect(result.written.reading.bars).toHaveLength(4);
+		expect(result.note).toMatch(/Length 56: 4 whole bars of 7\/8/);
+		// given, it stands
+		const given = json(
+			await run(writePatternTool, { track: 4, bars: 4, length: 64, notes: '1:A3:2' })
+		);
+		expect(given.written.length).toBe(64);
+		expect(given.note).not.toMatch(/whole bars/);
+	});
+
 	it('counts scenes in bars of the meter: four bars of 7/8 are four, not 3.5', async () => {
 		const { sim, run } = setup();
 		sim.state.areas.system.projectSettings.signature = 4; // 7/8
@@ -415,6 +469,33 @@ describe('write_pattern on drums', () => {
 		const bad = await run(writePatternTool, { track: 7, chords: '1:Hm7' });
 		expect(bad.isError).toBe(true);
 		expect(String(bad.content)).toMatch(/"Hm7" is not a chord name/);
+	});
+
+	it('says when the groove moves none of the notes', async () => {
+		const { sim, run } = setup();
+		sim.state.tempo.groove = 0; // shuffle
+		sim.state.tempo.swing = 35;
+		const straight = json(
+			await run(writePatternTool, {
+				track: 1,
+				grid: { kick: 'x... x... x... x...', 'closed hat': 'x.x. x.x. x.x. x.x.' }
+			})
+		);
+		expect(straight.note).toMatch(
+			/The groove \(shuffle, \+35\) moves none of this pattern's notes/
+		);
+		const swung = json(
+			await run(writePatternTool, {
+				track: 1,
+				grid: { kick: 'x... x... x... x...', 'closed hat': 'xxxx xxxx xxxx xxxx' }
+			})
+		);
+		expect(swung.note).not.toMatch(/moves none/);
+		sim.state.tempo.swing = 0;
+		const none = json(
+			await run(writePatternTool, { track: 1, grid: { kick: 'x... x... x... x...' } })
+		);
+		expect(none.note).not.toMatch(/moves none/);
 	});
 
 	it('repeats the notes given until the pattern is full', async () => {
@@ -687,6 +768,20 @@ describe('write_arrangement', () => {
 });
 
 describe('write_pattern, short', () => {
+	it('says how the reading spells sharps given in a flat key', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 3,
+				key: 'F minor',
+				notes: '1:F2:3 5:G#2:2 9:A#2:2 13:C3:2'
+			})
+		);
+		expect(result.written.reading.spelled).toBe(
+			'G# A# read as Ab Bb, as F minor spells them (the same notes)'
+		);
+	});
+
 	it('takes the notes as one string: a word per note, chords, lengths, velocities', async () => {
 		const { sim, run } = setup();
 		const result = await run(writePatternTool, {
@@ -949,6 +1044,12 @@ describe('read_sound', () => {
 		expect(sound.pages['M3 filter']).toMatch(/cutoff .*resonance .*env/);
 		// on or off, said either way: track 3's filter is on, its LFO off
 		expect(sound.pages['M3 filter']).toMatch(/^svf filter on: cutoff 00/);
+		// each value once (the envelope amount and key tracking came twice)
+		expect(sound.pages['M3 filter'].match(/key tracking/g)).toHaveLength(1);
+		// a closed filter its envelope opens: said, so cutoff 00 does not read as silent
+		expect(sound.reading).toMatch(
+			/nearly closed at cutoff 00, but its envelope opens it .* to about 28/
+		);
 		expect(sound.pages['M4 lfo']).toMatch(/^tremolo lfo off:/);
 		expect(sound.pages['shift M3 sends']).toMatch(/^sends:/);
 		expect(sound.pages['M4 lfo']).toMatch(/lfo/);

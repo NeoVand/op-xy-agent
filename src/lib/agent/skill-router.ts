@@ -81,6 +81,9 @@ export function routeSkills(input: RouteInput): string[] {
 	want('perform-live', LIVE.test(text));
 	// the app's own features are asked about more than requested ("how do I export a wav?")
 	want('the-app', APP.test(text));
+	// the preset maker is a page of the app too, asked about by name ("how do I get the kit I made in
+	// the preset maker onto track 2?" once got neither its skill nor make_kit's way there)
+	want('kits-and-samples', /\bpreset maker\b/i.test(text));
 	if (asking) {
 		want('shape-a-sound', TIMBRE.test(text));
 	} else {

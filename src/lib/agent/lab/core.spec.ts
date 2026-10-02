@@ -30,6 +30,30 @@ describe('forks', () => {
 		expect(JSON.stringify({ a })).toBe('{"a":"[fork 1]"}');
 	});
 
+	it('locks one step’s value with set and step', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(3, { notes: [{ step: 5, note: 'A2', length: 2 }] });
+		const result = f.set({ param: 'cutoff', value: 70, track: 3, step: 5 });
+		expect(result.reached).toBe(true);
+		expect(f.readPattern(3).locks).toEqual([{ step: 5, values: ['cutoff 70'] }]);
+	});
+
+	it('takes a track scale as text, and says what scale and velocity take', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(5, { scale: '2' as never, notes: [{ step: 1, note: 'A3' }] });
+		expect(f.readPattern(5).scale).toBe(2);
+		f.writePattern(5, { scale: '1/2' as never, notes: [{ step: 1, note: 'A3' }] });
+		expect(f.readPattern(5).scale).toBe(0.5);
+		expect(() => f.writePattern(5, { scale: 9 as never, notes: [] })).toThrow(
+			/scale is how many sixteenths a step lasts/
+		);
+		expect(() => f.writePattern(5, { notes: [{ step: 1, note: 'A3', velocity: 0 }] })).toThrow(
+			/a note at 0 would be silent/
+		);
+	});
+
 	it('set() plays the navigator’s steps on the fork: track 3 cutoff 40', () => {
 		const { lab, replica } = labOn();
 		const f = lab.fork();
@@ -258,6 +282,53 @@ describe('listen', () => {
 		await lab.listen(f, { seconds: 2 });
 		expect(JSON.parse(render.requests[1].project).tracks[2].sequence.current).toBe(0);
 		await expect(lab.listen(f, { scene: 7 })).rejects.toThrow(/scene 7 is empty/);
+	});
+
+	it('hears the song across a change of part, each part rendered from its start', async () => {
+		const render = clickRenderer();
+		const { lab } = labOn({ render });
+		const f = lab.fork();
+		f.setTempo(120);
+		f.writePattern(3, { pattern: 1, notes: [{ step: 1, note: 45 }] });
+		f.writePattern(3, { pattern: 2, notes: [{ step: 1, note: 45 }] });
+		f.writePattern(4, { pattern: 2, notes: [{ step: 1, note: 57 }] });
+		// two parts of a bar (2 s at 120), the second with track 4 coming in
+		f.writeArrangement({
+			scenes: [
+				{
+					scene: 1,
+					patterns: [
+						{ track: 3, pattern: 1 },
+						{ track: 4, pattern: 0 }
+					]
+				},
+				{
+					scene: 2,
+					patterns: [
+						{ track: 3, pattern: 2 },
+						{ track: 4, pattern: 2 }
+					]
+				}
+			],
+			song: { order: [1, 2], loop: false }
+		});
+		const heard = await lab.listen(f, { song: {}, seconds: 6 });
+		// the first part's notes, then a second ringing on with none; the last part alone
+		expect(render.requests.map((r) => [r.seconds, r.notes])).toEqual([
+			[3, 1.96875],
+			[2, undefined]
+		]);
+		expect(JSON.parse(render.requests[1].project).tracks[3].sequence.current).toBe(1);
+		expect(heard.text).toMatch(
+			/parts: entry 1, scene 1 \(0 s–2 s\): -?[\d.]+ LUFS; entry 2, scene 2 \(2 s–4 s\): -?[\d.]+ LUFS \(\+[\d.]+ dB\)/
+		);
+		expect(heard.text).toMatch(/the song ends 4 s in/);
+		// from a bar of an entry; past its bars, or with only one entry, it says so
+		await expect(lab.listen(f, { song: { entry: 1, bar: 2 } })).rejects.toThrow(
+			/has 1 bar, so it has no bar 2/
+		);
+		await expect(lab.listen(f, { song: { entry: 3 } })).rejects.toThrow(/2 entries/);
+		await expect(lab.listen(f, { song: {}, scene: 2 })).rejects.toThrow(/song goes alone/);
 	});
 
 	it('says plainly when there is no renderer', async () => {

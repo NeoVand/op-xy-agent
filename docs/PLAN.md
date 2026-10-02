@@ -96,6 +96,19 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   as one line each in change lists; the beat grid uses the set tempo when the heard one is its half
   or double (swing no longer reads loose); status names each track's preset; the device note says
   why nothing is connected; plan-only results say NOT SET; grids take marks only.
+- **Probe round ten (2026-10-02), 14 scenarios (`probe-scenarios-10.json`: a build-up and drop, a
+  louder chorus, a bass muted in one scene, call and response, sharps in a flat key, the two
+  envelopes, a kit from the preset maker, a quiz, a long build, plus re-runs):** a scene keeps its
+  own mix (write_arrangement `mix`: levels and mutes per scene, undone with it); the lab sets
+  parameter locks (`set` with `step`) and hears a song across a change of part (`listen` with
+  `song: {entry, bar}`, each part's loudness listed); the song WAV no longer plays a scene's
+  opening again under the next one (the offline render's `notes` cut); patterns in 7/8 default to
+  whole bars of the meter; readings name the chord each bar of a single line outlines and say how
+  they spell the sharps given; the planner reads a shift layer's value with shift held; make_kit
+  puts the user's own preset-maker kit on any track; `read_sound` lists each filter value once and
+  says when the envelope opens a closed filter; the grounding names what earlier changes were about
+  and says when built parts were never heard; the manual gained where copied presets go, prism's
+  shape and detune, and what scale 1/2 does.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

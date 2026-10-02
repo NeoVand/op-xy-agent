@@ -112,6 +112,8 @@ export type RenderScene = (request: {
 	readonly track: number;
 	readonly mode: SimState['mode'];
 	readonly seconds: number;
+	/** The seconds whose notes play: after it the sound only rings out. */
+	readonly notes?: number;
 	readonly sampleRate: number;
 }) => Promise<{ readonly sampleRate: number; readonly channels: Float32Array[] }>;
 
@@ -144,6 +146,9 @@ export async function songWav(
 			track: work.track,
 			mode: work.mode,
 			seconds: seconds + TAIL,
+			// the scene's notes, then its tail ringing out with none: held on its own, the scene
+			// started over in the tail, a second and a half of it under the next one's start
+			notes: seconds - secondsPer16th / 4,
 			sampleRate
 		});
 		pieces.push({ start: Math.round(at * sampleRate), channels: audio.channels });

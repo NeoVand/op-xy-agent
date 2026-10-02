@@ -22,6 +22,8 @@ import {
 	type ListenAnalysis,
 	type TrackTake
 } from '$lib/core/listen';
+import { loudness } from '$lib/core/listen/level';
+import { BAR, lengthSettings, sceneLength } from '$lib/sim/areas/arrange/model';
 import { KeyParseError, parseKeys } from '$lib/core/opxy';
 import { snapshot } from '$lib/sim/areas/system/projects';
 import { buildFrame } from '$lib/sim/frames';
@@ -83,6 +85,8 @@ export interface LabRender {
 	readonly track: number;
 	readonly mode: SimState['mode'];
 	readonly seconds: number;
+	/** The seconds whose notes play (default all): after it the sound only rings out. */
+	readonly notes?: number;
 }
 
 /** Rendered audio: one or two channels. */
@@ -140,6 +144,11 @@ export interface LabSession {
 /** Seconds `listen` hears by default: the mix, and each track alone (as listen and listen_tracks). */
 const LISTEN_SECONDS = 8;
 const TRACK_SECONDS = 4;
+const barsOf = (n: number) => `${n} bar${n === 1 ? '' : 's'}`;
+/** Seconds a song is heard by default, across a change of part. */
+const SONG_SECONDS = 16;
+/** How long each part of a song heard rings into the next, s (as the song's WAV). */
+const SONG_TAIL = 1;
 /** What one program may render: renders, and seconds in all. */
 export const LISTEN_LIMITS = { renders: 24, seconds: 240 } as const;
 
@@ -194,12 +203,22 @@ const patternNumber = z.int().min(1).max(16);
 const scenePattern = z.int().min(0).max(16);
 const sceneNumber = z.int().min(1).max(99);
 const scales = TRACK_SCALES.map((s) => z.literal(s));
+/**
+ * A track scale as a number or as write_pattern writes it ("2", "1/2"): an agent's program passed
+ * "2" and was told only "Invalid input".
+ */
+const trackScale = z.preprocess(
+	(v) => (typeof v === 'string' ? (v.trim() === '1/2' ? 0.5 : Number(v)) : v),
+	z.union(scales, {
+		error: `scale is how many sixteenths a step lasts: ${TRACK_SCALES.join(', ')} (0.5 is 1/2)`
+	})
+);
 
 const patternWrite = z.strictObject({
 	pattern: patternNumber.optional(),
 	bars: z.int().min(1).max(4).optional(),
 	length: z.int().min(1).max(64).optional(),
-	scale: z.union(scales).optional(),
+	scale: trackScale.optional(),
 	// a list, or write_pattern's short form ("1:A2:4 5:C3+E3+G3:2:70"), which an agent carried over
 	notes: z.union([
 		z
@@ -207,7 +226,11 @@ const patternWrite = z.strictObject({
 				z.strictObject({
 					step: z.int().min(1).max(64),
 					note: z.union([z.int().min(0).max(127), z.string().min(2).max(4)]),
-					velocity: z.int().min(1).max(127).optional(),
+					velocity: z
+						.int()
+						.min(1, { error: 'velocity is 1–127: a note at 0 would be silent, so leave it out' })
+						.max(127)
+						.optional(),
 					length: z.number().min(0.05).max(64).optional(),
 					// what readPattern says a drum note plays: notes read back are written as they are
 					sound: z.string().optional()
@@ -231,7 +254,21 @@ const arrangementWrite = z.strictObject({
 					])
 					.nullable(),
 				// what readArrangement says a scene lasts; ignored here (its patterns decide)
-				bars: z.number().optional()
+				bars: z.number().optional(),
+				// a scene's own mix, as write_arrangement takes it
+				mix: z
+					.array(
+						z.strictObject({
+							track: track16,
+							level: z.int().min(0).max(99).optional(),
+							muted: z.boolean().optional()
+						})
+					)
+					.max(16)
+					.optional(),
+				// what readArrangement says of its mix; ignored here
+				muted: z.array(track16).optional(),
+				levels: z.array(z.number()).optional()
 			})
 		)
 		.max(99)
@@ -253,13 +290,21 @@ const setting = z.strictObject({
 	track: track16.optional(),
 	area: z.enum(SETTING_AREAS as [SettingArea, ...SettingArea[]]).optional(),
 	page: z.int().min(1).max(4).optional(),
-	key: settingValue.optional()
+	key: settingValue.optional(),
+	// a parameter lock on one step, as plan_steps takes it (an agent's riser needed a cutoff per step)
+	step: z.int().min(1).max(64).optional()
 });
 
 const listenOptions = z.strictObject({
 	seconds: z.number().min(1).max(30).optional(),
 	tracks: z.union([z.literal('each'), z.array(track8).min(1).max(8)]).optional(),
-	scene: sceneNumber.optional()
+	scene: sceneNumber.optional(),
+	song: z
+		.strictObject({
+			entry: z.int().min(1).max(96).optional(),
+			bar: z.int().min(1).max(64).optional()
+		})
+		.optional()
 });
 
 const planOptions = z.strictObject({
@@ -450,11 +495,12 @@ export function createLab(options: LabOptions): LabSession {
 			const w = check(arrangementWrite, write, 'writeArrangement');
 			const order = w.song ? (w.song.order ?? w.song.scenes) : undefined;
 			if (w.song && !order) throw new LabError('writeArrangement: song needs its order (scenes)');
-			const scenes = w.scenes?.map(({ scene, patterns }) => ({
+			const scenes = w.scenes?.map(({ scene, patterns, mix }) => ({
 				scene,
 				patterns:
 					patterns?.map((p, i) => (typeof p === 'number' ? { track: i + 1, pattern: p } : p)) ??
-					null
+					null,
+				...(mix ? { mix } : {})
 			}));
 			return virtual.writeArrangement({
 				scenes,
@@ -665,6 +711,11 @@ export function createLab(options: LabOptions): LabSession {
 	}
 
 	async function renderOf(state: SimState, seconds: number): Promise<ListenAnalysis> {
+		const audio = await renderAudio(state, seconds);
+		return analyzeAudio(audio.channels, audio.sampleRate, { expectedBpm: state.tempo.bpm });
+	}
+
+	async function renderAudio(state: SimState, seconds: number, notes?: number): Promise<LabAudio> {
 		const renderer = options.render;
 		if (!renderer) {
 			throw new LabError(
@@ -678,13 +729,119 @@ export function createLab(options: LabOptions): LabSession {
 		}
 		renders++;
 		rendered += seconds;
-		const audio = await renderer.render(renderRequest(state, seconds), options.signal);
-		return analyzeAudio(audio.channels, audio.sampleRate, { expectedBpm: state.tempo.bpm });
+		return renderer.render(renderRequest(state, seconds, notes), options.signal);
+	}
+
+	/**
+	 * The song from an entry (and a bar of it), across the scenes that follow: each entry rendered
+	 * from where it starts, ringing into the next, as the song's WAV is made (the render itself does
+	 * not move from scene to scene). Agents could hear a scene alone, never a change of part.
+	 */
+	async function listenSong(
+		f: ForkRecord,
+		from: { entry?: number; bar?: number },
+		seconds: number
+	): Promise<Heard> {
+		const base = f.sim.state;
+		const a = base.areas.arrange;
+		const order = a.songs[a.song]?.order ?? [];
+		if (order.length < 2) {
+			throw new LabError(
+				'listen: song needs a song of two entries or more (writeArrangement song); hear one scene with scene'
+			);
+		}
+		const entry = from.entry ?? 1;
+		if (entry > order.length) {
+			throw new LabError(
+				`listen: the song has ${order.length} entries (song entry 1–${order.length})`
+			);
+		}
+		const per16 = 60 / base.tempo.bpm / 4;
+		const barSteps = BAR[lengthSettings(base).signature];
+		const pieces: {
+			entry: number;
+			scene: number;
+			bar: number;
+			start: number;
+			seconds: number;
+			audio: LabAudio;
+		}[] = [];
+		let at = 0;
+		for (let i = entry - 1; i < order.length && at < seconds - 0.01; i++) {
+			const scene = order[i] + 1;
+			const state = sceneState(base, scene);
+			const length = Math.max(1, sceneLength(state));
+			const bar = i === entry - 1 ? (from.bar ?? 1) : 1;
+			const offset = (bar - 1) * barSteps;
+			if (offset >= length) {
+				throw new LabError(
+					`listen: entry ${i + 1} (scene ${scene}) has ${barsOf(Math.ceil(length / barSteps))}, so it has no bar ${bar}`
+				);
+			}
+			state.transport.position = offset;
+			const part = Math.min(seconds - at, (length - offset) * per16);
+			const last = at + part >= seconds - 0.01 || i === order.length - 1;
+			// the part's notes, then a tail that rings into the next with no notes of its own (the
+			// scene looping would start over in it)
+			const audio = last
+				? await renderAudio(state, part)
+				: await renderAudio(state, part + SONG_TAIL, part - per16 / 4);
+			pieces.push({ entry: i + 1, scene, bar, start: at, seconds: part, audio });
+			at += part;
+		}
+		const rate = pieces[0].audio.sampleRate;
+		const frames = Math.round(at * rate);
+		const out = [new Float32Array(frames), new Float32Array(frames)];
+		for (const piece of pieces) {
+			const from0 = Math.round(piece.start * rate);
+			out.forEach((channel, c) => {
+				const source = piece.audio.channels[c] ?? piece.audio.channels[0];
+				for (let i = 0; i < source.length && from0 + i < frames; i++)
+					channel[from0 + i] += source[i];
+			});
+		}
+		const analysis = analyzeAudio(out, rate, { expectedBpm: base.tempo.bpm });
+		const summary = summarize(analysis, { source: f.name });
+		// each part's own loudness, so a change of part reads as louder or quieter
+		const clock = (s: number) => `${Math.round(s * 10) / 10} s`;
+		let was: number | null = null;
+		const parts = pieces.map((p) => {
+			const start = Math.round(p.start * rate);
+			const end = Math.round((p.start + p.seconds) * rate);
+			const lufs = loudness(
+				out.map((c) => c.subarray(start, end)),
+				rate
+			).integrated;
+			const change =
+				lufs !== null && was !== null
+					? ` (${lufs - was >= 0 ? '+' : ''}${(lufs - was).toFixed(1)} dB)`
+					: '';
+			if (lufs !== null) was = lufs;
+			return `entry ${p.entry}, scene ${p.scene}${p.bar > 1 ? ` from bar ${p.bar}` : ''} (${clock(p.start)}–${clock(p.start + p.seconds)}): ${lufs === null ? 'silent' : `${lufs.toFixed(1)} LUFS`}${change}`;
+		});
+		const ended =
+			at < seconds - 0.01
+				? `\nnote: the song ends ${clock(at)} in${a.songs[a.song]?.loop ? ' (it loops: entry 1 follows)' : ''}`
+				: '';
+		const click = clickHeard(base)
+			? '\nnote: the metronome is on, so its click is in what you heard'
+			: '';
+		return {
+			text: `${summary.text}\nparts: ${parts.join('; ')}${ended}${click}`,
+			flags: summary.flags,
+			data: summary.data
+		};
 	}
 
 	async function listen(fork: Fork, listening?: ListenOptions): Promise<Heard> {
 		const f = record(fork, 'listen');
 		const o = check(listenOptions, listening ?? {}, 'listen');
+		if (o.song) {
+			if (o.scene !== undefined || o.tracks) {
+				throw new LabError('listen: song goes alone, without scene or tracks');
+			}
+			return listenSong(f, o.song, o.seconds ?? SONG_SECONDS);
+		}
 		const state = playing(f, o.scene);
 		const click = clickHeard(state)
 			? '\nnote: the metronome is on, so its click is in what you heard'

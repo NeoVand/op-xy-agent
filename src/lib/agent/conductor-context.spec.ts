@@ -451,12 +451,40 @@ describe('the conductor grounds its answer', () => {
 		const list = (i: number) => JSON.stringify(api.messageRequests[i].body.messages.at(-1));
 		expect(list(1)).toMatch(/- tempo 120 → 100 bpm/);
 		expect(list(2)).toMatch(/- T3 pattern 1: 0 → 1 note/);
-		expect(list(2)).toMatch(/and 1 change from the earlier list, still as given there/);
+		// named by what it was about, so it reads without the earlier list
+		expect(list(2)).toMatch(/and 1 change from the earlier list, still as given there \(tempo\)/);
 		expect(list(2)).not.toMatch(/- tempo 120 → 100 bpm/);
 		// the tempo back where it was: said, not dropped
 		expect(list(3)).toMatch(
-			/since reverted, now as at the user’s message \(an earlier list gave it\): tempo 120 → 100 bpm/
+			/no longer so, back as at the user’s message \(an earlier list gave it\): tempo 120 → 100 bpm/
 		);
+	});
+
+	it('says when parts written together were never heard, and not for one part', async () => {
+		const use = (id: string, name: string, input: unknown): ScriptedTurn => ({
+			content: [{ type: 'tool_use', id, name, input }],
+			stop_reason: 'tool_use'
+		});
+		const api = scriptedApi([
+			use('toolu_1', 'write_pattern', { track: 3, notes: [{ step: 1, note: 45 }] }),
+			use('toolu_2', 'write_pattern', { track: 4, notes: [{ step: 1, note: 57 }] }),
+			answer('Done.')
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim: new OpxySim({ now: () => 0 }) }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('a bass and chords');
+		const list = (i: number) => JSON.stringify(api.messageRequests[i].body.messages.at(-1));
+		expect(list(1)).not.toMatch(/Not heard in this answer/);
+		expect(list(2)).toMatch(/Not heard in this answer: describe what you wrote or set/);
 	});
 
 	it('says a demo puts the replica back when nothing changed', async () => {

@@ -42,6 +42,16 @@ facts:
     source: docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1
     confidence: verified
     verified_on: '1.1.33'
+  - id: shape-range
+    text: Shape runs from a saw at 0 to a square at about 50, then narrows the two oscillators' pulses one after the other up to 99. Low is full and buzzy (every harmonic), the middle hollow (the even harmonics gone), the top thin and nasal.
+    source: docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: detune-cents
+    text: Detune moves the second oscillator up to about 15 cents from the first, the same amount on every note, so the two beat slowly against each other, faster toward the top.
+    source: docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo
+    confidence: verified
+    verified_on: '1.1.33'
   - id: ratio-steps
     text: Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16.
     source: docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo

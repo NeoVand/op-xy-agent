@@ -146,6 +146,11 @@ export interface ListenOptions {
 	readonly tracks?: 'each' | readonly number[];
 	/** A scene 1–99 looping, instead of what play starts. */
 	readonly scene?: number;
+	/**
+	 * The song from one of its entries (1 = the first; bar: the bar of that entry's scene to start
+	 * at), across the scenes that follow as the song plays them: to hear a change of part.
+	 */
+	readonly song?: { readonly entry?: number; readonly bar?: number };
 }
 
 /** What a fork sounds like. */
@@ -200,6 +205,8 @@ export interface Setting {
 	readonly page?: number;
 	/** A sampler track's key: "G3", its sample's name ("snare 1"), or 1–24. */
 	readonly key?: number | string;
+	/** A parameter lock: the pattern step (1–64) whose own value this sets, the track's kept. */
+	readonly step?: number;
 }
 
 /** What `set` did, or what `plan` would do. */

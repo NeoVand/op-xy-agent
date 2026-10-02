@@ -116,6 +116,39 @@ describe('make_kit', () => {
 		expect(sim.state.areas.sample.tracks[0].keys[0]?.id).toContain('kits/dust/');
 	});
 
+	it('puts the user’s kit from the preset maker on a track, edits and all', async () => {
+		const sim = new OpxySim();
+		const virtual = createVirtualOpxy({ sim });
+		const audio = { sampleRate: 44100, channels: [new Float32Array(441).fill(0.5)] };
+		let kept: ReturnType<NonNullable<PresetInboxHost['keptKit']>> = null;
+		const host: PresetInboxHost = { put: () => {}, href: '/presets', keptKit: () => kept };
+		const call = (input: unknown) =>
+			makeKitTool.run(makeKitTool.input.parse(input), {
+				toolCallId: 'toolu_m',
+				agent: 'conductor',
+				env: { presets: host, virtual }
+			} as unknown as ToolContext);
+		// nothing kept yet: it says how to get one there
+		const none = await call({ name: 'mine', from_preset_maker: true, track: 2 });
+		expect(none.isError).toBe(true);
+		expect(String(none.content)).toMatch(/open on the replica/);
+		kept = {
+			name: 'my kit',
+			sounds: [
+				{ key: 53, name: 'kick', audio },
+				{ key: 55, name: 'snare', audio }
+			]
+		};
+		const result = await call({ name: 'mine', from_preset_maker: true, track: 2 });
+		expect(result.isError).toBeFalsy();
+		expect(JSON.parse(String(result.content))).toMatchObject({
+			kit: 'my kit',
+			keys: 2,
+			on_replica: { track: 2 }
+		});
+		expect(sim.state.areas.sample.tracks[1].keys[0]?.id).toContain('kits/my kit/');
+	});
+
 	it('says so when there is nothing to make or nowhere to leave it', async () => {
 		expect((await run({ name: 'x', voices: [] }, inbox().host)).isError).toBe(true);
 		expect((await run({ name: 'x', style: '808', voices: [] }, null)).isError).toBe(true);

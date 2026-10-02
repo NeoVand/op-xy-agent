@@ -16,7 +16,8 @@ import {
 	renderVoice,
 	type SampleInput
 } from '$lib/core/presets';
-import { defineTool, errorResult, jsonResult } from './define';
+import { defineTool, errorResult, jsonResult, type PresetInboxHost } from './define';
+import type { VirtualOpxy } from '../virtual-opxy';
 
 const unit = z.number().min(0).max(1).optional();
 
@@ -27,9 +28,15 @@ export const makeKitTool = defineTool({
 	// a list of voices with a dozen fields each would push the strict tool set's grammar over the
 	// API's size limit; zod still checks every call
 	strict: false,
-	description: `Make a drum kit from generated sounds and leave it in the app's preset maker, where the user can play each key, swap in their own samples, download the .preset or install it on the OP-XY over USB. Give track (1–8) to also put it on that track of the replica: the track becomes a drum sampler playing the kit, so you can write_pattern a beat there and play it right away (do this whenever the user wants to hear or use the kit). Start from a style (808: long boomy kick; 909: punchy; lo-fi: crushed; tight: short and snappy; boom: huge kick) or none, then give voices to put on keys 53–76 (F3–E5; the factory order is kick 53–54, snare 55–56, rim 57, clap 58, tambourine 59, shaker 60, closed hats 61–62, open hat 63, clave 64, low tom 65, ride 66, mid tom 67, crash 68, high tom 69, triangle 70, congas 71–72, cowbell 73, guiro 74, metal 75, fx 76). Voice types: ${VOICE_TYPES.join(', ')}. Leave out the numbers you do not care about: pitch in Hz (kick 30–90, toms and congas 60–400, snare 120–300), decay in seconds (0.01–${MAX_DECAY}), and 0–1 for tone (dark to bright), snap (kick click, snare wires), drive (saturation) and crush (lo-fi). Up to ${DRUM_KEYS} voices; a voice replaces the style's sound on its key. A kit is a whole new kit: on a track it replaces every key's sound, so to shape one or two sounds of the kit a track has (a shorter snare, a lower kick), set that key's own values with the key planner instead (its "end", "tune", "gain" with key naming the key). Tell the user the kit is in the preset maker, with the link the result gives, and on which track of the replica it plays.`,
+	description: `Make a drum kit from generated sounds and leave it in the app's preset maker, where the user can play each key, swap in their own samples, download the .preset or install it on the OP-XY over USB. Give track (1–8) to also put it on that track of the replica: the track becomes a drum sampler playing the kit, so you can write_pattern a beat there and play it right away (do this whenever the user wants to hear or use the kit). Start from a style (808: long boomy kick; 909: punchy; lo-fi: crushed; tight: short and snappy; boom: huge kick) or none, then give voices to put on keys 53–76 (F3–E5; the factory order is kick 53–54, snare 55–56, rim 57, clap 58, tambourine 59, shaker 60, closed hats 61–62, open hat 63, clave 64, low tom 65, ride 66, mid tom 67, crash 68, high tom 69, triangle 70, congas 71–72, cowbell 73, guiro 74, metal 75, fx 76). Voice types: ${VOICE_TYPES.join(', ')}. Leave out the numbers you do not care about: pitch in Hz (kick 30–90, toms and congas 60–400, snare 120–300), decay in seconds (0.01–${MAX_DECAY}), and 0–1 for tone (dark to bright), snap (kick click, snare wires), drive (saturation) and crush (lo-fi). Up to ${DRUM_KEYS} voices; a voice replaces the style's sound on its key. A kit is a whole new kit: on a track it replaces every key's sound, so to shape one or two sounds of the kit a track has (a shorter snare, a lower kick), set that key's own values with the key planner instead (its "end", "tune", "gain" with key naming the key). Tell the user the kit is in the preset maker, with the link the result gives, and on which track of the replica it plays. from_preset_maker puts the kit the user made in the preset maker (the drum kit it held when they left it, edits and all) on track instead of making one; the preset maker's own "open on the replica" puts it on track 1.`,
 	input: z.object({
-		name: z.string().min(1).max(24).describe('The kit’s name, as the device will list it'),
+		name: z
+			.string()
+			.min(1)
+			.max(24)
+			.describe(
+				'The kit’s name, as the device will list it (a kit from the preset maker keeps its own)'
+			),
 		track: z
 			.number()
 			.int()
@@ -38,6 +45,12 @@ export const makeKitTool = defineTool({
 			.optional()
 			.describe(
 				'Also put the kit on this instrument track of the replica (it becomes a drum sampler)'
+			),
+		from_preset_maker: z
+			.boolean()
+			.optional()
+			.describe(
+				'Put the user’s own kit from the preset maker on track instead of making one (style and voices are then left out)'
 			),
 		style: z.enum(KIT_STYLES).optional().describe('A whole kit to start from'),
 		voices: z
@@ -58,10 +71,12 @@ export const makeKitTool = defineTool({
 				})
 			)
 			.max(DRUM_KEYS)
+			.default([])
 	}),
-	async run({ name, style, voices, track }, ctx) {
+	async run({ name, style, voices, track, from_preset_maker }, ctx) {
 		const inbox = ctx.env.presets;
 		const virtual = ctx.env.virtual ?? null;
+		if (from_preset_maker) return fromPresetMaker(inbox, virtual, track);
 		if (!inbox && !(track && virtual)) {
 			return errorResult('The preset maker is not available here.', 'no preset maker');
 		}
@@ -125,3 +140,43 @@ export const makeKitTool = defineTool({
 });
 
 export const PRESET_TOOLS = [makeKitTool] as const;
+
+/** The user's kit from the preset maker, onto a replica track. */
+function fromPresetMaker(
+	inbox: PresetInboxHost | null | undefined,
+	virtual: VirtualOpxy | null,
+	track: number | undefined
+) {
+	if (!virtual) return errorResult('There is no replica here.', 'no replica');
+	if (!track) return errorResult('Give the track (1–8) the kit goes on.', 'no track');
+	const kit = inbox?.keptKit?.() ?? null;
+	if (!kit) {
+		return errorResult(
+			`The preset maker holds no drum kit: it keeps the kit it had when the user left it, and it had none (or it has not been opened since the app loaded). The user can open it${inbox ? ` (${inbox.href})` : ''}, make or drop a kit and come back, or use its "open on the replica", which puts the kit on track 1.`,
+			'no kit in the preset maker'
+		);
+	}
+	try {
+		const load = virtual.loadKit(track, { name: kit.name, sounds: kit.sounds });
+		return jsonResult(
+			{
+				kit: kit.name,
+				keys: load.keys,
+				on_replica: {
+					track: load.track,
+					engine_changed: load.engineChanged,
+					audible: load.audible,
+					sounds: virtual.readSound(load.track).kit
+				},
+				note: `The user's kit from the preset maker is on the replica's track ${load.track} now${load.engineChanged ? ' (it was another engine; it is a drum sampler now)' : ''}: write a pattern there and play it.${load.audible ? '' : ' This browser cannot make sound, so the kit is silent here.'}`
+			},
+			`${kit.name} on track ${load.track}`,
+			{ applied: true }
+		);
+	} catch (error) {
+		return errorResult(
+			`The kit could not go on track ${track}: ${error instanceof Error ? error.message : String(error)}`,
+			'not on the replica'
+		);
+	}
+}

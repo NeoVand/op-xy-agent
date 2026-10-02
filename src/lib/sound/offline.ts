@@ -21,6 +21,7 @@ import {
 	synthWorklet
 } from './runtime';
 import type { SampleRegistry } from './samples';
+import type { SchedulerSink } from './scheduler';
 
 /** What to render. */
 export interface OfflineRender {
@@ -31,6 +32,11 @@ export interface OfflineRender {
 	readonly track: number;
 	readonly mode: SimState['mode'];
 	readonly seconds: number;
+	/**
+	 * The seconds whose notes play (default all of them): after it the sound only rings out, so a
+	 * scene rendered with a tail does not start over in it.
+	 */
+	readonly notes?: number;
 	readonly sampleRate: number;
 }
 
@@ -68,7 +74,19 @@ export async function renderOffline(
 	if (punch) engine.usePunch(punch, 0);
 	try {
 		engine.sync(state, 0);
-		const scheduler = new Scheduler({ state: () => state, now: () => LEAD, sink: engine.sink });
+		// notes (and clicks) starting after `notes` are dropped at the sink: the scheduler lays a
+		// step down half a step early for its groove, so its lookahead alone let the next one in
+		const end = request.notes === undefined ? Infinity : LEAD + request.notes;
+		const sink: SchedulerSink = {
+			...engine.sink,
+			note: (event, settings) => {
+				if (event.time < end) engine.sink.note(event, settings);
+			},
+			click: (event) => {
+				if (event.time < end) engine.sink.click(event);
+			}
+		};
+		const scheduler = new Scheduler({ state: () => state, now: () => LEAD, sink });
 		scheduler.tick(request.seconds);
 		// an offline context renders faster than the worklets' ports deliver
 		await new Promise((resolve) => setTimeout(resolve, 150));

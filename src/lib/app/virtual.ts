@@ -33,6 +33,7 @@ import {
 import {
 	BAR,
 	captureScene,
+	trackMix,
 	chooseScene,
 	lengthOf,
 	sceneLength,
@@ -44,7 +45,7 @@ import {
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { replicaChangeList, replicaChanges } from './replica-diff';
-import { AUX_NAMES, DEFAULT_METRONOME_LEVEL, type SimState } from '$lib/sim/params';
+import { AUX_NAMES, DEFAULT_METRONOME_LEVEL, GROOVES, type SimState } from '$lib/sim/params';
 import { takeBack } from '$lib/sim/merge';
 import {
 	MAX_BARS,
@@ -176,6 +177,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			current: index === seq.current,
 			...(components.length ? { components } : {}),
 			...(locks.length ? { locks } : {}),
+			...(p.groove ? { groove: p.groove } : {}),
 			bars: p.bars,
 			length: p.length,
 			scale: p.scale,
@@ -208,14 +210,6 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		const t = s.tracks[track - 1];
 		const at = (page: 1 | 2 | 3 | 4, extra: Partial<Place> = {}) =>
 			({ area: 'instrument', track, page, ...extra }) as Place;
-		// the filter page draws cutoff and resonance; its envelope amount and key tracking too
-		const shown = (id: string) => {
-			const p = lockParam(id);
-			return p ? `${p.label} ${p.format(p.get(t))}` : null;
-		};
-		const filterMore = ['filter.envAmount', 'filter.keyTracking']
-			.map(shown)
-			.filter((x): x is string => x !== null);
 		const preset = s.areas.system.trackPresets[track - 1] ?? null;
 		const keys = t.engine === 'drum' ? s.areas.sample.tracks[track - 1].keys : null;
 		return {
@@ -227,7 +221,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				'M2 amp envelope': screenAt(at(2, { envelope: 'amp' })),
 				'M2 filter envelope': screenAt(at(2, { envelope: 'filter' })),
 				'shift M2 play mode': screenAt(at(2), true),
-				'M3 filter': [stated(screenAt(at(3))), ...filterMore].join(', '),
+				// its reading names cutoff, resonance, envelope amount and key tracking
+				'M3 filter': stated(screenAt(at(3))),
 				'shift M3 sends': screenAt(at(3), true),
 				'M4 lfo': stated(screenAt(at(4))),
 				player: screenAt({ area: 'player', track })
@@ -268,9 +263,17 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			) / BAR[signature];
 		const scenes = a.scenes.flatMap((scene, i) => {
 			const shown = i === a.scene ? captureScene(s) : scene;
-			return shown
-				? [{ scene: i + 1, patterns: shown.patterns.map((p) => p + 1), bars: bars(shown.patterns) }]
-				: [];
+			if (!shown) return [];
+			const muted = shown.mix.flatMap((m, t) => (m.muted ? [t + 1] : []));
+			return [
+				{
+					scene: i + 1,
+					patterns: shown.patterns.map((p) => p + 1),
+					bars: bars(shown.patterns),
+					...(muted.length ? { muted } : {}),
+					levels: shown.mix.slice(0, 8).map((m) => Math.round(m.level))
+				}
+			];
 		});
 		const song = a.songs[a.song];
 		// a song of one entry is that scene round and round
@@ -346,7 +349,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				sound: !sound || !sound.available ? 'unavailable' : sound.enabled ? 'on' : 'off',
 				// heard only while on with a level above 0 (level 0 is silent, though the page says on)
 				metronome: s.tempo.metronome.on && s.tempo.metronome.level > 0,
-				...(recording ? { recording } : {})
+				...(recording ? { recording } : {}),
+				groove: { type: GROOVES[s.tempo.groove] ?? String(s.tempo.groove), amount: s.tempo.swing }
 			};
 		},
 
@@ -524,7 +528,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 
 		writeArrangement(write) {
 			const a = s.areas.arrange;
-			for (const { scene, patterns } of write.scenes ?? []) {
+			for (const { scene, patterns, mix: given } of write.scenes ?? []) {
 				if (!Number.isInteger(scene) || scene < 1 || scene > SCENES) {
 					throw new VirtualOpxyError(`there is no scene ${scene} (1–${SCENES})`);
 				}
@@ -535,6 +539,20 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				}
 				const base = captureScene(s);
 				const chosen = base.patterns.map(() => 0);
+				// the mix: the scene's own (one not on screen keeps what it stored), then what is given
+				const mix = (index === a.scene ? base.mix : (a.scenes[index]?.mix ?? base.mix)).map(
+					(m) => ({ ...m })
+				);
+				for (const { track, level, muted } of given ?? []) {
+					const t = trackIndex(track);
+					if (level !== undefined) {
+						if (!Number.isFinite(level) || level < 0 || level > 99) {
+							throw new VirtualOpxyError(`a level is 0–99 (track ${track}: ${level})`);
+						}
+						mix[t].level = level;
+					}
+					if (muted !== undefined) mix[t].muted = muted;
+				}
 				for (const { track, pattern } of patterns) {
 					const t = trackIndex(track);
 					if (!Number.isInteger(pattern) || pattern < 0 || pattern > MAX_PATTERNS) {
@@ -546,8 +564,19 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					ensurePatterns(s, t, at);
 					chosen[t] = at - 1;
 				}
-				a.scenes[index] = { patterns: chosen, mix: base.mix };
-				if (index === a.scene) applyCurrentScene();
+				a.scenes[index] = { patterns: chosen, mix };
+				if (index === a.scene) {
+					applyCurrentScene();
+					// on screen: the tracks take the scene's mix now
+					for (const { track } of given ?? []) {
+						const t = trackIndex(track);
+						Object.assign(trackMix(s, t), {
+							level: mix[t].level,
+							pan: mix[t].pan,
+							muted: mix[t].muted
+						});
+					}
+				}
 			}
 			if (write.song) {
 				const order = write.song.order;

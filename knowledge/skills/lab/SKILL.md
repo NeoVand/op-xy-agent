@@ -14,10 +14,9 @@ the chat. What the fork left alone stays as the replica has it, so the replica k
 anything the user did while the program ran is kept. A program that throws or runs past its time
 limit changes nothing, even if it committed first.
 
-The lab exists so that you can compute and measure instead of guessing. The replica is the
-instrument the user sees; the lab is where you try an idea three ways, read what each one did, and
-keep the one that holds up. One program can do what would otherwise take dozens of tool calls, and
-it does the arithmetic in code, where it is exact.
+The lab exists so that you can compute and measure instead of guessing: try an idea three ways,
+read what each one did, and keep the one that holds up. One program does the work of dozens of tool
+calls, with the arithmetic exact in code.
 
 ## When it fits
 
@@ -40,7 +39,7 @@ lab.files.midi(name)       // a file read note by note (MidiFileNotes)
 lab.midi.shapes(file)      // per track: midi (1-based), name, channels, notes, range, drums, shape
 lab.midi.plan(file, { tracks: [{ midi, to, transpose?, drums? }], fromBar?, toBar? })
 lab.midi.write(fork, plan, { keepOthers? })
-await lab.listen(fork, { seconds?, tracks?: 'each', scene? })   // offline render, then heard
+await lab.listen(fork, { seconds?, tracks?: 'each', scene?, song?: { entry?, bar? } })   // offline render, then heard
 lab.commit(fork, label)    // returns { same, changes } for what lands
 lab.offer(fork, label)     // a take for the user to hear and keep (2–3 a run; nothing lands)
 lab.log(...values)         // or console.log
@@ -49,9 +48,9 @@ fork.status()  fork.readPattern(track, pattern?)  fork.writePattern(track, { pat
   length?, scale?, notes: [{ step, note, velocity?, length? }] or "1:A2:4 5:C3+E3:2" })
 fork.readArrangement()
 fork.writeArrangement({ scenes?: [{ scene, patterns: [{ track, pattern }] | number[] | null }],
-  song?: { order, loop } })  fork.readSound(track)  fork.setTempo(bpm)  fork.setMetronome(on)
+  mix?: [{ track, level?, muted? }] }], song?: { order, loop } })  fork.readSound(track)  fork.setTempo(bpm)  fork.setMetronome(on)
 fork.setMuted(track, muted)  fork.selectTrack(track)
-fork.set({ param, value, track?, area?, page?, key? })   // or an array, in order
+fork.set({ param, value, track?, area?, page?, key?, step? })   // or an array, in order
 fork.plan(setting)         // the steps set would play, without playing them
 fork.press(keys, clicks?)  fork.screen()  fork.diff(other?)
 ```
@@ -100,8 +99,7 @@ four.
 Four worked programs are in the skill's file `examples.md` (the skill tool with name lab and file
 examples.md): two mappings of a MIDI file compared by how much of each part plays as written, a
 chorus made from a verse with its scenes and song, a pad brightened by ear, and hats humanised in
-every scene with their accents kept. Read them before
-your first program in a conversation; they show the shapes programs take, not templates.
+every scene with their accents kept. Read them before your first program in a conversation.
 
 ## Things that trip programs up
 
@@ -122,8 +120,9 @@ were: put the new pattern in its scenes with `writeArrangement`, or no scene pla
 both throw with the reason, and the program stops there unless you catch it. When you probe
 ("does this preset exist?"), wrap the attempt in try/catch and log what happened.
 
-Listening renders from the top, as play would start it, and the song does not move on to its next
-scene while it renders; to hear a later part, name its scene. A program hears at most 24 renders
+Listening renders from the top, as play would start it; `scene` loops one part, and `song: { entry,
+bar }` plays the song on from there across the parts that follow, each part's loudness listed, to
+check a change of part (does the fill lead in, does the chorus lift). A program hears at most 24 renders
 and 240 seconds in all, within its time limit (20 s unless timeout_s says otherwise, 60 at most). A
 new project's metronome is on, and its click is in what you hear (`fork.setMetronome(false)`).
 

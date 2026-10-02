@@ -41,6 +41,26 @@ facts:
     text: 'On OS 1.1.33 the top level holds projects (user, templates and the open project as workspace.xy), samples (user), presets (snapshot and user sound packs) and how_to_import.txt.'
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
     verified_on: '1.1.33'
+  - id: own-folders
+    text: Each kind of file goes only in its own top folder (presets, projects, samples), and new folders can be made only inside those three; a copy that fails usually has a name the unit refuses or sits in the wrong folder.
+    source: docs/research/30-presets-samples.md#41-what-mtp-shows
+    verified_on: '1.1.33'
+  - id: preset-files
+    text: A copied drum or sampler preset is a folder whose name ends in .preset, its patch.json beside its samples; it can sit anywhere inside the presets folder, a folder of your own there included. A synth preset without samples can also be a single .json file.
+    source: docs/research/30-presets-samples.md#41-what-mtp-shows
+    verified_on: '1.1.33'
+  - id: on-eject
+    text: What you copy, rename or delete shows on the unit once the disk is ejected (`M4`).
+    source: docs/research/30-presets-samples.md#41-what-mtp-shows
+    verified_on: '1.1.33'
+  - id: names
+    text: The unit's own import note allows letters, digits, spaces, hashes, hyphens and round brackets in file and folder names, plus the extension's dot; keep to those even though OS 1.1.15 took UTF-8.
+    source: docs/research/30-presets-samples.md#41-what-mtp-shows
+    verified_on: '1.1.33'
+  - id: samples-travel
+    text: A project file does not carry its samples, so a project moved to another OP-XY needs its samples copied too.
+    source: docs/research/30-presets-samples.md#41-what-mtp-shows
+    verified_on: '1.1.33'
   - id: bug-1029
     text: OS 1.0.29 could corrupt files over 64 KB copied off the unit by MTP; 1.0.32 fixed it, and backups made under 1.0.29 may be damaged.
     source: https://teenage.engineering/downloads/op-xy#1.0.32

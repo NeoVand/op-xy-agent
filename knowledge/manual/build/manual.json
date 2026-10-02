@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "2f9ed081",
+	"bundle_hash": "5ef787d4",
 	"stats": {
 		"units": 166,
-		"facts": 1215,
+		"facts": 1223,
 		"procedures": 207,
 		"parameters": 207,
-		"verified_items": 251,
-		"words": 46155,
+		"verified_items": 258,
+		"words": 46429,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -7527,6 +7527,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "double",
+					"text": "Scale 1/2 halves every step, so a pattern plays at double time beside tracks at 1; scale 2 doubles every step, half time. A pattern at 1/2 lasts half as long, so it plays twice in a scene of its length at 1.",
+					"source": "https://teenage.engineering/guides/op-xy/sequencer#extend-with-bar",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
 					"id": "longer",
 					"text": "Raising the scale is how a pattern outgrows four bars; 64 steps at scale 16 last 64 bars.",
 					"source": "https://teenage.engineering/guides/op-xy/sequencer#extend-with-bar",
@@ -12373,6 +12381,22 @@
 					"id": "drawn",
 					"text": "Shape grows the triangle, ratio thickens the convex lens, detune slides the concave lens and stereo opens the wedge into an arrowhead.",
 					"source": "docs/research/59-screen-profiling.md#25-engine-pages-instrument-m1",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "shape-range",
+					"text": "Shape runs from a saw at 0 to a square at about 50, then narrows the two oscillators' pulses one after the other up to 99. Low is full and buzzy (every harmonic), the middle hollow (the even harmonics gone), the top thin and nasal.",
+					"source": "docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "detune-cents",
+					"text": "Detune moves the second oscillator up to about 15 cents from the first, the same amount on every note, so the two beat slowly against each other, faster toward the top.",
+					"source": "docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo",
 					"firmware_min": null,
 					"verified_on": "1.1.33",
 					"confidence": "verified"
@@ -25662,6 +25686,46 @@
 					"confidence": "verified"
 				},
 				{
+					"id": "own-folders",
+					"text": "Each kind of file goes only in its own top folder (presets, projects, samples), and new folders can be made only inside those three; a copy that fails usually has a name the unit refuses or sits in the wrong folder.",
+					"source": "docs/research/30-presets-samples.md#41-what-mtp-shows",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "preset-files",
+					"text": "A copied drum or sampler preset is a folder whose name ends in .preset, its patch.json beside its samples; it can sit anywhere inside the presets folder, a folder of your own there included. A synth preset without samples can also be a single .json file.",
+					"source": "docs/research/30-presets-samples.md#41-what-mtp-shows",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "on-eject",
+					"text": "What you copy, rename or delete shows on the unit once the disk is ejected (`M4`).",
+					"source": "docs/research/30-presets-samples.md#41-what-mtp-shows",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "names",
+					"text": "The unit's own import note allows letters, digits, spaces, hashes, hyphens and round brackets in file and folder names, plus the extension's dot; keep to those even though OS 1.1.15 took UTF-8.",
+					"source": "docs/research/30-presets-samples.md#41-what-mtp-shows",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
+					"id": "samples-travel",
+					"text": "A project file does not carry its samples, so a project moved to another OP-XY needs its samples copied too.",
+					"source": "docs/research/30-presets-samples.md#41-what-mtp-shows",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "bug-1029",
 					"text": "OS 1.0.29 could corrupt files over 64 KB copied off the unit by MTP; 1.0.32 fixed it, and backups made under 1.0.29 may be damaged.",
 					"source": "https://teenage.engineering/downloads/op-xy#1.0.32",
@@ -25736,6 +25800,10 @@
 				},
 				{
 					"url": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/30-presets-samples.md#41-what-mtp-shows",
 					"kind": "research"
 				},
 				{

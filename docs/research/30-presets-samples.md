@@ -563,6 +563,16 @@ folders such as "refelt piano", "harmonium", "ensemble") [D, strings in XYF:src/
   Bells…) (`XYF:docs/workflows/factory_preset_capture_checklist_1.1.21.md`) [D]. The browser toggles
   category view and engine view (`instrument.html` §14.6) [O].
 - Root folders are fixed: "don't allow moving mtp folders from one root folder to another" (1.0.45) [O].
+- The unit's own `how_to_import.txt` (OS 1.1.33, read over MTP on 2026-09-28,
+  `research/device/captures/mtp/how_to_import.txt`, git-ignored) agrees, in our words: each kind of
+  file goes only in its own root folder (presets, projects, samples), new folders only inside those
+  three; a copy that fails usually has a name the unit refuses or sits in the wrong folder. A drum or
+  sampler preset is a `<name>.preset` folder (its `patch.json` beside its samples), anywhere under
+  `presets/` (a subfolder of your own is fine); a synth preset without samples may also be a lone
+  `<name>.json`. Snapshots land in `presets/snapshot`. Changes show on the unit after the disk is
+  ejected. Its name rule is the conservative one: letters, digits, space, `#`, `-`, `(`, `)` and the
+  extension's dot. Samples go anywhere under `samples/` (wav or aif, mono or stereo); a project's
+  `.xy` does not carry its samples, so moving a project to another unit means copying them too [D].
 
 ### 4.2 How a project points at a preset (decoded `.xy`)
 

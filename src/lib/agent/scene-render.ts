@@ -74,13 +74,14 @@ export const clickHeard = (state: SimState): boolean =>
 	state.tempo.metronome.on && state.tempo.metronome.level > 0;
 
 /** What an offline render of `state` takes: its project, and how it plays, for `seconds`. */
-export function renderRequest(state: SimState, seconds: number): LabRender {
+export function renderRequest(state: SimState, seconds: number, notes?: number): LabRender {
 	return {
 		project: snapshot(state),
 		transport: { ...state.transport },
 		track: state.track,
 		mode: state.mode,
-		seconds
+		seconds,
+		...(notes !== undefined ? { notes } : {})
 	};
 }
 

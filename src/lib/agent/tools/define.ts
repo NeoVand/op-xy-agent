@@ -29,7 +29,7 @@ import type { LabHost } from '../lab/host';
 import type { ListenHost } from '../listen-host';
 import type { ManualSource } from '../manual-source';
 import type { AgentName, InverseCall, Todo, ToolKind, ToolPreview, ToolDisplay } from '../types';
-import type { SampleInput } from '$lib/core/presets';
+import type { PcmAudio, SampleInput } from '$lib/core/presets';
 import type { RehearsedStep, VirtualOpxy } from '../virtual-opxy';
 
 /** `setTimeout` / `clearTimeout`, injectable for tests. */
@@ -123,6 +123,15 @@ export interface PresetInboxHost {
 	put(draft: { readonly name: string; readonly samples: readonly SampleInput[] }): void;
 	/** The preset maker's address, for the answer's link. */
 	readonly href: string;
+	/** The drum kit the user had in the preset maker when it last closed, its edits written in. */
+	keptKit?(): {
+		readonly name: string;
+		readonly sounds: readonly {
+			readonly key: number;
+			readonly name: string;
+			readonly audio: PcmAudio;
+		}[];
+	} | null;
 }
 
 /** Files attached in this conversation, as tools read them (kept in memory, by name). */
@@ -584,14 +593,20 @@ function unstringFields(
 		const key = String(issue.path[0]);
 		const value = out[key];
 		if (typeof value !== 'string') continue;
-		try {
-			const parsed: unknown = JSON.parse(value);
-			if (typeof parsed === 'object' && parsed !== null) {
-				out[key] = parsed;
-				changed = true;
+		// JSON, or JSON with a string method the model wrote into it: `"x... x...".replace(/ /g,"")`
+		// took a grid three times, and dropping the spaces changes nothing a grid reads
+		const texts = [value, value.replace(/\.replace\(\/[^/]*\/g?,\s*(["'])\1\)/g, '')];
+		for (const text of texts) {
+			try {
+				const parsed: unknown = JSON.parse(text);
+				if (typeof parsed === 'object' && parsed !== null) {
+					out[key] = parsed;
+					changed = true;
+					break;
+				}
+			} catch {
+				// not JSON: the error says what the field takes
 			}
-		} catch {
-			// not JSON: the error says what the field takes
 		}
 	}
 	return changed ? out : null;

@@ -1031,6 +1031,14 @@ export class Conductor {
 	 * from this, not from what it meant to do.
 	 */
 	#grounding(): BetaTextBlockParam[] {
+		// what the standing changes were about, so the count reads without the earlier lists (an
+		// agent looked back through every earlier message to know what "3 changes" stood for)
+		const standingAbout = (subjects: readonly string[]) => {
+			const unique = subjects.filter((s, i) => subjects.indexOf(s) === i);
+			return unique.length > 8
+				? `${unique.slice(0, 8).join(', ')} and ${unique.length - 8} more`
+				: unique.join(', ');
+		};
 		const virtual = this.#env.virtual;
 		if (!virtual || !this.#checkpoint) return [];
 		let lines: readonly string[];
@@ -1050,7 +1058,17 @@ export class Conductor {
 		// where playback stands, so an answer never says it plays when it does not (an agent once
 		// told a user "playback is running" on a stopped replica)
 		const walk = this.#walkthrough();
-		const now = `Now: ${playingNow(virtual)}${walk ? ` ${walk}` : ''}`;
+		// a sound changed, or parts written together, and never heard: how it sounds is a guess
+		// (agents judged "warmer" and the balance of a lead over a bass from the values they wrote,
+		// and said so only when asked)
+		const tracks = marked.flatMap((l) => /^T(\d+) pattern \d+:/.exec(l)?.[1] ?? []);
+		const parts = tracks.filter((t, i) => tracks.indexOf(t) === i).length;
+		const shaped = marked.some((l) => /^(aux )?T\d+ (shift )?M\d /.test(l));
+		const unheard =
+			(shaped || parts >= 2) && !this.#heardSinceMessage()
+				? ' Not heard in this answer: describe what you wrote or set, and listen first (listen, or lab.listen in run_lab) before you say how it sounds (the balance, warmth, the feel).'
+				: '';
+		const now = `Now: ${playingNow(virtual)}${walk ? ` ${walk}` : ''}${unheard}`;
 		const report = [...marked, now].join('\n');
 		if (report === this.#reported) return [];
 		this.#reported = report;
@@ -1071,12 +1089,12 @@ export class Conductor {
 			...fresh.map((l) => `- ${l}`),
 			...(gone.length
 				? [
-						`- since reverted, now as at the user\u2019s message (an earlier list gave it): ${gone.join('; ')}`
+						`- no longer so, back as at the user\u2019s message (an earlier list gave it): ${gone.join('; ')}`
 					]
 				: []),
 			...(standing > 0
 				? [
-						`- and ${standing} change${standing === 1 ? '' : 's'} from the earlier list${before.length === 1 ? '' : 's'}, still as given there`
+						`- and ${standing} change${standing === 1 ? '' : 's'} from the earlier list${before.length === 1 ? '' : 's'}, still as given there (${standingAbout(marked.filter((l) => before.includes(l)).map(about))})`
 					]
 				: [])
 		];
@@ -1084,9 +1102,14 @@ export class Conductor {
 		const shown = this.#calledSinceMessage('show_on_replica')
 			? '; show_on_replica puts the replica back after its demo, so a demo leaves nothing here'
 			: '';
+		// a plan shown to reach a page moves the screen alone (an agent read "nothing changed" just
+		// after the planner had taken the replica to M2, and was unsure which to believe)
+		const moved = this.#calledSinceMessage('plan_steps')
+			? '; the screen may be on another page now, which is no change to the sound or the patterns'
+			: '';
 		const text =
 			marked.length === 0 && before.length === 0
-				? `Nothing changed on the replica during this answer, by your calls or the user (it is as it was when the user\u2019s message came${shown}).\n${now}`
+				? `Nothing changed on the replica during this answer, by your calls or the user (it sounds and is set as it was when the user\u2019s message came${shown}${moved}).\n${now}`
 				: fresh.length === 0 && gone.length === 0
 					? `Nothing more changed on the replica since the last list: its ${standing} change${standing === 1 ? '' : 's'} still stand${standing === 1 ? 's' : ''}.\n${now}`
 					: `What changed on the replica since the user\u2019s message, yours and anything the user did on it meanwhile (describe the outcome from this${before.length ? ', with the earlier lists' : ''}):\n${listed.join('\n')}\n${now}`;
@@ -1131,6 +1154,29 @@ export class Conductor {
 	}
 
 	/** Whether the model has called the tool `name` since the user's message. */
+	/** Whether this answer heard the music: listen, listen_tracks, or a lab program that listens. */
+	#heardSinceMessage(): boolean {
+		const hears = (b: { type: string; name?: string; input?: unknown }) =>
+			b.type === 'tool_use' &&
+			(b.name === 'listen' ||
+				b.name === 'listen_tracks' ||
+				(b.name === 'run_lab' && /lab\.listen\(/.test(JSON.stringify(b.input ?? null))));
+		for (let i = this.#messages.length - 1; i >= 0; i--) {
+			const m = this.#messages[i];
+			if (m.role === 'user') {
+				if (typeof m.content === 'string' || !m.content.some((b) => b.type === 'tool_result')) {
+					return false;
+				}
+				continue;
+			}
+			if (typeof m.content === 'string') continue;
+			if (m.content.some((b) => hears(b as { type: string; name?: string; input?: unknown }))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	#calledSinceMessage(name: string): boolean {
 		for (let i = this.#messages.length - 1; i >= 0; i--) {
 			const m = this.#messages[i];

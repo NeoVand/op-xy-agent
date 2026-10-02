@@ -60,6 +60,8 @@ export interface VirtualPattern {
 	readonly notes: readonly VirtualNote[];
 	/** Step components on its steps (random, skip trigger, multiply …), when it has any. */
 	readonly components?: readonly VirtualComponent[];
+	/** The bar menu's groove amount for this pattern, when set: it replaces the tempo page's. */
+	readonly groove?: number;
 	/** Parameter locks on its steps, each value as its page shows it ("cutoff 80"), when any. */
 	readonly locks?: readonly { readonly step: number; readonly values: readonly string[] }[];
 }
@@ -100,6 +102,10 @@ export interface VirtualScene {
 	 * the project's scene length (a pattern lasts its steps times its track scale).
 	 */
 	readonly bars: number;
+	/** Tracks muted in this scene (scenes keep their mix), when any. */
+	readonly muted?: readonly number[];
+	/** Each instrument track's level (0–99) in this scene, track 1 first. */
+	readonly levels?: readonly number[];
 }
 
 /** Scenes and the song. */
@@ -135,6 +141,12 @@ export interface ArrangementWrite {
 	readonly scenes?: readonly {
 		readonly scene: number;
 		readonly patterns: readonly { readonly track: number; readonly pattern: number }[] | null;
+		/** Levels (0–99) and mutes this scene keeps for its tracks; tracks left out keep theirs. */
+		readonly mix?: readonly {
+			readonly track: number;
+			readonly level?: number;
+			readonly muted?: boolean;
+		}[];
 	}[];
 	readonly song?: { readonly order: readonly number[]; readonly loop: boolean };
 }
@@ -178,6 +190,8 @@ export interface VirtualStatus {
 	 * in, or on (latched: what is played lands in the pattern until stop).
 	 */
 	readonly recording?: 'armed' | 'count-in' | 'on';
+	/** The tempo page's groove: its type ("shuffle") and amount (−99 shuffle … 99 swing, 0 none). */
+	readonly groove?: { readonly type: string; readonly amount: number };
 }
 
 /** A drum kit's sounds, one per keyboard key (53–76). */

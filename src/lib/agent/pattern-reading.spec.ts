@@ -105,6 +105,50 @@ describe('readPattern', () => {
 	});
 });
 
+describe('a line of single notes', () => {
+	it('names the chord each bar outlines, where its notes make one', () => {
+		// A2 A2 C3 E3 | G2 G2 B2 D3 | F2 F2 A2 C3 | E2 E2 G#2 B2: Am G F E, the call-response bass
+		const bars = [
+			[45, 45, 48, 52],
+			[43, 43, 47, 50],
+			[41, 41, 45, 48],
+			[40, 40, 44, 47]
+		];
+		const notes = bars.flatMap((bar, b) =>
+			bar.map((note, i) => ({ step: b * 16 + 9 + i * 2, note, length: 1 }))
+		);
+		const reading = readPattern(pattern(notes, 4), [], undefined, parseKey('A minor'));
+		expect(reading?.outlines).toEqual([
+			'bar 1: Am (A C E)',
+			'bar 2: G (G B D)',
+			'bar 3: F (F A C)',
+			'bar 4: E (E G# B)'
+		]);
+		// a bar of a scale run makes no chord, and says none
+		const run = readPattern(
+			pattern([60, 62, 64, 65, 67].map((note, i) => ({ step: i * 3 + 1, note, length: 2 })))
+		);
+		expect(run?.outlines).toBeUndefined();
+	});
+
+	it('says how it spells the sharps a writer gave in a flat key', () => {
+		const notes = [41, 44, 46, 48, 51].map((note, i) => ({ step: i * 3 + 1, note, length: 2 }));
+		const reading = readPattern(pattern(notes), [], undefined, parseKey('F minor'), [
+			'G#',
+			'A#',
+			'D#',
+			'C'
+		]);
+		expect(reading?.bars[0]).toMatch(/Ab2/);
+		expect(reading?.spelled).toBe(
+			'G# A# D# read as Ab Bb Eb, as F minor spells them (the same notes)'
+		);
+		// spelled as given: nothing to say
+		const plain = readPattern(pattern(notes), [], undefined, parseKey('F minor'), ['Ab']);
+		expect(plain?.spelled).toBeUndefined();
+	});
+});
+
 describe('hitMark', () => {
 	it('marks accents and soft hits by fixed lines, so a grid reads back as written', () => {
 		expect(hitMark(120)).toBe('X');

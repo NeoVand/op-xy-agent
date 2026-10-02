@@ -123,6 +123,15 @@ describe('ToolRegistry', () => {
 		const grid = { kick: 'x... x... x... x...' };
 		const parsed = registry.parse('write_pattern', { track: 1, grid: JSON.stringify(grid) });
 		expect(parsed).toMatchObject({ ok: true, input: { grid } });
+		// with a string method written into it, as models have (spaces in a grid are skipped anyway)
+		const coded = registry.parse('write_pattern', {
+			track: 1,
+			grid: '{"kick": "x... x... x... x...".replace(/ /g,""), "snare": ".... x..."}'
+		});
+		expect(coded).toMatchObject({
+			ok: true,
+			input: { grid: { kick: 'x... x... x... x...', snare: '.... x...' } }
+		});
 		// text that is no JSON still says what the field takes
 		const bad = registry.parse('write_pattern', { track: 1, grid: '{"kick": "x..."' });
 		expect(bad.ok).toBe(false);

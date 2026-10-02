@@ -7,6 +7,8 @@
  */
 import { z } from 'zod';
 import { parseNoteName } from '$lib/core/midi/notes';
+import { GROOVES } from '$lib/sim/params';
+import { grooveTime } from '$lib/sound/groove';
 import { meterOf } from '$lib/sim/areas/arrange/model';
 import { STEP_COMPONENTS, type StepComponentKind } from '$lib/sim/sequencer';
 import { TIME_SIGNATURES, type TimeSignature } from '$lib/sim/areas/arrange/state';
@@ -88,11 +90,26 @@ function meterNow(virtual: VirtualOpxy): BarMeter {
 }
 
 /** The pitched parts the other instrument tracks play now, for a pattern's key. */
-function partsAlongside(virtual: VirtualOpxy, track: number): VirtualPattern[] {
-	return virtual
-		.status()
-		.tracks.filter((t) => t.track <= 8 && t.track !== track && t.notes > 0 && t.engine !== 'drum')
-		.map((t) => virtual.readPattern(t.track));
+function partsAlongside(virtual: VirtualOpxy, track: number, pattern?: number): VirtualPattern[] {
+	const status = virtual.status();
+	const pitched = status.tracks.filter(
+		(t) => t.track <= 8 && t.track !== track && t.engine !== 'drum'
+	);
+	// the parts that play with this pattern: those of a scene it plays in, the one on screen
+	// first (a chord pattern read against a bass from another part once named the wrong chords)
+	const a = virtual.readArrangement();
+	const scenes =
+		pattern === undefined ? [] : a.scenes.filter((s) => s.patterns[track - 1] === pattern);
+	const scene = scenes.find((s) => s.scene === a.scene) ?? scenes[0];
+	if (scene && a.scenes.length > 1) {
+		return pitched
+			.map((t) => virtual.readPattern(t.track, scene.patterns[t.track - 1]))
+			.filter((p) => p.notes.length > 0);
+	}
+	// one scene, or a pattern in none: what plays now, if this one is what its track plays
+	const current = status.tracks[track - 1]?.current;
+	if (pattern !== undefined && current !== pattern) return [];
+	return pitched.filter((t) => t.notes > 0).map((t) => virtual.readPattern(t.track));
 }
 
 /**
@@ -106,7 +123,8 @@ function patternView(
 		drumSteps = true,
 		alongside = [] as readonly VirtualPattern[],
 		meter = FOUR_FOUR as BarMeter,
-		meant = null as MeantKey | null
+		meant = null as MeantKey | null,
+		written = [] as readonly string[]
 	} = {}
 ) {
 	const byStep = new Map<
@@ -124,7 +142,7 @@ function patternView(
 		byStep.set(n.step, list);
 	}
 	const grid = drumGrid(p, meter);
-	const reading = grid ? null : readPattern(p, alongside, meter, meant);
+	const reading = grid ? null : readPattern(p, alongside, meter, meant, written);
 	return {
 		track: p.track,
 		pattern: p.pattern,
@@ -271,7 +289,7 @@ export const writePatternTool = defineTool({
 			.max(64)
 			.optional()
 			.describe(
-				'Steps that play, if the last bar is shorter (default: all). In another time signature a bar is fewer steps (3/4 and 6/8: 12, 5/4: 20, 7/8: 14, 12/8: 24): four bars of 7/8 are bars 4, length 56'
+				'Steps that play, if the last bar is shorter (default: all; in another time signature, the whole bars of it that fit). A bar of another time signature is another count of steps (3/4 and 6/8: 12, 5/4: 20, 7/8: 14, 12/8: 24): four bars of 7/8 are bars 4, length 56 (the default there), four of 3/4 bars 3, length 48'
 			),
 		scale: z
 			.enum(SCALES)
@@ -493,12 +511,24 @@ export const writePatternTool = defineTool({
 				? Math.max(current.bars, input.bar)
 				: (was?.bars ?? existing?.bars ?? Math.ceil(Math.max(lastNote, written.steps || 1) / 16)));
 		const span = bars * 16;
+		// in another time signature, by default the whole bars of it that fit: four bars of 16 steps
+		// are four of 7/8 (56 steps), where all 64 spilled into a fifth and an agent rewrote nine
+		// patterns
+		const meter = meterNow(virtual);
+		const wholeBars = Math.floor(span / meter.bar) * meter.bar;
+		const metered =
+			meter.bar !== 16 && wholeBars > 0 && lastNote <= wholeBars && wholeBars < span
+				? wholeBars
+				: undefined;
 		// the steps that play: a shorter last bar (length 14 for a 7/8 groove) is what lines fill;
 		// one bar's lines fill that bar
 		const kept0 = was ?? existing;
 		const fill = current
 			? 16
-			: Math.min(span, input.length ?? (input.bars === undefined && kept0 ? kept0.length : span));
+			: Math.min(
+					span,
+					input.length ?? (input.bars === undefined && kept0 ? kept0.length : (metered ?? span))
+				);
 		// a line that neither fills the pattern nor divides it is a miscount (an agent wrote 14 marks
 		// for 16 steps, and a note saying so went unread): nothing is written until it is fixed
 		const uneven = Object.entries(lineSteps)
@@ -635,15 +665,21 @@ export const writePatternTool = defineTool({
 				: adding || (was && input.components === undefined)
 					? (whole?.components ?? [])
 					: [];
+			const defaulted = input.length === undefined && !(keep && keep.bars === bars);
 			const result = virtual.writePattern(input.track, {
 				pattern,
 				bars,
-				length: input.length ?? (keep && keep.bars === bars ? keep.length : undefined),
+				length: input.length ?? (keep && keep.bars === bars ? keep.length : metered),
 				scale: input.scale === undefined ? keep?.scale : scaleValue(input.scale),
 				notes,
 				components: [...kept, ...given]
 			});
 			const notes2: string[] = [];
+			if (defaulted && metered !== undefined) {
+				notes2.push(
+					`Length ${metered}: ${metered / meter.bar} whole bars of ${virtual.status().signature} (${meter.bar} steps each) in ${bars} bars of 16 steps; give length for another.`
+				);
+			}
 			// a line shorter than a bar repeats to fill the pattern, a single crash too (an agent wrote
 			// "x..." for one crash and got one on every beat)
 			const bar = meterNow(virtual).bar;
@@ -696,6 +732,22 @@ export const writePatternTool = defineTool({
 					`A closed and an open hat both hit on step${both.length === 1 ? '' : 's'} ${both.map(count).join(', ')}: a drummer plays one or the other there, so keep one unless the stack is the sound you want.`
 				);
 			}
+			// a groove that moves none of the notes: said (an agent swung a beat whose every hit sat
+			// on an odd step, and described a swing nobody would hear)
+			const groove = virtual.status().groove;
+			const amount = result.groove || groove?.amount || 0;
+			if (groove && amount !== 0 && result.notes.length > 0) {
+				const g = { type: Math.max(0, GROOVES.indexOf(groove.type as never)), amount };
+				const moved = result.notes.some((n) => {
+					const at = (n.step - 1) * result.scale;
+					return Math.abs(grooveTime(at, g) - at) > 0.02;
+				});
+				if (!moved) {
+					notes2.push(
+						`The groove (${groove.type}, ${amount > 0 ? '+' : ''}${amount}) moves none of this pattern's notes, so it plays straight: ${/shuffle/.test(groove.type) ? 'shuffle moves the even sixteenths (steps 2, 4, 6…)' : 'they sit where it does not push'}; put hits there to hear it.`
+					);
+				}
+			}
 			// with an arrangement the scenes stay as they are: say where this pattern plays
 			const arrangement = virtual.readArrangement();
 			if (
@@ -724,9 +776,10 @@ export const writePatternTool = defineTool({
 				{
 					written: patternView(result, {
 						drumSteps: false,
-						alongside: partsAlongside(virtual, input.track),
+						alongside: partsAlongside(virtual, input.track, pattern),
 						meter: meterNow(virtual),
-						meant: input.key ? parseKey(input.key) : null
+						meant: input.key ? parseKey(input.key) : null,
+						written: writtenAccidentals(input.notes)
 					}),
 					...(sound ? { sound } : {}),
 					note: ['On the replica.', ...notes2].join(' ')
@@ -739,6 +792,12 @@ export const writePatternTool = defineTool({
 		}
 	}
 });
+
+/** The note names with a sharp or flat the notes give ("G#" from "9:G#2:3"), for the reading. */
+function writtenAccidentals(notes: unknown): string[] {
+	const text = typeof notes === 'string' ? notes : JSON.stringify(notes ?? null);
+	return [...new Set([...text.matchAll(/(?<![A-Za-z])([A-G](?:#|b|♯|♭))-?\d/g)].map((m) => m[1]))];
+}
 
 /** A track's sound in a few words ("dissolve (lead/gaussian)"), or null for an auxiliary track. */
 function soundOf(virtual: NonNullable<ReturnType<typeof virtualOf>>, track: number): string | null {
@@ -770,7 +829,7 @@ export const readPatternTool = defineTool({
 			const p = virtual.readPattern(input.track, input.pattern);
 			return jsonResult(
 				patternView(p, {
-					alongside: partsAlongside(virtual, input.track),
+					alongside: partsAlongside(virtual, input.track, p.pattern),
 					meter: meterNow(virtual)
 				}),
 				`track ${p.track} pattern ${p.pattern}: ${p.notes.length} notes`
@@ -797,12 +856,23 @@ export const readSoundTool = defineTool({
 		if (!virtual) return errorResult(NO_VIRTUAL, 'no virtual op-xy');
 		try {
 			const sound = virtual.readSound(input.track);
+			// a closed filter that its envelope opens (an agent read a bass preset's cutoff 00 as all
+			// but silent and doubted the reading)
+			const filter = /filter on: cutoff (\d+),.*envelope amount (\d+)/.exec(
+				sound.pages['M3 filter'] ?? ''
+			);
+			const opens =
+				filter && Number(filter[1]) < 15 && Number(filter[2]) > 0
+					? `The filter is nearly closed at cutoff ${filter[1]}, but its envelope opens it on every note: at the filter envelope's peak to about ${Math.min(99, Math.round(Number(filter[1]) + 0.85 * Number(filter[2])))} (envelope amount ${filter[2]}), then back toward its sustain, so the track sounds dark and plucked, not silent.`
+					: null;
 			return jsonResult(
 				{
 					...sound,
 					// what the numbers are on (an agent called 99 "a lot" unsure of the scale)
-					reading:
-						'Values as the pages show them: most run 00–99; tune is in semitones, pan −100…100, an LFO amount −99…99. A send of 99 is full, and the tape send at 99 is the normal path to the output, not a sound taken away.'
+					reading: [
+						'Values as the pages show them: most run 00–99; tune is in semitones, pan −100…100, an LFO amount −99…99. A send of 99 is full, and the tape send at 99 is the normal path to the output, not a sound taken away.',
+						...(opens ? [opens] : [])
+					].join(' ')
 				},
 				`track ${sound.track}: ${sound.preset ?? sound.engine}`
 			);
@@ -815,13 +885,26 @@ export const readSoundTool = defineTool({
 // ─── write_arrangement ──────────────────────────────────────────────────────────────────────────
 
 /** The input that writes `before` back over the scenes `touched` and the song. */
-function arrangementBack(before: VirtualArrangement, touched: readonly number[]): ArrangementWrite {
+function arrangementBack(
+	before: VirtualArrangement,
+	touched: readonly { scene: number; mix?: readonly { track: number }[] }[]
+): ArrangementWrite {
 	return {
-		scenes: touched.map((scene) => {
+		scenes: touched.map(({ scene, mix }) => {
 			const was = before.scenes.find((s) => s.scene === scene);
+			// the tracks whose level or mute this changed, back as the scene had them
+			const back =
+				was && mix?.length
+					? mix.map(({ track }) => ({
+							track,
+							...(was.levels?.[track - 1] !== undefined ? { level: was.levels[track - 1] } : {}),
+							muted: was.muted?.includes(track) ?? false
+						}))
+					: undefined;
 			return {
 				scene,
-				patterns: was ? was.patterns.map((pattern, i) => ({ track: i + 1, pattern })) : null
+				patterns: was ? was.patterns.map((pattern, i) => ({ track: i + 1, pattern })) : null,
+				...(back ? { mix: back } : {})
 			};
 		}),
 		song: { order: [...before.song.order], loop: before.song.loop }
@@ -834,7 +917,7 @@ export const writeArrangementTool = defineTool({
 	kind: 'mutate',
 	approval: 'auto',
 	description:
-		'Set scenes and the song on the replica. A scene says which pattern each track plays: tracks left out keep the pattern they have in that scene (pattern 1 in a new scene), so a scene changes track by track; pattern 0 makes a track rest, silent, in that scene; patterns missing on a track are added empty; null clears a scene. The song is the order scenes play in (up to 96 entries) and whether it loops. transport play then plays the song from its first scene when it has more than one entry. Write the patterns first with write_pattern.',
+		'Set scenes and the song on the replica. A scene says which pattern each track plays: tracks left out keep the pattern they have in that scene (pattern 1 in a new scene), so a scene changes track by track; pattern 0 makes a track rest, silent, in that scene (on an empty pattern the track has, else one added at its end, which the result lists); patterns missing on a track are added empty; null clears a scene; mix sets a scene’s own levels and mutes (a louder chorus, the bass out of one part), which it keeps as the song moves through it. The song is the order scenes play in (up to 96 entries) and whether it loops. transport play then plays the song from its first scene when it has more than one entry. Write the patterns first with write_pattern.',
 	input: z.object({
 		scenes: z
 			.array(
@@ -854,6 +937,18 @@ export const writeArrangementTool = defineTool({
 						.nullable()
 						.describe(
 							'The tracks to set in this scene (the rest keep theirs); null clears the scene'
+						),
+					mix: z
+						.array(
+							z.object({
+								track: z.int().min(1).max(16).describe('Track 1–16'),
+								level: z.int().min(0).max(99).optional().describe('Its level, 0–99'),
+								muted: z.boolean().optional().describe('Muted in this scene')
+							})
+						)
+						.optional()
+						.describe(
+							'Levels and mutes this scene keeps (a scene stores its mix: a louder chorus, the bass muted in one part); tracks left out keep theirs'
 						)
 				})
 			)
@@ -888,14 +983,15 @@ export const writeArrangementTool = defineTool({
 	},
 	inverse(input, before) {
 		if (!before) return null;
-		const back = arrangementBack(
-			before,
-			(input.scenes ?? []).map((s) => s.scene)
-		);
+		const back = arrangementBack(before, input.scenes ?? []);
 		return {
 			tool: 'write_arrangement',
 			input: {
-				scenes: (back.scenes ?? []).map((s) => ({ scene: s.scene, patterns: s.patterns })),
+				scenes: (back.scenes ?? []).map((s) => ({
+					scene: s.scene,
+					patterns: s.patterns,
+					...(s.mix ? { mix: s.mix } : {})
+				})),
 				song: {
 					scenes: back.song?.order.length ? [...back.song.order] : [1],
 					loop: back.song?.loop ?? true
@@ -912,7 +1008,7 @@ export const writeArrangementTool = defineTool({
 			// tracks a scene leaves out keep what that scene had (pattern 1 in a new scene), so one
 			// track changes alone: an agent restated every track to change one, wary of the rest
 			const had = new Map(virtual.readArrangement().scenes.map((s) => [s.scene, s.patterns]));
-			const scenes = input.scenes?.map(({ scene, patterns }) => {
+			const scenes = input.scenes?.map(({ scene, patterns, mix }) => {
 				const old = had.get(scene);
 				if (patterns === null) {
 					// cleared: what follows for it in this call starts from pattern 1
@@ -928,7 +1024,7 @@ export const writeArrangementTool = defineTool({
 					scene,
 					Array.from({ length: 16 }, (_, i) => all.find((p) => p.track === i + 1)?.pattern ?? 1)
 				);
-				return { scene, patterns: all };
+				return { scene, patterns: all, ...(mix ? { mix } : {}) };
 			});
 			const result = virtual.writeArrangement({
 				scenes,
@@ -1021,7 +1117,19 @@ export function arrangementView(
 							: [`${name(i)} p${p}`]
 				);
 				const which = others.length > 0 ? `${others.join(', ')}; the rest p1` : 'every track p1';
-				return [`scene ${s.scene}`, `${which} (${barsText(s.bars)})`];
+				// its mix, where it is its own: mutes, and levels unlike the first scene's
+				const first = a.scenes[0]?.levels ?? [];
+				const levels = (s.levels ?? []).flatMap((l, i) =>
+					first[i] !== undefined && l !== first[i] ? [`T${i + 1} ${l}`] : []
+				);
+				const mix = [
+					s.muted?.length ? `muted ${s.muted.map((t) => name(t - 1)).join(', ')}` : '',
+					levels.length ? `levels ${levels.join(', ')}` : ''
+				].filter(Boolean);
+				return [
+					`scene ${s.scene}`,
+					`${which} (${barsText(s.bars)})${mix.length ? `; ${mix.join('; ')}` : ''}`
+				];
 			})
 		),
 		song: { ...a.song, length }

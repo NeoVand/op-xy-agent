@@ -974,6 +974,9 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 	);
 
 	onDestroy(() => {
+		// the kit stays for the agent, whose chat is on another page ("put my kit on track 2")
+		const kit = bench.mode === 'drum' || bench.mode === 'slices' ? bench.kitForReplica() : [];
+		inbox?.keep(kit.length > 0 ? { name: bench.presetName || 'kit', sounds: kit } : null);
 		stopBeat();
 		for (const t of Object.values(timers)) clearTimeout(t);
 		player.close();

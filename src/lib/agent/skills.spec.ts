@@ -155,6 +155,10 @@ describe('routing', () => {
 		]);
 		expect(route('why is my bass so dull?')).toEqual(['shape-a-sound']);
 		expect(route('sync the op-xy with ableton')).toEqual(['midi-gear']);
+		// the preset maker is the app's own page: asked about by name, its skill comes
+		expect(route('I made a kit in the preset maker, how do I get it onto track 2 here?')).toContain(
+			'kits-and-samples'
+		);
 	});
 
 	it('never adds more than two, nor one the thread holds', () => {

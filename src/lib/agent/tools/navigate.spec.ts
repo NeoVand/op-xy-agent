@@ -59,6 +59,23 @@ function setup(withReplica = false) {
 const json = (result: ToolResult) => JSON.parse(String(result.content));
 
 describe('plan_steps', () => {
+	it('reads a shift layer’s value with shift held, as the user sees it turning', async () => {
+		const { run } = setup();
+		const plan = json(
+			await run(planStepsTool, {
+				show: false,
+				track: 3,
+				settings: [
+					{ param: 'cutoff', value: 22 },
+					{ param: 'fx ii send', value: 18 }
+				]
+			})
+		);
+		const send = plan.settings[1].steps.at(-1);
+		expect(send.keys).toBe('shift + turn E4');
+		expect(send.screen).toMatch(/^sends: .*fx II 18/);
+	});
+
 	it('plans a parameter from where the replica stands, without moving it', async () => {
 		const { sim, run } = setup();
 		const result = await run(planStepsTool, { show: false, track: 3, param: 'cutoff', value: 40 });

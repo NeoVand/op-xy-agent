@@ -24,6 +24,9 @@ facts:
   - id: four
     text: '`bar + accidental 4`, the black key marked 4, sets scale 4; the step lights then move four times slower.'
     source: https://teenage.engineering/guides/op-xy/get-started#4.3%20adding-chords
+  - id: double
+    text: Scale 1/2 halves every step, so a pattern plays at double time beside tracks at 1; scale 2 doubles every step, half time. A pattern at 1/2 lasts half as long, so it plays twice in a scene of its length at 1.
+    source: https://teenage.engineering/guides/op-xy/sequencer#extend-with-bar
   - id: longer
     text: Raising the scale is how a pattern outgrows four bars; 64 steps at scale 16 last 64 bars.
     source: https://teenage.engineering/guides/op-xy/sequencer#extend-with-bar

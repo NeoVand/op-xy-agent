@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1215 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1223 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -1350,6 +1350,7 @@ Facts:
 - Holding `bar` and pressing a black key sets the track scale, the time one step takes; every track keeps its own. [#set] [s1]
 - The scale multiplies the length of every step; at 4 a step lasts four normal steps, so four steps fill a 4/4 bar. [#meaning] [s2]
 - `bar + accidental 4`, the black key marked 4, sets scale 4; the step lights then move four times slower. [#four] [s2]
+- Scale 1/2 halves every step, so a pattern plays at double time beside tracks at 1; scale 2 doubles every step, half time. A pattern at 1/2 lasts half as long, so it plays twice in a scene of its length at 1. [#double] [s1]
 - Raising the scale is how a pattern outgrows four bars; 64 steps at scale 16 last 64 bars. [#longer] [s1]
 - TE's guide lists the scales 1, 2, 3, 4, 6, 8, 16 and 1/2. [#guide-list] [s1]
 - The changelog also names 1/5 and 1/7, repaired in OS 1.0.15. [#fractions] (since 1.0.15) [s3]
@@ -2224,6 +2225,8 @@ Facts:
 - Over MIDI, CC12, CC13, CC14 and CC15 on the track's channel move shape, ratio, detune and stereo. [#midi-ccs] (verified 1.1.33) [s5]
 - Prism's picture is a row of four optics — a triangle, a convex lens, a concave lens and a wedge — with light rays passing through the lenses on every note. [#picture] (verified 1.1.33) [s6]
 - Shape grows the triangle, ratio thickens the convex lens, detune slides the concave lens and stereo opens the wedge into an arrowhead. [#drawn] (verified 1.1.33) [s6]
+- Shape runs from a saw at 0 to a square at about 50, then narrows the two oscillators' pulses one after the other up to 99. Low is full and buzzy (every harmonic), the middle hollow (the even harmonics gone), the top thin and nasal. [#shape-range] (verified 1.1.33) [s7]
+- Detune moves the second oscillator up to about 15 cents from the first, the same amount on every note, so the two beat slowly against each other, faster toward the top. [#detune-cents] (verified 1.1.33) [s7]
 - Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16. [#ratio-steps] (verified 1.1.33) [s7]
 
 Procedures:
@@ -4662,8 +4665,13 @@ Facts:
 - In MTP mode the OP-XY shows up as a different USB device and its MIDI port disappears, so MIDI apps, this one included, lose the connection. [#midi-gone] (verified 1.1.33) [s3]
 - When the computer closes its MTP session, the OP-XY leaves MTP mode by itself and its MIDI port returns. [#auto-exit] (verified 1.1.33) [s3]
 - On OS 1.1.33 the top level holds projects (user, templates and the open project as workspace.xy), samples (user), presets (snapshot and user sound packs) and how_to_import.txt. [#layout] (verified 1.1.33) [s3]
-- OS 1.0.29 could corrupt files over 64 KB copied off the unit by MTP; 1.0.32 fixed it, and backups made under 1.0.29 may be damaged. [#bug-1029] (since 1.0.32) [s4]
-- MTP accepts UTF-8 file and folder names since OS 1.1.15. [#utf8] (since 1.1.15) [s5]
+- Each kind of file goes only in its own top folder (presets, projects, samples), and new folders can be made only inside those three; a copy that fails usually has a name the unit refuses or sits in the wrong folder. [#own-folders] (verified 1.1.33) [s4]
+- A copied drum or sampler preset is a folder whose name ends in .preset, its patch.json beside its samples; it can sit anywhere inside the presets folder, a folder of your own there included. A synth preset without samples can also be a single .json file. [#preset-files] (verified 1.1.33) [s4]
+- What you copy, rename or delete shows on the unit once the disk is ejected (`M4`). [#on-eject] (verified 1.1.33) [s4]
+- The unit's own import note allows letters, digits, spaces, hashes, hyphens and round brackets in file and folder names, plus the extension's dot; keep to those even though OS 1.1.15 took UTF-8. [#names] (verified 1.1.33) [s4]
+- A project file does not carry its samples, so a project moved to another OP-XY needs its samples copied too. [#samples-travel] (verified 1.1.33) [s4]
+- OS 1.0.29 could corrupt files over 64 KB copied off the unit by MTP; 1.0.32 fixed it, and backups made under 1.0.29 may be damaged. [#bug-1029] (since 1.0.32) [s5]
+- MTP accepts UTF-8 file and folder names since OS 1.1.15. [#utf8] (since 1.1.15) [s6]
 
 Procedures:
 - Put the OP-XY in MTP mode [#enter] [s1]
@@ -4675,7 +4683,7 @@ Procedures:
 
 Related: [howto.back-up-projects], [howto.load-samples], [com.usb], [sampler.sample-files]
 
-Sources: s1 guide:com#mtp · s2 teenage.engineering/guides/fieldkit · s3 note 90 · s4 changelog:1.0.32 · s5 changelog:1.1.15
+Sources: s1 guide:com#mtp · s2 teenage.engineering/guides/fieldkit · s3 note 90 · s4 note 30 · s5 changelog:1.0.32 · s6 changelog:1.1.15
 
 ### MIDI CC reference [com.midi-cc-reference]
 current · OS ≥ 1.0.9 · changed in 1.1.0 · guide v1.1.15
