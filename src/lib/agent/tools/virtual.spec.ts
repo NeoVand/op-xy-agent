@@ -700,10 +700,30 @@ describe('write_pattern on drums', () => {
 				notes: '1:A1:2 3:A1:2 9:C2:2 19:E2:2 25:G1:2'
 			})
 		);
-		expect(bass.note).toMatch(/It hits with T1's kick on steps 1, 9, 25 \(3 of its 5 steps\)\./);
+		expect(bass.note).toMatch(
+			/It hits with T1's kick on steps 1, 9, 25 \(3 of its 5 steps\): together is a choice/
+		);
 		// a lead high above it says nothing of the kick
 		const lead = json(await run(writePatternTool, { track: 5, notes: '1:C5:2 9:E5:2' }));
 		expect(lead.note).not.toMatch(/kick/);
+	});
+
+	it('plays a pattern backwards, alone or into a copy', async () => {
+		const { virtual, run } = setup();
+		// C4 for two steps, E4 for one, G4 for four, in a bar of 16
+		await run(writePatternTool, { track: 5, notes: '1:C4:2 5:E4:1 9:G4:4' });
+		const back = json(
+			await run(writePatternTool, { track: 5, pattern: 2, copy: 1, reverse: true, stay: true })
+		);
+		expect(back.written.notes).toBe('5:G4:4:100 12:E4:1:100 15:C4:2:100');
+		expect(back.note).toMatch(/Reversed: the notes play backwards/);
+		// the source as it was
+		expect(json(await run(readPatternTool, { track: 5, pattern: 1 })).notes).toBe(
+			'1:C4:2:100 5:E4:1:100 9:G4:4:100'
+		);
+		// backwards twice is forwards
+		await run(writePatternTool, { track: 5, pattern: 2, reverse: true, stay: true });
+		expect(virtual.readPattern(5, 2).notes.map((n) => n.step)).toEqual([1, 5, 9]);
 	});
 
 	it('gives a pattern its own groove, confirmed and undone with it', async () => {

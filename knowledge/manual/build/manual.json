@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "0bdaf1f4",
+	"bundle_hash": "a2043445",
 	"stats": {
 		"units": 166,
-		"facts": 1228,
+		"facts": 1229,
 		"procedures": 207,
 		"parameters": 207,
 		"verified_items": 261,
-		"words": 46683,
+		"words": 46733,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -23668,6 +23668,14 @@
 					"confidence": "verified"
 				},
 				{
+					"id": "one-tempo",
+					"text": "The tempo is one value for the whole project; it sits on no module page, so no parameter lock or LFO reaches it, and a tempo change over a song (a ramp) is made by hand on the tempo page, over MIDI (CC80), or by following an external MIDI clock.",
+					"source": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
 					"id": "new-project",
 					"text": "A new empty project runs at 120 BPM (OS 1.1.33).",
 					"source": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
@@ -23863,6 +23871,10 @@
 				{
 					"url": "docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133",
 					"kind": "research"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
+					"kind": "guide"
 				},
 				{
 					"url": "docs/research/10-xy-format.md#32-projectsettings-0x00000x0094",

@@ -212,7 +212,7 @@ function offGrid(p: VirtualPattern): { offGrid?: string } {
 	const sign = (x: number) => `${x > 0 ? '+' : '−'}${Math.abs(x).toFixed(2)}`;
 	const shown = off.slice(0, 8).map((n) => `step ${n.step} ${sign(n.offset ?? 0)}`);
 	return {
-		offGrid: `${off.length} note${off.length === 1 ? '' : 's'} off the grid by part of a step (a live take's timing, kept by writes that start from this pattern): ${shown.join(', ')}${off.length > 8 ? ', …' : ''}`
+		offGrid: `${off.length} note${off.length === 1 ? '' : 's'} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern): ${shown.join(', ')}${off.length > 8 ? ', …' : ''}`
 	};
 }
 
@@ -387,7 +387,7 @@ export const writePatternTool = defineTool({
 			.boolean()
 			.optional()
 			.describe(
-				"With grid: write only the lines given, the pattern's other sounds kept as they are (add a cowbell, or change the hats, without resending the beat); its bars and length stay unless given"
+				"With grid: write only the lines given, the pattern's other sounds kept as they are (add a cowbell, or change the hats, without resending the beat; a line of rests takes its sound out); its bars and length stay unless given"
 			),
 		copy: z
 			.int()
@@ -412,6 +412,12 @@ export const writePatternTool = defineTool({
 			.optional()
 			.describe(
 				'With copy or copy_track: only this bar of the source, as a pattern of one bar (a section cut into one-bar patterns for a fade, a bar to vary as a fill)'
+			),
+		reverse: z
+			.boolean()
+			.optional()
+			.describe(
+				'Alone, or with copy: the notes backwards, each ending where its mirror began (a melody in retrograde, a fill turned round); its locks and components go with their steps'
 			),
 		humanize: z
 			.object({
@@ -622,6 +628,10 @@ export const writePatternTool = defineTool({
 			input.bar === undefined &&
 			!shifting &&
 			!adding;
+		// reverse, alone or with copy: the notes backwards (an agent worked out a retrograde melody
+		// by hand, new step = 34 − step − length)
+		const reversing =
+			input.reverse === true && !given && input.grid === undefined && input.bar === undefined;
 		// humanize alone loosens the pattern as it is (an agent asked to humanize robotic hats could
 		// only vary velocities by hand, and nothing moved a note off the grid)
 		const humanizing =
@@ -637,7 +647,8 @@ export const writePatternTool = defineTool({
 		const current = input.bar !== undefined ? readSource() : null;
 		const barFrom = input.bar !== undefined ? (input.bar - 1) * 16 : 0;
 		const inBar = (step: number) => step > barFrom && step <= barFrom + 16;
-		const whole = shifting || adding || copying || restyling || humanizing ? readSource() : null;
+		const whole =
+			shifting || adding || copying || restyling || humanizing || reversing ? readSource() : null;
 		const was =
 			whole && current
 				? {
@@ -654,7 +665,8 @@ export const writePatternTool = defineTool({
 			!adding &&
 			!copying &&
 			!restyling &&
-			!humanizing
+			!humanizing &&
+			!reversing
 		) {
 			return errorResult(
 				'Nothing to write: give notes (a string or a list; an empty one clears the pattern), grid, or transpose to shift the pattern as it is.',
@@ -879,6 +891,23 @@ export const writePatternTool = defineTool({
 				...notes.map((n) => ({ ...n, step: n.step + barFrom }))
 			);
 		}
+		// a note of length L on step s, backwards, starts where its mirror ends: fill − s − L + 2
+		const mirror = (step: number, length = 1) =>
+			Math.max(1, fill - step - Math.max(1, Math.round(length)) + 2);
+		// steps where a note starts move with it; other steps mirror plainly
+		const starts = new Map(notes.map((n) => [n.step, mirror(n.step, n.length)]));
+		const mirrored = (step: number) => starts.get(step) ?? Math.max(1, fill - step + 1);
+		if (reversing) {
+			notes.splice(
+				0,
+				notes.length,
+				...notes.map((n) => ({
+					...n,
+					step: mirror(n.step, n.length),
+					...(n.offset ? { offset: -n.offset } : {})
+				}))
+			);
+		}
 		let loosened = 0;
 		if (humanizing && input.humanize) {
 			const kit = drums ? virtual.readSound(input.track).kit : undefined;
@@ -939,9 +968,9 @@ export const writePatternTool = defineTool({
 			const anew =
 				current !== null &&
 				(input.notes !== undefined || input.chords !== undefined || input.grid !== undefined);
-			const locks = (lockBase?.stepLocks ?? []).filter(
-				(l) => l.step <= span && !(anew && inBar(l.step))
-			);
+			const locks = (lockBase?.stepLocks ?? [])
+				.filter((l) => l.step <= span && !(anew && inBar(l.step)))
+				.map((l) => (reversing ? { ...l, step: mirrored(l.step) } : l));
 			const prior = virtual.readPattern(input.track, pattern);
 			const result = virtual.writePattern(input.track, {
 				pattern,
@@ -955,7 +984,9 @@ export const writePatternTool = defineTool({
 				length: input.length ?? (keep && keep.bars === bars ? keep.length : metered),
 				scale: input.scale === undefined ? keep?.scale : scaleValue(input.scale),
 				notes,
-				components: [...kept, ...given],
+				components: reversing
+					? [...kept, ...given].map((c) => ({ ...c, step: mirrored(c.step) }))
+					: [...kept, ...given],
 				...(locks.length ? { locks } : {}),
 				// notes moved off the grid play there only with quantise below 100
 				...(humanizing && ((input.humanize?.timing ?? 0) > 0 || (input.humanize?.late ?? 0) !== 0)
@@ -963,6 +994,7 @@ export const writePatternTool = defineTool({
 					: {})
 			});
 			const notes2: string[] = [];
+			if (reversing) notes2.push('Reversed: the notes play backwards, last to first.');
 			if (humanizing && input.humanize) {
 				const t = input.humanize.timing ?? 0;
 				const v = input.humanize.velocity ?? 0;
@@ -1127,7 +1159,7 @@ export const writePatternTool = defineTool({
 					const shared = [...new Set(result.notes.filter((n) => on(n.step)).map((n) => n.step))];
 					if (shared.length > 0) {
 						notes2.push(
-							`It hits with T${kit.track}'s kick on step${shared.length === 1 ? '' : 's'} ${shared.slice(0, 12).join(', ')}${shared.length > 12 ? ', …' : ''} (${shared.length} of its ${new Set(result.notes.map((n) => n.step)).size} steps).`
+							`It hits with T${kit.track}'s kick on step${shared.length === 1 ? '' : 's'} ${shared.slice(0, 12).join(', ')}${shared.length > 12 ? ', …' : ''} (${shared.length} of its ${new Set(result.notes.map((n) => n.step)).size} steps): together is a choice of style; for room between them, move the bass off those steps.`
 						);
 					}
 				}

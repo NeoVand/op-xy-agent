@@ -1214,7 +1214,8 @@ export class Conductor {
 		const p = this.#env.guide?.progress?.() ?? null;
 		if (!p) return null;
 		const done = p.done.length;
-		return `A walkthrough is lit (${p.goal}): ${done} of ${p.total} steps done${done ? ` (${p.done.join(', ')})` : ''}${p.next ? `, waiting for the user to do ${p.next}` : ''}.`;
+		const held = p.held?.length ? `; held down now: ${p.held.join(', ')}` : '';
+		return `A walkthrough is lit (${p.goal}): ${done} of ${p.total} steps done${done ? ` (${p.done.join(', ')})` : ''}${p.next ? `, waiting for the user to do ${p.next}` : ''}${held}.`;
 	}
 
 	/** Whether the model has called the tool `name` since the user's message. */

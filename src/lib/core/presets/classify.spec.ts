@@ -37,7 +37,9 @@ const EXPECTED: Readonly<Record<VoiceType, DrumKind>> = {
 	tambourine: 'tambourine',
 	triangle: 'triangle',
 	guiro: 'guiro',
-	zap: 'fx'
+	zap: 'fx',
+	// a bed of dust is no one kind of hit: not heard for (below)
+	crackle: 'fx'
 };
 
 describe('drum kinds from file names', () => {
@@ -96,7 +98,7 @@ describe('drum kinds from file names', () => {
 
 describe('drum kinds from the sound', () => {
 	it('hears every generated voice as its kind, in several takes and colours', () => {
-		for (const type of Object.keys(EXPECTED) as VoiceType[]) {
+		for (const type of (Object.keys(EXPECTED) as VoiceType[]).filter((t) => t !== 'crackle')) {
 			for (const variation of [{}, { tone: 0.1 }, { tone: 0.9 }, { seed: 7 }, { seed: 23 }]) {
 				const heard = bySound(renderVoice({ type, ...variation }));
 				expect([type, variation, heard]).toEqual([type, variation, EXPECTED[type]]);

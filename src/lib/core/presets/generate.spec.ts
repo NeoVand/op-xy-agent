@@ -38,7 +38,8 @@ const rms = (x: Float32Array, from: number, to: number) => {
 
 describe('generated drum sounds', () => {
 	it('renders every voice type at its level, ringing as long as asked and ending in silence', () => {
-		for (const type of VOICE_TYPES) {
+		// the crackle is a bed, not a hit: its own test below
+		for (const type of VOICE_TYPES.filter((t) => t !== 'crackle')) {
 			const audio = renderVoice({ type, decay: 0.3 });
 			const x = audio.channels[0];
 			expect(audio.sampleRate).toBe(SR);
@@ -50,6 +51,22 @@ describe('generated drum sounds', () => {
 			// the tail has died away by well over 30 dB
 			expect(rms(x, x.length - 1000, x.length)).toBeLessThan(rms(x, 0, 2000) / 30);
 		}
+	});
+
+	it('renders a crackle as an even bed of pops, well below the hits, denser with tone', () => {
+		const pops = (tone: number) => {
+			const x = renderVoice({ type: 'crackle', tone, decay: 2 }).channels[0];
+			let count = 0;
+			for (let i = 1; i < x.length; i++)
+				if (Math.abs(x[i]) > 0.1 && Math.abs(x[i - 1]) <= 0.1) count++;
+			return { x, count };
+		};
+		const { x, count } = pops(0.5);
+		expect(x.reduce((m, s) => Math.max(m, Math.abs(s)), 0)).toBeCloseTo(0.35, 5);
+		// as dense at the end as at the start: no decay
+		const half = Math.floor(x.length / 2);
+		expect(rms(x, half, x.length - 2000)).toBeGreaterThan(rms(x, 0, half) / 3);
+		expect(pops(0.95).count).toBeGreaterThan(count);
 	});
 
 	it('is deterministic, and a seed gives another take', () => {

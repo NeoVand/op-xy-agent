@@ -196,6 +196,25 @@ describe('replica changes', () => {
 		]);
 	});
 
+	it('say a drum swap as the same rhythm on other sounds', () => {
+		const { virtual } = setup();
+		const hit = (step: number, note: number) => ({ step, note, velocity: 100, length: 1 });
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [hit(1, 53), hit(5, 55), hit(9, 53), hit(13, 55)]
+		});
+		const start = virtual.checkpoint();
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [hit(1, 53), hit(5, 58), hit(9, 53), hit(13, 58)]
+		});
+		expect(virtual.changesSince(start)).toEqual([
+			'T1 pattern 1: 4 notes, the same rhythm on other sounds on steps 5, 13 (snare 1 → clap 1)'
+		]);
+	});
+
 	it('say the song moving on once, not as each track switching pattern', () => {
 		const { sim, virtual } = setup();
 		const kick = [1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 100, length: 1 }));

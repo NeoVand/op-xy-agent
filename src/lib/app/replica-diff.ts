@@ -192,7 +192,9 @@ function patternChanges(
 			// the notes, when they changed (a lock alone once read "2 notes, step 7 … locked")
 			const notes = (p: Pattern | undefined) => p?.steps.map((s) => s.notes);
 			if (!was || !now || !same(notes(was), notes(now))) {
-				parts.push(describeNoteChange(was, now, soundOf) ?? `${notesIn(now)} notes`);
+				parts.push(
+					describeNoteChange(was, now, soundOf, track?.engine === 'drum') ?? `${notesIn(now)} notes`
+				);
 			}
 			if (was && now) {
 				if (was.bars !== now.bars) parts.push(`${was.bars} → ${now.bars} bars`);

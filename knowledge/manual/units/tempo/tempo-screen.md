@@ -29,6 +29,10 @@ facts:
     text: Over MIDI, CC80 on any channel sets the tempo; on OS 1.1.33 the result is twice the value in BPM, held within 40–220, so only even tempos can be sent.
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133
     verified_on: '1.1.33'
+  - id: one-tempo
+    text: The tempo is one value for the whole project; it sits on no module page, so no parameter lock or LFO reaches it, and a tempo change over a song (a ramp) is made by hand on the tempo page, over MIDI (CC80), or by following an external MIDI clock.
+    source: https://teenage.engineering/guides/op-xy/sequencer#step-sequencing
+    confidence: derived
   - id: new-project
     text: A new empty project runs at 120 BPM (OS 1.1.33).
     source: docs/research/90-device-probe.md#2026-09-26--session-1-results-owner-present-scratch-project-os-1133

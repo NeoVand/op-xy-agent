@@ -127,8 +127,10 @@ function detail(x: readonly Placed[], y: readonly Placed[]): string[] {
 export function describeNoteChange(
 	before: Pattern | undefined,
 	after: Pattern | undefined,
-	/** A drum note's sound ("kick 1"), on a drum track. */
-	soundOf?: (note: number) => string | null
+	/** A drum note's sound ("kick 1"), on a drum track; a pitched note's name elsewhere. */
+	soundOf?: (note: number) => string | null,
+	/** A drum track, whose notes are sounds: the same rhythm on other sounds, not new pitches. */
+	drums = false
 ): string | null {
 	const x = placed(before);
 	const y = placed(after);
@@ -164,10 +166,25 @@ export function describeNoteChange(
 		// which steps, when few: one chord changed reads as that chord's step
 		const changed = [...new Set(y.flatMap((n, i) => (n.note !== x[i].note ? [n.step] : [])))];
 		const steps = new Set(y.map((n) => n.step)).size;
+		// on a drum track, which sounds took the hits over (a snare made a clap read "new pitches")
+		const swaps =
+			drums && soundOf
+				? [
+						...new Set(
+							y.flatMap((n, i) =>
+								n.note !== x[i].note
+									? [`${soundOf(x[i].note) ?? x[i].note} → ${soundOf(n.note) ?? n.note}`]
+									: []
+							)
+						)
+					]
+				: [];
+		const what = drums ? 'on other sounds' : 'with new pitches';
+		const which = swaps.length && swaps.length <= 4 ? ` (${swaps.join(', ')})` : '';
 		if (changed.length < steps && changed.length <= 8) {
-			return `${count}, the same rhythm with new pitches on step${changed.length === 1 ? '' : 's'} ${changed.join(', ')}`;
+			return `${count}, the same rhythm ${what} on step${changed.length === 1 ? '' : 's'} ${changed.join(', ')}${which}`;
 		}
-		return `${count}, the same rhythm with new pitches`;
+		return `${count}, the same rhythm ${what}${which}`;
 	}
 	const moved = unmatched(y.map(where), x.map(where));
 	if (

@@ -9,7 +9,7 @@
  * user's own presses on the replica move its simulator, as always.
  */
 import { createContext } from 'svelte';
-import { tryParseKeys } from '$lib/core/opxy';
+import { getControl, tryParseKeys, type ControlId } from '$lib/core/opxy';
 import { planAnimation, type ReplicaState, type Timers, type TurnableId } from '$lib/replica';
 
 /** One step of a walkthrough: a key combo, the detents of a turn, and the screen it leads to. */
@@ -127,13 +127,30 @@ export class ReplicaGuide {
 	}
 
 	/** Where the walkthrough stands, for the agent (it once could not tell how far the user got). */
-	progress(): { goal: string; done: string[]; total: number; next: string | null } | null {
+	progress(): {
+		goal: string;
+		done: string[];
+		total: number;
+		next: string | null;
+		held: string[];
+	} | null {
 		if (this.status !== 'running') return null;
+		// the keys held down now, by name (an agent guiding a count-in could not tell whether the
+		// user still held record)
+		const held = this.#replica.pressed.flatMap((id) => {
+			try {
+				const control = getControl(id as ControlId);
+				return [control.token ?? control.label];
+			} catch {
+				return [];
+			}
+		});
 		return {
 			goal: this.goal,
 			done: this.steps.slice(0, this.index).map((s) => s.keys),
 			total: this.steps.length,
-			next: this.steps[this.index]?.keys ?? null
+			next: this.steps[this.index]?.keys ?? null,
+			held
 		};
 	}
 

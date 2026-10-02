@@ -42,7 +42,8 @@ export function grooveReach(
 	if (moved === 0) {
 		return `${label} moves none of T${pattern.track}'s notes, so it plays straight: ${where(type)}. ${fix}`;
 	}
-	if (moved / pattern.notes.length < FEW) {
+	// a few swung hits a bar are a swing (ghost hats between eighth-note kicks and snares)
+	if (moved < 4 && moved / pattern.notes.length < FEW) {
 		return `${label} moves only ${moved} of T${pattern.track}'s ${pattern.notes.length} notes, so it hardly swings: ${where(type)}. ${fix}`;
 	}
 	return always

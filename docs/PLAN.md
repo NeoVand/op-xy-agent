@@ -233,6 +233,18 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   answering; "live drummer" no longer loads the performance skill; scale alone says 1/2 is double
   time; the skill's open-hat rule says the grid drops the closed hat and to show the grid as it
   came back.
+- **Probe round nineteen (2026-10-02), 16 scenarios (`probe-scenarios-19.json`: the five sessions
+  round eighteen lost to the API's overload, all completed this time, and new ones: a laid-back
+  snare, a bass kept off the kick, a swung beat, a melody backwards, the verse bass an octave up in
+  the chorus, a tempo ramp, a sound copied between tracks, a count-in lesson followed by hand,
+  vinyl crackle, the user's own presses before the first message, a muddy low end):** two failed
+  calls (a JS expression in a grid, a | in the notes form). Fixes: write_pattern `reverse` (alone
+  or into a copy, locks and components with their steps); the notes and chords forms take | between
+  bars; a drum swap reads "the same rhythm on other sounds (snare 1 → clap 1)"; merge says a line of
+  rests takes its sound out; the groove note counts a few swung hits a bar as a swing; the kick
+  note says together is a choice of style; the walkthrough status says which keys are held down;
+  make_kit's `crackle` voice (vinyl dust, an even bed of pops, also in the preset maker); the manual:
+  the tempo is one value a project, no lock or LFO reaches it (derived).
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

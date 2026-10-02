@@ -26,7 +26,8 @@ export const VOICE_TYPES = [
 	'tambourine',
 	'triangle',
 	'guiro',
-	'zap'
+	'zap',
+	'crackle'
 ] as const;
 export type VoiceType = (typeof VOICE_TYPES)[number];
 
@@ -126,7 +127,8 @@ export function renderVoice(voice: Voice): PcmAudio {
 		crush: unit(voice.crush, 0),
 		snap: unit(voice.snap, 0.5),
 		sweep: unit(voice.sweep, 0.5),
-		level: unit(voice.level, 0.9),
+		// a crackle is a bed under the beat, well below the hits
+		level: unit(voice.level, voice.type === 'crackle' ? 0.35 : 0.9),
 		seed: voice.seed ?? 1
 	};
 	const decay = Math.min(MAX_DECAY, Math.max(0.01, voice.decay ?? DEFAULT_DECAY[voice.type]));
@@ -253,6 +255,26 @@ export function renderVoice(voice: Voice): PcmAudio {
 			biquad(x, 'bandpass', 2500 + 1500 * v.tone, 1.2);
 			break;
 		}
+		case 'crackle': {
+			// vinyl dust: sparse pops, mostly small and a few loud, over a faint hiss, even over its
+			// length so it loops under a beat (an agent faked one from crushed hats); tone sets how
+			// many pops a second, snap how loud the hiss
+			const rate = 6 + 34 * v.tone;
+			const unitRand = () => (rand() + 1) / 2;
+			for (let i = 0; i < length; i++) x[i] = rand() * 0.05 * v.snap;
+			for (let i = Math.round(unitRand() * (SR / rate)); i < length;) {
+				const amp = 0.25 + 0.75 * unitRand() ** 3;
+				const sign = rand() < 0 ? -1 : 1;
+				const width = Math.max(2, Math.round((0.0004 + 0.0018 * unitRand()) * SR));
+				for (let k = 0; k < width && i + k < length; k++) {
+					x[i + k] += sign * amp * Math.exp((-4 * k) / width);
+				}
+				i += Math.max(1, Math.round((-Math.log(1 - 0.999 * unitRand()) / rate) * SR));
+			}
+			biquad(x, 'highpass', 700);
+			biquad(x, 'lowpass', 9000);
+			break;
+		}
 		case 'zap': {
 			let phase = 0;
 			for (let i = 0; i < length; i++) {
@@ -310,7 +332,8 @@ const DEFAULT_DECAY: Readonly<Record<VoiceType, number>> = {
 	tambourine: 0.2,
 	triangle: 1.2,
 	guiro: 0.25,
-	zap: 0.2
+	zap: 0.2,
+	crackle: 4
 };
 
 /** Kit styles: how each voice type is dialled in (the factory layout decides where it goes). */

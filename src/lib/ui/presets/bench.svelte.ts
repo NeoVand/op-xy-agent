@@ -139,7 +139,8 @@ const VOICE_KIND: Readonly<Record<VoiceType, DrumKind>> = {
 	tambourine: 'tambourine',
 	triangle: 'triangle',
 	guiro: 'guiro',
-	zap: 'fx'
+	zap: 'fx',
+	crackle: 'fx'
 };
 
 /** Kinds one voice can stand for on TE's keys (a cymbal on the ride key is the ride). */

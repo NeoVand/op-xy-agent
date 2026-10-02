@@ -10,6 +10,10 @@ import {
 } from './pattern-notes';
 
 describe('compactNotes', () => {
+	it('takes | between bars, as a grid does', () => {
+		expect(compactNotes('1:D2:6 | 17:D2:6').map((n) => n.step)).toEqual([1, 17]);
+	});
+
 	it('reads a word per note, chords, lengths and velocities, either left out', () => {
 		expect(compactNotes('1:A2:4 5:C3+E3+G3:2:70\n9:E2::90, 13:45')).toEqual([
 			{ step: 1, note: 'A2', length: 4 },

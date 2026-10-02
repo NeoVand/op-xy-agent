@@ -180,6 +180,8 @@ export interface GuideProgress {
 	readonly total: number;
 	/** The step lit now. */
 	readonly next: string | null;
+	/** The keys held down now, by name ("record"), when known. */
+	readonly held?: readonly string[];
 }
 
 /** What the replica's screen shows now (the app's UI simulator, not the real device's screen). */

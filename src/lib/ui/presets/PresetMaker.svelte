@@ -153,7 +153,8 @@ run or an arpeggio for instruments). The strip below says what the device takes;
 		tambourine: ['decay', 'tone'],
 		triangle: ['decay'],
 		guiro: ['decay', 'tone'],
-		zap: ['decay', 'sweep']
+		zap: ['decay', 'sweep'],
+		crackle: ['decay', 'tone', 'snap']
 	};
 
 	function voiceKnob(sound: BenchSound, param: VoiceParam, label: string): Knob {

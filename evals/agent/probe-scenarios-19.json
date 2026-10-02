@@ -1,0 +1,143 @@
+[
+	{
+		"name": "call-response-2",
+		"about": "Rerun (lost to overload): two melodic parts that alternate.",
+		"steps": [
+			{ "say": "write a call and response melody between track 4 and track 5, 4 bars, in C major" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snare-like-clap-2",
+		"about": "Rerun (lost to overload): one sound of a kit replaced by another kind.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "I want the snare to sound like a clap instead" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "transpose-all-2",
+		"about": "Rerun (lost to overload): everything moved down a minor third.",
+		"steps": [
+			{ "say": "make a beat with a bass, chords and a lead in E minor" },
+			{ "say": "transpose everything down a minor third" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lead-to-arp-2",
+		"about": "Rerun (lost to overload): a lead turned into an arpeggio by the player.",
+		"steps": [
+			{ "say": "put a slow chord melody on track 5, a chord every 2 beats" },
+			{ "say": "turn it into an arpeggio" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "explain-project-2",
+		"about": "Rerun (lost to overload): explaining what each track does.",
+		"steps": [
+			{ "say": "make a song with drums, bass and chords, verse and chorus" },
+			{ "say": "explain what each track does in this song, simply" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "laid-back-snare",
+		"about": "Re-check: a snare laid back with humanize's lean.",
+		"steps": [
+			{ "say": "make a neo soul beat" },
+			{ "say": "lay the snare back a little, like Dilla" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-off-kick-2",
+		"about": "Re-check: the bass written against the kick, the overlap said.",
+		"steps": [
+			{ "say": "make a deep house beat with a bass" },
+			{ "say": "move the bass so it never hits with the kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "groove-fixed-first",
+		"about": "Re-check: a swing asked for, made audible before the answer.",
+		"steps": [{ "say": "make a swung hip hop beat with a bass" }, { "why": true }]
+	},
+	{
+		"name": "reverse-melody",
+		"about": "A transformation: a melody played backwards.",
+		"steps": [
+			{ "say": "write a 2 bar melody on track 5" },
+			{ "say": "now make pattern 2 the same melody backwards" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "octave-bass-variation",
+		"about": "A variation built from an existing part across scenes.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus, drums and bass" },
+			{ "say": "in the chorus, play the verse bassline an octave higher instead of its own" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tempo-ramp",
+		"about": "A request the device cannot do directly: a tempo change over time.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "make the tempo speed up gradually over 8 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "copy-sound-between",
+		"about": "One track's sound put on another track.",
+		"steps": [
+			{ "say": "make a bassline on track 3 and chords on track 4" },
+			{ "say": "give track 4 the same sound as track 3" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "count-in-lesson",
+		"about": "A how-to about recording with a count-in, followed by hand.",
+		"steps": [
+			{ "say": "teach me to record a melody on track 5 with a count-in, light the keys" },
+			{ "follow": 4 },
+			{ "say": "what do I do now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lofi-vinyl",
+		"about": "A texture request: vinyl crackle on a lofi beat.",
+		"steps": [
+			{ "say": "make a lofi beat with keys" },
+			{ "say": "add some vinyl crackle" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "first-message-edits",
+		"about": "The user's turns and presses before the first message, then an ask about them.",
+		"steps": [
+			{ "press": ["key.tempo", "turn:encoder.1:-20"] },
+			{ "press": ["key.instrument", "track.1", "step.1", "step.9"] },
+			{ "say": "I set something up, can you build on it?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "too-much-low-end",
+		"about": "A mix problem across tracks.",
+		"steps": [
+			{ "say": "make a dub techno loop with a kick, bass and chords" },
+			{ "say": "there's too much low end, it's muddy" },
+			{ "why": true }
+		]
+	}
+]

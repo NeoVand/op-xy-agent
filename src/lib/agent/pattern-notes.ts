@@ -92,7 +92,8 @@ function noteOf(text: string, word: string): number | string {
 /** Reads a compact string: `step:note[:length[:velocity]]` words, chords joined by `+`. */
 export function compactNotes(text: string): WrittenNote[] {
 	const notes: WrittenNote[] = [];
-	for (const word of text.split(/[\s,;]+/).filter(Boolean)) {
+	// | between bars is for reading, as in a grid (an agent's notes split bars with it)
+	for (const word of text.split(/[\s,;|]+/).filter(Boolean)) {
 		const {
 			step,
 			token: chord,
@@ -121,7 +122,7 @@ export function compactNotes(text: string): WrittenNote[] {
  */
 export function compactChords(text: string, options: { root?: boolean } = {}): WrittenNote[] {
 	const parsed = text
-		.split(/[\s,;]+/)
+		.split(/[\s,;|]+/)
 		.filter(Boolean)
 		.map((word) => {
 			const part = wordParts(word, 'step:chord[:length[:velocity]] (e.g. 1:Am7, 17:F/A:16:70)');
@@ -153,7 +154,7 @@ export function compactChords(text: string, options: { root?: boolean } = {}): W
 /** The chord names a chords text gives, by step, as written ("Em7" on step 17), for the reading. */
 export function chordSymbols(text: string): Map<number, string> {
 	const out = new Map<number, string>();
-	for (const word of text.split(/[\s,;]+/).filter(Boolean)) {
+	for (const word of text.split(/[\s,;|]+/).filter(Boolean)) {
 		try {
 			const part = wordParts(word, 'step:chord');
 			if (chordFromSymbol(part.token)) out.set(part.step, part.token);
