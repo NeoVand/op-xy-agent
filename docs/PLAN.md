@@ -84,7 +84,7 @@
   back their locks and change lists name them ("step 7 cutoff locked at 60"); a miscounted grid
   line is refused, not noted; scenes count bars in the project's meter (four bars of 7/8, not
   3.5); a pattern at another track scale says how long it lasts; chords by name take `voicing:
-  root` and list their symbols; list pages read in full for the agent; a sound copy names what
+root` and list their symbols; list pages read in full for the agent; a sound copy names what
   it replaced; device_status says why nothing is connected; the app skill knows the song .wav and
   .mid downloads and that the replica records no audio, and is routed for questions too.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
