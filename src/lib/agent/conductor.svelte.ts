@@ -216,7 +216,12 @@ function playingNow(virtual: VirtualOpxy): string {
 					: status.recording === 'on'
 						? ` Recording is on for ${track} (latched): what is played on the keys lands in its pattern until stop.`
 						: '';
-		if (!status.playing) return `the replica is stopped.${recording}`;
+		// a project with nothing in it, said (an agent asked to "make it louder" first read all
+		// sixteen tracks to find there was nothing to turn up)
+		const empty = status.tracks.every((t) => t.notes === 0)
+			? ' Its project holds no notes yet: every pattern is empty.'
+			: '';
+		if (!status.playing) return `the replica is stopped.${empty}${recording}`;
 		// which tracks play notes now, and which are muted (an agent told of a loud hat could check
 		// only the track it wrote)
 		const name = (t: { track: number }) => (t.track <= 8 ? `T${t.track}` : `aux T${t.track - 8}`);

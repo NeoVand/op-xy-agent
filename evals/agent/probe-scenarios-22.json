@@ -1,0 +1,149 @@
+[
+	{
+		"name": "acid-slide-2",
+		"about": "Re-check: slides that really glide (notes that run past the next).",
+		"steps": [
+			{
+				"say": "make a squelchy acid bassline on track 3, with a few notes that slide into the next"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "scrap-it",
+		"about": "Re-check: starting over with a new project.",
+		"steps": [
+			{ "say": "make a dubstep beat with a wobble bass" },
+			{ "say": "scrap all of it, I want a fresh empty project" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sixth-below",
+		"about": "Re-check: a harmony read against its melody.",
+		"steps": [
+			{ "say": "write a 2 bar melody on track 5 in D major" },
+			{ "say": "add a harmony a sixth below it on track 6, same rhythm" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "slow-swell",
+		"about": "Re-check: envelope times in seconds for a swell.",
+		"steps": [
+			{ "say": "put a pad chord on track 8 for 4 bars" },
+			{ "say": "make it swell in slowly over about 2 seconds" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-already-zero",
+		"about": "Re-check: a walkthrough to a value already set, on another page.",
+		"steps": [{ "say": "light the keys to show me where to set the swing to 0" }, { "why": true }]
+	},
+	{
+		"name": "lab-hat-takes",
+		"about": "Re-check: lab takes with drum grids by name, read back.",
+		"steps": [
+			{ "say": "make a boom bap beat" },
+			{ "say": "give me three different hi-hat patterns to choose from" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "how-arp-works",
+		"about": "Re-check: how a feature works, one idea and a demonstration.",
+		"steps": [{ "say": "how does the arpeggiator work?" }, { "why": true }]
+	},
+	{
+		"name": "remove-roll",
+		"about": "Re-check: a step component taken off.",
+		"steps": [
+			{ "say": "make a trap beat with hi-hat rolls" },
+			{ "say": "remove the last hi-hat roll, keep the others" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "f-sharp-major",
+		"about": "Re-check: a key named with sharps reads in sharps.",
+		"steps": [
+			{ "say": "write a chord progression in F# major on track 7 and tell me the chords" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "open-hat-end",
+		"about": "An open hat placed on the last sixteenth of each bar.",
+		"steps": [
+			{ "say": "make a 2 bar house beat" },
+			{ "say": "open the hi-hat on the last sixteenth of every bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "build-a-song",
+		"about": "A song built up over several turns, then arranged.",
+		"steps": [
+			{ "say": "make a beat at 100 bpm" },
+			{ "say": "add a bassline" },
+			{ "say": "add some chords" },
+			{ "say": "now turn it into a song with an intro and an outro" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "polyphony",
+		"about": "A fact about the device's limits.",
+		"steps": [{ "say": "how many notes can the op-xy play at once?" }, { "why": true }]
+	},
+	{
+		"name": "mono-vs-legato",
+		"about": "A concept question that wants a demonstration.",
+		"steps": [
+			{ "say": "what's the difference between mono and legato on the op-xy?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "question-answer",
+		"about": "A melody with a musical form: question and answer.",
+		"steps": [
+			{ "say": "write a melody on track 5 that sounds like a question and then an answer" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "variation-every-4",
+		"about": "Variation every fourth bar.",
+		"steps": [
+			{ "say": "make a techno beat" },
+			{ "say": "it's boring, make something different happen every 4th bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "external-channel-3",
+		"about": "An external synth on a MIDI channel.",
+		"steps": [
+			{
+				"say": "set track 4 up to play my external synth on midi channel 3, and give it a bassline"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "dilla-swing",
+		"about": "A feel request: Dilla swing.",
+		"steps": [{ "say": "make a beat that swings like J Dilla, drunk and loose" }, { "why": true }]
+	},
+	{
+		"name": "filter-sweep-4",
+		"about": "A filter that opens over four bars.",
+		"steps": [
+			{ "say": "put a 4 bar chord loop on track 7" },
+			{ "say": "make the filter open slowly over the 4 bars, then snap shut at the loop" },
+			{ "why": true }
+		]
+	}
+]

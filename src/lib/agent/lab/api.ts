@@ -241,6 +241,11 @@ export interface PatternWrite {
 	readonly chords?: string;
 	readonly voicing?: 'smooth' | 'root';
 	/**
+	 * A drum track's lines by sound name or note, as write_pattern's grid ({"closed hat": "x.x. X.x."}:
+	 * x a hit at velocity, X an accent, o soft, 1–9 a hit that loud, . a rest), with notes or alone.
+	 */
+	readonly grid?: Readonly<Record<string, string>>;
+	/**
 	 * At most 120, in any order; an empty list clears the pattern. Or one string, a word a note
 	 * ("1:A2:4 5:C3+E3:2"), as write_pattern takes it.
 	 */

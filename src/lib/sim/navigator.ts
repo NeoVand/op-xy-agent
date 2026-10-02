@@ -28,7 +28,8 @@ import { SLICE_MODES, soundKeyOf, soundName, type Region } from './areas/sample/
 import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
 import type { PresetEntry } from './areas/system/catalogue';
 import { PROJECT_SECTIONS } from './areas/system/settings';
-import { findProject, snapshot } from './areas/system/projects';
+import { autosaves, findProject, snapshot } from './areas/system/projects';
+import { HOLD_MS } from './areas/system/state';
 import { currentGroup, groups, presetKey, presetsIn, soundOf } from './areas/system/presets';
 import {
 	FILTER_TYPES,
@@ -520,6 +521,11 @@ function play(sim: OpxySim, keys: string, clicks = 0): void {
 				if (e) for (let n = 0; n < Math.abs(clicks); n++) sim.turn(e, Math.sign(clicks));
 			} else if (term.gesture === 'click') {
 				if (e) sim.click(e);
+			} else if (term.gesture === 'hold') {
+				// a long press, held past the device's hold time (a new project is hold M1)
+				sim.input({ type: 'press', id });
+				sim.advance(HOLD_MS + 50, { transport: false });
+				sim.input({ type: 'release', id });
 			} else sim.press(id);
 		});
 		if (!sequence.chords[i + 1]?.keepHeld) release();
@@ -1373,7 +1379,9 @@ export function planToSetting(state: SimState, goal: SettingGoal): NavPlan {
 	}
 	if (TEMPO_PARAMS[id]) {
 		walk(rec, { area: 'tempo' });
-		return rec.plan(true);
+		// the encoder too, as for a sound's value: a walkthrough to the tempo it already had lit
+		// the tempo key and nothing to turn
+		return rec.plan(true, `E${TEMPO_PARAMS[id].encoder + 1} turns it`);
 	}
 	const picker = PICKERS[id];
 	if (picker) {
@@ -2530,7 +2538,7 @@ function savedAsIs(state: SimState): boolean {
  * Saving the project (`M2` on the project page) and saving a copy under a new name (`shift + M2`,
  * then `M1` on the naming screen): an agent asked for the save steps once and got none.
  */
-const PROJECT_SAVE: Readonly<Record<'save' | 'save as', Special>> = {
+const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>> = {
 	save: {
 		plan(state) {
 			const rec = new Recorder(copy(state));
@@ -2566,6 +2574,27 @@ const PROJECT_SAVE: Readonly<Record<'save' | 'save as', Special>> = {
 		// a copy is a new project: there is no state that says it is done
 		reads: () => false,
 		action: true
+	},
+	// starting over (hold M1 on the project page): an agent asked to "delete everything and start
+	// over" could only write over the tracks it remembered
+	'new project': {
+		plan(state) {
+			const rec = new Recorder(copy(state));
+			const was = state.project.name;
+			if (!toProjectView(rec)) return rec.plan(false, 'the project page did not open');
+			rec.do('hold M1');
+			const now = rec.sim.state.project.name;
+			const ok = now !== was;
+			const plan = rec.plan(
+				ok,
+				ok
+					? `a new project, "${now}": a new project's sounds, tempo and empty patterns; "${was}" ${autosaves(state) ? 'was saved first and stays' : 'stays as last saved (autosave is off)'} in the projects folder (shift + project)`
+					: 'no new project was made'
+			);
+			return { ...plan, action: true };
+		},
+		reads: () => false,
+		action: true
 	}
 };
 
@@ -2577,7 +2606,7 @@ const PROJECT_SETTING: Special = {
 			const names = PROJECT_SECTIONS.flatMap((s) => s.rows(state).map((r) => r.label));
 			return rec.plan(
 				false,
-				`the project settings have no "${goal.label}"; they hold ${[...new Set(names)].join(', ')}; the project page's own actions are "save" and "save as"`
+				`the project settings have no "${goal.label}"; they hold ${[...new Set(names)].join(', ')}; the project page's own actions are "save", "save as" and "new project"`
 			);
 		}
 		const s = () => rec.sim.state;
@@ -2646,6 +2675,8 @@ function specialOf(goal: PageValueGoal): Special | null {
 			if (label === 'save' || label === 'save project') return PROJECT_SAVE.save;
 			if (label === 'save as' || label === 'save a copy' || label === 'save copy')
 				return PROJECT_SAVE['save as'];
+			if (/^(new( project)?|start over|fresh project|clear (the )?project)$/.test(label))
+				return PROJECT_SAVE['new project'];
 			return PROJECT_SETTING;
 		default:
 			return null;

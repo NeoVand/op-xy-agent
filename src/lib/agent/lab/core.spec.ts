@@ -72,7 +72,7 @@ describe('forks', () => {
 		const notes = f.readPattern(7).notes;
 		expect(notes.filter((n) => n.step === 1).map((n) => n.note % 12)).toEqual([9, 0, 4]);
 		expect(notes.filter((n) => n.step === 17)).toHaveLength(3);
-		expect(() => f.writePattern(7, {} as never)).toThrow(/give notes .* or chords/);
+		expect(() => f.writePattern(7, {} as never)).toThrow(/give notes .*, chords .* or a drum grid/);
 	});
 
 	it('locks one step’s value with set and step', () => {
@@ -218,6 +218,47 @@ describe('commits', () => {
 		expect(project.tempo.bpm).toBe(90);
 		// nothing reached the replica: the host lands the project
 		expect(replica.status().bpm).toBe(120);
+	});
+
+	it('offers takes that read back what they hold, drum lines by sound and loudness', () => {
+		// two hat takes, accented and flat, once read alike ("15 → 22 notes" each)
+		const { lab, session } = labOn();
+		const accents = lab.fork();
+		accents.writePattern(1, {
+			grid: { kick: 'x... x... x... x...', 'closed hat': '9.3. 9.3. 9.3. 9.3.' }
+		});
+		const flat = lab.fork();
+		flat.writePattern(1, {
+			grid: { kick: 'x... x... x... x...', 'closed hat': '5.5. 5.5. 5.5. 5.5.' }
+		});
+		lab.offer(accents, 'accents');
+		lab.offer(flat, 'flat');
+		const [a, b] = session.takes();
+		expect(a.reads).toEqual([
+			'T1 p1 kick 1: 7... 7... 7... 7...',
+			'T1 p1 closed hat 1: 9.3. 9.3. 9.3. 9.3.'
+		]);
+		expect(b.reads?.[1]).toBe('T1 p1 closed hat 1: 5.5. 5.5. 5.5. 5.5.');
+		// a pitched part reads as its notes
+		const bass = lab.fork();
+		bass.writePattern(3, { notes: '1:A1:2 5:C2:2' });
+		lab.offer(bass, 'bass');
+		expect(session.takes()[2].reads).toEqual(['T3 p1: 1:A1:2:100 5:C2:2:100']);
+	});
+
+	it('writes a drum grid by sound name, and says which names the kit lacks', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		const p = f.writePattern(1, {
+			grid: { snare: '.... x... .... x...', 'open hat': '..x. ..x. ..x. ..x.' },
+			velocity: 90
+		});
+		expect(p.notes.filter((n) => n.sound === 'snare 1').map((n) => n.step)).toEqual([5, 13]);
+		expect(p.notes.filter((n) => n.sound === 'open hat 1')).toHaveLength(4);
+		expect(p.notes.every((n) => n.velocity === 90)).toBe(true);
+		expect(() => f.writePattern(1, { grid: { gong: 'x...' } })).toThrow(
+			/writePattern: grid "gong" is no sound, note name or number of track 1 \(its sounds: kick 1/
+		);
 	});
 
 	it('refuses what is not a fork of this lab, and an empty label', () => {

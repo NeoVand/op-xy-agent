@@ -200,7 +200,7 @@ export const transportTool = defineTool({
 	approval: 'auto',
 	device: true,
 	description:
-		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the replica on screen: play runs its song from the first scene (when the song has more than one entry), and while it plays starts it again from the top, as the play key does; the result says where it plays from. play with scene (the replica only) starts that scene from its top and loops it: the way to hear one part of a song ("from where the melody comes in").',
+		'Start or stop the OP-XY sequencer (MIDI start / stop). Changes playback only, never the project. "play" while the device reports it is already playing sends nothing, because start would restart the pattern from the top. With no OP-XY connected it starts or stops the replica on screen: play runs its song from the first scene (when the song has more than one entry), and while it plays starts it again from the top, as the play key does; the result says where it plays from. play with scene (the replica only) starts that scene from its top and loops it: the way to hear one part of a song ("from where the melody comes in"). A new project\'s metronome clicks along: before you play music you made, switch it off (set_metronome) in the same answer and say so, unless the user plays along to it.',
 	input: z.object({
 		action: z.enum(['play', 'stop']).describe('play starts the sequencer, stop stops it'),
 		scene: z
@@ -260,7 +260,7 @@ export const transportTool = defineTool({
 						? {
 								// an agent mentioned the click and left it on under a beat it had built
 								metronome:
-									'on: it clicks along. Under music you made, switch it off (set_metronome) and say so, unless the user plays along to it'
+									'on: it is clicking along under the music now. Switch it off (set_metronome) in this answer and say so, unless the user plays along to it'
 							}
 						: {}),
 					...(scene !== undefined

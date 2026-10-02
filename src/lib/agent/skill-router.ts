@@ -18,8 +18,9 @@ export interface RouteInput {
 /** Most skills added to one message. */
 export const MAX_ROUTED = 2;
 
+// "how do parameter locks work?" got no skill, and the answer was every fact the manual holds
 const TEACH =
-	/\b(how (do|can|would|should) i|how to|is there a way to|where (is|are|do i|can i|would i)|show me|walk me|guide me|teach me|let me (do|try)|(i want|i'd like) to learn|what does .{1,40} do|what is this (page|screen)|what am i looking at|my screen|i'm lost|i am lost)\b/i;
+	/\b(how (do|can|would|should) i|how (does|do) .{1,40} work|how to|is there a way to|where (is|are|do i|can i|would i)|show me|walk me|guide me|teach me|let me (do|try)|(i want|i'd like) to learn|what does .{1,40} do|what is this (page|screen)|what am i looking at|my screen|i'm lost|i am lost)\b/i;
 /** Something went wrong: the answer is a cause and a fix, not a topic's extras. */
 const TROUBLE =
 	/\b(why (does|do|is|are|did|won'?t|can'?t|doesn'?t|isn'?t)|what did i do wrong|what'?s wrong|(doesn'?t|does not|won'?t|will not|stopped|stops) (work|play|sound|make)|not working|goes (totally )?silent|keeps? (losing|cutting|dropping|stopping))\b/i;

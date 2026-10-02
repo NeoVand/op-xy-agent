@@ -66,7 +66,16 @@ import type {
 } from './api';
 import { applyProject } from './apply';
 import { diffReplica, type DiffSide } from './diff';
-import { compactChords, compactNotes, PatternNotesError, type WrittenNote } from '../pattern-notes';
+import {
+	compactChords,
+	compactNotes,
+	gridHits,
+	markVelocity,
+	PatternNotesError,
+	type WrittenNote
+} from '../pattern-notes';
+import { gridKey } from '../grid-key';
+import { takeReads } from './take-reads';
 
 /** A program's mistake, in words it can act on. */
 export class LabError extends Error {
@@ -122,6 +131,8 @@ export interface LabTake {
 	readonly label: string;
 	/** What keeping it would change on the replica as the lab left it. */
 	readonly changes: readonly string[];
+	/** The parts it changes as they would read: a drum sound's line with its loudness, notes. */
+	readonly reads?: readonly string[];
 	/** The project its line began from, and its own: keeping it merges the one into the other. */
 	readonly base: string;
 	readonly project: string;
@@ -253,7 +264,10 @@ const patternWrite = z.strictObject({
 	chords: z.string().max(2000).optional(),
 	voicing: z.enum(['smooth', 'root']).optional(),
 	// every note's velocity that gives none, as write_pattern's (a program failed on it)
-	velocity: z.int().min(1).max(127).optional()
+	velocity: z.int().min(1).max(127).optional(),
+	// a drum track's lines by sound name, as write_pattern's grid ({"closed hat": "x.x. x.x."}): an
+	// agent's hats went in by number, unsure the kit put them there
+	grid: z.record(z.string().min(1).max(40), z.string().max(400)).optional()
 });
 
 const arrangementWrite = z.strictObject({
@@ -477,19 +491,43 @@ export function createLab(options: LabOptions): LabSession {
 			};
 		};
 
+		/** A drum grid's hits as notes, each line's key found in the track's kit by name. */
+		function gridNotes(
+			track: number,
+			grid: Readonly<Record<string, string>> | undefined,
+			velocity: number
+		): WrittenNote[] {
+			if (!grid) return [];
+			const kit = track <= 8 ? virtual.readSound(track).kit : undefined;
+			const { hits } = gridHits(grid);
+			const unknown = Object.keys(grid).filter((key) => gridKey(key, kit) === null);
+			if (unknown.length > 0) {
+				const sounds = kit ? ` (its sounds: ${[...new Set(Object.values(kit))].join(', ')})` : '';
+				throw new LabError(
+					`writePattern: grid ${unknown.map((k) => `"${k}"`).join(', ')} is no sound, note name or number of track ${track}${sounds}`
+				);
+			}
+			return hits.map((hit) => ({
+				step: hit.step,
+				note: gridKey(hit.key, kit)!,
+				velocity: markVelocity(hit.mark, velocity),
+				length: 1
+			}));
+		}
+
 		function writePattern(track: number, write: PatternWrite) {
 			const t = check(track16, track, 'writePattern track');
 			const w = check(patternWrite, write, 'writePattern');
-			if (w.notes === undefined && w.chords === undefined) {
+			if (w.notes === undefined && w.chords === undefined && w.grid === undefined) {
 				throw new LabError(
-					'writePattern: give notes (a list or "1:A2:4 5:C3+E3:2") or chords ("1:Am7 17:F")'
+					'writePattern: give notes (a list or "1:A2:4 5:C3+E3:2"), chords ("1:Am7 17:F") or a drum grid ({"kick": "x... x..."})'
 				);
 			}
 			let given: readonly WrittenNote[];
 			try {
 				const notes = typeof w.notes === 'string' ? compactNotes(w.notes) : (w.notes ?? []);
 				const chords = w.chords ? compactChords(w.chords, { root: w.voicing === 'root' }) : [];
-				given = [...notes, ...chords];
+				given = [...notes, ...chords, ...gridNotes(t, w.grid, w.velocity ?? 100)];
 			} catch (error) {
 				if (error instanceof PatternNotesError)
 					throw new LabError(`writePattern: ${error.message}`);
@@ -964,12 +1002,18 @@ export function createLab(options: LabOptions): LabSession {
 			const trial = JSON.parse(JSON.stringify(replica)) as SimState;
 			const project = snapshot(f.sim.state);
 			applyProject(trial, f.origin, project);
-			const diff = diffReplica(
-				sideOf(JSON.parse(JSON.stringify(replica)) as SimState),
-				sideOf(trial)
-			);
+			const before = sideOf(JSON.parse(JSON.stringify(replica)) as SimState);
+			const after = sideOf(trial);
+			const diff = diffReplica(before, after);
 			if (diff.same) throw new LabError(`offer: “${text}” changes nothing on the replica`);
-			takes.push({ label: text, changes: diff.changes, base: f.origin, project });
+			const reads = takeReads(before.virtual, after.virtual);
+			takes.push({
+				label: text,
+				changes: diff.changes,
+				...(reads.length ? { reads } : {}),
+				base: f.origin,
+				project
+			});
 			return diff;
 		},
 		log: () => {}

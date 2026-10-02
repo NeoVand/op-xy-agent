@@ -67,6 +67,11 @@ export interface MeantKey {
 	readonly mode: 'major' | 'minor';
 	/** The key's own tonic (D for D dorian, whose spelling is C major's). */
 	readonly tonic: number;
+	/**
+	 * Sharps or flats as the name gives them: "D# minor" spells A# G# F#, not as Eb minor does (an
+	 * agent's black-key melody in D# minor read back as Bb Ab Gb, "as D# minor spells them").
+	 */
+	readonly prefer?: 'sharps' | 'flats';
 }
 
 /** Modes by name: the major or minor key they spell as, and how far below its tonic theirs is. */
@@ -97,7 +102,10 @@ export function parseKey(text: string): MeantKey | null {
 		label: `${letter}${m[2] ? (accidental > 0 ? '#' : 'b') : ''} ${word}`,
 		pitchClass: (tonic - kind.down + 12) % 12,
 		mode: kind.mode,
-		tonic
+		tonic,
+		...(accidental !== 0
+			? { prefer: accidental > 0 ? ('sharps' as const) : ('flats' as const) }
+			: {})
 	};
 }
 
@@ -174,7 +182,7 @@ export function readPattern(
 			? estimateKey(chroma, { written: true })
 			: null;
 	const names = meant
-		? keySpelling(meant.pitchClass, meant.mode)
+		? keySpelling(meant.pitchClass, meant.mode, meant.prefer)
 		: found
 			? keySpelling(found.pitchClass, found.mode)
 			: keySpelling(0, 'major');

@@ -156,6 +156,8 @@ describe('the conductor grounds its answer', () => {
 		expect(text).toContain('<user-changes>');
 		expect(text).toContain('tempo 120 → 97 bpm');
 		expect(text).toContain('Now: the replica is stopped.');
+		// a project with nothing written, said so (the scripted turns write no notes)
+		expect(text).toContain('Its project holds no notes yet: every pattern is empty.');
 		// and nothing when they changed nothing
 		await conductor.send('ok').catch(() => {});
 		const third = api.messageRequests[2]?.body.messages ?? [];

@@ -102,6 +102,8 @@ describe('routing', () => {
 		expect(route('why does track 3 sound so dark?')).toEqual(['shape-a-sound']);
 		expect(route('walk me through opening it up')).toEqual(['teach-on-the-replica']);
 		expect(route('what does shift + M1 do?')).toEqual(['teach-on-the-replica']);
+		// how a feature works: taught on the replica, not told as every fact the manual holds
+		expect(route('how do parameter locks work?')).toEqual(['teach-on-the-replica']);
 		expect(route('build a little house loop and play it')).toEqual(['make-music']);
 		// the app's own downloads
 		expect(route('how do I export this as a wav file?')).toContain('the-app');

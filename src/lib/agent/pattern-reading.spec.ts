@@ -24,6 +24,22 @@ describe('readPattern', () => {
 		expect(reading?.chords).toBeUndefined();
 	});
 
+	it('spells a key named with a sharp in sharps, its flat twin in flats', () => {
+		// the black keys in D# minor read as Bb Ab Gb Db Eb, "as D# minor spells them"
+		const notes = [70, 68, 66, 61, 63].map((note, i) => ({ step: 1 + i * 2, note, length: 2 }));
+		const sharps = readPattern(pattern(notes), [], undefined, parseKey('D# minor'), [
+			'A#',
+			'G#',
+			'F#',
+			'C#',
+			'D#'
+		]);
+		expect(sharps?.bars).toEqual(['A#4 – G#4 – | F#4 – C#4 – | D#4 – · · | · · · ·']);
+		expect(sharps?.spelled).toBeUndefined();
+		const flats = readPattern(pattern(notes), [], undefined, parseKey('Eb minor'));
+		expect(flats?.bars).toEqual(['Bb4 – Ab4 – | Gb4 – Db4 – | Eb4 – · · | · · · ·']);
+	});
+
 	it('says which notes are outside the key named, and the mode one of them makes', () => {
 		// Dm7 G7: D F A C, G B D F — the B makes D minor dorian
 		const notes = [50, 53, 57, 60, 55, 59, 62, 65].map((note, i) => ({
@@ -264,7 +280,14 @@ describe('parseKey', () => {
 			mode: 'major',
 			tonic: 2
 		});
-		expect(parseKey('eb')).toEqual({ label: 'Eb major', pitchClass: 3, mode: 'major', tonic: 3 });
+		expect(parseKey('eb')).toEqual({
+			label: 'Eb major',
+			pitchClass: 3,
+			mode: 'major',
+			tonic: 3,
+			prefer: 'flats'
+		});
+		expect(parseKey('D# minor')?.prefer).toBe('sharps');
 		expect(parseKey('H minor')).toBeNull();
 	});
 });

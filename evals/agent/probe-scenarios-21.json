@@ -1,0 +1,146 @@
+[
+	{
+		"name": "backwards-fill-2",
+		"about": "Re-check: a tom fill reversed about the downbeat into a copy.",
+		"steps": [
+			{ "say": "make a 2 bar beat with a tom fill at the end of bar 2" },
+			{ "say": "make pattern 2 the same but played backwards" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chords-on-lead",
+		"about": "Re-check: chords asked for on T5, a legato track, named one note at a time.",
+		"steps": [
+			{ "say": "write a slow chord progression on track 5, one chord a bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ratchet-empty-step",
+		"about": "Re-check: a component put on a step that holds no note.",
+		"steps": [
+			{ "say": "make a trap beat" },
+			{ "say": "put a ratchet roll on step 16 of the snare" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tempo-already-there",
+		"about": "Re-check: a walkthrough to a value already set.",
+		"steps": [{ "say": "light the keys and show me how to set the tempo to 120" }, { "why": true }]
+	},
+	{
+		"name": "lab-accents",
+		"about": "Re-check: lab takes that differ by velocity.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "give me two hi-hat takes to compare: one with accents on the offbeats, one flat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "get-project-in",
+		"about": "Re-check: a project brought in from the unit (MTP mode), nothing connected.",
+		"steps": [{ "say": "how do I get the song that's on my op-xy into this app?" }, { "why": true }]
+	},
+	{
+		"name": "acid-slide",
+		"about": "A 303-style line: slides (portamento) and accents.",
+		"steps": [
+			{ "say": "make an acid bassline on track 3 with slides and accents, like a 303" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "euclid",
+		"about": "A rhythm spelled by a rule: euclidean hits.",
+		"steps": [
+			{
+				"say": "on track 2, put a euclidean rhythm: 5 hits spread evenly over 16 steps on a rim, and 3 over 8 on a shaker"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chord-push",
+		"about": "Chords that anticipate the bar line.",
+		"steps": [
+			{
+				"say": "put Am F C G on track 7, but make each chord come in an eighth note early, before the bar"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "harmonize-thirds",
+		"about": "A second part derived from the first: thirds above.",
+		"steps": [
+			{ "say": "write a 2 bar melody on track 5 in G major" },
+			{ "say": "harmonize it a third above on track 6" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "same-to-t8",
+		"about": "A pronoun reference: do the same to another track.",
+		"steps": [
+			{ "say": "give the sound on track 7 a slow attack so it swells in" },
+			{ "say": "do the same to track 8" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "huh",
+		"about": "A user who did not understand the answer.",
+		"steps": [
+			{ "say": "how do parameter locks work?" },
+			{ "say": "huh? i don't get it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "kid-dog-song",
+		"about": "A child asking for a song about a pet.",
+		"steps": [{ "say": "im 8 can u make a song about my dog his name is biscuit" }, { "why": true }]
+	},
+	{
+		"name": "black-keys",
+		"about": "A melody limited to the black keys.",
+		"steps": [{ "say": "write a melody on track 5 using only the black keys" }, { "why": true }]
+	},
+	{
+		"name": "start-over",
+		"about": "A full reset asked for after one beat.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{
+				"say": "nah this is bad. delete everything and start over with something completely different"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "louder-cold",
+		"about": "A first message that refers to nothing: make it louder.",
+		"steps": [{ "say": "make it louder" }, { "why": true }]
+	},
+	{
+		"name": "tie-across-bar",
+		"about": "A note held over the bar line.",
+		"steps": [
+			{
+				"say": "write a 2 bar bassline on track 3 where the last note of bar 1 is held over into bar 2"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "warm-pad-engine",
+		"about": "A choice of engine, explained and made.",
+		"steps": [
+			{ "say": "which synth engine is best for a warm pad, and why? set it up on track 8" },
+			{ "why": true }
+		]
+	}
+]

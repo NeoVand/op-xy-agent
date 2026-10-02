@@ -334,9 +334,39 @@ describe('plan_steps with show', () => {
 			await run(planStepsTool, { show: false, guide: true, track: 3, param: 'cutoff', value: 40 })
 		);
 		expect(result.guided).toBe(true);
-		expect(result.already).toMatch(/^The value is already 40: the walkthrough lights the way/);
+		expect(result.already).toMatch(
+			/^cutoff is already 40: say so\. The walkthrough lights the way/
+		);
 		// already on its page: the encoder alone is lit
 		expect(guided[0].steps.map((s) => s.keys)).toEqual(['turn E1']);
+	});
+
+	it('says a value is already set when only its page is a step away, and lights the encoder', async () => {
+		// a new project's tempo is 120: the plan to "tempo 120" pressed tempo alone, and said
+		// nothing of the value being set already
+		const { run, guided } = setup(true);
+		const result = json(
+			await run(planStepsTool, {
+				show: false,
+				guide: true,
+				area: 'tempo',
+				param: 'tempo',
+				value: '120'
+			})
+		);
+		expect(result.already).toMatch(/^tempo is already 120: say so/);
+		expect(guided[0].steps.map((s) => s.keys)).toEqual(['tempo', 'turn E1']);
+		const planned = json(
+			await run(planStepsTool, { show: false, area: 'tempo', param: 'tempo', value: '120' })
+		);
+		expect(planned.already).toMatch(/^tempo is already 120: the steps only go to its page/);
+		expect(planned.planned).toBeUndefined();
+		// a value that is not set yet says nothing of the kind
+		const other = json(
+			await run(planStepsTool, { show: false, area: 'tempo', param: 'tempo', value: '96' })
+		);
+		expect(other.already).toBeUndefined();
+		expect(other.planned).toMatch(/^NOT SET/);
 	});
 
 	it('walks to a value with none given, ending on the turn, its note kept', async () => {
@@ -452,6 +482,66 @@ describe('plan_steps to the project settings', () => {
 		expect(keys(copy).slice(-2)).toEqual(['shift + M2', 'M1']);
 		expect(sim.state.project.name).not.toBe(name);
 		expect(copy.note).toMatch(/^saved as "project 2"/);
+	});
+
+	it('says where the notes slide once legato and portamento are set', async () => {
+		// an acid line whose notes ended where the next began, set to legato: none slides
+		const { virtual, run } = setup(true);
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 1,
+			notes: [1, 3, 5].map((step) => ({ step, note: 45, velocity: 100, length: 2 }))
+		});
+		const result = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 3,
+				settings: [
+					{ param: 'play mode', value: 'legato' },
+					{ param: 'portamento', value: 20 }
+				]
+			})
+		);
+		expect(result.slides).toMatch(
+			/^T3 plays legato with portamento 20, but no note runs past the next one's start/
+		);
+	});
+
+	it('reads the sound back after loading an engine, with the settings that followed', async () => {
+		const { run } = setup(true);
+		const result = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 8,
+				settings: [
+					{ param: 'engine', value: 'axis' },
+					{ param: 'amp attack', value: 50 }
+				]
+			})
+		);
+		expect(result.loaded.track).toBe(8);
+		expect(result.loaded.pages['M1 engine']).toMatch(/^axis:/);
+		expect(result.loaded.pages['M2 amp envelope']).toMatch(/attack 50/);
+		expect(result.sound).toMatch(/^A load sets every page anew/);
+	});
+
+	it('starts over with a new project: project, then hold M1', async () => {
+		// "delete everything and start over" once meant writing over each track remembered
+		const { sim, virtual, run } = setup(true);
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 1, note: 53, velocity: 100, length: 1 }]
+		});
+		const name = sim.state.project.name;
+		const fresh = json(
+			await run(planStepsTool, { show: true, area: 'project', param: 'new project' })
+		);
+		expect(fresh).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(fresh.steps.map((s: { keys: string }) => s.keys)).toEqual(['project', 'hold M1']);
+		expect(sim.state.project.name).not.toBe(name);
+		expect(virtual.readPattern(1).notes).toHaveLength(0);
+		expect(fresh.note).toMatch(/^a new project, "project 2": a new project's sounds/);
 	});
 });
 

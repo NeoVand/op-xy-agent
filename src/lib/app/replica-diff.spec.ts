@@ -119,12 +119,23 @@ describe('replica changes', () => {
 		const lines = virtual.changesSince(start);
 		expect(lines.filter((l) => l.startsWith('T1 '))).toEqual([
 			expect.stringMatching(
-				/^T1 M2 amp envelope: release 03 → 40; unchanged: attack .*, sustain \d+$/
+				/^T1 M2 amp envelope: release 03 → 40 \(\d+ s → 2\.2 s\); unchanged: attack .*, sustain \d+$/
 			)
 		]);
 		sim.state.areas.system.power = { on: true, booting: true, elapsed: 0, since: 0 };
 		expect(virtual.changesSince(start)).toEqual(lines);
 		expect(lines.join('\n')).not.toMatch(/presets for|starting up/);
+	});
+
+	it('say an envelope stage in seconds as it moves', () => {
+		// attack 75 for "a slow swell" is about 24 s, which the agent did not know
+		const { sim, virtual } = setup();
+		sim.state.tracks[6].amp.attack = 50;
+		const from = virtual.checkpoint();
+		sim.state.tracks[6].amp.attack = 75;
+		expect(virtual.changesSince(from)).toEqual([
+			expect.stringMatching(/^T7 M2 amp envelope: attack 50 → 75 \(1\.4 s → 24 s\); unchanged:/)
+		]);
 	});
 
 	it('count patterns by their notes, and read scenes and the song', () => {

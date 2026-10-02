@@ -257,6 +257,26 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   track (status tracks carry `playMode`) and when step components sit on steps with no notes; the
   lab's writePattern takes `velocity`; the projects skill says loading from or saving to the unit
   needs MTP mode.
+- **Probe round twenty-one (2026-10-02), 18 scenarios (`probe-scenarios-21.json`: re-checks (a tom
+  fill reversed, chords on the legato T5, a ratchet on an empty step, a walkthrough to tempo 120, lab
+  takes by velocity, loading from the unit) and new kinds: an acid line with slides, euclidean
+  rhythms, chords that anticipate the bar, a harmony a third above, "do the same to track 8", "huh?",
+  an eight-year-old's song for a dog, black keys only, "delete everything and start over", "make it
+  louder" on an empty project, a note tied over the bar line, an engine for a warm pad):** one failed
+  call (a 0.01-step note). Fixes: plan_steps says a value is already set wherever its page is (and
+  lights the encoder, tempo's too) and plans "new project" (project, hold M1; the planner holds
+  keys now); write_pattern leaves out components on steps with no notes and takes them off with
+  `none`, says which notes slide on a legato or mono track with portamento up (and plan_steps says
+  it once legato or portamento is set: notes that only touch do not slide), reads a harmony against
+  the line it moves with ("a third above throughout, 3 minor, 3 major", parallel fifths), states the
+  drum reverse rule in numbers, and calls the open-hat drop the grid's choice, not the OP-XY's; the
+  replica's change lines and read_sound give envelope stages in seconds (attack 75 is about 24 s),
+  read_sound says a filter that is off does nothing; a key named with a sharp spells sharps (D#
+  minor); the Now line says when the project holds no notes; "how do X work?" routes to the teaching
+  skill, which keeps to one idea and a demonstration; plan_steps reads a loaded sound's pages back;
+  the lab's takes read back their drum lines and notes, and its writePattern takes a drum grid by
+  sound name; transport's description asks for the click off before playing; the projects skill
+  names the project card's buttons.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

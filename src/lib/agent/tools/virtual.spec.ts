@@ -734,7 +734,9 @@ describe('write_pattern on drums', () => {
 			'kick 1': 'x... .... x... ....',
 			'snare 1': '.xx. x... .... x...'
 		});
-		expect(beat.note).toMatch(/Reversed about the downbeat/);
+		expect(beat.note).toMatch(
+			/Reversed about the downbeat: step 1 stays and step n goes to 18 − n \(16 → 2, 5 → 13\)/
+		);
 	});
 
 	it('says when chords land on a mono track, and components on steps with no notes', async () => {
@@ -754,7 +756,66 @@ describe('write_pattern on drums', () => {
 				]
 			})
 		);
-		expect(rolls.note).toMatch(/Step 14 holds no notes, so its component does nothing/);
+		expect(rolls.note).toMatch(
+			/Step 14 holds no notes, so its component was left out: a component plays only on a step with notes/
+		);
+		// left out, so nothing waits on the rest for a later note to wake
+		expect(rolls.written.components).toEqual(['step 13: multiply 3']);
+	});
+
+	it('reads a harmony against the line it moves with', async () => {
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 5,
+			key: 'G major',
+			notes: '1:B4:2 3:D5:2 5:G5:4 9:F#5:2'
+		});
+		const harmony = json(
+			await run(writePatternTool, {
+				track: 6,
+				key: 'G major',
+				notes: '1:D5:2 3:F#5:2 5:B5:4 9:A5:2'
+			})
+		);
+		expect(harmony.note).toMatch(
+			/Against T5's line on the same steps \(4 of its 4 notes\): a third above throughout \(2 minor, 2 major\)/
+		);
+	});
+
+	it('says which notes slide on a legato track with portamento up', async () => {
+		const { sim, run } = setup();
+		// T5 plays legato in a new project; its portamento up
+		sim.state.tracks[4].playMode.portamento = 20;
+		const line = json(
+			await run(writePatternTool, { track: 5, notes: '1:A3:2.5 3:C4:2 5:E4:2 9:A4:4' })
+		);
+		expect(line.note).toMatch(
+			/T5 plays legato with portamento 20: the notes on step 1 run past the next one's start and slide into it\. Those on step 3 end just where the next begins/
+		);
+	});
+
+	it('takes a step component off with none, and a later one of a kind replaces it', async () => {
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			grid: { 'closed hat': 'x.x. x.x. x.x. x.x.' },
+			components: [
+				{ step: 5, kind: 'multiply', value: 3 },
+				{ step: 9, kind: 'multiply', value: 4 },
+				{ step: 9, kind: 'random', value: 2 }
+			]
+		});
+		const off = json(
+			await run(writePatternTool, {
+				track: 1,
+				components: [
+					{ step: 9, kind: 'none' },
+					{ step: 5, kind: 'multiply', value: 6 }
+				]
+			})
+		);
+		expect(off.written.components).toEqual(['step 5: multiply 6']);
+		expect(off.written.noteCount).toBe(8);
 	});
 
 	it('gives a pattern its own groove, confirmed and undone with it', async () => {
@@ -917,7 +978,9 @@ describe('write_pattern on drums', () => {
 		);
 		expect(merged.written.grid['closed hat 1']).toBe('x.x. x.x. x.x. x...');
 		expect(merged.written.grid['open hat 1']).toBe('.... .... .... ..x.');
-		expect(merged.note).toMatch(/The closed hat is left out on step 15/);
+		expect(merged.note).toMatch(
+			/The grid keeps one hat a step: the closed hat is left out on step 15/
+		);
 		expect(merged.note).not.toMatch(/both hit/);
 	});
 
@@ -970,7 +1033,7 @@ describe('write_pattern on drums', () => {
 			})
 		);
 		expect(result.note).toMatch(
-			/The closed hat is left out on steps 3 \(1& of bar 1\), 7 \(2& of bar 1\), where the open hat hits/
+			/the closed hat is left out on steps 3 \(1& of bar 1\), 7 \(2& of bar 1\), where the open hat hits, as a drummer plays one or the other there\. Not a limit of the OP-XY/
 		);
 		expect(result.written.grid['closed hat 1']).toBe('x... x... x.x. x.x.');
 		expect(result.note).not.toMatch(/both hit/);
@@ -1095,7 +1158,7 @@ describe('write_arrangement', () => {
 		const { run } = setup();
 		await run(writePatternTool, { track: 1, notes: '1:53' });
 		const clicking = json(await run(transportTool, { action: 'play' }));
-		expect(clicking.metronome).toMatch(/^on: it clicks along/);
+		expect(clicking.metronome).toMatch(/^on: it is clicking along under the music now/);
 		await run(setMetronomeTool, { on: false });
 		const quiet = json(await run(transportTool, { action: 'play' }));
 		expect(quiet.metronome).toBeUndefined();
@@ -1477,6 +1540,18 @@ describe('read_sound', () => {
 		expect(sound.pages.player).toMatch(/player/);
 		expect(sound.mix).toEqual({ level: 74, pan: 0, muted: false });
 		expect(sound.kit).toBeUndefined();
+	});
+
+	it('gives the envelopes in seconds, and says a filter that is off does nothing', async () => {
+		const { run } = setup();
+		// T7's strings in a new project: attack 50, the ladder filter off
+		const sound = json(await run(readSoundTool, { track: 7 }));
+		expect(sound.reading).toMatch(
+			/In time: amp envelope attack 1\.4 s, decay [\d.]+ s, release [\d.]+ s; filter envelope attack/
+		);
+		expect(sound.reading).toMatch(
+			/The filter is off \(M3 pressed again switches it on\): its cutoff, resonance and the filter envelope do nothing/
+		);
 	});
 
 	it('lists the sound on every key of a drum track, and moves nothing', async () => {

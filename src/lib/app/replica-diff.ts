@@ -19,6 +19,7 @@ import { noteName } from '$lib/core/midi/notes';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
 import { PROJECT_SECTIONS } from '$lib/sim/areas/system/settings';
+import { stageSeconds, timeText, type EnvelopeStage } from '$lib/sound/times';
 
 /** Most lines a diff gives; the rest are counted. */
 export const MAX_CHANGE_LINES = 40;
@@ -115,7 +116,17 @@ function pageChange(page: string, was: string | undefined, now: string): string 
 	if (!diff) return `${was} → ${now}`;
 	// the reading's own name where it is the page's ("sends: aux 00…" on shift M3 sends)
 	const kept = diff.kept.filter((part, i) => !(i === 0 && page.endsWith(part)));
-	return `${diff.moved.join(', ')}${kept.length ? `; unchanged: ${kept.join(', ')}` : ''}`;
+	// an envelope's stages in seconds too (an agent set attack 75 for "a slow swell", about 24 s)
+	const moved = /envelope$/.test(page)
+		? diff.moved.map((m) => {
+				const x = /^(attack|decay|release) (\d+) → (\d+)$/.exec(m);
+				if (!x) return m;
+				const stage = x[1] as EnvelopeStage;
+				const time = (v: string) => timeText(stageSeconds(stage, Number(v)));
+				return `${m} (${time(x[2])} → ${time(x[3])})`;
+			})
+		: diff.moved;
+	return `${moved.join(', ')}${kept.length ? `; unchanged: ${kept.join(', ')}` : ''}`;
 }
 
 /**

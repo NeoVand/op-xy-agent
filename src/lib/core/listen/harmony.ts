@@ -51,9 +51,17 @@ const PLAIN_KEYS = { major: 0, minor: 9 };
  * C, F, Bb and Eb minor), the usual names in C major and A minor. So F minor's chords are Db and
  * Ab, not C# and G#.
  */
-export function keySpelling(tonic: number, mode: 'major' | 'minor'): readonly string[] {
-	const names: readonly string[] =
-		tonic === PLAIN_KEYS[mode]
+export function keySpelling(
+	tonic: number,
+	mode: 'major' | 'minor',
+	/** Sharps or flats as a key's name gives them ("D# minor" spells sharps, Eb minor's twin). */
+	prefer?: 'sharps' | 'flats'
+): readonly string[] {
+	const names: readonly string[] = prefer
+		? prefer === 'sharps'
+			? SHARP_NAMES
+			: FLAT_NAMES
+		: tonic === PLAIN_KEYS[mode]
 			? PITCH_CLASSES
 			: SHARP_KEYS[mode].has(tonic)
 				? SHARP_NAMES

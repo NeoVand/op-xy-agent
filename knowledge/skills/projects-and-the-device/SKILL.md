@@ -23,9 +23,13 @@ when it matters.
 
 ## The project key and files
 
-The "project" key under the replica opens a `.xy` file from disk, downloads the replica's project as
-one, loads the project the OP-XY has open, or saves the replica's project to it; the last two read
-and write the unit over USB, so it must be in MTP mode (`com → M4`) first, as for sending. A loaded project
+The "project" key under the replica opens a card: "new project" (the default sounds, nothing written),
+"open .xy…" (a file from disk), the song as WAV or MIDI and the project as `.xy` to download, and over
+USB "load from the op-xy" (the project the unit has open, with the samples its tracks use) and "save to
+the op-xy…". Those last two read and write the unit, so it must be in MTP mode (`com → M4`) first, as
+for sending; Chrome asks to pick the device the first time. Whether the unit's file holds changes
+made since it last saved is not known, so saving there first (`project → M2`) is the sure way. A
+loaded project
 brings each track's own sound settings (engine values, envelopes, filter, LFO, sends, FX I and II)
 but not TE's factory samples: drum kits and sampler presets play the replica's stand-ins, while the
 user's own recordings and community kits come across.
