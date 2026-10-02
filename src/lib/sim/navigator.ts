@@ -2642,6 +2642,16 @@ const NAMING_KEYS = 'E1 picks a character, E2 turns it, M2 the next, M4 deletes,
  * Saving the project (`M2` on the project page) and saving a copy under a new name (`shift + M2`,
  * then `M1` on the naming screen): an agent asked for the save steps once and got none.
  */
+/**
+ * What becomes of edits made after a save (an agent saved, then wrote a variation, and could not
+ * tell whether the save held it).
+ */
+function afterSave(state: SimState): string {
+	return autosaves(state)
+		? 'edits from here on are autosaved when another project opens or a new one starts; save again (M2) to store them now, as a version of their own'
+		: 'edits from here on are stored only by saving again (M2): autosave is off';
+}
+
 const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>> = {
 	save: {
 		plan(state) {
@@ -2653,7 +2663,7 @@ const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>
 			return rec.plan(
 				ok,
 				ok
-					? 'the project page flashes "saved": stored in the replica\'s projects folder, which this browser keeps; the OP-XY gets the project only when it is sent to it'
+					? `the project page flashes "saved": stored in the replica's projects folder, which this browser keeps; the OP-XY gets the project only when it is sent to it; ${afterSave(rec.sim.state)}`
 					: 'the project did not save'
 			);
 		},
@@ -2694,8 +2704,8 @@ const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>
 				ok,
 				ok
 					? given !== null
-						? `saved as "${now}", now the open project, typed on the naming screen (${NAMING_KEYS}); "${was}" stays in the projects folder as it was last saved`
-						: `saved as "${now}", the name the naming screen offers: for another, give the name as the value (${NAMING_KEYS})`
+						? `saved as "${now}", now the open project, typed on the naming screen (${NAMING_KEYS}); "${was}" stays in the projects folder as it was last saved; ${afterSave(rec.sim.state)}`
+						: `saved as "${now}", the name the naming screen offers: for another, give the name as the value (${NAMING_KEYS}); ${afterSave(rec.sim.state)}`
 					: refused
 						? `the naming screen refused it: ${refused}`
 						: 'the copy did not save'

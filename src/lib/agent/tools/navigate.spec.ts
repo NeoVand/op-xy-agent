@@ -578,6 +578,10 @@ describe('plan_steps to the project settings', () => {
 		expect(named.note).toMatch(
 			/^saved as "night drive", now the open project, typed on the naming screen/
 		);
+		// and what keeps the edits after it (an agent could not tell whether a variation was saved)
+		expect(named.note).toMatch(
+			/edits from here on are autosaved when another project opens or a new one starts; save again \(M2\) to store them now/
+		);
 		const renamed = json(
 			await run(planStepsTool, { show: true, area: 'project', param: 'rename', value: 'dusk' })
 		);

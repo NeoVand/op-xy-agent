@@ -1,0 +1,148 @@
+[
+	{
+		"name": "chord-names-swing",
+		"about": "Re-check: chord names kept through a later write and a read.",
+		"steps": [
+			{ "say": "write Fmaj9 Em7 Dm9 Cmaj9 on track 7, one per bar" },
+			{ "say": "humanize them a little" },
+			{ "say": "read the chords back to me exactly as they are now" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "quieter-copy",
+		"about": "Re-check: a copy at another velocity.",
+		"steps": [
+			{ "say": "write a melody on track 5" },
+			{ "say": "copy it to track 6 an octave down and much quieter" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-swell-check",
+		"about": "Re-check: the lab's readSound in seconds.",
+		"steps": [
+			{
+				"say": "use the lab to make track 8's pad swell in over about 3 seconds, check its envelope in seconds before you commit, and write a chord for it"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-crash-change",
+		"about": "Re-check: a song heard across a change of part.",
+		"steps": [
+			{
+				"say": "use the lab to make a 2 scene song where scene 2 starts with a crash and a bigger beat, and listen across the change before you commit"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "riff-under-chords",
+		"about": "Re-check: a short line checked against each pass of longer chords.",
+		"steps": [
+			{
+				"say": "write a one bar bass riff in E minor on track 3, then four bars of chords on track 7 over it"
+			},
+			{ "say": "where does the bass clash with the chords?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "roll-over-groove",
+		"about": "Re-check: a groove type other than shuffle.",
+		"steps": [
+			{ "say": "make a hip hop beat" },
+			{ "say": "give it the roll over groove and tell me which hits move" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "disco-hats",
+		"about": "Re-check: the hat note read plainly.",
+		"steps": [{ "say": "make a disco beat with lots of hats" }, { "why": true }]
+	},
+	{
+		"name": "korean-house",
+		"about": "A request in Korean.",
+		"steps": [{ "say": "신나는 하우스 비트 만들어줘, 베이스도 넣어서" }, { "why": true }]
+	},
+	{
+		"name": "reggae-one-drop",
+		"about": "A genre not tried yet.",
+		"steps": [
+			{ "say": "make a reggae one drop riddim with bass and skank chords" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "flute-lead",
+		"about": "A sound by description.",
+		"steps": [
+			{ "say": "write a melody on track 5 and make it sound like a flute" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "build-to-drop",
+		"about": "An arrangement with tension and release.",
+		"steps": [{ "say": "make an 8 bar build-up that goes into a drop, as a song" }, { "why": true }]
+	},
+	{
+		"name": "phone-sampling",
+		"about": "A device how-to with cables.",
+		"steps": [{ "say": "how do I sample a sound from my phone into the op-xy?" }, { "why": true }]
+	},
+	{
+		"name": "cant-hear",
+		"about": "A troubleshooting question.",
+		"steps": [
+			{ "say": "make a beat with a bass but don't start it" },
+			{ "say": "I can't hear anything, why?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "make-it-better",
+		"about": "A vague improvement request.",
+		"steps": [
+			{ "say": "make a beat with a bass and chords" },
+			{ "say": "make it better" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "two-five-one",
+		"about": "A jazz progression by its numerals.",
+		"steps": [{ "say": "write a ii-V-I in Bb on track 7 with jazzy voicings" }, { "why": true }]
+	},
+	{
+		"name": "bar-two-match",
+		"about": "An edit by reference to another bar.",
+		"steps": [
+			{ "say": "write a 2 bar bassline on track 3" },
+			{ "say": "make the second bar the same as the first" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "drums-only-intro",
+		"about": "A song whose parts come in.",
+		"steps": [
+			{
+				"say": "make a song where the first scene is only drums and the second adds bass and chords"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "save-variation",
+		"about": "Saving, then a variation.",
+		"steps": [
+			{ "say": "make a beat and save the project as night drive" },
+			{ "say": "now make a busier variation of the beat in a new pattern" },
+			{ "why": true }
+		]
+	}
+]

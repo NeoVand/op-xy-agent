@@ -67,6 +67,17 @@ const FORMULAS: Formula[] = [
 	{ pcs: [0, 1, 4, 7, 10], degrees: [0, 1, 2, 4, 6], suffix: '7♭9', spoken: 'seventh flat nine' },
 	{ pcs: [0, 3, 4, 7, 10], degrees: [0, 1, 2, 4, 6], suffix: '7♯9', spoken: 'seventh sharp nine' },
 	{ pcs: [0, 4, 7, 9, 10], degrees: [0, 2, 4, 5, 6], suffix: '13', spoken: 'thirteenth' },
+	// a thirteenth as jazz voices it: the fifth left out, the ninth in, or both, or neither (an
+	// F13 of F A E♭ G D in a ii–V–I read as no chord)
+	{ pcs: [0, 2, 4, 9, 10], degrees: [0, 1, 2, 5, 6], suffix: '13', spoken: 'thirteenth' },
+	{ pcs: [0, 2, 4, 7, 9, 10], degrees: [0, 1, 2, 4, 5, 6], suffix: '13', spoken: 'thirteenth' },
+	{ pcs: [0, 4, 9, 10], degrees: [0, 2, 5, 6], suffix: '13', spoken: 'thirteenth' },
+	{
+		pcs: [0, 2, 3, 7, 9, 10],
+		degrees: [0, 1, 2, 4, 5, 6],
+		suffix: 'm13',
+		spoken: 'minor thirteenth'
+	},
 	{
 		pcs: [0, 4, 6, 7, 11],
 		degrees: [0, 2, 3, 4, 6],

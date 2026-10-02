@@ -31,6 +31,15 @@ describe('voicesNote', () => {
 		);
 	});
 
+	it('reads an octave doubling as one, its parallels the point', () => {
+		// an octave-down copy of a melody was flagged for parallel octaves, read as a fault
+		const melody = line(5, [69, 72, 76, 74, 72, 71]);
+		const double = line(6, [57, 60, 64, 62, 60, 59]);
+		expect(voicesNote(double, melody)).toBe(
+			"Against T5's line on the same steps (6 of its 6 notes): an octave below throughout."
+		);
+	});
+
 	it('leaves lines that do not move together, and chords, alone', () => {
 		const melody = line(5, [71, 74, 79, 78, 76, 74]);
 		const offbeat = {

@@ -51,10 +51,19 @@ export function grooveReach(
 	}
 	const swung = [...bySound].filter(([, c]) => c.moved > 0);
 	const straight = [...bySound].filter(([, c]) => c.moved === 0);
-	const sounds =
-		bySound.size > 1 && moved > 0 && straight.length > 0
-			? `: ${swung.map(([name, c]) => `${name} ${c.moved} of ${c.all}`).join(', ')}; none of ${straight.map(([name, c]) => `${name}'s ${c.all}`).join(', ')}, which ${straight.length === 1 ? 'plays' : 'play'} straight: ${where(type)}`
-			: '';
+	// each sound's moved steps, all of them (an agent asked which hits a roll over moved got one
+	// list of steps cut at 16, and guessed the kicks and snares past it)
+	const stepsOf = (sound: string) => {
+		const at = [
+			...new Set(pattern.notes.filter((n) => n.sound === sound && moves(n)).map((n) => n.step))
+		].sort((a, b) => a - b);
+		return `step${at.length === 1 ? '' : 's'} ${at.slice(0, 24).join(' ')}${at.length > 24 ? ' …' : ''}`;
+	};
+	const drums = bySound.size > 1 && moved > 0;
+	const sounds = drums
+		? `: ${swung.map(([name, c]) => `${name} ${c.moved} of ${c.all} (${stepsOf(name)})`).join(', ')}${straight.length ? `; none of ${straight.map(([name, c]) => `${name}'s ${c.all}`).join(', ')}, which ${straight.length === 1 ? 'plays' : 'play'} straight: ${where(type)}` : ''}`
+		: '';
+	const across = drums ? '' : on;
 	// what to do about it, before the answer (agents told the user the swing would not be heard
 	// instead of making it heard)
 	const fix =
@@ -68,11 +77,11 @@ export function grooveReach(
 	}
 	// the sound with the most notes left straight: said even when enough moves overall
 	const busiest = [...bySound].sort((a, b) => b[1].all - a[1].all)[0];
-	if (sounds && busiest && busiest[1].moved === 0) {
-		return `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${on}${sounds}. Say only what swings; ${fix.charAt(0).toLowerCase()}${fix.slice(1)}`;
+	if (straight.length && sounds && busiest && busiest[1].moved === 0) {
+		return `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${across}${sounds}. Say only what swings; ${fix.charAt(0).toLowerCase()}${fix.slice(1)}`;
 	}
 	return always
-		? `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${on}${sounds}.`
+		? `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${across}${sounds}.`
 		: null;
 }
 

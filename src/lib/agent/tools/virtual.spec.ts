@@ -667,6 +667,23 @@ describe('write_pattern on drums', () => {
 		expect(estimated.written.reading.key).toBe('Bb major (C major moved down 2 semitones)');
 	});
 
+	it('reads a line already there against chords written over it', async () => {
+		// chords over a one-bar riff: the clash in bar 4 was found only when the user asked
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 3,
+			key: 'E minor',
+			notes: '1:E2:2 3:E2:1 5:G2:2 7:E2:1 9:D2:2 11:E2:1 13:B1:2 15:D2:2'
+		});
+		const chords = json(
+			await run(writePatternTool, { track: 7, key: 'E minor', chords: '1:Em 17:C 33:G 49:D' })
+		);
+		// the G under D/F# rubs (a half step above its F#); the D under Em is a 7th, a colour
+		expect(chords.note).toMatch(
+			/T3's line against these chords: 17 of the 32 notes over T7's chords \(the line plays 4 times under them\) are chord tones; on a beat and outside the chord \(1 a half step above a chord tone, which rubs; .*\): .*bar 1 step 9: D2 over Em\/G \(E G B\), .*bar 4 step 5: G2 over D\/F# \(D F# A, a half step above its F#\)/
+		);
+	});
+
 	it('reads a part to come against the other tracks’ patterns of its number', async () => {
 		const { run } = setup();
 		await run(writePatternTool, { track: 3, pattern: 2, stay: true, notes: '1:A1:16' });
@@ -746,7 +763,9 @@ describe('write_pattern on drums', () => {
 		const up = json(await run(writePatternTool, { track: 3, transpose: 12 }));
 		expect(virtual.readPattern(3).notes.find((n) => n.step === 23)?.offset).toBe(0.125);
 		expect(up.written.locks).toEqual(['step 7: cutoff 40']);
-		expect(up.written.offGrid).toMatch(/^1 note off the grid .*: step 23 \+0\.13$/);
+		expect(up.written.offGrid).toMatch(
+			/^1 note off the grid .*: step 23 \+0\.13; \d+ on the grid$/
+		);
 		// a whole rewrite drops them, and says so
 		const anew = json(await run(writePatternTool, { track: 3, notes: '1:D2:4' }));
 		expect(virtual.readPattern(3).locks).toBeUndefined();
@@ -1110,7 +1129,7 @@ describe('write_pattern on drums', () => {
 			})
 		);
 		expect(kicks.note).toMatch(
-			/moves 4 of T1's 17 notes \(on steps 4, 8, 10, 12\): kick 1 3 of 6, snare 1 1 of 3; none of closed hat 1's 8, which plays straight: shuffle moves the even sixteenths/
+			/moves 4 of T1's 17 notes: kick 1 3 of 6 \(steps 4 10 12\), snare 1 1 of 3 \(step 8\); none of closed hat 1's 8, which plays straight: shuffle moves the even sixteenths/
 		);
 		expect(kicks.note).toMatch(/Say only what swings/);
 		sim.state.tempo.swing = 0;
@@ -1491,6 +1510,11 @@ describe('write_pattern, short', () => {
 		expect(chords).toMatch(/step 17: Em7(\/G)? \(/);
 		expect(chords).not.toMatch(/G6/);
 		expect(result.written.reading.progression).toMatch(/^Fmaj9 Em7 Dm9 Cmaj9: /);
+		// humanized, every chord's offsets by step, low note to high, and how many stayed on the grid
+		const loose = json(await run(writePatternTool, { track: 7, humanize: { timing: 0.08 } }));
+		expect(loose.written.offGrid).toMatch(
+			/off the grid .*: step 1 [+−]\d\.\d\d( [+−]\d\.\d\d){1,4}, step 17 .* \(a step's notes low to high\)(; \d+ on the grid)?$/
+		);
 		// and by them after: a groove change, a read (an Em7 read back as G6 after a groove)
 		const grooved = json(await run(writePatternTool, { track: 7, groove: 30 }));
 		expect(grooved.written.reading.progression).toMatch(/^Fmaj9 Em7 Dm9 Cmaj9: /);

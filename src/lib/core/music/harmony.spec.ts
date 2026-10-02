@@ -30,6 +30,11 @@ describe('chordName', () => {
 		expect(chordName([62, 64, 67, 69, 72])?.name).toBe('D9sus4');
 		expect(chordName([57, 60, 62, 64, 67])?.name).toBe('Am7(add11)');
 		expect(chordName([57, 59, 60, 62, 64, 67])?.name).toBe('Am11');
+		// thirteenths as jazz voices them: F A E♭ G D (no fifth), the full one, the shell, a minor
+		expect(chordName([41, 63, 67, 69, 74], true)?.name).toBe('F13');
+		expect(chordName([41, 57, 60, 63, 67, 74], true)?.name).toBe('F13');
+		expect(chordName([41, 57, 62, 63], true)?.name).toBe('F13');
+		expect(chordName([50, 53, 57, 60, 64, 71])?.name).toBe('Dm13');
 	});
 
 	it('names triads', () => {

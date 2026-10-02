@@ -104,7 +104,10 @@ export function voicesNote(line: Line, other: Line): string | null {
 		const kind = Math.abs(p.gap) % 12 === 7 ? 'fifths' : 'octaves';
 		parallels.set(kind, new Set([...(parallels.get(kind) ?? []), q.step, p.step]));
 	});
-	const parallel = [...parallels]
+	// an octave throughout is a doubling: its parallels are the point (an octave-down copy of a
+	// melody was flagged for parallel octaves, which an agent read as a fault)
+	const doubling = most === pairs.length && main === 'octave';
+	const parallel = (doubling ? [] : [...parallels])
 		.map(([kind, steps]) => {
 			const list = [...steps].sort((a, b) => a - b);
 			const shown = list.length > 8 ? `${list.slice(0, 8).join(', ')}, …` : list.join(', ');

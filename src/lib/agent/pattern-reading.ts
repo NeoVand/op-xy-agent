@@ -384,7 +384,7 @@ export function readPattern(
 		};
 		let under = 0;
 		let tones = 0;
-		const outside: string[] = [];
+		const outside: { at: number; text: string; rub: boolean }[] = [];
 		let passing = 0;
 		const chordTracks = new Set<number>();
 		// a line shorter than the chords loops under them: each pass against the chords it meets (a
@@ -412,16 +412,34 @@ export function readPattern(
 				if (beatStarts.has((at - 1) % meter.bar)) {
 					const named = chordName(chord.notes);
 					const sorted = [...pcs].sort((a, b) => a - b).map((pc) => names[pc]);
-					outside.push(
-						`${where(at)}: ${noteName(n.note)} over ${named ? respellChord(ascii(named.name), names) : sorted.join(' ')} (${sorted.join(' ')})`
-					);
+					// a half step above a chord tone rubs (the 4th over a major chord, the ♭6 over a
+					// minor one); the rest outside are colours, a 7th or a 9th, a half step below one
+					// included (an agent asked where a bass clashed weighed every outside note alike)
+					const near = [...pcs].find((pc) => (n.note - pc + 12) % 12 === 1);
+					const rub = near === undefined ? '' : `, a half step above its ${names[near]}`;
+					outside.push({
+						at,
+						rub: near !== undefined,
+						text: `${where(at)}: ${noteName(n.note)} over ${named ? respellChord(ascii(named.name), names) : sorted.join(' ')} (${sorted.join(' ')}${rub})`
+					});
 				} else passing++;
 			}
 		}
 		if (under >= 2) {
 			const by = [...chordTracks].map((t) => `T${t}`).join(' and ');
 			const looped = passes > 1 ? ` (the line plays ${passes} times under them)` : '';
-			againstChords = `${tones} of the ${under} notes over ${by}'s chords${looped} are chord tones${outside.length ? `; on a beat and outside the chord: ${outside.slice(0, 8).join(', ')}${outside.length > 8 ? ', …' : ''}` : '; none on a beat is outside its chord'}${passing ? `; ${passing} off the beat ${passing === 1 ? 'is a passing note' : 'are passing notes'}` : ''}`;
+			// the rubs kept when the list is cut, in order of where they fall
+			const shown = [...outside.filter((o) => o.rub), ...outside.filter((o) => !o.rub)]
+				.slice(0, 8)
+				.sort((a, b) => a.at - b.at)
+				.map((o) => o.text);
+			const rubs = outside.filter((o) => o.rub).length;
+			const rubbing = rubs
+				? ` (${rubs} a half step above a chord tone, which rubs; the others are colours, such as a 7th or a 9th)`
+				: outside.length
+					? ' (none a half step above a chord tone: colours, such as a 7th or a 9th)'
+					: '';
+			againstChords = `${tones} of the ${under} notes over ${by}'s chords${looped} are chord tones${outside.length ? `; on a beat and outside the chord${rubbing}: ${shown.join(', ')}${outside.length > 8 ? ', …' : ''}` : '; none on a beat is outside its chord'}${passing ? `; ${passing} off the beat ${passing === 1 ? 'is a passing note' : 'are passing notes'}` : ''}`;
 		}
 	}
 	// what the chords make over the other part's bass, apart, when any differs from its own name

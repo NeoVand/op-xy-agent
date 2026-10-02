@@ -465,6 +465,20 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   are refused when a group of it is miscounted (an open hat had moved a step late); the hat note
   says to describe the hats as the grid has them (an agent read "mention it only if" as hiding
   them); the groove's other types are said to move other steps.
+- **Probe round thirty-three (2026-10-02), 18 scenarios (`probe-scenarios-33.json`: re-checks
+  (chord names through humanize and a read, a quieter octave-down copy, a lab swell checked in
+  seconds, a lab song heard across a crash, a riff under longer chords, roll over's moved hits,
+  disco hats) and new kinds: Korean house, a reggae one drop, a flute lead, an 8-bar build into a
+  drop, sampling from a phone, "I can't hear anything", "make it better", a ii–V–I in Bb, bar two
+  made like bar one, a drums-only intro, a save then a variation):** no failed calls. Fixes: chords
+  written over lines already there read those lines against them at once (a riff's clash under
+  D/F# was found only when the user asked), and the check marks a note a half step above a chord
+  tone as a rub, the other outside notes as colours (a 7th, a 9th); a groove on a drum track lists
+  every sound's moved steps in full (roll over's list was cut at 16); an octave doubling is no
+  longer flagged for parallel octaves; off-grid offsets are listed by step, a chord's notes low to
+  high, with how many stay on the grid; a save says what keeps the edits after it (autosave when
+  another project opens, or save again); the chord namer knows the jazz voicings of a 13th (no
+  fifth, with the ninth; the shell) and m13 (an F13 of F A E♭ G D read as no chord).
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

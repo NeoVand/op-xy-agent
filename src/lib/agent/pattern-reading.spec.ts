@@ -349,7 +349,7 @@ describe('a melody against the chords another track plays', () => {
 		);
 		const reading = readPattern(melody, [chords], undefined, parseKey('E minor'));
 		expect(reading?.againstChords).toBe(
-			"2 of the 4 notes over T7's chords are chord tones; on a beat and outside the chord: step 5: F#4 over Em (E G B); 1 off the beat is a passing note"
+			"2 of the 4 notes over T7's chords are chord tones; on a beat and outside the chord (none a half step above a chord tone: colours, such as a 7th or a 9th): step 5: F#4 over Em (E G B); 1 off the beat is a passing note"
 		);
 		// a one-bar bass under two bars of chords, read in each pass (it was read under the first
 		// bar's chords alone)
@@ -372,7 +372,7 @@ describe('a melody against the chords another track plays', () => {
 			3
 		);
 		expect(readPattern(bass, [two], undefined, parseKey('A minor'))?.againstChords).toBe(
-			"3 of the 4 notes over T7's chords (the line plays 2 times under them) are chord tones; on a beat and outside the chord: bar 2 step 1: A2 over Em (E G B)"
+			"3 of the 4 notes over T7's chords (the line plays 2 times under them) are chord tones; on a beat and outside the chord (none a half step above a chord tone: colours, such as a 7th or a 9th): bar 2 step 1: A2 over Em (E G B)"
 		);
 	});
 });

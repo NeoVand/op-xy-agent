@@ -41,6 +41,7 @@ import {
 import type {
 	ArrangementWrite,
 	VirtualArrangement,
+	VirtualNote,
 	VirtualOpxy,
 	VirtualPattern
 } from '../virtual-opxy';
@@ -355,11 +356,26 @@ function offGrid(p: VirtualPattern): { offGrid?: string } {
 	const off = p.notes.filter((n) => n.offset);
 	if (off.length === 0) return {};
 	const sign = (x: number) => `${x > 0 ? '+' : '−'}${Math.abs(x).toFixed(2)}`;
-	const shown = off.slice(0, 8).map((n) => `step ${n.step} ${sign(n.offset ?? 0)}`);
+	// by step, a chord's notes low to high (asked for chords "exactly", an agent got 8 of the 18
+	// offsets and could not tell which note stayed on the grid)
+	const byStep = new Map<number, VirtualNote[]>();
+	for (const n of off) byStep.set(n.step, [...(byStep.get(n.step) ?? []), n]);
+	const steps = [...byStep].sort((a, b) => a[0] - b[0]);
+	const shown = steps.slice(0, 16).map(
+		([step, notes]) =>
+			`step ${step} ${[...notes]
+				.sort((a, b) => a.note - b.note)
+				.map((n) => sign(n.offset ?? 0))
+				.join(' ')}`
+	);
+	const stacked = steps.some(([, notes]) => notes.length > 1)
+		? " (a step's notes low to high)"
+		: '';
+	const on = p.notes.length - off.length;
 	// which sounds, on a drum track (an agent humanizing the hats alone could not confirm it)
 	const sounds = [...new Set(off.flatMap((n) => (n.sound ? [n.sound] : [])))];
 	return {
-		offGrid: `${off.length} note${off.length === 1 ? '' : 's'}${sounds.length ? ` (${sounds.join(', ')})` : ''} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern; the notes on the grid stay there): ${shown.join(', ')}${off.length > 8 ? ', …' : ''}`
+		offGrid: `${off.length} note${off.length === 1 ? '' : 's'}${sounds.length ? ` (${sounds.join(', ')})` : ''} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern; the notes on the grid stay there): ${shown.join(', ')}${steps.length > 16 ? ', …' : ''}${stacked}${on > 0 ? `; ${on} on the grid` : ''}`
 	};
 }
 
@@ -1464,6 +1480,22 @@ export const writePatternTool = defineTool({
 						notes2.push(
 							`It hits with T${kit.track}'s kick on step${shared.length === 1 ? '' : 's'} ${shared.slice(0, 12).join(', ')}${shared.length > 12 ? ', …' : ''} (${shared.length} of its ${new Set(result.notes.map((n) => n.step)).size} steps${drifting ? ', on the first pass: their lengths differ, so this moves as they drift' : ''}): together is a style choice, nothing to fix (most grooves lock the bass to the kick); for room between them, move the bass off those steps.`
 						);
+					}
+				}
+			}
+			// chords over lines already there (a bass, a melody): each line read against them (an
+			// agent wrote chords over a one-bar riff and found the clash in bar 4 only when the user
+			// asked where the bass clashed)
+			const stacks = new Map<number, Set<number>>();
+			for (const n of drums ? [] : result.notes) {
+				stacks.set(n.step, (stacks.get(n.step) ?? new Set()).add(n.note % 12));
+			}
+			if ([...stacks.values()].some((pcs) => pcs.size >= 3)) {
+				for (const q of partsAlongside(virtual, input.track, pattern)) {
+					const named = keysOf(virtual).get(`${q.track}:${q.pattern}`);
+					const line = readPattern(q, [result], meterNow(virtual), named ? parseKey(named) : null);
+					if (line?.againstChords) {
+						notes2.push(`T${q.track}'s line against these chords: ${line.againstChords}.`);
 					}
 				}
 			}
