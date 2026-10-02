@@ -203,9 +203,17 @@ export const runLabTool = defineTool({
 						new Map(status.tracks.map((t) => [t.track, t.byPattern]))
 					)
 				: null;
+		// playback through a commit (an agent could not tell whether a commit restarted the song)
+		const playing = landed !== null && virtual ? virtual.status().playing : false;
 		const content = {
 			...view(result, landed !== null, takes.length > 0),
-			...(arrangement ? { arrangement } : {})
+			...(arrangement ? { arrangement } : {}),
+			...(playing
+				? {
+						playback:
+							'goes on where it was, with the commits in it; transport play starts it again from the top'
+					}
+				: {})
 		};
 		if (!result.ok) {
 			return { content: JSON.stringify(content), summary, isError: true, applied: false };

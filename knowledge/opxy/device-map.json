@@ -220,7 +220,7 @@
 			"track": 1,
 			"path": [],
 			"screen": "drum key F3: tune +0.00, play mode oneshot",
-			"shiftScreen": "drum key F3 (shift): tune +0.00, play mode oneshot",
+			"shiftScreen": "drum key F3 (shift): direction forward, pan 0, fade 00, gain 0",
 			"units": [
 				"sampler.drum-key-settings",
 				"sampler.drum-sampler"

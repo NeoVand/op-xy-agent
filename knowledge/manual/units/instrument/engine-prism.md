@@ -63,7 +63,7 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: ratio-steps
-    text: Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16.
+    text: Ratio moves in ten equal steps of its 0–99 value and reads as the oscillators' frequency ratio, a step each ten — 00–09 2:1, 10–19 1:1, 20–29 2:3, 30–39 1:2, 40–49 1:3, 50–59 1:4, 60–69 1:6, 70–79 1:8, 80–89 1:12 and 90–99 1:16.
     source: docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo
     confidence: verified
     verified_on: '1.1.33'

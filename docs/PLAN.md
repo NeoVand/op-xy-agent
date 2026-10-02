@@ -190,6 +190,21 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   and written nowhere; a demo says how the transport ended (`transportAtEnd`); note lists, sends,
   delays and pans route to their skills; the skills: one-bar fade steps need one-bar patterns; the
   manual: quantisation most likely acts as notes play (derived), the old pattern count reworded.
+- **Probe round sixteen (2026-10-02), 16 scenarios (`probe-scenarios-16.json`: re-checks of
+  round fifteen (a lock kept through a bar rewrite, a beat copied to T2, the open hat panned, reverb
+  on the clap, "play this", a fade in one-bar steps) and new ones: tracks muted by hand, a beat that
+  adds a sound a bar, a boomy bass, triplet hats, the song's length, a louder chorus, swing on the
+  hats alone, an arp of another track's chords, a melody from CABBAGE, a beginner):** the kept
+  lock, copy_track, "play this" and the user's mutes all worked. Fixes: **a merge of rest lines
+  alone (to take one sound out) wiped the whole pattern** — it now takes those sounds out and
+  keeps the rest, and says so; a line of rests may be any length, and a miscounted line run
+  together says to space it in fours; write_pattern `copy_bar` (one bar of a pattern as a pattern
+  of its own, for fades and fills); the drum key page's shift layer reads direction, pan, fade and
+  gain; pitched notes added or removed are named in the change list ("(B1, D2)"); the user's
+  changes are said to be theirs firmly, the song moving on kept apart; the lab result and the
+  arrangement say playback goes on; a demo that took notes off says so (`caution`); a new scene's
+  mix starts from the one playing; the manual: prism ratio by value ranges, triplets from
+  multiply (derived).
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

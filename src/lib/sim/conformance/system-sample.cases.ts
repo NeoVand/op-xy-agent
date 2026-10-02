@@ -1532,7 +1532,7 @@ export function systemSampleConformance(start: () => Promise<Driver>): void {
 		it('M1 with shift: E1 the direction, E2 the pan, E3 the fade, E4 the gain of the selected key', async () => {
 			const d = await start();
 			await d.withShift(async () => {
-				expect(d.screen()).toBe('drum key F3 (shift): tune +0.00, play mode oneshot');
+				expect(d.screen()).toBe('drum key F3 (shift): direction forward, pan 0, fade 00, gain 0');
 				await d.turn(1, -1);
 				await d.turn(2, 10);
 				await d.turn(3, 30);

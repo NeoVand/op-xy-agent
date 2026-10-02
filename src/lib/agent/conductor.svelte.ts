@@ -1185,7 +1185,21 @@ export class Conductor {
 			return parts.length ? `<user-changes>\n${parts.join('\n')}\n</user-changes>` : null;
 		}
 		const since = this.#answered ? 'Since your last answer' : 'Since the chat opened';
-		return `<user-changes>\n${since}, the replica changed (the user's own hands, or playback they started or stopped):\n${lines.map((l) => `- ${l}`).join('\n')}${walk ? `\n${walk}` : ''}\n${now}\n</user-changes>`;
+		// whose they are, firmly (an agent told a user who had muted two tracks that it was probably
+		// them "or a stray key press"), apart from the song moving on as it plays
+		const playedOn = lines.filter((l) => l.endsWith('(the song moved on)'));
+		const byHand = lines.filter((l) => !playedOn.includes(l));
+		const parts = [
+			byHand.length
+				? `${since}, the user changed the replica by hand (its keys, the mouse or the computer keyboard; none of your tools ran since):\n${byHand.map((l) => `- ${l}`).join('\n')}`
+				: null,
+			playedOn.length
+				? `${byHand.length ? 'And as' : `${since}, as`} the replica played on: ${playedOn.join('; ')}.`
+				: null,
+			walk,
+			now
+		].filter(Boolean);
+		return `<user-changes>\n${parts.join('\n')}\n</user-changes>`;
 	}
 
 	/**

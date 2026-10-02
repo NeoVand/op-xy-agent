@@ -628,6 +628,27 @@ describe('write_pattern on drums', () => {
 		);
 	});
 
+	it('copies one bar of a pattern alone as a pattern of one bar', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, {
+			track: 3,
+			bars: 4,
+			notes: '1:A1:4 17:F1:4 33:C2:4 37:E2:2 49:G1:4'
+		});
+		const third = json(
+			await run(writePatternTool, { track: 3, pattern: 2, copy: 1, copy_bar: 3, stay: true })
+		);
+		const p = virtual.readPattern(3, 2);
+		expect(p.bars).toBe(1);
+		expect(p.notes.map((n) => `${n.step}:${n.note}`)).toEqual(['1:36', '5:40']);
+		expect(third.note).toMatch(
+			/Pattern 2 started from a copy of bar 3 of pattern 1; pattern 1 is as it was/
+		);
+		// a bar the source does not have
+		const none = await run(writePatternTool, { track: 3, pattern: 3, copy: 2, copy_bar: 2 });
+		expect(String(none.content)).toMatch(/pattern 2 has 1 bar, so there is no bar 2 to copy/);
+	});
+
 	it('gives a pattern its own groove, confirmed and undone with it', async () => {
 		const { sim, env, run } = setup();
 		sim.state.tempo.groove = 0; // shuffle, at the tempo page's 0: straight
@@ -752,6 +773,25 @@ describe('write_pattern on drums', () => {
 		);
 		expect(unplayed.note).toMatch(/none plays this pattern yet: write_arrangement puts it in one/);
 		expect(unplayed.note).not.toMatch(/waits until/);
+	});
+
+	it('takes one sound out with a merged line of rests, and keeps the others', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			grid: {
+				kick: 'x... x... x... x...',
+				clap: '.... x... .... x...',
+				'closed hat': 'x.x. x.x. x.x. x.x.'
+			}
+		});
+		const out = json(
+			await run(writePatternTool, { track: 1, merge: true, grid: { clap: '....' } })
+		);
+		const sounds = new Set(virtual.readPattern(1).notes.map((n) => n.sound));
+		expect([...sounds].sort()).toEqual(['closed hat 1', 'kick 1']);
+		expect(virtual.readPattern(1).notes).toHaveLength(12);
+		expect(out.note).toMatch(/clap: no hits, so the merge took that sound out and kept the others/);
 	});
 
 	it('leaves a merged closed hat out under an open hat the pattern keeps', async () => {
@@ -1148,6 +1188,16 @@ describe('write_pattern, short', () => {
 		expect(currentPattern(sim.state.tracks[0].sequence).steps.flatMap((s) => s.notes)).toHaveLength(
 			notes
 		);
+		// a line run together says how to find the miscount; a line of rests alone may be any length
+		const together = await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			grid: { kick: 'x......x..x....x.....x...x..x..', 'open hat': '.'.repeat(30) }
+		});
+		expect(String(together.content)).toMatch(
+			/kick has 31 \(run together: with a space after every four marks, a beat each, a miscount shows\)\./
+		);
+		expect(String(together.content)).not.toMatch(/open hat has/);
 		// a made kit's "kick", written as the new project's "kick 1"
 		sim.state.areas.sample.tracks[0].keys[0] = {
 			...sim.state.areas.sample.tracks[0].keys[0]!,

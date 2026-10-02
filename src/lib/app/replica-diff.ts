@@ -15,6 +15,7 @@ import { drumKeyChanges } from './drum-keys';
 import { brainSettings, KEYS, SCALES, type BrainSettings } from '$lib/sim/areas/auxiliary/state';
 import { trackSequence } from '$lib/sim/areas/arrange/model';
 import { formatScale } from '$lib/sim/sequencer';
+import { noteName } from '$lib/core/midi/notes';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
 import { PROJECT_SECTIONS } from '$lib/sim/areas/system/settings';
@@ -424,14 +425,16 @@ export function replicaChangeList(
 				`${label} plays pattern ${was.sequence.current + 1} → ${now.sequence.current + 1}`
 			);
 		}
-		// a drum note by its key's sound ("closed hat 1")
+		// a drum note by its key's sound ("closed hat 1"), any other by its name ("4 added on steps
+		// 28, 29 (B1, D2)": steps alone left an agent checking a rewritten ending by eye)
 		const keys = now.engine === 'drum' ? after.areas.sample.tracks[t]?.keys : undefined;
 		const soundOf = keys
 			? (note: number) => {
 					const file = keys[note - FIRST_NOTE];
 					return file ? soundName(file.name) : null;
 				}
-			: undefined;
+			: (note: number) =>
+					note >= 0 && note <= 127 ? noteName(note, { ascii: true, convention: 'c4' }) : null;
 		const patterns = patternChanges(
 			label,
 			was.sequence.patterns,

@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1226 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1227 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -1030,7 +1030,7 @@ Sources: s1 guide:step-components · s2 guide:step-components#step-components-re
 
 ### Multiply (step component) [sequencer.component-multiply]
 current · OS ≥ 1.0.9 · guide v1.1.15
-Also called: multiply, ratchet, retrigger, roll, divide a step
+Also called: multiply, ratchet, retrigger, roll, divide a step, triplets, triplet roll
 Where: modes instrument, auxiliary
 
 Step component on `natural 3` that splits a step into several quick hits inside its own length, a ratchet.
@@ -1042,6 +1042,7 @@ Facts:
 - Multiply divides a step into several shorter hits that fit inside the step, the ratchet effect common on hi-hats. [#what] [s1]
 - The black keys 1–8 split the step into 1–8 hits (1 leaves it unchanged); 0 picks a random number. [#values] [s2]
 - `accidental 9` most likely gives 9 hits; TE's table prints 3 for it, apparently a slip. Not checked on a unit. [#nine] (derived) [s2]
+- Three hits in a step are triplets of that step's length, so multiply 3 on a sixteenth step gives a thirty-second-note triplet roll, and on a step of an eighth (track scale 2) sixteenth-note triplets; the track scales alone have no triplet value. [#triplets] (derived) [s2]
 
 Procedures:
 - Turn a hi-hat step into a three-hit ratchet [#ratchet] [s3]
@@ -2230,7 +2231,7 @@ Facts:
 - Detune moves the second oscillator up to about 15 cents from the first, the same amount on every note, so the two beat slowly against each other, faster toward the top. [#detune-cents] (verified 1.1.33) [s7]
 - Ratio tunes the second oscillator against the first, an octave below at 2:1, in unison at 1:1, a fifth above at 2:3, an octave above at 1:2, and on up to four octaves above at 1:16, where it reads as a high overtone over the note more than a second note. [#ratio-meaning] (verified 1.1.33) [s7]
 - Stereo adds a copy of the sound through a slowly sweeping delay, a little sharp in one channel while flat in the other; up to the middle it fades the copy in, past it the sweep widens and quickens. The copy is high-passed, so the bass stays in the centre, and at 0 the sound is mono. [#stereo-copy] (verified 1.1.33) [s8]
-- Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16. [#ratio-steps] (verified 1.1.33) [s7]
+- Ratio moves in ten equal steps of its 0–99 value and reads as the oscillators' frequency ratio, a step each ten — 00–09 2:1, 10–19 1:1, 20–29 2:3, 30–39 1:2, 40–49 1:3, 50–59 1:4, 60–69 1:6, 70–79 1:8, 80–89 1:12 and 90–99 1:16. [#ratio-steps] (verified 1.1.33) [s7]
 
 Procedures:
 - Put the prism engine on the selected instrument track [#choose] [s9]

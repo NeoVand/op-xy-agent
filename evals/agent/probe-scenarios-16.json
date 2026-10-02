@@ -1,0 +1,139 @@
+[
+	{
+		"name": "lock-then-bar-2",
+		"about": "Re-check: a lock kept when one bar is rewritten.",
+		"steps": [
+			{ "say": "make a 2 bar bassline on track 3" },
+			{ "say": "open the filter on just the first note, as a lock" },
+			{ "say": "now change only bar 2 so it ends higher" },
+			{ "say": "is the filter lock on the first note still there?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "copy-to-t2-2",
+		"about": "Re-check: a beat copied to another drum track, then varied.",
+		"steps": [
+			{ "say": "make a beat on track 1" },
+			{ "say": "copy the beat to track 2 and make that one busier" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "open-hat-right",
+		"about": "Re-check: a drum key found by its plain name in the key planner.",
+		"steps": [
+			{ "say": "make a beat with an open hat" },
+			{ "say": "pan the open hat to the right" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "reverb-on-clap",
+		"about": "Re-check: one sound of a kit sent to the reverb, with the sound skill loaded.",
+		"steps": [
+			{ "say": "make a house beat with a clap" },
+			{ "say": "put reverb on the clap only" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "play-this-3",
+		"about": "Re-check: notes to play, written and started.",
+		"steps": [
+			{ "say": "play this on track 5: A4 C5 E5 A5 G5 E5 C5 D5, eighth notes" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "mutes-by-hand",
+		"about": "Trouble: the user muted tracks by hand and lost the drums.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "press": ["key.mix", "latch:key.shift", "track.1", "track.3", "latch:key.shift"] },
+			{ "say": "why did the drums and bass go silent?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "build-up-beat",
+		"about": "A beat that adds a sound every bar.",
+		"steps": [
+			{ "say": "make a 4 bar beat that adds one more drum sound every bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "boomy-bass",
+		"about": "A sound problem: a boomy bass.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "the bass is too boomy, fix it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "triplet-hats",
+		"about": "Triplets on a sixteenth grid.",
+		"steps": [{ "say": "make a trap beat with triplet hi-hat rolls" }, { "why": true }]
+	},
+	{
+		"name": "song-length",
+		"about": "A question about the replica's own song.",
+		"steps": [
+			{ "say": "make a song with an intro, a verse and a chorus" },
+			{ "say": "how long is the song in seconds, and how many bars?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chorus-louder",
+		"about": "A scene's own mix.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus" },
+			{ "say": "make the chorus louder than the verse" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-hats-only",
+		"about": "A groove for one sound of a kit, which grooves per pattern.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "swing just the hats, keep the kick straight" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-follows-chords",
+		"about": "One track's arpeggio following another track's chords.",
+		"steps": [
+			{ "say": "put Cmaj7 Am7 Dm7 G7 on track 7, a chord a bar" },
+			{ "say": "make track 6 arpeggiate those chords" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "name-melody",
+		"about": "A playful constraint: a melody from letters.",
+		"steps": [{ "say": "write a melody using only the notes in the word CABBAGE" }, { "why": true }]
+	},
+	{
+		"name": "fade-one-bar-steps",
+		"about": "Re-check: a fade in one-bar steps.",
+		"steps": [
+			{ "say": "make a 4 bar loop with drums and chords" },
+			{ "say": "make a song that plays it twice, then fades out bar by bar over one more pass" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "beginner-first",
+		"about": "A beginner with no idea where to start.",
+		"steps": [
+			{ "say": "I just got my OP-XY and I have no idea what I'm doing. help" },
+			{ "say": "ok make something and show me how you did it" },
+			{ "why": true }
+		]
+	}
+]

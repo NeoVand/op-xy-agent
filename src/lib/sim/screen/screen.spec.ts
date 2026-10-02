@@ -437,7 +437,7 @@ describe('renderFrame (recorded draw calls)', () => {
 			SCENARIOS.find((s) => s.id === id)?.setup(sim);
 			return describeFrame(sim.frame);
 		};
-		expect(said('drum')).toMatch(/^drum key F3 \(shift\): tune/);
+		expect(said('drum')).toMatch(/^drum key F3 \(shift\): direction forward, pan 0/);
 		expect(said('sampler')).toMatch(/^sampler, root /);
 		expect(said('sample-multi')).toMatch(/^multisampler zone /);
 	});

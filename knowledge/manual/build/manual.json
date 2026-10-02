@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "60d1da8a",
+	"bundle_hash": "25ec9e0e",
 	"stats": {
 		"units": 166,
-		"facts": 1226,
+		"facts": 1227,
 		"procedures": 207,
 		"parameters": 207,
 		"verified_items": 260,
-		"words": 46583,
+		"words": 46647,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -5874,7 +5874,9 @@
 				"ratchet",
 				"retrigger",
 				"roll",
-				"divide a step"
+				"divide a step",
+				"triplets",
+				"triplet roll"
 			],
 			"area": "sequencer",
 			"order": 44,
@@ -5914,6 +5916,14 @@
 				{
 					"id": "nine",
 					"text": "`accidental 9` most likely gives 9 hits; TE's table prints 3 for it, apparently a slip. Not checked on a unit.",
+					"source": "https://teenage.engineering/guides/op-xy/step-components#step-components-ref-table",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "triplets",
+					"text": "Three hits in a step are triplets of that step's length, so multiply 3 on a sixteenth step gives a thirty-second-note triplet roll, and on a step of an eighth (track scale 2) sixteenth-note triplets; the track scales alone have no triplet value.",
 					"source": "https://teenage.engineering/guides/op-xy/step-components#step-components-ref-table",
 					"firmware_min": null,
 					"verified_on": null,
@@ -12427,7 +12437,7 @@
 				},
 				{
 					"id": "ratio-steps",
-					"text": "Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16.",
+					"text": "Ratio moves in ten equal steps of its 0–99 value and reads as the oscillators' frequency ratio, a step each ten — 00–09 2:1, 10–19 1:1, 20–29 2:3, 30–39 1:2, 40–49 1:3, 50–59 1:4, 60–69 1:6, 70–79 1:8, 80–89 1:12 and 90–99 1:16.",
 					"source": "docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo",
 					"firmware_min": null,
 					"verified_on": "1.1.33",

@@ -285,6 +285,14 @@ export const showOnReplicaTool = defineTool({
 				...(ended ? { screenAtEnd: ended } : {}),
 				...(state ? { transportAtEnd: state } : {}),
 				...(did.length ? { whileShown: did } : {}),
+				// a step entry shown on a step that already held the notes takes them off (a chord
+				// "entered" for a beginner was the chord removed, for a moment)
+				...(did.some((l) => /\bremoved\b/.test(l))
+					? {
+							caution:
+								'As shown, the keys took notes off: a key pressed with a step that holds its note removes it. To show notes going on, show it on an empty step or pattern.'
+						}
+					: {}),
 				replica: putBack
 					? 'back where it was: the user can try it from there'
 					: tookOver

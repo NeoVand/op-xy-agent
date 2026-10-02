@@ -120,6 +120,12 @@ function describeSampler(frame: Extract<ScreenFrame, { page: 'drum' }>): string 
 	if (engine === 'multisampler') {
 		return `multisampler zone ${frame.key}${layer}: tune ${frame.tune}${empty}`;
 	}
+	// the shift layer reads its own four (a pan turned there read "tune +0.00", and an agent could not
+	// see the pan it had set)
+	if (frame.shift) {
+		const gain = Math.round(frame.gain * 50 - 30);
+		return `drum key ${frame.key}${layer}: direction ${frame.reverse ? 'reverse' : 'forward'}, pan ${Math.round(frame.pan * 100)}, fade ${two(frame.fade * 99)}, gain ${gain}${empty}`;
+	}
 	return `drum key ${frame.key}${layer}: tune ${frame.tune}, play mode ${frame.playMode}${empty}`;
 }
 

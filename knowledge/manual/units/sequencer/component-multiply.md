@@ -1,7 +1,7 @@
 ---
 id: sequencer.component-multiply
 title: Multiply (step component)
-aliases: [multiply, ratchet, retrigger, roll, divide a step]
+aliases: [multiply, ratchet, retrigger, roll, divide a step, triplets, triplet roll]
 area: sequencer
 order: 44
 context:
@@ -22,6 +22,10 @@ facts:
     source: https://teenage.engineering/guides/op-xy/step-components#step-components-ref-table
   - id: nine
     text: "`accidental 9` most likely gives 9 hits; TE's table prints 3 for it, apparently a slip. Not checked on a unit."
+    source: https://teenage.engineering/guides/op-xy/step-components#step-components-ref-table
+    confidence: derived
+  - id: triplets
+    text: Three hits in a step are triplets of that step's length, so multiply 3 on a sixteenth step gives a thirty-second-note triplet roll, and on a step of an eighth (track scale 2) sixteenth-note triplets; the track scales alone have no triplet value.
     source: https://teenage.engineering/guides/op-xy/step-components#step-components-ref-table
     confidence: derived
 procedures:
