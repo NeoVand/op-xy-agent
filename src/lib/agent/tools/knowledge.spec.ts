@@ -5,7 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { createUnitSource } from '../manual-index';
 import { combineSources, type ManualSource } from '../manual-source';
 import { createVirtualOpxy } from '$lib/app/virtual';
+import { ReplicaState } from '$lib/replica';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { describeFrame } from '$lib/sim/screen/render';
+import { FakeTime } from '../../../../test/fakes/fake-time';
 import type { AgentEnvironment, AnyTool, ScreenReader, ToolContext, ToolResult } from './define';
 import {
 	readManualUnitTool,
@@ -168,6 +171,62 @@ describe('show_on_replica', () => {
 		// a step with no note gets one: nothing to warn of
 		const kick = await guided('instrument → T1 → step 1');
 		expect(kick.caution).toBeUndefined();
+	});
+});
+
+describe('show_on_replica with the real replica', () => {
+	// the replica's own animation timers and the simulator's frames, as in the app
+	async function demo(keys: string, threshold: number) {
+		const time = new FakeTime();
+		const sim = new OpxySim({ now: () => time.now() });
+		sim.state.areas.sample.record.threshold = threshold;
+		const replica = new ReplicaState({ timers: time });
+		replica.observe((event) => sim.input(event));
+		const virtual = createVirtualOpxy({ sim });
+		const frame = () => {
+			sim.advance(16);
+			time.setTimeout(frame, 16);
+		};
+		time.setTimeout(frame, 16);
+		const env = {
+			device: null,
+			replica,
+			virtual,
+			screen: { read: () => ({ page: sim.frame.page, shows: describeFrame(sim.frame) }) },
+			guide: { start: () => {}, stop: () => {} },
+			manual: ours,
+			timers: time,
+			confirmWindowMs: 0,
+			plan: { get: () => [], set: () => {} },
+			abortDeviceWork: () => {}
+		} as unknown as AgentEnvironment;
+		const ctx: ToolContext = {
+			toolCallId: 'toolu_rec',
+			agent: 'conductor',
+			signal: new AbortController().signal,
+			env
+		};
+		let done = false;
+		const running = showOnReplicaTool
+			.run(showOnReplicaTool.input.parse({ keys }), ctx)
+			.finally(() => (done = true));
+		for (let i = 0; i < 2000 && !done; i++) await time.advance(50);
+		return JSON.parse(String((await running).content));
+	}
+
+	it('says a take on the record page is pretend, and whether one was kept', async () => {
+		// a step read "take 1.wav" and the end "kick 1.wav": an agent could not tell whether the
+		// replica had recorded anything
+		const kept = await demo('T1 → sample → key F3 → hold M1', 0);
+		expect(kept.recorder).toMatch(/^The replica has no microphone: .*this time it kept one/);
+		expect(kept.replica).toBe('back where it was: the user can try it from there');
+		const none = await demo('T1 → sample → key F3 → hold M1', 99);
+		expect(none.recorder).toMatch(
+			/this time it kept none: the stand-in stayed under the threshold/
+		);
+		// a demo elsewhere says nothing of it
+		const other = await demo('T1 → M2', 0);
+		expect(other.recorder).toBeUndefined();
 	});
 });
 

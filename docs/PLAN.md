@@ -313,6 +313,27 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   the browser's sound is off; merge's description says a line replaces its sound's line, and bar
   with merge writes one bar's crash without a 64-mark line; the open-hat note tells the agent how to
   say it.
+- **Probe round twenty-four (2026-10-02), 18 scenarios (`probe-scenarios-24.json`: re-checks (locks
+  on the first step of each bar while playing, track 2 to a drum machine on channel 10, a slow
+  attack under short stabs, a crash in bar 1 alone) and new kinds: kick and bass sitting together,
+  scenes vs patterns, a melody made more interesting, far-away hats, a counter melody in the gaps,
+  an intro adding one part every 2 bars, a kick muted by hand, wider stereo, a rounder bass with
+  the notes kept, Hindi hip hop, a voice recorded as a drum, a 3-bar bass against a 4-bar beat, an
+  undo, ghost notes and accents):** no failed calls; locks while playing landed on steps 1, 17, 33
+  and 49. Fixes: "track 2 midi channel" (the page named last) reaches the midi page, and an unknown
+  row lists the rows by page; the preset settings (shift + instrument: width, high pass, velocity
+  sensitivity, portamento type, tunings, preset transpose and the mod routing, velocity → cutoff
+  for accents that open the filter) are reachable by name, and a plan setting them says the
+  replica's sound plays none of them but velocity sensitivity; patterns of different lengths in a
+  scene are said to drift while it repeats and to line up again every so many bars, every track
+  starting on its first step when the song moves on (the kick note says it drifts only when the
+  lengths do not divide); a folder alone ("bass") lists its presets, and a factory preset loaded on
+  the replica is said to play as its engine's starting sound (the replica knows TE's presets by
+  name); a demo on the record page says the replica's take is pretend and whether it kept one (a
+  real-replica test: the rehearsed step and the end screen had disagreed); a sound swapped or
+  "rounder" routes to the sound skill, which now sets envelopes by time and names velocity →
+  cutoff; device_status with nothing connected drops the device's clock notes; write_arrangement
+  says a scene's mute rests a track too; the bars legend and merge are described.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

@@ -644,6 +644,10 @@ describe('the navigator: values by the names the pages use', () => {
 		expect(planParam(sim.state, { track: 3, param: 'preset', value: 'nope' }).note).toMatch(
 			/no preset "nope"/
 		);
+		// a folder alone lists its presets
+		expect(planParam(sim.state, { track: 3, param: 'preset', value: 'bass/' }).note).toMatch(
+			/^"bass\/" is a folder of the preset browser, holding .*bass\/sonorous.*: name one$/
+		);
 	});
 });
 

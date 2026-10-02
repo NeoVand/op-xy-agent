@@ -274,6 +274,20 @@ export const showOnReplicaTool = defineTool({
 			!tookOver &&
 			(outcome === 'finished' || ctx.signal.aborted) &&
 			virtual!.revert(before);
+		// the record page hears a stand-in input, so whether a held key keeps a take turns on where
+		// the stand-in is: a step read "take 1.wav", the end "kick 1.wav", and an agent could not
+		// tell whether anything had been recorded
+		const recordPage = [...screens.map((s) => s.screen), ended ?? ''].some((t) =>
+			/\brecord\b[^:]*:/.test(t)
+		);
+		const takeIn = (t: string | null | undefined) => /\btake \d+\.wav\b/.exec(t ?? '')?.[0] ?? null;
+		const kept =
+			did.some((l) => /\btake \d+\b/.test(l)) ||
+			(takeIn(ended) !== null && takeIn(ended) !== takeIn(start?.shows));
+		const recorder =
+			recordPage && /\bhold\b/.test(keys)
+				? `The replica has no microphone: its record page hears a stand-in input, so a take on it is pretend (${kept ? 'this time it kept one' : 'this time it kept none: the stand-in stayed under the threshold while the key was held'}), and the steps, rehearsed on a copy, can disagree. On the unit, the hold arms the recorder and the take begins once the real input passes the threshold.`
+				: null;
 		const caption = input.caption ? `${keys}: ${input.caption}` : `showed ${keys}`;
 		return jsonResult(
 			{
@@ -284,6 +298,7 @@ export const showOnReplicaTool = defineTool({
 				...(screens.length ? { steps: screens } : {}),
 				...(ended ? { screenAtEnd: ended } : {}),
 				...(state ? { transportAtEnd: state } : {}),
+				...(recorder ? { recorder } : {}),
 				...(did.length ? { whileShown: did } : {}),
 				// a step entry shown on a step that already held the notes takes them off (a chord
 				// "entered" for a beginner was the chord removed, for a moment)

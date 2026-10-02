@@ -813,6 +813,27 @@ describe('write_pattern on drums', () => {
 		);
 	});
 
+	it('says when patterns of other lengths drift while the scene repeats', async () => {
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			bars: 4,
+			grid: { kick: 'x... .... x... ....', 'closed hat': 'x.x. x.x. x.x. x.x.' }
+		});
+		const bass = json(
+			await run(writePatternTool, {
+				track: 3,
+				bars: 3,
+				length: 48,
+				notes: '1:A1:3 17:G1:3 33:F1:3'
+			})
+		);
+		expect(bass.note).toMatch(
+			/Its 48 steps loop on their own against T1's 64: while the scene repeats they drift and line up again every 192 steps \(12 bars\)/
+		);
+		expect(bass.note).toMatch(/on the first pass: their lengths differ/);
+	});
+
 	it('reads a harmony against the line it moves with', async () => {
 		const { run } = setup();
 		await run(writePatternTool, {

@@ -27,7 +27,7 @@ import { MAX_SLICES } from './areas/sample/slicer';
 import { SLICE_MODES, soundKeyOf, soundName, type Region } from './areas/sample/state';
 import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
 import type { PresetEntry } from './areas/system/catalogue';
-import { PROJECT_SECTIONS } from './areas/system/settings';
+import { PRESET_SECTIONS, PROJECT_SECTIONS } from './areas/system/settings';
 import { autosaves, findProject, snapshot } from './areas/system/projects';
 import { HOLD_MS } from './areas/system/state';
 import { currentGroup, groups, presetKey, presetsIn, soundOf } from './areas/system/presets';
@@ -941,6 +941,11 @@ function presetNamed(s: SimState, value: number | string): PresetEntry | string 
 	if (named.length === 1) return named[0];
 	if (named.length > 1)
 		return `"${value}" names ${named.map(presetKey).join(', ')}: give its folder`;
+	// a folder alone, its presets (an agent asked for a rounder bass had no list to choose from)
+	const folder = want.replace(/\/+$/, '');
+	const inFolder = library.filter((p) => p.folder.toLowerCase() === folder);
+	if (inFolder.length > 0)
+		return `"${value}" is a folder of the preset browser, holding ${inFolder.map(presetKey).join(', ')}: name one`;
 	// what is near it, so the next try is not a guess
 	const words = want.split(/[/\s_-]+/).filter((w) => w.length > 1);
 	const near = library
@@ -2528,10 +2533,17 @@ function projectRow(
 ): { section: number; row: number } | null {
 	let want = PROJECT_ROW_NAMES[word(label)] ?? word(label);
 	let only: string | null = null;
-	const named = /^(midi|voices?)\b(?:\s+(?:channel|count))?\s*(.*)$/.exec(want);
+	// the page first ("midi track 2", "midi channel" of a track) or last ("track 2 midi channel")
+	const first = /^(midi|voices?)\b(?:\s+(?:channel|count))?\s*(.*)$/.exec(want);
+	const last = /^(.+?)\s+(midi|voices?)(?:\s+(?:channel|count))?$/.exec(want);
+	const named = first
+		? { page: first[1], row: first[2] }
+		: last
+			? { page: last[2], row: last[1] }
+			: null;
 	if (named) {
-		only = named[1].startsWith('voice') ? 'voices' : 'midi';
-		want = named[2] || (track !== undefined ? `track ${track}` : '');
+		only = named.page.startsWith('voice') ? 'voices' : 'midi';
+		want = named.row || (track !== undefined ? `track ${track}` : '');
 	}
 	const found: { section: number; row: number }[] = [];
 	for (const [section, s] of PROJECT_SECTIONS.entries()) {
@@ -2650,10 +2662,17 @@ const PROJECT_SETTING: Special = {
 			);
 		}
 		if (!at) {
-			const names = PROJECT_SECTIONS.flatMap((s) => s.rows(state).map((r) => r.label));
+			// by page, so a row two pages share reads as theirs ("midi: track 1 … track 8")
+			const pages = PROJECT_SECTIONS.map(
+				(s) =>
+					`${s.label}: ${s
+						.rows(state)
+						.map((r) => r.label)
+						.join(', ')}`
+			);
 			return rec.plan(
 				false,
-				`the project settings have no "${goal.label}"; they hold ${[...new Set(names)].join(', ')}; the project page's own actions are "save", "save as" and "new project"`
+				`the project settings have no "${goal.label}"; by page they hold ${pages.join('; ')} (a track's midi channel: "midi channel" with track); the project page's own actions are "save", "save as" and "new project"`
 			);
 		}
 		const s = () => rec.sim.state;
@@ -2695,14 +2714,92 @@ const PROJECT_SETTING: Special = {
 	}
 };
 
+/** Other names for a preset setting's row. */
+const PRESET_ROW_NAMES: Readonly<Record<string, string>> = {
+	'stereo width': 'width',
+	stereo: 'width',
+	velocity: 'velocity sens',
+	'velocity sensitivity': 'velocity sens',
+	highpass: 'high pass',
+	'high-pass': 'high pass',
+	'portamento style': 'portamento type',
+	'preset transpose': 'transpose',
+	'preset tuning': 'tuning'
+};
+
+/** A preset setting's row by its name: its section and place (shift + instrument; the rows' names are fixed). */
+function presetRow(label: string): { section: number; row: number } | null {
+	const want = PRESET_ROW_NAMES[word(label)] ?? word(label);
+	for (const [section, s] of PRESET_SECTIONS.entries()) {
+		const row = s.rows(undefined as never).findIndex((r) => r.label.toLowerCase() === want);
+		if (row >= 0) return { section, row };
+	}
+	return null;
+}
+
+/** A preset setting's value on track `track`'s preset, as its page shows it. */
+const presetValue = (state: SimState, at: { section: number; row: number }, track: number) => {
+	const on = { ...state, track: track - 1 } as SimState;
+	return PRESET_SECTIONS[at.section].rows(on)[at.row]?.value(on) ?? '';
+};
+
+/**
+ * A setting of a track's preset (shift + instrument, for the selected track; manual:
+ * preset-settings): width, high pass, velocity sensitivity, portamento type, tuning, the preset's own
+ * transpose and the mod routing; E1 picks the section, E2 the row, E3 turns its value. An agent asked
+ * to widen a chord loop found no page for width.
+ */
+const PRESET_SETTING: Special = {
+	plan(state, goal) {
+		const rec = new Recorder(copy(state));
+		const track = goal.track ?? state.track + 1;
+		const at = presetRow(goal.label);
+		if (!at) return rec.plan(false, `the preset settings have no "${goal.label}"`);
+		const s = () => rec.sim.state;
+		if (!(s().areas.system.page === 'preset-settings' && s().track === track - 1)) {
+			selectTrack(rec, track);
+			rec.do('shift + instrument');
+		}
+		if (s().areas.system.page !== 'preset-settings') {
+			return rec.plan(false, 'the preset settings did not open');
+		}
+		const cursor = () => s().areas.system.presetCursor;
+		if (cursor().section !== at.section) rec.do('turn E1', at.section - cursor().section);
+		if (cursor().row !== at.row) rec.do('turn E2', at.row - cursor().row);
+		if (hit(presetValue(s(), at, track), goal.value)) return rec.plan(true);
+		// the value: tried a detent at a time on a copy, each way, until it reads the goal
+		for (const way of [1, -1]) {
+			const trial = copy(s());
+			for (let n = 1; n <= 100; n++) {
+				const was = presetValue(trial.state, at, track);
+				play(trial, 'turn E3', way);
+				const now = presetValue(trial.state, at, track);
+				if (hit(now, goal.value)) {
+					rec.do('turn E3', way * n);
+					return rec.plan(true);
+				}
+				if (now === was) break;
+			}
+		}
+		return rec.plan(
+			false,
+			`${goal.label} never reads ${goal.value} (it reads ${presetValue(s(), at, track)})`
+		);
+	},
+	reads(state, goal) {
+		const at = presetRow(goal.label);
+		return at !== null && hit(presetValue(state, at, goal.track ?? state.track + 1), goal.value);
+	}
+};
+
 /** The keys of its own that set a goal's value, or null for a value an encoder sets. */
 function specialOf(goal: PageValueGoal): Special | null {
 	const label = word(goal.label);
 	switch (goal.area) {
 		case 'instrument':
-			return ['sound from', 'copy sound from', 'copy sound', 'paste sound from'].includes(label)
-				? COPY_SOUND
-				: null;
+			if (['sound from', 'copy sound from', 'copy sound', 'paste sound from'].includes(label))
+				return COPY_SOUND;
+			return presetRow(label) ? PRESET_SETTING : null;
 		case 'player':
 			if (label === 'chord' || label === 'maestro chord') return MAESTRO_CHORD;
 			return label === 'type' || label === 'player type' ? PLAYER_TYPE : null;

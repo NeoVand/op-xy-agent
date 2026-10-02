@@ -157,12 +157,18 @@ export const deviceStatusTool = defineTool({
 							: 'This browser cannot reach USB devices (no WebUSB), so the replica’s project cannot be sent from here.'
 					}
 				: {}),
-			notes: [
-				'sentState is what this app last sent; the OP-XY never reports tempo edits, mutes or track selection made by hand.',
-				s.clockOut
-					? 'The device sends clock, so play state and tempo are confirmed by the device.'
-					: 'The device sends no clock (com → system settings → midi → clock is not "both"): play state and tempo cannot be confirmed.'
-			]
+			// a device's notes only with a device (the clock note with none connected was noise an
+			// agent had to wade through)
+			notes: s.connected
+				? [
+						'sentState is what this app last sent; the OP-XY never reports tempo edits, mutes or track selection made by hand.',
+						s.clockOut
+							? 'The device sends clock, so play state and tempo are confirmed by the device.'
+							: 'The device sends no clock (com → system settings → midi → clock is not "both"): play state and tempo cannot be confirmed.'
+					]
+				: [
+						'No OP-XY is connected, so transport, clock and sentState hold nothing yet; virtual is the replica on screen.'
+					]
 		};
 		const summary = s.connected
 			? `connected, os ${s.firmware ?? 'unknown'}, ${s.playState}`

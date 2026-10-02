@@ -26,7 +26,13 @@ signal taken away), and give no tips for states the reading does not show (the f
 Work out the parameters and their values first; the manual's how-to recipes list ones that were
 tried ([howto.acid-bass], [howto.pluck], [howto.pad-swell], [howto.wobble], [howto.sidechain-duck]). Then set them in one go with the key planner's settings list, so the user can watch it
 happen on the replica and the steps come back as keys. Put list picks first (engine or preset, filter
-type, LFO type), and an engine or preset first of all, because loading one resets the sound. With an
+type, LFO type), and an engine or preset first of all, because loading one resets the sound. An
+envelope stage can be set by its time ("amp attack", value "2 s"): the planner turns it to the
+nearest value and says it, and every envelope change reads back in seconds too, so a swell or a
+fade is set by how long it should take, against how long the notes last at the tempo. Accents that
+open the filter route velocity to the cutoff in the preset settings ("velocity target" cutoff, then
+"velocity amount"), so on the unit louder steps sound brighter; the replica's sound plays none of
+the preset settings but velocity sensitivity, so that is for the user to hear on the device. With an
 OP-XY connected, the parameters MIDI reaches can be sent to it directly (the user approves each).
 
 Afterwards say what each change does, so they learn the sound and not just the result, and give the

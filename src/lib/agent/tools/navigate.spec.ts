@@ -443,7 +443,9 @@ describe('plan_steps to the project settings', () => {
 		const named = json(
 			await run(planStepsTool, { show: false, area: 'project', param: 'nope', value: 1 })
 		);
-		expect(named.note).toMatch(/the project settings have no "nope"; they hold transpose/);
+		expect(named.note).toMatch(
+			/the project settings have no "nope"; by page they hold general: transpose/
+		);
 	});
 
 	it('locks one step’s value with its key held while the encoder turns', async () => {
@@ -551,6 +553,27 @@ describe('plan_steps to the project settings', () => {
 			})
 		);
 		expect(midi.unit).toMatch(/preset browser on OS 1\.1\.33 showed none/);
+		expect(midi.standIn).toBeUndefined();
+	});
+
+	it('says a factory preset plays as its engine’s starting sound, and lists a folder', async () => {
+		const { run } = setup(true);
+		const named = json(
+			await run(planStepsTool, { show: true, track: 3, param: 'preset', value: 'bass/sonorous' })
+		);
+		expect(named.loaded.preset).toBe('bass/sonorous');
+		expect(named.standIn).toMatch(
+			/^T3 bass\/sonorous: the replica knows TE's factory presets by name/
+		);
+		// a new project's own presets are the device's sounds
+		const own = json(
+			await run(planStepsTool, { show: true, track: 8, param: 'preset', value: 'pad/bandpasser' })
+		);
+		expect(own.standIn).toBeUndefined();
+		const folder = json(
+			await run(planStepsTool, { show: false, track: 3, param: 'preset', value: 'bass' })
+		);
+		expect(folder.note).toMatch(/^"bass" is a folder of the preset browser, holding bass\/alloy, /);
 	});
 
 	it('sets an envelope stage by its time, the nearest value said', async () => {
@@ -670,11 +693,51 @@ describe('plan_steps to the project settings', () => {
 			await run(planStepsTool, { show: false, area: 'project', param: 'midi track 6', value: '2' })
 		);
 		expect(named.screen).toMatch(/midi, track 6, 2/);
+		const after = json(
+			await run(planStepsTool, {
+				show: false,
+				area: 'project',
+				param: 'track 2 midi channel',
+				value: '10'
+			})
+		);
+		expect(after.screen).toMatch(/midi, track 2, 10/);
 		const bare = json(
 			await run(planStepsTool, { show: false, area: 'project', param: 'track 6', value: '2' })
 		);
 		expect(bare.reached).toBe(false);
 		expect(bare.note).toMatch(/"track 6" is a row of voices and midi: name the page/);
+	});
+
+	it('sets a preset setting, the stereo width, through shift + instrument', async () => {
+		// an agent asked to widen a chord loop found no page for width
+		const { sim, run } = setup(true);
+		const wide = json(
+			await run(planStepsTool, { show: true, track: 7, param: 'width', value: 60 })
+		);
+		expect(wide).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(wide.steps.map((s: { keys: string }) => s.keys)).toContain('shift + instrument');
+		expect(sim.state.areas.system.presetSettings[6].width).toBeGreaterThan(0);
+		expect(wide.screen).toMatch(/width, 60/);
+		// shown, not played: the browser's sound reads only velocity sensitivity of these
+		expect(wide.unheard).toMatch(/^width: the replica shows it on its preset settings page/);
+		// velocity onto the cutoff: accents that open the filter (an acid line's agent asked for it)
+		const accents = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 3,
+				settings: [
+					{ param: 'velocity target', value: 'cutoff' },
+					{ param: 'velocity amount', value: 50 }
+				]
+			})
+		);
+		expect(accents).toMatchObject({ shown: true, arrived: true });
+		expect(accents.unheard).toMatch(/^velocity target, velocity amount: .* them /);
+		const sensitivity = json(
+			await run(planStepsTool, { show: true, track: 3, param: 'velocity sens', value: 40 })
+		);
+		expect(sensitivity.unheard).toBeUndefined();
 	});
 
 	it('starts over with a new project: project, then hold M1', async () => {

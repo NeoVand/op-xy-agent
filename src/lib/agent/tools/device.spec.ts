@@ -65,6 +65,10 @@ describe('device_status', () => {
 		const result = await run(deviceStatusTool, {});
 		expect(json(result).connected).toBe(false);
 		expect(result.summary).toBe('no op-xy connected');
+		// a device's clock is no news with none connected
+		expect(json(result).notes).toEqual([
+			'No OP-XY is connected, so transport, clock and sentState hold nothing yet; virtual is the replica on screen.'
+		]);
 	});
 });
 
