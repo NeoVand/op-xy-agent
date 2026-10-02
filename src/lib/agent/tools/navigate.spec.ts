@@ -59,6 +59,49 @@ function setup(withReplica = false) {
 const json = (result: ToolResult) => JSON.parse(String(result.content));
 
 describe('plan_steps', () => {
+	it('says when a groove it sets hardly reaches the notes', async () => {
+		const { virtual, run } = setup(true);
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [1, 3, 5, 7, 9, 11, 13, 15].map((step) => ({
+				step,
+				note: 61,
+				velocity: 100,
+				length: 1
+			}))
+		});
+		const shown = json(
+			await run(planStepsTool, {
+				show: true,
+				settings: [
+					{ param: 'groove', value: 'shuffle' },
+					{ param: 'swing', value: 50 }
+				]
+			})
+		);
+		expect(shown.shown).toBe(true);
+		expect(shown.groove).toMatch(
+			/moves none of T1's notes, so it plays straight: shuffle moves the even sixteenths/
+		);
+	});
+
+	it('says patterns keep their steps when the time signature changes', async () => {
+		const { run } = setup(true);
+		const shown = json(
+			await run(planStepsTool, {
+				show: true,
+				area: 'project',
+				param: 'time signature',
+				value: '3/4'
+			})
+		);
+		expect(shown.shown).toBe(true);
+		expect(shown.meter).toMatch(
+			/3\/4 now, a bar 12 steps: the patterns keep their steps \(a 64-step pattern runs 5.33 bars/
+		);
+	});
+
 	it('reads a shift layer’s value with shift held, as the user sees it turning', async () => {
 		const { run } = setup();
 		const plan = json(

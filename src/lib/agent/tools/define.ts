@@ -123,6 +123,8 @@ export interface PresetInboxHost {
 	put(draft: { readonly name: string; readonly samples: readonly SampleInput[] }): void;
 	/** The preset maker's address, for the answer's link. */
 	readonly href: string;
+	/** Whether the preset maker has been opened since the app loaded. */
+	opened?(): boolean;
 	/** The drum kit the user had in the preset maker when it last closed, its edits written in. */
 	keptKit?(): {
 		readonly name: string;
@@ -577,6 +579,33 @@ export class ToolRegistry {
 	}
 }
 
+/** A string literal followed by method calls, `"x...".repeat(4).trim()`. */
+const LITERAL_CALLS =
+	/("(?:[^"\\]|\\.)*")((?:\s*\.\s*[A-Za-z]+\s*\((?:[^()]|\/[^/\n]*\/[a-z]*)*\))+)/g;
+
+/**
+ * JSON text with the string methods written after its literals worked out: `.repeat(n)` repeats
+ * the text; the rest (trim, replace, slice…) are dropped, which a grid's reading tolerates (it
+ * skips spaces and |, and a line of the wrong length is refused with its count).
+ */
+function withoutStringMethods(text: string): string {
+	return text.replace(LITERAL_CALLS, (whole, literal: string, calls: string) => {
+		let value: string;
+		try {
+			value = JSON.parse(literal) as string;
+		} catch {
+			return whole;
+		}
+		for (const call of calls.matchAll(/\.\s*([A-Za-z]+)\s*\(([^()]*)\)/g)) {
+			const times = Number(call[2].trim());
+			if (call[1] === 'repeat' && Number.isInteger(times) && times > 0 && times <= 64) {
+				value = value.repeat(times);
+			}
+		}
+		return JSON.stringify(value);
+	});
+}
+
 /**
  * `input` with each top-level field that failed as the wrong type, but is a string of JSON for an
  * object or a list, read as that; null when there is none.
@@ -593,9 +622,9 @@ function unstringFields(
 		const key = String(issue.path[0]);
 		const value = out[key];
 		if (typeof value !== 'string') continue;
-		// JSON, or JSON with a string method the model wrote into it: `"x... x...".replace(/ /g,"")`
-		// took a grid three times, and dropping the spaces changes nothing a grid reads
-		const texts = [value, value.replace(/\.replace\(\/[^/]*\/g?,\s*(["'])\1\)/g, '')];
+		// JSON, or JSON with string methods the model wrote into it: `"x... x...".replace(/ /g,"")`
+		// took a grid three times, `.trim()` and `.slice(0,0)` another
+		const texts = [value, withoutStringMethods(value)];
 		for (const text of texts) {
 			try {
 				const parsed: unknown = JSON.parse(text);

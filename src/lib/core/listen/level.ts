@@ -169,11 +169,18 @@ export interface LevelStats {
 	/** The largest channel mean (DC offset), −1…1. */
 	readonly dcOffset: number;
 	readonly loudness: LoudnessStats;
+	/** Where the highest sample is, seconds from the start. */
+	readonly peakSeconds: number;
+	/** The first and last sample at full scale, seconds; null with none. */
+	readonly clipSeconds: readonly [number, number] | null;
 }
 
 /** Peak, RMS, crest, clipping, DC offset and loudness of `channels`. */
 export function levelStats(channels: readonly ArrayLike<number>[], sampleRate: number): LevelStats {
 	let peak = 0;
+	let peakAt = 0;
+	let clipFirst = -1;
+	let clipLast = -1;
 	let sumSquares = 0;
 	let count = 0;
 	let clippedSamples = 0;
@@ -185,10 +192,15 @@ export function levelStats(channels: readonly ArrayLike<number>[], sampleRate: n
 		for (let i = 0; i < channel.length; i++) {
 			const x = channel[i];
 			const a = Math.abs(x);
-			if (a > peak) peak = a;
+			if (a > peak) {
+				peak = a;
+				peakAt = i;
+			}
 			sumSquares += x * x;
 			sum += x;
 			if (a >= CLIP_LEVEL) {
+				if (clipFirst < 0 || i < clipFirst) clipFirst = i;
+				if (i > clipLast) clipLast = i;
 				clippedSamples++;
 				run++;
 				if (run === CLIP_RUN) clipRuns++;
@@ -209,6 +221,8 @@ export function levelStats(channels: readonly ArrayLike<number>[], sampleRate: n
 		clippedSamples,
 		clipRuns,
 		dcOffset,
-		loudness: loudness(channels, sampleRate)
+		loudness: loudness(channels, sampleRate),
+		peakSeconds: peakAt / sampleRate,
+		clipSeconds: clipFirst < 0 ? null : [clipFirst / sampleRate, clipLast / sampleRate]
 	};
 }

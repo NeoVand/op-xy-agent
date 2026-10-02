@@ -121,7 +121,13 @@ describe('make_kit', () => {
 		const virtual = createVirtualOpxy({ sim });
 		const audio = { sampleRate: 44100, channels: [new Float32Array(441).fill(0.5)] };
 		let kept: ReturnType<NonNullable<PresetInboxHost['keptKit']>> = null;
-		const host: PresetInboxHost = { put: () => {}, href: '/presets', keptKit: () => kept };
+		let opened = false;
+		const host: PresetInboxHost = {
+			put: () => {},
+			href: '/presets',
+			keptKit: () => kept,
+			opened: () => opened
+		};
 		const call = (input: unknown) =>
 			makeKitTool.run(makeKitTool.input.parse(input), {
 				toolCallId: 'toolu_m',
@@ -131,7 +137,12 @@ describe('make_kit', () => {
 		// nothing kept yet: it says how to get one there
 		const none = await call({ name: 'mine', from_preset_maker: true, track: 2 });
 		expect(none.isError).toBe(true);
+		expect(String(none.content)).toMatch(/not been opened since the app loaded/);
 		expect(String(none.content)).toMatch(/open on the replica/);
+		// opened, and left without a drum kit: said as that
+		opened = true;
+		const empty = await call({ name: 'mine', from_preset_maker: true, track: 2 });
+		expect(String(empty.content)).toMatch(/held no drum kit when the user left it/);
 		kept = {
 			name: 'my kit',
 			sounds: [

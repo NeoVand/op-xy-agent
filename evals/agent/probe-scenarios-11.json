@@ -1,0 +1,149 @@
+[
+	{
+		"name": "verse-chorus-mix",
+		"about": "Re-check: a scene's own mix, a louder chorus and a bass out of the verse.",
+		"steps": [
+			{
+				"say": "make a song with a verse and a chorus, 4 bars each: the bass should sit out in the verse and the chorus should be louder"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "check-the-transition",
+		"about": "Re-check: hearing a change of part, a fill into the chorus.",
+		"steps": [
+			{
+				"say": "make a verse and a chorus with a drum fill leading into the chorus, then listen to the transition and tell me if it works"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sharps-in-eb",
+		"about": "Re-check: sharps given in a flat key, and the user's notes kept.",
+		"steps": [
+			{
+				"say": "write a melody in Eb major on track 5 using only D#, F, G, G#, A# and C"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "groove-in-7-8",
+		"about": "Re-check: patterns in 7/8 at their default length.",
+		"steps": [{ "say": "make a 4 bar groove in 7/8 at 140 with drums and a bass" }, { "why": true }]
+	},
+	{
+		"name": "kit-not-made-yet",
+		"about": "Re-check: the preset maker's kit asked for when there is none.",
+		"steps": [{ "say": "put the kit I made in the preset maker on track 2" }, { "why": true }]
+	},
+	{
+		"name": "other-room",
+		"about": "A sound described by a place: muffled, from another room.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "now make it sound like it's coming from the next room" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "turn-into-waltz",
+		"about": "Existing material moved to another meter.",
+		"steps": [
+			{ "say": "make a simple pop chord progression with drums" },
+			{ "say": "turn it into a waltz" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "five-minutes",
+		"about": "Teaching under a time limit: what matters most.",
+		"steps": [
+			{
+				"say": "I only have five minutes. teach me the three most important things about the op-xy"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "faster-same-tempo",
+		"about": "A request that sounds self-contradictory.",
+		"steps": [
+			{ "say": "make a hip hop beat at 90" },
+			{ "say": "make it feel faster but keep the same tempo" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "numbered-list",
+		"about": "A numbered procedure in one message.",
+		"steps": [
+			{
+				"say": "1. set the tempo to 100\n2. drums on track 1, a simple rock beat\n3. a bass on track 3 that follows the kick\n4. chords on track 7, C Am F G\n5. play it"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chord-chart",
+		"about": "A chord chart pasted as text, two chords in one bar.",
+		"steps": [
+			{
+				"say": "play these chords on track 4, one bar each:\n| C | Am | F G | C |"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-second-half",
+		"about": "A feel that changes partway through a song.",
+		"steps": [
+			{
+				"say": "make an 8 bar song where the drums are straight in the first half and swung in the second half"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "breakdown",
+		"about": "A breakdown: everything out but the bass, then back.",
+		"steps": [
+			{ "say": "make a techno track with drums, bass and a lead" },
+			{
+				"say": "add a breakdown where only the bass plays for 2 bars, then everything comes back"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "guitarist",
+		"about": "A user from another instrument, asking about synth controls.",
+		"steps": [
+			{
+				"say": "I'm a guitarist and I don't know synths at all. what do the four encoders do on M1 for track 3?"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hum-a-tune",
+		"about": "A melody described by humming syllables.",
+		"steps": [
+			{
+				"say": "it goes like da da DAA, da da DAA, da da da da daaa, slow, kind of sad. can you put that on track 5?"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "humanize-hats",
+		"about": "Humanising: velocity and timing on the hats.",
+		"steps": [
+			{ "say": "make a boom bap beat" },
+			{ "say": "humanize the hats, they sound too robotic" },
+			{ "why": true }
+		]
+	}
+]

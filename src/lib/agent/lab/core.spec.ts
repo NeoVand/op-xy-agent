@@ -30,6 +30,17 @@ describe('forks', () => {
 		expect(JSON.stringify({ a })).toBe('{"a":"[fork 1]"}');
 	});
 
+	it('says when a groove set hardly reaches the notes', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(1, { notes: '1:61 3:61 5:61 7:61 9:61 11:61 13:61 15:61' });
+		const result = f.set([
+			{ param: 'groove', value: 'shuffle' },
+			{ param: 'swing', value: 50 }
+		]);
+		expect(result.note).toMatch(/moves none of T1's notes/);
+	});
+
 	it('locks one step’s value with set and step', () => {
 		const { lab } = labOn();
 		const f = lab.fork();

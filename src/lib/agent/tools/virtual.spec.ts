@@ -309,6 +309,48 @@ describe('a scene’s own mix', () => {
 		expect(sim.state.areas.arrange.scenes[1]?.mix[2].muted).toBe(true);
 	});
 
+	it('says when the whole closed hat line falls under the open hats', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 1,
+				grid: {
+					kick: 'x... x... x... x...',
+					'closed hat': '..x. ..x. ..x. ..x.',
+					'open hat': '..x. ..x. ..x. ..x.'
+				}
+			})
+		);
+		expect(result.written.grid['closed hat 1']).toBeUndefined();
+		expect(result.note).toMatch(/The closed hat line is left out entirely/);
+	});
+
+	it('says loud digits read back as x, the hits as written', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, { track: 1, grid: { snare: '.... .... 3456 ....' } })
+		);
+		expect(result.written.grid['snare 1']).toBe('.... .... 345x ....');
+		expect(result.note).toMatch(
+			/Digit 6 \(velocity 85\) reads back as x: the hits play as written/
+		);
+	});
+
+	it('says a track rests in a scene on its empty first pattern, when it plays in another', async () => {
+		const { run } = setup();
+		await run(writePatternTool, { track: 5, pattern: 2, notes: '1:A4:4' });
+		const result = json(
+			await run(writeArrangementTool, {
+				scenes: [
+					{ scene: 1, patterns: [{ track: 5, pattern: 0 }] },
+					{ scene: 2, patterns: [{ track: 5, pattern: 2 }] }
+				]
+			})
+		);
+		expect(result.arrangement.scenes['scene 1']).toMatch(/^T5 rests \(p1, empty\)/);
+		expect(result.arrangement.scenes['scene 2']).toMatch(/^T5 p2/);
+	});
+
 	it('undoes a scene’s mix with its patterns', async () => {
 		const { env, sim, run } = setup();
 		const was = sim.state.tracks[2].mix.level;
@@ -333,6 +375,7 @@ describe('patterns in another time signature', () => {
 		);
 		expect(result.written.length).toBe(56);
 		expect(result.written.reading.bars).toHaveLength(4);
+		expect(result.meter).toBe('7/8: bars of 14 steps');
 		expect(result.note).toMatch(/Length 56: 4 whole bars of 7\/8/);
 		// given, it stands
 		const given = json(
@@ -481,16 +524,22 @@ describe('write_pattern on drums', () => {
 				grid: { kick: 'x... x... x... x...', 'closed hat': 'x.x. x.x. x.x. x.x.' }
 			})
 		);
-		expect(straight.note).toMatch(
-			/The groove \(shuffle, \+35\) moves none of this pattern's notes/
+		expect(straight.note).toMatch(/The groove \(shuffle, \+35\) moves none of T1's notes/);
+		// one hit a bar on an even sixteenth: hardly a swing, said too
+		const few = json(
+			await run(writePatternTool, {
+				track: 1,
+				grid: { kick: 'x... x... x... x...', 'closed hat': 'x.x. x.x. x.x. x.xx' }
+			})
 		);
+		expect(few.note).toMatch(/moves only 1 of T1's 13 notes, so it hardly swings/);
 		const swung = json(
 			await run(writePatternTool, {
 				track: 1,
 				grid: { kick: 'x... x... x... x...', 'closed hat': 'xxxx xxxx xxxx xxxx' }
 			})
 		);
-		expect(swung.note).not.toMatch(/moves none/);
+		expect(swung.note).not.toMatch(/moves none|hardly swings/);
 		sim.state.tempo.swing = 0;
 		const none = json(
 			await run(writePatternTool, { track: 1, grid: { kick: 'x... x... x... x...' } })
@@ -531,6 +580,36 @@ describe('write_pattern on drums', () => {
 		expect(merged.written.grid['snare 1']).toBe('.... x... .... x... | .... x... .... x...');
 		expect(merged.written.grid['cowbell 1']).toBe('..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x.');
 		expect(merged.written.grid['open hat 1']).toBeUndefined();
+	});
+
+	it('writes a pattern for a part to come and leaves the track on its own with stay', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, { track: 3, notes: '1:A1:4' });
+		const later = json(
+			await run(writePatternTool, { track: 3, pattern: 2, stay: true, notes: '1:A1:2 3:A1:2' })
+		);
+		expect(virtual.status().tracks[2].current).toBe(1);
+		expect(later.note).toMatch(/T3 still plays pattern 1: pattern 2 waits/);
+		expect(later.note).not.toMatch(/plays pattern 2 now/);
+	});
+
+	it('leaves a merged closed hat out under an open hat the pattern keeps', async () => {
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			grid: { kick: 'x... x... x... x...', 'open hat': '.... .... .... ..x.' }
+		});
+		const merged = json(
+			await run(writePatternTool, {
+				track: 1,
+				merge: true,
+				grid: { 'closed hat': 'x.x. x.x. x.x. x.x.' }
+			})
+		);
+		expect(merged.written.grid['closed hat 1']).toBe('x.x. x.x. x.x. x...');
+		expect(merged.written.grid['open hat 1']).toBe('.... .... .... ..x.');
+		expect(merged.note).toMatch(/The closed hat is left out on step 15/);
+		expect(merged.note).not.toMatch(/both hit/);
 	});
 
 	it('says how long a pattern lasts at another track scale', async () => {

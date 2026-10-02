@@ -151,8 +151,12 @@ function fromPresetMaker(
 	if (!track) return errorResult('Give the track (1–8) the kit goes on.', 'no track');
 	const kit = inbox?.keptKit?.() ?? null;
 	if (!kit) {
+		// which of the two, said plainly (an agent could only guess and told the user both)
+		const why = inbox?.opened?.()
+			? 'it held no drum kit when the user left it (it was empty, or on a sampler or multisample preset, which a replica drum track does not take)'
+			: 'it has not been opened since the app loaded (it keeps nothing across a reload)';
 		return errorResult(
-			`The preset maker holds no drum kit: it keeps the kit it had when the user left it, and it had none (or it has not been opened since the app loaded). The user can open it${inbox ? ` (${inbox.href})` : ''}, make or drop a kit and come back, or use its "open on the replica", which puts the kit on track 1.`,
+			`The preset maker has no drum kit to give: ${why}. The user can open it${inbox ? ` (${inbox.href})` : ''}, make or drop a kit and come back here; its own "open on the replica" puts the kit on track 1 instead, replacing that track's sounds.`,
 			'no kit in the preset maker'
 		);
 	}

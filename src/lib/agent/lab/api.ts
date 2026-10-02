@@ -217,7 +217,7 @@ export interface SetResult {
 	readonly steps: readonly string[];
 	/** What the screen shows after them. */
 	readonly screen: string;
-	/** Why a setting was not reached, from `plan`. */
+	/** Why a setting was not reached, from `plan`; from `set`, a groove that hardly reaches the notes. */
 	readonly note?: string;
 }
 
@@ -231,19 +231,24 @@ export interface PatternWrite {
 	readonly length?: number;
 	/** Track scale: how many sixteenths a step lasts, 1–8, 16 or 0.5 (default: unchanged). */
 	readonly scale?: number;
-	/** At most 120, in any order; an empty list clears the pattern. */
-	readonly notes: readonly {
-		/** 1–64. */
-		readonly step: number;
-		/** A MIDI note (60 = C4) or a name ("F#3"); on a drum track one sound per note, 53–76. */
-		readonly note: number | string;
-		/** 1–127 (default 100). */
-		readonly velocity?: number;
-		/** In steps (default 1). */
-		readonly length?: number;
-		/** What readPattern says a drum note plays; ignored here (the note decides). */
-		readonly sound?: string;
-	}[];
+	/**
+	 * At most 120, in any order; an empty list clears the pattern. Or one string, a word a note
+	 * ("1:A2:4 5:C3+E3:2"), as write_pattern takes it.
+	 */
+	readonly notes:
+		| string
+		| readonly {
+				/** 1–64. */
+				readonly step: number;
+				/** A MIDI note (60 = C4) or a name ("F#3"); on a drum track one sound per note, 53–76. */
+				readonly note: number | string;
+				/** 1–127 (default 100). */
+				readonly velocity?: number;
+				/** In steps (default 1). */
+				readonly length?: number;
+				/** What readPattern says a drum note plays; ignored here (the note decides). */
+				readonly sound?: string;
+		  }[];
 }
 
 /** A fork's status: the virtual OP-XY's, without the browser's sound (a fork makes none). */

@@ -52,6 +52,16 @@ facts:
     source: docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo
     confidence: verified
     verified_on: '1.1.33'
+  - id: ratio-meaning
+    text: Ratio tunes the second oscillator against the first, an octave below at 2:1, in unison at 1:1, a fifth above at 2:3, an octave above at 1:2, and on up to four octaves above at 1:16, where it reads as a high overtone over the note more than a second note.
+    source: docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo
+    confidence: verified
+    verified_on: '1.1.33'
+  - id: stereo-copy
+    text: Stereo adds a copy of the sound through a slowly sweeping delay, a little sharp in one channel while flat in the other; up to the middle it fades the copy in, past it the sweep widens and quickens. The copy is high-passed, so the bass stays in the centre, and at 0 the sound is mono.
+    source: docs/research/57-synth-engines.md#simple--shape-pw-noise-stereo
+    confidence: verified
+    verified_on: '1.1.33'
   - id: ratio-steps
     text: Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16.
     source: docs/research/57-synth-engines.md#prism--shape-ratio-detune-stereo

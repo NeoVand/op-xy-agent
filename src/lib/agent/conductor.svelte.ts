@@ -242,6 +242,16 @@ function playingNow(virtual: VirtualOpxy): string {
 	}
 }
 
+/**
+ * An earlier change line that no longer holds, as what holds now where that reads plainer: "T3
+ * plays pattern 1 → 2" gone is T3 on pattern 1 again (an agent misread the bare line after it had
+ * put a scene's pattern back).
+ */
+function backAgain(line: string): string {
+	const m = /^(.+?) plays pattern (\d+) → (\d+)/.exec(line);
+	return m ? `${m[1]} plays pattern ${m[2]} again, not ${m[3]}` : line;
+}
+
 /** The agent behind the panel. Create with {@link Conductor.create}. */
 export class Conductor {
 	/** Where the conductor stands. */
@@ -1066,7 +1076,7 @@ export class Conductor {
 		const shaped = marked.some((l) => /^(aux )?T\d+ (shift )?M\d /.test(l));
 		const unheard =
 			(shaped || parts >= 2) && !this.#heardSinceMessage()
-				? ' Not heard in this answer: describe what you wrote or set, and listen first (listen, or lab.listen in run_lab) before you say how it sounds (the balance, warmth, the feel).'
+				? ' Not heard in this answer: describe what you wrote or set, not how it sounds (the balance, warmth, the feel), unless you listen first (listen, or lab.listen in run_lab); if you do not, leave listening unmentioned.'
 				: '';
 		const now = `Now: ${playingNow(virtual)}${walk ? ` ${walk}` : ''}${unheard}`;
 		const report = [...marked, now].join('\n');
@@ -1089,7 +1099,7 @@ export class Conductor {
 			...fresh.map((l) => `- ${l}`),
 			...(gone.length
 				? [
-						`- no longer so, back as at the user\u2019s message (an earlier list gave it): ${gone.join('; ')}`
+						`- no longer so, back as at the user\u2019s message (an earlier list gave it): ${gone.map(backAgain).join('; ')}`
 					]
 				: []),
 			...(standing > 0

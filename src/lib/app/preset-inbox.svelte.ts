@@ -31,6 +31,7 @@ export class PresetInbox {
 	readonly href: string;
 	#listener: ((draft: PresetDraft) => void) | null = null;
 	#kept: KeptKit | null = null;
+	#opened = false;
 
 	constructor(href: string) {
 		this.href = href;
@@ -39,6 +40,12 @@ export class PresetInbox {
 	/** The preset maker, closing: the drum kit it held (null for none). */
 	keep(kit: KeptKit | null): void {
 		this.#kept = kit;
+		this.#opened = true;
+	}
+
+	/** Whether the preset maker has been opened since the app loaded. */
+	opened(): boolean {
+		return this.#opened;
 	}
 
 	/** The drum kit the preset maker held when it last closed, if any. */
@@ -55,6 +62,7 @@ export class PresetInbox {
 	/** The preset maker listens while it is open; a waiting kit comes first. Returns the unlisten. */
 	listen(listener: (draft: PresetDraft) => void): () => void {
 		this.#listener = listener;
+		this.#opened = true;
 		const waiting = this.draft;
 		this.draft = null;
 		if (waiting) listener(waiting);

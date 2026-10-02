@@ -109,6 +109,22 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   says when the envelope opens a closed filter; the grounding names what earlier changes were about
   and says when built parts were never heard; the manual gained where copied presets go, prism's
   shape and detune, and what scale 1/2 does.
+- **Probe round eleven (2026-10-02), 16 scenarios (`probe-scenarios-11.json`: a verse and chorus
+  with their own mix, a fill checked by ear across the change, sharps in E♭, a 7/8 groove, a kit
+  the preset maker never had, "from the next room", a waltz, five minutes of teaching, faster at
+  the same tempo, a numbered list, a chord chart, swing in half a song, a breakdown, a guitarist, a
+  hummed tune, humanised hats):** the agent heard a fill into a chorus with the new song listening,
+  found clipping at the join and fixed it. Fixes: listen summaries give the time of a hot peak and
+  of the clipping; scenes list every track's level once they differ, and a track resting on its
+  empty pattern 1; the level scale is described (74 is unity, 60 about −4 dB); a groove that moves
+  few or none of a pattern's notes is said when it is set (plan_steps, the lab's `set`), not only on
+  a write; a time-signature change says the patterns keep their steps; write_pattern names the
+  meter, says when a whole closed-hat line falls under open hats, says loud digits read back as x,
+  takes `stay` (a pattern for a later part, the track left on its own) and leaves a merged closed hat
+  out under a kept open hat; string methods written into JSON inputs are worked out; "plays pattern
+  1 again, not 2" replaces a bare undone line; the not-heard note no longer prompts "I haven't
+  listened"; the play result says to switch the click off under music made; parts put on tracks
+  route to make-music; the manual gained prism's ratio and stereo.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

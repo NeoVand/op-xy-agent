@@ -155,6 +155,12 @@ describe('routing', () => {
 		]);
 		expect(route('why is my bass so dull?')).toEqual(['shape-a-sound']);
 		expect(route('sync the op-xy with ableton')).toEqual(['midi-gear']);
+		// parts put on tracks, as a numbered list with no verb, are a request to make them
+		expect(
+			route(
+				'1. set the tempo to 100\n2. drums on track 1, a simple rock beat\n3. chords on track 7'
+			)
+		).toContain('make-music');
 		// the preset maker is the app's own page: asked about by name, its skill comes
 		expect(route('I made a kit in the preset maker, how do I get it onto track 2 here?')).toContain(
 			'kits-and-samples'

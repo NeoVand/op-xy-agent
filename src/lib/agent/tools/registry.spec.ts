@@ -132,6 +132,15 @@ describe('ToolRegistry', () => {
 			ok: true,
 			input: { grid: { kick: 'x... x... x... x...', snare: '.... x...' } }
 		});
+		// trim and slice dropped, repeat worked out
+		const chained = registry.parse('write_pattern', {
+			track: 1,
+			grid: '{"closed hat": "7.3.5.4. ".repeat(2).trim(), "kick": "x... x...".slice(0,0)}'
+		});
+		expect(chained).toMatchObject({
+			ok: true,
+			input: { grid: { 'closed hat': '7.3.5.4. 7.3.5.4. ', kick: 'x... x...' } }
+		});
 		// text that is no JSON still says what the field takes
 		const bad = registry.parse('write_pattern', { track: 1, grid: '{"kick": "x..."' });
 		expect(bad.ok).toBe(false);

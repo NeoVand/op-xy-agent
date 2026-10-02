@@ -460,6 +460,35 @@ describe('the conductor grounds its answer', () => {
 		);
 	});
 
+	it('says a track is back on its pattern when a switch is undone', async () => {
+		const use = (id: string, name: string, input: unknown): ScriptedTurn => ({
+			content: [{ type: 'tool_use', id, name, input }],
+			stop_reason: 'tool_use'
+		});
+		const api = scriptedApi([
+			use('toolu_1', 'write_pattern', { track: 3, pattern: 2, notes: [{ step: 1, note: 45 }] }),
+			use('toolu_2', 'write_arrangement', {
+				scenes: [{ scene: 1, patterns: [{ track: 3, pattern: 1 }] }]
+			}),
+			answer('Done.')
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim: new OpxySim({ now: () => 0 }) }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('a bass for later');
+		const list = (i: number) => JSON.stringify(api.messageRequests[i].body.messages.at(-1));
+		expect(list(1)).toMatch(/T3 plays pattern 1 → 2/);
+		expect(list(2)).toMatch(/T3 plays pattern 1 again, not 2/);
+	});
+
 	it('says when parts written together were never heard, and not for one part', async () => {
 		const use = (id: string, name: string, input: unknown): ScriptedTurn => ({
 			content: [{ type: 'tool_use', id, name, input }],
@@ -484,7 +513,9 @@ describe('the conductor grounds its answer', () => {
 		await conductor.send('a bass and chords');
 		const list = (i: number) => JSON.stringify(api.messageRequests[i].body.messages.at(-1));
 		expect(list(1)).not.toMatch(/Not heard in this answer/);
-		expect(list(2)).toMatch(/Not heard in this answer: describe what you wrote or set/);
+		expect(list(2)).toMatch(
+			/Not heard in this answer: describe what you wrote or set, not how it sounds/
+		);
 	});
 
 	it('says a demo puts the replica back when nothing changed', async () => {

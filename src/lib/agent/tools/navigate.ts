@@ -9,6 +9,7 @@
 import { z } from 'zod';
 import {
 	findParam,
+	goalName,
 	TEMPO_PARAMS,
 	type NavPlan,
 	type NavStep,
@@ -16,6 +17,9 @@ import {
 	type SettingGoal,
 	type SettingsPlan
 } from '$lib/sim/navigator';
+import { BAR } from '$lib/sim/areas/arrange/model';
+import { grooveReachAll } from '../groove-reach';
+import type { TimeSignature } from '$lib/sim/areas/arrange/state';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
 import type { NavGoal } from '../virtual-opxy';
 import { defineTool, errorResult, jsonResult, type AgentEnvironment } from './define';
@@ -391,7 +395,37 @@ export const planStepsTool = defineTool({
 			'settings' in goal
 				? after.steps.length === 0
 				: after.reached && (after.steps.length === 0 || plan.action === true);
-		return jsonResult({ shown: true, arrived, ...planView(plan) }, `shown: ${summaryOf(plan)}`);
+		// a new time signature regroups the bars and leaves the patterns' steps as they were (an
+		// agent turning a song into a waltz could not tell whether its patterns had been reflowed)
+		const signature = virtual.status().signature;
+		const steps = BAR[signature as TimeSignature];
+		const meter =
+			signature !== status.signature && steps
+				? `The time signature is ${signature} now, a bar ${steps} steps: the patterns keep their steps (a 64-step pattern runs ${Math.round((64 / steps) * 100) / 100} bars of it), so write them again in its bars; write_pattern's default length follows the meter.`
+				: null;
+		// a groove that hardly reaches the notes (shuffle moves the even sixteenths): said where it
+		// is set, not only when a pattern is written
+		const params =
+			'settings' in goal
+				? goal.settings.map(goalName)
+				: 'to' in goal
+					? [goalName(goal.to)]
+					: 'place' in goal
+						? []
+						: [goalName(goal)];
+		const reach = params.some((p) => /groove|swing|shuffle/i.test(p))
+			? grooveReachAll(virtual)
+			: [];
+		return jsonResult(
+			{
+				shown: true,
+				arrived,
+				...planView(plan),
+				...(meter ? { meter } : {}),
+				...(reach.length ? { groove: reach.join(' ') } : {})
+			},
+			`shown: ${summaryOf(plan)}`
+		);
 	}
 });
 

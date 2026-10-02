@@ -23,6 +23,7 @@ import {
 	type TrackTake
 } from '$lib/core/listen';
 import { loudness } from '$lib/core/listen/level';
+import { grooveReachAll } from '../groove-reach';
 import { BAR, lengthSettings, sceneLength } from '$lib/sim/areas/arrange/model';
 import { KeyParseError, parseKeys } from '$lib/core/opxy';
 import { snapshot } from '$lib/sim/areas/system/projects';
@@ -532,7 +533,17 @@ export function createLab(options: LabOptions): LabSession {
 				);
 			}
 			for (const step of plan.steps) playStep(sim, step);
-			return { reached: true, steps: plan.steps.map(stepText), screen: screenOf(sim) };
+			// a groove that hardly reaches the notes, said where it is set (an agent swung a beat on
+			// the eighths, heard no swing, and suspected the render)
+			const reach = list.some((s) => /groove|swing|shuffle/i.test(s.param))
+				? grooveReachAll(virtual)
+				: [];
+			return {
+				reached: true,
+				steps: plan.steps.map(stepText),
+				screen: screenOf(sim),
+				...(reach.length ? { note: reach.join(' ') } : {})
+			};
 		}
 
 		function plan(input: Setting | readonly Setting[]): SetResult {

@@ -104,6 +104,17 @@ describe('flags', () => {
 		expect(flagsOf(analyzeAudio([sine(440, 2, SR, 0.01)], SR))).toContain('quiet');
 	});
 
+	it('says where the peak and the clipping are', () => {
+		// a quiet tone with a burst at full scale 1 s in
+		const take = sine(220, 2, SR, 0.2);
+		for (let i = SR; i < SR + 200; i++) take[i] = i % 2 === 0 ? 1 : -1;
+		const text = summarize(analyzeAudio([take], SR)).text;
+		expect(text).toMatch(/peak 0 dBFS at 1 s/);
+		expect(text).toMatch(/clipping: \d+ flat tops? \(\d+ samples at full scale, at 1 s\)/);
+		// a peak with headroom gets no time
+		expect(summarize(analyzeAudio([sine(220, 2, SR, 0.2)], SR)).text).not.toMatch(/dBFS at/);
+	});
+
 	it('flags mostly silence, dropouts and a DC offset', () => {
 		const sparse = new Float32Array(4 * SR);
 		sparse.set(sine(440, 1, SR, 0.3), SR);

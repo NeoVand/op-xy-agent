@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1223 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1225 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -2227,10 +2227,12 @@ Facts:
 - Shape grows the triangle, ratio thickens the convex lens, detune slides the concave lens and stereo opens the wedge into an arrowhead. [#drawn] (verified 1.1.33) [s6]
 - Shape runs from a saw at 0 to a square at about 50, then narrows the two oscillators' pulses one after the other up to 99. Low is full and buzzy (every harmonic), the middle hollow (the even harmonics gone), the top thin and nasal. [#shape-range] (verified 1.1.33) [s7]
 - Detune moves the second oscillator up to about 15 cents from the first, the same amount on every note, so the two beat slowly against each other, faster toward the top. [#detune-cents] (verified 1.1.33) [s7]
+- Ratio tunes the second oscillator against the first, an octave below at 2:1, in unison at 1:1, a fifth above at 2:3, an octave above at 1:2, and on up to four octaves above at 1:16, where it reads as a high overtone over the note more than a second note. [#ratio-meaning] (verified 1.1.33) [s7]
+- Stereo adds a copy of the sound through a slowly sweeping delay, a little sharp in one channel while flat in the other; up to the middle it fades the copy in, past it the sweep widens and quickens. The copy is high-passed, so the bass stays in the centre, and at 0 the sound is mono. [#stereo-copy] (verified 1.1.33) [s8]
 - Ratio moves in ten equal steps and reads as the oscillators' frequency ratio — 2:1, 1:1, 2:3, 1:2, 1:3, 1:4, 1:6, 1:8, 1:12 and 1:16. [#ratio-steps] (verified 1.1.33) [s7]
 
 Procedures:
-- Put the prism engine on the selected instrument track [#choose] [s8]
+- Put the prism engine on the selected instrument track [#choose] [s9]
   Needs: instrument mode; the track is selected
   1. `shift + M1` — opens the preset browser by engine (OS 1.1.33)
   2. `turn E1` — scroll to prism; its first preset is highlighted
@@ -2248,7 +2250,7 @@ Parameters:
 
 Related: [sequencer.parameter-locks], [instrument.save-to-same-snapshot]
 
-Sources: s1 guide:synth-engines#arrange · s2 guide:synth-engines#prism · s3 guide:instrument#engine · s4 guide:sequencer#step-sequencing · s5 note 59 · s6 note 59 · s7 note 57 · s8 guide:synth-engines#change-engine
+Sources: s1 guide:synth-engines#arrange · s2 guide:synth-engines#prism · s3 guide:instrument#engine · s4 guide:sequencer#step-sequencing · s5 note 59 · s6 note 59 · s7 note 57 · s8 note 57 · s9 guide:synth-engines#change-engine
 
 ### Simple synth engine [instrument.engine-simple]
 current · OS ≥ 1.0.9 · guide v1.1.15 · verified on 1.1.33

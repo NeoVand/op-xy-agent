@@ -328,11 +328,18 @@ function levelLine(a: ListenAnalysis): string {
 	parts.push(lufs !== null ? `${r1(lufs)} LUFS integrated` : 'too quiet to measure loudness');
 	if (l.loudness.shortTermMax !== null)
 		parts.push(`loudest 3 s ${r1(l.loudness.shortTermMax)} LUFS`);
-	parts.push(`peak ${r1(l.peakDbfs)} dBFS`, `crest ${r1(l.crestDb)} dB`);
+	// where the peak is, when it is worth finding (an agent could not tell which moment clipped)
+	const at = l.peakDbfs >= FLAG_LIMITS.hotPeakDbfs ? ` at ${r1(l.peakSeconds)} s` : '';
+	parts.push(`peak ${r1(l.peakDbfs)} dBFS${at}`, `crest ${r1(l.crestDb)} dB`);
 	if (l.loudness.range !== null) parts.push(`range ${r1(l.loudness.range)} LU`);
+	const span = l.clipSeconds
+		? l.clipSeconds[1] - l.clipSeconds[0] < 0.05
+			? `, at ${r1(l.clipSeconds[0])} s`
+			: `, from ${r1(l.clipSeconds[0])} to ${r1(l.clipSeconds[1])} s`
+		: '';
 	parts.push(
 		l.clipRuns > 0
-			? `clipping: ${l.clipRuns} flat top${l.clipRuns === 1 ? '' : 's'} (${l.clippedSamples} samples at full scale)`
+			? `clipping: ${l.clipRuns} flat top${l.clipRuns === 1 ? '' : 's'} (${l.clippedSamples} samples at full scale${span})`
 			: 'no clipping'
 	);
 	return `level: ${parts.join(', ')}`;

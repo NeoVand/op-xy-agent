@@ -257,7 +257,11 @@ export const transportTool = defineTool({
 					...(playState === 'playing' ? { from: playingFrom(virtual) } : {}),
 					// a new project clicks along (an agent learned it only from its instructions)
 					...(playState === 'playing' && virtual.status().metronome
-						? { metronome: 'on: it clicks along (set_metronome off silences it)' }
+						? {
+								// an agent mentioned the click and left it on under a beat it had built
+								metronome:
+									'on: it clicks along. Under music you made, switch it off (set_metronome) and say so, unless the user plays along to it'
+							}
 						: {}),
 					...(scene !== undefined
 						? {
