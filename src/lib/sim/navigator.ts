@@ -15,10 +15,11 @@
  */
 import { parseNoteName } from '$lib/core/midi/notes';
 import { KEYBOARD_FIRST_NOTE, parseKeys, targetIds, type KeySequence } from '$lib/core/opxy';
+import { musicMark } from './music-mark';
 import { OpxySim } from './opxy-sim.svelte';
 import { buildFrame } from './frames';
 import { trackSequence } from './areas/arrange/model';
-import { trackOctave } from './areas/sequencer/model';
+import { shownBar, trackOctave } from './areas/sequencer/model';
 import { FX_NAMES, FX_TYPES } from './areas/auxiliary/state';
 import { activeRegion, tuneText, zoneOf } from './areas/sample/m1';
 import { keyNote } from './areas/sample/record';
@@ -28,7 +29,7 @@ import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
 import type { PresetEntry } from './areas/system/catalogue';
 import { PROJECT_SECTIONS } from './areas/system/settings';
 import { findProject, snapshot } from './areas/system/projects';
-import { currentGroup, groups, presetKey, presetsIn } from './areas/system/presets';
+import { currentGroup, groups, presetKey, presetsIn, soundOf } from './areas/system/presets';
 import {
 	FILTER_TYPES,
 	GROOVES,
@@ -90,6 +91,8 @@ export interface NavStep {
 	readonly clicks?: number;
 	/** What the screen shows after the step. */
 	readonly screen: string;
+	/** The replica's music after it (`musicMark`), where the screen cannot tell: a step's lock. */
+	readonly music?: string;
 }
 
 /** A plan and whether running it reached the goal. */
@@ -119,6 +122,11 @@ export interface ParamGoal {
 	readonly key?: number | string;
 	/** For a value no parameter id names (found on the track's pages by name): the M-page. */
 	readonly page?: PageNumber;
+	/**
+	 * A parameter lock: the pattern step (1–64) whose own value this is, set with its step key held
+	 * while the encoder turns; the track's value stays.
+	 */
+	readonly step?: number;
 }
 
 /** One goal of a {@link SettingsPlan}: its steps and whether they reached it. */
@@ -812,9 +820,11 @@ function turnTo(
 	shift: boolean,
 	read: (sim: OpxySim) => number,
 	target: number,
-	matches: (v: number) => boolean
+	matches: (v: number) => boolean,
+	/** A key held while turning: a step, for its parameter lock ("step 7"). */
+	hold?: string
 ): boolean {
-	const keys = `${shift ? 'shift + ' : ''}turn E${e + 1}`;
+	const keys = `${hold ? `${hold} + ` : ''}${shift ? 'shift + ' : ''}turn E${e + 1}`;
 	const sim = rec.sim;
 	if (matches(read(sim))) return true;
 	const sense = senseOf(sim, keys, read, target);
@@ -828,7 +838,15 @@ function turnTo(
 		clicks += dir;
 		if (read(sim) === before) break;
 	}
-	if (clicks !== 0) rec.steps.push({ keys, clicks, screen: screenOf(sim) });
+	if (clicks !== 0) {
+		rec.steps.push({
+			keys,
+			clicks,
+			screen: screenOf(sim),
+			// a held step's lock leaves the page reading the track's value: done by the music
+			...(hold ? { music: musicMark(sim.state) } : {})
+		});
+	}
 	return matches(read(sim));
 }
 
@@ -1124,6 +1142,26 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 		);
 	}
 	const lock = where.lock;
+	// a parameter lock: the step's own value, with its key held (on the bar the step keys show)
+	let hold: string | undefined;
+	let read = (sim: OpxySim) => lock.get(sim.state.tracks[track - 1]);
+	if (goal.step !== undefined) {
+		const pattern = currentPattern(trackSequence(rec.sim.state, track - 1));
+		if (goal.step > pattern.bars * 16) {
+			return rec.plan(false, `the pattern has ${pattern.bars * 16} steps, so no step ${goal.step}`);
+		}
+		const bar = Math.floor((goal.step - 1) / 16);
+		for (let tap = 0; tap < 4 && shownBar(rec.sim.state) !== bar; tap++) rec.do('bar');
+		if (shownBar(rec.sim.state) !== bar) {
+			return rec.plan(false, `the step keys did not come to bar ${bar + 1}`);
+		}
+		hold = `step ${((goal.step - 1) % 16) + 1}`;
+		const index = goal.step - 1;
+		// the step's lock, read on whichever copy is tried (a turn's sense is tried on copies)
+		read = (sim) =>
+			currentPattern(trackSequence(sim.state, track - 1)).steps[index]?.locks[lock.id] ??
+			lock.get(sim.state.tracks[track - 1]);
+	}
 	const speed = lock.id === 'lfo.speed';
 	const target = speed
 		? lfoSpeedTarget(goal.value)
@@ -1134,7 +1172,6 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 			: '';
 		return rec.plan(false, `"${goal.value}" is not a value of ${id}${ways}`);
 	}
-	const read = (sim: OpxySim) => lock.get(sim.state.tracks[track - 1]);
 	// compare as the screen shows it, so 40 on a 0–99 lane stops where the page reads 40 (a speed
 	// by its place: synced 16 and free 16 read alike)
 	const ok = turnTo(
@@ -1143,9 +1180,12 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 		where.shift,
 		read,
 		target,
-		speed ? (v) => Math.round(v) === target : readsAs(lock.format, target, goal.value)
+		speed ? (v) => Math.round(v) === target : readsAs(lock.format, target, goal.value),
+		hold
 	);
-	return rec.plan(ok, ok ? undefined : `${id} stopped at ${lock.format(read(rec.sim))}`);
+	const locked =
+		goal.step !== undefined ? `step ${goal.step} locked, the track's own value kept` : undefined;
+	return rec.plan(ok, ok ? locked : `${id} stopped at ${lock.format(read(rec.sim))}`);
 }
 
 /**
@@ -1201,12 +1241,18 @@ export function reads(state: SimState, goal: SettingGoal): boolean {
 	if (!p || !placeOfParam(lockId, track)) return false;
 	if (lockId.startsWith('filter.') && !t.filter.on) return false;
 	if (lockId.startsWith('lfo.') && !t.lfo.on) return false;
+	// a parameter lock reads its step's own value
+	const value =
+		goal.step !== undefined
+			? (currentPattern(t.sequence).steps[goal.step - 1]?.locks[p.id] ?? null)
+			: p.get(t);
+	if (value === null) return false;
 	if (p.id === 'lfo.speed') {
 		const speed = lfoSpeedTarget(goal.value);
-		return speed !== null && Math.round(p.get(t)) === speed;
+		return speed !== null && Math.round(value) === speed;
 	}
 	const target = targetValue(goal.value, p.format, p.min, p.max, p.step);
-	return target !== null && readsAs(p.format, target, goal.value)(p.get(t));
+	return target !== null && readsAs(p.format, target, goal.value)(value);
 }
 
 /** A setting of any kind: an instrument or tempo parameter, or a value another page shows. */
@@ -1928,6 +1974,11 @@ function findPage(state: SimState, goal: PageValueGoal, access: Access): Found {
  */
 export function planPageValue(state: SimState, goal: PageValueGoal): NavPlan {
 	const special = specialOf(goal);
+	// one that reads as done needs no steps (a copied sound replanned after it was shown read as
+	// not arrived, its keys planned again)
+	if (special && !special.action && special.reads(state, goal)) {
+		return new Recorder(copy(state)).plan(true, 'already set');
+	}
 	if (special) return special.plan(state, goal);
 	const access = accessOf(goal);
 	const found = findPage(state, goal, access);
@@ -2061,6 +2112,53 @@ const MAESTRO_CHORD: Special = {
 			chord.length > 0 &&
 			(chord[0] - notes[0]) % 12 === 0 &&
 			sameNotes(shape(chord), shape(notes))
+		);
+	}
+};
+
+/** Whether two instrument tracks (1–8) hold the same sound, as a copy saves it. */
+const sameSound = (state: SimState, a: number, b: number) =>
+	soundOf(state, a - 1) === soundOf(state, b - 1) &&
+	state.areas.system.trackPresets[a - 1] === state.areas.system.trackPresets[b - 1];
+
+/**
+ * A track's whole sound copied onto another (manual: instrument/save-copy-scramble): the source's
+ * track key held with M2 copies it, the target's with M3 pastes it, its notes and mixer strip
+ * kept. Value: the track to copy from (an agent could only demonstrate it, and nothing stayed).
+ */
+const COPY_SOUND: Special = {
+	plan(state, goal) {
+		const rec = new Recorder(copy(state));
+		const to = goal.track ?? state.track + 1;
+		const from = wholeNumber(goal.value);
+		if (from === null || from < 1 || from > 8 || to > 8) {
+			return rec.plan(
+				false,
+				'sounds copy between instrument tracks 1–8: give the track to copy from as the value'
+			);
+		}
+		if (from === to) return rec.plan(false, `track ${to} already holds its own sound`);
+		walk(rec, { area: 'instrument', track: from, page: 1 });
+		rec.do(`T${from} + M2`);
+		rec.do(`T${to} + M3`);
+		const ok = sameSound(rec.sim.state, from, to);
+		return rec.plan(
+			ok,
+			ok
+				? `track ${to} plays track ${from}'s sound now; its notes and mixer strip stay`
+				: 'the sound did not paste'
+		);
+	},
+	reads(state, goal) {
+		const from = wholeNumber(goal.value);
+		const to = goal.track ?? state.track + 1;
+		return (
+			from !== null &&
+			from >= 1 &&
+			from <= 8 &&
+			to <= 8 &&
+			from !== to &&
+			sameSound(state, from, to)
 		);
 	}
 };
@@ -2498,6 +2596,10 @@ const PROJECT_SETTING: Special = {
 function specialOf(goal: PageValueGoal): Special | null {
 	const label = word(goal.label);
 	switch (goal.area) {
+		case 'instrument':
+			return ['sound from', 'copy sound from', 'copy sound', 'paste sound from'].includes(label)
+				? COPY_SOUND
+				: null;
 		case 'player':
 			if (label === 'chord' || label === 'maestro chord') return MAESTRO_CHORD;
 			return label === 'type' || label === 'player type' ? PLAYER_TYPE : null;

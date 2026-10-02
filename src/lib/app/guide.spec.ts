@@ -105,6 +105,34 @@ describe('the replica walkthrough', () => {
 		expect(done).toHaveLength(1);
 	});
 
+	it('walks a parameter lock: the step held while the encoder turns', async () => {
+		const { sim, replica, guide } = setup();
+		const virtual = createVirtualOpxy({ sim });
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 7, note: 48, velocity: 100, length: 2 }]
+		});
+		const plan = planParam(sim.state, { track: 3, param: 'cutoff', value: 4, step: 7 });
+		expect(plan.reached).toBe(true);
+		expect(plan.steps.at(-1)?.keys).toBe('step 7 + turn E1');
+		guide.start('step 7 cutoff 4', plan.steps);
+		await tap(replica, 'track.3');
+		await tap(replica, 'key.m3');
+		expect(guide.current?.keys).toBe('step 7 + turn E1');
+		// the user holds step 7 and turns
+		replica.press('step.7', 'pointer');
+		await settle();
+		replica.turn('encoder.1', 4, { source: 'pointer' });
+		await settle();
+		replica.release('step.7', 'pointer');
+		await settle();
+		expect(guide.status).toBe('done');
+		const step = sim.state.tracks[2].sequence.patterns[0].steps[6];
+		expect(Math.round(step.locks['filter.cutoff'])).toBe(4);
+		expect(step.notes).toHaveLength(1);
+	});
+
 	it('lights each step, and moves on once the screen shows where it leads', async () => {
 		const { sim, replica, guide } = setup();
 		const plan = planParam(sim.state, { track: 3, param: 'cutoff', value: 5 });

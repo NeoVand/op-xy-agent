@@ -35,6 +35,8 @@ export interface SettingSpec {
 	readonly page?: number;
 	/** A sampler track's key (a drum key, a zone), or the drum key slicing starts from. */
 	readonly key?: number | string;
+	/** An instrument parameter's lock on one pattern step (1–64), the track's value kept. */
+	readonly step?: number;
 }
 
 /**
@@ -60,7 +62,13 @@ export function settingGoal(spec: SettingSpec, selected = 1): SettingGoal | stri
 				return 'only instrument tracks (1–8) have these parameters';
 			}
 			// tempo values belong to no track
-			return { track: Math.min(t, 8), param: spec.param, value: spec.value, ...extra };
+			return {
+				track: Math.min(t, 8),
+				param: spec.param,
+				value: spec.value,
+				...extra,
+				...(spec.step !== undefined && area === 'instrument' ? { step: spec.step } : {})
+			};
 		}
 		case 'auxiliary':
 			// auxiliary pages number their tracks 1–8

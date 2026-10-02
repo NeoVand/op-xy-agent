@@ -418,8 +418,8 @@ version or newer.
 
 Facts:
 - The screen shows the installed OS version while the unit starts up. [#see-version] [s1]
-- TE's OP-XY downloads page lists every release with its notes and, except for the withdrawn 1.0.29, a firmware file; the newest is OS 1.1.33, the version this manual describes. [#downloads] [s2]
-- The easy route is TE's MIDI updater, a web page that updates the connected unit straight from the browser. [#web-updater] [s2]
+- TE's OP-XY downloads page (teenage.engineering/downloads/op-xy) lists every release with its notes and, except for the withdrawn 1.0.29, a firmware file; the newest is OS 1.1.33, the version this manual describes. [#downloads] [s2]
+- The easy route is TE's MIDI updater, a web page on that downloads page that updates the connected unit straight from the browser. [#web-updater] [s2]
 - The manual route goes through TE boot, where `T1` makes the OP-XY show up on a computer as a removable disk. [#disk-route] [s3]
 - Copy the firmware file onto that disk and eject it; the update then runs by itself — let it finish and follow the screen. [#copy-eject] [s3]
 - Never install OS 1.0.29, which TE withdrew because it could corrupt files over 64 KB copied off the unit over MTP. [#avoid-1029] (since 1.0.32) [s4]

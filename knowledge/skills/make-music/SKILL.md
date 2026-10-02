@@ -26,15 +26,18 @@ pluck on 6, strings on 7 and a pad on 8.
 
 Write the patterns first (patterns for different tracks can go out together in one answer), then the
 scenes and the song when there is more than one part, then start playback. Write them short: notes
-as one string, a word per note (step:note[:length[:velocity]], a chord joined by +), and drums as a
-grid, a line per sound as read_pattern shows them. An answer has an output limit, so send a few
+as one string, a word per note (step:note[:length[:velocity]], a chord joined by +), a progression
+by name as chords ("1:Am7 17:Fmaj7 33:C/E", voiced smoothly near middle C; give notes instead only for
+a voicing of your own), and drums as a grid, a line per sound as read_pattern shows them. An answer has an output limit, so send a few
 patterns at a time, not a whole song. Give quiet parts their velocity (pads, strings and keys about
 50–80); left out, every note plays at 100. A feel is part of the
 request: lazy, swung or laid back is the tempo page's groove and its amount. Shuffle is the plain
 swing, roll over a slow, lazy hip-hop drag; the amount (groove amount, right of centre to swing)
 on the replica reads light at 25–35, lazy at 45–60 (near triplets at 65) and heavy past 75, and
 listen measures the swing it hears (50 % straight, 67 % triplets). Set them with the key planner's
-settings, groove then swing ({param: "groove", value: "shuffle"}, {param: "swing", value: 50}). With no tempo given,
+settings, groove then swing ({param: "groove", value: "shuffle"}, {param: "swing", value: 50}). On the
+replica shuffle moves every second sixteenth (steps 2, 4, 6…), so hits on the eighths do not swing;
+one track's own amount is the bar menu's groove (area bar). With no tempo given,
 pick one that suits the style (house 120–126, techno 128–135, hip hop and boom bap 85–95, lo-fi
 70–85, drum and bass 170–175); slow, ambient or a pad wants 60–80 (one chord a bar at 120 is not
 slow). A new project's metronome clicks on every beat: when you start playback of a beat or song you made,
@@ -55,7 +58,9 @@ closed-hat line with open hats on top is fine). Velocity per step is a step comp
 A kit made from generated sounds can be put straight onto a drum track, so a beat written there
 plays with it at once. A style's signature sound is part of the request too (trap's long, low 808
 bass, a techno rumble, a house organ stab): the notes alone keep the track's preset, so shape its
-sound for the style (the shape-a-sound skill) and say what you set.
+sound for the style (the shape-a-sound skill) and say what you set. Trap hat rolls are faster than
+a step: put the multiply component on the hat steps that roll (its digit is how many quick hits), with
+their loudness rising or falling by step.
 
 A part that varies as it plays (generative, evolving, never quite the same) takes step components
 (random notes, skip trigger, multiply: [sequencer.step-component-reference]), patterns of different

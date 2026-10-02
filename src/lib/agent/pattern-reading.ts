@@ -201,7 +201,13 @@ export function readPattern(
 		}
 		// the root as the key spells it ("Db", not "C#", in F minor)
 		const name = respellChord(ascii(chord.name), names);
-		const with_ = over && bass ? ` over T${bass.track}'s ${names[bass.note % 12]}` : '';
+		// over another track's bass, and what its own notes make when that differs (a strings part
+		// shifted before its bass read Bm7/A for plain B D F#)
+		const own = alone ? respellChord(ascii(alone.name), names) : null;
+		const with_ =
+			over && bass
+				? ` over T${bass.track}'s ${names[bass.note % 12]}${own && own !== respellChord(ascii(chord.name), names) ? `; its own notes make ${own}` : ''}`
+				: '';
 		if (name !== lastChord) {
 			chords.push(`step ${step}: ${name} (${tones.join(' ')}${with_})`);
 			const plain = name.split('/')[0];

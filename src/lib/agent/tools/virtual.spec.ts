@@ -371,6 +371,31 @@ describe('write_pattern on drums', () => {
 		expect(result.written.grid['closed hat 1']).toBe('x.x. x.xx .x.x .x');
 	});
 
+	it('writes chords by name, voiced smoothly, each lasting until the next', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 7,
+				pattern: 1,
+				bars: 4,
+				key: 'A minor',
+				chords: '1:Am 17:F 33:C 49:G'
+			})
+		);
+		expect(result.written.reading.progression).toMatch(/^Am F C G: i ♭VI ♭III ♭VII in A minor/);
+		const steps = result.written.steps as {
+			step: number;
+			notes: { note: number; length: number }[];
+		}[];
+		expect(steps.map((s) => s.step)).toEqual([1, 17, 33, 49]);
+		expect(steps[0].notes.map((n) => n.note)).toEqual([57, 60, 64]);
+		// until the next chord, the last to its bar's end
+		expect(steps.every((s) => s.notes.every((n) => n.length === 16))).toBe(true);
+		const bad = await run(writePatternTool, { track: 7, chords: '1:Hm7' });
+		expect(bad.isError).toBe(true);
+		expect(String(bad.content)).toMatch(/"Hm7" is not a chord name/);
+	});
+
 	it('says when a line shorter than a bar repeats to fill the pattern', async () => {
 		const { run } = setup();
 		const result = json(
@@ -529,6 +554,16 @@ describe('write_arrangement', () => {
 		expect(sim.state.tracks[0].sequence.current).toBe(1);
 		// where the playhead is: the song's second entry, the scene's first bar
 		expect(virtual.readArrangement().at).toEqual({ bar: 1, entry: 2 });
+	});
+
+	it('says on play when the metronome clicks along', async () => {
+		const { run } = setup();
+		await run(writePatternTool, { track: 1, notes: '1:53' });
+		const clicking = json(await run(transportTool, { action: 'play' }));
+		expect(clicking.metronome).toMatch(/^on: it clicks along/);
+		await run(setMetronomeTool, { on: false });
+		const quiet = json(await run(transportTool, { action: 'play' }));
+		expect(quiet.metronome).toBeUndefined();
 	});
 
 	it('plays one scene from its top, round and round, with transport play and a scene', async () => {

@@ -9,6 +9,7 @@ import type { LabOutcome } from '../lab/host';
 import type { LabRunResult } from '../lab/run';
 import { UNDO_CALL_PREFIX } from './device';
 import { defineTool, errorResult, jsonResult, type ToolResult } from './define';
+import { arrangementView } from './virtual';
 
 /** Seconds a program may run when the model does not say. */
 export const LAB_SECONDS = 20;
@@ -187,7 +188,25 @@ export const runLabTool = defineTool({
 		const { result, landed } = outcome;
 		const takes = outcome.offer ? (result.takes ?? []) : [];
 		const summary = chip(input.purpose, result, landed !== null, takes.length);
-		const content = view(result, landed !== null, takes.length > 0);
+		// scenes or the song changed: the arrangement as it landed, scene by scene (an agent that
+		// built a whole song in one program had only the change lines to describe it from)
+		const virtual = ctx.env.virtual;
+		const reshaped =
+			landed !== null &&
+			result.commits.some((c) => c.changes.some((l) => /^(scene \d+|song):/.test(l)));
+		const status = reshaped && virtual ? virtual.status() : null;
+		const arrangement =
+			status && virtual
+				? arrangementView(
+						virtual.readArrangement(),
+						status.bpm,
+						new Map(status.tracks.map((t) => [t.track, t.byPattern]))
+					)
+				: null;
+		const content = {
+			...view(result, landed !== null, takes.length > 0),
+			...(arrangement ? { arrangement } : {})
+		};
 		if (!result.ok) {
 			return { content: JSON.stringify(content), summary, isError: true, applied: false };
 		}

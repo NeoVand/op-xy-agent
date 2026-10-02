@@ -1,0 +1,154 @@
+[
+	{
+		"name": "hat-under-open",
+		"about": "Re-check: open hats over steady closed hats, the grid leaving the closed ones out.",
+		"steps": [
+			{
+				"say": "make a disco beat at 118 with open hats on the off-beats over steady sixteenth closed hats"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "rolling-hats",
+		"about": "Re-check: soft hits read back as digits, a hat roll that swells.",
+		"steps": [
+			{
+				"say": "make a trap beat at 140 with hi-hat rolls that get quieter and then louder"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "undo-again",
+		"about": "Re-check: undo, then undo again, stepping back answer by answer.",
+		"steps": [
+			{ "say": "make a beat at 100" },
+			{ "say": "add a bass" },
+			{ "say": "undo" },
+			{ "say": "undo again" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "song-mode-demo",
+		"about": "Re-check: a demo that needs a page first (song mode from arrange).",
+		"steps": [{ "say": "show me how to get to song mode" }, { "why": true }]
+	},
+	{
+		"name": "is-bass-playing",
+		"about": "Re-check: which tracks sound, from the Now line.",
+		"steps": [
+			{ "say": "make a beat with drums and a bass, and play it" },
+			{ "say": "is the bass playing right now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "score-image",
+		"about": "A score as an image: the melody played, a bass under it.",
+		"steps": [
+			{
+				"say": "play this melody on track 4 and put a simple bass under it",
+				"files": ["evals/agent/fixtures/jacques-f.png"]
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "abc-text",
+		"about": "A tune pasted as ABC notation.",
+		"steps": [
+			{
+				"say": "can you play this on track 5?\n\nX:1\nT:Twinkle\nM:4/4\nL:1/4\nK:D\nD D A A | B B A2 | G G F F | E E D2 |"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "guitar-tab",
+		"about": "A riff pasted as guitar tab.",
+		"steps": [
+			{
+				"say": "play this riff on track 6, it's a guitar tab:\n\ne|----------------|\nB|----------------|\nG|----------------|\nD|-----5-7-5------|\nA|-5-7-------7-5--|\nE|----------------|"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "reggaeton-spanish",
+		"about": "Spanish: a reggaeton dembow with a bass, answered in Spanish.",
+		"steps": [
+			{ "say": "hazme un ritmo de reguetón a 95 bpm con un bajo, por favor" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "firmware-question",
+		"about": "A firmware update asked for: explained, never done.",
+		"steps": [
+			{ "say": "how do I update the firmware on my op-xy? can you just do it for me?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "two-minute-song",
+		"about": "A song of a set length: the arithmetic of scenes and the song.",
+		"steps": [
+			{
+				"say": "make a song that lasts about 2 minutes at 120 bpm, with an intro, verse, chorus and outro"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "transpose-all",
+		"about": "Everything moved up a whole step.",
+		"steps": [
+			{ "say": "make a chord progression on track 7 and a bass on track 3" },
+			{ "say": "now transpose everything up a whole step" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "copy-sound",
+		"about": "One track's sound copied onto another.",
+		"steps": [{ "say": "copy the sound of track 3 onto track 6" }, { "why": true }]
+	},
+	{
+		"name": "user-correction",
+		"about": "The user corrects the agent's musical choice.",
+		"steps": [
+			{ "say": "make a rock beat" },
+			{ "say": "no, the snare should be on 3, it's a half-time beat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "p-lock-lesson",
+		"about": "A parameter-lock lesson followed key by key and by the encoder.",
+		"steps": [
+			{ "say": "make a simple bassline on track 3" },
+			{
+				"say": "teach me how to give just one step of it a different filter cutoff, light the keys for me"
+			},
+			{ "follow": 8, "detents": 8 },
+			{ "say": "did it work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tempo-limits",
+		"about": "A value past the device's range.",
+		"steps": [
+			{ "say": "set the tempo to 300 bpm" },
+			{ "say": "ok, then as fast as it goes" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-hats-only",
+		"about": "A request the device may not do as asked: swing on one part only.",
+		"steps": [{ "say": "make a house beat and swing only the hi-hats" }, { "why": true }]
+	}
+]

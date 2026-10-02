@@ -67,6 +67,15 @@
   `take_back` steps back like an undo ("undo again" is answer 1 again); chords are named on their
   bass when it can be the root (C6, not Am7/C) and common extended chords are named; listening
   does not flag loose timing without drums.
+- **Probe round seven (2026-10-02), 17 scenarios (`probe-scenarios-7.json`: a score image, ABC,
+  guitar tab, Spanish, a firmware question, a 2-minute song, a sound copy, a parameter-lock lesson,
+  tempo limits, swing on the hats alone):** chords by name in write_pattern (`chords`: "1:Am7
+  17:Fmaj7", voiced near middle C with smooth voice leading, `core/music/voicing.ts`); the planner
+  locks one step's value (`step`: the step held while the encoder turns, walked through by the
+  music mark, which now carries locks) and copies a sound ("sound from"); a walkthrough warns when
+  a lone step press would take a note off; demos give each combo's screen; lab results that change
+  scenes give the arrangement; play says when the click is on; a chord over another track's bass
+  says what its own notes make; the manual gives TE's downloads address.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

@@ -104,6 +104,28 @@ describe('run_lab', () => {
 		expect(journal.list()[2].inverse?.label).toMatch(/back as it was before/);
 	});
 
+	it('gives the arrangement as it landed when the scenes or the song changed', async () => {
+		const { call } = setup();
+		const { body } = await call({
+			purpose: 'two scenes',
+			code: [
+				'const f = lab.fork();',
+				'f.writePattern(1, { pattern: 1, notes: [{ step: 1, note: 53 }] });',
+				'f.writePattern(1, { pattern: 2, notes: [{ step: 5, note: 53 }] });',
+				'f.writeArrangement({ scenes: [{ scene: 1, patterns: [{ track: 1, pattern: 1 }] }, { scene: 2, patterns: [{ track: 1, pattern: 2 }] }], song: { order: [1, 2], loop: true } });',
+				'lab.commit(f, "a song");'
+			].join('\n')
+		});
+		expect(body.arrangement.scenes['scene 2']).toMatch(/^T1 p2/);
+		expect(body.arrangement.song.order).toEqual([1, 2]);
+		// a commit that touches no scene gives none
+		const plain = await call({
+			purpose: 'tempo',
+			code: 'const f = lab.fork(); f.setTempo(90); lab.commit(f, "slower");'
+		});
+		expect(plain.body.arrangement).toBeUndefined();
+	});
+
 	it('leaves no revision when nothing was committed', async () => {
 		const { journal, call } = setup();
 		const { body } = await call({

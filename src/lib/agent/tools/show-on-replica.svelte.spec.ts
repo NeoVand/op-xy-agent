@@ -66,6 +66,8 @@ describe('show_on_replica', () => {
 		expect(result.screenAtEnd).toMatch(/mix/);
 		// and where it started, so a combo that needs another page first shows as such
 		expect(result.startedFrom).toMatch(/^instrument mode, the screen on /);
+		// and each combo's screen, rehearsed on a copy
+		expect(result.steps.map((s: { keys: string }) => s.keys)).toEqual(['mix', 'shift + T2']);
 		expect(result.whileShown).toContain('T2 muted');
 		expect(sim.state.mode).toBe('instrument');
 		expect(sim.state.tracks[1].mix.muted).toBe(false);

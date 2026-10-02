@@ -4,6 +4,8 @@
 import { describe, expect, it } from 'vitest';
 import { createUnitSource } from '../manual-index';
 import { combineSources, type ManualSource } from '../manual-source';
+import { createVirtualOpxy } from '$lib/app/virtual';
+import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import type { AgentEnvironment, AnyTool, ScreenReader, ToolContext, ToolResult } from './define';
 import {
 	readManualUnitTool,
@@ -128,6 +130,44 @@ describe('show_on_replica', () => {
 	it('reports that no replica is on screen', async () => {
 		const result = await run(showOnReplicaTool, { keys: 'shift + M1' }, ours);
 		expect(JSON.parse(String(result.content))).toMatchObject({ shown: false, keys: 'shift + M1' });
+	});
+	it('warns when a walkthrough’s lone step press would take a note off', async () => {
+		const virtual = createVirtualOpxy({ sim: new OpxySim({ now: () => 0 }) });
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 7, note: 48, velocity: 100, length: 2 }]
+		});
+		const started: string[] = [];
+		const env: AgentEnvironment = {
+			device: null,
+			replica: null,
+			virtual,
+			guide: { start: (goal) => void started.push(goal), stop: () => {} },
+			manual: ours,
+			timers: {
+				setTimeout: (callback, ms) => setTimeout(callback, ms),
+				clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>)
+			},
+			confirmWindowMs: 0,
+			plan: { get: () => [], set: () => {} },
+			abortDeviceWork: () => {}
+		};
+		const ctx: ToolContext = {
+			toolCallId: 'toolu_g',
+			agent: 'conductor',
+			signal: new AbortController().signal,
+			env
+		};
+		const guided = (keys: string) =>
+			showOnReplicaTool
+				.run(showOnReplicaTool.input.parse({ keys, guide: true }), ctx)
+				.then((r) => JSON.parse(String(r.content)));
+		const lock = await guided('instrument → T3 → M3 → step 7');
+		expect(lock.caution).toMatch(/^step 7 pressed alone takes off the note there/);
+		// a step with no note gets one: nothing to warn of
+		const kick = await guided('instrument → T1 → step 1');
+		expect(kick.caution).toBeUndefined();
 	});
 });
 

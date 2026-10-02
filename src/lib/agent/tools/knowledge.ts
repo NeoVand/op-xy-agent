@@ -137,11 +137,31 @@ function guideKeys(keys: string, caption: string | undefined, ctx: ToolContext):
 		);
 	}
 	guide.start(caption ?? keys, steps);
+	// a step key pressed alone where a note is takes it off (a lesson on a step's own cutoff lit
+	// "step 7" last, and the user's press deleted the note there): said, from the rehearsal
+	const noted = (music: string | undefined) => {
+		try {
+			const notes = (JSON.parse(music ?? '{}') as { notes?: unknown[][] }).notes ?? [];
+			return notes.flatMap((t) => t.slice(1)).filter((x) => /^\d+:\d/.test(String(x))).length;
+		} catch {
+			return 0;
+		}
+	};
+	const lone = steps
+		.filter(
+			(s, i) => i > 0 && /^step \d+$/.test(s.keys) && noted(s.music) < noted(steps[i - 1].music)
+		)
+		.map((s) => s.keys);
 	return jsonResult(
 		{
 			guided: true,
 			steps: steps.map((s) => s.keys),
-			note: 'The replica now lights each step in turn and waits for the user: tell them to follow the lit keys. It moves on by itself once a press has done what the step does, and says when the last one is done.'
+			note: 'The replica now lights each step in turn and waits for the user: tell them to follow the lit keys. It moves on by itself once a press has done what the step does, and says when the last one is done.',
+			...(lone.length
+				? {
+						caution: `${lone.join(', ')} pressed alone takes off the note there. For a step's own value (a parameter lock: the step held while an encoder turns), stop this and use the key planner with step and guide instead.`
+					}
+				: {})
 		},
 		`guiding ${keys}`
 	);
@@ -160,7 +180,7 @@ export const showOnReplicaTool = defineTool({
 			.boolean()
 			.optional()
 			.describe(
-				'true: instead of playing it, light the keys one combo at a time and wait for the user to press each (a walkthrough to follow by hand: presses, not turns)'
+				'true: instead of playing it, light the keys one combo at a time and wait for the user to press each (a walkthrough to follow by hand: presses, not turns; for turns and a step held while turning, a parameter lock, the key planner with guide)'
 			)
 	}),
 	async run(input, ctx) {
@@ -187,6 +207,16 @@ export const showOnReplicaTool = defineTool({
 		const startedFrom = start
 			? `${start.mode ? `${start.mode} mode, ` : ''}the screen on ${start.shows}`
 			: null;
+		// a chain's screen after each combo, from a rehearsal on a copy: which key landed where (an
+		// agent could check only the screen the demo ended on)
+		let screens: { keys: string; screen: string }[] = [];
+		try {
+			const rehearsed = ctx.env.virtual?.rehearse(keys) ?? [];
+			if (rehearsed.length > 1)
+				screens = rehearsed.map((s) => ({ keys: s.keys, screen: s.screen }));
+		} catch {
+			screens = [];
+		}
 		// A demonstration leaves nothing behind (docs/research episodes: a demo that muted track 2
 		// or entered a kick left the user's own try starting from somewhere else). Unless the user
 		// takes over while it plays: then what they did stays.
@@ -234,6 +264,7 @@ export const showOnReplicaTool = defineTool({
 				keys,
 				seconds: Math.round(handle.plan.duration / 100) / 10,
 				...(startedFrom ? { startedFrom } : {}),
+				...(screens.length ? { steps: screens } : {}),
 				...(ended ? { screenAtEnd: ended } : {}),
 				...(did.length ? { whileShown: did } : {}),
 				replica: putBack

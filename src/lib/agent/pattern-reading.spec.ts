@@ -174,7 +174,8 @@ describe('a chord named over the bass another part plays', () => {
 		expect(readPattern(keys)?.chords?.[0]).toMatch(/^step 1: Cmaj7 /);
 		const over = readPattern(keys, [bass]);
 		expect(over?.bars[0]).toMatch(/^Am9 /);
-		expect(over?.chords?.[0]).toBe("step 1: Am9 (C E G B over T3's A)");
+		// and what its own notes make, which a part moved before its bass would read as
+		expect(over?.chords?.[0]).toBe("step 1: Am9 (C E G B over T3's A; its own notes make Cmaj7)");
 	});
 });
 

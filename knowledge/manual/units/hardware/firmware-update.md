@@ -18,10 +18,10 @@ facts:
     text: The screen shows the installed OS version while the unit starts up.
     source: https://teenage.engineering/guides/op-xy/hardware-overview#power-on-charging
   - id: downloads
-    text: TE's OP-XY downloads page lists every release with its notes and, except for the withdrawn 1.0.29, a firmware file; the newest is OS 1.1.33, the version this manual describes.
+    text: TE's OP-XY downloads page (teenage.engineering/downloads/op-xy) lists every release with its notes and, except for the withdrawn 1.0.29, a firmware file; the newest is OS 1.1.33, the version this manual describes.
     source: https://teenage.engineering/downloads/op-xy
   - id: web-updater
-    text: The easy route is TE's MIDI updater, a web page that updates the connected unit straight from the browser.
+    text: The easy route is TE's MIDI updater, a web page on that downloads page that updates the connected unit straight from the browser.
     source: https://teenage.engineering/downloads/op-xy
   - id: disk-route
     text: The manual route goes through TE boot, where `T1` makes the OP-XY show up on a computer as a removable disk.

@@ -18,13 +18,17 @@ export function musicMark(s: SimState): string {
 		keys: s.tracks.map((t) => t.drumKey),
 		playing: s.transport.playing,
 		recording: rec.armed ? 'armed' : rec.countIn ? 'count-in' : rec.recLatch ? 'on' : 'off',
+		// each step's notes and parameter locks: a lock leaves the screen reading the track's value
 		notes: s.tracks.map((t) => {
 			const p = t.sequence.patterns[t.sequence.current];
 			return [
 				t.sequence.current,
-				...(p?.steps.flatMap((step, i) =>
-					step.notes.length > 0 ? [`${i}:${step.notes.map((n) => n.note).join('.')}`] : []
-				) ?? [])
+				...(p?.steps.flatMap((step, i) => {
+					const locks = Object.entries(step.locks ?? {});
+					if (step.notes.length === 0 && locks.length === 0) return [];
+					const locked = locks.map(([id, v]) => `${id}=${Math.round(v * 100) / 100}`).join(',');
+					return [`${i}:${step.notes.map((n) => n.note).join('.')}${locked ? `|${locked}` : ''}`];
+				}) ?? [])
 			];
 		})
 	});

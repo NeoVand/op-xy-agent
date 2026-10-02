@@ -53,7 +53,7 @@ function setup(withReplica = false) {
 		};
 		return tool.run(tool.input.parse(input), ctx);
 	};
-	return { sim, run, animated, guided, stops };
+	return { sim, virtual, run, animated, guided, stops };
 }
 
 const json = (result: ToolResult) => JSON.parse(String(result.content));
@@ -304,6 +304,44 @@ describe('plan_steps to the project settings', () => {
 			await run(planStepsTool, { show: false, area: 'project', param: 'nope', value: 1 })
 		);
 		expect(named.note).toMatch(/the project settings have no "nope"; they hold transpose/);
+	});
+
+	it('locks one step’s value with its key held while the encoder turns', async () => {
+		const { sim, virtual, run } = setup(true);
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 1,
+			notes: [
+				{ step: 1, note: 45, velocity: 100, length: 2 },
+				{ step: 7, note: 48, velocity: 100, length: 2 }
+			]
+		});
+		const before = sim.state.tracks[2].filter.cutoff;
+		const plan = json(
+			await run(planStepsTool, { show: true, track: 3, param: 'cutoff', value: 60, step: 7 })
+		);
+		expect(plan).toMatchObject({ shown: true, arrived: true, reached: true });
+		const last = plan.steps.at(-1);
+		expect(last.keys).toBe('step 7 + turn E1');
+		expect(plan.note).toMatch(/step 7 locked, the track's own value kept/);
+		const step = sim.state.tracks[2].sequence.patterns[0].steps[6];
+		expect(Math.round(step.locks['filter.cutoff'])).toBe(60);
+		// the track's own cutoff and the step's note stay
+		expect(sim.state.tracks[2].filter.cutoff).toBe(before);
+		expect(step.notes.map((n) => n.note)).toEqual([48]);
+	});
+
+	it('copies one track’s sound onto another with Tn + M2 and Tn + M3', async () => {
+		const { sim, run } = setup(true);
+		const plan = json(
+			await run(planStepsTool, { show: true, track: 6, param: 'sound from', value: 3 })
+		);
+		expect(plan).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(plan.steps.map((s: { keys: string }) => s.keys).slice(-2)).toEqual([
+			'T3 + M2',
+			'T6 + M3'
+		]);
+		expect(sim.state.tracks[5].engine).toBe(sim.state.tracks[2].engine);
 	});
 
 	it('saves the project with M2, and a copy with shift + M2 and M1', async () => {

@@ -13,6 +13,9 @@
  * track's octave convention), and a grid's sound names are left for the tool to look up.
  */
 
+import { chordFromSymbol } from '$lib/core/music/harmony';
+import { voiceChords } from '$lib/core/music/voicing';
+
 /** A note as written, before its name is read. */
 export interface WrittenNote {
 	readonly step: number;
@@ -42,6 +45,36 @@ export class PatternNotesError extends Error {
 
 const NOTE_NUMBER = /^\d{1,3}$/;
 
+/** A word's step, what it plays, and its length and velocity when given. */
+function wordParts(
+	word: string,
+	form: string
+): { step: number; token: string; length?: number; velocity?: number } {
+	const parts = word.split(':');
+	if (parts.length < 2 || parts.length > 4) {
+		throw new PatternNotesError(`"${word}" is not ${form}`);
+	}
+	const [stepText, token, lengthText = '', velocityText = ''] = parts;
+	const step = Number(stepText);
+	if (!Number.isInteger(step) || step < 1 || step > MAX_STEPS) {
+		throw new PatternNotesError(`"${word}": the step is 1–${MAX_STEPS}`);
+	}
+	const length = lengthText === '' ? undefined : Number(lengthText);
+	if (length !== undefined && !(length >= 0.05 && length <= MAX_STEPS)) {
+		throw new PatternNotesError(`"${word}": the length is 0.05–${MAX_STEPS} steps`);
+	}
+	const velocity = velocityText === '' ? undefined : Number(velocityText);
+	if (velocity !== undefined && !(Number.isInteger(velocity) && velocity >= 1 && velocity <= 127)) {
+		throw new PatternNotesError(`"${word}": the velocity is 1–127`);
+	}
+	return {
+		step,
+		token,
+		...(length === undefined ? {} : { length }),
+		...(velocity === undefined ? {} : { velocity })
+	};
+}
+
 function noteOf(text: string, word: string): number | string {
 	if (NOTE_NUMBER.test(text)) {
 		const n = Number(text);
@@ -60,28 +93,12 @@ function noteOf(text: string, word: string): number | string {
 export function compactNotes(text: string): WrittenNote[] {
 	const notes: WrittenNote[] = [];
 	for (const word of text.split(/[\s,;]+/).filter(Boolean)) {
-		const parts = word.split(':');
-		if (parts.length < 2 || parts.length > 4) {
-			throw new PatternNotesError(
-				`"${word}" is not step:note[:length[:velocity]] (e.g. 1:C3, 5:C3+E3+G3:4:70)`
-			);
-		}
-		const [stepText, chord, lengthText = '', velocityText = ''] = parts;
-		const step = Number(stepText);
-		if (!Number.isInteger(step) || step < 1 || step > MAX_STEPS) {
-			throw new PatternNotesError(`"${word}": the step is 1–${MAX_STEPS}`);
-		}
-		const length = lengthText === '' ? undefined : Number(lengthText);
-		if (length !== undefined && !(length >= 0.05 && length <= MAX_STEPS)) {
-			throw new PatternNotesError(`"${word}": the length is 0.05–${MAX_STEPS} steps`);
-		}
-		const velocity = velocityText === '' ? undefined : Number(velocityText);
-		if (
-			velocity !== undefined &&
-			!(Number.isInteger(velocity) && velocity >= 1 && velocity <= 127)
-		) {
-			throw new PatternNotesError(`"${word}": the velocity is 1–127`);
-		}
+		const {
+			step,
+			token: chord,
+			length,
+			velocity
+		} = wordParts(word, 'step:note[:length[:velocity]] (e.g. 1:C3, 5:C3+E3+G3:4:70)');
 		const keys = chord.split('+');
 		if (keys.some((k) => k === '')) throw new PatternNotesError(`"${word}": a note is missing`);
 		for (const key of keys) {
@@ -94,6 +111,40 @@ export function compactNotes(text: string): WrittenNote[] {
 		}
 	}
 	return notes;
+}
+
+/**
+ * Reads chords by name, `step:symbol[:length[:velocity]]` words ("1:Am7 17:F/A 33:C:8"), voiced
+ * near middle C, each moving as little as it can from the one before, a slash chord's bass below
+ * (agents voicing chords by hand once wrote A D F under "Bbmaj7"). A chord with no length lasts
+ * until the next one, the last to the end of its bar.
+ */
+export function compactChords(text: string): WrittenNote[] {
+	const parsed = text
+		.split(/[\s,;]+/)
+		.filter(Boolean)
+		.map((word) => {
+			const part = wordParts(word, 'step:chord[:length[:velocity]] (e.g. 1:Am7, 17:F/A:16:70)');
+			const chord = chordFromSymbol(part.token);
+			if (!chord) {
+				throw new PatternNotesError(
+					`"${word}": "${part.token}" is not a chord name (e.g. C, Am7, F#m7b5, Bbmaj9, Gsus4, C/E)`
+				);
+			}
+			return { ...part, chord };
+		})
+		.sort((a, b) => a.step - b.step);
+	const voiced = voiceChords(parsed.map((p) => p.chord));
+	return parsed.flatMap((p, i) => {
+		const next = parsed.slice(i + 1).find((q) => q.step > p.step)?.step;
+		const length = p.length ?? (next ?? Math.ceil(p.step / 16) * 16 + 1) - p.step;
+		return voiced[i].map((note) => ({
+			step: p.step,
+			note,
+			length,
+			...(p.velocity === undefined ? {} : { velocity: p.velocity })
+		}));
+	});
 }
 
 /** Reads a grid: each line's marks, one per step; returns the hits and how many steps it spans. */

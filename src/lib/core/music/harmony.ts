@@ -287,3 +287,114 @@ export function vexKey(s: Spelling): { key: string; acc: string } {
 export function pitchClassName(pc: number, flats = false): string {
 	return (flats ? NAMES_FLAT : NAMES_SHARP)[pitchClass(pc)];
 }
+
+/*
+ * Symbols.
+ *
+ * The other way round: "Am7", "F#m7b5", "C/E", "Bbmaj9" as a root, its tones above it and a bass
+ * of its own, so a progression can be written by name and voiced by code (agents voicing chords
+ * by hand once wrote A D F under "Bbmaj7").
+ */
+
+/** Ways a suffix is written, as the formula's own suffix (ASCII ♭ ♯ ° spellings and aliases). */
+const SUFFIX_ALIASES: Readonly<Record<string, string>> = {
+	'': '',
+	maj: '',
+	M: '',
+	major: '',
+	m: 'm',
+	min: 'm',
+	minor: 'm',
+	'-': 'm',
+	dim: '°',
+	o: '°',
+	aug: '+',
+	'#5': '+',
+	sus: 'sus4',
+	M7: 'maj7',
+	ma7: 'maj7',
+	maj7: 'maj7',
+	Δ: 'maj7',
+	Δ7: 'maj7',
+	min7: 'm7',
+	'-7': 'm7',
+	mM7: 'm(maj7)',
+	mmaj7: 'm(maj7)',
+	'm(maj7)': 'm(maj7)',
+	m7b5: 'm7♭5',
+	ø: 'm7♭5',
+	ø7: 'm7♭5',
+	dim7: '°7',
+	o7: '°7',
+	'7#5': '7♯5',
+	'7+5': '7♯5',
+	aug7: '7♯5',
+	'+7': '7♯5',
+	'7b5': '7♭5',
+	add2: 'add9',
+	madd9: 'm(add9)',
+	'm(add9)': 'm(add9)',
+	'7b9': '7♭9',
+	'7#9': '7♯9',
+	maj7b5: 'maj7♭5',
+	'maj7#11': 'maj7♯11',
+	M9: 'maj9',
+	'm7(add11)': 'm7(add11)',
+	m7add11: 'm7(add11)',
+	'69': '6/9',
+	'6/9': '6/9',
+	'6add9': '6/9'
+};
+
+const ascii = (s: string) => s.replace(/♭/g, 'b').replace(/♯/g, '#').replace(/°/g, 'dim');
+
+/** A chord written by name: its root, its tones as semitones above it, and a bass of its own. */
+export interface ChordSymbol {
+	/** Pitch class 0–11. */
+	readonly root: number;
+	/** Semitones above the root, sorted, the root's 0 first. */
+	readonly tones: readonly number[];
+	/** A slash chord's bass pitch class ("C/E": 4), or null. */
+	readonly bass: number | null;
+}
+
+const LETTER_PITCH: Readonly<Record<string, number>> = {
+	C: 0,
+	D: 2,
+	E: 4,
+	F: 5,
+	G: 7,
+	A: 9,
+	B: 11
+};
+
+function pitchOfName(letter: string, accidental: string): number {
+	const shift =
+		accidental === '#' || accidental === '♯'
+			? 1
+			: accidental === 'b' || accidental === '♭'
+				? -1
+				: 0;
+	return (LETTER_PITCH[letter.toUpperCase()] + shift + 12) % 12;
+}
+
+/** "Am7", "F#m7b5", "C/E", "Bbmaj9", "Gsus4" as a chord, or null for anything else. */
+export function chordFromSymbol(symbol: string): ChordSymbol | null {
+	const m = /^([A-Ga-g])([#♯b♭]?)(.*?)(?:\/([A-Ga-g])([#♯b♭]?))?$/.exec(symbol.trim());
+	if (!m) return null;
+	const raw = m[3];
+	// the formula a suffix names: as written, by an alias, or by its ASCII spelling
+	const wanted = SUFFIX_ALIASES[raw] ?? raw;
+	const formula =
+		FORMULAS.find((f) => f.suffix === wanted) ??
+		FORMULAS.find((f) => ascii(f.suffix) === ascii(wanted)) ??
+		FORMULAS.find(
+			(f) => ascii(f.suffix).toLowerCase() === ascii(wanted).toLowerCase() && wanted !== 'M'
+		);
+	if (!formula) return null;
+	return {
+		root: pitchOfName(m[1], m[2]),
+		tones: [...formula.pcs],
+		bass: m[4] ? pitchOfName(m[4], m[5]) : null
+	};
+}

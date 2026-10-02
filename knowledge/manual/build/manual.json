@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "935f00b0",
+	"bundle_hash": "2f9ed081",
 	"stats": {
 		"units": 166,
 		"facts": 1215,
 		"procedures": 207,
 		"parameters": 207,
 		"verified_items": 251,
-		"words": 46150,
+		"words": 46155,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -2615,7 +2615,7 @@
 				},
 				{
 					"id": "downloads",
-					"text": "TE's OP-XY downloads page lists every release with its notes and, except for the withdrawn 1.0.29, a firmware file; the newest is OS 1.1.33, the version this manual describes.",
+					"text": "TE's OP-XY downloads page (teenage.engineering/downloads/op-xy) lists every release with its notes and, except for the withdrawn 1.0.29, a firmware file; the newest is OS 1.1.33, the version this manual describes.",
 					"source": "https://teenage.engineering/downloads/op-xy",
 					"firmware_min": null,
 					"verified_on": null,
@@ -2623,7 +2623,7 @@
 				},
 				{
 					"id": "web-updater",
-					"text": "The easy route is TE's MIDI updater, a web page that updates the connected unit straight from the browser.",
+					"text": "The easy route is TE's MIDI updater, a web page on that downloads page that updates the connected unit straight from the browser.",
 					"source": "https://teenage.engineering/downloads/op-xy",
 					"firmware_min": null,
 					"verified_on": null,
