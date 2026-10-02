@@ -34,7 +34,7 @@ facts:
     text: A voice reaches the mixer directly and through its sends to the aux out, tape, FX I and FX II tracks, which feed the mixer as well.
     source: https://teenage.engineering/guides/op-xy/mix#signal-flow-chart
   - id: send-chain
-    text: In TE's signal flow diagram each send track can also feed the next — aux out into tape, tape into FX I, FX I into FX II.
+    text: In TE's signal flow diagram each send track can also feed the next one down — aux out into tape, tape into FX I, FX I into FX II — and no arrow runs back up, so FX II returns only to the mixer.
     source: https://teenage.engineering/guides/op-xy/mix#signal-flow-chart
 procedures:
   - id: enter

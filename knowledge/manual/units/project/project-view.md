@@ -21,6 +21,10 @@ facts:
   - id: new
     text: '`hold M1` in the project view creates a new project, saving your work automatically when autosave is on.'
     source: https://teenage.engineering/guides/op-xy/project#rename
+  - id: new-confirm
+    text: The guide mentions no confirmation step for a new project, and it does not say what happens to unsaved changes when autosave is off; with autosave off, save with `M2` first.
+    source: https://teenage.engineering/guides/op-xy/project#rename
+    confidence: derived
   - id: new-sounds
     text: A new project starts with drums on tracks 1 and 2, then bass, pluck, lead, soft pluck, strings and pad on tracks 3–8.
     source: https://teenage.engineering/guides/op-xy/get-started#4.%20get%20started

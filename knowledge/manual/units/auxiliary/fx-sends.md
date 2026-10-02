@@ -6,7 +6,7 @@ area: auxiliary
 order: 70
 context:
   modes: [auxiliary]
-summary: '`T7` and `T8` hold the two send effects: any sounding track can feed them, FX I can feed FX II, and `shift + T7` or `shift + T8` swaps the effect in a slot.'
+summary: '`T7` and `T8` hold the two send effects: any sounding track can feed them, FX I can feed FX II (one way only), and `shift + T7` or `shift + T8` opens the effect list for a slot.'
 status: current
 firmware:
   min: '1.0.9'
@@ -21,14 +21,22 @@ facts:
     text: On an FX track the keyboard plays the last selected instrument track, so you hear the effect on that sound.
     source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
   - id: choose
-    text: '`shift + T7` or `shift + T8` changes the effect in that slot; the encoders then pick one.'
-    source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
+    text: '`shift + T7` or `shift + T8` opens the effect list for that slot: `turn E4` scrolls it, and `click E4` or `M1` loads the highlighted effect.'
+    source: https://teenage.engineering/guides/op-xy/fx#fx
   - id: m1
     text: On an FX track, `M1` shows the loaded effect's parameters.
     source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
   - id: fx1-to-fx2
     text: On FX I, `shift + turn E4` on the `M3` page sets the send into FX II.
     source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
+  - id: one-way
+    text: The link between the slots runs one way, FX I into FX II; the guide describes no send from FX II back into FX I, so put the effect that should come first on FX I.
+    source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii
+    confidence: derived
+  - id: fx2-sends
+    text: What FX II's own `M3` shift layer holds is not documented, and that page has not yet been looked at on a unit.
+    source: docs/research/59-screen-profiling.md#213-auxiliary-tracks
+    confidence: derived
   - id: track-sends
     text: Instrument tracks send from their send page (`shift` held on `M3`, `E3` for FX I, `E4` for FX II).
     source: https://teenage.engineering/guides/op-xy/instrument#filter
@@ -58,4 +66,6 @@ related: [fx.overview, auxiliary.routing-filter-lfo, mix.levels-pans-sends]
 ---
 
 One reverb on FX II can serve every track, each sending as much as it needs, and chaining FX I
-into FX II lets a delay fade into reverb. The effects themselves are described in the effects area.
+into FX II lets a delay fade into reverb. The chain only runs that way round, so reverb into delay
+means loading the reverb on FX I and the delay on FX II. The effects themselves are described in the
+effects area.

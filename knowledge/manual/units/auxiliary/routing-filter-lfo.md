@@ -71,7 +71,7 @@ parameters:
     encoder: E4
     layer: shift
     name: FX II send
-    note: external audio, tape, and FX I (into FX II)
+    note: external audio, tape, and FX I (into FX II); FX II itself has no documented send
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio
   - screen: M4
     encoder: E1

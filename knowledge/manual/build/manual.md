@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1171 facts, 205 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1184 facts, 205 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -2593,7 +2593,7 @@ current · OS ≥ 1.0.9 · changed in 1.0.29 · guide v1.1.15
 Also called: record a sample, sample key, sample mode, sampling threshold
 Where: screens sample
 
-`sample` opens a record page from any screen: pick the input, set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.
+`sample` opens a record page from any screen: pick the source — mic, line in or USB — set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.
 
 The recorder waits for the sound, so set the threshold just above the room noise and the take
 starts with the first note. On sampler tracks the page adds key handling: the synth sampler tunes to
@@ -2604,30 +2604,33 @@ Facts:
 - A sample can be at most 20 seconds long, in every sampler. [#limit] [s1]
 - Holding `M1` arms the recorder; capture starts once the input passes the threshold. [#threshold] [s1]
 - `M2` plays the take back; `M4` deletes it before it reaches the library. [#keep-or-bin] [s1]
+- A stand-alone take should land in the library's user folder (samples → user over MTP). The sample chapter says only that it goes to the library, but TE's load-samples how-to names user as the folder for samples recorded on the unit; not yet checked on a unit. [#where] (derived) [s2]
 - Pressing the lit track key closes the record page. [#exit] [s1]
-- The built-in microphone can be the source, so sampling needs no cable. [#mic] [s2]
-- Picking the input channel for line in and USB arrived in OS 1.0.29. [#channel-since] (since 1.0.29) [s3]
-- TE's audio-interface how-to picks the USB channel with `turn E2` instead; not yet checked on a unit. [#channel-conflict] (conflicting) [s4]
+- The sources TE documents for the sample page are the built-in mic, line in and USB; the guide names line in and USB as the ones with an input channel and draws the page with the mic selected. [#sources] [s1]
+- Headset and main output belong to the external audio track's input list (`T5`); the guide never offers them on the sample page, and the page's full list has not been checked on a unit. [#not-t5-inputs] (derived) [s3]
+- The built-in microphone can be the source, so sampling needs no cable. [#mic] [s4]
+- Picking the input channel for line in and USB arrived in OS 1.0.29. [#channel-since] (since 1.0.29) [s5]
+- TE's audio-interface how-to picks the USB channel with `turn E2` instead; not yet checked on a unit. [#channel-conflict] (conflicting) [s6]
 
 Procedures:
 - Record a sample into the library [#record] [s1]
   Needs: the selected track does not use a sampler engine
   1. `sample`
   2. `hold M1` — after setting source, gain and threshold
-  Result: The take is saved to the library unless you press `M4`.
+  Result: The take is saved to the library (by TE's how-to, in its user folder) unless you press `M4`.
 
 Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| sample | `turn E1` | source | – | – | – | s1 |
+| sample | `turn E1` | source | mic / line in / USB | – | – | the documented sources; headset and main output are inputs of the external audio track, not of this page s1 |
 | sample | `shift + turn E1` | input channel | – | – | – | line in and USB only s1 |
 | sample | `turn E3` | gain | – | – | – | shown on the meter s1 |
 | sample | `turn E4` | threshold | – | – | – | s1 |
 
-Related: [sampler.overview], [sampler.drum-sampler], [sampler.sample-files]
+Related: [sampler.overview], [sampler.drum-sampler], [sampler.sample-files], [sampler.sample-library], [auxiliary.external-audio]
 
-Sources: s1 guide:sample#arrange · s2 teenage.engineering/products/op-xy · s3 changelog:1.0.29 · s4 guide:how-to#use-an-audio-interface-with-op-xy
+Sources: s1 guide:sample#arrange · s2 guide:how-to#how-to-load-samples · s3 guide:auxiliary#external-audio · s4 teenage.engineering/products/op-xy · s5 changelog:1.0.29 · s6 guide:how-to#use-an-audio-interface-with-op-xy
 
 ### Synth sampler [sampler.synth-sampler]
 current · OS ≥ 1.0.9 · changed in 1.1.0 · guide v1.1.15
@@ -2824,10 +2827,11 @@ Facts:
 - In the library a sample plays as soon as it is selected; `stop` ends the preview. [#preview] [s1]
 - Clicking any encoder opens a subfolder or loads the selected sample; subfolder names are in square brackets. [#enter] [s1]
 - New folders are made on a computer, inside the samples folder, in MTP mode. [#new-folders] [s1]
+- Samples you record on the unit are kept in the library's user folder, which a computer sees as samples → user in MTP mode. [#user-folder] [s2]
 - For the drum sampler and multisampler, `M2` and `M3` step through filled keys and `M4` clears a key without deleting its file. [#key-controls] [s1]
-- Holding a keyboard key and pressing `sample` browses samples for that key. [#from-key] (since 1.1.0) [s2]
-- Samples used by your own presets are gathered in one group. [#preset-samples] (since 1.1.15) [s3]
-- A system setting controls the sample preview; the changelog does not say where it is. [#preview-setting] (since 1.1.17) [s4]
+- Holding a keyboard key and pressing `sample` browses samples for that key. [#from-key] (since 1.1.0) [s3]
+- Samples used by your own presets are gathered in one group. [#preset-samples] (since 1.1.15) [s4]
+- A system setting controls the sample preview; the changelog does not say where it is. [#preview-setting] (since 1.1.17) [s5]
 
 Procedures:
 - Load a sample into the current sampler [#load] [s1]
@@ -2845,7 +2849,7 @@ Parameters:
 
 Related: [sampler.sample-files], [sampler.drum-sampler]
 
-Sources: s1 guide:sample#sample-folder · s2 changelog:1.1.0 · s3 changelog:1.1.15 · s4 changelog:1.1.17
+Sources: s1 guide:sample#sample-folder · s2 guide:how-to#how-to-load-samples · s3 changelog:1.1.0 · s4 changelog:1.1.15 · s5 changelog:1.1.17
 
 ### Sample files, pitch and memory [sampler.sample-files]
 current · OS ≥ 1.0.9 · changed in 1.0.25, 1.0.45, 1.1.15 · guide v1.1.15
@@ -3080,7 +3084,7 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: audio in, audio input, line in, aux out, external effects
 Where: modes auxiliary; screens M1, M2
 
-`T5` brings an input — mic, headset, line, USB or the main output — into the mix, and routes instrument tracks out of the multi-out jack, for example through an outboard effect.
+`T5` brings one of its own five inputs — mic, headset, line in, USB audio or the main output — into the mix, and routes instrument tracks out of the multi-out jack, for example through an outboard effect.
 
 Two jobs share this track: as an input it puts a mic, synth or computer audio into the mix; as an
 output it sends chosen tracks out of the multi-out, so an outboard effect can process them and come
@@ -3088,29 +3092,31 @@ back through the input. Instrument tracks can also feed the aux output from thei
 
 Facts:
 - The 3.5 mm audio input takes line sources or a microphone, for vocals, horns and the like. [#line-in] [s1]
-- On `T5`, choose the input with `turn E1`, then `click E1` to switch it on. [#activate] [s2]
+- On the external audio track's `M1`, `turn E1` picks one of five inputs — mic, headset, audio input (the 3.5 mm line in), USB audio or main output. [#inputs] [s1]
+- These five are the external audio track's inputs only; the sample page has its own source control, documented with just mic, line in and USB. [#own-list] (derived) [s2]
+- On `T5`, choose the input with `turn E1`, then `click E1` to switch it on. [#activate] [s3]
 - Sending audio out needs the multi-out set to audio. [#out] [s1]
 - `M2` sends instrument tracks to the aux output on the multi-out; only routed tracks leave there, each at an amount independent of the main mix. [#routing] [s1]
-- For an outboard effect, send tracks out of the multi-out, return the effect into the audio input, and balance the return with drive, level and mix. [#outboard] [s2]
-- Community charts give CC12 on channel 13 as the input select and suggest the level is the track level, CC7. [#ccs] (community) [s3]
-- Over MIDI on channel 13, CC13 sets drive and CC15 mix, and CC32, CC35 and CC40–43 reach the filter and LFO pages; CC12, the input select, was left untried so the microphone could not open. [#midi] (verified 1.1.33) [s4]
-- `M1` draws the signal path — a microphone box marked fdbk block (crossed out while it blocks feedback), a line labelled input, then boxes for drive, level and mix. [#screen] (verified 1.1.33) [s5]
-- Drive reads 00–20 and mix 00–99; level showed 75 in a new project. [#ranges] (verified 1.1.33) [s5]
-- Its `M2` routing page shows track boxes 1–8 and an out box, and its `M4` LFO aims at syn, filter or amp, with parameters such as param1, hi pass, volume and pan. [#other-pages] (verified 1.1.33) [s5]
+- For an outboard effect, send tracks out of the multi-out, return the effect into the audio input, and balance the return with drive, level and mix. [#outboard] [s3]
+- Community charts give CC12 on channel 13 as the input select and suggest the level is the track level, CC7. [#ccs] (community) [s4]
+- Over MIDI on channel 13, CC13 sets drive and CC15 mix, and CC32, CC35 and CC40–43 reach the filter and LFO pages; CC12, the input select, was left untried so the microphone could not open. [#midi] (verified 1.1.33) [s5]
+- `M1` draws the signal path — a microphone box marked fdbk block (crossed out while it blocks feedback), a line labelled input, then boxes for drive, level and mix. [#screen] (verified 1.1.33) [s6]
+- Drive reads 00–20 and mix 00–99; level showed 75 in a new project. [#ranges] (verified 1.1.33) [s6]
+- Its `M2` routing page shows track boxes 1–8 and an out box, and its `M4` LFO aims at syn, filter or amp, with parameters such as param1, hi pass, volume and pan. [#other-pages] (verified 1.1.33) [s6]
 
 Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| M1 | `turn E1` | input | mic / headset / audio input / USB audio / main output | – | – | s1 |
-| M1 | `click E1` | input on / off | – | – | – | s2 |
+| M1 | `turn E1` | input | mic / headset / audio input / USB audio / main output | – | – | this track's own list, not the sample page's sources s1 |
+| M1 | `click E1` | input on / off | – | – | – | s3 |
 | M1 | `turn E2` | drive | – | – | – | preamp gain, analog inputs only s1 |
 | M1 | `turn E3` | level | – | – | – | the input's volume in the main mix s1 |
 | M1 | `turn E4` | mix | – | – | – | how much of the routed tracks returns to the main output s1 |
 
-Related: [auxiliary.routing-filter-lfo], [instrument.track-sends], [com.multi-out]
+Related: [auxiliary.routing-filter-lfo], [instrument.track-sends], [com.multi-out], [sampler.sampling]
 
-Sources: s1 guide:auxiliary#external-audio · s2 guide:how-to#send-audio-to-and-from-an-external-effect · s3 note 20 · s4 note 59 · s5 note 59
+Sources: s1 guide:auxiliary#external-audio · s2 guide:sample#arrange · s3 guide:how-to#send-audio-to-and-from-an-external-effect · s4 note 20 · s5 note 59 · s6 note 59
 
 ### Tape track [auxiliary.tape]
 current · OS ≥ 1.0.9 · changed in 1.1.15 · guide v1.1.15
@@ -3150,27 +3156,31 @@ current · OS ≥ 1.0.9 · guide v1.1.15
 Also called: send effects, fx tracks, reverb send, delay send
 Where: modes auxiliary
 
-`T7` and `T8` hold the two send effects: any sounding track can feed them, FX I can feed FX II, and `shift + T7` or `shift + T8` swaps the effect in a slot.
+`T7` and `T8` hold the two send effects: any sounding track can feed them, FX I can feed FX II (one way only), and `shift + T7` or `shift + T8` opens the effect list for a slot.
 
 One reverb on FX II can serve every track, each sending as much as it needs, and chaining FX I
-into FX II lets a delay fade into reverb. The effects themselves are described in the effects area.
+into FX II lets a delay fade into reverb. The chain only runs that way round, so reverb into delay
+means loading the reverb on FX I and the delay on FX II. The effects themselves are described in the
+effects area.
 
 Facts:
 - FX I and FX II are the two send effects; every track that makes sound can send to both, and FX I can send on into FX II. [#what] [s1]
 - On an FX track the keyboard plays the last selected instrument track, so you hear the effect on that sound. [#audition] [s1]
-- `shift + T7` or `shift + T8` changes the effect in that slot; the encoders then pick one. [#choose] [s1]
+- `shift + T7` or `shift + T8` opens the effect list for that slot: `turn E4` scrolls it, and `click E4` or `M1` loads the highlighted effect. [#choose] [s2]
 - On an FX track, `M1` shows the loaded effect's parameters. [#m1] [s1]
 - On FX I, `shift + turn E4` on the `M3` page sets the send into FX II. [#fx1-to-fx2] [s1]
-- Instrument tracks send from their send page (`shift` held on `M3`, `E3` for FX I, `E4` for FX II). [#track-sends] [s2]
-- In mix mode, `M1` sets each track's FX I send with `turn E1` and FX II send with `turn E2`. [#mix-sends] [s3]
+- The link between the slots runs one way, FX I into FX II; the guide describes no send from FX II back into FX I, so put the effect that should come first on FX I. [#one-way] (derived) [s1]
+- What FX II's own `M3` shift layer holds is not documented, and that page has not yet been looked at on a unit. [#fx2-sends] (derived) [s3]
+- Instrument tracks send from their send page (`shift` held on `M3`, `E3` for FX I, `E4` for FX II). [#track-sends] [s4]
+- In mix mode, `M1` sets each track's FX I send with `turn E1` and FX II send with `turn E2`. [#mix-sends] [s5]
 - The guide's FX routing card repeats a CV sentence and its filter card names the tape track — copy slips. [#guide-slips] (derived) [s1]
-- The FX I page is headed with a boxed FX I and the effect's name, then four columns with labels above and values below, each a bar split by a marker at the value's height. [#screen] (verified 1.1.33) [s4]
-- On FX I, `shift + T7` lists the effects — chorus, delay, dist, lofi, phaser and reverb. [#type-list] (verified 1.1.33) [s4]
-- Over MIDI, CC12–15 on channel 15 move the four columns of FX I. [#midi] (verified 1.1.33) [s5]
+- The FX I page is headed with a boxed FX I and the effect's name, then four columns with labels above and values below, each a bar split by a marker at the value's height. [#screen] (verified 1.1.33) [s3]
+- On FX I, `shift + T7` lists the effects — chorus, delay, dist, lofi, phaser and reverb. [#type-list] (verified 1.1.33) [s3]
+- Over MIDI, CC12–15 on channel 15 move the four columns of FX I. [#midi] (verified 1.1.33) [s6]
 
 Related: [fx.overview], [auxiliary.routing-filter-lfo], [mix.levels-pans-sends]
 
-Sources: s1 guide:auxiliary#fx-i-and-fx-ii · s2 guide:instrument#filter · s3 guide:mix#levels-pans-and-sends · s4 note 59 · s5 note 59
+Sources: s1 guide:auxiliary#fx-i-and-fx-ii · s2 guide:fx#fx · s3 note 59 · s4 guide:instrument#filter · s5 guide:mix#levels-pans-and-sends · s6 note 59
 
 ### Aux routing, filter and LFO pages [auxiliary.routing-filter-lfo]
 current · OS ≥ 1.0.9 · changed in 1.1.32 · guide v1.1.15
@@ -3199,7 +3209,7 @@ Parameters:
 | M3 | `turn E4` | low-pass cutoff | – | – | 35 | s2 |
 | M3 | `shift + turn E2` | tape send | – | – | – | external audio only s7 |
 | M3 | `shift + turn E3` | FX I send | – | – | – | external audio and tape s7 |
-| M3 | `shift + turn E4` | FX II send | – | – | – | external audio, tape, and FX I (into FX II) s7 |
+| M3 | `shift + turn E4` | FX II send | – | – | – | external audio, tape, and FX I (into FX II); FX II itself has no documented send s7 |
 | M4 | `turn E1` | LFO speed | – | – | – | s2 |
 | M4 | `turn E2` | LFO amount | – | – | – | s2 |
 | M4 | `turn E3` | destination | – | – | – | the page to modulate s2 |
@@ -3222,9 +3232,9 @@ Six built-in send effects — chorus, delay, distortion, lofi, phaser and reverb
 
 Send effects work like the return channels of a mixing desk: tracks send a share of their signal to
 FX I or FX II, and the FX track plays the processed result back into the mix, so one reverb can serve
-every track. Each slot runs one effect at a time. The FX tracks themselves — sends, routing, filter,
-LFO and defaults — are covered with the auxiliary tracks; the units here list what each effect's
-`M1` encoders do.
+every track. Each slot runs one effect at a time, and FX I can also feed FX II, never the reverse as
+far as TE documents. The FX tracks themselves — sends, routing, filter, LFO and defaults — are
+covered with the auxiliary tracks; the units here list what each effect's `M1` encoders do.
 
 Facts:
 - The OP-XY has six built-in send effects — chorus, delay, distortion, lofi, phaser and reverb. [#six] [s1]
@@ -3730,7 +3740,7 @@ Facts:
 - Each scene stores every track's level and mute, so changing scene can change the balance too. [#per-scene] [s3]
 - After the mixer, the summed signal passes through the EQ, then the saturator, then the compressor and limiter, and on to the main output. [#master-chain] [s4]
 - A voice reaches the mixer directly and through its sends to the aux out, tape, FX I and FX II tracks, which feed the mixer as well. [#send-returns] [s4]
-- In TE's signal flow diagram each send track can also feed the next — aux out into tape, tape into FX I, FX I into FX II. [#send-chain] [s4]
+- In TE's signal flow diagram each send track can also feed the next one down — aux out into tape, tape into FX I, FX I into FX II — and no arrow runs back up, so FX II returns only to the mixer. [#send-chain] [s4]
 
 Procedures:
 - Open mix mode [#enter] [s1]
@@ -3951,6 +3961,7 @@ settings. Other projects are opened from the projects folder (`shift + project`)
 Facts:
 - `project` opens the project view of the project you are working on. [#enter] [s1]
 - `hold M1` in the project view creates a new project, saving your work automatically when autosave is on. [#new] [s2]
+- The guide mentions no confirmation step for a new project, and it does not say what happens to unsaved changes when autosave is off; with autosave off, save with `M2` first. [#new-confirm] (derived) [s2]
 - A new project starts with drums on tracks 1 and 2, then bass, pluck, lead, soft pluck, strings and pad on tracks 3–8. [#new-sounds] [s3]
 - `M2` saves the project and stores a version of it. [#save] [s2]
 - `shift + M2` saves a copy under a new name you type in. [#save-as] [s2]
@@ -4006,34 +4017,40 @@ current · OS ≥ 1.0.9 · changed in 1.1.25 · guide v1.1.15
 Also called: project browser, project list, open project, load project, duplicate project, delete project, subfolders
 Where: screens projects folder
 
-Shift + project opens the projects folder with factory projects, your projects, templates and autosaves; from there you load, duplicate, delete or view the history of a project.
+`shift + project` opens the projects folder — factory projects, your projects, templates and autosaves — to load, duplicate, delete or view the history of a project. TE disagrees with itself about which end key loads and which deletes, so read the screen labels first.
 
-The projects folder is the unit's file browser for projects. Mind the soft-key labels on screen:
-TE's text and drawing disagree about which end holds load and delete, and deleting is permanent.
+The projects folder is the unit's file browser for projects. History and duplicate sit on the middle
+keys whichever way the labels run; only the end keys are in doubt, with TE's text putting load on
+`M1` and delete on `M4` and its screen drawing the reverse. Look at the labels before you press, and
+never hold a key whose label you have not read: TE describes no way to bring a deleted project back.
 
 Facts:
 - `shift + project` opens the projects folder, which lists factory projects, your projects, the templates folder and autosaves. [#open] [s1]
-- `M1` loads the selected project. [#load] [s1]
+- TE's text gives load to `M1`, and the key picture beside that step shows key 1. [#load] [s1]
 - `M2` shows the history of the selected project. [#history] [s1]
-- Duplicate copies a whole project with its patterns, scenes and tracks; the guide's text gives it `M2` like history, but its drawing puts duplicate on the third key, so it is most likely `M3`. [#duplicate] (derived) [s2]
-- `hold M4` deletes the selected project. [#delete] [s1]
-- The guide's drawing of this screen labels the keys delete, history, duplicate, load from left to right, the reverse of the text for `M1` and `M4`; check the labels on your screen. [#label-order] (conflicting) [s2]
+- Duplicate copies a whole project with its patterns, scenes and tracks. [#duplicate] [s1]
+- TE's text gives duplicate `M2`, the key it also gives history — a slip, since the key picture beside it shows key 3 and the screen drawing puts duplicate third, so duplicate is almost certainly `M3`. [#duplicate-key] (derived) [s1]
+- TE's text gives delete to `hold M4`, and the key picture beside that step shows key 4 held. [#delete] [s1]
+- TE's drawing of the folder screen labels the soft keys delete, history, duplicate, load from left to right, which puts delete over `M1` and load over `M4` — the reverse of its own text and key pictures. [#label-order] (conflicting) [s1]
+- The key order has not been checked on the device yet; the replica follows TE's text, so what the replica shows does not settle it. [#unsettled] (derived) [s2]
+- On the arrange page TE's art showed the same reversal and OS 1.1.33 followed the text, so load on `M1` and delete on `hold M4` is the likelier order here too. [#likely] (derived) [s3]
+- Read the label above `M1` or `M4` on the screen before pressing it, and above all before holding it; the guide mentions no confirmation step after the delete hold, so do not count on one. [#check-labels] (derived) [s1]
 - Subfolders made over MTP appear with their names in square brackets; clicking any encoder opens one. [#subfolders] [s1]
-- Since OS 1.1.25 a duplicate includes changes that were not saved yet. [#unsaved] (since 1.1.25) [s3]
-- Over MTP your projects live in projects/user. [#mtp-path] (verified 1.1.33) [s4]
+- Since OS 1.1.25 a duplicate includes changes that were not saved yet. [#unsaved] (since 1.1.25) [s4]
+- Over MTP your projects live in projects/user. [#mtp-path] (verified 1.1.33) [s5]
 
 Procedures:
 - Open another project [#load] [s1]
   1. `shift + project`
   2. `turn E1…E4` — select the project
-  3. `M1`
+  3. `M1` — load in TE's text; check that the label above it reads load
 - Delete a project [#delete] [s1]
   1. `shift + project`
-  2. `hold M4` — with the project selected
+  2. `hold M4` — with the project selected, and only after checking that the label above it reads delete
 
 Related: [project.project-view], [project.versions-and-autosave], [project.templates]
 
-Sources: s1 guide:project#project-folder · s2 note 50 · s3 changelog:1.1.25 · s4 note 90
+Sources: s1 guide:project#project-folder · s2 note 55 · s3 note 59 · s4 changelog:1.1.25 · s5 note 90
 
 ### Project templates [project.templates]
 outdated-in-guide · OS ≥ 1.1.15 · changed in 1.1.17 · guide v1.1.15

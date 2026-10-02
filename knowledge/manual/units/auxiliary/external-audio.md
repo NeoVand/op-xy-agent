@@ -7,7 +7,7 @@ order: 50
 context:
   modes: [auxiliary]
   screens: [M1, M2]
-summary: '`T5` brings an input — mic, headset, line, USB or the main output — into the mix, and routes instrument tracks out of the multi-out jack, for example through an outboard effect.'
+summary: '`T5` brings one of its own five inputs — mic, headset, line in, USB audio or the main output — into the mix, and routes instrument tracks out of the multi-out jack, for example through an outboard effect.'
 status: current
 firmware:
   min: '1.0.9'
@@ -18,6 +18,13 @@ facts:
   - id: line-in
     text: The 3.5 mm audio input takes line sources or a microphone, for vocals, horns and the like.
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio
+  - id: inputs
+    text: On the external audio track's `M1`, `turn E1` picks one of five inputs — mic, headset, audio input (the 3.5 mm line in), USB audio or main output.
+    source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio
+  - id: own-list
+    text: These five are the external audio track's inputs only; the sample page has its own source control, documented with just mic, line in and USB.
+    source: https://teenage.engineering/guides/op-xy/sample#arrange
+    confidence: derived
   - id: activate
     text: On `T5`, choose the input with `turn E1`, then `click E1` to switch it on.
     source: https://teenage.engineering/guides/op-xy/how-to#send-audio-to-and-from-an-external-effect
@@ -60,6 +67,7 @@ parameters:
     layer: base
     name: input
     range: mic / headset / audio input / USB audio / main output
+    note: this track's own list, not the sample page's sources
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio
   - screen: M1
     encoder: E1
@@ -84,7 +92,7 @@ parameters:
     name: mix
     note: how much of the routed tracks returns to the main output
     source: https://teenage.engineering/guides/op-xy/auxiliary#external-audio
-related: [auxiliary.routing-filter-lfo, instrument.track-sends, com.multi-out]
+related: [auxiliary.routing-filter-lfo, instrument.track-sends, com.multi-out, sampler.sampling]
 ---
 
 Two jobs share this track: as an input it puts a mic, synth or computer audio into the mix; as an

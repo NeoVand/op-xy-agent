@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "50fbdfe2",
+	"bundle_hash": "093117d9",
 	"stats": {
 		"units": 166,
-		"facts": 1171,
+		"facts": 1184,
 		"procedures": 205,
 		"parameters": 207,
 		"verified_items": 247,
-		"words": 44147,
+		"words": 44766,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -14269,7 +14269,7 @@
 					"sample"
 				]
 			},
-			"summary": "`sample` opens a record page from any screen: pick the input, set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.",
+			"summary": "`sample` opens a record page from any screen: pick the source — mic, line in or USB — set gain and threshold, then `hold M1` to capture up to 20 seconds into the current sampler or the sample library.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -14313,12 +14313,36 @@
 					"confidence": "official"
 				},
 				{
+					"id": "where",
+					"text": "A stand-alone take should land in the library's user folder (samples → user over MTP). The sample chapter says only that it goes to the library, but TE's load-samples how-to names user as the folder for samples recorded on the unit; not yet checked on a unit.",
+					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-load-samples",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
 					"id": "exit",
 					"text": "Pressing the lit track key closes the record page.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "sources",
+					"text": "The sources TE documents for the sample page are the built-in mic, line in and USB; the guide names line in and USB as the ones with an input channel and draws the page with the mic selected.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "not-t5-inputs",
+					"text": "Headset and main output belong to the external audio track's input list (`T5`); the guide never offers them on the sample page, and the page's full list has not been checked on a unit.",
+					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				},
 				{
 					"id": "mic",
@@ -14364,7 +14388,7 @@
 							"set": null
 						}
 					],
-					"result": "The take is saved to the library unless you press `M4`.",
+					"result": "The take is saved to the library (by TE's how-to, in its user folder) unless you press `M4`.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14378,11 +14402,11 @@
 					"layer": "base",
 					"keys": "turn E1",
 					"name": "source",
-					"range": null,
+					"range": "mic / line in / USB",
 					"default": null,
 					"cc": null,
 					"cc_confidence": null,
-					"note": null,
+					"note": "the documented sources; headset and main output are inputs of the external audio track, not of this page",
 					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
 					"firmware_min": null,
 					"verified_on": null,
@@ -14440,12 +14464,22 @@
 			"related": [
 				"sampler.overview",
 				"sampler.drum-sampler",
-				"sampler.sample-files"
+				"sampler.sample-files",
+				"sampler.sample-library",
+				"auxiliary.external-audio"
 			],
 			"body": "The recorder waits for the sound, so set the threshold just above the room noise and the take\nstarts with the first note. On sampler tracks the page adds key handling: the synth sampler tunes to\nthe key you press; the drum sampler and multisampler record onto a selected key.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/how-to#how-to-load-samples",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
 					"kind": "guide"
 				},
 				{
@@ -15754,6 +15788,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "user-folder",
+					"text": "Samples you record on the unit are kept in the library's user folder, which a computer sees as samples → user in MTP mode.",
+					"source": "https://teenage.engineering/guides/op-xy/how-to#how-to-load-samples",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
 					"id": "key-controls",
 					"text": "For the drum sampler and multisampler, `M2` and `M3` step through filled keys and `M4` clears a key without deleting its file.",
 					"source": "https://teenage.engineering/guides/op-xy/sample#sample-folder",
@@ -15862,6 +15904,10 @@
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/sample#sample-folder",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/how-to#how-to-load-samples",
 					"kind": "guide"
 				},
 				{
@@ -17247,7 +17293,7 @@
 					"M2"
 				]
 			},
-			"summary": "`T5` brings an input — mic, headset, line, USB or the main output — into the mix, and routes instrument tracks out of the multi-out jack, for example through an outboard effect.",
+			"summary": "`T5` brings one of its own five inputs — mic, headset, line in, USB audio or the main output — into the mix, and routes instrument tracks out of the multi-out jack, for example through an outboard effect.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -17263,6 +17309,22 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "inputs",
+					"text": "On the external audio track's `M1`, `turn E1` picks one of five inputs — mic, headset, audio input (the 3.5 mm line in), USB audio or main output.",
+					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "own-list",
+					"text": "These five are the external audio track's inputs only; the sample page has its own source control, documented with just mic, line in and USB.",
+					"source": "https://teenage.engineering/guides/op-xy/sample#arrange",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				},
 				{
 					"id": "activate",
@@ -17349,7 +17411,7 @@
 					"default": null,
 					"cc": null,
 					"cc_confidence": null,
-					"note": null,
+					"note": "this track's own list, not the sample page's sources",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
 					"firmware_min": null,
 					"verified_on": null,
@@ -17423,12 +17485,17 @@
 			"related": [
 				"auxiliary.routing-filter-lfo",
 				"instrument.track-sends",
-				"com.multi-out"
+				"com.multi-out",
+				"sampler.sampling"
 			],
 			"body": "Two jobs share this track: as an input it puts a mic, synth or computer audio into the mix; as an\noutput it sends chosen tracks out of the multi-out, so an outboard effect can process them and come\nback through the input. Instrument tracks can also feed the aux output from their send page.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
+					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/sample#arrange",
 					"kind": "guide"
 				},
 				{
@@ -17669,7 +17736,7 @@
 				],
 				"screens": []
 			},
-			"summary": "`T7` and `T8` hold the two send effects: any sounding track can feed them, FX I can feed FX II, and `shift + T7` or `shift + T8` swaps the effect in a slot.",
+			"summary": "`T7` and `T8` hold the two send effects: any sounding track can feed them, FX I can feed FX II (one way only), and `shift + T7` or `shift + T8` opens the effect list for a slot.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -17696,8 +17763,8 @@
 				},
 				{
 					"id": "choose",
-					"text": "`shift + T7` or `shift + T8` changes the effect in that slot; the encoders then pick one.",
-					"source": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",
+					"text": "`shift + T7` or `shift + T8` opens the effect list for that slot: `turn E4` scrolls it, and `click E4` or `M1` loads the highlighted effect.",
+					"source": "https://teenage.engineering/guides/op-xy/fx#fx",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
@@ -17717,6 +17784,22 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "one-way",
+					"text": "The link between the slots runs one way, FX I into FX II; the guide describes no send from FX II back into FX I, so put the effect that should come first on FX I.",
+					"source": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "fx2-sends",
+					"text": "What FX II's own `M3` shift layer holds is not documented, and that page has not yet been looked at on a unit.",
+					"source": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				},
 				{
 					"id": "track-sends",
@@ -17774,11 +17857,19 @@
 				"auxiliary.routing-filter-lfo",
 				"mix.levels-pans-sends"
 			],
-			"body": "One reverb on FX II can serve every track, each sending as much as it needs, and chaining FX I\ninto FX II lets a delay fade into reverb. The effects themselves are described in the effects area.",
+			"body": "One reverb on FX II can serve every track, each sending as much as it needs, and chaining FX I\ninto FX II lets a delay fade into reverb. The chain only runs that way round, so reverb into delay\nmeans loading the reverb on FX I and the delay on FX II. The effects themselves are described in the\neffects area.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",
 					"kind": "guide"
+				},
+				{
+					"url": "https://teenage.engineering/guides/op-xy/fx#fx",
+					"kind": "guide"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/guides/op-xy/instrument#filter",
@@ -17787,10 +17878,6 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/mix#levels-pans-and-sends",
 					"kind": "guide"
-				},
-				{
-					"url": "docs/research/59-screen-profiling.md#213-auxiliary-tracks",
-					"kind": "research"
 				},
 				{
 					"url": "docs/research/59-screen-profiling.md#3-midi-reach-on-1133-verified-on-screen",
@@ -17966,7 +18053,7 @@
 					"default": null,
 					"cc": null,
 					"cc_confidence": null,
-					"note": "external audio, tape, and FX I (into FX II)",
+					"note": "external audio, tape, and FX I (into FX II); FX II itself has no documented send",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#external-audio",
 					"firmware_min": null,
 					"verified_on": null,
@@ -18214,7 +18301,7 @@
 				"auxiliary.fx-sends",
 				"mix.levels-pans-sends"
 			],
-			"body": "Send effects work like the return channels of a mixing desk: tracks send a share of their signal to\nFX I or FX II, and the FX track plays the processed result back into the mix, so one reverb can serve\nevery track. Each slot runs one effect at a time. The FX tracks themselves — sends, routing, filter,\nLFO and defaults — are covered with the auxiliary tracks; the units here list what each effect's\n`M1` encoders do.",
+			"body": "Send effects work like the return channels of a mixing desk: tracks send a share of their signal to\nFX I or FX II, and the FX track plays the processed result back into the mix, so one reverb can serve\nevery track. Each slot runs one effect at a time, and FX I can also feed FX II, never the reverse as\nfar as TE documents. The FX tracks themselves — sends, routing, filter, LFO and defaults — are\ncovered with the auxiliary tracks; the units here list what each effect's `M1` encoders do.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/fx#fx",
@@ -20682,7 +20769,7 @@
 				},
 				{
 					"id": "send-chain",
-					"text": "In TE's signal flow diagram each send track can also feed the next — aux out into tape, tape into FX I, FX I into FX II.",
+					"text": "In TE's signal flow diagram each send track can also feed the next one down — aux out into tape, tape into FX I, FX I into FX II — and no arrow runs back up, so FX II returns only to the mixer.",
 					"source": "https://teenage.engineering/guides/op-xy/mix#signal-flow-chart",
 					"firmware_min": null,
 					"verified_on": null,
@@ -21901,6 +21988,14 @@
 					"confidence": "official"
 				},
 				{
+					"id": "new-confirm",
+					"text": "The guide mentions no confirmation step for a new project, and it does not say what happens to unsaved changes when autosave is off; with autosave off, save with `M2` first.",
+					"source": "https://teenage.engineering/guides/op-xy/project#rename",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
 					"id": "new-sounds",
 					"text": "A new project starts with drums on tracks 1 and 2, then bass, pluck, lead, soft pluck, strings and pad on tracks 3–8.",
 					"source": "https://teenage.engineering/guides/op-xy/get-started#4.%20get%20started",
@@ -22224,7 +22319,7 @@
 					"projects folder"
 				]
 			},
-			"summary": "Shift + project opens the projects folder with factory projects, your projects, templates and autosaves; from there you load, duplicate, delete or view the history of a project.",
+			"summary": "`shift + project` opens the projects folder — factory projects, your projects, templates and autosaves — to load, duplicate, delete or view the history of a project. TE disagrees with itself about which end key loads and which deletes, so read the screen labels first.",
 			"status": "current",
 			"firmware": {
 				"min": "1.0.9",
@@ -22245,7 +22340,7 @@
 				},
 				{
 					"id": "load",
-					"text": "`M1` loads the selected project.",
+					"text": "TE's text gives load to `M1`, and the key picture beside that step shows key 1.",
 					"source": "https://teenage.engineering/guides/op-xy/project#project-folder",
 					"firmware_min": null,
 					"verified_on": null,
@@ -22261,15 +22356,23 @@
 				},
 				{
 					"id": "duplicate",
-					"text": "Duplicate copies a whole project with its patterns, scenes and tracks; the guide's text gives it `M2` like history, but its drawing puts duplicate on the third key, so it is most likely `M3`.",
-					"source": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"text": "Duplicate copies a whole project with its patterns, scenes and tracks.",
+					"source": "https://teenage.engineering/guides/op-xy/project#project-folder",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "official"
+				},
+				{
+					"id": "duplicate-key",
+					"text": "TE's text gives duplicate `M2`, the key it also gives history — a slip, since the key picture beside it shows key 3 and the screen drawing puts duplicate third, so duplicate is almost certainly `M3`.",
+					"source": "https://teenage.engineering/guides/op-xy/project#project-folder",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "derived"
 				},
 				{
 					"id": "delete",
-					"text": "`hold M4` deletes the selected project.",
+					"text": "TE's text gives delete to `hold M4`, and the key picture beside that step shows key 4 held.",
 					"source": "https://teenage.engineering/guides/op-xy/project#project-folder",
 					"firmware_min": null,
 					"verified_on": null,
@@ -22277,11 +22380,35 @@
 				},
 				{
 					"id": "label-order",
-					"text": "The guide's drawing of this screen labels the keys delete, history, duplicate, load from left to right, the reverse of the text for `M1` and `M4`; check the labels on your screen.",
-					"source": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"text": "TE's drawing of the folder screen labels the soft keys delete, history, duplicate, load from left to right, which puts delete over `M1` and load over `M4` — the reverse of its own text and key pictures.",
+					"source": "https://teenage.engineering/guides/op-xy/project#project-folder",
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "conflicting"
+				},
+				{
+					"id": "unsettled",
+					"text": "The key order has not been checked on the device yet; the replica follows TE's text, so what the replica shows does not settle it.",
+					"source": "docs/research/55-screen.md#9-gaps-where-the-real-screen-would-settle-it",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "likely",
+					"text": "On the arrange page TE's art showed the same reversal and OS 1.1.33 followed the text, so load on `M1` and delete on `hold M4` is the likelier order here too.",
+					"source": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
+				},
+				{
+					"id": "check-labels",
+					"text": "Read the label above `M1` or `M4` on the screen before pressing it, and above all before holding it; the guide mentions no confirmation step after the delete hold, so do not count on one.",
+					"source": "https://teenage.engineering/guides/op-xy/project#project-folder",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				},
 				{
 					"id": "subfolders",
@@ -22326,7 +22453,7 @@
 						},
 						{
 							"keys": "M1",
-							"note": null,
+							"note": "load in TE's text; check that the label above it reads load",
 							"set": null
 						}
 					],
@@ -22348,7 +22475,7 @@
 						},
 						{
 							"keys": "hold M4",
-							"note": "with the project selected",
+							"note": "with the project selected, and only after checking that the label above it reads delete",
 							"set": null
 						}
 					],
@@ -22365,14 +22492,18 @@
 				"project.versions-and-autosave",
 				"project.templates"
 			],
-			"body": "The projects folder is the unit's file browser for projects. Mind the soft-key labels on screen:\nTE's text and drawing disagree about which end holds load and delete, and deleting is permanent.",
+			"body": "The projects folder is the unit's file browser for projects. History and duplicate sit on the middle\nkeys whichever way the labels run; only the end keys are in doubt, with TE's text putting load on\n`M1` and delete on `M4` and its screen drawing the reverse. Look at the labels before you press, and\nnever hold a key whose label you have not read: TE describes no way to bring a deleted project back.",
 			"sources": [
 				{
 					"url": "https://teenage.engineering/guides/op-xy/project#project-folder",
 					"kind": "guide"
 				},
 				{
-					"url": "docs/research/50-hardware-ui.md#33-page-catalogue",
+					"url": "docs/research/55-screen.md#9-gaps-where-the-real-screen-would-settle-it",
+					"kind": "research"
+				},
+				{
+					"url": "docs/research/59-screen-profiling.md#29-arrange-and-song-mode",
 					"kind": "research"
 				},
 				{

@@ -68,6 +68,6 @@ related:
 
 Send effects work like the return channels of a mixing desk: tracks send a share of their signal to
 FX I or FX II, and the FX track plays the processed result back into the mix, so one reverb can serve
-every track. Each slot runs one effect at a time. The FX tracks themselves — sends, routing, filter,
-LFO and defaults — are covered with the auxiliary tracks; the units here list what each effect's
-`M1` encoders do.
+every track. Each slot runs one effect at a time, and FX I can also feed FX II, never the reverse as
+far as TE documents. The FX tracks themselves — sends, routing, filter, LFO and defaults — are
+covered with the auxiliary tracks; the units here list what each effect's `M1` encoders do.

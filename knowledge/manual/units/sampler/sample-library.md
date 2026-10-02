@@ -27,6 +27,9 @@ facts:
   - id: new-folders
     text: New folders are made on a computer, inside the samples folder, in MTP mode.
     source: https://teenage.engineering/guides/op-xy/sample#sample-folder
+  - id: user-folder
+    text: Samples you record on the unit are kept in the library's user folder, which a computer sees as samples → user in MTP mode.
+    source: https://teenage.engineering/guides/op-xy/how-to#how-to-load-samples
   - id: key-controls
     text: For the drum sampler and multisampler, `M2` and `M3` step through filled keys and `M4` clears a key without deleting its file.
     source: https://teenage.engineering/guides/op-xy/sample#sample-folder
