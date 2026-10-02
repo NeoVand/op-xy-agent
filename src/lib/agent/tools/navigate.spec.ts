@@ -2,7 +2,7 @@
 // show animation (a fake replica that plays each step on the simulator) leaves it there.
 import { describe, expect, it } from 'vitest';
 import { createVirtualOpxy } from '$lib/app/virtual';
-import type { ReplicaState } from '$lib/replica';
+import { ReplicaState } from '$lib/replica';
 import { playStep } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { FakeTime } from '../../../../test/fakes/fake-time';
@@ -145,7 +145,7 @@ describe('plan_steps', () => {
 		const plan = json(result);
 		expect(plan.reached).toBe(true);
 		expect(plan.steps.map((s: { keys: string }) => s.keys)).toEqual(['T3', 'M3', 'turn E1']);
-		expect(plan.steps[2]).toMatchObject({ clicks: 40, direction: 'clockwise' });
+		expect(plan.steps[2]).toMatchObject({ detents: 40, direction: 'clockwise' });
 		expect(plan.screen).toContain('cutoff 40');
 		expect(result.summary).toBe('planned only: 3 steps: T3, M3, turn E1 ×40');
 		expect(Object.keys(plan)[0]).toBe('planned');
@@ -585,6 +585,96 @@ describe('plan_steps to the project settings', () => {
 			[33, 'cutoff 60'],
 			[49, 'cutoff 85']
 		]);
+	});
+
+	it('lands step locks on their steps with the real replica animating while it plays', async () => {
+		// the replica's own animation timers and the simulator's frames, as in the app: a bar tap on
+		// another track's one-bar pattern once pinned nothing, and every lock landed two bars off
+		const time = new FakeTime();
+		const sim = new OpxySim({ now: () => time.now() });
+		const replica = new ReplicaState({ timers: time });
+		replica.observe((event) => sim.input(event));
+		const virtual = createVirtualOpxy({ sim });
+		const frame = () => {
+			sim.advance(16);
+			time.setTimeout(frame, 16);
+		};
+		time.setTimeout(frame, 16);
+		virtual.writePattern(7, {
+			pattern: 1,
+			bars: 4,
+			notes: [1, 17, 33, 49].map((step) => ({ step, note: 60, velocity: 90, length: 16 }))
+		});
+		virtual.transport('play');
+		await time.advance(2500);
+		const env = {
+			device: null,
+			replica,
+			virtual,
+			guide: { start: () => {}, stop: () => {} },
+			manual: NO_MANUAL,
+			timers: time,
+			confirmWindowMs: 0,
+			plan: { get: () => [], set: () => {} },
+			abortDeviceWork: () => {}
+		} as unknown as AgentEnvironment;
+		const ctx: ToolContext = {
+			toolCallId: 'toolu_live',
+			agent: 'conductor',
+			signal: new AbortController().signal,
+			env
+		};
+		let done = false;
+		const running = planStepsTool
+			.run(
+				planStepsTool.input.parse({
+					show: true,
+					track: 7,
+					settings: [
+						{ param: 'filter', value: 'on' },
+						...[1, 17, 33, 49].map((step, i) => ({ param: 'cutoff', value: 10 + i * 25, step }))
+					]
+				}),
+				ctx
+			)
+			.finally(() => (done = true));
+		for (let i = 0; i < 4000 && !done; i++) await time.advance(50);
+		const result = json(await running);
+		expect(result.arrived).toBe(true);
+		expect(result.pinned).toMatch(
+			/^The replica was playing, so a bar tap first pinned the step keys/
+		);
+		expect((virtual.readPattern(7).locks ?? []).map((l) => [l.step, l.values.join(', ')])).toEqual([
+			[1, 'cutoff 10'],
+			[17, 'cutoff 35'],
+			[33, 'cutoff 60'],
+			[49, 'cutoff 85']
+		]);
+	});
+
+	it('reaches a track’s midi channel on the project’s midi page, not its voices', async () => {
+		// "track 6" is a row of the voices page and of the midi page: an agent set track 6's voices
+		const { run } = setup(true);
+		const channel = json(
+			await run(planStepsTool, {
+				show: false,
+				area: 'project',
+				param: 'midi channel',
+				track: 6,
+				value: '2'
+			})
+		);
+		expect(channel.reached).toBe(true);
+		expect(channel.screen).toMatch(/midi, track 6, 2/);
+		const named = json(
+			await run(planStepsTool, { show: false, area: 'project', param: 'midi track 6', value: '2' })
+		);
+		expect(named.screen).toMatch(/midi, track 6, 2/);
+		const bare = json(
+			await run(planStepsTool, { show: false, area: 'project', param: 'track 6', value: '2' })
+		);
+		expect(bare.reached).toBe(false);
+		expect(bare.note).toMatch(/"track 6" is a row of voices and midi: name the page/);
 	});
 
 	it('starts over with a new project: project, then hold M1', async () => {

@@ -1,0 +1,157 @@
+[
+	{
+		"name": "locks-while-playing-2",
+		"about": "Re-check: step locks on the first step of each bar while the replica plays.",
+		"steps": [
+			{ "say": "make a 4 bar pad loop on track 8 and play it" },
+			{ "say": "while it plays, lock the cutoff a bit higher on the first step of each bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "drum-machine-channel-10",
+		"about": "Re-check: a track's midi channel on the project's midi page.",
+		"steps": [
+			{ "say": "send track 2's notes out on midi channel 10 to my drum machine" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "slow-attack-stabs",
+		"about": "Re-check: a slow attack under short notes, said.",
+		"steps": [
+			{
+				"say": "put a pad with a really slow attack on track 8, playing short stabs on every beat"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "crash-bar-1-only",
+		"about": "Re-check: one hit in one bar via bar and merge.",
+		"steps": [
+			{ "say": "make a 4 bar beat" },
+			{ "say": "add a crash only on the very first beat of bar 1" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "kick-bass-together",
+		"about": "A mix question between two parts.",
+		"steps": [
+			{ "say": "make a techno beat with a bass" },
+			{ "say": "make the kick and bass sit better together" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "scenes-vs-patterns",
+		"about": "A concept question.",
+		"steps": [{ "say": "what's the difference between a scene and a pattern?" }, { "why": true }]
+	},
+	{
+		"name": "melody-more-interesting",
+		"about": "A vague creative edit.",
+		"steps": [
+			{ "say": "write a simple melody on track 5" },
+			{ "say": "make it more interesting" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "far-away-hats",
+		"about": "Sound design by description: distance.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "make the hats sound like they're far away" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "answering-counter",
+		"about": "A counter melody that answers the lead.",
+		"steps": [
+			{ "say": "write a 2 bar lead on track 5 in E minor" },
+			{ "say": "add a counter melody on track 6 that answers it in the gaps" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "intro-adds-one",
+		"about": "An intro that adds one instrument every 2 bars.",
+		"steps": [
+			{
+				"say": "make an 8 bar intro that starts with just the kick and adds one instrument every 2 bars"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "kick-vanished",
+		"about": "The user mutes something by hand and asks what happened.",
+		"steps": [
+			{ "say": "make a beat and play it" },
+			{ "press": ["key.mix", "track.1"] },
+			{ "say": "the kick disappeared, what happened?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "wider-stereo",
+		"about": "A stereo width request.",
+		"steps": [
+			{ "say": "make a chord loop on track 7" },
+			{ "say": "make it sound wider in stereo" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swap-bass-sound",
+		"about": "A different sound, the notes kept.",
+		"steps": [
+			{ "say": "make a bassline on track 3" },
+			{ "say": "swap the bass sound for something rounder, keep the notes" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hindi-hiphop",
+		"about": "A request in Hindi.",
+		"steps": [{ "say": "एक हिप हॉप बीट बनाओ, बेस के साथ" }, { "why": true }]
+	},
+	{
+		"name": "voice-as-drum",
+		"about": "A sampler how-to.",
+		"steps": [
+			{ "say": "how do I record my voice and use it as a drum sound on the op-xy?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-3-bars",
+		"about": "Different pattern lengths across tracks.",
+		"steps": [
+			{ "say": "make a 4 bar beat and a 3 bar bassline so they drift against each other" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "undo-last",
+		"about": "An undo after a change.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "make the bass an octave higher" },
+			{ "say": "undo that" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ghosts-and-accents",
+		"about": "Dynamics in a drum line.",
+		"steps": [
+			{ "say": "make a funk beat" },
+			{ "say": "add ghost notes on the snare and accent the backbeat more" },
+			{ "why": true }
+		]
+	}
+]

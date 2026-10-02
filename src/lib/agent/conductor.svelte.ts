@@ -230,7 +230,13 @@ function playingNow(virtual: VirtualOpxy): string {
 		const withNotes = status.tracks.filter((t) => t.notes > 0);
 		const sounding = withNotes.filter((t) => !t.muted).map(name);
 		const muted = withNotes.filter((t) => t.muted).map(name);
-		const tracks = ` Sounding: ${sounding.length ? sounding.join(', ') : 'no track (no notes in the patterns playing)'}${muted.length ? `; muted: ${muted.join(', ')}` : ''}.`;
+		// the browser's own sound switched off: playing, and nothing heard (an agent could not tell
+		// whether the user heard the replica at all)
+		const silent =
+			status.sound === 'off'
+				? ' Its sound is off in the browser (the sound switch under the replica): the user hears nothing until it is on.'
+				: '';
+		const tracks = ` Sounding: ${sounding.length ? sounding.join(', ') : 'no track (no notes in the patterns playing)'}${muted.length ? `; muted: ${muted.join(', ')}` : ''}.${silent}`;
 		const a = virtual.readArrangement();
 		const queued = a.queued
 			? ` Scene ${a.queued} is queued: it takes over when this one ends.`

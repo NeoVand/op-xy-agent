@@ -296,6 +296,23 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   lines say first when another project opened, and name the bar menu's shape and note length; the
   midi engine's load says the unit's browser did not list it; the manual: mono and legato as the
   replica plays them (derived, the unit check pending).
+- **Probe round twenty-three (2026-10-02), 18 scenarios (`probe-scenarios-23.json`: re-checks (a filter
+  ramp set while playing, a fill merged into one bar, lab kick takes with merge, a 3 s swell, a third
+  above by scale steps, Gb major, swung hats, a synth on channel 2, a walkthrough to groove 40) and
+  new kinds: a lesson followed key by key, a busier copy, a bass too loud, a crash every 4 bars, a
+  song structure at once, "what bpm is this", Daft Punk without copying, Portuguese funk carioca,
+  stop and reset the tempo):** no failed calls; scale steps, Cb, times, bar merges and lab reads all
+  held. Fixes: step locks while playing still landed two bars off on the real replica (the pin tap
+  went to another track's one-bar pattern, which cannot switch bars): the pin now comes at the first
+  lock step, on the lock's track, and a test drives the real replica's animation with the
+  simulator's frames (a walkthrough of a lock while playing says to stop first); the project's midi
+  page is reachable ("midi channel" with track, or "midi track 6"), and a row two pages share, named
+  alone, is refused (track 6's channel set its voices); a slow attack against the notes it sounds
+  under is said where notes are written and where the attack is set (a 3 s swell under 2 s notes
+  never reaches full level); plan results give turns in detents, not clicks; the Now line says when
+  the browser's sound is off; merge's description says a line replaces its sound's line, and bar
+  with merge writes one bar's crash without a 64-mark line; the open-hat note tells the agent how to
+  say it.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

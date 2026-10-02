@@ -21,6 +21,7 @@ import { BAR } from '$lib/sim/areas/arrange/model';
 import { grooveReachAll } from '../groove-reach';
 import { lockReach } from '../lock-reach';
 import { slidesNote } from '../slides';
+import { swellNote } from '../swell';
 import { nearestStage, stageSeconds, timeText, type EnvelopeStage } from '$lib/sound/times';
 import type { TimeSignature } from '$lib/sim/areas/arrange/state';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
@@ -203,8 +204,13 @@ function toGoal(input: GoalInput, env: AgentEnvironment): NavGoal | string {
 
 const stepView = (s: NavStep) => ({
 	keys: s.keys,
+	// detents, not clicks: a click of an encoder is a press (an agent read "clicks: 40" for a turn
+	// and had to say which it meant)
 	...(s.clicks !== undefined
-		? { clicks: s.clicks, direction: s.clicks > 0 ? 'clockwise' : 'counter-clockwise' }
+		? {
+				detents: Math.abs(s.clicks),
+				direction: s.clicks > 0 ? 'clockwise' : 'counter-clockwise'
+			}
 		: {}),
 	screen: s.screen
 });
@@ -339,6 +345,11 @@ export const planStepsTool = defineTool({
 				if (input.guide && !input.show) plan = path;
 			}
 		}
+		// a step lock: its keys follow the playhead from bar to bar while the replica plays
+		const locking =
+			'settings' in goal
+				? goal.settings.some((g) => 'step' in g && g.step !== undefined)
+				: 'step' in goal && goal.step !== undefined;
 		if (input.guide && !input.show) {
 			const guide = ctx.env.guide;
 			const alreadyText = already
@@ -389,6 +400,12 @@ export const planStepsTool = defineTool({
 								]
 							}
 						: {}),
+					...(locking && virtual.status().playing
+						? {
+								caution:
+									'The replica is playing, and its step keys follow the playhead from bar to bar, so the lit bar taps count from wherever it is: ask the user to stop first (or stop it yourself) so the lock lands on its step.'
+							}
+						: {}),
 					// its own key: the plan's note ("E1 turns it") once took this one's place
 					walkthrough:
 						'The keys are lit on the replica now, one step at a time, and it waits for the user: tell them to follow the lit keys. It moves on by itself when the screen shows where a step leads, and tells you when the last is done.'
@@ -435,18 +452,28 @@ export const planStepsTool = defineTool({
 		ctx.env.guide?.stop();
 		// step locks while the replica plays: the step keys follow the playhead from bar to bar, so
 		// a plan made a moment before lands a bar off (an agent's four cutoff locks each went a bar
-		// early). A bar tap pins the keys, as picking a bar during playback does on the device, and
-		// the plan is made again from there.
-		const locking =
-			'settings' in goal
-				? goal.settings.some((g) => 'step' in g && g.step !== undefined)
-				: 'step' in goal && goal.step !== undefined;
-		if (locking && virtual.status().playing && !ctx.signal.aborted) {
-			await replica.animate('bar').done;
-			plan = virtual.plan(goal);
-		}
-		for (const step of plan.steps) {
+		// early). At the first lock's bar tap or held step, the lock's track selected by then, a bar
+		// tap pins the keys, as picking a bar during playback does on the device, and the rest is
+		// planned again from there (a tap on another track's one-bar pattern pinned nothing)
+		const holdsStep = (keys: string) => /^step \d+ \+/.test(keys);
+		let pinned = false;
+		let shown = plan.steps;
+		for (let i = 0; i < shown.length; i++) {
 			if (ctx.signal.aborted) break;
+			const step = shown[i];
+			if (
+				locking &&
+				!pinned &&
+				(step.keys === 'bar' || holdsStep(step.keys)) &&
+				virtual.status().playing
+			) {
+				pinned = true;
+				await replica.animate('bar').done;
+				// the rest from where the replica stands now; the result keeps the whole plan
+				shown = virtual.plan(goal).steps;
+				i = -1;
+				continue;
+			}
 			const clicks = Math.abs(step.clicks ?? 0);
 			const timing = clicks
 				? {
@@ -531,6 +558,26 @@ export const planStepsTool = defineTool({
 			const line = slidesNote(track, page, virtual.readPattern(track).notes);
 			return line ? [line] : [];
 		});
+		// a slow amp attack set where the notes end before it (a swell its chords never finish)
+		const attacked = new Set(
+			goals.flatMap((g) =>
+				'param' in g && /^(amp )?attack$/i.test(String(g.param).trim())
+					? [g.track ?? status.selectedTrack]
+					: []
+			)
+		);
+		const swells = [...attacked].flatMap((track) => {
+			if (track < 1 || track > 8) return [];
+			const p = virtual.readPattern(track);
+			const line = swellNote(
+				track,
+				virtual.readSound(track).pages['M2 amp envelope'] ?? '',
+				p.notes,
+				p.scale,
+				virtual.status().bpm
+			);
+			return line ? [line] : [];
+		});
 		// a sound loaded (an engine, a preset, another track's) sets every page anew: its pages as
 		// they read now, after the settings that followed (an agent loading axis for a pad never saw
 		// that the load had brought its own filter and envelopes)
@@ -556,6 +603,12 @@ export const planStepsTool = defineTool({
 			{
 				shown: true,
 				arrived,
+				...(pinned
+					? {
+							pinned:
+								'The replica was playing, so a bar tap first pinned the step keys (while it plays they follow the playhead from bar to bar); on the unit, stop first, or tap bar to pick the bar, before holding a step.'
+						}
+					: {}),
 				...(missed.length
 					? {
 							missed: `NOT ON THE REPLICA NOW: ${missed.join('; ')}. Their plans above were made on a copy; plan them again (show) and check before you answer.`
@@ -570,6 +623,7 @@ export const planStepsTool = defineTool({
 				...(reach.length ? { groove: reach.join(' ') } : {}),
 				...(shared.length ? { locks: shared.join(' ') } : {}),
 				...(slides.length ? { slides: slides.join(' ') } : {}),
+				...(swells.length ? { swell: swells.join(' ') } : {}),
 				...(midi ? { unit: midi } : {}),
 				...(loaded.length
 					? {

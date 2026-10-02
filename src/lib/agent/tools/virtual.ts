@@ -10,6 +10,7 @@ import { parseNoteName } from '$lib/core/midi/notes';
 import { grooveReach } from '../groove-reach';
 import { humanizeNotes, seedOf } from '../humanize';
 import { slidesNote } from '../slides';
+import { swellNote } from '../swell';
 import { gridKey } from '../grid-key';
 import { voicesNote } from '../voices';
 import { envelopeTimes } from '$lib/sound/times';
@@ -376,7 +377,7 @@ export const writePatternTool = defineTool({
 			.boolean()
 			.optional()
 			.describe(
-				"With grid: write only the lines given, the pattern's other sounds kept as they are (add a cowbell, or change the hats, without resending the beat; a line of rests takes its sound out); its bars and length stay unless given"
+				'With grid: write only the lines given, the pattern\'s other sounds kept as they are (add a cowbell, or change the hats, without resending the beat); a line given replaces that sound\'s whole line, and a line of rests takes it out; its bars and length stay unless given. With bar too, only that bar of those sounds (a crash on bar 1 alone: bar 1, merge, {"crash": "x... .... .... ...."}, no 64-mark line); with copy, the copy\'s lines'
 			),
 		copy: z
 			.int()
@@ -1128,7 +1129,7 @@ export const writePatternTool = defineTool({
 						? `The closed hat line is left out entirely: every hit of it falls where the open hat hits (step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}), and the grid keeps one hat a step, as a drummer plays one or the other (the OP-XY plays both: the notes form stacks them). Give the closed hat steps of its own, or leave it out.`
 						: // the grid's choice, said as one (agents told users a closed and an open hat "can't
 							// share a step")
-							`The grid keeps one hat a step: the closed hat is left out on step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}, where the open hat hits, as a drummer plays one or the other there. Not a limit of the OP-XY, which plays both: the notes form stacks them.`
+							`The grid keeps one hat a step: the closed hat is left out on step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}, where the open hat hits, as a drummer plays one or the other there. Not a limit of the OP-XY, which plays both: the notes form stacks them. Telling the user, say it is the drummer's way, never that the hats cannot share a step.`
 				);
 			}
 			// a closed and an open hat on one step: a drummer plays one or the other (an agent wrote
@@ -1249,11 +1250,22 @@ export const writePatternTool = defineTool({
 				);
 			}
 			// where the notes slide on a mono or legato track with portamento up (an agent's acid line
-			// ended each note where the next began, and it said they slid)
-			if (!drums && playMode && playMode !== 'poly') {
-				const page = virtual.readSound(input.track).pages['shift M2 play mode'] ?? '';
-				const slides = slidesNote(input.track, page, result.notes);
-				if (slides) notes2.push(slides);
+			// ended each note where the next began, and it said they slid), and a slow attack the
+			// notes end before (a 3 s swell under notes of 2 s)
+			if (!drums && result.notes.length > 0) {
+				const pages = virtual.readSound(input.track).pages;
+				if (playMode && playMode !== 'poly') {
+					const slides = slidesNote(input.track, pages['shift M2 play mode'] ?? '', result.notes);
+					if (slides) notes2.push(slides);
+				}
+				const swell = swellNote(
+					input.track,
+					pages['M2 amp envelope'] ?? '',
+					result.notes,
+					result.scale,
+					virtual.status().bpm
+				);
+				if (swell) notes2.push(swell);
 			}
 			// step components on steps with no notes, left out (an agent's rolls sat on rests)
 			if (bare.length > 0) {

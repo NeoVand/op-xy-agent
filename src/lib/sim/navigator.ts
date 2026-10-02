@@ -1046,8 +1046,13 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 	}
 	const rec = new Recorder(copy(state));
 	// a project setting named without its area ("time signature")
-	if (!id && projectRow(state, goal.param)) {
-		return PROJECT_SETTING.plan(state, { area: 'project', label: goal.param, value: goal.value });
+	if (!id && projectRow(state, goal.param, goal.track)) {
+		return PROJECT_SETTING.plan(state, {
+			area: 'project',
+			label: goal.param,
+			value: goal.value,
+			...(goal.track !== undefined ? { track: goal.track } : {})
+		});
 	}
 	if (!id) {
 		// not a sound parameter: a value one of the track's pages shows by that name (the midi
@@ -1221,8 +1226,13 @@ export function reads(state: SimState, goal: SettingGoal): boolean {
 	if ('label' in goal) return readsPage(state, goal);
 	const track = goal.track ?? state.track + 1;
 	const id = findParam(goal.param, state, track, goal.value);
-	if (!id && projectRow(state, goal.param)) {
-		return PROJECT_SETTING.reads(state, { area: 'project', label: goal.param, value: goal.value });
+	if (!id && projectRow(state, goal.param, goal.track)) {
+		return PROJECT_SETTING.reads(state, {
+			area: 'project',
+			label: goal.param,
+			value: goal.value,
+			...(goal.track !== undefined ? { track: goal.track } : {})
+		});
 	}
 	if (!id) {
 		return readsPage(state, {
@@ -1365,8 +1375,13 @@ export function planToSetting(state: SimState, goal: SettingGoal): NavPlan {
 	const track = goal.track ?? state.track + 1;
 	const id = findParam(goal.param, state, track);
 	// a project setting named without its area ("time signature")
-	if (!id && projectRow(state, goal.param)) {
-		return PROJECT_SETTING.plan(state, { area: 'project', label: goal.param, value: goal.value });
+	if (!id && projectRow(state, goal.param, goal.track)) {
+		return PROJECT_SETTING.plan(state, {
+			area: 'project',
+			label: goal.param,
+			value: goal.value,
+			...(goal.track !== undefined ? { track: goal.track } : {})
+		});
 	}
 	if (!id) {
 		return planToSetting(state, {
@@ -2501,14 +2516,39 @@ const PROJECT_ROW_NAMES: Readonly<Record<string, string>> = {
 	groove: 'groove type'
 };
 
-/** A project setting's row by its name: its section and place in it (project → M4). */
-function projectRow(state: SimState, label: string): { section: number; row: number } | null {
-	const want = PROJECT_ROW_NAMES[word(label)] ?? word(label);
-	for (const [section, s] of PROJECT_SECTIONS.entries()) {
-		const row = s.rows(state).findIndex((r) => r.label.toLowerCase() === want);
-		if (row >= 0) return { section, row };
+/**
+ * A project setting's row by its name: its section and place in it (project → M4). The voices and
+ * midi pages both have a row per track ("track 6"): "midi track 6", a "midi channel" of `track`,
+ * or "voices track 6" names one (an agent's channel for track 6 set its voices instead).
+ */
+function projectRow(
+	state: SimState,
+	label: string,
+	track?: number
+): { section: number; row: number } | null {
+	let want = PROJECT_ROW_NAMES[word(label)] ?? word(label);
+	let only: string | null = null;
+	const named = /^(midi|voices?)\b(?:\s+(?:channel|count))?\s*(.*)$/.exec(want);
+	if (named) {
+		only = named[1].startsWith('voice') ? 'voices' : 'midi';
+		want = named[2] || (track !== undefined ? `track ${track}` : '');
 	}
-	return null;
+	const found: { section: number; row: number }[] = [];
+	for (const [section, s] of PROJECT_SECTIONS.entries()) {
+		if (only && s.label !== only) continue;
+		const row = s.rows(state).findIndex((r) => r.label.toLowerCase() === want);
+		if (row >= 0) found.push({ section, row });
+	}
+	// a row two pages share, named alone, is neither (it once set the first page's)
+	return found.length === 1 ? found[0] : null;
+}
+
+/** The pages a row name is on, when more than one has it ("track 6": voices, midi). */
+function sharedRow(state: SimState, label: string): string[] {
+	const want = word(label);
+	return PROJECT_SECTIONS.filter((s) =>
+		s.rows(state).some((r) => r.label.toLowerCase() === want)
+	).map((s) => s.label);
 }
 
 /** The value of a project setting's row, as its page shows it. */
@@ -2601,7 +2641,14 @@ const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>
 const PROJECT_SETTING: Special = {
 	plan(state, goal) {
 		const rec = new Recorder(copy(state));
-		const at = projectRow(state, goal.label);
+		const at = projectRow(state, goal.label, goal.track);
+		const pages = sharedRow(state, goal.label);
+		if (!at && pages.length > 1) {
+			return rec.plan(
+				false,
+				`"${goal.label}" is a row of ${pages.join(' and ')}: name the page, e.g. "${pages[pages.length - 1]} ${goal.label}" (a track's midi channel: "midi channel" with track)`
+			);
+		}
 		if (!at) {
 			const names = PROJECT_SECTIONS.flatMap((s) => s.rows(state).map((r) => r.label));
 			return rec.plan(
@@ -2643,7 +2690,7 @@ const PROJECT_SETTING: Special = {
 		);
 	},
 	reads(state, goal) {
-		const at = projectRow(state, goal.label);
+		const at = projectRow(state, goal.label, goal.track);
 		return at !== null && hit(projectValue(state, at), goal.value);
 	}
 };
