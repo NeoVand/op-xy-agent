@@ -309,10 +309,56 @@ describe('commits', () => {
 		// the track plays pattern 1 still
 		expect(f.status().tracks[2].current).toBe(1);
 		expect(() => f.set({ param: 'cutoff', value: 40, track: 3, pattern: 2 })).toThrow(
-			/pattern goes with step/
+			/pattern goes with step .* or with area bar/
 		);
 		expect(() => f.set({ param: 'cutoff', value: 40, track: 3, step: 1, pattern: 5 })).toThrow(
 			/has no pattern 5/
+		);
+	});
+
+	it('sets another pattern’s bar menu, and switches back', () => {
+		// a program smoothing the locks of a song's second pattern pressed its way there and
+		// smoothed the first
+		const { lab } = labOn();
+		const song = lab.fork();
+		song.writePattern(3, { notes: '1:A1:4 5:C2:4 9:E2:4 13:G2:4' });
+		song.writePattern(3, { pattern: 2, copy: 1, stay: true });
+		lab.commit(song, 'two patterns');
+		const f = lab.fork();
+		const result = f.set({ area: 'bar', param: 'shape', value: 60, track: 3, pattern: 2 });
+		expect(result.reached).toBe(true);
+		expect(f.status().tracks[2].current).toBe(1);
+		expect(lab.commit(f, 'smoothed').changes).toEqual(['T3 pattern 2: smoothing 0 → 60']);
+	});
+
+	it('takes an envelope stage as a time, as plan_steps does', () => {
+		// a program's "0.3 s" attack was refused, and the cutoff batched with it was lost
+		const { lab } = labOn();
+		const f = lab.fork();
+		const result = f.set([
+			{ param: 'amp attack', value: '0.3 s', track: 7 },
+			{ param: 'cutoff', value: 25, track: 7 }
+		]);
+		expect(result.reached).toBe(true);
+		expect(result.note).toMatch(
+			/^amp attack 0\.3 s: the page value \d+ \(of 0–99\) is the nearest, 0\.3 s/
+		);
+		const page = Number(/page value (\d+)/.exec(result.note ?? '')?.[1]);
+		expect(f.readSound(7).pages['M2 amp envelope']).toMatch(new RegExp(`attack ${page},`));
+		expect(f.readSound(7).pages['M3 filter']).toMatch(/cutoff 25/);
+	});
+
+	it('names the key a write meant, for the readings once it lands', () => {
+		// a song's program named its keys, as write_pattern takes them, and failed
+		const { lab, session } = labOn();
+		const f = lab.fork();
+		f.writePattern(5, { key: 'D dorian', notes: '1:D4:2 3:F4:2 5:B4:2' });
+		f.writePattern(3, { notes: '1:D2:8' });
+		expect(session.keys()).toEqual({});
+		lab.commit(f, 'a melody');
+		expect(session.keys()).toEqual({ '5:1': 'D dorian', '3:1': null });
+		expect(() => f.writePattern(5, { key: 'H minor', notes: '1:D4' })).toThrow(
+			/"H minor" is no key it reads/
 		);
 	});
 

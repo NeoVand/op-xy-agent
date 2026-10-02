@@ -36,6 +36,7 @@ import { describeFrame } from '$lib/sim/screen/render';
 import { TRACK_SCALES } from '$lib/sim/sequencer';
 import { settleSession } from '$lib/sim/session';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
+import { stageSetting } from '$lib/sound/times';
 import { MidiImportError, planMidiImport, type ImportPlan } from '../midi-import';
 import { pitchRange, trackShapes } from '../midi-text';
 import {
@@ -75,6 +76,7 @@ import {
 	type WrittenNote
 } from '../pattern-notes';
 import { gridKey } from '../grid-key';
+import { parseKey } from '../pattern-reading';
 import { takeReads } from './take-reads';
 
 /** A program's mistake, in words it can act on. */
@@ -148,6 +150,8 @@ export interface LabSession {
 	commits(): readonly LabCommit[];
 	/** The project the commits leave (`snapshot`), or null when nothing was committed. */
 	project(): string | null;
+	/** The keys the committed writes named, by track:pattern (null: written with none). */
+	keys(): Readonly<Record<string, string | null>>;
 	/** The takes offered so far, in order. */
 	takes(): readonly LabTake[];
 	/** Forks made and renders heard so far. */
@@ -273,7 +277,10 @@ const patternWrite = z.strictObject({
 	merge: z.boolean().optional(),
 	// start from another of the track's patterns, as write_pattern's copy (a program building an
 	// outro from copies failed on it): alone a duplicate, with a grid and merge a variation
-	copy: patternNumber.optional()
+	copy: patternNumber.optional(),
+	// the key meant, as write_pattern takes it (a song's program failed on it): read_pattern spells
+	// the pattern in it once the commit lands
+	key: z.string().max(24).optional()
 });
 
 const arrangementWrite = z.strictObject({
@@ -329,7 +336,8 @@ const setting = z.strictObject({
 	// a parameter lock on one step, as plan_steps takes it (an agent's riser needed a cutoff per step)
 	step: z.int().min(1).max(64).optional(),
 	// with step, the pattern whose step it locks, when not the one the track plays (an outro's
-	// copies took the verse's locks, and pointing the track at them rewrote a scene)
+	// copies took the verse's locks, and pointing the track at them rewrote a scene); with area
+	// bar, the pattern whose bar menu it sets
 	pattern: patternNumber.optional()
 });
 
@@ -453,6 +461,8 @@ interface ForkRecord {
 	/** The whole state it was forked from, for `diff()`. */
 	readonly base: string;
 	baseSide: DiffSide | null;
+	/** The keys its writes named, by track:pattern (null: written with none), carried into its forks. */
+	readonly keys: Map<string, string | null>;
 }
 
 const stepText = (s: NavStep) => (s.clicks === undefined ? s.keys : `${s.keys} ×${s.clicks}`);
@@ -465,6 +475,8 @@ export function createLab(options: LabOptions): LabSession {
 	const replica = forkState(options.snapshot);
 	let committed = false;
 	const commits: LabCommit[] = [];
+	/** The keys the committed forks' writes named (track:pattern → "A minor"; null: none). */
+	const keys = new Map<string, string | null>();
 	const takes: LabTake[] = [];
 	let forks = 0;
 	let renders = 0;
@@ -481,11 +493,24 @@ export function createLab(options: LabOptions): LabSession {
 		return found;
 	}
 
-	function makeFork(state: SimState, origin: string, base: string): Fork {
+	function makeFork(
+		state: SimState,
+		origin: string,
+		base: string,
+		named: ReadonlyMap<string, string | null> = new Map()
+	): Fork {
 		const name = `fork ${++forks}`;
 		const sim = new OpxySim({ state, now: () => 0 });
 		const virtual = options.virtual(sim);
-		const self: ForkRecord = { name, sim, virtual, origin, base, baseSide: null };
+		const self: ForkRecord = {
+			name,
+			sim,
+			virtual,
+			origin,
+			base,
+			baseSide: null,
+			keys: new Map(named)
+		};
 
 		const status = (): ForkStatus => {
 			const s = virtual.status();
@@ -535,6 +560,12 @@ export function createLab(options: LabOptions): LabSession {
 			) {
 				throw new LabError(
 					'writePattern: give notes (a list or "1:A2:4 5:C3+E3:2"), chords ("1:Am7 17:F"), a drum grid ({"kick": "x... x..."}) or copy (another pattern of the track)'
+				);
+			}
+			const meant = w.key === undefined ? undefined : parseKey(w.key);
+			if (meant === null) {
+				throw new LabError(
+					`writePattern: "${w.key}" is no key it reads ("A minor", "D dorian", "Eb major")`
 				);
 			}
 			if (w.copy !== undefined && w.copy > virtual.status().tracks[t - 1].patterns) {
@@ -610,6 +641,7 @@ export function createLab(options: LabOptions): LabSession {
 			const steps = bars * 16;
 			const locks = (base?.stepLocks ?? []).filter((l) => l.step <= steps);
 			const components = (base?.components ?? []).filter((c) => c.step <= steps);
+			self.keys.set(`${t}:${w.pattern ?? 1}`, meant?.label ?? null);
 			return virtual.writePattern(t, {
 				pattern: w.pattern ?? 1,
 				bars,
@@ -644,11 +676,25 @@ export function createLab(options: LabOptions): LabSession {
 			});
 		}
 
-		/** The navigator's plan for settings as a program passes them, from where the fork stands. */
-		function planned(input: unknown, what: 'set' | 'plan'): { list: Setting[]; plan: NavPlan } {
-			const list = Array.isArray(input)
+		/**
+		 * The navigator's plan for settings as a program passes them, from where the fork stands; an
+		 * envelope stage may be given as a time, as plan_steps takes it (a program's "0.3 s" attack was
+		 * refused, and the settings batched with it were lost).
+		 */
+		function planned(
+			input: unknown,
+			what: 'set' | 'plan'
+		): { list: Setting[]; plan: NavPlan; times: string[] } {
+			const given = Array.isArray(input)
 				? check(z.array(setting).min(1).max(16), input, what)
 				: [check(setting, input, what)];
+			const times: string[] = [];
+			const list = given.map((s) => {
+				const read = stageSetting(s.param, s.value);
+				if (!read) return s;
+				times.push(read.line);
+				return { ...s, value: read.value };
+			});
 			const selected = virtual.status().selectedTrack;
 			const goals = list.map((s) => {
 				const goal = settingGoal(s, selected);
@@ -656,7 +702,7 @@ export function createLab(options: LabOptions): LabSession {
 				return goal;
 			});
 			const plan = goals.length === 1 ? virtual.plan(goals[0]) : virtual.plan({ settings: goals });
-			return { list, plan };
+			return { list, plan, times };
 		}
 
 		function set(input: Setting | readonly Setting[]): SetResult {
@@ -668,13 +714,16 @@ export function createLab(options: LabOptions): LabSession {
 		}
 
 		/**
-		 * Locks on another pattern's steps, as a person makes them: the track switched to that pattern
-		 * (the arrange page's pattern), the steps locked, the track switched back, so what plays and
-		 * every scene stay as they were.
+		 * Locks on another pattern's steps, or its bar menu (quant, length, groove, shape), as a person
+		 * sets them: the track switched to that pattern (the arrange page's pattern), the setting made,
+		 * the track switched back, so what plays and every scene stay as they were (a program smoothing
+		 * the locks of a song's second pattern pressed its way there and smoothed the first).
 		 */
 		function setOnPatterns(all: readonly Setting[]): SetResult {
-			if (all.some((s) => s.pattern !== undefined && s.step === undefined)) {
-				throw new LabError("set: pattern goes with step (a lock on that pattern's step)");
+			if (all.some((s) => s.pattern !== undefined && s.step === undefined && s.area !== 'bar')) {
+				throw new LabError(
+					"set: pattern goes with step (a lock on that pattern's step) or with area bar (that pattern's bar menu: quant, length, groove, shape)"
+				);
 			}
 			const selected = virtual.status().selectedTrack;
 			const steps: string[] = [];
@@ -728,7 +777,7 @@ export function createLab(options: LabOptions): LabSession {
 		}
 
 		function setNow(input: readonly Setting[]): SetResult {
-			const { list, plan } = planned(input, 'set');
+			const { list, plan, times } = planned(input, 'set');
 			if (!plan.reached) {
 				const what = list.map((s) => `${s.track ? `track ${s.track} ` : ''}${s.param} ${s.value}`);
 				throw new LabError(
@@ -752,7 +801,7 @@ export function createLab(options: LabOptions): LabSession {
 				const line = lockReach(virtual, track, steps);
 				return line ? [line] : [];
 			});
-			const notes = [...reach, ...shared];
+			const notes = [...times, ...reach, ...shared];
 			return {
 				reached: true,
 				steps: plan.steps.map(stepText),
@@ -762,12 +811,13 @@ export function createLab(options: LabOptions): LabSession {
 		}
 
 		function plan(input: Setting | readonly Setting[]): SetResult {
-			const { plan: p } = planned(input, 'plan');
+			const { plan: p, times } = planned(input, 'plan');
+			const notes = [...times, ...(p.note ? [p.note] : [])];
 			return {
 				reached: p.reached,
 				steps: p.steps.map(stepText),
 				screen: p.screen,
-				...(p.note ? { note: p.note } : {})
+				...(notes.length ? { note: notes.join(' ') } : {})
 			};
 		}
 
@@ -1114,7 +1164,7 @@ export function createLab(options: LabOptions): LabSession {
 			}
 			const parent = record(from, 'fork');
 			const json = JSON.stringify(parent.sim.state);
-			return makeFork(forkState(json), parent.origin, json);
+			return makeFork(forkState(json), parent.origin, json, parent.keys);
 		},
 		listen,
 		commit(fork: Fork, label: string): ReplicaDiff {
@@ -1124,6 +1174,7 @@ export function createLab(options: LabOptions): LabSession {
 			applyProject(replica, f.origin, snapshot(f.sim.state));
 			const diff = diffReplica(before, sideOf(replica));
 			commits.push({ label: text, changes: diff.changes });
+			for (const [slot, key] of f.keys) keys.set(slot, key);
 			committed = true;
 			return diff;
 		},
@@ -1159,6 +1210,7 @@ export function createLab(options: LabOptions): LabSession {
 		commits: () => [...commits],
 		takes: () => [...takes],
 		project: () => (committed ? snapshot(replica) : null),
+		keys: () => Object.fromEntries(keys),
 		counts: () => ({ forks, listens: renders })
 	};
 }

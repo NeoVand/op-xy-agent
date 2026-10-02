@@ -208,8 +208,9 @@ export interface Setting {
 	/** A parameter lock: the pattern step (1–64) whose own value this sets, the track's kept. */
 	readonly step?: number;
 	/**
-	 * With step: the pattern whose step it locks, when not the one the track plays (the track is
-	 * switched to it and back, so what plays and the scenes stay as they were).
+	 * With step: the pattern whose step it locks, when not the one the track plays; with area bar:
+	 * the pattern whose bar menu it sets (the track is switched to it and back, so what plays and
+	 * the scenes stay as they were).
 	 */
 	readonly pattern?: number;
 }
@@ -242,6 +243,8 @@ export interface PatternWrite {
 	readonly groove?: number;
 	/** Every note's velocity that gives none, 1–127 (default 100). */
 	readonly velocity?: number;
+	/** The key meant ("A minor", "D dorian"), as write_pattern's: readings spell the pattern in it. */
+	readonly key?: string;
 	/** Chords by name, as write_pattern takes them ("1:Am7 17:F"), voiced smoothly (or voicing root). */
 	readonly chords?: string;
 	readonly voicing?: 'smooth' | 'root';

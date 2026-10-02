@@ -430,6 +430,23 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   eighth"); a named key stays through writes that move no note (E dorian humanized read E minor);
   the music skill's three against four was wrong (a hit every four steps only doubles the beat)
   and now says an accented three-beat figure.
+- **Probe round thirty-one (2026-10-02), 18 scenarios (`probe-scenarios-31.json`: re-checks (a
+  crash on bar 1 alone, a fill's bar reversed, lab locks on a copy, slash chords in Bb, a wobble's
+  rate, D dorian kept) and new kinds: bossa nova, Turkish, double-time hats, a chord per scene,
+  accented hats read back, a filter opening across a song's second scene, a kit swap, an external
+  synth on T8, "too busy", a 15-step hat, undo twice, "stop everything"):** two failed calls. Fixes:
+  panic silences the replica when no OP-XY is connected (playback stopped, every note cut, release
+  tails too) where it refused; the lab's writePattern takes key, and the keys its commits name reach
+  the readings after; the lab's set takes an envelope stage as a time ("0.3 s"), as plan_steps does
+  (one shared reading), and with pattern and area bar sets that pattern's bar menu (a program
+  smoothing a song's second pattern had pressed its way onto the first); a plan_steps list that goes
+  to another pattern and back counts as landed when the replica holds what the plan left on its
+  copy (it read both switches as missed), real misses still named; read_pattern reads in the key
+  its write named; a shorter part loops under a longer one in the readings (a one-bar bass under
+  four-bar chords was heard under bar 1 alone); drum hits list their velocities; the LFO speed
+  lists its sync values and says there are no triplets; make_kit says where each given voice went,
+  by key number and note name; the kits skill puts TE's factory kits first (stand-ins on the
+  replica), and the music skill has a bossa nova clave and a plainer double-time rule.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

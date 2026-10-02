@@ -287,6 +287,14 @@ export class AppSound {
 		return true;
 	}
 
+	/** Cuts every sound at once, release tails and previews too (the agent's panic on the replica). */
+	silence(): void {
+		this.#engine?.silence();
+		this.#live.clear();
+		this.#playerLive.clear();
+		this.#pending = [];
+	}
+
 	/**
 	 * What the replica plays, for the agent's listening (`$lib/device/listen`): the audio context
 	 * and the node the whole sound passes through on its way out. Wakes the audio as a gesture

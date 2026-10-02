@@ -294,6 +294,26 @@ describe('a chord named over the bass another part plays', () => {
 		const both = readPattern(two, [under]);
 		expect(both?.progression).toMatch(/^Cmaj7 F\b/);
 		expect(both?.withBass).toBe("with T3's bass as it plays now: Am9 Dm7");
+		// a one-bar bass loops under two bars of chords (it was heard under the first bar alone)
+		const long: VirtualPattern = {
+			...at(
+				[
+					...[60, 64, 67, 71].map((note) => [1, note, 16] as [number, number, number]),
+					...[60, 64, 67, 71].map((note) => [17, note, 16] as [number, number, number])
+				],
+				4
+			),
+			bars: 2,
+			length: 32
+		};
+		const looped = readPattern(
+			{ ...long, notes: long.notes.filter((n) => n.step === 1 || n.note !== 71) },
+			[bass]
+		);
+		expect(looped?.chords).toEqual([
+			"step 1: Cmaj7 (C E G B; over T3's A it sounds as Am9)",
+			"step 17: C (C E G; over T3's A it sounds as Am7)"
+		]);
 	});
 });
 

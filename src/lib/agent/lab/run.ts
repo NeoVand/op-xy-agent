@@ -78,6 +78,8 @@ export interface LabRunResult {
 	readonly takes?: readonly LabTake[];
 	/** The project to land on the replica: the commits' result, or null. */
 	readonly project: string | null;
+	/** The keys the committed writes named, by track:pattern (null: written with none). */
+	readonly keys?: Readonly<Record<string, string | null>>;
 	readonly forks: number;
 	readonly listens: number;
 	readonly ms: number;
@@ -344,6 +346,9 @@ export async function runLabProgram(
 		...outcome,
 		commits: session.commits(),
 		project: 'error' in outcome ? null : session.project(),
+		...('error' in outcome || Object.keys(session.keys()).length === 0
+			? {}
+			: { keys: session.keys() }),
 		takes: 'error' in outcome ? [] : session.takes(),
 		...session.counts(),
 		ms: Date.now() - started

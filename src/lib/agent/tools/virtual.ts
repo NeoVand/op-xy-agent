@@ -144,6 +144,15 @@ const keysOf = (virtual: object) => {
 	return map;
 };
 
+/** The keys a lab run's commits named (track:pattern → "A minor"; null: written with none). */
+export function nameKeys(virtual: object, keys: Readonly<Record<string, string | null>>): void {
+	const map = keysOf(virtual);
+	for (const [slot, key] of Object.entries(keys)) {
+		if (key === null) map.delete(slot);
+		else map.set(slot, key);
+	}
+}
+
 /** Key names by tonic pitch class, as the keys are usually written. */
 const MAJOR_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 const MINOR_KEYS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
@@ -249,6 +258,18 @@ function patternView(
 	};
 }
 
+/** Each drum sound's velocities by step. */
+function soundVelocities(p: VirtualPattern): Map<string, Map<number, number>> {
+	const out = new Map<string, Map<number, number>>();
+	for (const n of p.notes) {
+		if (!n.sound) continue;
+		const at = out.get(n.sound) ?? new Map<number, number>();
+		at.set(n.step, n.velocity);
+		out.set(n.sound, at);
+	}
+	return out;
+}
+
 /** Each drum sound's steps, by sound (the notes it holds), in step order. */
 function soundSteps(p: VirtualPattern): Map<string, number[]> {
 	const steps = new Map<string, Set<number>>();
@@ -275,7 +296,17 @@ function drumHits(p: VirtualPattern): string | null {
 			? `every ${gap} from ${sorted[0]} (${sorted.length})`
 			: `${sorted.slice(0, 12).join(' ')} … (${sorted.length} in all)`;
 	};
-	return [...steps].map(([sound, at]) => `${sound}: ${listed(at)}`).join('; ');
+	// and how loud: one velocity for the line, or each hit's (an agent asked how loud each hat was
+	// had to read the pattern again)
+	const loud = soundVelocities(p);
+	const how = (sound: string, at: number[]) => {
+		const v = loud.get(sound);
+		if (!v) return '';
+		const all = [...new Set(at.map((step) => v.get(step)))];
+		if (all.length === 1) return ` at ${all[0]}`;
+		return at.length <= 16 ? ` (velocities ${at.map((step) => v.get(step)).join(' ')})` : '';
+	};
+	return [...steps].map(([sound, at]) => `${sound}: ${listed(at)}${how(sound, at)}`).join('; ');
 }
 
 /**
@@ -1395,7 +1426,7 @@ export const writePatternTool = defineTool({
 						const longer = Math.max(kit.length, result.length);
 						const drifting = longer % kit.length !== 0 || longer % result.length !== 0;
 						notes2.push(
-							`It hits with T${kit.track}'s kick on step${shared.length === 1 ? '' : 's'} ${shared.slice(0, 12).join(', ')}${shared.length > 12 ? ', …' : ''} (${shared.length} of its ${new Set(result.notes.map((n) => n.step)).size} steps${drifting ? ', on the first pass: their lengths differ, so this moves as they drift' : ''}): together is a choice of style; for room between them, move the bass off those steps.`
+							`It hits with T${kit.track}'s kick on step${shared.length === 1 ? '' : 's'} ${shared.slice(0, 12).join(', ')}${shared.length > 12 ? ', …' : ''} (${shared.length} of its ${new Set(result.notes.map((n) => n.step)).size} steps${drifting ? ', on the first pass: their lengths differ, so this moves as they drift' : ''}): together is a style choice, nothing to fix (most grooves lock the bass to the kick); for room between them, move the bass off those steps.`
 						);
 					}
 				}
@@ -1586,11 +1617,15 @@ export const readPatternTool = defineTool({
 		if (!virtual) return errorResult(NO_VIRTUAL, 'no virtual op-xy');
 		try {
 			const p = virtual.readPattern(input.track, input.pattern);
+			// the key its write named, as the write's own reading had it (a D dorian line read back
+			// alone was guessed afresh as D minor)
+			const named = keysOf(virtual).get(`${input.track}:${p.pattern}`);
 			return jsonResult(
 				patternView(p, {
 					alongside: partsAlongside(virtual, input.track, p.pattern),
 					meter: meterNow(virtual),
-					bpm: virtual.status().bpm
+					bpm: virtual.status().bpm,
+					...(named ? { meant: parseKey(named) } : {})
 				}),
 				`track ${p.track} pattern ${p.pattern}: ${p.notes.length} notes`
 			);

@@ -104,6 +104,28 @@ describe('run_lab', () => {
 		expect(journal.list()[2].inverse?.label).toMatch(/back as it was before/);
 	});
 
+	it('names the keys its writes meant for the readings after', async () => {
+		// a song's program named its keys, as write_pattern takes them
+		const { executor, registry, env, call } = setup();
+		const { body } = await call({
+			purpose: 'a dorian line',
+			code: [
+				'const f = lab.fork();',
+				'f.writePattern(5, { key: "D dorian", notes: "1:D4:2 3:F4:2 5:B4:2 7:C5:2" });',
+				'lab.commit(f, "a dorian line");'
+			].join('\n')
+		});
+		expect(body.ok).toBe(true);
+		const [block] = await executor.execute({
+			agent: 'conductor',
+			registry,
+			calls: [{ id: 'toolu_read', name: 'read_pattern', input: { track: 5 } }],
+			env,
+			signal: new AbortController().signal
+		});
+		expect(JSON.parse(String(block.content)).reading.key).toMatch(/^D dorian/);
+	});
+
 	it('gives the arrangement as it landed when the scenes or the song changed', async () => {
 		const { call } = setup();
 		const { body } = await call({

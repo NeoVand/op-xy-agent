@@ -205,6 +205,10 @@ export function meterBars(
 	});
 }
 
+/** Where a part shorter than this one is at `step`, on the first pass: it loops under it. */
+const loopedStep = (q: VirtualPattern, step: number): number =>
+	q.length > 0 && step > q.length ? ((step - 1) % q.length) + 1 : step;
+
 /**
  * The reading of a pitched pattern, or null for an empty one. The key counts the pitched parts that
  * play `alongside` it too (the scene's other tracks): a melody's first bars alone once read as E
@@ -258,11 +262,14 @@ export function readPattern(
 	const bassTracks = new Set<number>();
 	let lastChord = '';
 	// the lowest note another part sounds under a step, below this one's: a bass the chord is over
+	// (a shorter part loops under it: a one-bar bass under four-bar chords was heard under the
+	// first bar alone)
 	const under = (step: number, below: number): { note: number; track: number } | null => {
 		let best: { note: number; track: number } | null = null;
 		for (const q of alongside) {
+			const at = loopedStep(q, step);
 			for (const n of q.notes) {
-				if (n.step > step || n.step + Math.max(1, n.length) <= step || n.note >= below) continue;
+				if (n.step > at || n.step + Math.max(1, n.length) <= at || n.note >= below) continue;
 				if (!best || n.note < best.note) best = { note: n.note, track: q.track };
 			}
 		}
@@ -363,8 +370,9 @@ export function readPattern(
 		const chordAt = (step: number) => {
 			let best: { track: number; notes: number[] } | null = null;
 			for (const q of alongside) {
+				const at = loopedStep(q, step);
 				const notes = q.notes
-					.filter((n) => n.step <= step && step < n.step + Math.max(1, n.length))
+					.filter((n) => n.step <= at && at < n.step + Math.max(1, n.length))
 					.map((n) => n.note);
 				if (
 					new Set(notes.map((n) => n % 12)).size >= 3 &&

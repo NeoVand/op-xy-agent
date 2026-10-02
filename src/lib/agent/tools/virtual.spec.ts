@@ -11,6 +11,7 @@ import type { AgentEnvironment, AnyTool, ToolContext, ToolResult } from './defin
 import {
 	deviceStatusTool,
 	muteTrackTool,
+	panicTool,
 	playNotesTool,
 	selectTrackTool,
 	setMetronomeTool,
@@ -24,6 +25,7 @@ function setup(options: { sound?: boolean } = {}) {
 	const sim = new OpxySim({ now: () => time.now() });
 	const previews: [number, number, number, number][] = [];
 	let changes = 0;
+	let silenced = 0;
 	const sound: VirtualSound | null =
 		options.sound === undefined
 			? null
@@ -33,7 +35,8 @@ function setup(options: { sound?: boolean } = {}) {
 					preview: (track, note, velocity, seconds) => {
 						previews.push([track, note, velocity, seconds]);
 						return true;
-					}
+					},
+					silence: () => silenced++
 				};
 	const virtual = createVirtualOpxy({ sim, sound, changed: () => changes++ });
 	const env: AgentEnvironment = {
@@ -55,7 +58,16 @@ function setup(options: { sound?: boolean } = {}) {
 		};
 		return tool.run(tool.input.parse(input), ctx);
 	};
-	return { time, sim, env, virtual, run, previews, changes: () => changes };
+	return {
+		time,
+		sim,
+		env,
+		virtual,
+		run,
+		previews,
+		changes: () => changes,
+		silenced: () => silenced
+	};
 }
 
 const json = (result: ToolResult) => JSON.parse(String(result.content));
@@ -73,7 +85,7 @@ describe('write_pattern', () => {
 		expect(result.isError).toBeFalsy();
 		expect(json(result).written).toMatchObject({ track: 1, pattern: 1, bars: 1, noteCount: 6 });
 		// each sound's steps by number beside the grid (agents placed hits from the marks wrongly)
-		expect(json(result).written.hits).toBe('kick 1: 1 5 9 13; kick 2: 5 13');
+		expect(json(result).written.hits).toBe('kick 1: 1 5 9 13 at 100; kick 2: 5 13 at 90');
 		expect(json(result).written.beats).toBe(
 			'kick 1: 1 2 3 4; kick 2: 2 4 (beats of each bar; e, & and a the sixteenths after a beat)'
 		);
@@ -115,7 +127,7 @@ describe('write_pattern', () => {
 				grid: { kick: 'x... x... x... x...', crash: 'X... .... .... .... | ....' }
 			})
 		);
-		expect(result.written.hits).toMatch(/crash 1: 1(;|$)/);
+		expect(result.written.hits).toMatch(/crash 1: 1 at \d+(;|$)/);
 		expect(result.note).toMatch(
 			/crash: whole bars and then rests, short of the pattern, so its hits play once/
 		);
@@ -130,7 +142,7 @@ describe('write_pattern', () => {
 				}
 			})
 		);
-		expect(three.written.hits).toMatch(/open hat 1: 15 31 47(;|$)/);
+		expect(three.written.hits).toMatch(/open hat 1: 15 31 47 at \d+(;|$)/);
 		// a bar with hits after it is still a miscount
 		const off = await run(writePatternTool, {
 			track: 1,
@@ -152,7 +164,7 @@ describe('write_pattern', () => {
 			})
 		);
 		expect(result.written.hits).toBe(
-			'kick 1: 1 7 11 26 27; closed hat 1: 1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31'
+			'kick 1: 1 7 11 26 27 at 100; closed hat 1: 1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 at 100'
 		);
 		expect(result.written.beats).toBe(
 			'kick 1: bar 1: 1 2& 3&, bar 2: 3e 3&; closed hat 1: 1 1& 2 2& 3 3& 4 4& every bar (beats of each bar; e, & and a the sixteenths after a beat)'
@@ -646,6 +658,9 @@ describe('write_pattern on drums', () => {
 		});
 		const loose = json(await run(writePatternTool, { track: 5, humanize: { timing: 0.05 } }));
 		expect(loose.written.reading.key).toBe('E dorian (as written)');
+		// and read back alone (a D dorian line read back was guessed afresh as D minor)
+		const read = json(await run(readPatternTool, { track: 5 }));
+		expect(read.reading.key).toBe('E dorian (as written)');
 		// with no key named, the estimate moves as consistently
 		await run(writePatternTool, { track: 4, bars: 4, chords: '1:C 17:G 33:Am 49:F' });
 		const estimated = json(await run(writePatternTool, { track: 4, transpose: -2 }));
@@ -816,7 +831,7 @@ describe('write_pattern on drums', () => {
 			})
 		);
 		expect(bass.note).toMatch(
-			/It hits with T1's kick on steps 1, 9, 25 \(3 of its 5 steps\): together is a choice/
+			/It hits with T1's kick on steps 1, 9, 25 \(3 of its 5 steps\): together is a style choice, nothing to fix/
 		);
 		// a lead high above it says nothing of the kick
 		const lead = json(await run(writePatternTool, { track: 5, notes: '1:C5:2 9:E5:2' }));
@@ -1668,6 +1683,23 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		const next = json(await run(setTempoTool, { bpm: 100 }));
 		expect(next).toMatchObject({ target: 'virtual', tempoBpm: 100 });
 		expect(next.note).toBeUndefined();
+	});
+
+	it('panics on the replica with no OP-XY: playback stopped, every note cut', async () => {
+		// "stop everything, it's too loud" found panic refused with no device connected
+		const { sim, run, silenced } = setup({ sound: true });
+		await run(writePatternTool, { track: 1, notes: '1:C4:1 5:C4:1 9:C4:1 13:C4:1' });
+		await run(transportTool, { action: 'play' });
+		expect(sim.state.transport.playing).toBe(true);
+		const result = await run(panicTool, {});
+		expect(json(result)).toMatchObject({ target: 'virtual', stopped: true });
+		expect(json(result).note).toMatch(/^The replica is silent: playback stopped, every note cut/);
+		expect(sim.state.transport.playing).toBe(false);
+		expect(silenced()).toBe(1);
+		// stopped already, it still cuts the tails
+		const again = json(await run(panicTool, {}));
+		expect(again).toMatchObject({ stopped: false });
+		expect(silenced()).toBe(2);
 	});
 
 	it('re-checks slow attacks against the notes when the tempo changes', async () => {

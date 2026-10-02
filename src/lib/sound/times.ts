@@ -39,3 +39,39 @@ export function nearestStage(stage: EnvelopeStage, seconds: number): number {
 	}
 	return best;
 }
+
+/** An envelope stage's setting by its name: "attack", "amp release", "filter envelope decay". */
+const STAGE_PARAM = /^(?:(?:amp|filter)(?: envelope)? )?(attack|decay|release)$/i;
+const STAGE_TIME = /^(\d+(?:\.\d+)?)\s*(ms|s|sec|secs|seconds?)$/i;
+
+/**
+ * An envelope stage's setting read in time. Given as a time ("amp attack", "2 s"): the nearest page
+ * value, and a line that says so (an agent wanting a swell of about two seconds guessed 54 from two
+ * anchors and got 2.3 s); given as a page value: the time it takes, and which way the release runs
+ * (an agent set a release of 12 keeping in mind by itself that lower is longer). Null for anything
+ * else, a duck's release among them (it runs on another law).
+ */
+export function stageSetting(
+	param: string,
+	value: string | number
+): { readonly value: string | number; readonly line: string } | null {
+	const name = param.trim();
+	const stage = STAGE_PARAM.exec(name)?.[1].toLowerCase() as EnvelopeStage | undefined;
+	if (!stage) return null;
+	const text = String(value).trim();
+	if (/^\d+$/.test(text) && Number(text) <= 99) {
+		const turns =
+			stage === 'release' ? ' (the release runs the other way: a lower value lasts longer)' : '';
+		return {
+			value,
+			line: `${name} ${text}: about ${timeText(stageSeconds(stage, Number(text)))}${turns}`
+		};
+	}
+	const time = STAGE_TIME.exec(text);
+	if (!time) return null;
+	const page = nearestStage(stage, Number(time[1]) / (time[2].toLowerCase() === 'ms' ? 1000 : 1));
+	return {
+		value: page,
+		line: `${name} ${text}: the page value ${page} (of 0–99) is the nearest, ${timeText(stageSeconds(stage, page))}`
+	};
+}

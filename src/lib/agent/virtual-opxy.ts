@@ -12,6 +12,7 @@
 import type { ControlId } from '$lib/core/opxy';
 import type {
 	NavPlan,
+	NavStep,
 	PageValueGoal,
 	ParamGoal,
 	Place,
@@ -305,6 +306,11 @@ export interface VirtualOpxy {
 	setMuted(track: number, muted: boolean): void;
 	/** Sounds a note now in the browser; false when sound is off or unavailable. */
 	preview(track: number, note: number, velocity: number, seconds: number): boolean;
+	/**
+	 * Cuts everything the replica sounds at once, release tails and previews too (a panic: stop
+	 * alone lets the notes ring out). False where this computer makes no sound.
+	 */
+	silence(): boolean;
 	/** A pattern (default: the one the track plays). */
 	readPattern(track: number, pattern?: number): VirtualPattern;
 	/** Writes a pattern and makes it the one the track plays. */
@@ -332,6 +338,11 @@ export interface VirtualOpxy {
 	rehearse(keys: string): readonly RehearsedStep[];
 	/** The replica as it stands, to compare with later (a turn's grounding, the lab). */
 	checkpoint(): VirtualCheckpoint;
+	/**
+	 * The replica as a plan's steps would leave it, played on a copy (it does not move): what a
+	 * shown plan should land, compared with `changesSince` once it has played.
+	 */
+	played(steps: readonly Pick<NavStep, 'keys' | 'clicks'>[]): VirtualCheckpoint;
 	/** What changed since `checkpoint`, a line each in words; empty when nothing did. */
 	changesSince(checkpoint: VirtualCheckpoint): readonly string[];
 	/** The same changes, each with a shorter line for people and the keys that lead to it. */

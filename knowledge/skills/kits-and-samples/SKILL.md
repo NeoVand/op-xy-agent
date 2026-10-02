@@ -5,6 +5,14 @@ description: Use when the user wants a drum kit, wants to use their own samples,
 
 # Kits, samples and the preset maker
 
+## Another of the OP-XY's own kits
+
+"A different kit" on the unit is one of TE's factory kits, loaded from the preset browser: the key
+planner loads one by name (preset "drum/kerf"; the drum folder holds boop, chamine, dead spot,
+fletcher, in phase, kerf, martini, mushroom, playwood, sugar, wood box and zebra). The replica plays
+only a new project's two (boop, in phase) as themselves and the rest as a stand-in, as the result
+says, so to hear a different kit here, make one from generated sounds and say which way you went.
+
 ## A kit from generated sounds
 
 You can make a drum kit from generated sounds: start from a style (808: a long boomy kick; 909:

@@ -131,10 +131,16 @@ export const makeKitTool = defineTool({
 				);
 			}
 		}
+		// the voices given, each on its key by number and name and as the sound it became (an agent
+		// gave keys by number, read the kit back by note name and could not tell where its voices went)
+		const yours = voices.map(
+			(v) => `${v.key} ${noteName(v.key)}: ${byKey.get(v.key)?.name ?? v.type}`
+		);
 		return jsonResult(
 			{
 				kit: name,
 				keys: samples.length,
+				...(yours.length ? { voices: yours } : {}),
 				...(inbox ? { preset_maker: inbox.href } : {}),
 				...(loaded ? { on_replica: loaded } : {}),
 				note: loaded

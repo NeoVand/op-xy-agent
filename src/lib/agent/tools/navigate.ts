@@ -22,7 +22,7 @@ import { grooveReachAll } from '../groove-reach';
 import { lockReach } from '../lock-reach';
 import { slidesNote } from '../slides';
 import { swellNote, swellsNow, tailNote } from '../swell';
-import { nearestStage, stageSeconds, timeText, type EnvelopeStage } from '$lib/sound/times';
+import { stageSetting } from '$lib/sound/times';
 import type { TimeSignature } from '$lib/sim/areas/arrange/state';
 import { SETTING_AREAS, settingGoal, type SettingArea } from '$lib/sim/settings';
 import { DEFAULT_TRACK_PRESETS, factoryPresets } from '$lib/sim/areas/system/catalogue';
@@ -94,7 +94,7 @@ const goalInput = z.object({
 		.max(60)
 		.optional()
 		.describe(
-			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack" (an envelope stage takes a time too, "2 s" or "300 ms": the nearest value is set and said), "portamento", "fx ii send", "lfo amount", "lfo speed" (a number is a free speed, 0–99; synced to the tempo: "sync 16", "1 bar", "1/4"), "tempo", "groove" (shuffle moves only the even sixteenths, steps 2, 4, 6…: hits on the eighths stay straight, so put hats between them for it to be heard), "metronome" (on or off; a number is its level, and 0 is silent with it still on), an engine parameter by the name its M1 page shows (read_sound gives each engine\'s, such as "shape" or "detune")), "filter" and "lfo" (on, off: their page key pressed again switches them), a list or a load ("engine", "preset", "filter type", "lfo type": value is the name, e.g. "wavetable", "pluck/beach bum", "ladder", "duck"; a folder alone, "bass", lists its presets; an engine or preset is loaded from the preset browser shift + M1 brings up, which replaces the whole sound; the replica lists the external midi engine last, which OS 1.1.33 does not show), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome") and "source type" (audio, notes), the value and random LFOs\' "lfo destination" (syn, env, filter, or their free twins "syn free"…; a new project’s is syn, so name it) and "lfo parameter" (the destination page\'s encoder 1–4, or by name: cutoff, resonance, env amount, key tracking; attack, decay, sustain, release), a sampler track\'s own values with key naming the key ("tune", "start", "end", "play mode" (key, oneshot, mute group, loop), "direction", "pan", "fade", "gain" of a drum key; "start", "loop start", "loop end", "end", "tune", "loop crossfade", "gain", "loop type" of the synth sampler or a multisampler zone), any value a page of the track shows (the midi engine\'s "channel", "bank", "cc slot 1", "cc slot 1 number"), or an id ("filter.cutoff"); "sound from" copies another track\'s whole sound onto this one (value: that track, 1–8; its notes and mixer strip stay); the preset settings (shift + instrument): "width" (stereo width), "high pass", "velocity sens", "portamento type", "tuning", "tuning root", "preset transpose" and the mod routing ("velocity target" cutoff with "velocity amount" for accents that open the filter; modwheel, aftertouch and pitchbend alike). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II and their "effect": chorus, delay, dist, lofi, phaser, reverb; "speed" on the tape; the brain\'s "mode" (auto, manual), "root", "scale", "link"; a routing page\'s "track 1"…"track 8" (the brain: in or out; tape, FX and external audio: the send level; tracks 5–8 are a click away, which the plan does); an LFO\'s "lfo speed", "lfo amount"; "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii", "mute" (the scene on screen\'s: each scene keeps its own mix, so with several scenes, write_arrangement\'s mix sets the others); "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). With area player: "type" (arpeggio, hold, maestro), "player" (on, off), maestro\'s "chord" (its notes, "A3 C4 E4": stored with shift held on the keyboard, in the octave the keyboard plays) and the page\'s values (the arpeggio\'s "speed": 1/4, 1/8, 1/8t, 1/16, 1/16t, 1/32, 1/32t, 1/64; "pattern": up, down, up/down, up/repeat/down, random, play order; "range", "hold"; its shift layer "length", "style", "glide", "stereo"). With area arrange: "pattern" (the pattern the track plays; new ones are added as needed), "scene" (1–99; an empty one starts as a copy of the current), "song" (its scenes in order, e.g. "1 1 2 2") and "loop" (on, off). With area bar (the bar menu, bar held): "track scale" (1–8, 16, 1/2), "bars" (1–4), "quant", "length", "groove", "shape". With area sample: the record page\'s "source" (mic, line in, usb), "gain", "threshold", and on a drum track "even slices" or "transient slices" (value: how many; key: the key whose sample is cut; the slices land on the keys from F3). With area com: "multi-out", "bluetooth advertising", "charging", and the system settings (com → M1): midi "clock", "notes" and "other" (in, out, both, off), "active channel" (notes on it play the selected track; 1 by default), "midi echo"; the keyboard\'s "velocity" (off, soft, hard), "detune notes", "detune cents"; "screen brightness", "led brightness", "auto save", "power off", "country", "sample preview"; the pitchbend\'s "left sensitivity" and "right sensitivity"; the date and time ("year" … "minute"). With area project: a project setting ("time signature", "transpose", "autosave"…; a track\'s midi channel, off in a new project, is "midi channel" with track) or "save", "save as" and "new project" (M2 on the project page; shift + M2 and M1, the value being the copy\'s name, typed on the naming screen, else the name it offers (a name the projects folder holds already is refused, never overwritten); hold M1: starting over with a new project\'s sounds and nothing written, the open one saved first; for "delete everything", "start over"), and "rename" (value: the new name, typed; a–z, 0–9, space, - # ( )). Without page, the page that shows it.'
+			'To set a parameter of an instrument track: its name as the page shows it or a common word ("cutoff", "resonance", "amp release", "filter attack" (an envelope stage takes a time too, "2 s" or "300 ms": the nearest value is set and said), "portamento", "fx ii send", "lfo amount", "lfo speed" (a number is a free speed, 0–99; synced to the tempo: "sync N", a cycle of N sixteenths, N one of 1–8, 12, 16, 24, 32, or as a note value, "1/8" (sync 2), "1/4", "1 bar", "2 bars"; no triplets: sync 3 is a dotted eighth), "tempo", "groove" (shuffle moves only the even sixteenths, steps 2, 4, 6…: hits on the eighths stay straight, so put hats between them for it to be heard), "metronome" (on or off; a number is its level, and 0 is silent with it still on), an engine parameter by the name its M1 page shows (read_sound gives each engine\'s, such as "shape" or "detune")), "filter" and "lfo" (on, off: their page key pressed again switches them), a list or a load ("engine", "preset", "filter type", "lfo type": value is the name, e.g. "wavetable", "pluck/beach bum", "ladder", "duck"; a folder alone, "bass", lists its presets; an engine or preset is loaded from the preset browser shift + M1 brings up, which replaces the whole sound; the replica lists the external midi engine last, which OS 1.1.33 does not show), the duck LFO\'s "duck source" (the triggering track 1–16, or "metronome") and "source type" (audio, notes), the value and random LFOs\' "lfo destination" (syn, env, filter, or their free twins "syn free"…; a new project’s is syn, so name it) and "lfo parameter" (the destination page\'s encoder 1–4, or by name: cutoff, resonance, env amount, key tracking; attack, decay, sustain, release), a sampler track\'s own values with key naming the key ("tune", "start", "end", "play mode" (key, oneshot, mute group, loop), "direction", "pan", "fade", "gain" of a drum key; "start", "loop start", "loop end", "end", "tune", "loop crossfade", "gain", "loop type" of the synth sampler or a multisampler zone), any value a page of the track shows (the midi engine\'s "channel", "bank", "cc slot 1", "cc slot 1 number"), or an id ("filter.cutoff"); "sound from" copies another track\'s whole sound onto this one (value: that track, 1–8; its notes and mixer strip stay); the preset settings (shift + instrument): "width" (stereo width), "high pass", "velocity sens", "portamento type", "tuning", "tuning root", "preset transpose" and the mod routing ("velocity target" cutoff with "velocity amount" for accents that open the filter; modwheel, aftertouch and pitchbend alike). With area auxiliary or mix: the value\'s name as read_screen shows it on that page ("size" or "feedback" on FX I/II and their "effect": chorus, delay, dist, lofi, phaser, reverb; "speed" on the tape; the brain\'s "mode" (auto, manual), "root", "scale", "link"; a routing page\'s "track 1"…"track 8" (the brain: in or out; tape, FX and external audio: the send level; tracks 5–8 are a click away, which the plan does); an LFO\'s "lfo speed", "lfo amount"; "drive" on external audio; on mix M1 a track\'s "level", "pan", "fx i", "fx ii", "mute" (the scene on screen\'s: each scene keeps its own mix, so with several scenes, write_arrangement\'s mix sets the others); "low", "mid", "high" on the master EQ, M2; "gain" and the rest on the saturator, M3; "master" on M4). With area player: "type" (arpeggio, hold, maestro), "player" (on, off), maestro\'s "chord" (its notes, "A3 C4 E4": stored with shift held on the keyboard, in the octave the keyboard plays) and the page\'s values (the arpeggio\'s "speed": 1/4, 1/8, 1/8t, 1/16, 1/16t, 1/32, 1/32t, 1/64; "pattern": up, down, up/down, up/repeat/down, random, play order; "range", "hold"; its shift layer "length", "style", "glide", "stereo"). With area arrange: "pattern" (the pattern the track plays; new ones are added as needed), "scene" (1–99; an empty one starts as a copy of the current), "song" (its scenes in order, e.g. "1 1 2 2") and "loop" (on, off). With area bar (the bar menu, bar held): "track scale" (1–8, 16, 1/2), "bars" (1–4), "quant", "length", "groove", "shape" (the pattern the track plays now; another pattern\'s, or its step locks: in one settings list, area arrange "pattern" to it, the settings, then "pattern" back, and every scene stays as it was). With area sample: the record page\'s "source" (mic, line in, usb), "gain", "threshold", and on a drum track "even slices" or "transient slices" (value: how many; key: the key whose sample is cut; the slices land on the keys from F3). With area com: "multi-out", "bluetooth advertising", "charging", and the system settings (com → M1): midi "clock", "notes" and "other" (in, out, both, off), "active channel" (notes on it play the selected track; 1 by default), "midi echo"; the keyboard\'s "velocity" (off, soft, hard), "detune notes", "detune cents"; "screen brightness", "led brightness", "auto save", "power off", "country", "sample preview"; the pitchbend\'s "left sensitivity" and "right sensitivity"; the date and time ("year" … "minute"). With area project: a project setting ("time signature", "transpose", "autosave"…; a track\'s midi channel, off in a new project, is "midi channel" with track) or "save", "save as" and "new project" (M2 on the project page; shift + M2 and M1, the value being the copy\'s name, typed on the naming screen, else the name it offers (a name the projects folder holds already is refused, never overwritten); hold M1: starting over with a new project\'s sounds and nothing written, the open one saved first; for "delete everything", "start over"), and "rename" (value: the new name, typed; a–z, 0–9, space, - # ( )). Without page, the page that shows it.'
 		),
 	value: settingValue
 		.optional()
@@ -334,33 +334,14 @@ export const planStepsTool = defineTool({
 			/^(groove|groove type)$/i.test((asked.param ?? '').trim()) &&
 			/^[+\-−]?\d+(\.\d+)?$/.test(String(asked.value).trim());
 		const grooved = amount ? { ...asked, param: 'swing' } : asked;
-		// an envelope stage by its time ("amp attack", "2 s"): the nearest value, said (an agent wanting
-		// a swell of about two seconds guessed 54 from two anchors and got 2.3 s)
+		// an envelope stage by its time ("amp attack", "2 s"): the nearest page value, said; by its page
+		// value, the time it takes
 		const timings: string[] = [];
 		const timed = <T extends { param?: string; value?: string | number }>(s: T): T => {
-			const stage = /\b(attack|decay|release)\b/i.exec(s.param ?? '')?.[1].toLowerCase();
-			const time = /^(\d+(?:\.\d+)?)\s*(ms|s|sec|secs|seconds?)$/i.exec(
-				String(s.value ?? '').trim()
-			);
-			// a stage by its page value: its time said too, and which way the release runs (an agent
-			// set a release of 12 keeping in mind by itself that lower is longer)
-			const number = /^\d+$/.test(String(s.value ?? '').trim()) ? Number(s.value) : null;
-			// the envelopes' stages only (a duck's release runs on another law)
-			const envelope = /^((amp|filter)( envelope)? )?(attack|decay|release)$/i.test(
-				(s.param ?? '').trim()
-			);
-			if (stage && number !== null && number <= 99 && envelope) {
-				timings.push(
-					`${s.param} ${number}: about ${timeText(stageSeconds(stage as EnvelopeStage, number))}${stage === 'release' ? ' (the release runs the other way: a lower value lasts longer)' : ''}`
-				);
-			}
-			if (!stage || !time) return s;
-			const seconds = Number(time[1]) / (time[2].toLowerCase() === 'ms' ? 1000 : 1);
-			const value = nearestStage(stage as EnvelopeStage, seconds);
-			timings.push(
-				`${s.param} ${s.value}: the page value ${value} (of 0–99) is the nearest, ${timeText(stageSeconds(stage as EnvelopeStage, value))}`
-			);
-			return { ...s, value };
+			const read = s.param && s.value !== undefined ? stageSetting(s.param, s.value) : null;
+			if (!read) return s;
+			timings.push(read.line);
+			return { ...s, value: read.value };
 		};
 		const input = {
 			...timed(grooved),
@@ -512,6 +493,11 @@ export const planStepsTool = defineTool({
 		// tap pins the keys, as picking a bar during playback does on the device, and the rest is
 		// planned again from there (a tap on another track's one-bar pattern pinned nothing)
 		const holdsStep = (keys: string) => /^step \d+ \+/.test(keys);
+		// what the steps leave, played on a copy: a list that goes to a setting and back (a pattern
+		// switched to for its bar menu, then switched back) never plans again as done, so it has
+		// landed when the replica holds what the copy did (an agent's smoothing on a song's second
+		// pattern read as missed, every step of it shown)
+		const expected = 'settings' in goal ? virtual.played(plan.steps) : null;
 		let pinned = false;
 		let shown = plan.steps;
 		for (let i = 0; i < shown.length; i++) {
@@ -546,7 +532,8 @@ export const planStepsTool = defineTool({
 		// a save as leaves nothing a second plan reads as done: done when it can still be done
 		const arrived =
 			'settings' in goal
-				? after.steps.length === 0
+				? after.steps.length === 0 ||
+					(expected !== null && virtual.changesSince(expected).length === 0)
 				: after.reached && (after.steps.length === 0 || plan.action === true);
 		// which settings do not read their value on the replica now, named (an agent took each
 		// setting's reached for landed, with arrived false beside it)

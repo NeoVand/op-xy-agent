@@ -1,0 +1,156 @@
+[
+	{
+		"name": "crash-on-one",
+		"about": "Re-check: a crash on bar 1 only, written as one bar then rests.",
+		"steps": [
+			{ "say": "make a 4 bar rock beat with a crash on the very first beat only" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fill-reversed",
+		"about": "Re-check: reverse one bar.",
+		"steps": [
+			{ "say": "make a 2 bar beat with a snare fill at the end of bar 2" },
+			{ "say": "reverse the fill so it builds the other way" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-locks-on-copy",
+		"about": "Re-check: lab locks on another pattern.",
+		"steps": [
+			{ "say": "make a bassline on track 3 and copy it to pattern 2" },
+			{
+				"say": "in the lab, open the filter step by step across pattern 2 only, leaving pattern 1 as it is"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "slash-chords-flat-key",
+		"about": "Re-check: slash chords spelled in a flat key.",
+		"steps": [
+			{ "say": "write a chord progression in Bb major on track 7 with some inversions" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "wobble-rate",
+		"about": "Re-check: an LFO speed as a note value.",
+		"steps": [
+			{ "say": "make the bass on track 3 wobble in triplets" },
+			{ "say": "how fast is that wobble exactly?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "dorian-kept",
+		"about": "Re-check: a named mode kept through edits.",
+		"steps": [
+			{ "say": "write a melody in D dorian on track 5" },
+			{ "say": "humanize it a little and tell me the key" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bossa-nova",
+		"about": "A genre not tried yet.",
+		"steps": [{ "say": "make a bossa nova groove with chords and a bass" }, { "why": true }]
+	},
+	{
+		"name": "turkish-request",
+		"about": "A request in Turkish.",
+		"steps": [{ "say": "basit bir elektronik ritim yap, bas ile" }, { "why": true }]
+	},
+	{
+		"name": "double-time-hats",
+		"about": "Double-time hats on their own track.",
+		"steps": [
+			{ "say": "make a half-time trap beat" },
+			{ "say": "put double-time hats on top" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chord-per-scene",
+		"about": "A different chord per scene.",
+		"steps": [
+			{
+				"say": "make 4 scenes, each with the same beat and a different chord on track 7, then a song through them"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "accent-velocity-check",
+		"about": "Checking accents after writing.",
+		"steps": [
+			{ "say": "make a beat with accented hats on the off-beats" },
+			{ "say": "how loud is each hat exactly?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "filter-sweep-song",
+		"about": "A filter sweep across a song.",
+		"steps": [
+			{ "say": "make a 2 scene song and have the chords' filter open up across the second scene" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "drum-kit-swap",
+		"about": "A different kit on the drum track.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "try a different drum kit for it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "midi-out-to-synth",
+		"about": "Sequencing an external synth.",
+		"steps": [
+			{ "say": "I want track 8 to play my external synth on channel 4, how?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "too-busy",
+		"about": "A vague 'too busy' complaint.",
+		"steps": [
+			{ "say": "make a beat with a bass and a melody" },
+			{ "say": "this is too busy, simplify it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "pattern-length-odd",
+		"about": "An odd pattern length for a phase effect.",
+		"steps": [
+			{ "say": "make a 15 step hat pattern against a normal 16 step kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "undo-twice",
+		"about": "Undo two answers back.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "add a bassline" },
+			{ "say": "add chords" },
+			{ "say": "undo the last two things" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "stop-everything",
+		"about": "A panic-style request.",
+		"steps": [
+			{ "say": "make a beat and play it" },
+			{ "say": "stop everything, it's too loud" },
+			{ "why": true }
+		]
+	}
+]

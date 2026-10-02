@@ -55,12 +55,57 @@ function setup(withReplica = false, drift = 0) {
 		};
 		return tool.run(tool.input.parse(input), ctx);
 	};
-	return { sim, virtual, run, animated, guided, stops };
+	return { sim, virtual, env, run, animated, guided, stops };
 }
 
 const json = (result: ToolResult) => JSON.parse(String(result.content));
 
 describe('plan_steps', () => {
+	it('lands a list that switches to another pattern and back', async () => {
+		// an agent smoothing a song's second pattern switched T7 to it, set the bar menu's shape and
+		// switched back: every step was shown, and the result read both switches as missed
+		const { virtual, run } = setup(true);
+		const note = { step: 1, note: 60, velocity: 90, length: 16 };
+		virtual.writePattern(7, { pattern: 1, bars: 4, notes: [note] });
+		virtual.writePattern(7, { pattern: 2, bars: 4, notes: [note], play: false });
+		const shown = json(
+			await run(planStepsTool, {
+				show: true,
+				settings: [
+					{ area: 'arrange', param: 'pattern', value: 2, track: 7 },
+					{ area: 'bar', param: 'shape', value: 60, track: 7 },
+					{ area: 'arrange', param: 'pattern', value: 1, track: 7 }
+				]
+			})
+		);
+		expect(shown).toMatchObject({ shown: true, arrived: true });
+		expect(shown.missed).toBeUndefined();
+		expect(virtual.readPattern(7).pattern).toBe(1);
+	});
+
+	it('names the settings a show did not land', async () => {
+		const { env, run } = setup(true);
+		// a replica whose turns go nowhere: the pages open, no value moves
+		const replica = env.replica as unknown as { animate: (k: string, t?: object) => unknown };
+		const animate = replica.animate;
+		replica.animate = (keys, timing) =>
+			keys.startsWith('turn')
+				? { done: Promise.resolve('finished'), plan: { duration: 0 }, cancel: () => {} }
+				: animate(keys, timing);
+		const shown = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 3,
+				settings: [
+					{ param: 'cutoff', value: 40 },
+					{ param: 'resonance', value: 20 }
+				]
+			})
+		);
+		expect(shown.arrived).toBe(false);
+		expect(shown.missed).toMatch(/^NOT ON THE REPLICA NOW: cutoff 40; resonance 20\./);
+	});
+
 	it('takes the value LFO’s parameter by name', async () => {
 		const { sim, run } = setup(true);
 		const shown = json(

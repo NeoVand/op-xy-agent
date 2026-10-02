@@ -872,10 +872,29 @@ export const panicTool = defineTool({
 	device: true,
 	priority: true,
 	description:
-		'Silence the OP-XY at once: stops any preview in progress, then sends note-offs for every note this app started plus sustain off, all notes off and all sound off on all 16 channels. Always allowed; use it when something keeps sounding.',
+		'Silence the OP-XY at once: stops any preview in progress, then sends note-offs for every note this app started plus sustain off, all notes off and all sound off on all 16 channels. With no OP-XY connected it silences the replica: playback stopped and its notes cut. Always allowed; use it when something keeps sounding.',
 	input: z.object({}),
 	async run(_input, ctx) {
 		ctx.env.abortDeviceWork('panic');
+		// with no device, the replica: playback stopped and all it sounds cut, release tails too
+		// (an agent asked to "stop everything, it's too loud" found panic refused)
+		if (ctx.env.device?.session.phase !== 'ready' && ctx.env.virtual) {
+			const virtual = ctx.env.virtual;
+			const was = virtual.status().playing;
+			virtual.transport('stop');
+			const cut = virtual.silence();
+			const stopped = was ? 'playback stopped' : 'it was not playing';
+			return jsonResult(
+				{
+					target: 'virtual',
+					stopped: was,
+					note: cut
+						? `The replica is silent: ${stopped}, every note cut, tails too. Nothing was sent: no OP-XY is connected.`
+						: `The replica: ${stopped}; this computer makes no sound for it (sound off). Nothing was sent: no OP-XY is connected.`
+				},
+				was ? 'replica stopped and silenced' : 'replica silenced'
+			);
+		}
 		const stack = connected(ctx.env);
 		if (isResult(stack)) return stack;
 		try {

@@ -66,8 +66,9 @@ another. A harmony in the key is the melody copied with scale_steps (copy_track,
 
 A feel against the tempo is the parts, not the tempo: faster at the same tempo is busier hats
 (sixteenths), less swing, a busier bass; slower is the reverse, or half time (the snare on 3).
-Double-time hats at track scale 1/2 need a track of their own (T2 is a second drum track), since
-the scale is the whole track's.
+Double-time hats run twice as fast as the hats there: eighths become sixteenths; sixteenths become
+thirty-seconds at track scale 1/2, on a track of their own (T2 is a second drum track), since the
+scale is the whole track's.
 
 Musical words mean what a drummer or producer means: a fill fills its bar (sixteenths building in
 velocity into the next downbeat, toms at the end if you like; write the groove's one-bar lines for
@@ -75,7 +76,8 @@ the whole pattern, then the fill's bar alone with bar, rather than counting a 64
 every fourth bar is a one-bar groove, a copy of it with the fill (copy and bar), two scenes and the
 song 1 1 1 2), four-on-the-floor is a kick on every
 beat, a backbeat is the snare on 2 and 4, reggaeton's dembow is the kick on every beat under a snare
-or rim on steps 4, 7, 12 and 15 (three, three, two), and a closed and an open hat do not share a step (a
+or rim on steps 4, 7, 12 and 15 (three, three, two), bossa nova's clave (120–140 bpm) a rim on steps
+1, 7, 13 of bar 1 and 5, 11 of bar 2, and a closed and an open hat do not share a step (a
 drummer plays one or the other: write a steady closed-hat line with open hats on top if you like,
 and the grid leaves each closed hat under an open one out, as its result says; show the grid as it
 came back). Velocity per step is a step component

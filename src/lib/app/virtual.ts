@@ -92,6 +92,8 @@ export interface VirtualSound {
 	readonly enabled: boolean;
 	readonly available: boolean;
 	preview(track: number, note: number, velocity: number, seconds: number): boolean;
+	/** Cuts every sound at once: voices, release tails, previews. */
+	silence?(): void;
 	/** Where sample files' audio lives (a made kit's sounds go in here). */
 	readonly samples?: {
 		setFile(id: string, audio: { sampleRate: number; channels: readonly Float32Array[] }): void;
@@ -461,6 +463,13 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			return sound.preview(trackIndex(track), note, velocity, seconds);
 		},
 
+		silence() {
+			const sound = options.sound;
+			if (!sound?.silence || !sound.available || !sound.enabled) return false;
+			sound.silence();
+			return true;
+		},
+
 		readPattern,
 		readSound,
 
@@ -720,6 +729,12 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 
 		checkpoint() {
 			return { state: JSON.stringify(s) };
+		},
+
+		played(steps) {
+			const trial = new OpxySim({ state: JSON.parse(JSON.stringify(s)) as SimState, now: () => 0 });
+			for (const step of steps) playStep(trial, step);
+			return { state: JSON.stringify(trial.state) };
 		},
 
 		revert(to, from) {

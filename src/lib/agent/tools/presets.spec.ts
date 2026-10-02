@@ -50,10 +50,19 @@ describe('make_kit', () => {
 
 	it('makes a kit of the given voices alone', async () => {
 		const { host, drafts } = inbox();
-		await run({ name: 'two', voices: [voice(61, 'closed hat'), voice(53, 'kick')] }, host);
+		const result = await run(
+			{ name: 'two', voices: [voice(61, 'closed hat'), voice(53, 'kick')] },
+			host
+		);
 		expect(drafts[0].samples.map((s) => [s.key, s.name])).toEqual([
 			[53, 'kick'],
 			[61, 'closed hat']
+		]);
+		// each voice where it went, by number and note name (an agent gave keys by number and read
+		// the kit back by note name)
+		expect(JSON.parse(String(result.content)).voices).toEqual([
+			'61 C#4: closed hat',
+			'53 F3: kick'
 		]);
 	});
 
