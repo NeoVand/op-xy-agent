@@ -206,11 +206,16 @@ describe('write_pattern', () => {
 			velocity: step % 4 === 1 ? 120 : 60
 		}));
 		const written = json(await run(writePatternTool, { track: 1, notes: hats }));
-		expect(written.written.grid).toEqual({ 'closed hat 1': 'X.o. X.o. X.o. X.o.' });
-		// and a grid written with marks reads back with the same marks, a line of soft hats too
-		const marks = { 'closed hat 1': 'o.o. o.o. o.o. o.o.', 'kick 1': 'X... x... X... x...' };
+		expect(written.written.grid).toEqual({ 'closed hat 1': 'X.4. X.4. X.4. X.4.' });
+		// and a grid written with marks reads back with the same marks, soft hits as their digits
+		const marks = { 'closed hat 1': '2.3. 4.5. 1.2. 3.4.', 'kick 1': 'X... x... X... x...' };
 		const back = json(await run(writePatternTool, { track: 1, velocity: 85, grid: marks }));
 		expect(back.written.grid).toEqual(marks);
+		// an o is a soft hit at about half the pattern's velocity: 47 of 85 reads 3
+		const soft = json(
+			await run(writePatternTool, { track: 1, velocity: 85, grid: { 'closed hat 1': 'o.o.' } })
+		);
+		expect(soft.written.grid['closed hat 1']).toBe('3.3. 3.3. 3.3. 3.3.');
 	});
 });
 
@@ -366,6 +371,22 @@ describe('write_pattern on drums', () => {
 		expect(result.written.grid['closed hat 1']).toBe('x.x. x.xx .x.x .x');
 	});
 
+	it('says when a line shorter than a bar repeats to fill the pattern', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 1,
+				pattern: 1,
+				bars: 2,
+				grid: { kick: 'x... x... x... x...', crash: 'x...' }
+			})
+		);
+		expect(result.note).toMatch(
+			/Lines shorter than a bar repeat to fill the pattern: crash \(4 steps, 8 times\)/
+		);
+		expect(result.note).not.toMatch(/kick \(/);
+	});
+
 	it('says a grid line of rests alone plays nothing', async () => {
 		const { run } = setup();
 		const result = json(
@@ -379,7 +400,7 @@ describe('write_pattern on drums', () => {
 		expect(Object.keys(result.written.grid)).toEqual(['kick 1']);
 	});
 
-	it('says where a closed and an open hat hit on one step', async () => {
+	it('leaves a grid’s closed hat out under the open hat, and says where', async () => {
 		const { run } = setup();
 		const result = json(
 			await run(writePatternTool, {
@@ -387,6 +408,18 @@ describe('write_pattern on drums', () => {
 				pattern: 1,
 				grid: { '61': 'x.x. x.x. x.x. x.x.', '63': '..x. ..x. .... ....' }
 			})
+		);
+		expect(result.note).toMatch(
+			/The closed hat is left out on steps 3 \(1& of bar 1\), 7 \(2& of bar 1\), where the open hat hits/
+		);
+		expect(result.written.grid['closed hat 1']).toBe('x... x... x.x. x.x.');
+		expect(result.note).not.toMatch(/both hit/);
+	});
+
+	it('says where a closed and an open hat written as notes hit on one step', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, { track: 1, pattern: 1, notes: '3:61 3:63 7:61 7:63' })
 		);
 		expect(result.note).toMatch(
 			/A closed and an open hat both hit on steps 3 \(1& of bar 1\), 7 \(2& of bar 1\):/

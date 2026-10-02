@@ -125,9 +125,11 @@ export const drawers: AreaDrawers<SequencerFrame> = {
 				.filter((c) => c.label)
 				.map((c) => `${c.label} ${c.value}`)
 				.join(', ');
+			// the stored notes, and how a key plays them (an agent could not tell what the chord was
+			// rooted on from "a chord of 3 notes from a4")
 			const chord = f.maestro
 				? f.maestro.root
-					? `; chord of ${f.maestro.notes} note${f.maestro.notes === 1 ? '' : 's'} from ${f.maestro.root}`
+					? `; chord ${f.maestro.chord.join(' ')} stored, each key playing it moved so its lowest note is the key's`
 					: '; no chord stored'
 				: '';
 			return `${f.type} player ${f.on ? 'on' : 'off'}${cards ? `: ${cards}` : ''}${chord}`;

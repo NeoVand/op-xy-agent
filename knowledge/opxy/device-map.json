@@ -2013,7 +2013,7 @@
 					"keys": "M3"
 				}
 			],
-			"screen": "svf filter: cutoff 00, resonance 09",
+			"screen": "svf filter: cutoff 00, resonance 09, envelope amount 33, key tracking 17",
 			"shiftScreen": "sends: aux 00, tape 99, fx I 00, fx II 00",
 			"units": [
 				"instrument.filter",

@@ -155,10 +155,81 @@ describe('the conductor grounds its answer', () => {
 		const text = JSON.stringify(api.messageRequests[1].body.messages);
 		expect(text).toContain('<user-changes>');
 		expect(text).toContain('tempo 120 → 97 bpm');
+		expect(text).toContain('Now: the replica is stopped.');
 		// and nothing when they changed nothing
 		await conductor.send('ok').catch(() => {});
 		const third = api.messageRequests[2]?.body.messages ?? [];
 		expect(JSON.stringify(third.slice(-2))).not.toContain('<user-changes>');
+	});
+
+	it('says where the song is, entry by entry, with the tracks sounding', async () => {
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 1, note: 53, velocity: 100, length: 1 }]
+		});
+		virtual.writePattern(1, {
+			pattern: 2,
+			bars: 1,
+			notes: [{ step: 5, note: 53, velocity: 100, length: 1 }]
+		});
+		virtual.writeArrangement({
+			scenes: [
+				{ scene: 1, patterns: [{ track: 1, pattern: 1 }] },
+				{ scene: 2, patterns: [{ track: 1, pattern: 2 }] }
+			],
+			song: { order: [1, 1, 2, 2], loop: true }
+		});
+		const api = scriptedApi([
+			{
+				content: [
+					{ type: 'tool_use', id: 'toolu_p', name: 'transport', input: { action: 'play' } }
+				],
+				stop_reason: 'tool_use'
+			},
+			answer('Playing.')
+		]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('play the song');
+		const note = JSON.stringify(api.messageRequests[1].body.messages.at(-1));
+		// one-bar scenes: the entry alone, no empty bar part
+		expect(note).toContain('on scene 1 now (entry 1 of 4). Sounding: T1.');
+	});
+
+	it('says a take is running, armed or latched, in the next message', async () => {
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const api = scriptedApi([answer('Arm it.'), answer('Keep playing.')]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('how do I record live?');
+		// the user arms recording on track 1: record + play, stopped
+		sim.combo('key.record', 'key.play');
+		await conductor.send('what now?');
+		expect(JSON.stringify(api.messageRequests[1].body.messages)).toMatch(
+			/Recording is armed on T1: the first note played starts playback and the take/
+		);
 	});
 
 	it('says when playback started by the user’s hand, not by a tool of the agent’s', async () => {
@@ -199,7 +270,9 @@ describe('the conductor grounds its answer', () => {
 		expect(note.text).toContain('- playback started (by the user: no tool of yours did)');
 		expect(note.text).toContain('anything the user did on it meanwhile');
 		// and where playback stands, so the answer never guesses
-		expect(note.text).toContain('Now: the replica is playing scene 1, looping.');
+		expect(note.text).toContain(
+			'Now: the replica is playing scene 1, looping. Sounding: no track (no notes in the patterns playing).'
+		);
 		// its own transport call needs no word
 		await conductor.send('stop it');
 		const own = api.messageRequests[3].body.messages.at(-1).content.at(-1);
@@ -458,7 +531,43 @@ describe('the conductor grounds its answer', () => {
 		expect(result).toMatch(/takenBack.*tempo 120 → 100 bpm/);
 		await conductor.send('and the one before?');
 		const refused = JSON.stringify(api.messageRequests[5].body.messages.at(-1));
-		expect(refused).toMatch(/Only 2 of your answers changed the replica/);
+		// the taken-back answer and the take-back itself are not counted
+		expect(refused).toMatch(/None of your answers in this conversation left changes/);
+	});
+
+	it('steps back answer by answer: "undo again" is answer 1 again', async () => {
+		const call = (id: string, name: string, input: unknown): ScriptedTurn => ({
+			content: [{ type: 'tool_use', id, name, input }],
+			stop_reason: 'tool_use'
+		});
+		const api = scriptedApi([
+			call('toolu_1', 'set_tempo', { bpm: 100 }),
+			answer('100.'),
+			call('toolu_2', 'set_tempo', { bpm: 90 }),
+			answer('90.'),
+			call('toolu_3', 'take_back', {}),
+			answer('Back at 100.'),
+			call('toolu_4', 'take_back', {}),
+			answer('Back at 120.')
+		]);
+		const sim = new OpxySim({ now: () => 0 });
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('100 please');
+		await conductor.send('now 90');
+		await conductor.send('undo');
+		expect(sim.state.tempo.bpm).toBe(100);
+		await conductor.send('undo again');
+		expect(sim.state.tempo.bpm).toBe(120);
 	});
 
 	it('takes a turn back from its changes note, keeps what the user did since, and puts it back', async () => {

@@ -9,6 +9,29 @@ describe('chordName', () => {
 		expect(chordName([])).toBeNull();
 	});
 
+	it('names a chord on its bass when the bass can be its root, as a musician does', () => {
+		// C E G A: C6 over C, Am7 over A
+		expect(chordName([60, 64, 67, 69])?.name).toBe('C6');
+		expect(chordName([57, 60, 64, 67])?.name).toBe('Am7');
+		// C D G: Csus2 over C, Gsus4 over G
+		expect(chordName([60, 62, 67])?.name).toBe('Csus2');
+		expect(chordName([55, 60, 62])?.name).toBe('Gsus4');
+		// an inversion stays one: G/B, Am/C
+		expect(chordName([59, 62, 67])?.name).toBe('G/B');
+		expect(chordName([60, 64, 69])?.name).toBe('Am/C');
+	});
+
+	it('names the common extended chords', () => {
+		expect(chordName([57, 61, 64, 67, 70])?.name).toBe('A7♭9');
+		expect(chordName([57, 61, 64, 67, 72])?.name).toBe('A7♯9');
+		expect(chordName([55, 59, 62, 64, 65])?.name).toBe('G13');
+		expect(chordName([60, 64, 66, 67, 71])?.name).toBe('Cmaj7♯11');
+		expect(chordName([60, 62, 64, 67, 69])?.name).toBe('C6/9');
+		expect(chordName([62, 64, 67, 69, 72])?.name).toBe('D9sus4');
+		expect(chordName([57, 60, 62, 64, 67])?.name).toBe('Am7(add11)');
+		expect(chordName([57, 59, 60, 62, 64, 67])?.name).toBe('Am11');
+	});
+
 	it('names triads', () => {
 		expect(chordName([60, 64, 67])?.name).toBe('C');
 		expect(chordName([60, 63, 67])?.name).toBe('Cm');

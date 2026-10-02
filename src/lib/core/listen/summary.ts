@@ -24,6 +24,11 @@ export interface SummaryOptions {
 	readonly focus?: ListenFocus;
 	/** What was heard, for the first line ("the OP-XY's USB audio", "the virtual OP-XY"). */
 	readonly source?: string;
+	/**
+	 * Whether drums play in what was heard; false: pitched parts alone, whose soft attacks and long
+	 * notes time the grid too loosely to flag (a programmed bassline once read "loose").
+	 */
+	readonly percussive?: boolean;
 }
 
 /** Flag thresholds. */
@@ -484,7 +489,7 @@ function silenceLine(a: ListenAnalysis): string | null {
 /** The short text, flags and numbers for an analysis. */
 export function summarize(analysis: ListenAnalysis, options: SummaryOptions = {}): ListenSummary {
 	const focus = options.focus ?? 'all';
-	const flags = flagsOf(analysis);
+	const flags = flagsOf(analysis).filter((f) => !(options.percussive === false && f === 'loose'));
 	const data = dataOf(analysis, focus);
 	const rate = `${r1(analysis.sampleRate / 1000)} kHz ${analysis.channels === 2 ? 'stereo' : 'mono'}`;
 	const head = `heard ${secs(analysis.seconds)} of ${options.source ?? 'audio'} (${rate})`;

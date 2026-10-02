@@ -29,6 +29,14 @@ export function tracksPlaying(state: SimState): number[] {
 	});
 }
 
+/** Whether a drum track plays notes, unmuted, in `state`: what a take's timing can be read by. */
+export function drumsPlay(state: SimState): boolean {
+	return tracksPlaying(state).some((n) => {
+		const t = state.tracks[n - 1];
+		return t.engine === 'drum' && !t.mix.muted;
+	});
+}
+
 /**
  * `state` (a copy) with every instrument track but `track` (1–8) muted. When `track` ducks from
  * another instrument track, that one plays on at level 0, unheard (its sends are after the fader),

@@ -146,6 +146,9 @@ describe('flags', () => {
 		const l = analyzeAudio([loose.samples], SR, { expectedBpm: 100 });
 		expect(l.rhythm!.grid!.tightnessMs).toBeGreaterThan(FLAG_LIMITS.looseMs);
 		expect(flagsOf(l)).toContain('loose');
+		expect(summarize(l).flags).toContain('loose');
+		// pitched parts alone: their onsets blur, so timing is not flagged
+		expect(summarize(l, { percussive: false }).flags).not.toContain('loose');
 	});
 
 	it('flags no pulse in noise bursts at random times', () => {

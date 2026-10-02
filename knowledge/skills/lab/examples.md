@@ -80,7 +80,7 @@ before and after returned so the answer can say what changed:
 ```js
 const f = lab.fork();
 const hats = (notes) => notes.filter((n) => n.sound?.includes('hat'));
-// X is 115 and over, o 75 and under: a nudge stays inside the band its hit is in
+// X is 115 and over, soft hits (digits) 75 and under: a nudge stays inside the band its hit is in
 const band = (v) => (v >= 115 ? [115, 127] : v <= 75 ? [30, 75] : [76, 114]);
 const seen = new Set();
 const sample = [];

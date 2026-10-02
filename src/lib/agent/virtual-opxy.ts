@@ -164,6 +164,11 @@ export interface VirtualStatus {
 	 * is in what the agent hears.
 	 */
 	readonly metronome?: boolean;
+	/**
+	 * Live recording on the selected track, when it is not off: armed for the first note, counting
+	 * in, or on (latched: what is played lands in the pattern until stop).
+	 */
+	readonly recording?: 'armed' | 'count-in' | 'on';
 }
 
 /** A drum kit's sounds, one per keyboard key (53–76). */

@@ -57,7 +57,9 @@ describe('readPattern', () => {
 			undefined,
 			parseKey('C major')
 		);
-		expect(reading?.progression).toBe('C G Am F: I V vi IV in C major; inverted: G/B, Am/C, F/C');
+		expect(reading?.progression).toBe(
+			'C G Am F: I V vi IV in C major; G/B, Am/C, F/C are inversions, the same chords over another of their notes'
+		);
 		// a minor key's degrees as a major scale counts them
 		const minor = readPattern(
 			pattern(
@@ -69,6 +71,16 @@ describe('readPattern', () => {
 			parseKey('A minor')
 		);
 		expect(minor?.progression).toBe('Am F G7: i ♭VI ♭VII7 in A minor');
+		// a cluster that is no chord keeps its place, as its notes
+		const cluster = readPattern(
+			pattern([...chord(1, [57, 60, 64]), ...chord(17, [60, 61, 62])], 2),
+			[],
+			undefined,
+			parseKey('A minor')
+		);
+		expect(cluster?.progression).toBe(
+			'Am [C C# D]: i ? in A minor; [C C# D] is no chord the reading names'
+		);
 	});
 
 	it('shows rests, held notes and notes that make no chord', () => {
@@ -99,9 +111,11 @@ describe('hitMark', () => {
 		expect(hitMark(115)).toBe('X');
 		expect(hitMark(100)).toBe('x');
 		expect(hitMark(76)).toBe('x');
-		expect(hitMark(75)).toBe('o');
+		expect(hitMark(75)).toBe('5');
 		// a line of soft hits stays soft, whatever the other hits
-		expect([55, 55, 55].map(hitMark)).toEqual(['o', 'o', 'o']);
+		expect([55, 55, 55].map(hitMark)).toEqual(['4', '4', '4']);
+		// each soft digit reads back as written
+		for (const d of [1, 2, 3, 4, 5]) expect(hitMark(Math.round((d * 127) / 9))).toBe(String(d));
 	});
 });
 

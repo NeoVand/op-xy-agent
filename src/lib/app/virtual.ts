@@ -315,6 +315,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				};
 			});
 			const sound = options.sound;
+			const rec = s.areas.sequencer;
+			const recording = rec.armed ? 'armed' : rec.countIn ? 'count-in' : rec.recLatch ? 'on' : null;
 			return {
 				bpm: s.tempo.bpm,
 				signature: lengthSettings(s).signature,
@@ -324,7 +326,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				arrangement: readArrangement(),
 				sound: !sound || !sound.available ? 'unavailable' : sound.enabled ? 'on' : 'off',
 				// heard only while on with a level above 0 (level 0 is silent, though the page says on)
-				metronome: s.tempo.metronome.on && s.tempo.metronome.level > 0
+				metronome: s.tempo.metronome.on && s.tempo.metronome.level > 0,
+				...(recording ? { recording } : {})
 			};
 		},
 

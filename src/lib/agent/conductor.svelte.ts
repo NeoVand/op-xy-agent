@@ -202,7 +202,26 @@ function memoryPreferences(): PreferenceStore {
 /** Whether the replica plays, and what: the song from where, or the scene it loops. */
 function playingNow(virtual: VirtualOpxy): string {
 	try {
-		if (!virtual.status().playing) return 'the replica is stopped.';
+		const status = virtual.status();
+		// live recording, which the screen does not say (an agent teaching it could not tell whether
+		// the take was still running)
+		const track = `T${status.selectedTrack}`;
+		const recording =
+			status.recording === 'armed'
+				? ` Recording is armed on ${track}: the first note played starts playback and the take.`
+				: status.recording === 'count-in'
+					? ` ${track} counts in to record: the take starts when the count-in bar ends.`
+					: status.recording === 'on'
+						? ` Recording is on for ${track} (latched): what is played on the keys lands in its pattern until stop.`
+						: '';
+		if (!status.playing) return `the replica is stopped.${recording}`;
+		// which tracks play notes now, and which are muted (an agent told of a loud hat could check
+		// only the track it wrote)
+		const name = (t: { track: number }) => (t.track <= 8 ? `T${t.track}` : `aux T${t.track - 8}`);
+		const withNotes = status.tracks.filter((t) => t.notes > 0);
+		const sounding = withNotes.filter((t) => !t.muted).map(name);
+		const muted = withNotes.filter((t) => t.muted).map(name);
+		const tracks = ` Sounding: ${sounding.length ? sounding.join(', ') : 'no track (no notes in the patterns playing)'}${muted.length ? `; muted: ${muted.join(', ')}` : ''}.`;
 		const a = virtual.readArrangement();
 		const queued = a.queued
 			? ` Scene ${a.queued} is queued: it takes over when this one ends.`
@@ -211,12 +230,13 @@ function playingNow(virtual: VirtualOpxy): string {
 		// the bar only where the scene has more than one
 		const bar = a.at && scene && scene.bars > 1 ? `bar ${a.at.bar} of its ${scene.bars}` : '';
 		if (a.plays === 'song') {
-			const entry = a.at?.entry ? `entry ${a.at.entry} of ${a.song.order.length}, ` : '';
-			const where = entry || bar ? ` (${entry}${bar})` : '';
-			return `the replica is playing its song (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now${where}.${queued}`;
+			const entry = a.at?.entry ? `entry ${a.at.entry} of ${a.song.order.length}` : '';
+			const parts = [entry, bar].filter(Boolean);
+			const where = parts.length ? ` (${parts.join(', ')})` : '';
+			return `the replica is playing its song (${a.song.loop ? 'looping' : 'once through'}), on scene ${a.scene} now${where}.${tracks}${queued}${recording}`;
 		}
 		const held = a.song.order.length > 1 ? ' (picked, so the song does not move on)' : '';
-		return `the replica is playing scene ${a.scene}, looping${held}${bar ? `, at ${bar}` : ''}.${queued}`;
+		return `the replica is playing scene ${a.scene}, looping${held}${bar ? `, at ${bar}` : ''}.${tracks}${queued}${recording}`;
 	} catch {
 		return 'unknown.';
 	}
@@ -317,6 +337,8 @@ export class Conductor {
 			before: VirtualCheckpoint;
 			after: VirtualCheckpoint;
 			undone: VirtualCheckpoint | null;
+			/** The answer took an earlier one back: not itself one take_back counts. */
+			tookBack?: true;
 			/** While its note's "before" key is held: the replica before the hold, and during it. */
 			held?: { from: VirtualCheckpoint; shown: VirtualCheckpoint };
 		}
@@ -788,7 +810,12 @@ export class Conductor {
 			changes = undefined;
 		}
 		const id = entryId('changes');
-		this.#turns.set(id, { before: this.#checkpoint, after: virtual.checkpoint(), undone: null });
+		this.#turns.set(id, {
+			before: this.#checkpoint,
+			after: virtual.checkpoint(),
+			undone: null,
+			...(this.#calledSinceMessage('take_back') ? { tookBack: true as const } : {})
+		});
 		this.entries.push({ kind: 'changes', id, lines, changes, undo: 'ready' });
 		this.litChanges = changes && changes.length > 0 ? { id, changes } : null;
 	}
@@ -826,21 +853,24 @@ export class Conductor {
 	}
 
 	/**
-	 * take_back: what the agent's `answer`-th last answer that changed the replica changed, taken
-	 * back as its changes note's undo would (the note then offers to put it back).
+	 * take_back: what the agent's `answer`-th last answer whose changes still stand changed, taken
+	 * back as its changes note's undo would (the note then offers to put it back). Answers taken
+	 * back, and the take-backs, are skipped, as an undo steps back: "undo again" is answer 1 again
+	 * (an agent had to guess it was answer 3).
 	 */
 	#takeBack(answer: number): { undone: readonly string[] } | { error: string } {
 		const virtual = this.#env.virtual;
 		const notes = this.entries.filter(
-			(e): e is Extract<ChatEntry, { kind: 'changes' }> => e.kind === 'changes'
+			(e): e is Extract<ChatEntry, { kind: 'changes' }> =>
+				e.kind === 'changes' && e.undo !== 'undone' && !this.#turns.get(e.id)?.tookBack
 		);
 		const entry = notes.at(-answer);
 		if (!virtual || !entry) {
 			return {
 				error:
 					notes.length === 0
-						? 'None of your answers in this conversation changed the replica, so there is nothing to take back.'
-						: `Only ${notes.length} of your answers changed the replica (answer 1 is the last).`
+						? 'None of your answers in this conversation left changes on the replica that still stand, so there is nothing to take back.'
+						: `Only ${notes.length} of your answers left changes that still stand (answer 1 is the last).`
 			};
 		}
 		const turn = this.#turns.get(entry.id);
@@ -1070,8 +1100,15 @@ export class Conductor {
 			return null;
 		}
 		const walk = this.#walkthrough();
-		if (lines.length === 0) return walk ? `<user-changes>\n${walk}\n</user-changes>` : null;
-		return `<user-changes>\nSince your last answer, the replica changed (the user's own hands, or playback they started or stopped):\n${lines.map((l) => `- ${l}`).join('\n')}${walk ? `\n${walk}` : ''}\n</user-changes>`;
+		// where playback stands with it, and a take running (an agent asked "what now?" mid-take
+		// could not tell whether recording was still on)
+		const now = `Now: ${playingNow(virtual)}`;
+		const recording = virtual.status().recording !== undefined;
+		if (lines.length === 0) {
+			const parts = [walk, recording ? now : null].filter(Boolean);
+			return parts.length ? `<user-changes>\n${parts.join('\n')}\n</user-changes>` : null;
+		}
+		return `<user-changes>\nSince your last answer, the replica changed (the user's own hands, or playback they started or stopped):\n${lines.map((l) => `- ${l}`).join('\n')}${walk ? `\n${walk}` : ''}\n${now}\n</user-changes>`;
 	}
 
 	/**

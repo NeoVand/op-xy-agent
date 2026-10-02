@@ -316,11 +316,11 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await d.click('key.m3');
 			await d.turn(1, 50);
-			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
+			expect(d.screen()).toMatch(/^svf filter: cutoff 50, resonance 09, /);
 			await d.click('track.4');
-			expect(d.screen()).toBe('z hipass filter off: cutoff 79, resonance 52');
+			expect(d.screen()).toMatch(/^z hipass filter off: cutoff 79, resonance 52, /);
 			await d.click('track.3');
-			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
+			expect(d.screen()).toMatch(/^svf filter: cutoff 50, resonance 09, /);
 		});
 
 		it('shows a page’s extra parameters while shift is held, and the page again when it comes up', async () => {
@@ -786,14 +786,14 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('track.3');
 			await d.click('key.m3');
 			await d.turn(1, 50);
-			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 09');
+			expect(d.screen()).toMatch(/^svf filter: cutoff 50, resonance 09, /);
 			await d.click('key.m1');
 			await loadEngine(d, 'wavetable');
 			// the device writes wavetable's table by name, with no number (research 59 §2.5)
 			expect(header(d)).toEqual(['basic', 'position 00', 'warp 00', 'drift 00']);
 			// asinine, wavetable's first preset: its values are not in our library, so a fresh sound
 			await d.click('key.m3');
-			expect(d.screen()).toBe('svf filter: cutoff 99, resonance 00');
+			expect(d.screen()).toMatch(/^svf filter: cutoff 99, resonance 00, /);
 		});
 
 		it('edits the drum key last played on a drum track’s M1: tune, start, end, play mode', async () => {
@@ -1001,7 +1001,9 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.turn(2, 31);
 			await d.turn(3, -20);
 			await d.turn(4, 43);
-			expect(d.screen()).toBe('svf filter: cutoff 50, resonance 40');
+			expect(d.screen()).toBe(
+				'svf filter: cutoff 50, resonance 40, envelope amount 13, key tracking 60'
+			);
 			expect(on(d, 'filter')).toMatchObject({
 				cutoff: 50 / 99,
 				resonance: 40 / 99,
@@ -1041,7 +1043,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			expect(d.frame.page).toBe('synth');
 			await d.click('key.m3');
 			// a new type keeps the cutoff and resonance (ours; device check)
-			expect(d.screen()).toBe('ladder filter: cutoff 00, resonance 09');
+			expect(d.screen()).toMatch(/^ladder filter: cutoff 00, resonance 09, /);
 		});
 
 		it('confirms the highlighted filter type with M3 as well (ours, like M1 in the guide’s engine list; device check)', async () => {
@@ -1053,7 +1055,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 			await d.click('key.m3');
 			expect(d.frame.page).toBe('synth');
 			await d.click('key.m3');
-			expect(d.screen()).toBe('z lowpass filter: cutoff 00, resonance 09');
+			expect(d.screen()).toMatch(/^z lowpass filter: cutoff 00, resonance 09, /);
 		});
 
 		it('leaves the filter types unchanged with another module key (ours)', async () => {
@@ -1081,7 +1083,7 @@ export function instrumentConformance(start: () => Promise<Driver>): void {
 				await d.turn(4, 25);
 				expect(d.screen()).toBe('sends: aux 50, tape 31, fx I 77, fx II 25');
 			});
-			expect(d.screen()).toBe('svf filter: cutoff 00, resonance 09');
+			expect(d.screen()).toMatch(/^svf filter: cutoff 00, resonance 09, /);
 			await d.click('track.4');
 			await d.withShift(async () => {
 				expect(d.screen()).toBe('sends: aux 00, tape 99, fx I 00, fx II 23');

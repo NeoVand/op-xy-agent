@@ -58,6 +58,15 @@
   onto the keyboard) and plans save and save as; a grid line of rests is noted; a pattern switch
   names its scene; readings give the progression as degrees ("I V vi IV in C major"). The manual
   now says what arms each sampler page and how external MIDI gear is sequenced.
+- **Probe round six (2026-10-02), 16 scenarios (`probe-scenarios-6.json`: Persian, the user's
+  own presses, relative tweaks, a wrong premise, an undo chain, a vibe brief, a half-time chorus):**
+  soft drum hits read back as their digit; a grid leaves a closed hat out under an open one; a
+  line shorter than a bar that repeats is noted; filter pages read all four values; the maestro
+  chord reads as its notes and the planner documents chord, save and save as; demos say where
+  they started; the Now line names the tracks sounding and a running take (also between turns);
+  `take_back` steps back like an undo ("undo again" is answer 1 again); chords are named on their
+  bass when it can be the root (C6, not Am7/C) and common extended chords are named; listening
+  does not flag loose timing without drums.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

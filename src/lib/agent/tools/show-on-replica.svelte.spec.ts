@@ -26,7 +26,12 @@ function setup() {
 	const env = {
 		device: null,
 		replica,
-		screen: { read: () => ({ shows: describeFrame(buildFrame(simulator.sim.state)) }) },
+		screen: {
+			read: () => ({
+				shows: describeFrame(buildFrame(simulator.sim.state)),
+				mode: simulator.sim.state.mode
+			})
+		},
 		virtual: createVirtualOpxy({ sim: simulator.sim }),
 		manual: null,
 		timers: rig.time,
@@ -59,6 +64,8 @@ describe('show_on_replica', () => {
 		expect(result).toMatchObject({ shown: true, replica: expect.stringMatching(/^back where/) });
 		// what the demo led to, read before the replica went back, and what it did there
 		expect(result.screenAtEnd).toMatch(/mix/);
+		// and where it started, so a combo that needs another page first shows as such
+		expect(result.startedFrom).toMatch(/^instrument mode, the screen on /);
 		expect(result.whileShown).toContain('T2 muted');
 		expect(sim.state.mode).toBe('instrument');
 		expect(sim.state.tracks[1].mix.muted).toBe(false);

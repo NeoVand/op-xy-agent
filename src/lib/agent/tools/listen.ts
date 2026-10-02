@@ -35,6 +35,7 @@ import { deviceSnapshot } from '../device-state';
 import type { ListenFrom, ListenHost } from '../listen-host';
 import {
 	alone,
+	drumsPlay,
 	keyNote,
 	mixDuckNote,
 	renderRequest,
@@ -285,7 +286,18 @@ export const listenTool = defineTool({
 			if (ctx.signal.aborted) throw error;
 			return errorResult(`Nothing was heard: ${message(error)}`, 'could not listen');
 		}
-		const summary = summarize(analysis, { focus: input.focus, source: sourceText(target) });
+		// with no drums playing, timing is not flagged (pitched onsets blur): known on the replica
+		const percussive =
+			target.kind === 'virtual'
+				? target.virtual
+						.status()
+						.tracks.some((t) => t.track <= 8 && t.engine === 'drum' && t.notes > 0 && !t.muted)
+				: undefined;
+		const summary = summarize(analysis, {
+			focus: input.focus,
+			source: sourceText(target),
+			...(percussive === undefined ? {} : { percussive })
+		});
 		const legend = flagLegend(summary.flags);
 		const lines = [
 			summary.text,
@@ -441,7 +453,11 @@ async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResul
 			const seconds = input.seconds ?? LISTEN_SECONDS;
 			const recording = await render(renderRequest(state, seconds), ctx.signal);
 			const analysis = await host.analyze(recording, { expectedBpm });
-			const summary = summarize(analysis, { focus: input.focus, source });
+			const summary = summarize(analysis, {
+				focus: input.focus,
+				source,
+				percussive: drumsPlay(state)
+			});
 			const key = keyNote(writtenKey(state), analysis.harmony?.key);
 			const duck = mixDuckNote(state, analysis.pump !== null);
 			const legend = flagLegend(summary.flags);

@@ -25,7 +25,8 @@ export interface PatternReading {
 	readonly chords?: readonly string[];
 	/**
 	 * The chords by their plain names and as degrees of the key, with the inversions apart: "C G Am
-	 * F: I V vi IV in C major; inverted: G/B, Am/C, F/C".
+	 * F: I V vi IV in C major; G/B, Am/C, F/C are inversions, the same chords over another of their
+	 * notes".
 	 */
 	readonly progression?: string;
 }
@@ -188,7 +189,16 @@ export function readPattern(
 		const bass = tones.length >= 3 ? under(step, notes[0]) : null;
 		const over = bass ? chordName([bass.note, ...notes]) : null;
 		const chord = over ?? alone;
-		if (!chord) return notes.map(noteName).join('+');
+		if (!chord) {
+			// three notes or more that make no chord this names: in the progression as their notes,
+			// so it does not drop out unseen (an agent could not tell an A7♭9 was unnamed)
+			const unnamed = `[${tones.join(' ')}]`;
+			if (tones.length >= 3 && unnamed !== lastChord) {
+				heard.push({ plain: unnamed, name: unnamed, root: -1, suffix: '' });
+				lastChord = unnamed;
+			}
+			return notes.map(noteName).join('+');
+		}
 		// the root as the key spells it ("Db", not "C#", in F minor)
 		const name = respellChord(ascii(chord.name), names);
 		const with_ = over && bass ? ` over T${bass.track}'s ${names[bass.note % 12]}` : '';
@@ -206,9 +216,12 @@ export function readPattern(
 	const tonic = meant ? meant.tonic : found?.pitchClass;
 	const keyName = meant ? meant.label : found?.key;
 	const inverted = heard.filter((h) => h.name !== h.plain).map((h) => h.name);
+	const unnamed = heard.filter((h) => h.root < 0).map((h) => h.plain);
+	const degree = (h: (typeof heard)[number]) =>
+		h.root < 0 || tonic === undefined ? '?' : numeral(h.root, h.suffix, tonic);
 	const progression =
 		heard.length >= 2 && tonic !== undefined && keyName
-			? `${heard.map((h) => h.plain).join(' ')}: ${heard.map((h) => numeral(h.root, h.suffix, tonic)).join(' ')} in ${keyName}${inverted.length ? `; inverted: ${inverted.join(', ')}` : ''}`
+			? `${heard.map((h) => h.plain).join(' ')}: ${heard.map(degree).join(' ')} in ${keyName}${inverted.length ? `; ${inverted.join(', ')} ${inverted.length === 1 ? 'is an inversion' : 'are inversions'}, the same chord${inverted.length === 1 ? '' : 's'} over another of ${inverted.length === 1 ? 'its' : 'their'} notes` : ''}${unnamed.length ? `; ${unnamed.join(', ')} ${unnamed.length === 1 ? 'is' : 'are'} no chord the reading names` : ''}`
 			: null;
 	return {
 		...(meant
@@ -224,16 +237,19 @@ export function readPattern(
 
 /** At or over this velocity a hit reads as an accent, X. */
 export const ACCENT_VELOCITY = 115;
-/** At or under this, a soft hit, o. */
+/** At or under this, a soft hit, read as its digit. */
 export const SOFT_VELOCITY = 75;
 
 /**
- * A drum hit on the grid by how hard it is: X an accent, o a soft hit, x the rest, by fixed lines,
- * so a grid reads back as written (marked against each other, a line of soft hats came back as x,
- * and an agent thought they played at full velocity).
+ * A drum hit on the grid by how hard it is, by fixed lines: X an accent, x a hit, and a soft hit as
+ * its loudness digit, 1–5 (velocity about 14 a digit), so a grid reads back as written (marked
+ * against each other, a line of soft hats came back as x, and an agent thought they played at full
+ * velocity; an o for every soft hit hid ghost notes made softer).
  */
 export function hitMark(velocity: number): string {
 	if (velocity >= ACCENT_VELOCITY) return 'X';
-	if (velocity <= SOFT_VELOCITY) return 'o';
+	if (velocity <= SOFT_VELOCITY) {
+		return String(Math.min(5, Math.max(1, Math.round((velocity * 9) / 127))));
+	}
 	return 'x';
 }

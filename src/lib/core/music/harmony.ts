@@ -64,6 +64,34 @@ const FORMULAS: Formula[] = [
 	{ pcs: [0, 2, 4, 7, 10], degrees: [0, 1, 2, 4, 6], suffix: '9', spoken: 'dominant ninth' },
 	{ pcs: [0, 2, 3, 7, 10], degrees: [0, 1, 2, 4, 6], suffix: 'm9', spoken: 'minor ninth' },
 	{ pcs: [0, 2, 4, 7, 11], degrees: [0, 1, 2, 4, 6], suffix: 'maj9', spoken: 'major ninth' },
+	{ pcs: [0, 1, 4, 7, 10], degrees: [0, 1, 2, 4, 6], suffix: '7♭9', spoken: 'seventh flat nine' },
+	{ pcs: [0, 3, 4, 7, 10], degrees: [0, 1, 2, 4, 6], suffix: '7♯9', spoken: 'seventh sharp nine' },
+	{ pcs: [0, 4, 7, 9, 10], degrees: [0, 2, 4, 5, 6], suffix: '13', spoken: 'thirteenth' },
+	{
+		pcs: [0, 4, 6, 7, 11],
+		degrees: [0, 2, 3, 4, 6],
+		suffix: 'maj7♯11',
+		spoken: 'major seventh sharp eleven'
+	},
+	{ pcs: [0, 2, 4, 7, 9], degrees: [0, 1, 2, 4, 5], suffix: '6/9', spoken: 'six nine' },
+	{
+		pcs: [0, 2, 5, 7, 10],
+		degrees: [0, 1, 3, 4, 6],
+		suffix: '9sus4',
+		spoken: 'ninth suspended fourth'
+	},
+	{
+		pcs: [0, 3, 5, 7, 10],
+		degrees: [0, 2, 3, 4, 6],
+		suffix: 'm7(add11)',
+		spoken: 'minor seventh added eleventh'
+	},
+	{
+		pcs: [0, 2, 3, 5, 7, 10],
+		degrees: [0, 1, 2, 3, 4, 6],
+		suffix: 'm11',
+		spoken: 'minor eleventh'
+	},
 	{ pcs: [0, 4, 7], degrees: [0, 2, 4], suffix: '', spoken: 'major' },
 	{ pcs: [0, 3, 7], degrees: [0, 2, 4], suffix: 'm', spoken: 'minor' },
 	{ pcs: [0, 3, 6], degrees: [0, 2, 4], suffix: '°', spoken: 'diminished' },
@@ -120,7 +148,7 @@ export function chordName(notes: readonly number[], flats = false): Chord | null
 
 	const names = flats ? NAMES_FLAT : NAMES_SHARP;
 
-	const found = match(pcs);
+	const found = match(pcs, bass);
 	if (!found) return null;
 
 	const { root, formula } = found;
@@ -135,8 +163,17 @@ export function chordName(notes: readonly number[], flats = false): Chord | null
 	};
 }
 
-/** The first formula whose shape these pitch classes make, and on which root. */
-function match(pcs: number[]): Shape | null {
+/**
+ * The first formula whose shape these pitch classes make, and on which root: on the bass when one
+ * fits there, as a musician names it (C E G A over C is C6, not Am7/C; C D G over C is Csus2),
+ * else the first that fits (an inversion: G/B).
+ */
+function match(pcs: number[], bass: number): Shape | null {
+	for (const formula of FORMULAS) {
+		if (formula.pcs.length !== pcs.length) continue;
+		const shape = pcs.map((p) => (p - bass + 12) % 12).sort((a, b) => a - b);
+		if (sameSet(shape, formula.pcs)) return { root: bass, formula };
+	}
 	for (const formula of FORMULAS) {
 		if (formula.pcs.length !== pcs.length) continue;
 		for (const root of pcs) {
@@ -198,7 +235,7 @@ export function spellNotes(notes: readonly number[], flats = false): Spelling[] 
 	assertNotes(notes);
 	const sorted = [...notes].sort((a, b) => a - b);
 	const pcs = [...new Set(sorted.map(pitchClass))].sort((a, b) => a - b);
-	const found = pcs.length >= 2 ? match(pcs) : null;
+	const found = pcs.length >= 2 ? match(pcs, pitchClass(sorted[0])) : null;
 
 	if (!found) {
 		const step = flats

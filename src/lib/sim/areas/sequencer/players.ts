@@ -239,6 +239,7 @@ export function playerFrame(s: SimState): PlayerFrame {
 			hold: m.hold,
 			notes: m.chord.length,
 			root: m.chord.length > 0 ? noteName(Math.min(...m.chord)) : null,
+			chord: [...m.chord].sort((a, b) => a - b).map(noteName),
 			// keys pressed with shift held enter the chord, they do not play it
 			sounding: !s.shift && (playerNotes(s) ?? []).length > 0
 		};

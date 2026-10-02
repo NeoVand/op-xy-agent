@@ -1,0 +1,155 @@
+[
+	{
+		"name": "maestro-recheck",
+		"about": "Re-check: the maestro chord set through the planner, a melody of single notes on it.",
+		"steps": [
+			{
+				"say": "put the maestro player on track 4 with an A minor chord, then write a slow melody of single notes in A minor for it and play it"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ghost-digits",
+		"about": "Re-check: ghost notes written with velocity digits, then made softer.",
+		"steps": [
+			{ "say": "make a funky drum groove at 96 with ghost notes on the snare" },
+			{ "say": "the ghost notes are too loud, make them softer" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "save-as-show",
+		"about": "Re-check: save as, planned and shown.",
+		"steps": [
+			{ "say": "make a quick beat, then show me how to save it on my op-xy as a new copy" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "progression-degrees",
+		"about": "Re-check: a progression named by degrees and by chords.",
+		"steps": [
+			{
+				"say": "write a I V vi IV progression in G major on track 7 and tell me which chords those are"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "song-moving",
+		"about": "Re-check: the song moving on while the agent answers.",
+		"steps": [
+			{ "say": "make a two scene song, 2 bars each, a verse then a chorus, and play it" },
+			{ "say": "what's playing right now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "record-bass-lesson",
+		"about": "Re-check: a live-recording lesson followed key by key, then what next.",
+		"steps": [
+			{
+				"say": "teach me how to record a bassline live on track 3 by playing the keys, light them up for me"
+			},
+			{ "follow": 8 },
+			{ "say": "what now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "persian-hiphop",
+		"about": "Persian (right to left, Persian digits): a hip hop beat and a bass, answered in Persian.",
+		"steps": [
+			{ "say": "یک بیت هیپ‌هاپ آروم با تمپوی ۹۰ بساز و یه بیس هم روش بذار" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "where-am-i",
+		"about": "The user presses keys on the replica, then asks where they are.",
+		"steps": [
+			{ "press": ["track.3", "key.m3"] },
+			{ "say": "what am I looking at, and what do these four knobs do here?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "relative-tweaks",
+		"about": "Relative sound changes over several turns, then half of one taken back.",
+		"steps": [
+			{ "say": "make a bassline on track 3" },
+			{ "say": "make it warmer" },
+			{ "say": "a bit more" },
+			{ "say": "too much, go halfway back" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "wrong-hearing",
+		"about": "The user complains about a part that is not there.",
+		"steps": [
+			{ "say": "make a simple beat with just a kick and a snare" },
+			{ "say": "the hi-hat is way too loud, turn it down" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "concepts",
+		"about": "A beginner's concept question, then shown on the replica.",
+		"steps": [
+			{
+				"say": "I'm confused, what's the difference between a pattern, a scene and a song on the op-xy?"
+			},
+			{ "say": "show me on the replica" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "variation-alternate",
+		"about": "A variation on a second pattern, alternated by a song.",
+		"steps": [
+			{ "say": "make a house beat on track 1" },
+			{
+				"say": "make a variation of it on pattern 2 and have the two alternate every 2 bars, then play it"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "vibe-brief",
+		"about": "A creative brief with no musical terms.",
+		"steps": [{ "say": "make something that sounds like a rainy night in Tokyo" }, { "why": true }]
+	},
+	{
+		"name": "drum-sound-tweak",
+		"about": "Shaping single drum sounds: a punchier kick, a shorter snare.",
+		"steps": [
+			{ "say": "make a boom bap beat at 88" },
+			{ "say": "make the kick punchier and the snare shorter" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "undo-chain",
+		"about": "Undo twice in a row.",
+		"steps": [
+			{ "say": "make a techno beat at 128" },
+			{ "say": "add a bassline" },
+			{ "say": "add a lead" },
+			{ "say": "undo" },
+			{ "say": "undo again" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "half-time-chorus",
+		"about": "A feel change between song parts.",
+		"steps": [
+			{
+				"say": "make a song with a verse at full time and a chorus that feels half-time, 4 bars each, and play it"
+			},
+			{ "why": true }
+		]
+	}
+]

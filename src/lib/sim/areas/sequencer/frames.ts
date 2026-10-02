@@ -89,6 +89,8 @@ export interface MaestroView {
 	readonly notes: number;
 	/** The chord's lowest note ("d5"), or null. */
 	readonly root: string | null;
+	/** The stored chord's notes, lowest first ("a4 c5 e5"), for its description (the slabs only count them). */
+	readonly chord: readonly string[];
 	/** The chord is sounding (the slabs stand tall). */
 	readonly sounding: boolean;
 }

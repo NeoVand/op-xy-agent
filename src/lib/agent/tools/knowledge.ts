@@ -152,7 +152,7 @@ export const showOnReplicaTool = defineTool({
 	label: 'show on replica',
 	kind: 'ui',
 	description:
-		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"); the keys before a + stay held, and + at the start of the next combo keeps them held ("key G3 + record → + step 5 → + step 13": the snare held while its steps are pressed; "hold" goes only on a last key). The keys play from wherever the replica stands, as presses would (start with the track key when the user names a track, and write the same steps in your answer as you showed); once the result has been seen the replica goes back to where it was, so the user can try it from there, and the call returns then. Nothing stays changed: to leave the replica changed, use the key planner with show. Sends nothing to the device. When the user asks how to do something on the device, play the main combination once, before you write the answer, and do not mention that you did. When they want to do it themselves key by key ("walk me through it", "light the keys"), guide instead: the replica lights each combo and waits for their press.',
+		'Animate a key combo on the replica next to the chat, so the user sees which keys to press and in what order. Takes one combo in the key grammar ("shift + M1", "record + play", "step 5 + turn E2", "shift → step 1", "hold com"); → chains several ("T3 → shift + M3"); the keys before a + stay held, and + at the start of the next combo keeps them held ("key G3 + record → + step 5 → + step 13": the snare held while its steps are pressed; "hold" goes only on a last key). Keyboard keys are key F3 … key E5, named by the note they play at the default octave (for a lower note, [-] first: still key F3 to key E5). The keys play from wherever the replica stands, as presses would (start with the track key when the user names a track, and write the same steps in your answer as you showed); once the result has been seen the replica goes back to where it was, so the user can try it from there, and the call returns then. Nothing stays changed: to leave the replica changed, use the key planner with show. Sends nothing to the device. When the user asks how to do something on the device, play the main combination once, before you write the answer, and do not mention that you did. When they want to do it themselves key by key ("walk me through it", "light the keys"), guide instead: the replica lights each combo and waits for their press.',
 	input: z.object({
 		keys: z.string().min(1).max(120).describe('One key combo in the key grammar'),
 		caption: z.string().max(160).optional().describe('What the combo does, in a few words'),
@@ -181,6 +181,12 @@ export const showOnReplicaTool = defineTool({
 			);
 		}
 		ctx.env.guide?.stop();
+		// where the keys started from, in mode and screen: a song-mode demo of shift + arrange from
+		// instrument mode ended on arrange, and the agent described the song page it never reached
+		const start = ctx.env.screen?.read() ?? null;
+		const startedFrom = start
+			? `${start.mode ? `${start.mode} mode, ` : ''}the screen on ${start.shows}`
+			: null;
 		// A demonstration leaves nothing behind (docs/research episodes: a demo that muted track 2
 		// or entered a kick left the user's own try starting from somewhere else). Unless the user
 		// takes over while it plays: then what they did stays.
@@ -227,6 +233,7 @@ export const showOnReplicaTool = defineTool({
 				shown: outcome === 'finished',
 				keys,
 				seconds: Math.round(handle.plan.duration / 100) / 10,
+				...(startedFrom ? { startedFrom } : {}),
 				...(ended ? { screenAtEnd: ended } : {}),
 				...(did.length ? { whileShown: did } : {}),
 				replica: putBack

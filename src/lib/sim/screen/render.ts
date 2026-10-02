@@ -153,7 +153,9 @@ export function describeFrame(frame: ScreenFrame): string {
 		case 'playmode':
 			return `play mode ${frame.values[0]}, portamento ${frame.values[1]}, bend ${frame.values[2]}, volume ${frame.values[3]}`;
 		case 'filter':
-			return `${frame.type} filter${frame.off ? ' off' : ''}: cutoff ${lane(frame.cutoff)}, resonance ${lane(frame.resonance)}`;
+			// the envelope amount and key tracking as their lanes read: the page draws them as the
+			// curve's hatched ghost and the arrow (an agent described E3 and E4 without their values)
+			return `${frame.type} filter${frame.off ? ' off' : ''}: cutoff ${lane(frame.cutoff)}, resonance ${lane(frame.resonance)}, envelope amount ${lane(frame.envAmount)}, key tracking ${lane(frame.keyTracking)}`;
 		case 'sends':
 			return `sends: aux ${frame.values[0]}, tape ${frame.values[1]}, fx I ${frame.values[2]}, fx II ${frame.values[3]}`;
 		case 'lfo':

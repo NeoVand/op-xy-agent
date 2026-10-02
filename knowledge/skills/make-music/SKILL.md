@@ -48,7 +48,8 @@ six), 7/8 is 14, 5/4 is 20, so four bars of 3/4 are length 48. Readings then gro
 Musical words mean what a drummer or producer means: a fill fills its bar (sixteenths building in
 velocity into the next downbeat, toms at the end if you like), four-on-the-floor is a kick on every
 beat, a backbeat is the snare on 2 and 4, and a closed and an open hat do not share a step (a
-drummer plays one or the other). Velocity per step is a step component
+drummer plays one or the other: a grid leaves the closed one out under the open one, so a steady
+closed-hat line with open hats on top is fine). Velocity per step is a step component
 ([sequencer.component-velocity]), not a parameter lock.
 
 A kit made from generated sounds can be put straight onto a drum track, so a beat written there
@@ -67,7 +68,7 @@ shapes. A pattern or two are clearer written directly.
 ## Say what you made
 
 Describe what you made from what the write returned, not from what you meant: a drum pattern comes
-back as a grid (a line per drum sound, x a hit, X an accent, o a soft hit, four steps a beat), any
+back as a grid (a line per drum sound, x a hit, X an accent, a soft hit as its digit 1–5, four steps a beat), any
 other pattern as a reading of its bars and chords, spelled in the key its notes suggest. Show a drum
 grid as it came back, in a code block with one sentence on the feel, or say it in a sentence or two;
 say a bassline, chords or a melody in a sentence from the reading, never as a grid you draw
