@@ -4732,7 +4732,8 @@
 						"channel": "track",
 						"reach": "untested",
 						"confidence": "community-verified"
-					}
+					},
+					"about": "this track's own list, not the sample page's sources"
 				},
 				{
 					"keys": "turn E2",
@@ -5037,7 +5038,7 @@
 						"reach": "untested",
 						"confidence": "community"
 					},
-					"about": "external audio, tape, and FX I (into FX II)"
+					"about": "external audio, tape, and FX I (into FX II); FX II itself has no documented send"
 				}
 			]
 		},
@@ -5496,7 +5497,7 @@
 						"reach": "untested",
 						"confidence": "community"
 					},
-					"about": "external audio, tape, and FX I (into FX II)"
+					"about": "external audio, tape, and FX I (into FX II); FX II itself has no documented send"
 				}
 			]
 		},
@@ -6521,7 +6522,7 @@
 						"reach": "untested",
 						"confidence": "community"
 					},
-					"about": "external audio, tape, and FX I (into FX II)"
+					"about": "external audio, tape, and FX I (into FX II); FX II itself has no documented send"
 				}
 			]
 		},
