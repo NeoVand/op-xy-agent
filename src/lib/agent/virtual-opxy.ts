@@ -91,6 +91,11 @@ export interface PatternWrite {
 	readonly components?: readonly VirtualComponent[];
 	/** Make it the pattern the track plays (default); false edits it in place (a pattern card). */
 	readonly play?: boolean;
+	/**
+	 * The pattern's own groove amount, the bar menu's (−99 … 99 on the tempo page's groove type,
+	 * snapped to the device's detents; 0: the tempo page's amount); default: left as it is.
+	 */
+	readonly groove?: number;
 }
 
 /** A scene: the pattern each of the 16 tracks plays in it (index 0 = track 1). */

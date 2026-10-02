@@ -536,7 +536,7 @@ export function createLab(options: LabOptions): LabSession {
 			// a groove that hardly reaches the notes, said where it is set (an agent swung a beat on
 			// the eighths, heard no swing, and suspected the render)
 			const reach = list.some((s) => /groove|swing|shuffle/i.test(s.param))
-				? grooveReachAll(virtual)
+				? grooveReachAll(virtual, true)
 				: [];
 			return {
 				reached: true,

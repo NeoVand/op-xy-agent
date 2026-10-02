@@ -514,6 +514,63 @@ describe('write_pattern on drums', () => {
 		expect(String(bad.content)).toMatch(/"Hm7" is not a chord name/);
 	});
 
+	it('reads a part to come against the other tracks’ patterns of its number', async () => {
+		const { run } = setup();
+		await run(writePatternTool, { track: 3, pattern: 2, stay: true, notes: '1:A1:16' });
+		const chords = json(
+			await run(writePatternTool, { track: 7, pattern: 2, stay: true, notes: '1:C4+E4+G4:16' })
+		);
+		expect(chords.written.reading.chords[0]).toMatch(/over T3's A/);
+	});
+
+	it('starts a pattern from a copy of another, alone or with one bar written anew', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, { track: 3, bars: 4, notes: '1:A1:4 17:F1:4 33:C2:4 49:G1:4' });
+		// a bar of the copy changed, the source left alone
+		const fill = json(
+			await run(writePatternTool, {
+				track: 3,
+				pattern: 2,
+				copy: 1,
+				stay: true,
+				bar: 4,
+				notes: '1:G1:2 5:A1:2 9:B1:2 13:D2:2'
+			})
+		);
+		const copied = virtual.readPattern(3, 2).notes.map((n) => `${n.step}:${n.note}`);
+		expect(copied).toEqual(['1:33', '17:29', '33:36', '49:31', '53:33', '57:35', '61:38']);
+		expect(virtual.readPattern(3, 1).notes).toHaveLength(4);
+		expect(fill.note).toMatch(/Pattern 2 started from a copy of pattern 1, bar 4 written anew/);
+		// alone, the copy is whole
+		await run(writePatternTool, { track: 3, pattern: 3, copy: 1, stay: true });
+		expect(virtual.readPattern(3, 3).notes).toEqual(virtual.readPattern(3, 1).notes);
+		expect(virtual.readPattern(3, 3).bars).toBe(4);
+	});
+
+	it('gives a pattern its own groove, confirmed and undone with it', async () => {
+		const { sim, env, run } = setup();
+		sim.state.tempo.groove = 0; // shuffle, at the tempo page's 0: straight
+		const input = writePatternTool.input.parse({
+			track: 1,
+			pattern: 2,
+			stay: true,
+			groove: 60,
+			grid: { kick: 'x... x... x... x...', 'closed hat': 'xxxx xxxx xxxx xxxx' }
+		});
+		const before = writePatternTool.snapshot!(input, env);
+		const result = json(await run(writePatternTool, input));
+		expect(sim.state.tracks[0].sequence.patterns[1].groove).toBe(60);
+		// pattern 1 keeps the tempo page's: only this one swings
+		expect(sim.state.tracks[0].sequence.patterns[0].groove).toBe(0);
+		expect(result.note).toMatch(
+			/The groove \(shuffle, \+60, this pattern's own\) moves 8 of T1's 20 notes/
+		);
+		const inverse = writePatternTool.inverse!(input, before, env)!;
+		await run(writePatternTool, inverse.input);
+		expect(sim.state.tracks[0].sequence.patterns[1].groove).toBe(0);
+		expect(sim.state.tracks[0].sequence.current).toBe(0);
+	});
+
 	it('says when the groove moves none of the notes', async () => {
 		const { sim, run } = setup();
 		sim.state.tempo.groove = 0; // shuffle

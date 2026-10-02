@@ -230,7 +230,7 @@ export const listenTool = defineTool({
 	kind: 'read',
 	strict: false,
 	description:
-		'Listen to what is playing for a few seconds and get back what it sounds like: loudness (LUFS), peaks and clipping, tone against pink noise, stereo width and a mono low end, tempo compared with the set tempo, timing and swing, where the low, mid and high hits sit in the beat, a key and rough chords, silence and dropouts, and flags worth acting on. Hears the connected OP-XY over its USB audio, else the replica in the browser (from chooses). The transport must be playing: if it is stopped this says so, and nothing is recorded. With scene, it renders that scene of the replica looping instead, offline: nothing needs to play, and the song, the transport and the mutes are left alone (a song playing moves on from scene to scene, so this is how to hear one scene); add tracks to hear instrument tracks one at a time, each alone, without touching any mute; scene "song" hears every section of the song side by side. Changes nothing. Use it to check your own work, then revise and listen again.',
+		'Listen to what is playing for a few seconds and get back what it sounds like: loudness (LUFS), peaks and clipping, tone against pink noise, stereo width and a mono low end, tempo compared with the set tempo, timing and swing, where the low, mid and high hits sit in the beat, a key and rough chords, silence and dropouts, and flags worth acting on. Hears the connected OP-XY over its USB audio, else the replica in the browser (from chooses). The transport must be playing: if it is stopped this says so, and nothing is recorded. With scene, it renders that scene of the replica looping instead, offline: nothing needs to play, and the song, the transport and the mutes are left alone (a song playing moves on from scene to scene, so this is how to hear one scene); add tracks to hear instrument tracks one at a time, each alone, without touching any mute; scene "song" hears every section of the song side by side; to hear across a change of part (a fill into the chorus, the drop after a build), run_lab’s lab.listen with song: {entry, bar} plays the song on from there. Changes nothing. Use it to check your own work, then revise and listen again.',
 	input: z.object({
 		seconds: z
 			.number()
@@ -357,6 +357,14 @@ async function sections(
 				`peak ${d.level.peakDbfs} dBFS`,
 				...(tone ? [`vs pink: ${tone}`] : []),
 				...(d.rhythm ? [`${d.rhythm.onsets} onsets`] : []),
+				// the feel each section has (an agent swung one part and could not see it here)
+				...(d.rhythm?.swing !== null && d.rhythm?.swing !== undefined
+					? [
+							Math.abs(d.rhythm.swing - 50) < 2
+								? 'straight sixteenths'
+								: `swing ${d.rhythm.swing} %`
+						]
+					: []),
 				...(summary.flags.length > 0 ? [`worth a look: ${summary.flags.join(', ')}`] : [])
 			];
 			heard.push({

@@ -114,6 +114,22 @@ describe('make_kit', () => {
 		);
 		expect(sim.state.tracks[0].drumKeys[0].tune).toBe(5);
 		expect(sim.state.areas.sample.tracks[0].keys[0]?.id).toContain('kits/dust/');
+		// voices alone remake their keys only: the kick changes, the snare stays the kit's
+		const snare = sim.state.areas.sample.tracks[0].keys[2]?.id;
+		await makeKitTool.run(
+			makeKitTool.input.parse({
+				name: 'dust boom',
+				voices: [{ key: 53, type: 'kick', pitch: 40, decay: 2 }],
+				track: 1
+			}),
+			{
+				toolCallId: 'toolu_m',
+				agent: 'conductor',
+				env: { presets: host, virtual }
+			} as unknown as ToolContext
+		);
+		expect(sim.state.areas.sample.tracks[0].keys[0]?.id).toContain('kits/dust boom/');
+		expect(sim.state.areas.sample.tracks[0].keys[2]?.id).toBe(snare);
 	});
 
 	it('puts the user’s kit from the preset maker on a track, edits and all', async () => {

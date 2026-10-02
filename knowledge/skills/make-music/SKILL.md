@@ -38,8 +38,9 @@ on the replica reads light at 25–35, lazy at 45–60 (near triplets at 65) and
 listen measures the swing it hears (50 % straight, 67 % triplets). Set them with the key planner's
 settings, groove then swing ({param: "groove", value: "shuffle"}, {param: "swing", value: 50}). On the
 replica shuffle moves every second sixteenth (steps 2, 4, 6…), so hits on the eighths do not swing;
-one track's own amount is the bar menu's groove (area bar), kept by its pattern, so one part of a
-song swings alone when its scene plays a pattern with a groove of its own. With no tempo given,
+one track's own amount is the bar menu's groove, kept by its pattern on the same scale, so one part
+of a song swings alone when its scene plays a pattern with a groove of its own (write_pattern's
+groove sets it with the notes, without selecting the pattern). With no tempo given,
 pick one that suits the style (house 120–126, techno 128–135, hip hop and boom bap 85–95, lo-fi
 70–85, drum and bass 170–175); slow, ambient or a pad wants 60–80 (one chord a bar at 120 is not
 slow). A new project's metronome clicks on every beat: when you start playback of a beat or song you made,

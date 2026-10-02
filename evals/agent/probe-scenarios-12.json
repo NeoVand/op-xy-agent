@@ -1,0 +1,142 @@
+[
+	{
+		"name": "breakdown-2",
+		"about": "Re-check: a pattern for a later part while there is one scene (stay).",
+		"steps": [
+			{ "say": "make a techno track with drums, bass and a lead" },
+			{
+				"say": "add a 2 bar breakdown where only the bass plays, then everything comes back"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lofi-unheard",
+		"about": "Re-check: describing a build without listening, and no disclaimer about it.",
+		"steps": [{ "say": "make a lofi beat with keys and a bass" }, { "why": true }]
+	},
+	{
+		"name": "swing-second-half-2",
+		"about": "Re-check: a groove that reaches the notes, in one part only.",
+		"steps": [
+			{
+				"say": "make an 8 bar song: straight drums for the first 4 bars, then the same beat swung for the last 4"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "drop-hits-harder",
+		"about": "Re-check: hearing a change of part, the drop against the build.",
+		"steps": [
+			{
+				"say": "make a 4 bar build and a 4 bar drop, then check by listening that the drop hits harder than the build"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sixteenth-hats-merge",
+		"about": "Re-check: hats changed alone with an open hat kept.",
+		"steps": [
+			{ "say": "make a house beat with an open hat on the last offbeat of the bar" },
+			{ "say": "now make the closed hats sixteenths" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sidechain-bass",
+		"about": "Ducking the bass under a kick that shares a track with the kit.",
+		"steps": [
+			{ "say": "make a house beat with a bass" },
+			{ "say": "make the bass duck under the kick, like sidechain" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "copy-then-vary",
+		"about": "A pattern copied, then one bar of the copy changed.",
+		"steps": [
+			{ "say": "make a 4 bar bassline on track 3" },
+			{
+				"say": "copy it to pattern 2 and change only the last bar of the copy into a fill"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snare-too-loud",
+		"about": "One sound of a kit too loud.",
+		"steps": [
+			{ "say": "make a hip hop beat" },
+			{ "say": "the snare is way too loud" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "style-reference",
+		"about": "A style named by an artist.",
+		"steps": [{ "say": "make something that sounds like early Daft Punk" }, { "why": true }]
+	},
+	{
+		"name": "perform-scenes",
+		"about": "Live performance: switching scenes by hand.",
+		"steps": [
+			{ "say": "make a song with three scenes" },
+			{ "say": "I want to play this live. how do I jump between the scenes while it plays?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "external-synth",
+		"about": "Setting a track up to play an external synth.",
+		"steps": [
+			{
+				"say": "how do I set up track 8 to play my external synth on MIDI channel 3?"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "song-seconds",
+		"about": "A song of a set length, its seconds computed.",
+		"steps": [
+			{
+				"say": "make a song with four sections of 4 bars each at 128 bpm and tell me exactly how many seconds it lasts"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chords-up-octave",
+		"about": "A part moved up an octave.",
+		"steps": [
+			{ "say": "put a I vi IV V progression in G on track 7" },
+			{ "say": "they're too low, move them up an octave" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "boomy-kick",
+		"about": "One drum sound shaped: a longer, boomier kick.",
+		"steps": [
+			{ "say": "make a trap beat" },
+			{ "say": "make the kick longer and boomier" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "play-nothing",
+		"about": "Play asked for with nothing written.",
+		"steps": [{ "say": "play the song" }, { "why": true }]
+	},
+	{
+		"name": "bpm-question",
+		"about": "A question about the replica's own state.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "what tempo is this at, and what key is the bass in?" },
+			{ "why": true }
+		]
+	}
+]

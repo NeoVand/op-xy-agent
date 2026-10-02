@@ -59,6 +59,23 @@ function setup(withReplica = false) {
 const json = (result: ToolResult) => JSON.parse(String(result.content));
 
 describe('plan_steps', () => {
+	it('takes the value LFO’s parameter by name', async () => {
+		const { sim, run } = setup(true);
+		const shown = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 3,
+				settings: [
+					{ param: 'lfo type', value: 'value' },
+					{ param: 'lfo destination', value: 'filter' },
+					{ param: 'lfo parameter', value: 'resonance' }
+				]
+			})
+		);
+		expect(shown.arrived).toBe(true);
+		expect(sim.state.tracks[2].lfo.parameter).toBe(1);
+	});
+
 	it('says when a groove it sets hardly reaches the notes', async () => {
 		const { virtual, run } = setup(true);
 		virtual.writePattern(1, {

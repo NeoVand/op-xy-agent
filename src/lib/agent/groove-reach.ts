@@ -24,7 +24,9 @@ const where = (type: string) =>
 export function grooveReach(
 	pattern: Pick<VirtualPattern, 'track' | 'notes' | 'scale'>,
 	type: string,
-	amount: number
+	amount: number,
+	/** Say what it moves even when that is enough (a groove just set, confirmed). */
+	always = false
 ): string | null {
 	if (amount === 0 || pattern.notes.length === 0) return null;
 	const g = { type: Math.max(0, GROOVES.indexOf(type as never)), amount };
@@ -39,18 +41,24 @@ export function grooveReach(
 	if (moved / pattern.notes.length < FEW) {
 		return `${label} moves only ${moved} of T${pattern.track}'s ${pattern.notes.length} notes, so it hardly swings: ${where(type)}; put hits there (hats or ghost snares between the eighths) to hear it.`;
 	}
-	return null;
+	return always
+		? `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes.`
+		: null;
 }
 
-/** The groove's reach on every instrument track with notes, each as its pattern sets it. */
-export function grooveReachAll(virtual: VirtualOpxy): string[] {
+/**
+ * The groove's reach on every instrument track with notes, each as its pattern sets it (its own
+ * amount, the bar menu's, else the tempo page's); `always` confirms what it moves on each.
+ */
+export function grooveReachAll(virtual: VirtualOpxy, always = false): string[] {
 	const status = virtual.status();
 	const groove = status.groove;
 	if (!groove) return [];
 	return status.tracks.flatMap((t) => {
 		if (t.track > 8 || t.notes === 0) return [];
 		const p = virtual.readPattern(t.track);
-		const line = grooveReach(p, groove.type, p.groove || groove.amount);
-		return line ? [line] : [];
+		const own = p.groove ? `, pattern ${p.pattern}'s own` : '';
+		const line = grooveReach(p, groove.type, p.groove || groove.amount, always);
+		return line ? [line.replace(/^The groove \(([^)]*)\)/, `The groove ($1${own})`)] : [];
 	});
 }

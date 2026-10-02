@@ -125,6 +125,19 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   1 again, not 2" replaces a bare undone line; the not-heard note no longer prompts "I haven't
   listened"; the play result says to switch the click off under music made; parts put on tracks
   route to make-music; the manual gained prism's ratio and stereo.
+- **Probe round twelve (2026-10-02), 16 scenarios (`probe-scenarios-12.json`, no failed calls:
+  re-checks of stay, the unheard note, the groove reach, a drop heard against its build and merged
+  sixteenth hats, plus a sidechained bass, a copied and varied pattern, a loud snare, early Daft
+  Punk, scenes played live, an external synth, a song's seconds, chords up an octave, a boomier
+  kick, play with nothing written, a tempo question):** agents used stay and the groove warning and
+  stopped adding listening disclaimers. Fixes: write_pattern takes `copy` (start from another
+  pattern, alone or with one bar anew) and `groove` (a pattern's own groove, so one part swings
+  without selecting it in arrange; undone with the write); a groove set is confirmed with what it
+  moves; song sections in listen give their swing; a part written before the scenes is read
+  against the other tracks' patterns of its number; the value LFO's parameter takes names
+  (cutoff, attack…) and its destination is described; plan_steps' show says it sets and stays
+  (how-to questions take a demo or guide); make_kit says voices alone remake only their keys; the
+  grid's description says a closed hat under an open one is left out.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

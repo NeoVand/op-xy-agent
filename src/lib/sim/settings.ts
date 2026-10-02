@@ -44,6 +44,27 @@ export interface SettingSpec {
  * has selected (1–16), the default for an instrument parameter; the pages of the other areas
  * default to their own selected track.
  */
+/**
+ * The value LFO's parameter by the name of what it moves on its destination page, 1–4 as the
+ * screen numbers the encoders (an agent's "cutoff" was refused for a number, and it guessed 1).
+ */
+const LFO_PARAMETERS: Readonly<Record<string, number>> = {
+	cutoff: 1,
+	resonance: 2,
+	'env amount': 3,
+	'envelope amount': 3,
+	'key tracking': 4,
+	attack: 1,
+	decay: 2,
+	sustain: 3,
+	release: 4
+};
+
+const lfoParameter = (param: string, value: number | string): number | string => {
+	if (typeof value !== 'string' || !/^lfo (target )?parameter$/i.test(param.trim())) return value;
+	return LFO_PARAMETERS[value.trim().toLowerCase()] ?? value;
+};
+
 export function settingGoal(spec: SettingSpec, selected = 1): SettingGoal | string {
 	const track = spec.track;
 	const area = spec.area ?? ((track ?? selected) > 8 ? 'auxiliary' : 'instrument');
@@ -65,7 +86,7 @@ export function settingGoal(spec: SettingSpec, selected = 1): SettingGoal | stri
 			return {
 				track: Math.min(t, 8),
 				param: spec.param,
-				value: spec.value,
+				value: lfoParameter(spec.param, spec.value),
 				...extra,
 				...(spec.step !== undefined && area === 'instrument' ? { step: spec.step } : {})
 			};

@@ -59,7 +59,8 @@ import {
 	currentPattern,
 	emptyPattern,
 	emptyStep,
-	noteCount
+	noteCount,
+	stepGroove
 } from '$lib/sim/sequencer';
 
 /** Puts `state`'s screen where a person starts reading from: on, no page open, no key held. */
@@ -464,6 +465,12 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			if (write.scale !== undefined && !(TRACK_SCALES as readonly number[]).includes(write.scale)) {
 				throw new VirtualOpxyError(`track scale ${write.scale} does not exist`);
 			}
+			if (
+				write.groove !== undefined &&
+				(!Number.isFinite(write.groove) || Math.abs(write.groove) > 99)
+			) {
+				throw new VirtualOpxyError(`a pattern's groove is −99…99 (${write.groove})`);
+			}
 			for (const n of write.notes) {
 				if (!Number.isInteger(n.step) || n.step < 1 || n.step > steps) {
 					throw new VirtualOpxyError(`step ${n.step} is outside ${bars} bar(s) (1–${steps})`);
@@ -495,6 +502,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			target.bars = bars;
 			target.length = clampInt(write.length ?? steps, 1, steps);
 			if (write.scale !== undefined) target.scale = write.scale;
+			// the bar menu's groove, on the device's detents (60 is one, 61 is not)
+			if (write.groove !== undefined) target.groove = stepGroove(write.groove, 0);
 			for (const n of write.notes) {
 				const step = target.steps[n.step - 1];
 				const note = clampInt(n.note, 0, 127);
