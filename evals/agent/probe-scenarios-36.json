@@ -1,0 +1,133 @@
+[
+	{
+		"name": "scaled-hats-beats",
+		"about": "Re-check: hits at another track scale named in time.",
+		"steps": [
+			{ "say": "make a beat with double-time hats on track 2 at track scale 1/2" },
+			{ "say": "on which beats do the hats land?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-and-back",
+		"about": "Re-check: a change undone in one answer.",
+		"steps": [
+			{ "say": "make a beat with sixteenth hats" },
+			{ "say": "try a swing of 50, then take the swing off again, and tell me where it ended up" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "darker-epiano",
+		"about": "Re-check: a highpass switched on warned.",
+		"steps": [
+			{ "say": "write chords on track 4" },
+			{ "say": "make the chords on track 4 darker" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hats-ms",
+		"about": "Re-check: offsets in milliseconds.",
+		"steps": [
+			{ "say": "make a beat and humanize the hats" },
+			{ "say": "how many milliseconds off the grid is each hat?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "greek-piano",
+		"about": "A request in Greek.",
+		"steps": [{ "say": "φτιάξε ένα ήρεμο μπιτ με πιάνο" }, { "why": true }]
+	},
+	{
+		"name": "podcast-intro",
+		"about": "A length in seconds.",
+		"steps": [{ "say": "make an 8 second podcast intro jingle" }, { "why": true }]
+	},
+	{
+		"name": "bass-follows-kick",
+		"about": "A bass written against a beat.",
+		"steps": [
+			{ "say": "make a beat with a syncopated kick" },
+			{ "say": "make the bass hit exactly with the kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "counter-melody",
+		"about": "A second line against a melody.",
+		"steps": [
+			{ "say": "write a melody on track 5 over chords on track 7" },
+			{ "say": "add a counter melody on track 6" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "eighties-sound",
+		"about": "A style by era.",
+		"steps": [
+			{ "say": "make a beat with bass and chords" },
+			{ "say": "make it sound more 80s" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hats-too-loud",
+		"about": "A balance complaint about one sound.",
+		"steps": [{ "say": "make a beat" }, { "say": "the hats are too loud" }, { "why": true }]
+	},
+	{
+		"name": "what-is-brain",
+		"about": "A question about an auxiliary track.",
+		"steps": [{ "say": "what does the brain track do?" }, { "why": true }]
+	},
+	{
+		"name": "teach-live-record",
+		"about": "A guided live recording, followed.",
+		"steps": [
+			{ "say": "teach me to record a melody live on track 5, light the keys" },
+			{ "follow": 4 },
+			{ "say": "did it record anything?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "explain-components",
+		"about": "A beginner explanation.",
+		"steps": [{ "say": "explain step components to me like I'm ten years old" }, { "why": true }]
+	},
+	{
+		"name": "song-fade-out",
+		"about": "A fade out over a song's last scene.",
+		"steps": [{ "say": "make a 2 scene song and make it fade out at the end" }, { "why": true }]
+	},
+	{
+		"name": "pattern-vs-scene",
+		"about": "A concept question.",
+		"steps": [{ "say": "what's the difference between a pattern and a scene?" }, { "why": true }]
+	},
+	{
+		"name": "six-eight",
+		"about": "A compound meter.",
+		"steps": [{ "say": "build a beat in 6/8 with a bass" }, { "why": true }]
+	},
+	{
+		"name": "swap-tracks",
+		"about": "Two parts swapped between tracks.",
+		"steps": [
+			{ "say": "write a bass on track 3 and chords on track 4" },
+			{ "say": "swap them: bass on track 4 and chords on track 3" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "shorter-loop",
+		"about": "Cutting a loop shorter.",
+		"steps": [
+			{ "say": "make a 4 bar beat with a bass" },
+			{ "say": "cut everything down to the first 2 bars" },
+			{ "why": true }
+		]
+	}
+]

@@ -152,6 +152,16 @@ function guideKeys(keys: string, caption: string | undefined, ctx: ToolContext):
 			(s, i) => i > 0 && /^step \d+$/.test(s.keys) && noted(s.music) < noted(steps[i - 1].music)
 		)
 		.map((s) => s.keys);
+	// a lesson that ends armed to record: how the take is played here (an agent taught the arming
+	// and never said how the user plays notes on the replica, and the take stayed empty)
+	const armed = (() => {
+		try {
+			const { recording } = JSON.parse(steps.at(-1)?.music ?? '{}') as { recording?: string };
+			return recording !== undefined && recording !== 'off';
+		} catch {
+			return false;
+		}
+	})();
 	return jsonResult(
 		{
 			guided: true,
@@ -160,6 +170,11 @@ function guideKeys(keys: string, caption: string | undefined, ctx: ToolContext):
 			...(lone.length
 				? {
 						caution: `${lone.join(', ')} pressed alone takes off the note there. For a step's own value (a parameter lock: the step held while an encoder turns), stop this and use the key planner with step and guide instead.`
+					}
+				: {}),
+			...(armed
+				? {
+						take: 'The last step arms recording. Then the user plays the take on the replica’s keys, with the mouse or the computer keyboard (the Z row the lower twelve, the Q row the upper), and stop ends it: say so with the steps.'
 					}
 				: {})
 		},

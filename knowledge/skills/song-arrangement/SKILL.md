@@ -15,6 +15,10 @@ that scene: the song stops moving on until song mode is opened ([howto.loop-one-
 change (`shift`, tap `play`, then the scene's black key) waits instead of switching mid-bar
 ([arrange.scene-queue]).
 
+A piece meant to play once and stop (a jingle, a sting, an intro for a video) is a song with loop
+off, even of one scene (write_arrangement's song, scenes [1], loop false): play then runs it once
+and stops, and the transport's result gives its length in seconds. A loop plays on until stopped.
+
 ## Shaping sections
 
 A section is a scene; its difference from the one before is what the listener hears as form. Change
@@ -30,9 +34,10 @@ little between neighbouring sections and a lot at the big moments:
   looping so it ends on the quietest. A scene lasts as long as its longest pattern, so a fade in
   one-bar steps takes one-bar patterns: write_pattern copy with copy_bar makes a bar of the section
   a pattern of its own (one lab program does every track's at once and sets the scenes). A smooth
-  fade instead locks each track's volume (shift `M2`'s volume) on the outro's steps, lower bar by
-  bar, with the bar menu's shape smoothing between the locks (area bar, param shape; the lab's set
-  with step places the locks).
+  fade instead locks each track's volume (param "volume": shift `M2`'s, not the mixer's level) on
+  the outro's steps, lower bar by bar from the track's own (read_sound's play mode page), and sets
+  each faded pattern's shape so the level glides between the locks (area bar, param shape, 0–99,
+  with pattern; the lab's set with step places the locks).
 
 Four-bar scenes give a clear form; repeat a scene in the song rather than lengthening its patterns.
 A part left out of a section rests: pattern 0 for its track in that scene (an empty pattern).

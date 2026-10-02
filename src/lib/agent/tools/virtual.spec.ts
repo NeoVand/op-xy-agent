@@ -372,6 +372,41 @@ describe('write_pattern one bar at a time', () => {
 		expect(shifted.filter((n) => n.step === 1).map((n) => n.note)).toEqual([62, 65, 69]);
 		expect(shifted.filter((n) => n.step === 17).map((n) => n.note)).toEqual([46, 50, 53]);
 	});
+
+	it('cuts or lengthens the pattern as it is with bars or length alone', async () => {
+		// "cut everything down to the first 2 bars": an agent resent every note, unsure bars alone
+		// would keep them
+		const { virtual, run } = setup();
+		await run(writePatternTool, {
+			track: 3,
+			notes: '1:A1:2 9:C2:2 17:F1:2 25:A1:2 33:C2:2 41:E2:2 49:G1:2 57:A1:2'
+		});
+		await run(writePatternTool, {
+			track: 1,
+			bars: 4,
+			grid: { kick: 'x... .... x... ....', snare: '.... x... .... x...' }
+		});
+		const cut = json(await run(writePatternTool, { track: 3, bars: 2 }));
+		expect(cut.written).toMatchObject({ bars: 2, length: 32, noteCount: 4 });
+		expect(cut.note).toMatch(
+			/Cut from 4 bars to 2 bars: the 4 notes past step 32 are gone \(undo brings them back\), the rest as they were\./
+		);
+		expect(virtual.readPattern(3).notes.map((n) => n.step)).toEqual([1, 9, 17, 25]);
+		const drums = json(await run(writePatternTool, { track: 1, bars: 2 }));
+		expect(drums.written.grid['kick 1']).toBe('x... .... x... .... | x... .... x... ....');
+		// longer: the new bars empty, said, or filled again with repeat
+		const longer = json(await run(writePatternTool, { track: 3, bars: 3 }));
+		expect(longer.note).toMatch(/Lengthened from 2 bars to 3 bars: bar 3 is empty \(repeat: true/);
+		const again = json(await run(writePatternTool, { track: 3, bars: 4, repeat: true }));
+		expect(virtual.readPattern(3).notes.map((n) => n.step)).toEqual([1, 9, 17, 25, 33, 41, 49, 57]);
+		expect(again.note).not.toMatch(/empty/);
+		// length alone: the notes past it stay, unheard, as on the unit
+		const short = json(await run(writePatternTool, { track: 3, length: 52 }));
+		expect(short.written).toMatchObject({ bars: 4, length: 52 });
+		expect(short.note).toMatch(
+			/It plays 52 steps: 1 note after step 52 stays in the pattern unheard, as on the unit/
+		);
+	});
 });
 
 describe('a scene’s own mix', () => {
@@ -527,6 +562,32 @@ describe('patterns in another time signature', () => {
 		expect(arranged.arrangement.scenes['scene 1']).toMatch(/\(4 bars\)/);
 		// eight bars of 7/8 at 120: 8 × 14 sixteenths × 0.125 s = 14 s
 		expect(arranged.arrangement.song.length).toMatch(/^8 bars, 0:14 at 120 bpm/);
+	});
+
+	it('says a bar of the meter in marks when a grid miscounts it: 6/8 is 12, not 16', async () => {
+		const { sim, run } = setup();
+		sim.state.areas.system.projectSettings.signature = 3; // 6/8
+		// a 6/8 beat written with a bar of 16 (the probe's agent, twice)
+		const miscounted = await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			length: 24,
+			grid: { kick: 'x...x... x... | x.....x. ..x. ....' }
+		});
+		expect(miscounted.isError).toBe(true);
+		expect(String(miscounted.content)).toMatch(
+			/kick has 28 .*In 6\/8 a bar is 12 marks: \.\.\.\.\.\. \.\.\.\.\.\., with \| between bars\./
+		);
+		// in 4/4 nothing more is said; a bar short and then a hit is a miscount, not rests after a bar
+		sim.state.areas.system.projectSettings.signature = 1;
+		const four = await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			grid: { kick: 'x... .... .... ... | x... .... .... ....' }
+		});
+		expect(four.isError).toBe(true);
+		expect(String(four.content)).toMatch(/kick has 31 \(bar 1 has 15\)/);
+		expect(String(four.content)).not.toMatch(/a bar is/);
 	});
 
 	it('read bar by bar as the project counts them: a 3/4 bar is three beats of four', async () => {
@@ -809,7 +870,7 @@ describe('write_pattern on drums', () => {
 		expect(virtual.readPattern(3).notes.find((n) => n.step === 23)?.offset).toBe(0.125);
 		expect(up.written.locks).toEqual(['step 7: cutoff 40']);
 		expect(up.written.offGrid).toMatch(
-			/^1 note off the grid .*: step 23: A3 \+0\.13; \d+ on the grid; a step lasts 125 ms at 120 bpm$/
+			/^1 note off the grid .*: step 23: A3 \+0\.13 \(\+16 ms\); \d+ on the grid; a step lasts 125 ms at 120 bpm$/
 		);
 		// a whole rewrite drops them, and says so
 		const anew = json(await run(writePatternTool, { track: 3, notes: '1:D2:4' }));
@@ -868,7 +929,7 @@ describe('write_pattern on drums', () => {
 		).toBe(true);
 		expect((hats.find((n) => n.step === 1)?.offset ?? 0) >= 0).toBe(true);
 		expect(loose.note).toMatch(
-			/Loosened 8 notes: up to 0\.1 of a step off the grid \(the beats half that\), velocities up to 12 either way; the pattern's quantise 100 → 0/
+			/Loosened 8 notes of closed hat 1: up to 0\.1 of a step off the grid \(the beats half that\), velocities up to 12 either way; the pattern's quantise 100 → 0, so they play where they sit; kick 1 as it was\./
 		);
 		expect(loose.written.quantise).toBe(0);
 		// which sounds moved, the rest on the grid (an agent could not confirm the hats alone)
@@ -1558,7 +1619,7 @@ describe('write_pattern, short', () => {
 		// humanized, every chord's offsets by step, low note to high, and how many stayed on the grid
 		const loose = json(await run(writePatternTool, { track: 7, humanize: { timing: 0.08 } }));
 		expect(loose.written.offGrid).toMatch(
-			/off the grid .*: step 1: F3 [+−]\d\.\d\d, G3 [+−]\d\.\d\d, A3 [+−]\d\.\d\d, C4 [+−]\d\.\d\d, E4 [+−]\d\.\d\d; step 17: G3 /
+			/off the grid .*: step 1: F3 [+−]\d\.\d\d\d? \([+−]\d+(\.\d)? ms\), G3 [+−]\d\.\d\d\d? \([+−][\d.]+ ms\), A3 [^,]+, C4 [^,]+, E4 [^;]+; step 17: G3 /
 		);
 		// and by them after: a groove change, a read (an Em7 read back as G6 after a groove)
 		const grooved = json(await run(writePatternTool, { track: 7, groove: 30 }));

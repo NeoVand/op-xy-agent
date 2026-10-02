@@ -209,13 +209,17 @@ function playingNow(virtual: VirtualOpxy): string {
 		// live recording, which the screen does not say (an agent teaching it could not tell whether
 		// the take was still running)
 		const track = `T${status.selectedTrack}`;
+		// and how notes are played here (an agent teaching a live take never said, and the take
+		// stayed empty)
+		const keys =
+			' The user plays notes on the replica’s keys with the mouse or the computer keyboard (the Z row the lower twelve, the Q row the upper).';
 		const recording =
 			status.recording === 'armed'
-				? ` Recording is armed on ${track}: the first note played starts playback and the take.`
+				? ` Recording is armed on ${track} (step 1 flashes red): the first note played starts playback and the take.${keys}`
 				: status.recording === 'count-in'
-					? ` ${track} counts in to record: the take starts when the count-in bar ends.`
+					? ` ${track} counts in to record: the take starts when the count-in bar ends.${keys}`
 					: status.recording === 'on'
-						? ` Recording is on for ${track} (latched): what is played on the keys lands in its pattern until stop.`
+						? ` Recording is on for ${track} (latched): what is played on the keys lands in its pattern until stop.${keys}`
 						: '';
 		// a project with nothing in it, said (an agent asked to "make it louder" first read all
 		// sixteen tracks to find there was nothing to turn up)

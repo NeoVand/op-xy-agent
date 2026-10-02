@@ -171,6 +171,12 @@ describe('show_on_replica', () => {
 		// a step with no note gets one: nothing to warn of
 		const kick = await guided('instrument → T1 → step 1');
 		expect(kick.caution).toBeUndefined();
+		expect(kick.take).toBeUndefined();
+		// a lesson that ends armed to record says how the take is played here
+		const live = await guided('instrument → T5 → record + play');
+		expect(live.take).toMatch(
+			/^The last step arms recording\. Then the user plays the take .*computer keyboard/
+		);
 	});
 });
 

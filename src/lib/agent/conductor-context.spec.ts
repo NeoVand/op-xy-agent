@@ -285,7 +285,7 @@ describe('the conductor grounds its answer', () => {
 		sim.combo('key.record', 'key.play');
 		await conductor.send('what now?');
 		expect(JSON.stringify(api.messageRequests[1].body.messages)).toMatch(
-			/Recording is armed on T1: the first note played starts playback and the take/
+			/Recording is armed on T1 \(step 1 flashes red\): the first note played starts playback and the take\. The user plays notes on the replica’s keys with the mouse or the computer keyboard/
 		);
 	});
 

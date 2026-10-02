@@ -52,6 +52,45 @@ function singles(notes: readonly Voiced[]): Map<number, number> {
 
 const plural = (word: string) => (word === 'unison' ? 'unisons' : `${word}s`);
 
+/** An interval by its name, any octave (an octave apart is "octave", the same note "unison"). */
+const generic = (gap: number) => {
+	const size = Math.abs(gap) % 12;
+	return size === 0 && gap !== 0 ? 'octave' : GENERIC[size];
+};
+
+/** The middle note of a line. */
+const middle = (notes: ReadonlyMap<number, number>) => {
+	const sorted = [...notes.values()].sort((a, b) => a - b);
+	return sorted[Math.floor(sorted.length / 2)];
+};
+
+/**
+ * A line mostly between another's notes in a register near it, a counter-melody: how many of its
+ * notes start with the other's, the intervals there and on which steps, or null (an agent said its
+ * counter-line "rarely lands on the lead's steps" with 7 of its 20 there, and had nothing to check).
+ */
+function counterNote(
+	other: Line,
+	mine: ReadonlyMap<number, number>,
+	theirs: ReadonlyMap<number, number>,
+	pairs: readonly { step: number; gap: number }[]
+): string | null {
+	if (theirs.size < 4 || Math.abs(middle(mine) - middle(theirs)) > 12) return null;
+	const them = `T${other.track}'s`;
+	if (pairs.length === 0) {
+		return `Against ${them} line: none of its ${mine.size} notes start with one of ${them}; all fall between them.`;
+	}
+	const counts = new Map<string, number>();
+	for (const p of pairs) counts.set(generic(p.gap), (counts.get(generic(p.gap)) ?? 0) + 1);
+	const intervals = [...counts]
+		.sort((a, b) => b[1] - a[1])
+		.map(([g, n]) => `${n} ${n === 1 ? g : plural(g)}`)
+		.join(', ');
+	const steps = pairs.map((p) => p.step);
+	const shown = steps.length > 8 ? `${steps.slice(0, 8).join(', ')}, …` : steps.join(', ');
+	return `Against ${them} line: ${pairs.length} of its ${mine.size} notes start with one of ${them} (${intervals}; steps ${shown}), the other ${mine.size - pairs.length} between them.`;
+}
+
 /**
  * How `line` sits against `other` where both start single notes on the same steps (the other
  * repeating under a longer line), or null when they move together on too few of them.
@@ -60,17 +99,18 @@ export function voicesNote(line: Line, other: Line): string | null {
 	const mine = singles(line.notes);
 	const theirs = singles(other.notes);
 	if (mine.size < 4 || theirs.size === 0 || other.length < 1) return null;
+	// lines more than two octaves apart are a lead over a bass, no second voice (a hook's last
+	// notes over the bass's roots were flagged as parallel octaves, which an agent called noise)
+	if (Math.abs(middle(mine) - middle(theirs)) > 24) return null;
 	const pairs = [...mine]
 		.sort((a, b) => a[0] - b[0])
 		.flatMap(([step, note]) => {
 			const under = theirs.get(((step - 1) % other.length) + 1);
 			return under === undefined ? [] : [{ step, note, under, gap: note - under }];
 		});
-	if (pairs.length < 4 || pairs.length < mine.size * 0.6) return null;
-	const generic = (gap: number) => {
-		const size = Math.abs(gap) % 12;
-		return size === 0 && gap !== 0 ? 'octave' : GENERIC[size];
-	};
+	if (pairs.length < 4 || pairs.length < mine.size * 0.6) {
+		return counterNote(other, mine, theirs, pairs);
+	}
 	const counts = new Map<string, number>();
 	for (const p of pairs) counts.set(generic(p.gap), (counts.get(generic(p.gap)) ?? 0) + 1);
 	const [main, most] = [...counts].sort((a, b) => b[1] - a[1])[0];
@@ -84,14 +124,18 @@ export function voicesNote(line: Line, other: Line): string | null {
 	}
 	const kinds =
 		qualities.size > 0 ? ` (${[...qualities].map(([q, n]) => `${n} ${q}`).join(', ')})` : '';
-	const article = /^[aeiou]/.test(main) ? 'an' : 'a';
+	const article = /^[aeio]/.test(main) ? 'an' : 'a';
 	const rest = [...counts]
 		.filter(([g]) => g !== main)
 		.map(([g, n]) => `${n} ${n === 1 ? g : plural(g)}`);
+	// the same notes on every step: a copy, not a second voice (an agent's bass written over the
+	// same bass read "an unison throughout")
 	const shape =
-		most === pairs.length
-			? `${article} ${main}${side} throughout${kinds}`
-			: `mostly ${plural(main)}${side} (${most} of ${pairs.length}${kinds ? `, ${[...qualities].map(([q, n]) => `${n} ${q}`).join(', ')}` : ''}; ${rest.join(', ')})`;
+		most === pairs.length && main === 'unison'
+			? 'the same notes throughout, a unison doubling'
+			: most === pairs.length
+				? `${article} ${main}${side} throughout${kinds}`
+				: `mostly ${plural(main)}${side} (${most} of ${pairs.length}${kinds ? `, ${[...qualities].map(([q, n]) => `${n} ${q}`).join(', ')}` : ''}; ${rest.join(', ')})`;
 	// parallel fifths and octaves: one perfect interval to the same again, both voices moving the
 	// same way
 	const parallels = new Map<string, Set<number>>();

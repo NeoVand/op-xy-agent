@@ -506,9 +506,31 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   value now ("groove amount 0 again, not 40", where an agent read the old line as 40 again); a
   filter switched on by the steps is named by type, with a warning when it is a highpass (an
   agent darkening an epiano turned its highpass on).
+- **Probe round thirty-six (2026-10-02), 18 scenarios (`probe-scenarios-36.json`: re-checks (beats
+  at track scale 1/2, a swing tried and taken off, a darker epiano, hat offsets in ms) and new
+  kinds: a calm beat asked in Greek, an 8 second podcast jingle, a bass on the kick, a counter
+  melody, an 80s sound, hats too loud, the brain track, a guided live recording, step components
+  for a ten-year-old, a song that fades out, pattern against scene, a 6/8 beat, two tracks' parts
+  swapped, a beat cut to its first 2 bars):** two failed calls, both a 6/8 grid written in bars
+  of sixteen. The re-checks held: scaled hits named in time, the undone swing read with its value,
+  the highpass named and swapped for a ladder. Fixes: a grid miscount in another meter says its
+  bar in marks ("In 6/8 a bar is 12 marks: ...... ......"), and a bar a mark short before a hit is
+  a miscount, no longer "whole bars and then rests"; bars or length alone cut or lengthen a pattern
+  as it is and say what went (an agent resent every note to cut four bars to two); a line between
+  another's notes near its register is read as a counter-line (how many start together, the
+  intervals and steps there: an agent called 7 of 20 "rarely"), a unison doubling reads as one
+  ("an unison throughout"), and lines over two octaves apart go unread as voices (a hook over the
+  bass's roots was flagged for parallel octaves); humanize says which sounds it took and which
+  stayed, and each offset comes in ms too; an armed record says step 1 flashes red and how notes
+  are played here (the mouse, the computer keyboard's Z and Q rows), and a walkthrough ending armed
+  says the same (a lesson's take stayed empty); the listening skill gives one drum sound's two
+  levels (velocity, the key's sample gain); the fade names its lock ("volume", shift `M2`'s) and
+  sets shape; a jingle is a song with loop off (and routes the arrangement skill); swapping two
+  tracks' parts is one lab program.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
-  (rename with an alias in the key planner, then rerun the how-to eval).
+  (rename with an alias in the key planner, then rerun the how-to eval); multiply at `accidental 9`
+  (TE's table prints 3 hits, likely a slip for 9; not checked on a unit).
 - **2026-09-29/30:** Sonnet 5.5 as the default; `read_sound`, `send_project`, the demo run sheet;
   `import_midi` (a whole MIDI file as scenes and a song) after the Brother Louie failure.
 

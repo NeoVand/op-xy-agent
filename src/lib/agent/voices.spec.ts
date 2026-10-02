@@ -38,16 +38,44 @@ describe('voicesNote', () => {
 		expect(voicesNote(double, melody)).toBe(
 			"Against T5's line on the same steps (6 of its 6 notes): an octave below throughout."
 		);
+		// three octaves down is a bass under a lead, not a second voice: its octaves go unread
+		const bass = line(3, [33, 36, 40, 38, 36, 35]);
+		expect(voicesNote(melody, bass)).toBeNull();
+		// the same notes: a unison doubling (read "an unison throughout")
+		expect(voicesNote({ ...melody, track: 4 }, melody)).toBe(
+			"Against T5's line on the same steps (6 of its 6 notes): the same notes throughout, a unison doubling."
+		);
 	});
 
-	it('leaves lines that do not move together, and chords, alone', () => {
+	it('reads a counter-line between the notes of one near it, and leaves chords alone', () => {
 		const melody = line(5, [71, 74, 79, 78, 76, 74]);
 		const offbeat = {
 			track: 6,
 			length: 32,
 			notes: melody.notes.map((n) => ({ ...n, step: n.step + 1 }))
 		};
-		expect(voicesNote(offbeat, melody)).toBeNull();
+		expect(voicesNote(offbeat, melody)).toBe(
+			"Against T5's line: none of its 6 notes start with one of T5's; all fall between them."
+		);
+		// a counter-melody: two of its six with the lead's, the rest between (said "rarely" of 7 in 20)
+		const counter = {
+			track: 6,
+			length: 32,
+			notes: [
+				{ step: 1, note: 67 },
+				{ step: 4, note: 69 },
+				{ step: 6, note: 71 },
+				{ step: 9, note: 72 },
+				{ step: 12, note: 71 },
+				{ step: 14, note: 69 }
+			]
+		};
+		expect(voicesNote(counter, melody)).toBe(
+			"Against T5's line: 2 of its 6 notes start with one of T5's (2 thirds; steps 1, 9), the other 4 between them."
+		);
+		// two octaves below, a bass: no counter-line
+		const bass = { ...offbeat, notes: offbeat.notes.map((n) => ({ ...n, note: n.note - 24 })) };
+		expect(voicesNote(bass, melody)).toBeNull();
 		const chords = {
 			track: 7,
 			length: 32,
