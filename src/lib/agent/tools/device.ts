@@ -40,6 +40,7 @@ import {
 	type ToolResult
 } from './define';
 import { songLength } from './virtual';
+import { swellsNow } from '../swell';
 
 // ─── helpers ────────────────────────────────────────────────────────────────────────────────────
 
@@ -392,8 +393,16 @@ export const setTempoTool = defineTool({
 			const previous = where.virtual.status().bpm;
 			where.virtual.setTempo(input.bpm);
 			const bpm = where.virtual.status().bpm;
+			// slow attacks against the notes at the new tempo
+			const swells = bpm !== previous ? swellsNow(where.virtual) : [];
 			return jsonResult(
-				{ target: 'virtual', tempoBpm: bpm, previousBpm: previous, ...virtualNote(ctx.env) },
+				{
+					target: 'virtual',
+					tempoBpm: bpm,
+					previousBpm: previous,
+					...virtualNote(ctx.env),
+					...(swells.length ? { swell: swells.join(' ') } : {})
+				},
 				`tempo ${formatBpm(bpm)} bpm on the replica`,
 				{ applied: true, after: bpm }
 			);
@@ -629,7 +638,7 @@ export const setSoundTool = defineTool({
 	approval: 'device',
 	device: true,
 	description:
-		"Set one sound parameter of an instrument track on the connected OP-XY over MIDI (its CC on the track's channel): engine p1–p4 (the four M1 values; synth engines only, the samplers ignore them), the amp and filter envelopes, cutoff, resonance, env amount, key tracking, the FX I send, the track's mix level and pan. Values as the screen shows them, 0–99 (pan −100 left … 100 right). Changes the project's sound, so the user approves it. The device never reports parameter values: what it had before is known only if this app set it. Only for a connected OP-XY; for the replica use plan_steps with show, which also shows the keys.",
+		"Connected OP-XY only (with none, or for the replica, use plan_steps with show, which also shows the keys). Sets one sound parameter of an instrument track on the device over MIDI (its CC on the track's channel): engine p1–p4 (the four M1 values; synth engines only, the samplers ignore them), the amp and filter envelopes, cutoff, resonance, env amount, key tracking, the FX I send, the track's mix level and pan. Values as the screen shows them, 0–99 (pan −100 left … 100 right). Changes the project's sound, so the user approves it. The device never reports parameter values: what it had before is known only if this app set it.",
 	input: z.object({
 		track: z.int().min(1).max(8).describe('Instrument track 1–8'),
 		param: z.enum(SOUND_PARAM_NAMES).describe('Which parameter'),

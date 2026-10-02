@@ -297,6 +297,43 @@ describe('a chord named over the bass another part plays', () => {
 	});
 });
 
+describe('a melody against the chords another track plays', () => {
+	it('counts its chord tones and names those on a beat outside the chord', () => {
+		const at = (notes: [number, number, number][], track: number): VirtualPattern => ({
+			track,
+			pattern: 1,
+			patterns: 1,
+			current: true,
+			bars: 1,
+			length: 16,
+			scale: 1,
+			notes: notes.map(([step, note, length]) => ({ step, note, velocity: 100, length }))
+		});
+		// E minor (E G B) for two beats, then C major (C E G)
+		const chords = at(
+			[
+				...[64, 67, 71].map((note) => [1, note, 8] as [number, number, number]),
+				...[60, 64, 67].map((note) => [9, note, 8] as [number, number, number])
+			],
+			7
+		);
+		// B on 1 (a tone), F# on 3 (a passing note), F# on 5 (on a beat, outside Em), E on 9 (a tone)
+		const melody = at(
+			[
+				[1, 71, 2],
+				[3, 66, 2],
+				[5, 66, 2],
+				[9, 76, 4]
+			],
+			5
+		);
+		const reading = readPattern(melody, [chords], undefined, parseKey('E minor'));
+		expect(reading?.againstChords).toBe(
+			"2 of the 4 notes over T7's chords are chord tones; on a beat and outside the chord: step 5: F#4 over Em (E G B); 1 off the beat is a passing note"
+		);
+	});
+});
+
 describe('parseKey', () => {
 	it('reads a key and spells a mode as its parent', () => {
 		expect(parseKey('A minor')).toEqual({

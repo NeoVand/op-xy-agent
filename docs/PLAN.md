@@ -387,6 +387,19 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   press reads the same screen); outside 4/4 a write gives the pattern in the meter's bars and that
   the tempo counts quarter notes; a mix-page level is the scene on screen's; merge's description
   shows how to take a sound out.
+- **Probe round twenty-eight (2026-10-02), 18 scenarios (`probe-scenarios-28.json`: re-checks (a disco
+  beat's hats, a bass on a broken kick's steps, hat rolls on the hats alone, darker chords, a 3/4
+  waltz, chords quieter in the verse alone, a play demo, two named saves) and new kinds: afrobeat,
+  Italian pop, a slow swell then double tempo, groove vs swing, syncing to Ableton, a melody fixed
+  against the chords, a scene copied without the bass, a faster arp, a song's length, a beginner's
+  first message):** one failed call (set_sound with no device). Fixes: set_sound's description
+  leads with "connected OP-XY only"; a single-note line's reading checks it against the chords
+  another track plays under it (chord tones counted, notes on a beat outside the chord named,
+  off-beat ones passing notes) where an agent fixing clashes worked it out by hand; a tempo change
+  re-checks every track's slow attack against its notes (set_tempo and plan_steps); write_pattern
+  says writes that start from a pattern keep its step components; a save as never overwrites a
+  name the folder holds; disco's tempo range; a scene's mix is the way to make a part quieter in
+  one section.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

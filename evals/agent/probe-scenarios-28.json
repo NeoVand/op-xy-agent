@@ -1,0 +1,149 @@
+[
+	{
+		"name": "hats-first-try",
+		"about": "Re-check: open and closed hats written right the first time.",
+		"steps": [{ "say": "make a disco beat with open hats on the off-beats" }, { "why": true }]
+	},
+	{
+		"name": "bass-on-kick-steps",
+		"about": "Re-check: drum steps by number to write against.",
+		"steps": [
+			{ "say": "make a broken beat with an off-grid feeling kick" },
+			{ "say": "write a bass that plays only where the kick is" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ratchet-hat-only",
+		"about": "Re-check: a component on a step two sounds share.",
+		"steps": [
+			{ "say": "make a trap beat" },
+			{ "say": "add hat rolls at the end of each bar, only on the hats" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "darker-pad",
+		"about": "Re-check: the filter switched on to set its cutoff.",
+		"steps": [
+			{ "say": "make chords on track 7" },
+			{ "say": "make the chords darker" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "waltz-length",
+		"about": "Re-check: a pattern's bars in another meter.",
+		"steps": [{ "say": "write a 4 bar waltz melody in 3/4 on track 5" }, { "why": true }]
+	},
+	{
+		"name": "quieter-in-chorus",
+		"about": "Re-check: a level in one scene.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus, with drums, bass and chords" },
+			{ "say": "make the chords quieter only in the verse" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "show-play-key",
+		"about": "Re-check: a demo of playing stops again.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "show me how to start and stop playback" },
+			{ "say": "is it playing now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "save-new-name",
+		"about": "Re-check: save as a new name after edits.",
+		"steps": [
+			{ "say": "make a beat and save it as idea one" },
+			{ "say": "now make the bass busier and save that as idea two" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "afrobeat",
+		"about": "A genre not tried yet.",
+		"steps": [{ "say": "make an afrobeat groove with a bassline" }, { "why": true }]
+	},
+	{
+		"name": "italian-pop",
+		"about": "A request in Italian.",
+		"steps": [
+			{ "say": "fammi una base pop con accordi e una melodia, in do maggiore" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "slow-it-down",
+		"about": "A tempo change and what it does to a slow attack.",
+		"steps": [
+			{ "say": "make a pad loop with a slow swell on track 8" },
+			{ "say": "double the tempo" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-is-groove",
+		"about": "A concept question on the device.",
+		"steps": [
+			{ "say": "what's the difference between groove and swing on the op-xy?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "midi-from-daw",
+		"about": "Syncing to a DAW.",
+		"steps": [
+			{ "say": "how do I sync the op-xy to ableton over usb so it follows ableton's tempo?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fix-the-clash",
+		"about": "A harmony fix across parts.",
+		"steps": [
+			{ "say": "make chords on track 7 in E minor and a melody on track 5" },
+			{ "say": "check that the melody fits the chords and fix any notes that clash" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "copy-scene",
+		"about": "A scene copied and changed.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "copy this into a second scene, drop the bass there, and play scene 1 then 2" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-speed",
+		"about": "The arpeggiator, changed after.",
+		"steps": [
+			{ "say": "put an arpeggio on track 6 from a chord" },
+			{ "say": "make the arp twice as fast" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "count-the-bars",
+		"about": "A question about length.",
+		"steps": [
+			{ "say": "make a song with intro, verse, chorus and outro" },
+			{ "say": "how long is the song, in bars and in minutes?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "beginner-start",
+		"about": "A beginner's first message.",
+		"steps": [
+			{ "say": "I just got my op-xy and I have no idea what I'm doing. where do I start?" },
+			{ "why": true }
+		]
+	}
+]

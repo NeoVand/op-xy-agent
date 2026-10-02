@@ -7,6 +7,7 @@
  * (`sound/times.ts`).
  */
 import { stageSeconds, timeText } from '$lib/sound/times';
+import type { VirtualOpxy } from './virtual-opxy';
 
 /**
  * What a slow attack does to `notes` (lengths in steps at track scale `scale`) at `bpm`, given the
@@ -80,4 +81,25 @@ export function tailNote(
 	if (blurred === 0) return null;
 	const at = `${Math.round(bpm * 10) / 10} bpm`;
 	return `T${track}'s amp release (${m[1]} on its page, where a lower value lasts longer) takes ${timeText(release)} to die away (${at}), so ${blurred === changes ? 'each chord rings on under the next' : `at ${blurred} of its ${changes} chord changes the old chord rings on under the new one`}: their notes sound together for a while, which blurs the change (a listen reads such blends as sus or added-note chords). A shorter release ("amp release" with a time, such as "0.5 s") keeps the changes clean; a pad often keeps some of it.`;
+}
+
+/**
+ * The swell notes of every instrument track with notes at the tempo now: a tempo change moves
+ * notes against an attack that does not move (a pad's 2.8 s swell fit its notes at 72 bpm, and
+ * once the tempo doubled the agent learned it only from a later write).
+ */
+export function swellsNow(virtual: VirtualOpxy): string[] {
+	const bpm = virtual.status().bpm;
+	return virtual.status().tracks.flatMap((t) => {
+		if (t.track > 8 || t.notes === 0 || t.engine === 'drum') return [];
+		const p = virtual.readPattern(t.track);
+		const line = swellNote(
+			t.track,
+			virtual.readSound(t.track).pages['M2 amp envelope'] ?? '',
+			p.notes,
+			p.scale,
+			bpm
+		);
+		return line ? [line] : [];
+	});
 }

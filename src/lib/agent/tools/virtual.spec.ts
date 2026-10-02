@@ -1583,6 +1583,17 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		expect(next.note).toBeUndefined();
 	});
 
+	it('re-checks slow attacks against the notes when the tempo changes', async () => {
+		// a swell that fit its notes at 72 bpm stopped reaching full level once the tempo doubled
+		const { sim, run } = setup();
+		sim.state.tracks[7].amp.attack = 50;
+		await run(writePatternTool, { track: 8, notes: '1:C4+E4+G4:16' });
+		const slow = json(await run(setTempoTool, { bpm: 60 }));
+		expect(slow.swell).toBeUndefined();
+		const fast = json(await run(setTempoTool, { bpm: 160 }));
+		expect(fast.swell).toMatch(/^T8.s amp attack \(50 on its page\) takes/);
+	});
+
 	it('switches its metronome off and on, and says when it already was', async () => {
 		const { sim, env, run } = setup();
 		// a new project's metronome clicks

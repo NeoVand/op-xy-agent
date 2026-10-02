@@ -36,6 +36,13 @@ export interface PatternReading {
 	 */
 	readonly withBass?: string;
 	/**
+	 * A line of single notes against the chords another track plays under it: how many of its
+	 * notes are tones of the chord sounding, and those on a beat that are not ("step 9: F# over Em
+	 * (E G B)"), off-beat ones being passing notes. An agent asked to fix a melody's clashes with
+	 * the chords had to work each note out by hand.
+	 */
+	readonly againstChords?: string;
+	/**
 	 * A line of single notes, bar by bar: the chord each bar's notes make, where they make one ("bar
 	 * 1: Am (A C E)"), so the harmony a bassline or melody outlines can be checked.
 	 */
@@ -348,6 +355,53 @@ export function readPattern(
 		heard.length >= 2 && tonic !== undefined && keyName
 			? `${heard.map((h) => h.plain).join(' ')}: ${heard.map(degree).join(' ')} in ${keyName}${inverted.length ? `; ${inverted.join(', ')} ${inverted.length === 1 ? 'is an inversion' : 'are inversions'}, the same chord${inverted.length === 1 ? '' : 's'} over another of ${inverted.length === 1 ? 'its' : 'their'} notes` : ''}${unnamed.length ? `; ${unnamed.join(', ')} ${unnamed.length === 1 ? 'is' : 'are'} no chord the reading names` : ''}`
 			: null;
+	// a single-note line against the chords sounding under it on another track
+	let againstChords: string | null = null;
+	if ([...starting.values()].every((notes) => notes.length === 1)) {
+		const beatStarts = new Set<number>();
+		meter.beats.reduce((at, beat) => (beatStarts.add(at), at + beat), 0);
+		const chordAt = (step: number) => {
+			let best: { track: number; notes: number[] } | null = null;
+			for (const q of alongside) {
+				const notes = q.notes
+					.filter((n) => n.step <= step && step < n.step + Math.max(1, n.length))
+					.map((n) => n.note);
+				if (
+					new Set(notes.map((n) => n % 12)).size >= 3 &&
+					(!best || notes.length > best.notes.length)
+				)
+					best = { track: q.track, notes };
+			}
+			return best;
+		};
+		let under = 0;
+		let tones = 0;
+		const outside: string[] = [];
+		let passing = 0;
+		const chordTracks = new Set<number>();
+		for (const n of [...p.notes].sort((a, b) => a.step - b.step)) {
+			const chord = chordAt(n.step);
+			if (!chord) continue;
+			under++;
+			chordTracks.add(chord.track);
+			const pcs = new Set(chord.notes.map((x) => x % 12));
+			if (pcs.has(n.note % 12)) {
+				tones++;
+				continue;
+			}
+			if (beatStarts.has((n.step - 1) % meter.bar)) {
+				const named = chordName(chord.notes);
+				const sorted = [...pcs].sort((a, b) => a - b).map((pc) => names[pc]);
+				outside.push(
+					`step ${n.step}: ${noteName(n.note)} over ${named ? respellChord(ascii(named.name), names) : sorted.join(' ')} (${sorted.join(' ')})`
+				);
+			} else passing++;
+		}
+		if (under >= 2) {
+			const by = [...chordTracks].map((t) => `T${t}`).join(' and ');
+			againstChords = `${tones} of the ${under} notes over ${by}'s chords are chord tones${outside.length ? `; on a beat and outside the chord: ${outside.slice(0, 8).join(', ')}${outside.length > 8 ? ', …' : ''}` : '; none on a beat is outside its chord'}${passing ? `; ${passing} off the beat ${passing === 1 ? 'is a passing note' : 'are passing notes'}` : ''}`;
+		}
+	}
 	// what the chords make over the other part's bass, apart, when any differs from its own name
 	const withBass =
 		heard.length >= 2 && heard.some((h) => h.together !== undefined && h.together !== h.name)
@@ -450,6 +504,7 @@ export function readPattern(
 		...(chords.length ? { chords } : {}),
 		...(progression ? { progression } : {}),
 		...(withBass ? { withBass } : {}),
+		...(againstChords ? { againstChords } : {}),
 		...(outlines.length ? { outlines } : {}),
 		...(spelled ? { spelled } : {}),
 		...(outside ? { outside } : {}),
