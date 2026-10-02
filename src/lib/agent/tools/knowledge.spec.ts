@@ -211,7 +211,10 @@ describe('show_on_replica with the real replica', () => {
 			.run(showOnReplicaTool.input.parse({ keys }), ctx)
 			.finally(() => (done = true));
 		for (let i = 0; i < 2000 && !done; i++) await time.advance(50);
-		return JSON.parse(String((await running).content));
+		const result = JSON.parse(String((await running).content));
+		// and a while after it, as the user would find the replica
+		await time.advance(3000);
+		return { ...result, playingAfter: sim.state.transport.playing };
 	}
 
 	it('says a take on the record page is pretend, and whether one was kept', async () => {
@@ -227,6 +230,14 @@ describe('show_on_replica with the real replica', () => {
 		// a demo elsewhere says nothing of it
 		const other = await demo('T1 → M2', 0);
 		expect(other.recorder).toBeUndefined();
+	});
+
+	it('stops the playback a demo started: a count-in shown leaves the replica stopped', async () => {
+		// "back where it was" played on after record + play → + play, read as the user's playback
+		const count = await demo('instrument → T5 → record + play → + play', 0);
+		expect(count.transportAtEnd).toMatch(/counting in to record/);
+		expect(count.replica).toBe('back where it was: the user can try it from there');
+		expect(count.playingAfter).toBe(false);
 	});
 });
 

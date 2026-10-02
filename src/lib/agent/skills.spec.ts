@@ -139,6 +139,10 @@ describe('routing', () => {
 		// the sends and the pan are the sound skill's (it says a send is the whole track's)
 		expect(route('put a delay on the snare only')).toEqual(['shape-a-sound']);
 		expect(route('put the hi-hats on the left')).toEqual(['make-music', 'shape-a-sound']);
+		// a keyboard that sends on a channel is MIDI, not an FX send
+		expect(
+			route('my keyboard sends on channel 5. make it play whichever track I have selected')
+		).not.toContain('shape-a-sound');
 		// a sound swapped for a rounder one, the notes kept
 		expect(route('swap the bass sound for something rounder, keep the notes')).toEqual([
 			'shape-a-sound'

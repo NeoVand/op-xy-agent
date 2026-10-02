@@ -35,6 +35,11 @@ export function grooveReach(
 		return Math.abs(grooveTime(at, g) - at) > 0.02;
 	};
 	const moved = pattern.notes.filter(moves).length;
+	// which steps it moves (an agent told "10 of 16 move" could not tell whether its hats did)
+	const steps = [...new Set(pattern.notes.filter(moves).map((n) => n.step))].sort((a, b) => a - b);
+	const on = steps.length
+		? ` (on step${steps.length === 1 ? '' : 's'} ${steps.slice(0, 16).join(', ')}${steps.length > 16 ? ', …' : ''})`
+		: '';
 	const label = `The groove (${type}, ${amount > 0 ? '+' : ''}${amount})`;
 	// on a drum track, which sounds it moves and which it leaves (an agent said its hats swung when
 	// the groove moved a few kicks and snares, the hats all on the eighths)
@@ -59,15 +64,15 @@ export function grooveReach(
 	}
 	// a few swung hits a bar are a swing (ghost hats between eighth-note kicks and snares)
 	if (moved < 4 && moved / pattern.notes.length < FEW) {
-		return `${label} moves only ${moved} of T${pattern.track}'s ${pattern.notes.length} notes, so it hardly swings: ${where(type)}. ${fix}`;
+		return `${label} moves only ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${on}, so it hardly swings: ${where(type)}. ${fix}`;
 	}
 	// the sound with the most notes left straight: said even when enough moves overall
 	const busiest = [...bySound].sort((a, b) => b[1].all - a[1].all)[0];
 	if (sounds && busiest && busiest[1].moved === 0) {
-		return `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${sounds}. Say only what swings; ${fix.charAt(0).toLowerCase()}${fix.slice(1)}`;
+		return `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${on}${sounds}. Say only what swings; ${fix.charAt(0).toLowerCase()}${fix.slice(1)}`;
 	}
 	return always
-		? `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${sounds}.`
+		? `${label} moves ${moved} of T${pattern.track}'s ${pattern.notes.length} notes${on}${sounds}.`
 		: null;
 }
 

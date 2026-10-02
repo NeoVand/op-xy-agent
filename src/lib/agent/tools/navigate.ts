@@ -342,6 +342,18 @@ export const planStepsTool = defineTool({
 			const time = /^(\d+(?:\.\d+)?)\s*(ms|s|sec|secs|seconds?)$/i.exec(
 				String(s.value ?? '').trim()
 			);
+			// a stage by its page value: its time said too, and which way the release runs (an agent
+			// set a release of 12 keeping in mind by itself that lower is longer)
+			const number = /^\d+$/.test(String(s.value ?? '').trim()) ? Number(s.value) : null;
+			// the envelopes' stages only (a duck's release runs on another law)
+			const envelope = /^((amp|filter)( envelope)? )?(attack|decay|release)$/i.test(
+				(s.param ?? '').trim()
+			);
+			if (stage && number !== null && number <= 99 && envelope) {
+				timings.push(
+					`${s.param} ${number}: about ${timeText(stageSeconds(stage as EnvelopeStage, number))}${stage === 'release' ? ' (the release runs the other way: a lower value lasts longer)' : ''}`
+				);
+			}
 			if (!stage || !time) return s;
 			const seconds = Number(time[1]) / (time[2].toLowerCase() === 'ms' ? 1000 : 1);
 			const value = nearestStage(stage as EnvelopeStage, seconds);
@@ -616,6 +628,21 @@ export const planStepsTool = defineTool({
 			);
 			return line ? [line] : [];
 		});
+		// a duck whose source track plays more than its kick dips on every one of its hits (an agent
+		// ducked a pad from a kit with hats and only the skill said so)
+		const ducks = goals.flatMap((g) => {
+			if (!('param' in g) || !/^duck source$/i.test(String(g.param).trim())) return [];
+			const source = Number(g.value);
+			if (!Number.isInteger(source) || source < 1 || source > 8) return [];
+			const sounds = [
+				...new Set(virtual.readPattern(source).notes.flatMap((n) => (n.sound ? [n.sound] : [])))
+			];
+			const others = sounds.filter((name) => !/^kick\b/.test(name));
+			if (others.length === 0 || others.length === sounds.length) return [];
+			return [
+				`T${source}, the duck's source, plays ${others.join(', ')} besides its kick: the ducked track dips on all of their hits, not the kick's alone. For the kick alone, give it a track of its own and duck from that, or duck from the metronome for every beat.`
+			];
+		});
 		// and a long release set under chords that change, each ringing on under the next
 		const released = new Set(
 			goals.flatMap((g) =>
@@ -703,6 +730,7 @@ export const planStepsTool = defineTool({
 				...(slides.length ? { slides: slides.join(' ') } : {}),
 				...(swells.length ? { swell: swells.join(' ') } : {}),
 				...(tails.length ? { tail: tails.join(' ') } : {}),
+				...(ducks.length ? { duck: ducks.join(' ') } : {}),
 				...(midi ? { unit: midi } : {}),
 				...(standIn ? { standIn } : {}),
 				...(modes.length ? { playMode: modes.join(' ') } : {}),

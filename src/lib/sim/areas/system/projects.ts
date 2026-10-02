@@ -54,6 +54,52 @@ export function snapshot(s: SimState): string {
 	return JSON.stringify(content);
 }
 
+/**
+ * Whether two snapshots hold the same project, apart from the clocks that run on as time passes
+ * (the sequencer's, the record page's meter and timer), which are no part of it: compared whole, a
+ * save read as unsaved a frame later, and a save shown on the replica said it had not arrived.
+ */
+export function sameContent(a: string, b: string): boolean {
+	if (a === b) return true;
+	const still = (json: string) => {
+		let c: ProjectContent | null;
+		try {
+			c = JSON.parse(json) as ProjectContent | null;
+		} catch {
+			return json;
+		}
+		// an entry with nothing stored yet holds no project to compare
+		if (!c || typeof c !== 'object' || !c.areas) return json;
+		const areas = c.areas as Partial<SimState['areas']>;
+		const record = areas.sample?.record;
+		return JSON.stringify({
+			...c,
+			areas: {
+				...areas,
+				...(areas.sequencer ? { sequencer: { ...areas.sequencer, clock: 0 } } : {}),
+				...(areas.sample && record
+					? {
+							sample: {
+								...areas.sample,
+								record: {
+									...record,
+									clock: 0,
+									level: 0,
+									held: 0,
+									armedAt: 0,
+									armedClock: 0,
+									played: 0,
+									playing: false
+								}
+							}
+						}
+					: {})
+			}
+		});
+	};
+	return still(a) === still(b);
+}
+
 /** Leaves playback and the pages a project change would strand. */
 function settle(s: SimState, name: string): void {
 	s.project.name = name;

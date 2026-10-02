@@ -19,6 +19,7 @@ import { noteName } from '$lib/core/midi/notes';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
 import { PROJECT_SECTIONS } from '$lib/sim/areas/system/settings';
+import { sameContent, snapshot } from '$lib/sim/areas/system/projects';
 import { stageSeconds, timeText, type EnvelopeStage } from '$lib/sound/times';
 
 /** Most lines a diff gives; the rest are counted. */
@@ -345,13 +346,26 @@ export function replicaChangeList(
 	const add = (line: string, controls: readonly ControlId[], brief = line) =>
 		changes.push({ line, brief, controls });
 	// another project open, said first: what follows comes with it (an agent that started a new
-	// project read the lines after as settings reverted one by one)
+	// project read the lines after as settings reverted one by one). The same project under a new
+	// name is no other project: renamed (its old name gone from the folder), or a copy saved under
+	// the name (the old one still there), with nothing else brought (an agent read a rename as
+	// "another project is open")
 	if (before.project.name !== after.project.name) {
-		add(
-			`project "${before.project.name}" → "${after.project.name}": another project is open, and the changes below are what it brought`,
-			['key.project'],
-			`project "${before.project.name}" → "${after.project.name}"`
-		);
+		const was = before.project.name;
+		const now = after.project.name;
+		const same = sameContent(snapshot(before), snapshot(after));
+		const stored = (st: SimState, name: string) =>
+			st.areas.system.projects.user.some((p) => p.name === name);
+		const how = !same
+			? 'another project is open, and the changes below are what it brought'
+			: stored(after, was)
+				? `a copy saved under the new name and open now; "${was}" stays in the projects folder as it was last saved`
+				: stored(before, was)
+					? 'renamed: the same project, its stored copy renamed too'
+					: stored(after, now)
+						? 'the same project, saved under the new name'
+						: 'the same project under a new name';
+		add(`project "${was}" → "${now}": ${how}`, ['key.project'], `project "${was}" → "${now}"`);
 	}
 	if (before.transport.playing !== after.transport.playing) {
 		add(after.transport.playing ? 'playback started' : 'playback stopped', ['key.play']);
@@ -519,8 +533,10 @@ export function replicaChangeList(
 			// as its page reads ("FX I delay: dry 99 → 00"), where "settings changed" once left an
 			// agent unsure which of them it had set
 			const page = `${name} ${slot.type}`;
-			const a = read.before.readSound(1).fx?.[name];
-			const b = read.after.readSound(1).fx?.[name];
+			// the page's values alone, without read_sound's note on the repeats' time
+			const plain = (reading?: string) => reading?.replace(/ \(a repeat about every [^)]*\)$/, '');
+			const a = plain(read.before.readSound(1).fx?.[name]);
+			const b = plain(read.after.readSound(1).fx?.[name]);
 			if (a && b && a !== b) {
 				add(`${page}: ${pageChange(page, a, b)}`, aux, `${page}: ${briefChange(a, b)}`);
 			} else add(`${name} (${slot.type}) settings changed`, aux);

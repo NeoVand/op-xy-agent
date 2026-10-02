@@ -87,8 +87,12 @@ function screenReader(simulator: AppSimulator): ScreenReader {
 			const frame = simulator.frame;
 			const modulePage = s.overlay === null && s.mode !== 'arrange' ? s.pages[s.mode] : null;
 			const list = describeList(frame);
+			// the system pages share one list screen: named by the page it is ("project settings"),
+			// since "system-list" left an agent working out which settings were open
+			const system = s.areas.system.page;
+			const page = frame.page === 'system-list' && system ? system.replace(/-/g, ' ') : frame.page;
 			return {
-				page: frame.page,
+				page,
 				shows: describeFrame(frame),
 				...(list ? { list } : {}),
 				mode: s.mode,

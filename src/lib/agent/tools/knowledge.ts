@@ -222,6 +222,7 @@ export const showOnReplicaTool = defineTool({
 		// takes over while it plays: then what they did stays.
 		const virtual = ctx.env.virtual;
 		const before = virtual?.checkpoint() ?? null;
+		const wasPlaying = virtual?.status().playing ?? false;
 		let tookOver = false;
 		const stop = replica.subscribe((event) => {
 			if (event.source === 'pointer' || event.source === 'keyboard') tookOver = true;
@@ -274,6 +275,15 @@ export const showOnReplicaTool = defineTool({
 			!tookOver &&
 			(outcome === 'finished' || ctx.signal.aborted) &&
 			virtual!.revert(before);
+		// playback the demo started is stopped again: a take-back leaves the transport to the player,
+		// and after a count-in shown, "back where it was" played on, read as the user's own playback
+		const stopped =
+			!!virtual &&
+			!tookOver &&
+			(outcome === 'finished' || ctx.signal.aborted) &&
+			!wasPlaying &&
+			virtual.status().playing;
+		if (stopped && virtual) virtual.transport('stop');
 		// the record page hears a stand-in input, so whether a held key keeps a take turns on where
 		// the stand-in is: a step read "take 1.wav", the end "kick 1.wav", and an agent could not
 		// tell whether anything had been recorded
@@ -308,11 +318,12 @@ export const showOnReplicaTool = defineTool({
 								'As shown, the keys took notes off: a key pressed with a step that holds its note removes it. To show notes going on, show it on an empty step or pattern.'
 						}
 					: {}),
-				replica: putBack
-					? 'back where it was: the user can try it from there'
-					: tookOver
-						? 'the user took over while it played; what they did stays'
-						: 'unchanged'
+				replica:
+					putBack || stopped
+						? 'back where it was: the user can try it from there'
+						: tookOver
+							? 'the user took over while it played; what they did stays'
+							: 'unchanged'
 			},
 			caption
 		);

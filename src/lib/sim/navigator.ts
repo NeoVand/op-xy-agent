@@ -33,7 +33,7 @@ import {
 	PROJECT_SECTIONS,
 	SYSTEM_SECTIONS
 } from './areas/system/settings';
-import { autosaves, findProject, snapshot } from './areas/system/projects';
+import { autosaves, findProject, sameContent, snapshot } from './areas/system/projects';
 import { HOLD_MS } from './areas/system/state';
 import { currentGroup, groups, presetKey, presetsIn, soundOf } from './areas/system/presets';
 import {
@@ -2588,7 +2588,8 @@ function toProjectView(rec: Recorder): boolean {
 
 /** Whether the project is stored as it stands now (a save leaves nothing unsaved). */
 function savedAsIs(state: SimState): boolean {
-	return findProject(state, 'user', state.project.name)?.snapshot === snapshot(state);
+	const stored = findProject(state, 'user', state.project.name)?.snapshot;
+	return stored != null && sameContent(stored, snapshot(state));
 }
 
 /**
@@ -2739,10 +2740,13 @@ const PROJECT_RENAME: Special = {
 		rec.do('M1');
 		const ok = rec.sim.state.project.name === given;
 		const refused = rec.sim.state.areas.system.naming?.notice;
+		// what is stored under the name (an agent could not tell whether the rename had saved)
+		const stored = findProject(state, 'user', state.project.name) !== undefined;
+		const saved = savedAsIs(state);
 		return rec.plan(
 			ok,
 			ok
-				? `renamed "${state.project.name}" → "${given}" (${NAMING_KEYS}); a save (M2) stores it under the new name`
+				? `renamed "${state.project.name}" → "${given}" (${NAMING_KEYS}): ${!stored ? 'it was never saved, so M2 on the project page stores it under the new name' : saved ? 'its stored copy is renamed too, and it is saved as it stands' : 'its stored copy is renamed too; the changes since its last save are not stored until M2 saves them'}`
 				: refused
 					? `the naming screen refused it: ${refused}`
 					: 'the project was not renamed'

@@ -200,7 +200,16 @@ describe('plan_steps with show', () => {
 	});
 
 	it('sets a whole sound up from several settings, grouped by the parameter they set', async () => {
-		const { sim, run, animated } = setup(true);
+		const { sim, virtual, run, animated } = setup(true);
+		// the kit's kick with its hats: the duck dips on both
+		virtual.writePattern(1, {
+			pattern: 1,
+			bars: 1,
+			notes: [
+				...[1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 100, length: 1 })),
+				...[3, 7, 11, 15].map((step) => ({ step, note: 61, velocity: 90, length: 1 }))
+			]
+		});
 		const result = json(
 			await run(planStepsTool, {
 				show: true,
@@ -224,6 +233,9 @@ describe('plan_steps with show', () => {
 		expect(result.note).toMatch(/warp drive/);
 		expect(animated.length).toBeGreaterThan(4);
 		expect(sim.state.tracks[2].lfo).toMatchObject({ type: 'duck', on: true, source: 1 });
+		expect(result.duck).toMatch(
+			/^T1, the duck's source, plays closed hat 1 besides its kick: the ducked track dips on all of their hits/
+		);
 		// param with settings is a contradiction
 		const both = await run(planStepsTool, {
 			show: false,
@@ -534,6 +546,56 @@ describe('plan_steps to the project settings', () => {
 		expect(String(odd.content)).toMatch(/the naming screen has no \\"é\\"/);
 	});
 
+	it('arrives at a save and a named save as with the real replica, time passing', async () => {
+		// the sequencer's clock runs on every frame: a save compared whole read as unsaved a frame
+		// later, and "save it as sunrise jam" shown on the replica said it had not arrived
+		const time = new FakeTime();
+		const sim = new OpxySim({ now: () => time.now() });
+		const replica = new ReplicaState({ timers: time });
+		replica.observe((event) => sim.input(event));
+		const virtual = createVirtualOpxy({ sim });
+		const frame = () => {
+			sim.advance(16);
+			time.setTimeout(frame, 16);
+		};
+		time.setTimeout(frame, 16);
+		const env = {
+			device: null,
+			replica,
+			virtual,
+			guide: { start: () => {}, stop: () => {} },
+			manual: NO_MANUAL,
+			timers: time,
+			confirmWindowMs: 0,
+			plan: { get: () => [], set: () => {} },
+			abortDeviceWork: () => {}
+		} as unknown as AgentEnvironment;
+		const live = async (input: unknown) => {
+			const ctx: ToolContext = {
+				toolCallId: 'toolu_save',
+				agent: 'conductor',
+				signal: new AbortController().signal,
+				env
+			};
+			let done = false;
+			const running = planStepsTool
+				.run(planStepsTool.input.parse(input), ctx)
+				.finally(() => (done = true));
+			for (let i = 0; i < 4000 && !done; i++) await time.advance(50);
+			return json(await running);
+		};
+		const saved = await live({ show: true, area: 'project', param: 'save' });
+		expect(saved).toMatchObject({ shown: true, arrived: true });
+		const named = await live({
+			show: true,
+			area: 'project',
+			param: 'save as',
+			value: 'sunrise jam'
+		});
+		expect(named).toMatchObject({ shown: true, arrived: true });
+		expect(sim.state.project.name).toBe('sunrise jam');
+	});
+
 	it('reaches the system settings: a keyboard on channel 3 plays the selected track', async () => {
 		// an agent gave com → M1 steps from the manual, unable to check them
 		const { sim, run } = setup(true);
@@ -645,6 +707,13 @@ describe('plan_steps to the project settings', () => {
 			/^amp attack 2 s: the page value 5\d \(of 0–99\) is the nearest, 2(\.\d)? s$/
 		);
 		expect(sim.state.tracks[7].amp.attack).toBeGreaterThanOrEqual(52);
+		// by its page value, its time said, and the release's way round
+		const release = json(
+			await run(planStepsTool, { show: true, track: 8, param: 'amp release', value: 12 })
+		);
+		expect(release.times).toMatch(
+			/^amp release 12: about \d+(\.\d)? s \(the release runs the other way: a lower value lasts longer\)$/
+		);
 		expect(sim.state.tracks[7].amp.attack).toBeLessThanOrEqual(54);
 	});
 

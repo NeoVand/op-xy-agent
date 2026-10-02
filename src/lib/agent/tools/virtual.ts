@@ -201,7 +201,7 @@ function patternView(
 		// notes off the grid (a live take), which neither the grid nor the notes form shows
 		...offGrid(p),
 		...(p.quantise !== undefined ? { quantise: p.quantise } : {}),
-		...(grid ? { grid, hits: drumHits(p) ?? '' } : {}),
+		...(grid ? { grid, hits: drumHits(p, meter) ?? '' } : {}),
 		...('bars' in reading ? { reading } : {}),
 		...(notes
 			? { notes }
@@ -212,29 +212,36 @@ function patternView(
 }
 
 /**
- * Each drum sound's steps by number, beside the grid ("kick 1: 1 7 9; snare 1: 5 11"): agents
- * describing a 7/8 beat and a reggaeton hat line from the grid's marks put hits on the wrong steps.
- * A long regular line reads "every 2 from 1 (32)".
+ * Each drum sound's hits beside the grid, by bar and beat ("kick 1: 1 2& 3& every bar"; "snare 1:
+ * bar 1: 2 4, bar 2: 2 3a 4"): agents describing a 7/8 beat and a breakbeat from the grid's marks
+ * put hits on the wrong steps, and one turned step 26 into the wrong beat by hand. Beats of four
+ * steps name the sixteenths after each beat e, & and a; other meters give a bar's step numbers.
  */
-function drumHits(p: VirtualPattern): string | null {
-	const steps = new Map<string, number[]>();
+function drumHits(p: VirtualPattern, meter: BarMeter): string | null {
+	const steps = new Map<string, Set<number>>();
 	for (const n of p.notes) {
 		if (!n.sound) continue;
-		const list = steps.get(n.sound) ?? [];
-		if (!list.includes(n.step)) list.push(n.step);
-		steps.set(n.sound, list);
+		steps.set(n.sound, (steps.get(n.sound) ?? new Set<number>()).add(n.step));
 	}
 	if (steps.size === 0) return null;
-	const listed = (at: number[]): string => {
-		const sorted = [...at].sort((a, b) => a - b);
-		if (sorted.length <= 16) return sorted.join(' ');
-		const gap = sorted[1] - sorted[0];
-		const regular = sorted.every((s, i) => i === 0 || s - sorted[i - 1] === gap);
-		return regular
-			? `every ${gap} from ${sorted[0]} (${sorted.length})`
-			: `${sorted.slice(0, 12).join(' ')} … (${sorted.length} in all)`;
-	};
-	return [...steps.entries()].map(([sound, at]) => `${sound}: ${listed(at)}`).join('; ');
+	const fours = meter.beats.every((b) => b === 4);
+	const name = (inBar: number) =>
+		fours
+			? `${Math.floor((inBar - 1) / 4) + 1}${['', 'e', '&', 'a'][(inBar - 1) % 4]}`
+			: String(inBar);
+	const bars = Math.max(1, Math.ceil(p.length / meter.bar));
+	const lines = [...steps.entries()].map(([sound, at]) => {
+		const byBar = Array.from({ length: bars }, () => [] as number[]);
+		for (const step of [...at].sort((a, b) => a - b)) {
+			const bar = Math.floor((step - 1) / meter.bar);
+			byBar[Math.min(bar, bars - 1)].push(step - bar * meter.bar);
+		}
+		const said = byBar.map((list) => list.map(name).join(' '));
+		if (bars === 1) return `${sound}: ${said[0]}`;
+		if (said.every((line) => line === said[0])) return `${sound}: ${said[0]} every bar`;
+		return `${sound}: ${said.flatMap((line, i) => (line ? [`bar ${i + 1}: ${line}`] : [])).join(', ')}`;
+	});
+	return `${lines.join('; ')}${fours ? ' (beats of each bar; e, & and a the sixteenths after a beat)' : ` (steps of each ${meter.bar}-step bar)`}`;
 }
 
 /** The notes that play off the grid, by how far: "3 notes off the grid (…): step 5 +0.10, …". */
@@ -243,8 +250,10 @@ function offGrid(p: VirtualPattern): { offGrid?: string } {
 	if (off.length === 0) return {};
 	const sign = (x: number) => `${x > 0 ? '+' : '−'}${Math.abs(x).toFixed(2)}`;
 	const shown = off.slice(0, 8).map((n) => `step ${n.step} ${sign(n.offset ?? 0)}`);
+	// which sounds, on a drum track (an agent humanizing the hats alone could not confirm it)
+	const sounds = [...new Set(off.flatMap((n) => (n.sound ? [n.sound] : [])))];
 	return {
-		offGrid: `${off.length} note${off.length === 1 ? '' : 's'} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern): ${shown.join(', ')}${off.length > 8 ? ', …' : ''}`
+		offGrid: `${off.length} note${off.length === 1 ? '' : 's'}${sounds.length ? ` (${sounds.join(', ')})` : ''} off the grid by part of a step (a live take's timing or humanize's, kept by writes that start from this pattern; the notes on the grid stay there): ${shown.join(', ')}${off.length > 8 ? ', …' : ''}`
 	};
 }
 
@@ -1303,6 +1312,19 @@ export const writePatternTool = defineTool({
 				notes2.push(
 					`T${input.track} plays ${playMode} (its play mode, shift M2), so a chord sounds one note at a time: set its play mode to poly (plan_steps param "play mode", value poly) for the chords to sound.`
 				);
+			}
+			// single notes that run into the next on a mono track: the next cuts them (an agent asked
+			// for overlapping bass notes found out from the sound that mono cuts overlaps)
+			if (!drums && playMode === 'mono' && stacked.size === 0) {
+				const sorted = [...result.notes].sort((a, b) => a.step - b.step);
+				const cut = sorted.filter(
+					(n, i) => i + 1 < sorted.length && n.step + n.length > sorted[i + 1].step
+				).length;
+				if (cut > 0) {
+					notes2.push(
+						`T${input.track} plays mono, so where a note runs on into the next (${cut} time${cut === 1 ? '' : 's'} here), the next cuts it off with a new attack: legato joins them without one (a glide with portamento up), poly lets both ring (plan_steps param "play mode").`
+					);
+				}
 			}
 			// where the notes slide on a mono or legato track with portamento up (an agent's acid line
 			// ended each note where the next began, and it said they slid), and a slow attack the

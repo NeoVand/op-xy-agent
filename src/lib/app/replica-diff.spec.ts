@@ -2,6 +2,7 @@
 // the click and playback; a sound changed through the keys reads as its page did on the screen;
 // patterns by their notes; scenes and the song.
 import { describe, expect, it } from 'vitest';
+import { renameProject, saveProject, saveProjectAs } from '$lib/sim/areas/system/projects';
 import { playStep } from '$lib/sim/navigator';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { settingGoal } from '$lib/sim/settings';
@@ -137,12 +138,26 @@ describe('replica changes', () => {
 		]);
 	});
 
-	it('say first when another project is open', () => {
+	it('say first when another project is open, and a rename or a copy as such', () => {
 		const { sim, virtual } = setup();
-		const from = virtual.checkpoint();
+		let from = virtual.checkpoint();
 		sim.state.project.name = 'project 2';
+		sim.state.tempo.bpm = 98;
 		expect(virtual.changesSince(from)[0]).toBe(
 			'project "project 1" → "project 2": another project is open, and the changes below are what it brought'
+		);
+		// the same project renamed (an agent read its own rename as another project opening)
+		saveProject(sim.state);
+		from = virtual.checkpoint();
+		expect(renameProject(sim.state, 'tape loops')).toBeNull();
+		expect(virtual.changesSince(from)[0]).toBe(
+			'project "project 2" → "tape loops": renamed: the same project, its stored copy renamed too'
+		);
+		// and saved as a copy, the old one kept
+		from = virtual.checkpoint();
+		expect(saveProjectAs(sim.state, 'sunrise jam')).toBeNull();
+		expect(virtual.changesSince(from)[0]).toBe(
+			'project "tape loops" → "sunrise jam": a copy saved under the new name and open now; "tape loops" stays in the projects folder as it was last saved'
 		);
 	});
 

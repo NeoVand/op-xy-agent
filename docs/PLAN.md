@@ -354,6 +354,23 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   M1", "step 5 + turn E1 +5"); the prompt asks for the user's language; envelope times read "the
   page value 16 (of 0–99)"; the music skill knows the dembow; the sound skill asks for a listen
   before and after a request about how something sounds.
+- **Probe round twenty-six (2026-10-02), 18 scenarios (`probe-scenarios-26.json`: re-checks (save as
+  "sunrise jam", a rename, a keyboard playing the selected track, MIDI clock out, chords moved while
+  the bass waits, a lush pad's changes, a breakbeat's kick steps, a factory preset on a mono line,
+  a 3-bar bass in a 4-bar song, "what did I press?") and new kinds: a dembow at 95, Korean lo-fi, a
+  pad pumping with the kick, an echo in time, recording with a count-in, loosened hats, a variation
+  scene, "what key is this?"):** no failed calls; typed names, the system settings, own chords first
+  and the press log held. Fixes: a save shown on the real replica now arrives (project comparisons
+  leave out the clocks that run on, which made every save read unsaved a frame later; a test with
+  the replica's frames fails without it); the change list tells a rename and a save-as copy from
+  another project opening, and a rename says what is stored; a demo that starts playback (a count-in
+  shown) stops it again, where "back where it was" had played on and read as the user's playback (a
+  real-replica test); read_screen names the settings page open; drum hits read by bar and beat ("2&",
+  "3e"); overlapping notes on a mono track are said to cut each other; a duck from a kit that also
+  plays hats says it dips on all of them; read_sound gives a delay's repeat time at the tempo; the
+  groove note names the steps it moves; envelope notes give the page value, and a stage set by number
+  its time (and that a lower release lasts longer); humanize's line names the sounds it moved; a
+  keyboard that "sends on channel 5" no longer loads the sound skill.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

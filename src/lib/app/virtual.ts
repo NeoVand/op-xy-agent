@@ -124,6 +124,19 @@ function trackIndex(track: number): number {
 	return track - 1;
 }
 
+/**
+ * A delay's reading with how far apart its repeats land at the tempo ("size 1/8 dotted" is about
+ * 375 ms at 120 bpm): an agent setting an echo in time with the beat could only say "a few
+ * repeats". Its size is a note value of the project's tempo.
+ */
+function delayTime(reading: string, bpm: number): string {
+	const m = /^delay: size (1\/(\d+))( dotted)?\b/.exec(reading);
+	if (!m || bpm <= 0) return reading;
+	const beats = (4 / Number(m[2])) * (m[3] ? 1.5 : 1);
+	const ms = Math.round((beats * 60_000) / bpm);
+	return `${reading} (a repeat about every ${ms} ms at ${Math.round(bpm * 10) / 10} bpm)`;
+}
+
 /** Adds empty patterns until track `t` has `count` (keeping the arrange area's sound slots aligned). */
 function ensurePatterns(s: SimState, t: number, count: number): void {
 	const seq = trackSequence(s, t);
@@ -255,8 +268,14 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			},
 			// where the sends go: what FX I and FX II hold (auxiliary T7 and T8, their M1 pages)
 			fx: {
-				'FX I': screenAt({ area: 'auxiliary', track: 7, page: 1 }).replace(/^FX I /, ''),
-				'FX II': screenAt({ area: 'auxiliary', track: 8, page: 1 }).replace(/^FX II /, '')
+				'FX I': delayTime(
+					screenAt({ area: 'auxiliary', track: 7, page: 1 }).replace(/^FX I /, ''),
+					s.tempo.bpm
+				),
+				'FX II': delayTime(
+					screenAt({ area: 'auxiliary', track: 8, page: 1 }).replace(/^FX II /, ''),
+					s.tempo.bpm
+				)
 			},
 			mix: {
 				level: Math.round(t.mix.level),

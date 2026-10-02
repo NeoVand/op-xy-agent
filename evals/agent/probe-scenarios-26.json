@@ -1,0 +1,152 @@
+[
+	{
+		"name": "save-as-sunrise",
+		"about": "Re-check: save as with a name typed on the naming screen.",
+		"steps": [
+			{ "say": "make a short house loop" },
+			{ "say": "save it as sunrise jam" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "rename-project",
+		"about": "Re-check: renaming the open project.",
+		"steps": [{ "say": "rename this project to tape loops 2" }, { "why": true }]
+	},
+	{
+		"name": "keyboard-plays-selected",
+		"about": "Re-check: the system settings' active channel, set on the replica.",
+		"steps": [
+			{
+				"say": "my keyboard sends on channel 5. make it play whichever track I have selected"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "midi-clock-out",
+		"about": "Re-check: a system setting by another name.",
+		"steps": [
+			{ "say": "I want my drum machine to follow the op-xy's tempo. what do I set?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chords-then-bass-transpose",
+		"about": "Re-check: own chords first while the bass is mid-edit.",
+		"steps": [
+			{ "say": "make a chord loop on track 7 and a bassline on track 3 in A minor" },
+			{ "say": "move the chords up a whole step but leave the bass for now" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lush-pad-changes",
+		"about": "Re-check: a long release under changing chords.",
+		"steps": [
+			{ "say": "put a lush pad with a long release on track 8 playing a chord every bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "kick-positions",
+		"about": "Re-check: drum steps listed by number.",
+		"steps": [
+			{ "say": "make a breakbeat" },
+			{ "say": "which steps is the kick on?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "load-poly-bass",
+		"about": "Re-check: a load that changes the play mode.",
+		"steps": [
+			{ "say": "make a bassline on track 3 with some overlapping notes" },
+			{ "say": "load the factory bass preset 'big square' on it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "song-with-short-loop",
+		"about": "Re-check: a song entry cutting a shorter loop off.",
+		"steps": [
+			{
+				"say": "make a 4 bar drum pattern and a 3 bar bassline, then a song that plays that scene 3 times"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lost-after-presses",
+		"about": "Re-check: the user's own presses in the next message.",
+		"steps": [
+			{ "press": ["key.project", "key.m4"] },
+			{ "say": "oops, I pressed something. what did I press and how do I get out?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "dembow-again",
+		"about": "Re-check: the dembow in the skill.",
+		"steps": [{ "say": "make a dembow beat at 95" }, { "why": true }]
+	},
+	{
+		"name": "korean-lofi",
+		"about": "A request in Korean.",
+		"steps": [{ "say": "로파이 힙합 비트 만들어 줘. 코드도 넣어 줘" }, { "why": true }]
+	},
+	{
+		"name": "sidechain-pad",
+		"about": "A duck on a pad by the kick.",
+		"steps": [
+			{ "say": "make a house beat with a pad" },
+			{ "say": "make the pad pump with the kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ping-pong-delay",
+		"about": "An effect question on one part.",
+		"steps": [
+			{ "say": "write a short lead on track 5" },
+			{ "say": "give the lead an echo that repeats in time with the beat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "count-in-record",
+		"about": "Recording live with a count-in.",
+		"steps": [
+			{ "say": "how do I record a melody live on track 5 with a count-in?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "humanize-hats",
+		"about": "Loosening a stiff part.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "the hats sound robotic, loosen them up a bit" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "two-scenes-variation",
+		"about": "A variation scene and a song between them.",
+		"steps": [
+			{
+				"say": "make a beat with a bass, then a second scene where the bass plays higher, and a song that alternates them"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-is-this-key",
+		"about": "A question about the state after building.",
+		"steps": [
+			{ "say": "write a melody on track 5" },
+			{ "say": "what key is it in, and what chords would fit under it?" },
+			{ "why": true }
+		]
+	}
+]

@@ -10,13 +10,13 @@ describe('swellNote', () => {
 	it('says notes end before a slow attack does', () => {
 		// attack 57 is about 3.2 s; a bar at 120 bpm is 2 s
 		expect(swellNote(8, amp(57), [{ length: 16 }], 1, 120)).toBe(
-			"T8's amp attack takes 3.2 s, longer than its longest note (2 s at 120 bpm): its notes end before they reach full level. Longer notes, a slower tempo or a shorter attack let them."
+			"T8's amp attack (57 on its page) takes 3.2 s, longer than its longest note (2 s at 120 bpm): its notes end before they reach full level. Longer notes, a slower tempo or a shorter attack let them."
 		);
 	});
 
 	it('says a note reaches full level only near its end', () => {
 		expect(swellNote(8, amp(57), [{ length: 32 }], 1, 120)).toMatch(
-			/takes 3\.2 s and its longest note lasts 4 s at 120 bpm, so it reaches full level only near its end/
+			/\(57 on its page\) takes 3\.2 s and its longest note lasts 4 s at 120 bpm, so it reaches full level only near its end/
 		);
 	});
 
@@ -39,7 +39,7 @@ describe('tailNote', () => {
 	it('says a long release rings each chord on under the next', () => {
 		// release 30 is about 3.2 s (an agent's pad read Csus4 at every change)
 		expect(tailNote(7, amp(35, 30), changes, 1, 120)).toMatch(
-			/^T7's amp release takes 3\.\d s to die away \(120 bpm\), so each chord rings on under the next: /
+			/^T7's amp release \(30 on its page, where a lower value lasts longer\) takes 3\.\d s to die away \(120 bpm\), so each chord rings on under the next: /
 		);
 	});
 

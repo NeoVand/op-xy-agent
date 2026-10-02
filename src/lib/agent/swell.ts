@@ -25,11 +25,13 @@ export function swellNote(
 	if (attack < 0.3) return null;
 	const longest = Math.max(...notes.map((n) => n.length)) * (60 / bpm / 4) * scale;
 	const at = `${Math.round(bpm * 10) / 10} bpm`;
+	// the page value with its time, so a note given before a change reads as of that value (an
+	// agent saw 2.8 s in one result and 10 s in the next, and could not tell which was now)
 	if (attack >= longest) {
-		return `T${track}'s amp attack takes ${timeText(attack)}, longer than its longest note (${timeText(longest)} at ${at}): its notes end before they reach full level. Longer notes, a slower tempo or a shorter attack let them.`;
+		return `T${track}'s amp attack (${m[1]} on its page) takes ${timeText(attack)}, longer than its longest note (${timeText(longest)} at ${at}): its notes end before they reach full level. Longer notes, a slower tempo or a shorter attack let them.`;
 	}
 	if (attack > longest * 0.6) {
-		return `T${track}'s amp attack takes ${timeText(attack)} and its longest note lasts ${timeText(longest)} at ${at}, so it reaches full level only near its end (a shorter attack, "amp attack" with a time, brings it in sooner).`;
+		return `T${track}'s amp attack (${m[1]} on its page) takes ${timeText(attack)} and its longest note lasts ${timeText(longest)} at ${at}, so it reaches full level only near its end (a shorter attack, "amp attack" with a time, brings it in sooner).`;
 	}
 	return null;
 }
@@ -77,5 +79,5 @@ export function tailNote(
 	}
 	if (blurred === 0) return null;
 	const at = `${Math.round(bpm * 10) / 10} bpm`;
-	return `T${track}'s amp release takes ${timeText(release)} to die away (${at}), so ${blurred === changes ? 'each chord rings on under the next' : `at ${blurred} of its ${changes} chord changes the old chord rings on under the new one`}: their notes sound together for a while, which blurs the change (a listen reads such blends as sus or added-note chords). A shorter release ("amp release" with a time, such as "0.5 s") keeps the changes clean; a pad often keeps some of it.`;
+	return `T${track}'s amp release (${m[1]} on its page, where a lower value lasts longer) takes ${timeText(release)} to die away (${at}), so ${blurred === changes ? 'each chord rings on under the next' : `at ${blurred} of its ${changes} chord changes the old chord rings on under the new one`}: their notes sound together for a while, which blurs the change (a listen reads such blends as sus or added-note chords). A shorter release ("amp release" with a time, such as "0.5 s") keeps the changes clean; a pad often keeps some of it.`;
 }

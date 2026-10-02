@@ -73,7 +73,9 @@ describe('write_pattern', () => {
 		expect(result.isError).toBeFalsy();
 		expect(json(result).written).toMatchObject({ track: 1, pattern: 1, bars: 1, noteCount: 6 });
 		// each sound's steps by number beside the grid (agents placed hits from the marks wrongly)
-		expect(json(result).written.hits).toBe('kick 1: 1 5 9 13; kick 2: 5 13');
+		expect(json(result).written.hits).toBe(
+			'kick 1: 1 2 3 4; kick 2: 2 4 (beats of each bar; e, & and a the sixteenths after a beat)'
+		);
 		expect(stepRow(sim)).toBe('w...w...w...w...');
 		const p = currentPattern(sim.state.tracks[0].sequence);
 		expect(p.steps[4].notes.map((n) => [n.note, n.velocity])).toEqual([
@@ -81,6 +83,21 @@ describe('write_pattern', () => {
 			[54, 90]
 		]);
 		expect(changes()).toBeGreaterThan(0);
+	});
+
+	it('lists a drum line’s hits by bar and beat beside the grid', async () => {
+		// "26 and 27" read by hand as the and of 3 and the beat after: they are 3e and 3&
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 1,
+				bars: 2,
+				grid: { kick: 'x.....x...x..... .........xx.....', 'closed hat': 'x.x.x.x.x.x.x.x.' }
+			})
+		);
+		expect(result.written.hits).toBe(
+			'kick 1: bar 1: 1 2& 3&, bar 2: 3e 3&; closed hat 1: 1 1& 2 2& 3 3& 4 4& every bar (beats of each bar; e, & and a the sixteenths after a beat)'
+		);
 	});
 
 	it('writes two bars at a track scale into pattern 3, adding patterns 2 and 3', async () => {
@@ -539,7 +556,7 @@ describe('write_pattern on drums', () => {
 		);
 		// the strings' long release rings each chord on under the next (read as sus chords once)
 		expect(result.note).toMatch(
-			/T7's amp release takes \d+(\.\d)? s to die away \(120 bpm\), so each chord rings on under the next/
+			/T7's amp release \(\d+ on its page, where a lower value lasts longer\) takes \d+(\.\d)? s to die away \(120 bpm\), so each chord rings on under the next/
 		);
 		const bad = await run(writePatternTool, { track: 7, chords: '1:Hm7' });
 		expect(bad.isError).toBe(true);
@@ -686,7 +703,10 @@ describe('write_pattern on drums', () => {
 			/Loosened 8 notes: up to 0\.1 of a step off the grid \(the beats half that\), velocities up to 12 either way; the pattern's quantise 100 → 0/
 		);
 		expect(loose.written.quantise).toBe(0);
-		expect(loose.written.offGrid).toMatch(/notes? off the grid/);
+		// which sounds moved, the rest on the grid (an agent could not confirm the hats alone)
+		expect(loose.written.offGrid).toMatch(
+			/^\d+ notes? \(closed hat 1\) off the grid .*the notes on the grid stay there/
+		);
 		expect(virtual.changesSince(start).join(' ')).toMatch(/quantise 100 → 0/);
 		// a sound the kit lacks is refused
 		const none = await run(writePatternTool, {
@@ -751,6 +771,11 @@ describe('write_pattern on drums', () => {
 		const chords = json(await run(writePatternTool, { track: 3, chords: '1:Am 9:F' }));
 		expect(chords.note).toMatch(
 			/T3 plays mono \(its play mode, shift M2\), so a chord sounds one note/
+		);
+		// single notes running into the next: mono cuts them
+		const overlap = json(await run(writePatternTool, { track: 3, notes: '1:A1:6 5:C2:4 13:E2:2' }));
+		expect(overlap.note).toMatch(
+			/T3 plays mono, so where a note runs on into the next \(1 time here\), the next cuts it off/
 		);
 		const rolls = json(
 			await run(writePatternTool, {
@@ -937,7 +962,7 @@ describe('write_pattern on drums', () => {
 				grid: { kick: 'x... x... x... x...', 'closed hat': 'x.x. x.x. x.x. x.xx' }
 			})
 		);
-		expect(few.note).toMatch(/moves only 1 of T1's 13 notes, so it hardly swings/);
+		expect(few.note).toMatch(/moves only 1 of T1's 13 notes \(on step 16\), so it hardly swings/);
 		const swung = json(
 			await run(writePatternTool, {
 				track: 1,
@@ -957,7 +982,7 @@ describe('write_pattern on drums', () => {
 			})
 		);
 		expect(kicks.note).toMatch(
-			/moves 4 of T1's 17 notes: kick 1 3 of 6, snare 1 1 of 3; none of closed hat 1's 8, which plays straight: shuffle moves the even sixteenths/
+			/moves 4 of T1's 17 notes \(on steps 4, 8, 10, 12\): kick 1 3 of 6, snare 1 1 of 3; none of closed hat 1's 8, which plays straight: shuffle moves the even sixteenths/
 		);
 		expect(kicks.note).toMatch(/Say only what swings/);
 		sim.state.tempo.swing = 0;
@@ -1645,6 +1670,10 @@ describe('read_sound', () => {
 		expect(sound.pages.player).toMatch(/player/);
 		expect(sound.mix).toEqual({ level: 74, pan: 0, muted: false });
 		expect(sound.kit).toBeUndefined();
+		// the delay's repeats in time at the tempo (an agent could only say "a few repeats")
+		expect(sound.fx['FX I']).toMatch(
+			/^delay: size 1\/8 dotted, .* \(a repeat about every 375 ms at 120 bpm\)$/
+		);
 	});
 
 	it('gives the envelopes in seconds, and says a filter that is off does nothing', async () => {

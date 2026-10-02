@@ -39,9 +39,10 @@ const NOTE_LIST = /\b[A-G][#b♯♭]?-?\d\b(?:[\s,–-]+[A-G][#b♯♭]?-?\d\b){
 /** A part put on a track ("drums on track 1", "chords on T7"): a request to make it, no verb needed. */
 const PLACED =
 	/\b(beat|drums?|bass ?(line)?|chords?|melody|lead|pad|arp|hats?|hi-?hats?)\b[^.\n]{0,30}\bon (track |t)\d\b/i;
-// "swap the bass sound for something rounder" got no skill: a sound swapped, and rounder
+// "swap the bass sound for something rounder" got no skill: a sound swapped, and rounder; a
+// keyboard that "sends on channel 5" is no FX send
 const SOUND =
-	/\b(tone|timbre|filter|cutoff|resonance|envelope|attack|decay|sustain|release|lfo|duck|pump|pumping|sidechain|delay|reverb|echo|sends?|pan(ned|ning)?|(to|on) the (left|right)|wider|stereo|bright(er)?|dark(er)?|dull|warm(er)?|harsh|thin|fat(ter)?|muddy|plucky|punchy|round(er)?|mellow(er)?|soft(er)?|rich(er)?|hollow|glassy|metallic|gritty|grittier|dirty|dirtier|crunchy|crunchier|airy|airier|(swap|change|replace|switch)(ping)? (the |its |my |this |that )?(\w+ )?sound|sounds? (so |too |a bit |more |less )?(better|worse|good|bad|nicer|bigger|fuller|like))\b/i;
+	/\b(tone|timbre|filter|cutoff|resonance|envelope|attack|decay|sustain|release|lfo|duck|pump|pumping|sidechain|delay|reverb|echo|sends?(?!\s+(on|over|out|midi|notes?|clock|cc|its|to (my|the|a|an) (synth|drum machine|daw|computer|keyboard|op-?xy)))|pan(ned|ning)?|(to|on) the (left|right)|wider|stereo|bright(er)?|dark(er)?|dull|warm(er)?|harsh|thin|fat(ter)?|muddy|plucky|punchy|round(er)?|mellow(er)?|soft(er)?|rich(er)?|hollow|glassy|metallic|gritty|grittier|dirty|dirtier|crunchy|crunchier|airy|airier|(swap|change|replace|switch)(ping)? (the |its |my |this |that )?(\w+ )?sound|sounds? (so |too |a bit |more |less )?(better|worse|good|bad|nicer|bigger|fuller|like))\b/i;
 /** Words for how something sounds, which make a question one for the sound skill. */
 const TIMBRE =
 	/\b(bright|dark|dull|warm|harsh|thin|fat|muddy|boomy|tinny|weak|flat|lifeless|plucky|punchy|round(er)?|mellow|hollow|glassy|metallic|gritty|crunchy|airy)\b/i;
