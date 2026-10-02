@@ -209,11 +209,16 @@ export const showOnReplicaTool = defineTool({
 			: null;
 		// a chain's screen after each combo, from a rehearsal on a copy: which key landed where (an
 		// agent could check only the screen the demo ended on)
-		let screens: { keys: string; screen: string }[] = [];
+		let screens: { keys: string; screen: string; transport?: string }[] = [];
 		try {
 			const rehearsed = ctx.env.virtual?.rehearse(keys) ?? [];
+			// with the transport where a step starts it (a count-in's second press reads the same screen)
 			if (rehearsed.length > 1)
-				screens = rehearsed.map((s) => ({ keys: s.keys, screen: s.screen }));
+				screens = rehearsed.map((s) => ({
+					keys: s.keys,
+					screen: s.screen,
+					...(s.transport ? { transport: s.transport } : {})
+				}));
 		} catch {
 			screens = [];
 		}
@@ -318,8 +323,9 @@ export const showOnReplicaTool = defineTool({
 								'As shown, the keys took notes off: a key pressed with a step that holds its note removes it. To show notes going on, show it on an empty step or pattern.'
 						}
 					: {}),
-				replica:
-					putBack || stopped
+				replica: stopped
+					? 'back where it was, the playback the demo started stopped again (nothing records): the user can try it from there'
+					: putBack
 						? 'back where it was: the user can try it from there'
 						: tookOver
 							? 'the user took over while it played; what they did stays'

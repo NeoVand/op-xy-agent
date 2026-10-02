@@ -371,6 +371,22 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   groove note names the steps it moves; envelope notes give the page value, and a stage set by number
   its time (and that a lower release lasts longer); humanize's line names the sounds it moved; a
   keyboard that "sends on channel 5" no longer loads the sound skill.
+- **Probe round twenty-seven (2026-10-02), 18 scenarios (`probe-scenarios-27.json`: re-checks (a save
+  while playing, a count-in demo then "is it recording?", echo spacing, a bass on a syncopated kick,
+  a pad ducked from a kit, a rename then a save, which hits a swing moves) and new kinds: a snare
+  roll that speeds up, a 12/8 blues shuffle, the brain in D minor, exporting a wav, Spanish cumbia,
+  German techno, everything but the drums turned down, darker hats alone, a song that builds and
+  strips back, what M1–M4 do, punch-in fx):** no failed calls; the save arrived while playing, the
+  count-in demo left the replica stopped, and the echo time was read off. Fixes: write_pattern's
+  description says up front that a closed hat under an open hat is left out (seven agents learned
+  it only from the result) and the note reads as a normal hat line; drum results give each sound's
+  steps by number again (to write against) beside its beats; a component on a drum step two sounds
+  share is said to reach both (a snare roll rolled the hat); plan_steps says when its steps switched
+  an off filter on; a save says it lives in the replica's projects folder in this browser; a demo
+  that stopped its own playback says so, and rehearsed steps name the transport (a count-in's second
+  press reads the same screen); outside 4/4 a write gives the pattern in the meter's bars and that
+  the tempo counts quarter notes; a mix-page level is the scene on screen's; merge's description
+  shows how to take a sound out.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

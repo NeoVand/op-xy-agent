@@ -236,7 +236,11 @@ describe('show_on_replica with the real replica', () => {
 		// "back where it was" played on after record + play → + play, read as the user's playback
 		const count = await demo('instrument → T5 → record + play → + play', 0);
 		expect(count.transportAtEnd).toMatch(/counting in to record/);
-		expect(count.replica).toBe('back where it was: the user can try it from there');
+		// the step that starts it says so: its screen reads as the one before
+		expect(count.steps.at(-1)).toMatchObject({ transport: 'counting in to record' });
+		expect(count.replica).toBe(
+			'back where it was, the playback the demo started stopped again (nothing records): the user can try it from there'
+		);
 		expect(count.playingAfter).toBe(false);
 	});
 });

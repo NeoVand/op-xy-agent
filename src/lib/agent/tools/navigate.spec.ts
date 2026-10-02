@@ -698,6 +698,29 @@ describe('plan_steps to the project settings', () => {
 		expect(folder.note).toMatch(/^"bass" is a folder of the preset browser, holding bass\/alloy, /);
 	});
 
+	it('says when the steps switched an off filter on to set its cutoff', async () => {
+		// T7's strings in a new project have the filter off
+		const { run } = setup(true);
+		const off = json(
+			await run(planStepsTool, { show: true, track: 7, param: 'cutoff', value: 30 })
+		);
+		// the steps switch it on first (M3 again), said so
+		expect(off.steps.map((s: { keys: string }) => s.keys)).toEqual(['T7', 'M3', 'M3', 'turn E1']);
+		expect(off.filterOff).toMatch(/^T7's filter was off, so the steps switched it on first/);
+		const on = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 7,
+				settings: [
+					{ param: 'filter', value: 'on' },
+					{ param: 'cutoff', value: 30 }
+				]
+			})
+		);
+		// on already: nothing to say
+		expect(on.filterOff).toBeUndefined();
+	});
+
 	it('sets an envelope stage by its time, the nearest value said', async () => {
 		const { sim, run } = setup(true);
 		const result = json(

@@ -1,0 +1,136 @@
+[
+	{
+		"name": "save-while-playing",
+		"about": "Re-check: a save shown while the replica plays arrives.",
+		"steps": [{ "say": "make a beat and play it" }, { "say": "save the project" }, { "why": true }]
+	},
+	{
+		"name": "count-in-demo-again",
+		"about": "Re-check: a count-in demo leaves the replica stopped.",
+		"steps": [
+			{ "say": "show me how to start recording on track 3 with a count-in" },
+			{ "say": "ok, is it recording now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "echo-time",
+		"about": "Re-check: the delay's repeat time.",
+		"steps": [
+			{ "say": "put some echo on the snare track" },
+			{ "say": "how far apart are the echoes at this tempo?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-follows-kick",
+		"about": "Re-check: hits by beat; a bassline on the kick's steps.",
+		"steps": [
+			{ "say": "make a beat with a syncopated kick" },
+			{ "say": "now write a bassline that hits exactly with the kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "pad-pumps-kit",
+		"about": "Re-check: a duck from a kit track that also plays hats.",
+		"steps": [
+			{ "say": "make a house beat with hats and a pad on track 8" },
+			{ "say": "duck the pad from track 1" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snare-roll-speeds-up",
+		"about": "Step components: a roll that speeds up.",
+		"steps": [
+			{ "say": "make a beat and add a snare roll at the end of bar 1 that speeds up" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "blues-shuffle",
+		"about": "A 12/8 blues shuffle.",
+		"steps": [{ "say": "make a slow 12/8 blues shuffle with a bass" }, { "why": true }]
+	},
+	{
+		"name": "brain-in-key",
+		"about": "The brain (aux T1) following a key.",
+		"steps": [{ "say": "set the brain so everything I play stays in D minor" }, { "why": true }]
+	},
+	{
+		"name": "export-wav",
+		"about": "An app question.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "how do I get this out as a wav file?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "cumbia-spanish",
+		"about": "A request in Spanish, a genre not tried.",
+		"steps": [{ "say": "haz un ritmo de cumbia con bajo" }, { "why": true }]
+	},
+	{
+		"name": "german-techno",
+		"about": "A request in German.",
+		"steps": [{ "say": "Mach einen Techno-Beat mit 130 BPM und einer Bassline" }, { "why": true }]
+	},
+	{
+		"name": "only-drums-up",
+		"about": "A mix change across tracks.",
+		"steps": [
+			{ "say": "make a beat with bass and chords" },
+			{ "say": "turn down everything except the drums" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "darker-hats",
+		"about": "A sound change on one drum sound.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "make the hats darker, not the kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "build-and-strip",
+		"about": "A song that builds and strips back.",
+		"steps": [
+			{
+				"say": "make a song that starts with the kick, adds a part every scene up to four parts, then strips back to the kick"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-m-keys-do",
+		"about": "A teaching question about the panel.",
+		"steps": [{ "say": "what do the M1 to M4 keys do?" }, { "why": true }]
+	},
+	{
+		"name": "punch-in-fx",
+		"about": "A manual question about a feature.",
+		"steps": [{ "say": "what is punch-in fx and how do I use it live?" }, { "why": true }]
+	},
+	{
+		"name": "rename-then-save",
+		"about": "Re-check: rename then save, and what the change list says.",
+		"steps": [
+			{ "say": "make a short loop" },
+			{ "say": "rename the project to night bus and save it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-which-steps",
+		"about": "Re-check: the groove note names the steps it moves.",
+		"steps": [
+			{ "say": "make a hip hop beat with hats on every eighth" },
+			{ "say": "add swing, and tell me which hits actually move" },
+			{ "why": true }
+		]
+	}
+]

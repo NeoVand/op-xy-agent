@@ -2649,7 +2649,13 @@ const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>
 			if (!toProjectView(rec)) return rec.plan(false, 'the project page did not open');
 			rec.do('M2');
 			const ok = savedAsIs(rec.sim.state);
-			return rec.plan(ok, ok ? 'the project page flashes "saved"' : 'the project did not save');
+			// where it lives (an agent could not tell a replica save from one on the unit)
+			return rec.plan(
+				ok,
+				ok
+					? 'the project page flashes "saved": stored in the replica\'s projects folder, which this browser keeps; the OP-XY gets the project only when it is sent to it'
+					: 'the project did not save'
+			);
 		},
 		reads: (state) => savedAsIs(state),
 		action: true

@@ -279,6 +279,11 @@ export interface RehearsedStep {
 	readonly music?: string;
 	/** Done once the screen no longer reads this (a turn with no value to reach). */
 	readonly leave?: string;
+	/**
+	 * Where the transport stands after it, when it plays or records ("counting in to record"): a
+	 * count-in's second press reads the same screen, and an agent could not tell it had started.
+	 */
+	readonly transport?: string;
 }
 
 /** The virtual OP-XY. */

@@ -201,7 +201,7 @@ function patternView(
 		// notes off the grid (a live take), which neither the grid nor the notes form shows
 		...offGrid(p),
 		...(p.quantise !== undefined ? { quantise: p.quantise } : {}),
-		...(grid ? { grid, hits: drumHits(p, meter) ?? '' } : {}),
+		...(grid ? { grid, hits: drumHits(p) ?? '', beats: drumBeats(p, meter) ?? '' } : {}),
 		...('bars' in reading ? { reading } : {}),
 		...(notes
 			? { notes }
@@ -211,18 +211,43 @@ function patternView(
 	};
 }
 
-/**
- * Each drum sound's hits beside the grid, by bar and beat ("kick 1: 1 2& 3& every bar"; "snare 1:
- * bar 1: 2 4, bar 2: 2 3a 4"): agents describing a 7/8 beat and a breakbeat from the grid's marks
- * put hits on the wrong steps, and one turned step 26 into the wrong beat by hand. Beats of four
- * steps name the sixteenths after each beat e, & and a; other meters give a bar's step numbers.
- */
-function drumHits(p: VirtualPattern, meter: BarMeter): string | null {
+/** Each drum sound's steps, by sound (the notes it holds), in step order. */
+function soundSteps(p: VirtualPattern): Map<string, number[]> {
 	const steps = new Map<string, Set<number>>();
 	for (const n of p.notes) {
 		if (!n.sound) continue;
 		steps.set(n.sound, (steps.get(n.sound) ?? new Set<number>()).add(n.step));
 	}
+	return new Map([...steps].map(([sound, at]) => [sound, [...at].sort((a, b) => a - b)]));
+}
+
+/**
+ * Each drum sound's steps by number beside the grid ("kick 1: 1 7 11 14"), to write other parts
+ * against: an agent locking a bass to the kick converted the grid's marks to steps by hand. A long
+ * regular line reads "every 2 from 1 (32)".
+ */
+function drumHits(p: VirtualPattern): string | null {
+	const steps = soundSteps(p);
+	if (steps.size === 0) return null;
+	const listed = (sorted: number[]): string => {
+		if (sorted.length <= 16) return sorted.join(' ');
+		const gap = sorted[1] - sorted[0];
+		const regular = sorted.every((s, i) => i === 0 || s - sorted[i - 1] === gap);
+		return regular
+			? `every ${gap} from ${sorted[0]} (${sorted.length})`
+			: `${sorted.slice(0, 12).join(' ')} … (${sorted.length} in all)`;
+	};
+	return [...steps].map(([sound, at]) => `${sound}: ${listed(at)}`).join('; ');
+}
+
+/**
+ * And where they fall by bar and beat ("kick 1: 1 2& 3& every bar"; "snare 1: bar 1: 2 4, bar 2:
+ * 2 3a 4"), to describe them: agents describing a 7/8 beat and a breakbeat from the grid's marks
+ * put hits on the wrong beats, one turning step 26 into the wrong beat by hand. Beats of four steps
+ * name the sixteenths after each beat e, & and a; other meters give a bar's step numbers.
+ */
+function drumBeats(p: VirtualPattern, meter: BarMeter): string | null {
+	const steps = soundSteps(p);
 	if (steps.size === 0) return null;
 	const fours = meter.beats.every((b) => b === 4);
 	const name = (inBar: number) =>
@@ -230,11 +255,11 @@ function drumHits(p: VirtualPattern, meter: BarMeter): string | null {
 			? `${Math.floor((inBar - 1) / 4) + 1}${['', 'e', '&', 'a'][(inBar - 1) % 4]}`
 			: String(inBar);
 	const bars = Math.max(1, Math.ceil(p.length / meter.bar));
-	const lines = [...steps.entries()].map(([sound, at]) => {
+	const lines = [...steps].map(([sound, at]) => {
 		const byBar = Array.from({ length: bars }, () => [] as number[]);
-		for (const step of [...at].sort((a, b) => a - b)) {
-			const bar = Math.floor((step - 1) / meter.bar);
-			byBar[Math.min(bar, bars - 1)].push(step - bar * meter.bar);
+		for (const step of at) {
+			const bar = Math.min(Math.floor((step - 1) / meter.bar), bars - 1);
+			byBar[bar].push(step - bar * meter.bar);
 		}
 		const said = byBar.map((list) => list.map(name).join(' '));
 		if (bars === 1) return `${sound}: ${said[0]}`;
@@ -357,7 +382,7 @@ export const writePatternTool = defineTool({
 	approval: 'auto',
 	// a string or a list for notes, and a grid's lines: more than the API's strict grammar takes
 	strict: false,
-	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held (a write that starts from it, as bar, transpose, merge, components or scale alone do, keeps its parameter locks and its notes' timing outside what it rewrites); in a project with one scene it becomes the pattern the track plays (unless stay), and with an arrangement (more than one scene) the scenes stay as they are and the result says which play it. transpose alone shifts the pattern as it is (a bassline down an octave), scale_steps with key moves it along the key's scale (a harmony a third or sixth away, from copy_track), and scale or groove alone set the track scale or groove with the notes kept; bar writes one bar alone, keeping the others (every sound of that bar as given; with merge, only the sounds its grid names change there); copy starts from another of the track's patterns (with bar, a variation of it), copy_track from another track's, and copy_bar from one bar of it alone; components puts step components on steps (random, skip trigger, multiply…), alone onto the pattern as it is; key names the key you mean, for the reading (which lists notes outside it, and the mode they make). Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76 (the keys F3–E5: 53 is F3, 61 C#4, 63 D#4), in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short (a step is a sixteenth at track scale 1: an eighth note 2 steps, a beat 4): notes as one string, a word per note, step:note[:length[:velocity]] (a length in steps, 0.05–64) with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), chords by name as chords ("1:Am7 17:Fmaj7", voiced smoothly for you, so most read back as inversions, F/A; voicing "root" keeps each on its root; a new project's T3 plays mono and T5 legato, one note at a time, so chords want another track or poly there), and drums as grid, a line per sound by its name on this track (as read_pattern, read_sound or make_kit list them; a new project's kits number them, "kick 1", "closed hat 2", and a name without its number finds the lowest) or its MIDI note, 53–76 ({"kick": "x... x... x... x...", "62": "..x. ..x. ..x. ..x."}: x a hit at the pattern's velocity, X an accent 25 above it (115 at least), o a soft hit about half of it, 1–9 a hit of that loudness (about 14 a digit: 1 = 14, 3 = 42, 5 = 71, 7 = 99, 9 = 127; ghost notes 3–4), . a rest, four steps a beat; spaces and | are only for reading; a line shorter than the pattern that divides it repeats, and every line loops with the pattern, so they line up alike on every pass (a part that drifts against the rest needs a track of its own with another pattern length); the result reads each digit back as itself (9 as X), an o at the default velocity as 4, the write's own velocity as x and other velocities as x (76–114) or X (115 and over)). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. The result reads the pattern back: a drum track as a grid, any other as its bars ("–" the note held on, "·" a rest) and chords, spelled in the key its notes and the parts playing with it suggest, and its notes in the form notes takes; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
+	description: `Program one pattern of one track on the replica (on screen, it plays in the browser): its notes step by step, bars, length and track scale. Replaces what the pattern held (a write that starts from it, as bar, transpose, merge, components or scale alone do, keeps its parameter locks and its notes' timing outside what it rewrites); in a project with one scene it becomes the pattern the track plays (unless stay), and with an arrangement (more than one scene) the scenes stay as they are and the result says which play it. transpose alone shifts the pattern as it is (a bassline down an octave), scale_steps with key moves it along the key's scale (a harmony a third or sixth away, from copy_track), and scale or groove alone set the track scale or groove with the notes kept; bar writes one bar alone, keeping the others (every sound of that bar as given; with merge, only the sounds its grid names change there); copy starts from another of the track's patterns (with bar, a variation of it), copy_track from another track's, and copy_bar from one bar of it alone; components puts step components on steps (random, skip trigger, multiply…), alone onto the pattern as it is; key names the key you mean, for the reading (which lists notes outside it, and the mode they make). Up to ${MAX_NOTES} notes and 4 bars (64 steps) per pattern, 16 patterns per track; drum tracks (1 and 2 in a new project) have one sound per note, 53–76 (the keys F3–E5: 53 is F3, 61 C#4, 63 D#4), in the layout TE’s kits share: 53–54 kicks, 55–56 snares, 57 rim, 58 clap, 59 tambourine, 60 shaker, 61–62 closed hats, 63 open hat, 64 clave, 65 low tom, 66 ride, 67 mid tom, 68 crash, 69 high tom, 70 triangle, 71–72 congas, 73 cowbell, 74 guiro, 75 metal, 76 chi. Give notes short (a step is a sixteenth at track scale 1: an eighth note 2 steps, a beat 4): notes as one string, a word per note, step:note[:length[:velocity]] (a length in steps, 0.05–64) with a chord joined by + ("1:A2:4 5:C3+E3+G3:2:70 9:E2::90"), chords by name as chords ("1:Am7 17:Fmaj7", voiced smoothly for you, so most read back as inversions, F/A; voicing "root" keeps each on its root; a new project's T3 plays mono and T5 legato, one note at a time, so chords want another track or poly there), and drums as grid, a line per sound by its name on this track (as read_pattern, read_sound or make_kit list them; a new project's kits number them, "kick 1", "closed hat 2", and a name without its number finds the lowest) or its MIDI note, 53–76 ({"kick": "x... x... x... x...", "62": "..x. ..x. ..x. ..x."}: x a hit at the pattern's velocity, X an accent 25 above it (115 at least), o a soft hit about half of it, 1–9 a hit of that loudness (about 14 a digit: 1 = 14, 3 = 42, 5 = 71, 7 = 99, 9 = 127; ghost notes 3–4), . a rest, four steps a beat; spaces and | are only for reading; one hat a step: a closed hat where an open hat hits is left out, as a drummer plays one or the other, so write the closed hats around the open ones (the notes form stacks both); a line shorter than the pattern that divides it repeats, and every line loops with the pattern, so they line up alike on every pass (a part that drifts against the rest needs a track of its own with another pattern length); the result reads each digit back as itself (9 as X), an o at the default velocity as 4, the write's own velocity as x and other velocities as x (76–114) or X (115 and over)). velocity is every note's that gives none (default ${DEFAULT_VELOCITY}, loud: pads and quiet parts want 50–80). The real OP-XY cannot receive patterns over MIDI, so this always writes to the replica, even with a device connected. The result reads the pattern back: a drum track as a grid, any other as its bars ("–" the note held on, "·" a rest) and chords, spelled in the key its notes and the parts playing with it suggest, and its notes in the form notes takes; describe what you made from that. Use write_arrangement for scenes and the song, transport to hear it.`,
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16 (1–8 instrument, 9–16 auxiliary)'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default 1)'),
@@ -412,7 +437,7 @@ export const writePatternTool = defineTool({
 			.boolean()
 			.optional()
 			.describe(
-				'With grid: write only the lines given, the pattern\'s other sounds kept as they are (add a cowbell, or change the hats, without resending the beat); a line given replaces that sound\'s whole line, and a line of rests takes it out; its bars and length stay unless given. With bar too, only that bar of those sounds (a crash on bar 1 alone: bar 1, merge, {"crash": "x... .... .... ...."}, no 64-mark line); with copy, the copy\'s lines'
+				'With grid: write only the lines given, the pattern\'s other sounds kept as they are (add a cowbell, or change the hats, without resending the beat); a line given replaces that sound\'s whole line, and a line of rests takes it out ({"closed hat": "."} removes the closed hats, the rest kept); its bars and length stay unless given. With bar too, only that bar of those sounds (a crash on bar 1 alone: bar 1, merge, {"crash": "x... .... .... ...."}, no 64-mark line); with copy, the copy\'s lines'
 			),
 		copy: z
 			.int()
@@ -1164,7 +1189,7 @@ export const writePatternTool = defineTool({
 						? `The closed hat line is left out entirely: every hit of it falls where the open hat hits (step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}), and the grid keeps one hat a step, as a drummer plays one or the other (the OP-XY plays both: the notes form stacks them). Give the closed hat steps of its own, or leave it out.`
 						: // the grid's choice, said as one (agents told users a closed and an open hat "can't
 							// share a step")
-							`The grid keeps one hat a step: the closed hat is left out on step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}, where the open hat hits, as a drummer plays one or the other there. Not a limit of the OP-XY, which plays both: the notes form stacks them. Telling the user, say it is the drummer's way, never that the hats cannot share a step.`
+							`Closed hat left out on step${underOpen.length === 1 ? '' : 's'} ${underOpen.map((step) => count(step + barFrom)).join(', ')}, under the open hat: the grid keeps one hat a step, as a drummer plays them (not a limit of the OP-XY: the notes form stacks both). A normal hat line; mention it only if the user asked for closed hats there.`
 				);
 			}
 			// a closed and an open hat on one step: a drummer plays one or the other (an agent wrote
@@ -1354,6 +1379,25 @@ export const writePatternTool = defineTool({
 				);
 				if (tail) notes2.push(tail);
 			}
+			// a component on a drum step reaches every sound there, as a lock does (a snare roll put
+			// on steps 15 and 16 rolled the hat on 15 too, and the agent could not tell)
+			if (drums && landing.length > 0) {
+				const shared = [...new Set(landing.map((c) => c.step))]
+					.sort((a, b) => a - b)
+					.flatMap((step) => {
+						const sounds = [
+							...new Set(
+								result.notes.filter((n) => n.step === step).map((n) => n.sound ?? String(n.note))
+							)
+						];
+						return sounds.length > 1 ? [`step ${step}: ${sounds.join(', ')}`] : [];
+					});
+				if (shared.length > 0) {
+					notes2.push(
+						`A component is the whole step's on a drum track, so it reaches every sound there: ${shared.join('; ')}. For one sound alone (a snare roll without the hat), give it steps of its own, or put it on a track of its own (T2 is a second drum track, with a kit of its own).`
+					);
+				}
+			}
 			// step components on steps with no notes, left out (an agent's rolls sat on rests)
 			if (bare.length > 0) {
 				notes2.push(
@@ -1377,8 +1421,12 @@ export const writePatternTool = defineTool({
 					written: view,
 					// the meter it was read in, outside 4/4 (an agent unsure whether a change of time
 					// signature in the same answer had reached the write)
+					// and the pattern in that meter's bars, which "bars" (of 16 steps) is not (a 12/8 shuffle
+					// read "3 bars" here against the song's 2 bars of 12/8), and what the tempo counts
 					...(meter.bar !== 16
-						? { meter: `${virtual.status().signature}: bars of ${meter.bar} steps` }
+						? {
+								meter: `${virtual.status().signature}: bars of ${meter.bar} steps; this pattern is ${Math.round((result.length / meter.bar) * 100) / 100} of them (bars counts bars of 16 steps). The tempo counts quarter notes, four steps, in every meter, as the replica plays it.`
+							}
 						: {}),
 					...(sound ? { sound } : {}),
 					note: ['On the replica.', ...notes2].join(' ')

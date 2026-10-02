@@ -690,10 +690,21 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					now: () => 0
 				});
 				playStep(copy, { keys: formatKeys({ chords: sequence.chords.slice(0, i + 1) }) });
+				const rec = copy.state.areas.sequencer;
+				const transport = rec.armed
+					? 'recording armed: the first note played starts it'
+					: rec.countIn
+						? 'counting in to record'
+						: rec.recLatch
+							? 'recording'
+							: copy.state.transport.playing
+								? 'playing'
+								: null;
 				steps.push({
 					keys: shown,
 					screen: describeFrame(buildFrame(copy.state)),
-					music: musicMark(copy.state)
+					music: musicMark(copy.state),
+					...(transport ? { transport } : {})
 				});
 			});
 			return steps;

@@ -73,7 +73,8 @@ describe('write_pattern', () => {
 		expect(result.isError).toBeFalsy();
 		expect(json(result).written).toMatchObject({ track: 1, pattern: 1, bars: 1, noteCount: 6 });
 		// each sound's steps by number beside the grid (agents placed hits from the marks wrongly)
-		expect(json(result).written.hits).toBe(
+		expect(json(result).written.hits).toBe('kick 1: 1 5 9 13; kick 2: 5 13');
+		expect(json(result).written.beats).toBe(
 			'kick 1: 1 2 3 4; kick 2: 2 4 (beats of each bar; e, & and a the sixteenths after a beat)'
 		);
 		expect(stepRow(sim)).toBe('w...w...w...w...');
@@ -96,6 +97,9 @@ describe('write_pattern', () => {
 			})
 		);
 		expect(result.written.hits).toBe(
+			'kick 1: 1 7 11 26 27; closed hat 1: 1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31'
+		);
+		expect(result.written.beats).toBe(
 			'kick 1: bar 1: 1 2& 3&, bar 2: 3e 3&; closed hat 1: 1 1& 2 2& 3 3& 4 4& every bar (beats of each bar; e, & and a the sixteenths after a beat)'
 		);
 	});
@@ -424,7 +428,9 @@ describe('patterns in another time signature', () => {
 		);
 		expect(result.written.length).toBe(56);
 		expect(result.written.reading.bars).toHaveLength(4);
-		expect(result.meter).toBe('7/8: bars of 14 steps');
+		expect(result.meter).toMatch(
+			/^7\/8: bars of 14 steps; this pattern is \d+(\.\d+)? of them \(bars counts bars of 16 steps\)\. The tempo counts quarter notes/
+		);
 		expect(result.note).toMatch(/Length 56: 4 whole bars of 7\/8/);
 		// given, it stands
 		const given = json(
@@ -792,6 +798,20 @@ describe('write_pattern on drums', () => {
 		);
 		// left out, so nothing waits on the rest for a later note to wake
 		expect(rolls.written.components).toEqual(['step 13: multiply 3']);
+		// on a step two sounds share, both take it
+		const roll = json(
+			await run(writePatternTool, {
+				track: 1,
+				grid: { snare: '.... .... .... ..xx', 'closed hat': 'x.x. x.x. x.x. x.x.' },
+				components: [
+					{ step: 15, kind: 'multiply', value: 3 },
+					{ step: 16, kind: 'multiply', value: 4 }
+				]
+			})
+		);
+		expect(roll.note).toMatch(
+			/A component is the whole step's on a drum track, so it reaches every sound there: step 15: (snare 1, closed hat 1|closed hat 1, snare 1)\./
+		);
 	});
 
 	it('merges one bar: the sounds the grid names change there, the bar keeps the rest', async () => {
@@ -1096,7 +1116,7 @@ describe('write_pattern on drums', () => {
 		expect(merged.written.grid['closed hat 1']).toBe('x.x. x.x. x.x. x...');
 		expect(merged.written.grid['open hat 1']).toBe('.... .... .... ..x.');
 		expect(merged.note).toMatch(
-			/The grid keeps one hat a step: the closed hat is left out on step 15/
+			/Closed hat left out on step 15 \(4& of bar 1\), under the open hat: the grid keeps one hat a step/
 		);
 		expect(merged.note).not.toMatch(/both hit/);
 	});
@@ -1150,7 +1170,7 @@ describe('write_pattern on drums', () => {
 			})
 		);
 		expect(result.note).toMatch(
-			/the closed hat is left out on steps 3 \(1& of bar 1\), 7 \(2& of bar 1\), where the open hat hits, as a drummer plays one or the other there\. Not a limit of the OP-XY/
+			/Closed hat left out on steps 3 \(1& of bar 1\), 7 \(2& of bar 1\), under the open hat: the grid keeps one hat a step, as a drummer plays them \(not a limit of the OP-XY/
 		);
 		expect(result.written.grid['closed hat 1']).toBe('x... x... x.x. x.x.');
 		expect(result.note).not.toMatch(/both hit/);
