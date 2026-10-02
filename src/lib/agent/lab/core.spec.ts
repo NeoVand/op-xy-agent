@@ -602,7 +602,7 @@ describe('listen', () => {
 		// a scene heard alone says it too, from its first bar
 		const scene = await lab.listen(f, { scene: 1, seconds: 8 });
 		expect(scene.text).toMatch(
-			/\nloudness by bar -?[\d.]+, -?[\d.]+, -?[\d.]+, -?[\d.]+ \(LUFS, from the scene's first bar, which starts from silence\)/
+			/\nloudness by bar -?[\d.]+, -?[\d.]+, -?[\d.]+, -?[\d.]+ \(LUFS, from the scene's first bar\)/
 		);
 	});
 

@@ -1,0 +1,147 @@
+[
+	{
+		"name": "afro-congas",
+		"about": "Re-check: low and high congas as two lines, each its own sound.",
+		"steps": [
+			{ "say": "make an afro-cuban groove with low and high congas and a bass" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-resonance-playing",
+		"about": "Re-check: a guided lock while playing lands on its step.",
+		"steps": [
+			{ "say": "make a bassline on track 3 and play it" },
+			{ "say": "teach me to lock the filter resonance on step 9, light the keys" },
+			{ "follow": 5 },
+			{ "say": "did it work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "soft-fill",
+		"about": "Re-check: a fill merged into a soft beat keeps its velocity.",
+		"steps": [
+			{ "say": "make a soft 4 bar beat, everything at velocity 70" },
+			{ "say": "add a snare fill in bar 4" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "slow-build",
+		"about": "Re-check: a slow scene heard whole, every bar.",
+		"steps": [
+			{ "say": "make a 4 bar beat at 85 bpm that builds up bar by bar" },
+			{ "say": "does it really build? listen and tell me" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tom-descend",
+		"about": "Re-check: toms by number, high to low.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "add a fill in the last bar going down the toms, high to low" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "snappier-snare",
+		"about": "Re-check: one generated sound, the rest kept.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "generate a snappier snare for it, keep the rest of the kit" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "japanese-funk",
+		"about": "A request in Japanese.",
+		"steps": [{ "say": "ベースとドラムでファンキーなビートを作って" }, { "why": true }]
+	},
+	{
+		"name": "dnb-reese",
+		"about": "A fast genre and a named bass sound.",
+		"steps": [{ "say": "make a drum and bass loop at 174 bpm with a reese bass" }, { "why": true }]
+	},
+	{
+		"name": "seven-eight",
+		"about": "An odd meter.",
+		"steps": [{ "say": "make a groove in 7/8" }, { "why": true }]
+	},
+	{
+		"name": "swing-hats-only",
+		"about": "Swing on one sound only.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "make only the hats swing, keep the kick and snare straight" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sad-progression",
+		"about": "Theory explained along a write.",
+		"steps": [
+			{ "say": "write a sad chord progression and explain what makes it sound sad" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "harmonize-thirds",
+		"about": "A second line from the first.",
+		"steps": [
+			{ "say": "write a melody on track 5" },
+			{ "say": "harmonize it a third above on track 6" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-out-late",
+		"about": "A track taken out of part of a song.",
+		"steps": [
+			{ "say": "make a 4 scene song with drums, bass and chords" },
+			{ "say": "take the bass out of the last two scenes" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "old-radio",
+		"about": "A sound described by a picture.",
+		"steps": [
+			{ "say": "write chords on track 4" },
+			{ "say": "make them sound like they come from an old radio" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "ratchet-howto",
+		"about": "A device how-to about step components.",
+		"steps": [
+			{ "say": "how do I make one step repeat really fast, like a ratchet?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "whats-on-six",
+		"about": "Reading what a track holds.",
+		"steps": [
+			{ "say": "make a beat with chords and a lead" },
+			{ "say": "what's on track 6 right now, and what kind of sound is it?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "send-to-device",
+		"about": "A device action with no device connected.",
+		"steps": [{ "say": "make a beat" }, { "say": "send this project to my op-xy" }, { "why": true }]
+	},
+	{
+		"name": "kick-bass-fight",
+		"about": "A mix conflict between two tracks.",
+		"steps": [
+			{ "say": "make a beat with a heavy sub bass" },
+			{ "say": "the kick and the bass are fighting, fix it" },
+			{ "why": true }
+		]
+	}
+]

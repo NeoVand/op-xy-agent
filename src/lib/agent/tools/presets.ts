@@ -133,9 +133,13 @@ export const makeKitTool = defineTool({
 		}
 		// the voices given, each on its key by number and name and as the sound it became (an agent
 		// gave keys by number, read the kit back by note name and could not tell where its voices went)
-		const yours = voices.map(
-			(v) => `${v.key} ${noteName(v.key)}: ${byKey.get(v.key)?.name ?? v.type}`
-		);
+		// and the hits of the track's pattern that play each (an agent was unsure the snare it remade
+		// was the one its pattern played)
+		const pattern = loaded && virtual ? virtual.readPattern(loaded.track) : null;
+		const yours = voices.map((v) => {
+			const hits = pattern?.notes.filter((n) => n.note === v.key).length ?? 0;
+			return `${v.key} ${noteName(v.key)}: ${byKey.get(v.key)?.name ?? v.type}${loaded ? `, a new sound${hits ? ` (${hits} hit${hits === 1 ? '' : 's'} of pattern ${pattern?.pattern} play it)` : ''}` : ''}`;
+		});
 		// voices alone change only their keys (an agent asked for a flag a key, unsure the others kept
 		// their sounds)
 		const others = loaded?.sounds ? Object.keys(loaded.sounds).length - byKey.size : 0;

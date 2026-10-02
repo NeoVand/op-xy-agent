@@ -34,6 +34,13 @@ The tone bands against pink noise are the whole take's balance, not each sound's
 (an 808, a sub bass) makes the highs read low even when the hats are bright. To judge one sound's
 own tone, hear its track alone (listen with tracks).
 
+## Two parts in each other's way
+
+When the user says two parts fight (the kick and the bass, the pad and the chords), listen before
+you change anything: each alone and the scene together tells you whether it is their notes on the
+same steps, a long tail ringing into the other's hits (the amp release), their levels, or the same
+band. Fix what you heard, then listen again and say what moved.
+
 ## One sound too loud or too quiet
 
 A track's level (area mix, "level") moves everything on it. One sound of a drum track alone has two

@@ -485,9 +485,7 @@ async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResul
 			return {
 				content: [
 					summary.text,
-					...(bars
-						? [`loudness ${bars} (LUFS, from the scene's first bar, which starts from silence)`]
-						: []),
+					...(bars ? [`loudness ${bars} (LUFS, from the scene's first bar)`] : []),
 					...[...notes, ...(key ? [key] : []), ...(duck ? [duck] : [])].map((n) => `note: ${n}`),
 					...(legend ? [legend] : []),
 					`numbers: ${JSON.stringify(summary.data)}`

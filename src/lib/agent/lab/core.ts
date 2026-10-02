@@ -1206,9 +1206,7 @@ export function createLab(options: LabOptions): LabSession {
 			return {
 				text:
 					summary.text +
-					(bars
-						? `\nloudness ${bars} (LUFS, from the scene's first bar, which starts from silence)`
-						: '') +
+					(bars ? `\nloudness ${bars} (LUFS, from the scene's first bar)` : '') +
 					click +
 					(key ? `\nnote: ${key}` : ''),
 				flags: summary.flags,

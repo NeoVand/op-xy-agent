@@ -128,6 +128,21 @@ describe('replica changes', () => {
 		expect(lines.join('\n')).not.toMatch(/presets for|starting up/);
 	});
 
+	it('say a step component put on a step without a note plays nothing yet', () => {
+		// a demo put multiply on an empty step, and the agent could not tell whether it had landed
+		const { sim, virtual } = setup();
+		const from = virtual.checkpoint();
+		sim.state.tracks[2].sequence.patterns[0].steps[6].components.push({
+			kind: 'multiply',
+			value: 3
+		});
+		expect(virtual.changesSince(from)).toEqual([
+			expect.stringMatching(
+				/step components changed on step 7 \(step 7 has no note, so its component plays nothing until a note is there\)/
+			)
+		]);
+	});
+
 	it('say the bar menu’s shape and note length as they move', () => {
 		const { sim, virtual } = setup();
 		const from = virtual.checkpoint();

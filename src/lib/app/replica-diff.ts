@@ -168,10 +168,23 @@ export function extrasChange(was: Pattern, now: Pattern, track: TrackState | und
 			: locks),
 		...(components.length
 			? [
-					`step components changed on step${components.length === 1 ? '' : 's'} ${components.join(', ')}`
+					`step components changed on step${components.length === 1 ? '' : 's'} ${components.join(', ')}${noteless(components)}`
 				]
 			: [])
 	];
+
+	// a component plays only with a note on its step (a demo put multiply on an empty step, and the
+	// agent could not tell whether it had landed)
+	function noteless(steps: readonly number[]): string {
+		const empty = steps.filter(
+			(step) =>
+				(now.steps[step - 1]?.notes.length ?? 0) === 0 &&
+				(now.steps[step - 1]?.components.length ?? 0) > 0
+		);
+		if (empty.length === 0) return '';
+		const one = empty.length === 1;
+		return ` (step${one ? '' : 's'} ${empty.join(', ')} ${one ? 'has' : 'have'} no note, so ${one ? 'its component plays' : 'their components play'} nothing until a note is there)`;
+	}
 }
 
 /**

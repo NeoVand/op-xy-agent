@@ -114,6 +114,8 @@ describe('routing', () => {
 		expect(route('make an 8 second podcast intro jingle')).toContain('song-arrangement');
 		// a sound word in a request loads the sound skill ("too boomy, fix it" loaded none)
 		expect(route('the bass is too boomy, fix it')).toContain('shape-a-sound');
+		// two parts in each other's way are heard first (the bass was rewritten on a guess)
+		expect(route('the kick and the bass are fighting, fix it')).toContain('listening');
 		// a ringtone is a file too: the app's download
 		expect(route('make a 6 second ringtone that plays once')).toEqual(
 			expect.arrayContaining(['the-app', 'song-arrangement'])

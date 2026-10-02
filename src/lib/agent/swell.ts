@@ -84,12 +84,11 @@ export function tailNote(
 }
 
 /**
- * The swell notes of every instrument track with notes at the tempo now: a tempo change moves
- * notes against an attack that does not move (a pad's 2.8 s swell fit its notes at 72 bpm, and
- * once the tempo doubled the agent learned it only from a later write).
+ * The swell notes of every instrument track with notes at the tempo now (or at `bpm`): a tempo
+ * change moves notes against an attack that does not move (a pad's 2.8 s swell fit its notes at
+ * 72 bpm, and once the tempo doubled the agent learned it only from a later write).
  */
-export function swellsNow(virtual: VirtualOpxy): string[] {
-	const bpm = virtual.status().bpm;
+export function swellsNow(virtual: VirtualOpxy, bpm = virtual.status().bpm): string[] {
 	return virtual.status().tracks.flatMap((t) => {
 		if (t.track > 8 || t.notes === 0 || t.engine === 'drum') return [];
 		const p = virtual.readPattern(t.track);

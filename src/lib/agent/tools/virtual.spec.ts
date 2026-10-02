@@ -1494,10 +1494,17 @@ describe('write_pattern on drums', () => {
 		expect(result.note).toMatch(
 			/The groove \(shuffle, \+60, this pattern's own\) moves 8 of T1's 20 notes/
 		);
+		expect(result.note).not.toMatch(/falls between/);
 		const inverse = writePatternTool.inverse!(input, before, env)!;
 		await run(writePatternTool, inverse.input);
 		expect(sim.state.tracks[0].sequence.patterns[1].groove).toBe(0);
 		expect(sim.state.tracks[0].sequence.current).toBe(0);
+		// 50 is no detent of the bar menu's: it lands on 49, and the result says so
+		const between = json(await run(writePatternTool, { track: 1, groove: 50 }));
+		expect(sim.state.tracks[0].sequence.patterns[0].groove).toBe(49);
+		expect(between.note).toMatch(
+			/Groove 50 falls between the bar menu's steps \(… 46, 49, 51 …\), so it is 49, the nearest/
+		);
 	});
 
 	it('says when the groove moves none of the notes', async () => {
@@ -2220,8 +2227,14 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		const { sim, run } = setup();
 		sim.state.tracks[7].amp.attack = 50;
 		await run(writePatternTool, { track: 8, notes: '1:C4+E4+G4:16' });
+		// at 120 bpm its 2 s chord reached full level only near its end: at 60 it does, and says so
+		// (an agent quoted the swell at 120 after it had set 66, where it fit)
 		const slow = json(await run(setTempoTool, { bpm: 60 }));
-		expect(slow.swell).toBeUndefined();
+		expect(slow.swell).toBe(
+			"At 60 bpm T8's notes outlast its amp attack: the swell said at 120 bpm is no longer so."
+		);
+		const same = json(await run(setTempoTool, { bpm: 66 }));
+		expect(same.swell).toBeUndefined();
 		const fast = json(await run(setTempoTool, { bpm: 160 }));
 		expect(fast.swell).toMatch(/^T8.s amp attack \(50 on its page\) takes/);
 	});

@@ -51,8 +51,10 @@ const DEVICE =
 	/\b((on|to) (my|the) (op-?xy|device|unit|real one)|mtp|transfer|project file|\.xy\b|load (the |my )?project|save (it|this) (to|on))\b/i;
 const KITS =
 	/\b(kits?|samples?|preset maker|one-?shots?|multi-?sample|sound ?font|sf2|sfz|slice|slices|slicing)\b/i;
+// two parts that get in each other's way are heard first ("the kick and the bass are fighting"
+// loaded no skill, and the bass was rewritten on a guess)
 const LISTEN =
-	/\b(how does (it|this|that) sound|how do(es)? (it|they) sound|listen|too loud|too quiet|clipping|mix(ing)?)\b/i;
+	/\b(how does (it|this|that) sound|how do(es)? (it|they) sound|listen|too loud|too quiet|clipping|mix(ing)?|fighting|fight|clash(es|ing)?|competing|masking|stepping on|sounds? (wrong|off|weird|strange))\b/i;
 // "save my project to my computer" is the project card's download too (the answer gave only the
 // device's MTP copy)
 const APP =

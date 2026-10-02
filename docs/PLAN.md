@@ -605,6 +605,24 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   says its first bar starts from silence; rootless voicings over a bass count away from its onsets
   too (a Charleston comp); a voices-alone kit says the other keys kept their sounds; only strikes
   sound under a rhythm (a chord from step 1 under "..x-" first plays on step 3).
+- **Probe round forty-one (2026-10-02), 18 scenarios (`probe-scenarios-41.json`: re-checks (low and
+  high congas, a guided resonance lock while playing, a fill in a soft beat, a slow build heard,
+  toms high to low, one generated snare) and new kinds: funk asked in Japanese, drum and bass with a
+  reese, a 7/8 groove, swing on the hats alone, a sad progression explained, a harmony a third
+  above, the bass out of a song's last scenes, an old-radio tone, ratchets, what a track holds,
+  sending to an OP-XY that is not there, a kick and bass that fight):** no failed calls. Held: the
+  lock lands on step 9 after the lit stop, the fill keeps velocity 70, the 85 bpm build heard in all
+  four bars, the kit's other keys said kept. Fixes: a pattern's groove between the bar menu's
+  detents **says it landed on the nearest** (50 is 49 on the unit's steps, and an agent could not
+  tell rounding from another scale); an auxiliary setting reads back the track as given, 9–16 (FX I
+  given as 15 came back as 7); a sound shaped on a track with notes says how to hear it alone (agents
+  tuned a reese and a radio tone by numbers and never listened); "fighting", "clashing" and the like
+  route the listening skill, which now says to hear two parts in each other's way before changing
+  them (a bass was rewritten on a guess); a tempo change says when a swell it ends is no longer so;
+  a component on an empty step says it plays nothing yet; a bar merge's take-out is that bar's; a
+  generated voice says it is a new sound and which hits play it; groove is the type, swing its
+  amount; a soft write reads back as its nearest digit (70 is 5). The bar loudness line no longer
+  says its first bar starts from silence (an agent took that for why bar 1 was quiet).
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval); multiply at `accidental 9`

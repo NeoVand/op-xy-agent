@@ -349,6 +349,8 @@ describe('plan_steps with show', () => {
 		);
 		expect(result).toMatchObject({ shown: true, arrived: true, reached: true });
 		expect(result.settings[0]).toMatchObject({ param: 'scene', area: 'arrange', reached: true });
+		// an auxiliary track reads back as given, 9–16 (FX I given as 15 came back as track 7)
+		expect(result.settings[4]).toMatchObject({ param: 'track 5', area: 'auxiliary', track: 9 });
 		const s = sim.state;
 		expect(s.areas.arrange.songs[0].order).toEqual([0, 0, 1, 1]);
 		// the guiro's key, D5, is above the sixteen slices laid from F3
@@ -852,6 +854,37 @@ describe('plan_steps to the project settings', () => {
 		expect(result.lfoRate).toBe(
 			"T3's LFO is synced at sync 2: a cycle every 2 sixteenths (an eighth), 4 a second at 120 bpm."
 		);
+	});
+
+	it('says how to hear a sound shaped on a track with notes, alone', async () => {
+		// agents set a reese bass or a radio tone by numbers and said afterwards they never listened
+		const { virtual, run } = setup(true);
+		const empty = json(
+			await run(planStepsTool, { show: true, track: 3, param: 'cutoff', value: 40 })
+		);
+		// no notes on T3: nothing to hear
+		expect(empty.hear).toBeUndefined();
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 1, note: 45, velocity: 100, length: 4 }]
+		});
+		const shaped = json(
+			await run(planStepsTool, {
+				show: true,
+				track: 3,
+				settings: [
+					{ param: 'detune', value: 60 },
+					{ param: 'tempo', value: 100 }
+				]
+			})
+		);
+		expect(shaped.hear).toBe(
+			'Not heard since: listen with scene 1 and tracks [3] hears T3 alone, offline, before you say how it sounds.'
+		);
+		// a tempo alone shapes no sound
+		const tempo = json(await run(planStepsTool, { show: true, param: 'tempo', value: 90 }));
+		expect(tempo.hear).toBeUndefined();
 	});
 
 	it('says when the steps switched an off filter on to set its cutoff', async () => {

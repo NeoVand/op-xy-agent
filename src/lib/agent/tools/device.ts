@@ -406,15 +406,26 @@ export const setTempoTool = defineTool({
 			const previous = where.virtual.status().bpm;
 			where.virtual.setTempo(input.bpm);
 			const bpm = where.virtual.status().bpm;
-			// slow attacks against the notes at the new tempo
+			// slow attacks against the notes at the new tempo, and those the old tempo had that it
+			// ends (an agent quoted a strings' swell at 120 bpm after it had set 66, where it fit)
 			const swells = bpm !== previous ? swellsNow(where.virtual) : [];
+			const track = (line: string) => /^T(\d+)'s/.exec(line)?.[1];
+			const fitted =
+				bpm !== previous
+					? swellsNow(where.virtual, previous)
+							.map(track)
+							.filter((t) => t !== undefined && !swells.some((line) => track(line) === t))
+					: [];
+			const fits = fitted.length
+				? `At ${formatBpm(bpm)} bpm ${fitted.map((t) => `T${t}'s`).join(' and ')} notes outlast ${fitted.length === 1 ? 'its' : 'their'} amp attack: the swell said at ${formatBpm(previous)} bpm is no longer so.`
+				: '';
 			return jsonResult(
 				{
 					target: 'virtual',
 					tempoBpm: bpm,
 					previousBpm: previous,
 					...virtualNote(ctx.env),
-					...(swells.length ? { swell: swells.join(' ') } : {})
+					...(swells.length || fits ? { swell: [...swells, fits].filter(Boolean).join(' ') } : {})
 				},
 				`tempo ${formatBpm(bpm)} bpm on the replica`,
 				{ applied: true, after: bpm }
