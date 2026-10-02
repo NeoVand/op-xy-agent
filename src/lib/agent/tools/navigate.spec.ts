@@ -530,7 +530,9 @@ describe('plan_steps to the project settings', () => {
 		expect(named).toMatchObject({ shown: true, arrived: true, reached: true });
 		expect(named.already).toBeUndefined();
 		expect(sim.state.project.name).toBe('night drive');
-		expect(named.note).toMatch(/^saved as "night drive", typed on the naming screen/);
+		expect(named.note).toMatch(
+			/^saved as "night drive", now the open project, typed on the naming screen/
+		);
 		const renamed = json(
 			await run(planStepsTool, { show: true, area: 'project', param: 'rename', value: 'dusk' })
 		);

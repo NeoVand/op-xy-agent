@@ -72,7 +72,9 @@ describe('forks', () => {
 		const notes = f.readPattern(7).notes;
 		expect(notes.filter((n) => n.step === 1).map((n) => n.note % 12)).toEqual([9, 0, 4]);
 		expect(notes.filter((n) => n.step === 17)).toHaveLength(3);
-		expect(() => f.writePattern(7, {} as never)).toThrow(/give notes .*, chords .* or a drum grid/);
+		expect(() => f.writePattern(7, {} as never)).toThrow(
+			/give notes .*, chords .*, a drum grid .* or copy/
+		);
 	});
 
 	it('locks one step’s value with set and step', () => {
@@ -270,6 +272,28 @@ describe('commits', () => {
 		expect(() => f.writePattern(1, { grid: { gong: 'x...' } })).toThrow(
 			/writePattern: grid "gong" is no sound, note name or number of track 1 \(its sounds: kick 1/
 		);
+	});
+
+	it('copies a pattern, and keeps its locks and components through a merge', () => {
+		// a program building an outro from copies failed on copy, and a merge dropped the locks
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(1, { grid: { kick: 'x... x... x... x...', snare: '.... x... .... x...' } });
+		f.set({ param: 'cutoff', value: 40, track: 1, step: 5 });
+		const roll = f.readPattern(1);
+		expect(roll.stepLocks?.map((l) => l.step)).toEqual([5]);
+		// a duplicate: notes and locks
+		const copy = f.writePattern(1, { pattern: 2, copy: 1, stay: true });
+		expect(copy.notes).toHaveLength(roll.notes.length);
+		expect(copy.stepLocks?.map((l) => l.step)).toEqual([5]);
+		// a merge onto the pattern keeps its locks
+		const merged = f.writePattern(1, {
+			grid: { 'closed hat': 'x.x. x.x. x.x. x.x.' },
+			merge: true
+		});
+		expect(merged.stepLocks?.map((l) => l.step)).toEqual([5]);
+		expect(merged.notes.filter((n) => n.sound === 'kick 1')).toHaveLength(4);
+		expect(() => f.writePattern(1, { pattern: 3, copy: 9 })).toThrow(/has no pattern 9 to copy/);
 	});
 
 	it('refuses what is not a fork of this lab, and an empty label', () => {

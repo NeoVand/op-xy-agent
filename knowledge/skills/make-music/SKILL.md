@@ -57,7 +57,9 @@ takes the whole bars of the meter that its bars of 16 hold (bars 4 in 7/8: 56 st
 it), and the result says so. Readings then group the bars that way. Double time is track scale 1/2
 (each step a thirty-second), half time scale 2.
 
-Parts sit where the presets sound best: a bass mostly between E1 and E3 (a sub bass C1–C2), chords
+A new project's T7 strings and T8 pad swell in over about a second and ring on for about three
+after each chord: for chords that change every bar or faster, set a shorter attack and release
+first (the key planner takes times, "0.3 s"), and say so. Parts sit where the presets sound best: a bass mostly between E1 and E3 (a sub bass C1–C2), chords
 and pads around middle C (C3–C5), a lead or melody above them (C4–C6), so the parts do not crowd one
 another. A harmony in the key is the melody copied with scale_steps (copy_track, key; 2 a third up,
 −5 a sixth down), and the result reads it against the melody, so say the intervals it gives.
@@ -87,6 +89,10 @@ bass, a techno rumble, a house organ stab): the notes alone keep the track's pre
 sound for the style (the shape-a-sound skill) and say what you set. Trap hat rolls are faster than
 a step: put the multiply component on the hat steps that roll (its digit is how many quick hits), with
 their loudness rising or falling by step.
+
+Three against four is a polymeter: a 12-step line, a hit every four steps, on a track of its own
+drifts against the 16-step bar and lines up every three bars (even thirds of one bar, 5⅓ steps,
+no step gives).
 
 A part that varies as it plays (generative, evolving, never quite the same) takes step components
 (random notes, skip trigger, multiply: [sequencer.step-component-reference]), patterns of different

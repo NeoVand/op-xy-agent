@@ -270,7 +270,10 @@ const patternWrite = z.strictObject({
 	grid: z.record(z.string().min(1).max(40), z.string().max(400)).optional(),
 	// with a grid, the sounds it names replace theirs and the rest of the pattern stays, as
 	// write_pattern's merge (a program's hat takes failed on it twice)
-	merge: z.boolean().optional()
+	merge: z.boolean().optional(),
+	// start from another of the track's patterns, as write_pattern's copy (a program building an
+	// outro from copies failed on it): alone a duplicate, with a grid and merge a variation
+	copy: patternNumber.optional()
 });
 
 const arrangementWrite = z.strictObject({
@@ -521,9 +524,19 @@ export function createLab(options: LabOptions): LabSession {
 		function writePattern(track: number, write: PatternWrite) {
 			const t = check(track16, track, 'writePattern track');
 			const w = check(patternWrite, write, 'writePattern');
-			if (w.notes === undefined && w.chords === undefined && w.grid === undefined) {
+			if (
+				w.notes === undefined &&
+				w.chords === undefined &&
+				w.grid === undefined &&
+				w.copy === undefined
+			) {
 				throw new LabError(
-					'writePattern: give notes (a list or "1:A2:4 5:C3+E3:2"), chords ("1:Am7 17:F") or a drum grid ({"kick": "x... x..."})'
+					'writePattern: give notes (a list or "1:A2:4 5:C3+E3:2"), chords ("1:Am7 17:F"), a drum grid ({"kick": "x... x..."}) or copy (another pattern of the track)'
+				);
+			}
+			if (w.copy !== undefined && w.copy > virtual.status().tracks[t - 1].patterns) {
+				throw new LabError(
+					`writePattern: track ${t} has no pattern ${w.copy} to copy (it has ${virtual.status().tracks[t - 1].patterns})`
 				);
 			}
 			let given: readonly WrittenNote[];
@@ -556,8 +569,23 @@ export function createLab(options: LabOptions): LabSession {
 					'writePattern: merge goes with a grid (the sounds its lines name are replaced, the rest kept)'
 				);
 			}
-			// merge: the pattern's notes of the sounds no grid line names, kept as they are
-			const before = w.merge ? virtual.readPattern(t, w.pattern ?? 1) : null;
+			// what the write starts from: the copy (alone its notes, with a merge those its grid does
+			// not name), or with a merge the pattern itself, whose locks and components stay (a lab
+			// merge once dropped every lock and component of the pattern)
+			const copied = w.copy !== undefined ? virtual.readPattern(t, w.copy) : null;
+			const base = copied ?? (w.merge ? virtual.readPattern(t, w.pattern ?? 1) : null);
+			const before = w.merge ? base : null;
+			if (copied && !w.merge && notes.length === 0) {
+				for (const n of copied.notes) {
+					notes.push({
+						step: n.step,
+						note: n.note,
+						velocity: n.velocity,
+						length: n.length,
+						...(n.offset ? { offset: n.offset } : {})
+					});
+				}
+			}
 			if (before) {
 				const kit = t <= 8 ? virtual.readSound(t).kit : undefined;
 				const named = new Set(Object.keys(w.grid ?? {}).map((key) => gridKey(key, kit)));
@@ -573,15 +601,26 @@ export function createLab(options: LabOptions): LabSession {
 				}
 			}
 			const last = notes.reduce((max, n) => Math.max(max, n.step), 1);
+			const bars =
+				w.bars ?? (base ? Math.max(base.bars, Math.ceil(last / 16)) : Math.ceil(last / 16));
+			// the base's locks and components on the steps the pattern keeps
+			const steps = bars * 16;
+			const locks = (base?.stepLocks ?? []).filter((l) => l.step <= steps);
+			const components = (base?.components ?? []).filter((c) => c.step <= steps);
 			return virtual.writePattern(t, {
 				pattern: w.pattern ?? 1,
-				bars:
-					w.bars ?? (before ? Math.max(before.bars, Math.ceil(last / 16)) : Math.ceil(last / 16)),
-				length: w.length ?? (before && w.bars === undefined ? before.length : undefined),
-				scale: w.scale,
+				bars,
+				length: w.length ?? (base && w.bars === undefined ? base.length : undefined),
+				scale: w.scale ?? (copied ? copied.scale : undefined),
 				...(w.stay ? { play: false } : {}),
-				...(w.groove !== undefined ? { groove: w.groove } : {}),
-				notes
+				...(w.groove !== undefined
+					? { groove: w.groove }
+					: copied?.groove !== undefined
+						? { groove: copied.groove }
+						: {}),
+				notes,
+				...(locks.length ? { locks } : {}),
+				...(components.length ? { components } : {})
 			});
 		}
 

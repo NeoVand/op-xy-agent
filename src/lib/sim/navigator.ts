@@ -2694,7 +2694,7 @@ const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>
 				ok,
 				ok
 					? given !== null
-						? `saved as "${now}", typed on the naming screen (${NAMING_KEYS}); "${was}" stays as it was last saved`
+						? `saved as "${now}", now the open project, typed on the naming screen (${NAMING_KEYS}); "${was}" stays in the projects folder as it was last saved`
 						: `saved as "${now}", the name the naming screen offers: for another, give the name as the value (${NAMING_KEYS})`
 					: refused
 						? `the naming screen refused it: ${refused}`

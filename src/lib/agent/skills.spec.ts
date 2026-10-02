@@ -143,6 +143,9 @@ describe('routing', () => {
 		expect(
 			route('my keyboard sends on channel 5. make it play whichever track I have selected')
 		).not.toContain('shape-a-sound');
+		expect(route('send this to my op-xy')).not.toContain('shape-a-sound');
+		expect(route('put more delay send on the snare track')).toContain('shape-a-sound');
+		expect(route('send the hats to the reverb')).toContain('shape-a-sound');
 		// a sound swapped for a rounder one, the notes kept
 		expect(route('swap the bass sound for something rounder, keep the notes')).toEqual([
 			'shape-a-sound'

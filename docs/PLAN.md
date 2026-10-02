@@ -400,6 +400,21 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   says writes that start from a pattern keep its step components; a save as never overwrites a
   name the folder holds; disco's tempo range; a scene's mix is the way to make a part quieter in
   one section.
+- **Probe round twenty-nine (2026-10-02), 18 scenarios (`probe-scenarios-29.json`: re-checks (clashes
+  between a melody and its chords, a pad sped up to 140, a bass turned down, hats changed around a
+  snare roll, a save as onto a name taken, "what did I change?") and new kinds: UK garage, Dutch,
+  a final chorus a whole step up, three against four, a lead down an octave, chopping a break,
+  sending with no device, soft-loud hats, deep house tempo, clearing a track, a fading outro, a
+  step-entry lesson):** two failed calls (the lab's writePattern had no copy, then a take-back with
+  nothing to take back); the melody check named F# over G, the tempo change re-flagged the swell,
+  and levels went through the key planner. Fixes: the lab's writePattern takes copy and keeps a
+  pattern's locks and components through a merge or a copy (a lab merge had dropped them); its set
+  says a lock lands on the pattern the track plays; a clear (no notes) keeps the pattern's bars,
+  where clearing four bars of chords left one; a save as says the copy is now the open project; the
+  router sends "send this to my op-xy" nowhere near the sound skill (FX words make a send); the
+  groove rule sits beside plan_steps' groove; the music skill names the new project's swelling pads
+  and three against four as a polymeter; a transpose carries the key the pattern was written in
+  (or its reading's), "B minor (A minor moved up 2 semitones)", where G D A Bm read as D major.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

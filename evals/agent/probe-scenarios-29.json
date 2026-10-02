@@ -1,0 +1,146 @@
+[
+	{
+		"name": "melody-fits-chords",
+		"about": "Re-check: a melody read against the chords under it.",
+		"steps": [
+			{ "say": "write chords on track 7 in G major, then a melody on track 5 over them" },
+			{ "say": "are there any notes in the melody that clash with the chords?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "faster-tempo-pad",
+		"about": "Re-check: a tempo change re-checks a pad's slow attack.",
+		"steps": [
+			{ "say": "make an ambient pad loop with slow swelling chords on track 8 at 70 bpm" },
+			{ "say": "speed it up to 140" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "level-on-replica",
+		"about": "Re-check: a level set on the replica, not with set_sound.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "turn the bass down a little" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "merge-keeps-rolls",
+		"about": "Re-check: a merge keeps the step components.",
+		"steps": [
+			{ "say": "make a beat with a snare roll at the end using multiply" },
+			{ "say": "change the hats to sixteenths, keep everything else" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "overwrite-name",
+		"about": "Re-check: a save as onto a name already taken.",
+		"steps": [
+			{ "say": "make a beat and save it as demo" },
+			{ "say": "change the kick, then save it as demo again" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "garage-2step",
+		"about": "A genre not tried yet.",
+		"steps": [{ "say": "make a UK garage 2-step beat with a bass" }, { "why": true }]
+	},
+	{
+		"name": "dutch-chill",
+		"about": "A request in Dutch.",
+		"steps": [{ "say": "maak een rustige chill beat met akkoorden" }, { "why": true }]
+	},
+	{
+		"name": "modulate-up",
+		"about": "A key change for the last part of a song.",
+		"steps": [
+			{ "say": "make a song with a verse and chorus, 4 bars each, with chords and a melody" },
+			{ "say": "add a final chorus a whole step higher" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "polyrhythm",
+		"about": "Three against four.",
+		"steps": [
+			{ "say": "make a beat where a percussion line plays three against the four of the kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-changed",
+		"about": "The user changes things by hand and asks.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "press": ["key.tempo", "turn:encoder.1:6"] },
+			{ "say": "I changed something, what was it?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lead-octave-down",
+		"about": "A simple edit with a range check.",
+		"steps": [
+			{ "say": "write a lead melody on track 5" },
+			{ "say": "move it down an octave" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sample-chop",
+		"about": "Slicing a sample.",
+		"steps": [
+			{ "say": "how do I chop a drum break into slices on the op-xy and play them on the keys?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "send-to-device",
+		"about": "Sending the project with no device.",
+		"steps": [{ "say": "make a beat" }, { "say": "send this to my op-xy" }, { "why": true }]
+	},
+	{
+		"name": "ghost-hats",
+		"about": "Velocity dynamics on hats.",
+		"steps": [
+			{ "say": "make a beat where the hats have a soft-loud-soft-loud pattern" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bpm-for-genre",
+		"about": "A tempo question.",
+		"steps": [{ "say": "what tempo should a deep house track be?" }, { "why": true }]
+	},
+	{
+		"name": "clear-a-track",
+		"about": "Clearing one track.",
+		"steps": [
+			{ "say": "make a beat with bass and chords" },
+			{ "say": "clear the chords, I want to write my own" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "outro-fade",
+		"about": "A fade out at the end of a song.",
+		"steps": [
+			{ "say": "make a song with three scenes and make the last one fade out" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-step-entry",
+		"about": "A hands-on lesson, followed.",
+		"steps": [
+			{ "say": "teach me how to put a snare on beats 2 and 4, light the keys" },
+			{ "follow": 4 },
+			{ "say": "did that work?" },
+			{ "why": true }
+		]
+	}
+]

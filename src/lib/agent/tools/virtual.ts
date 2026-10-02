@@ -134,6 +134,44 @@ function partsAlongside(
 }
 
 /**
+ * The key each pattern was last written in, as the write named it (track:pattern → "A minor"), per
+ * replica: a transpose carries it, where an estimate reads Am F C G as C major.
+ */
+const namedKeys = new WeakMap<object, Map<string, string>>();
+const keysOf = (virtual: object) => {
+	let map = namedKeys.get(virtual);
+	if (!map) namedKeys.set(virtual, (map = new Map()));
+	return map;
+};
+
+/** Key names by tonic pitch class, as the keys are usually written. */
+const MAJOR_KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const MINOR_KEYS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
+
+/**
+ * The key a pattern's clear key reading ("A minor", not a guess) moves to by `semitones`, with
+ * where it came from ("A minor moved up 2 semitones"), or null.
+ */
+function movedKey(
+	reading: string | undefined,
+	semitones: number
+): { key: MeantKey; from: string } | null {
+	const m = /^([A-G][#b]?) (major|minor)$/.exec(reading ?? '');
+	if (!m) return null;
+	const from = parseKey(`${m[1]} ${m[2]}`);
+	if (!from) return null;
+	const pc = (((from.pitchClass + semitones) % 12) + 12) % 12;
+	const tonic = (m[2] === 'major' ? MAJOR_KEYS : MINOR_KEYS)[pc];
+	const key = parseKey(`${tonic} ${m[2]}`);
+	if (!key) return null;
+	const n = Math.abs(semitones);
+	return {
+		key,
+		from: `${m[1]} ${m[2]} moved ${semitones > 0 ? 'up' : 'down'} ${n} semitone${n === 1 ? '' : 's'}`
+	};
+}
+
+/**
  * A pattern as the model reads it: a drum pattern as its grid, a pitched one as its reading with
  * its notes in write_pattern's own form. `drumSteps: false` leaves a drum pattern as its grid alone
  * (write_pattern's result: the steps again, note by note, made an agent's drum results twice as
@@ -808,11 +846,19 @@ export const writePatternTool = defineTool({
 						}
 					: readSource()
 				: null;
+		// a clear (no notes, no grid lines with hits) keeps the pattern's bars: clearing a track to
+		// write on once shrank its four bars to one
+		const clearing =
+			notes.length === 0 && !written.steps && was === null && existing === null && !input.copy;
+		const cleared = clearing ? virtual.readPattern(input.track, pattern) : null;
 		const bars =
 			input.bars ??
 			(current && input.bar !== undefined
 				? Math.max(current.bars, input.bar)
-				: (was?.bars ?? existing?.bars ?? Math.ceil(Math.max(lastNote, written.steps || 1) / 16)));
+				: (was?.bars ??
+					existing?.bars ??
+					cleared?.bars ??
+					Math.ceil(Math.max(lastNote, written.steps || 1) / 16)));
 		const span = bars * 16;
 		// in another time signature, by default the whole bars of it that fit: four bars of 16 steps
 		// are four of 7/8 (56 steps), where all 64 spilled into a fifth and an agent rewrote nine
@@ -1250,12 +1296,28 @@ export const writePatternTool = defineTool({
 				);
 			}
 			const sound = soundOf(virtual, input.track);
+			// a transpose carries the key it moves from, named rather than guessed afresh (G D A Bm
+			// transposed from A minor read as D major, and an agent named the key change wrong)
+			const slot = `${input.track}:${pattern}`;
+			const keyFrom = `${fromTrack}:${copied ?? pattern}`;
+			const carried =
+				!input.key && !drums && transpose !== 0 && scaleSteps === 0 && was
+					? movedKey(
+							keysOf(virtual).get(keyFrom) ??
+								readPattern(was, partsAlongside(virtual, input.track, pattern))?.key,
+							transpose
+						)
+					: null;
+			// the key this pattern is in now, for the next transpose
+			if (input.key && parseKey(input.key)) keysOf(virtual).set(slot, parseKey(input.key)!.label);
+			else if (carried) keysOf(virtual).set(slot, carried.key.label);
+			else if (given || input.grid !== undefined) keysOf(virtual).delete(slot);
 			const view = patternView(result, {
 				drumSteps: false,
 				alongside: partsAlongside(virtual, input.track, pattern),
 				meter: meterNow(virtual),
 				bpm: virtual.status().bpm,
-				meant: input.key ? parseKey(input.key) : null,
+				meant: input.key ? parseKey(input.key) : (carried?.key ?? null),
 				written: writtenAccidentals(input.notes),
 				plain: velocity,
 				// the chords by the names given, where the notes are theirs
@@ -1265,6 +1327,9 @@ export const writePatternTool = defineTool({
 						)
 					: new Map()
 			});
+			if (carried && view.reading && 'key' in view.reading) {
+				(view.reading as { key?: string }).key = `${carried.key.label} (${carried.from})`;
+			}
 			// a bass on the kick's steps (an agent moving a bass off the kick worked the overlaps out by
 			// hand, from a grid and a list of steps)
 			if (!drums && result.scale === 1 && result.notes.some((n) => n.note < 48)) {

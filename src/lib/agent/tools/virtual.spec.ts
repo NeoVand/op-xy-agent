@@ -569,6 +569,26 @@ describe('write_pattern on drums', () => {
 		expect(String(bad.content)).toMatch(/"Hm7" is not a chord name/);
 	});
 
+	it('carries the key through a transpose instead of guessing it afresh', async () => {
+		// G D A Bm transposed from A minor read as D major, and an agent named the key change wrong
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 7,
+			bars: 4,
+			key: 'A minor',
+			chords: '1:Am 17:F 33:C 49:G'
+		});
+		const up = json(await run(writePatternTool, { track: 7, transpose: 2 }));
+		expect(up.written.reading.key).toBe('B minor (A minor moved up 2 semitones)');
+		// and again from there
+		const again = json(await run(writePatternTool, { track: 7, transpose: 3 }));
+		expect(again.written.reading.key).toBe('D minor (B minor moved up 3 semitones)');
+		// with no key named, the estimate moves as consistently
+		await run(writePatternTool, { track: 4, bars: 4, chords: '1:C 17:G 33:Am 49:F' });
+		const estimated = json(await run(writePatternTool, { track: 4, transpose: -2 }));
+		expect(estimated.written.reading.key).toBe('Bb major (C major moved down 2 semitones)');
+	});
+
 	it('reads a part to come against the other tracks’ patterns of its number', async () => {
 		const { run } = setup();
 		await run(writePatternTool, { track: 3, pattern: 2, stay: true, notes: '1:A1:16' });
@@ -1477,6 +1497,10 @@ describe('write_pattern, short', () => {
 		expect(
 			currentPattern(sim.state.tracks[0].sequence).steps.every((s) => s.notes.length === 0)
 		).toBe(true);
+		// a clear keeps the pattern's bars (clearing four bars of chords left one)
+		await run(writePatternTool, { track: 4, bars: 4, notes: '1:C4+E4+G4:16 49:F4+A4+C5:16' });
+		const cleared = json(await run(writePatternTool, { track: 4, notes: '' }));
+		expect(cleared.written).toMatchObject({ bars: 4, length: 64, noteCount: 0 });
 	});
 
 	it('finds a sound by its name with or without a number, and says when a line is short', async () => {
