@@ -60,6 +60,8 @@ export interface VirtualPattern {
 	readonly notes: readonly VirtualNote[];
 	/** Step components on its steps (random, skip trigger, multiply …), when it has any. */
 	readonly components?: readonly VirtualComponent[];
+	/** Parameter locks on its steps, each value as its page shows it ("cutoff 80"), when any. */
+	readonly locks?: readonly { readonly step: number; readonly values: readonly string[] }[];
 }
 
 /**
@@ -120,6 +122,11 @@ export interface VirtualArrangement {
 	readonly scenes: readonly VirtualScene[];
 	/** The song's scene order (scene numbers) and whether it loops. */
 	readonly song: { readonly order: readonly number[]; readonly loop: boolean };
+	/**
+	 * Steps (sixteenths) in a bar of the project's time signature (14 in 7/8): what scenes' bars
+	 * and the playhead's bar count in. Default 16.
+	 */
+	readonly barSteps?: number;
 }
 
 /** Scenes to set or clear, and the song's order. */

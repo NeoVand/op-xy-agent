@@ -41,7 +41,8 @@ const KITS =
 	/\b(kits?|samples?|preset maker|one-?shots?|multi-?sample|sound ?font|sf2|sfz|slice|slices|slicing)\b/i;
 const LISTEN =
 	/\b(how does (it|this|that) sound|how do(es)? (it|they) sound|listen|too loud|too quiet|clipping|mix(ing)?)\b/i;
-const APP = /\b(computer keyboard|this app|the app|manual page)\b/i;
+const APP =
+	/\b(computer keyboard|this app|the app|manual page|export|bounce|wav|mp3|download (it|this|the song|my song))\b/i;
 const NEW =
 	/\b(just (got|bought|unboxed)|new to (this|the op-?xy|music)|where (do|should) i (start|begin)|never (used|made)|beginner|first time|no idea (how|what)|make something (cool|nice|fun)|i don'?t know (anything|much) about)\b/i;
 const GEAR =
@@ -78,6 +79,8 @@ export function routeSkills(input: RouteInput): string[] {
 	want('teach-on-the-replica', teaching);
 	want('midi-gear', GEAR.test(text) || DAW.test(text));
 	want('perform-live', LIVE.test(text));
+	// the app's own features are asked about more than requested ("how do I export a wav?")
+	want('the-app', APP.test(text));
 	if (asking) {
 		want('shape-a-sound', TIMBRE.test(text));
 	} else {
@@ -89,7 +92,6 @@ export function routeSkills(input: RouteInput): string[] {
 		want('shape-a-sound', SOUND.test(text));
 		want('projects-and-the-device', DEVICE.test(text));
 		want('listening', LISTEN.test(text));
-		want('the-app', APP.test(text));
 	}
 	const loaded = input.loaded ?? new Set<string>();
 	return wanted.filter((name) => !loaded.has(name)).slice(0, MAX_ROUTED);

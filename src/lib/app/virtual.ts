@@ -16,7 +16,7 @@ import type {
 } from '$lib/agent/virtual-opxy';
 import { KEYBOARD_NOTE_NAMES, formatKeys, parseKeys, type KeyTerm } from '$lib/core/opxy';
 import { musicMark } from '$lib/sim/music-mark';
-import { lockParam } from '$lib/sim/areas/sequencer/locks';
+import { lockLabel, lockParam } from '$lib/sim/areas/sequencer/locks';
 import { buildFrame } from '$lib/sim/frames';
 import { describeFrame } from '$lib/sim/screen/render';
 import { FIRST_NOTE, KEYS, sampleFile, soundName } from '$lib/sim/areas/sample/state';
@@ -157,12 +157,25 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			.flatMap((step, i) =>
 				step.components.map((c) => ({ step: i + 1, kind: c.kind, value: c.value }))
 			);
+		// each step's locks as its page names and shows them (an agent asked whether a lock landed
+		// could not see one)
+		const locks =
+			t < 8
+				? p.steps.slice(0, MAX_STEPS).flatMap((step, i) => {
+						const values = Object.entries(step.locks ?? {}).map(([id, v]) => {
+							const param = lockParam(id);
+							return `${lockLabel(id, s.tracks[t])} ${param ? param.format(v) : Math.round(v)}`;
+						});
+						return values.length ? [{ step: i + 1, values }] : [];
+					})
+				: [];
 		return {
 			track,
 			pattern: index + 1,
 			patterns: seq.patterns.length,
 			current: index === seq.current,
 			...(components.length ? { components } : {}),
+			...(locks.length ? { locks } : {}),
 			bars: p.bars,
 			length: p.length,
 			scale: p.scale,
@@ -246,12 +259,13 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 	function readArrangement(): VirtualArrangement {
 		const a = s.areas.arrange;
 		const { mode, signature } = lengthSettings(s);
+		// in bars of the project's meter, as the playhead's bar counts (four 7/8 bars once read 3.5)
 		const bars = (patterns: readonly number[]) =>
 			lengthOf(
 				patterns.map((p, t) => trackSequence(s, t).patterns[p] ?? emptyPattern()),
 				mode,
 				signature
-			) / STEPS_PER_BAR;
+			) / BAR[signature];
 		const scenes = a.scenes.flatMap((scene, i) => {
 			const shown = i === a.scene ? captureScene(s) : scene;
 			return shown
@@ -274,7 +288,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			...(a.queued !== null ? { queued: a.queued + 1 } : {}),
 			...(at ? { at } : {}),
 			scenes,
-			song: { order: song.order.map((n) => n + 1), loop: song.loop }
+			song: { order: song.order.map((n) => n + 1), loop: song.loop },
+			...(BAR[signature] !== STEPS_PER_BAR ? { barSteps: BAR[signature] } : {})
 		};
 	}
 

@@ -171,6 +171,8 @@ export interface ScreenReading {
 	readonly page: string;
 	/** The page in words, with its values. */
 	readonly shows: string;
+	/** A list page in full: what it lists, its items and the highlighted one. */
+	readonly list?: string;
 	readonly mode: string;
 	/** A page opened over the mode (tempo, project, com, sample, players, bar), or null. */
 	readonly overlay: string | null;

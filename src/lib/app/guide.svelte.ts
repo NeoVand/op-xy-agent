@@ -39,7 +39,9 @@ export interface TurnHint {
 
 /** A screen reading's numbers by their labels: "amp envelope: attack 00, decay 25" → decay: 25. */
 function readings(screen: string): Record<string, number> {
-	const body = screen.includes(': ') ? screen.slice(screen.indexOf(': ') + 2) : screen;
+	// the values after the last label: a held step's frame ("step 7 held, 1 lock, cutoff 04: svf
+	// filter: cutoff 04, …") reads like the page it shows
+	const body = screen.includes(': ') ? screen.slice(screen.lastIndexOf(': ') + 2) : screen;
 	const out: Record<string, number> = {};
 	for (const part of body.split(', ')) {
 		const m = /^(.*?)\s([+-]?\d+(?:\.\d+)?)\b/.exec(part.trim());

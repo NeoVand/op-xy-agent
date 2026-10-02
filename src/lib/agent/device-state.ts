@@ -30,6 +30,8 @@ export interface DeviceSnapshot {
 	/** Sent-state: mutes this app last set, by track number. */
 	readonly mutes: Readonly<Record<number, boolean>>;
 	readonly sysex: boolean;
+	/** Why it is not connected, in words: the phase, and the session's own problem or notice. */
+	readonly why?: string;
 }
 
 /** Reads the device layer. Works without one (`connected: false`, phase `none`). */
@@ -49,7 +51,8 @@ export function deviceSnapshot(stack: DeviceStack | null): DeviceSnapshot {
 			tempoSent: null,
 			selectedTrack: null,
 			mutes: {},
-			sysex: false
+			sysex: false,
+			why: 'this view has no device connection'
 		};
 	}
 	const { session, mirror } = stack;
@@ -57,9 +60,32 @@ export function deviceSnapshot(stack: DeviceStack | null): DeviceSnapshot {
 	mirror.mutes.forEach((muted, index) => {
 		if (muted !== null) mutes[index + 1] = muted;
 	});
+	// why there is no connection (an agent asked why a Mac did not see the unit had only "not
+	// connected" and gave a generic checklist)
+	const PHASES: Readonly<Record<string, string>> = {
+		idle: 'the user has not connected yet: the connect key under the replica asks the browser for MIDI access, then looks for the OP-XY',
+		'requesting-access': 'the browser is asking the user for MIDI access',
+		'waiting-for-device': 'MIDI access is granted, and no OP-XY is among the MIDI ports',
+		opening: 'opening the OP-XY’s MIDI ports',
+		identifying: 'asking the device who it is',
+		greeting: 'asking the OP-XY for its firmware',
+		disconnected: 'the OP-XY was connected and went away'
+	};
+	const problem = session.problem;
+	const why =
+		session.phase === 'ready'
+			? undefined
+			: [
+					PHASES[session.phase] ?? null,
+					problem ? `${problem.title}: ${problem.detail} ${problem.action}` : null,
+					session.notice
+				]
+					.filter(Boolean)
+					.join('; ');
 	return {
 		connected: session.phase === 'ready',
 		phase: session.phase,
+		...(why ? { why } : {}),
 		product: session.info?.product ?? null,
 		firmware: session.firmware?.osVersion ?? null,
 		firmwareRelation: session.firmware?.relation ?? 'unknown',

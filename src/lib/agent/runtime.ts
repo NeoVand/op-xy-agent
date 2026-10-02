@@ -8,7 +8,7 @@ import type { AppSimulator } from '$lib/app/simulator.svelte';
 import { createVirtualOpxy, type VirtualSound } from '$lib/app/virtual';
 import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
-import { describeFrame } from '$lib/sim/screen/render';
+import { describeFrame, describeList } from '$lib/sim/screen/render';
 import { SampleRegistry } from '$lib/sound/samples';
 import { createAnthropicClient } from './client';
 import { Conductor, type PreferenceStore } from './conductor.svelte';
@@ -86,9 +86,11 @@ function screenReader(simulator: AppSimulator): ScreenReader {
 			const s = simulator.sim.state;
 			const frame = simulator.frame;
 			const modulePage = s.overlay === null && s.mode !== 'arrange' ? s.pages[s.mode] : null;
+			const list = describeList(frame);
 			return {
 				page: frame.page,
 				shows: describeFrame(frame),
+				...(list ? { list } : {}),
 				mode: s.mode,
 				overlay: s.overlay,
 				modulePage,

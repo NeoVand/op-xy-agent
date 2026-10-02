@@ -44,6 +44,18 @@ describe('voiceChords', () => {
 		}
 	});
 
+	it('keeps every chord on its root when asked', () => {
+		const chords = voiceChords(
+			['Am', 'F', 'C', 'G'].map((n) => chordFromSymbol(n)!),
+			{ root: true }
+		);
+		expect(chords.map((c) => c[0] % 12)).toEqual([9, 5, 0, 7]);
+		for (const c of chords) {
+			const middle = c.reduce((a, b) => a + b, 0) / c.length;
+			expect(Math.abs(middle - 60)).toBeLessThanOrEqual(7);
+		}
+	});
+
 	it('puts a slash chord’s bass below the voicing', () => {
 		const [c] = voice('C/E');
 		expect(c[0] % 12).toBe(4);

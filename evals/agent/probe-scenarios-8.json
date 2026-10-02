@@ -1,0 +1,147 @@
+[
+	{
+		"name": "ii-v-i",
+		"about": "Re-check: a progression by name, voiced by the tool.",
+		"steps": [
+			{ "say": "write a jazzy ii V I in Bb major on track 7, with some extensions, and play it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lock-lesson-2",
+		"about": "Re-check: a parameter lock walked through by hand, then checked.",
+		"steps": [
+			{ "say": "make a simple bassline on track 3, with a note on step 5" },
+			{
+				"say": "show me how to give just step 5 a higher filter cutoff myself, light the keys and I'll follow"
+			},
+			{ "follow": 8, "detents": 10 },
+			{ "say": "did it work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "copy-then-melody",
+		"about": "Re-check: a sound copied, then the same melody on both tracks.",
+		"steps": [
+			{
+				"say": "copy track 4's sound onto track 5, then write a short melody on track 4 and the same melody an octave up on track 5"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "filter-type-demo",
+		"about": "Re-check: a demo of a combo chain, with each step's screen.",
+		"steps": [{ "say": "show me how to change the filter type on track 3" }, { "why": true }]
+	},
+	{
+		"name": "remember-taste",
+		"about": "The memory: a taste told once, used later.",
+		"steps": [
+			{ "say": "remember that I like dark, minimal techno with lots of space" },
+			{ "say": "make me something" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "korean-lofi",
+		"about": "Korean: a lo-fi beat, answered in Korean.",
+		"steps": [
+			{ "say": "로파이 비트 만들어줘, 템포는 75로 하고 피아노 코드도 넣어줘" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "user-turned-tempo",
+		"about": "The user changes the tempo by hand, then asks why it sounds different.",
+		"steps": [
+			{ "say": "make a beat at 100 and play it" },
+			{ "press": ["key.tempo", "turn:encoder.1:15"] },
+			{ "say": "why does it sound faster now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "too-happy",
+		"about": "Abstract feedback over several turns.",
+		"steps": [
+			{ "say": "make a chord progression with a melody on top" },
+			{ "say": "it feels too happy" },
+			{ "say": "still too happy, make it really sad" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "export-wav",
+		"about": "A question about the app itself.",
+		"steps": [
+			{ "say": "make a short beat" },
+			{ "say": "how do I export this as a wav file?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "not-showing-up",
+		"about": "A connection problem, with no device.",
+		"steps": [
+			{ "say": "I plugged my op-xy into my mac with usb c but the app doesn't see it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "thirty-seconds",
+		"about": "Time arithmetic: a part of a set length in seconds.",
+		"steps": [
+			{
+				"say": "I need exactly 30 seconds of music at 128 bpm for a video intro. how many bars is that, and can you make it?"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "explain-what-you-did",
+		"about": "Honesty about its own calls after a build.",
+		"steps": [
+			{ "say": "make a drum and bass track at 174 with a reese bass" },
+			{ "say": "explain exactly what you did, step by step, and why" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "phrygian-double-time",
+		"about": "Many constraints in one message.",
+		"steps": [
+			{
+				"say": "make a song in 7/8 at 140 in D phrygian with a bass, a lead and chords, three parts, and the last part double time"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "too-many-notes",
+		"about": "A request past a pattern's note limit.",
+		"steps": [
+			{
+				"say": "fill track 4 with a crazy fast arpeggio, 32nd notes for all 4 bars, chords of 4 notes each"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "two-hats-listen",
+		"about": "Two versions compared by listening, then a choice.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{
+				"say": "try two different hi-hat patterns and listen to both, then keep the one that grooves more"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "record-voice",
+		"about": "A sampling request the replica cannot do as asked.",
+		"steps": [{ "say": "record my voice into track 1 and chop it up" }, { "why": true }]
+	}
+]

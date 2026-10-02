@@ -237,7 +237,9 @@ export const showOnReplicaTool = defineTool({
 		try {
 			outcome = await handle.done;
 			if (outcome === 'finished') {
-				ended = ctx.env.screen?.read().shows ?? null;
+				// a list in full: its items and the highlighted one, not that item alone
+				const reading = ctx.env.screen?.read();
+				ended = reading ? (reading.list ?? reading.shows) : null;
 				try {
 					did = before ? (virtual?.changesSince(before) ?? []) : [];
 				} catch {

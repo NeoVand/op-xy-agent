@@ -120,6 +120,14 @@ describe('the replica walkthrough', () => {
 		await tap(replica, 'track.3');
 		await tap(replica, 'key.m3');
 		expect(guide.current?.keys).toBe('step 7 + turn E1');
+		// the card can say which way: the step's screen is read with it held, the lock's value shown
+		const lit = guide.current!;
+		expect(lit.screen).toMatch(/^step 7 held/);
+		expect(turnHint(lit, describeFrame(buildFrame(sim.state)), '')).toMatchObject({
+			label: 'cutoff',
+			target: 4,
+			way: 'clockwise'
+		});
 		// the user holds step 7 and turns
 		replica.press('step.7', 'pointer');
 		await settle();

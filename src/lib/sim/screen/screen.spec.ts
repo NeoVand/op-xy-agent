@@ -8,7 +8,7 @@ import { screenFont } from './font';
 import { ICONS, PATTERNS, drawIcon } from './icons';
 import { PathDataError, compilePath, tracePath } from './paths';
 import { RecordingContext } from './recording';
-import { describeFrame, renderFrame } from './render';
+import { describeFrame, describeList, renderFrame } from './render';
 import { frameToSvg } from './svg';
 import type { FilterView, ScreenFrame } from './frame';
 import { COLORS, RAMP } from './palette';
@@ -479,3 +479,33 @@ describe.skipIf(!existsSync(research))(
 		}, 60_000);
 	}
 );
+
+describe('describeList', () => {
+	it('names a list, its items and the highlighted one; null for other pages', () => {
+		const frame: ScreenFrame = {
+			page: 'list',
+			columns: [
+				{ items: ['3', 'filter'], selected: null, style: 'outline', x: 4.5, width: 100 },
+				{
+					items: ['ladder', 'svf', 'z hipass', 'z lowpass'],
+					selected: 1,
+					style: 'outline',
+					x: 109.2,
+					width: 124.75
+				}
+			],
+			soft: []
+		} as unknown as ScreenFrame;
+		expect(describeList(frame)).toBe(
+			'3 filter list: ladder, svf, z hipass, z lowpass (svf highlighted)'
+		);
+		// the screen's short reading stays the highlighted item
+		expect(describeFrame(frame)).toBe('svf');
+		const long = {
+			...frame,
+			columns: [{ items: Array.from({ length: 20 }, (_, i) => `p${i}`), selected: 4 }]
+		} as unknown as ScreenFrame;
+		expect(describeList(long)).toBe('a list: p4 highlighted, 5 of 20');
+		expect(describeList({ page: 'tempo' } as unknown as ScreenFrame)).toBeNull();
+	});
+});

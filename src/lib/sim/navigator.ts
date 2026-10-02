@@ -839,11 +839,20 @@ function turnTo(
 		if (read(sim) === before) break;
 	}
 	if (clicks !== 0) {
+		// a held step's lock: the screen as it reads with the step still held (the page itself goes
+		// back to the track's value on release, which gave a walkthrough no value to turn toward),
+		// and the music, which keeps the lock
+		const step = hold ? /^step (\d+)$/.exec(hold) : null;
+		let screen = screenOf(sim);
+		if (step) {
+			const held = copy(sim.state);
+			held.input({ type: 'press', id: `step.${step[1]}` });
+			screen = screenOf(held);
+		}
 		rec.steps.push({
 			keys,
 			clicks,
-			screen: screenOf(sim),
-			// a held step's lock leaves the page reading the track's value: done by the music
+			screen,
 			...(hold ? { music: musicMark(sim.state) } : {})
 		});
 	}
@@ -2138,6 +2147,14 @@ const COPY_SOUND: Special = {
 			);
 		}
 		if (from === to) return rec.plan(false, `track ${to} already holds its own sound`);
+		// what the copy replaces, named (an agent learned it only from the change list afterwards)
+		const named = (s: SimState, t: number) => {
+			const preset = s.areas.system.trackPresets[t - 1];
+			return preset && preset !== '/'
+				? `${s.tracks[t - 1].engine} (${preset})`
+				: s.tracks[t - 1].engine;
+		};
+		const was = named(state, to);
 		walk(rec, { area: 'instrument', track: from, page: 1 });
 		rec.do(`T${from} + M2`);
 		rec.do(`T${to} + M3`);
@@ -2145,7 +2162,7 @@ const COPY_SOUND: Special = {
 		return rec.plan(
 			ok,
 			ok
-				? `track ${to} plays track ${from}'s sound now; its notes and mixer strip stay`
+				? `track ${to} plays track ${from}'s sound now, ${named(rec.sim.state, to)}, in place of ${was}: the engine, envelopes, filter, LFO and play mode all come with it; its notes and mixer strip stay`
 				: 'the sound did not paste'
 		);
 	},

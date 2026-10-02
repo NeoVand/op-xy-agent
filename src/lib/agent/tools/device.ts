@@ -54,7 +54,7 @@ function attribution(ctx: ToolContext): SendAttribution {
 }
 
 const NOT_CONNECTED =
-	'No OP-XY is connected, so nothing was sent. Ask the user to connect it with the connect button on the device stage (USB, Chrome or Edge), then try again.';
+	'No OP-XY is connected, so nothing was sent. Ask the user to connect it with the connect key under the replica (USB, Chrome or Edge), then try again.';
 
 /** The device stack when an OP-XY is connected and ready; otherwise an error result. */
 function connected(env: AgentEnvironment): DeviceStack | ToolResult {
@@ -136,6 +136,7 @@ export const deviceStatusTool = defineTool({
 		const data = {
 			connected: s.connected,
 			phase: s.phase,
+			...(s.why ? { why: s.why } : {}),
 			device: s.connected
 				? {
 						product: s.product,

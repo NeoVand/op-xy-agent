@@ -76,6 +76,17 @@
   a lone step press would take a note off; demos give each combo's screen; lab results that change
   scenes give the arrangement; play says when the click is on; a chord over another track's bass
   says what its own notes make; the manual gives TE's downloads address.
+- **Probe round eight (2026-10-02), 16 scenarios (`probe-scenarios-8.json`: a taste remembered,
+  Korean, the user's own tempo turn, "too happy" over three turns, a WAV export, a connection
+  problem, 30 seconds of music, 7/8 phrygian with double time, too many notes, two hat patterns
+  by ear, a voice to record):** a lock step's screen reads with the step held (the walkthrough's
+  turn hint has a target) and `readings` take the values after the last label; patterns read
+  back their locks and change lists name them ("step 7 cutoff locked at 60"); a miscounted grid
+  line is refused, not noted; scenes count bars in the project's meter (four bars of 7/8, not
+  3.5); a pattern at another track scale says how long it lasts; chords by name take `voicing:
+  root` and list their symbols; list pages read in full for the agent; a sound copy names what
+  it replaced; device_status says why nothing is connected; the app skill knows the song .wav and
+  .mid downloads and that the replica records no audio, and is routed for questions too.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

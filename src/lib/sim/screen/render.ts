@@ -83,6 +83,29 @@ export function renderFrame(ctx: ScreenCtx, frame: ScreenFrame, options: RenderO
 	ctx.restore();
 }
 
+/**
+ * A list page in full, for the agent: what it lists, its items and the highlighted one ("3 filter
+ * list: ladder, svf, z hipass, z lowpass (svf highlighted)"); null for any other page. The screen's
+ * short description names the highlighted item alone, which an agent read as the track's filter
+ * type with no sign that a list was open.
+ */
+export function describeList(frame: ScreenFrame): string | null {
+	if (frame.page !== 'list') return null;
+	const heading = frame.columns
+		.filter((c) => c.selected === null)
+		.map((c) => c.items.join(' '))
+		.join(' ');
+	const picks = frame.columns
+		.filter((c) => c.selected !== null)
+		.map((c) => {
+			const at = c.items[c.selected!];
+			return c.items.length <= 8
+				? `${c.items.join(', ')} (${at} highlighted)`
+				: `${at} highlighted, ${c.selected! + 1} of ${c.items.length}`;
+		});
+	return `${heading ? `${heading} list` : 'a list'}: ${picks.join('; ')}`;
+}
+
 /** A 0–1 view of a 0–99 lane as the device writes the lane ("00"…"99"), the number a lock shows. */
 const lane = (v: number) => two(v * 99);
 

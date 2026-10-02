@@ -288,6 +288,27 @@ describe('write_pattern one bar at a time', () => {
 });
 
 describe('patterns in another time signature', () => {
+	it('counts scenes in bars of the meter: four bars of 7/8 are four, not 3.5', async () => {
+		const { sim, run } = setup();
+		sim.state.areas.system.projectSettings.signature = 4; // 7/8
+		await run(writePatternTool, {
+			track: 1,
+			pattern: 1,
+			bars: 4,
+			length: 56,
+			grid: { kick: 'x... ..x. .... ..' }
+		});
+		const arranged = json(
+			await run(writeArrangementTool, {
+				scenes: [{ scene: 1, patterns: [{ track: 1, pattern: 1 }] }],
+				song: { scenes: [1, 1], loop: false }
+			})
+		);
+		expect(arranged.arrangement.scenes['scene 1']).toMatch(/\(4 bars\)/);
+		// eight bars of 7/8 at 120: 8 × 14 sixteenths × 0.125 s = 14 s
+		expect(arranged.arrangement.song.length).toMatch(/^8 bars, 0:14 at 120 bpm/);
+	});
+
 	it('read bar by bar as the project counts them: a 3/4 bar is three beats of four', async () => {
 		const { sim, run } = setup();
 		sim.state.areas.system.projectSettings.signature = 0; // 3/4
@@ -394,6 +415,16 @@ describe('write_pattern on drums', () => {
 		const bad = await run(writePatternTool, { track: 7, chords: '1:Hm7' });
 		expect(bad.isError).toBe(true);
 		expect(String(bad.content)).toMatch(/"Hm7" is not a chord name/);
+	});
+
+	it('says how long a pattern lasts at another track scale', async () => {
+		const { run } = setup();
+		const fast = json(
+			await run(writePatternTool, { track: 4, bars: 4, scale: '1/2', notes: '1:A3 64:C4' })
+		);
+		expect(fast.written.lasts).toBe('2 bars of time at track scale 1/2');
+		const plain = json(await run(writePatternTool, { track: 5, bars: 1, notes: '1:A3' }));
+		expect(plain.written.lasts).toBeUndefined();
 	});
 
 	it('says when a line shorter than a bar repeats to fill the pattern', async () => {
@@ -717,13 +748,20 @@ describe('write_pattern, short', () => {
 		expect(p.steps[16].notes.map((n) => n.note)).toEqual([53]);
 		expect(p.steps[18].notes.map((n) => n.note)).toEqual([62]);
 		expect(json(result).note).toBe('On the replica.');
-		// a line that neither fills nor divides it is said, so a miscount shows
+		// a line that neither fills nor divides it is a miscount: nothing is written
+		const notes = currentPattern(sim.state.tracks[0].sequence).steps.flatMap((s) => s.notes).length;
 		const short = await run(writePatternTool, {
 			track: 1,
 			bars: 2,
 			grid: { kick: 'x... '.repeat(7) + 'x.' }
 		});
-		expect(json(short).note).toMatch(/neither fill the pattern's 32 steps .*kick has 30/);
+		expect(short.isError).toBe(true);
+		expect(String(short.content)).toMatch(
+			/Nothing was written: grid lines that neither fill the pattern's 32 steps .*kick has 30/
+		);
+		expect(currentPattern(sim.state.tracks[0].sequence).steps.flatMap((s) => s.notes)).toHaveLength(
+			notes
+		);
 		// a made kit's "kick", written as the new project's "kick 1"
 		sim.state.areas.sample.tracks[0].keys[0] = {
 			...sim.state.areas.sample.tracks[0].keys[0]!,

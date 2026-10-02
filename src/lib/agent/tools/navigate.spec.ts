@@ -317,6 +317,7 @@ describe('plan_steps to the project settings', () => {
 			]
 		});
 		const before = sim.state.tracks[2].filter.cutoff;
+		const start = virtual.checkpoint();
 		const plan = json(
 			await run(planStepsTool, { show: true, track: 3, param: 'cutoff', value: 60, step: 7 })
 		);
@@ -329,6 +330,9 @@ describe('plan_steps to the project settings', () => {
 		// the track's own cutoff and the step's note stay
 		expect(sim.state.tracks[2].filter.cutoff).toBe(before);
 		expect(step.notes.map((n) => n.note)).toEqual([48]);
+		// read back with the pattern, and named in the change list
+		expect(virtual.readPattern(3).locks).toEqual([{ step: 7, values: ['cutoff 60'] }]);
+		expect(virtual.changesSince(start)).toContain('T3 pattern 1: step 7 cutoff locked at 60');
 	});
 
 	it('copies one track’s sound onto another with Tn + M2 and Tn + M3', async () => {

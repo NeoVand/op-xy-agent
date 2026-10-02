@@ -134,9 +134,19 @@ function patternView(
 		bars: p.bars,
 		length: p.length,
 		scale: scaleName(p.scale),
+		// how long it plays, where the track scale makes that differ from its bars of steps (64
+		// steps at 1/2 last two bars, which an agent read as four)
+		...(p.scale !== 1
+			? {
+					lasts: `${barsText((p.length * p.scale) / meter.bar)} of time at track scale ${scaleName(p.scale)}`
+				}
+			: {}),
 		noteCount: p.notes.length,
 		...(p.components?.length
 			? { components: p.components.map((c) => `step ${c.step}: ${c.kind} ${c.value}`) }
+			: {}),
+		...(p.locks?.length
+			? { locks: p.locks.map((l) => `step ${l.step}: ${l.values.join(', ')}`) }
 			: {}),
 		...(grid ? { grid } : {}),
 		...(reading ? { reading } : {}),
@@ -185,6 +195,7 @@ interface PatternInput {
 	readonly velocity?: number;
 	readonly notes?: string | readonly WrittenNote[];
 	readonly chords?: string;
+	readonly voicing?: 'smooth' | 'root';
 	readonly grid?: Readonly<Record<string, string>>;
 }
 
@@ -196,7 +207,7 @@ function writtenNotes(input: PatternInput): {
 } {
 	const notes = [
 		...(typeof input.notes === 'string' ? compactNotes(input.notes) : (input.notes ?? [])),
-		...(input.chords ? compactChords(input.chords) : [])
+		...(input.chords ? compactChords(input.chords, { root: input.voicing === 'root' }) : [])
 	];
 	const { hits, steps } = input.grid ? gridHits(input.grid) : { hits: [], steps: 0 };
 	return { notes, hits, steps };
@@ -283,7 +294,13 @@ export const writePatternTool = defineTool({
 			.max(2000)
 			.optional()
 			.describe(
-				'Chords by name instead of their notes, a word per chord, step:symbol[:length[:velocity]] ("1:Am7 17:Fmaj7 33:C/E 49:G7:16:70"): voiced near middle C, each moving as little as it can from the one before (smooth voice leading, so most read back as inversions), a slash chord\'s bass below; with no length a chord lasts until the next, the last to its bar\'s end. With notes too, both are written'
+				'Chords by name instead of their notes, a word per chord, step:symbol[:length[:velocity]] ("1:Am7 17:Fmaj7 33:C/E 49:G7:16:70"): voiced near middle C, each moving as little as it can from the one before (smooth voice leading, so most read back as inversions; voicing root keeps every chord on its root), a slash chord\'s bass below; with no length a chord lasts until the next, the last to its bar\'s end. Symbols: C, Cm, C7, Cmaj7 (CM7), Cm7, Cm7b5 (Cø), Cdim, Cdim7, Caug (C+), Csus2, Csus4, C7sus4, C6, Cm6, C6/9, Cadd9, Cm(add9), C9, Cm9, Cmaj9, C9sus4, C7b9, C7#9, C7#5, C7b5, C13, Cmaj7#11, Cm7(add11), Cm11, C5, on any root with # or b. With notes too, both are written'
+			),
+		voicing: z
+			.enum(['smooth', 'root'])
+			.optional()
+			.describe(
+				'How chords by name are voiced: smooth (default, each led from the one before) or root (each on its root)'
 			),
 		grid: z
 			.record(z.string().min(1).max(40), z.string().max(200))
@@ -461,6 +478,21 @@ export const writePatternTool = defineTool({
 		const fill = current
 			? 16
 			: Math.min(span, input.length ?? (input.bars === undefined && was ? was.length : span));
+		// a line that neither fills the pattern nor divides it is a miscount (an agent wrote 14 marks
+		// for 16 steps, and a note saying so went unread): nothing is written until it is fixed
+		const uneven = Object.entries(lineSteps)
+			.filter(([, n]) => n !== fill && !(n < fill && fill % n === 0))
+			.map(([key, n]) => {
+				const where = gridMiscount(input.grid?.[key] ?? '', meterNow(virtual).bar);
+				const past = n > fill ? `, the last ${n - fill} past its end` : '';
+				return `${key} has ${n}${where ? ` (${where})` : ''}${past}`;
+			});
+		if (uneven.length > 0) {
+			return errorResult(
+				`Nothing was written: grid lines that neither fill the pattern's ${fill} steps nor repeat into them: ${uneven.join(', ')}. Write each line as ${fill} marks, rests as dots (or a part of ${fill} that repeats into it, such as one bar of a longer pattern).`,
+				'grid lines miscounted'
+			);
+		}
 		// closed hats a grid put under an open hat, left out (below)
 		let underOpen: number[] = [];
 		if (written.hits.length > 0) {
@@ -563,20 +595,6 @@ export const writePatternTool = defineTool({
 				components: [...kept, ...given]
 			});
 			const notes2: string[] = [];
-			// a line that neither fills the pattern nor divides it is often a miscount (an agent wrote
-			// 30 marks for 32 steps): the rest of it plays as rests
-			const uneven = Object.entries(lineSteps)
-				.filter(([, n]) => n !== fill && !(n < fill && fill % n === 0))
-				.map(([key, n]) => {
-					const where = gridMiscount(input.grid?.[key] ?? '', meterNow(virtual).bar);
-					const past = n > fill ? `, the last ${n - fill} past its end and silent` : '';
-					return `${key} has ${n}${where ? ` (${where})` : ''}${past}`;
-				});
-			if (uneven.length > 0) {
-				notes2.push(
-					`Grid lines that neither fill the pattern's ${fill} steps nor repeat into them: ${uneven.join(', ')}; what a line leaves is rests. Check them against the grid above.`
-				);
-			}
 			// a line shorter than a bar repeats to fill the pattern, a single crash too (an agent wrote
 			// "x..." for one crash and got one on every beat)
 			const bar = meterNow(virtual).bar;
@@ -923,8 +941,8 @@ const barsText = (bars: number) => `${Math.round(bars * 100) / 100} bar${bars ==
 export function songLength(a: VirtualArrangement, bpm: number): string {
 	const bars = new Map(a.scenes.map((s) => [s.scene, s.bars]));
 	const order = a.song.order;
-	// a bar of sixteen steps at track scale 1 lasts 240 / bpm seconds
-	const seconds = (n: number) => (n * 240) / bpm;
+	// a sixteenth lasts 15 / bpm seconds; a bar holds the meter's sixteenths (16 in 4/4, 14 in 7/8)
+	const seconds = (n: number) => (n * (a.barSteps ?? 16) * 15) / bpm;
 	if (order.length > 1) {
 		const total = order.reduce((sum, scene) => sum + (bars.get(scene) ?? 1), 0);
 		return `${barsText(total)}, ${clock(seconds(total))} at ${bpm} bpm${a.song.loop ? ', then it starts over' : ', then it stops'}`;

@@ -119,7 +119,7 @@ export function compactNotes(text: string): WrittenNote[] {
  * (agents voicing chords by hand once wrote A D F under "Bbmaj7"). A chord with no length lasts
  * until the next one, the last to the end of its bar.
  */
-export function compactChords(text: string): WrittenNote[] {
+export function compactChords(text: string, options: { root?: boolean } = {}): WrittenNote[] {
 	const parsed = text
 		.split(/[\s,;]+/)
 		.filter(Boolean)
@@ -134,7 +134,10 @@ export function compactChords(text: string): WrittenNote[] {
 			return { ...part, chord };
 		})
 		.sort((a, b) => a.step - b.step);
-	const voiced = voiceChords(parsed.map((p) => p.chord));
+	const voiced = voiceChords(
+		parsed.map((p) => p.chord),
+		options
+	);
 	return parsed.flatMap((p, i) => {
 		const next = parsed.slice(i + 1).find((q) => q.step > p.step)?.step;
 		const length = p.length ?? (next ?? Math.ceil(p.step / 16) * 16 + 1) - p.step;

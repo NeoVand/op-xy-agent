@@ -6,9 +6,11 @@
  */
 import type { ChordSymbol } from './harmony';
 
-/** Where the voicings sit: the note their middle stays near (60, middle C). */
+/** Where the voicings sit: the note their middle stays near (60, middle C), and how they move. */
 export interface VoicingOptions {
 	readonly center?: number;
+	/** Every chord on its root, near the centre, rather than led smoothly from the one before. */
+	readonly root?: boolean;
 }
 
 /** The chord's tones stacked close from each of its inversions, the lowest at or above `floor`. */
@@ -47,13 +49,13 @@ export function voiceChords(
 	const out: number[][] = [];
 	let previous: number[] | null = null;
 	for (const chord of chords) {
-		const candidates = [center - 12, center - 7, center].flatMap((floor) =>
-			inversions(chord, floor)
-		);
+		const all = [center - 12, center - 7, center].flatMap((floor) => inversions(chord, floor));
+		// root position: the inversions with the root at the bottom alone
+		const candidates = options.root ? all.filter((c) => c[0] % 12 === chord.root) : all;
 		const near = candidates.filter((c) => Math.abs(mean(c) - center) <= 7);
 		const pool = near.length > 0 ? near : candidates;
 		const score = (c: number[]) =>
-			previous
+			previous && !options.root
 				? motion(previous, c) + Math.abs(mean(c) - center) * 0.25
 				: Math.abs(mean(c) - center) + (c[0] % 12 === chord.root ? 0 : 3);
 		let best = pool[0];

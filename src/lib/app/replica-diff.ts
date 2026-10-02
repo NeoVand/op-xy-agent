@@ -9,7 +9,8 @@
  */
 import type { ControlId } from '$lib/core/opxy';
 import type { ReplicaChange, VirtualOpxy, VirtualScene } from '$lib/agent/virtual-opxy';
-import { GROOVES, type SimState } from '$lib/sim/params';
+import { GROOVES, type SimState, type TrackState } from '$lib/sim/params';
+import { lockLabel, lockParam } from '$lib/sim/areas/sequencer/locks';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
 import { PROJECT_SECTIONS } from '$lib/sim/areas/system/settings';
@@ -86,6 +87,42 @@ export function briefChange(was: string, now: string): string {
 	return parts.length > 0 ? parts.join(', ') : whole;
 }
 
+/**
+ * A pattern's locks and step components, changed: each lock by its step, name and value ("step 5
+ * cutoff locked at 80"), the components by their steps (one line once said only "step components
+ * or locks changed", and an agent could not tell whether a user's lock had landed).
+ */
+function extrasChange(was: Pattern, now: Pattern, track: TrackState | undefined): string[] {
+	const locks: string[] = [];
+	const components: number[] = [];
+	for (let i = 0; i < Math.max(was.steps.length, now.steps.length); i++) {
+		const a = was.steps[i]?.locks ?? {};
+		const b = now.steps[i]?.locks ?? {};
+		for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) {
+			if (a[id] === b[id]) continue;
+			const param = lockParam(id);
+			const name = track ? lockLabel(id, track) : (param?.label ?? id);
+			const shown = (v: number) => (param ? param.format(v) : String(Math.round(v)));
+			locks.push(
+				b[id] === undefined
+					? `step ${i + 1} ${name} lock off`
+					: a[id] === undefined
+						? `step ${i + 1} ${name} locked at ${shown(b[id])}`
+						: `step ${i + 1} ${name} lock ${shown(a[id])} → ${shown(b[id])}`
+			);
+		}
+		if (!same(was.steps[i]?.components, now.steps[i]?.components)) components.push(i + 1);
+	}
+	return [
+		...(locks.length > 4 ? [`${locks.length} locks changed`] : locks),
+		...(components.length
+			? [
+					`step components changed on step${components.length === 1 ? '' : 's'} ${components.join(', ')}`
+				]
+			: [])
+	];
+}
+
 /** A pattern without its player, which the player page's line says (or "player changed"). */
 const unplayed = (p: Pattern | undefined) => (p ? { ...p, player: null } : p);
 
@@ -98,7 +135,8 @@ function patternChanges(
 	before: readonly Pattern[],
 	after: readonly Pattern[],
 	shown: number,
-	soundOf?: (note: number) => string | null
+	soundOf?: (note: number) => string | null,
+	track?: TrackState
 ): string[] {
 	const changed: number[] = [];
 	for (let i = 0; i < Math.max(before.length, after.length); i++) {
@@ -112,17 +150,19 @@ function patternChanges(
 			const was = before[n - 1];
 			const now = after[n - 1];
 			const parts: string[] = [];
-			if (!same(unplayed(was), unplayed(now)) || !was || !now) {
+			// the notes, when they changed (a lock alone once read "2 notes, step 7 … locked")
+			const notes = (p: Pattern | undefined) => p?.steps.map((s) => s.notes);
+			if (!was || !now || !same(notes(was), notes(now))) {
 				parts.push(describeNoteChange(was, now, soundOf) ?? `${notesIn(now)} notes`);
 			}
 			if (was && now) {
 				if (was.bars !== now.bars) parts.push(`${was.bars} → ${now.bars} bars`);
 				if (was.length !== now.length) parts.push(`${was.length} → ${now.length} steps`);
-				const extras = (p: Pattern) => p.steps.map((s) => [s.components, s.locks]);
-				if (!same(extras(was), extras(now))) parts.push('step components or locks changed');
+				parts.push(...extrasChange(was, now, track));
 				if (n !== shown && !same(was.player, now.player)) parts.push('its player changed');
 			} else if (now && now.length !== now.bars * 16) parts.push(`${now.length} steps`);
-			return `${label} pattern ${n}: ${parts.join(', ')}`;
+			// what else a pattern holds (its scale, its groove…) when nothing named above changed
+			return `${label} pattern ${n}: ${parts.length ? parts.join(', ') : 'its settings changed'}`;
 		});
 	}
 	const total = (list: readonly Pattern[]) => list.reduce((sum, p) => sum + notesIn(p), 0);
@@ -285,7 +325,8 @@ export function replicaChangeList(
 			was.sequence.patterns,
 			now.sequence.patterns,
 			now.sequence.current + 1,
-			soundOf
+			soundOf,
+			now
 		);
 		for (const line of patterns) add(line, [track]);
 	}
