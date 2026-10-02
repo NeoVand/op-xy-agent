@@ -887,7 +887,15 @@ export class Conductor {
 		turn.undone = virtual.checkpoint();
 		entry.undo = 'undone';
 		if (this.litChanges?.id === entry.id) this.litChanges = null;
-		return { undone: entry.lines };
+		// what still differs from before the answer: the user's edits since, which stay (an agent
+		// told "all three changes reversed" found the user's two kicks still there)
+		let kept: readonly string[];
+		try {
+			kept = virtual.changesSince(turn.before);
+		} catch {
+			kept = [];
+		}
+		return { undone: entry.lines, ...(kept.length ? { kept } : {}) };
 	}
 
 	/** The takes a lab run's chip shows, when it offered some and none is kept yet. */
@@ -1063,7 +1071,7 @@ export class Conductor {
 			...fresh.map((l) => `- ${l}`),
 			...(gone.length
 				? [
-						`- back as it was at the user\u2019s message, so no longer a change (an earlier list gave it): ${gone.join('; ')}`
+						`- since reverted, now as at the user\u2019s message (an earlier list gave it): ${gone.join('; ')}`
 					]
 				: []),
 			...(standing > 0

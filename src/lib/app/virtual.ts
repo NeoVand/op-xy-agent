@@ -319,9 +319,13 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			const tracks = Array.from({ length: 16 }, (_, t) => {
 				const seq = trackSequence(s, t);
 				const mix = t < 8 ? s.tracks[t].mix : s.aux[t - 8].mix;
+				// the sound it plays, by its preset (an agent asked what was on each track guessed
+				// "default" for the ones it had not written)
+				const preset = t < 8 ? s.areas.system.trackPresets[t] : null;
 				return {
 					track: t + 1,
 					engine: t < 8 ? s.tracks[t].engine : AUX_NAMES[t - 8],
+					...(preset && preset !== '/' ? { preset } : {}),
 					patterns: seq.patterns.length,
 					current: seq.current + 1,
 					notes: noteCount(currentPattern(seq)),

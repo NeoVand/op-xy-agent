@@ -33,6 +33,40 @@ describe('replica changes', () => {
 		]);
 	});
 
+	it('say the brain’s key, mode and routing', () => {
+		const { sim, virtual, start } = setup();
+		const goals = [
+			{ param: 'mode', value: 'manual' },
+			{ param: 'root', value: 'd' },
+			{ param: 'scale', value: 'minor' }
+		].map((g) => {
+			const goal = settingGoal({ ...g, area: 'auxiliary', track: 9 }, 1);
+			if (typeof goal === 'string') throw new Error(goal);
+			return goal;
+		});
+		const plan = virtual.plan({ settings: goals });
+		expect(plan.reached).toBe(true);
+		for (const step of plan.steps) playStep(sim, step);
+		const lines = virtual.changesSince(start);
+		expect(lines.find((l) => l.startsWith('brain:'))).toMatch(
+			/^brain: auto → manual, key c major → d minor$/
+		);
+	});
+
+	it('say a kit put on a drum track, key by key', () => {
+		const { virtual, start } = setup();
+		const audio = { sampleRate: 48000, channels: [new Float32Array(480)] };
+		virtual.loadKit(1, {
+			name: 'boom',
+			sounds: [
+				{ key: 53, name: 'kick', audio },
+				{ key: 55, name: 'snare', audio }
+			]
+		});
+		const line = virtual.changesSince(start).find((l) => l.startsWith('T1 kit:'));
+		expect(line).toMatch(/^T1 kit: 2 keys with new samples \(kick 1 → kick, snare 1 → snare\)$/);
+	});
+
 	it('read a sound changed through the keys as its page does', () => {
 		const { sim, virtual, start } = setup();
 		const goal = settingGoal({ param: 'cutoff', value: 40, track: 3 }, 1);

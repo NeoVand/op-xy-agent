@@ -11,6 +11,8 @@ import type { ControlId } from '$lib/core/opxy';
 import type { ReplicaChange, VirtualOpxy, VirtualScene } from '$lib/agent/virtual-opxy';
 import { GROOVES, type SimState, type TrackState } from '$lib/sim/params';
 import { lockLabel, lockParam } from '$lib/sim/areas/sequencer/locks';
+import { brainSettings, KEYS, SCALES, type BrainSettings } from '$lib/sim/areas/auxiliary/state';
+import { trackSequence } from '$lib/sim/areas/arrange/model';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
 import { PROJECT_SECTIONS } from '$lib/sim/areas/system/settings';
@@ -268,12 +270,17 @@ export function replicaChangeList(
 		const now = after.tracks[t];
 		const wasPreset = before.areas.system.trackPresets[t] ?? null;
 		const nowPreset = after.areas.system.trackPresets[t] ?? null;
-		if (was.engine !== now.engine || wasPreset !== nowPreset) {
+		// a new sound (an engine or a preset loaded) is one line: its pages are all the new sound's,
+		// which once read as a dozen separate edits
+		const newSound = was.engine !== now.engine || wasPreset !== nowPreset;
+		if (newSound) {
 			const name = (engine: string, preset: string | null) =>
 				preset && preset !== '/' ? `${engine} (${preset})` : engine;
-			add(`${label} sound: ${name(was.engine, wasPreset)} → ${name(now.engine, nowPreset)}`, [
-				track
-			]);
+			add(
+				`${label} sound: ${name(was.engine, wasPreset)} → ${name(now.engine, nowPreset)} (every page as the new sound has it: read_sound reads them)`,
+				[track],
+				`${label} sound: ${name(was.engine, wasPreset)} → ${name(now.engine, nowPreset)}`
+			);
 		}
 		// the sound without the patterns and the mix, which have their own lines
 		const sound = (track: typeof was) => ({ ...track, sequence: null, mix: null });
@@ -286,7 +293,7 @@ export function replicaChangeList(
 			const a = read.before.readSound(t + 1).pages;
 			const b = read.after.readSound(t + 1).pages;
 			for (const page of Object.keys(b)) {
-				const wanted = page === 'player' ? playerChanged : soundChanged;
+				const wanted = page === 'player' ? playerChanged : soundChanged && !newSound;
 				if (!wanted || a[page] === b[page]) continue;
 				const key = pageKey(page);
 				add(
@@ -295,6 +302,24 @@ export function replicaChangeList(
 					`${label} ${page}: ${a[page] === undefined ? `— → ${b[page]}` : briefChange(a[page], b[page])}`
 				);
 			}
+		}
+		// a kit's samples, key by key (a new kit on a drum track once left no line at all)
+		const keysWere = kit(before)?.keys ?? [];
+		const keysNow = kit(after)?.keys ?? [];
+		const swapped: string[] = [];
+		for (let k = 0; k < Math.max(keysWere.length, keysNow.length); k++) {
+			const a = keysWere[k]?.name ?? null;
+			const b = keysNow[k]?.name ?? null;
+			if (a === b) continue;
+			const name = (file: string | null) => (file ? soundName(file) : 'empty');
+			swapped.push(`${name(a)} → ${name(b)}`);
+		}
+		if (swapped.length > 0) {
+			add(
+				`${label} kit: ${swapped.length} key${swapped.length === 1 ? '' : 's'} with new samples (${swapped.slice(0, 4).join(', ')}${swapped.length > 4 ? ', …' : ''})`,
+				[track],
+				`${label} kit: ${swapped.length} new sample${swapped.length === 1 ? '' : 's'}`
+			);
 		}
 		const m0 = was.mix;
 		const m1 = now.mix;
@@ -330,6 +355,23 @@ export function replicaChangeList(
 		);
 		for (const line of patterns) add(line, [track]);
 	}
+
+	// the brain (aux T1): its key, scale, detection, link and routing, for the pattern it is on (an
+	// agent that set it to D minor was told nothing had changed)
+	const brain = (st: SimState) => brainSettings(st.areas.auxiliary, trackSequence(st, 8).current);
+	const b0 = brain(before);
+	const b1 = brain(after);
+	const brainParts: string[] = [];
+	const mode = (b: BrainSettings) => (b.auto ? 'auto' : 'manual');
+	const key = (b: BrainSettings) => `${KEYS[b.key]} ${SCALES[b.scale]?.label ?? b.scale}`;
+	const linked = (b: BrainSettings) => (b.link === null ? 'none' : `T${b.link + 1}`);
+	const routed = (b: BrainSettings) =>
+		b.routes.flatMap((r, i) => (r ? [`T${i + 1}`] : [])).join(' ') || 'none';
+	if (b0.auto !== b1.auto) brainParts.push(`${mode(b0)} → ${mode(b1)}`);
+	if (key(b0) !== key(b1)) brainParts.push(`key ${key(b0)} → ${key(b1)}`);
+	if (b0.link !== b1.link) brainParts.push(`link ${linked(b0)} → ${linked(b1)}`);
+	if (routed(b0) !== routed(b1)) brainParts.push(`routed ${routed(b0)} → ${routed(b1)}`);
+	if (brainParts.length > 0) add(`brain: ${brainParts.join(', ')}`, ['key.auxiliary']);
 
 	const fx0 = before.areas.auxiliary.fx;
 	const fx1 = after.areas.auxiliary.fx;

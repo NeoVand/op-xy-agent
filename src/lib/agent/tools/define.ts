@@ -109,7 +109,13 @@ export interface AnswerHistory {
 	 * Takes back on the replica what an earlier answer changed (1: the last that changed something),
 	 * where the replica still reads as that answer left it; or says why it cannot.
 	 */
-	takeBack(answer: number): { readonly undone: readonly string[] } | { readonly error: string };
+	takeBack(answer: number):
+		| {
+				readonly undone: readonly string[];
+				/** What still differs from before that answer: the user's own changes since, kept. */
+				readonly kept?: readonly string[];
+		  }
+		| { readonly error: string };
 }
 
 /** Where make_kit leaves a kit: the app's preset inbox (`$lib/app/preset-inbox.svelte.ts`). */

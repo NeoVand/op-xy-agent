@@ -455,7 +455,7 @@ describe('the conductor grounds its answer', () => {
 		expect(list(2)).not.toMatch(/- tempo 120 → 100 bpm/);
 		// the tempo back where it was: said, not dropped
 		expect(list(3)).toMatch(
-			/back as it was at the user’s message, so no longer a change \(an earlier list gave it\): tempo 120 → 100 bpm/
+			/since reverted, now as at the user’s message \(an earlier list gave it\): tempo 120 → 100 bpm/
 		);
 	});
 
@@ -533,6 +533,40 @@ describe('the conductor grounds its answer', () => {
 		const refused = JSON.stringify(api.messageRequests[5].body.messages.at(-1));
 		// the taken-back answer and the take-back itself are not counted
 		expect(refused).toMatch(/None of your answers in this conversation left changes/);
+	});
+
+	it('says what a take-back kept: the user’s own changes since', async () => {
+		const call = (id: string, name: string, input: unknown): ScriptedTurn => ({
+			content: [{ type: 'tool_use', id, name, input }],
+			stop_reason: 'tool_use'
+		});
+		const api = scriptedApi([
+			call('toolu_1', 'write_pattern', { track: 3, notes: '1:A2:4' }),
+			answer('A bass note.'),
+			call('toolu_2', 'take_back', {}),
+			answer('Taken back.')
+		]);
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('a bass note please');
+		// the user's own change after the answer
+		virtual.setTempo(97);
+		await conductor.send('undo');
+		const result = JSON.stringify(api.messageRequests[3].body.messages.at(-1));
+		expect(result).toMatch(/takenBack.*T3 pattern 1: 0 → 1 note/);
+		expect(result).toMatch(/kept.*tempo 120 → 97 bpm/);
+		expect(sim.state.tempo.bpm).toBe(97);
 	});
 
 	it('steps back answer by answer: "undo again" is answer 1 again', async () => {

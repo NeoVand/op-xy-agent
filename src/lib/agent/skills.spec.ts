@@ -105,6 +105,7 @@ describe('routing', () => {
 		expect(route('build a little house loop and play it')).toEqual(['make-music']);
 		// the app's own downloads
 		expect(route('how do I export this as a wav file?')).toContain('the-app');
+		expect(route('how do I get this as an audio file to send to a friend?')).toContain('the-app');
 		// options to choose between by ear are the lab's takes
 		expect(route('give me three basslines to choose from')).toEqual(['lab', 'make-music']);
 		expect(route('make a punchy 909 kit and play a house beat with it')).toEqual([

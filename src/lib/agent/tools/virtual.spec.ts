@@ -417,6 +417,41 @@ describe('write_pattern on drums', () => {
 		expect(String(bad.content)).toMatch(/"Hm7" is not a chord name/);
 	});
 
+	it('repeats the notes given until the pattern is full', async () => {
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, { track: 3, bars: 4, repeat: true, notes: '1:A2:4 9:C3:4' })
+		);
+		const steps = (result.written.steps as { step: number }[]).map((s) => s.step);
+		expect(steps).toEqual([1, 9, 17, 25, 33, 41, 49, 57]);
+	});
+
+	it('merges grid lines into the pattern, the other sounds kept', async () => {
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			grid: {
+				kick: 'x... x... x... x...',
+				snare: '.... x... .... x...',
+				'open hat': '..x. ..x. ..x. ..x.'
+			}
+		});
+		const merged = json(
+			await run(writePatternTool, {
+				track: 1,
+				merge: true,
+				grid: { cowbell: '..x. ..x. ..x. ..x.', 'open hat': '.... .... .... ....' }
+			})
+		);
+		// two bars still, kick and snare kept, the cowbell added, the open hat cleared
+		expect(merged.written.bars).toBe(2);
+		expect(merged.written.grid['kick 1']).toBe('x... x... x... x... | x... x... x... x...');
+		expect(merged.written.grid['snare 1']).toBe('.... x... .... x... | .... x... .... x...');
+		expect(merged.written.grid['cowbell 1']).toBe('..x. ..x. ..x. ..x. | ..x. ..x. ..x. ..x.');
+		expect(merged.written.grid['open hat 1']).toBeUndefined();
+	});
+
 	it('says how long a pattern lasts at another track scale', async () => {
 		const { run } = setup();
 		const fast = json(

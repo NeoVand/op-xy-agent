@@ -42,7 +42,7 @@ const KITS =
 const LISTEN =
 	/\b(how does (it|this|that) sound|how do(es)? (it|they) sound|listen|too loud|too quiet|clipping|mix(ing)?)\b/i;
 const APP =
-	/\b(computer keyboard|this app|the app|manual page|export|bounce|wav|mp3|download (it|this|the song|my song))\b/i;
+	/\b(computer keyboard|this app|the app|manual page|export|bounce|wav|mp3|audio file|sound file|download (it|this|the song|my song))\b/i;
 const NEW =
 	/\b(just (got|bought|unboxed)|new to (this|the op-?xy|music)|where (do|should) i (start|begin)|never (used|made)|beginner|first time|no idea (how|what)|make something (cool|nice|fun)|i don'?t know (anything|much) about)\b/i;
 const GEAR =

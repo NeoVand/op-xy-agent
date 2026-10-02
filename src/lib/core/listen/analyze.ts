@@ -111,8 +111,11 @@ export function analyzeAudio(
 	const onsets = detectOnsets(channels, sampleRate);
 	const expectedBpm = options.expectedBpm ?? null;
 	const tempo = estimateTempo(onsets.pulse, onsets.frameRate, { expectedBpm });
+	// the set tempo is the grid when the rhythm supports it, or when what is heard is that tempo,
+	// its half or its double (a swung beat at 90 heard as 45 read every hit as loose)
+	const simple = (r: string | undefined) => r === 'same' || r === 'half' || r === 'double';
 	const gridBpm =
-		tempo?.expected && tempo.expected.support >= GRID_SUPPORT
+		tempo?.expected && (tempo.expected.support >= GRID_SUPPORT || simple(tempo.expected.relation))
 			? tempo.expected.bpm
 			: tempo && tempo.confidence >= GRID_CONFIDENCE
 				? tempo.bpm

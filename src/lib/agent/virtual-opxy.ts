@@ -144,6 +144,8 @@ export interface VirtualTrack {
 	readonly track: number;
 	/** Engine ("drum", "prism" …) for instrument tracks, the aux track's name for 9–16. */
 	readonly engine: string;
+	/** The preset an instrument track's sound came from ("bass/shoulder"), when it has one. */
+	readonly preset?: string;
 	readonly patterns: number;
 	/** The pattern it plays. */
 	readonly current: number;

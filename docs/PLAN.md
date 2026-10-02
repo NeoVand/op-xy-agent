@@ -87,6 +87,15 @@
 root` and list their symbols; list pages read in full for the agent; a sound copy names what
   it replaced; device_status says why nothing is connected; the app skill knows the song .wav and
   .mid downloads and that the replica records no audio, and is routed for questions too.
+- **Probe round nine (2026-10-02), 16 scenarios (`probe-scenarios-9.json`: "sounds terrible",
+  "more cowbell", undo after the user's own edits, a language switch, the brain in D minor, "what's
+  on each track", "don't touch the drums", hats fading in, the arpeggiator, a fill every 4th bar, a
+  cowbell from scratch, an emoji beat):** the lock lesson now works end to end; write_pattern
+  `merge` writes only the grid lines given and `repeat` fills a pattern from a phrase; take_back
+  says what it kept (the user's edits) and leaves playback; the brain, a kit and a new sound read
+  as one line each in change lists; the beat grid uses the set tempo when the heard one is its half
+  or double (swing no longer reads loose); status names each track's preset; the device note says
+  why nothing is connected; plan-only results say NOT SET; grids take marks only.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

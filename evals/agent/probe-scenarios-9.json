@@ -1,0 +1,142 @@
+[
+	{
+		"name": "lock-lesson-3",
+		"about": "Re-check: a lock walked through with the turn hint, then checked.",
+		"steps": [
+			{ "say": "make a bassline on track 3 with notes on steps 1, 5, 9 and 13" },
+			{
+				"say": "teach me to make just step 9 brighter with a parameter lock, light the keys and I'll follow"
+			},
+			{ "follow": 6 },
+			{ "say": "did it work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "audio-file",
+		"about": "Re-check: the app's own song download.",
+		"steps": [
+			{ "say": "make a short loop" },
+			{ "say": "how do I get this as an audio file to send to a friend?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "seven-eight-length",
+		"about": "Re-check: scene bars and song length in 7/8.",
+		"steps": [
+			{
+				"say": "make a song in 7/8 at 130 with two parts of 4 bars each and tell me how long it is"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "cant-see-unit",
+		"about": "Re-check: why no device is connected.",
+		"steps": [{ "say": "why can't the app see my op-xy?" }, { "why": true }]
+	},
+	{
+		"name": "sounds-terrible",
+		"about": "Vague negative feedback with no detail.",
+		"steps": [
+			{ "say": "make a hip hop beat with a bass" },
+			{ "say": "this sounds terrible, fix it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "more-cowbell",
+		"about": "A two-word request after a beat.",
+		"steps": [{ "say": "make a disco beat" }, { "say": "more cowbell" }, { "why": true }]
+	},
+	{
+		"name": "undo-after-my-edits",
+		"about": "The user adds notes by hand, then says undo.",
+		"steps": [
+			{ "say": "make a simple kick and snare beat on track 1" },
+			{ "press": ["key.instrument", "track.1", "step.3", "step.11"] },
+			{ "say": "undo" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "language-switch",
+		"about": "English, then French, mid-conversation.",
+		"steps": [
+			{ "say": "make a chill beat at 85" },
+			{ "say": "maintenant ajoute une ligne de basse douce, s'il te plaît" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "brain-d-minor",
+		"about": "The brain set to a key, the tracks following it.",
+		"steps": [
+			{
+				"say": "set the brain to D minor and make all my melodic tracks follow it, then write a melody on track 5"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "whats-on-each-track",
+		"about": "An overview after several parts.",
+		"steps": [
+			{ "say": "make a beat, a bass, chords and a lead" },
+			{ "say": "what's on each track right now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "dont-touch-drums",
+		"about": "A constraint: change one part, leave the rest.",
+		"steps": [
+			{ "say": "make a house beat with a bassline" },
+			{ "say": "don't touch the drums, just make the bass funkier" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hats-fade-in",
+		"about": "A change over time: hats fading in over bars.",
+		"steps": [
+			{ "say": "make a techno beat" },
+			{ "say": "make the hi-hats fade in over 4 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-up-down",
+		"about": "The arpeggiator set up with a speed and a pattern.",
+		"steps": [
+			{
+				"say": "put Am F C G chords on track 4 and turn on the arpeggiator at 1/16 with an up-down pattern"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fill-every-4",
+		"about": "A drum fill every fourth bar, through scenes.",
+		"steps": [
+			{ "say": "make a rock beat and put a drum fill at the end of every 4th bar" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "cowbell-from-scratch",
+		"about": "A sound designed on a synth track.",
+		"steps": [
+			{
+				"say": "can you make an 808 cowbell sound from scratch on track 6 and play it on the off-beats?"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "emoji-beat",
+		"about": "A beat described in emoji.",
+		"steps": [{ "say": "make a beat that goes 🥁 🥁 👏 🥁 🥁 👏 🥁 👏" }, { "why": true }]
+	}
+]

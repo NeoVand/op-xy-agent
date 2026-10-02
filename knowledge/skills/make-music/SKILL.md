@@ -28,7 +28,8 @@ Write the patterns first (patterns for different tracks can go out together in o
 scenes and the song when there is more than one part, then start playback. Write them short: notes
 as one string, a word per note (step:note[:length[:velocity]], a chord joined by +), a progression
 by name as chords ("1:Am7 17:Fmaj7 33:C/E", voiced smoothly near middle C; give notes instead only for
-a voicing of your own), and drums as a grid, a line per sound as read_pattern shows them. An answer has an output limit, so send a few
+a voicing of your own), and drums as a grid, a line per sound as read_pattern shows them; to add or
+change one sound of a beat, write its line alone with merge (the other sounds stay). An answer has an output limit, so send a few
 patterns at a time, not a whole song. Give quiet parts their velocity (pads, strings and keys about
 50–80); left out, every note plays at 100. A feel is part of the
 request: lazy, swung or laid back is the tempo page's groove and its amount. Shuffle is the plain
@@ -49,7 +50,8 @@ pattern length its bars fill: a 3/4 bar is 12 steps (three beats of four), 6/8 i
 six), 7/8 is 14, 5/4 is 20, so four bars of 3/4 are length 48. Readings then group the bars that way.
 
 Musical words mean what a drummer or producer means: a fill fills its bar (sixteenths building in
-velocity into the next downbeat, toms at the end if you like), four-on-the-floor is a kick on every
+velocity into the next downbeat, toms at the end if you like; write the groove's one-bar lines for
+the whole pattern, then the fill's bar alone with bar, rather than counting a 64-mark line), four-on-the-floor is a kick on every
 beat, a backbeat is the snare on 2 and 4, and a closed and an open hat do not share a step (a
 drummer plays one or the other: a grid leaves the closed one out under the open one, so a steady
 closed-hat line with open hats on top is fine). Velocity per step is a step component

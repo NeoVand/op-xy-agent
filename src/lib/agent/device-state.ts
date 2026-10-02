@@ -113,8 +113,11 @@ const SOURCE_TEXT = {
  */
 export function describeDevice(s: DeviceSnapshot): string {
 	if (!s.connected) {
-		const why = s.phase === 'disconnected' ? 'The OP-XY disconnected.' : 'No OP-XY is connected.';
-		return `Device note from the app: ${why} Device tools will fail until the user connects it with the connect button on the device stage. Teaching and the replica still work. A new device note comes with the next message when that changes, so this one holds until then.`;
+		// and why, as the session knows it (an agent asked why a Mac did not see the unit had only
+		// "not connected", and gave a generic checklist)
+		const what = s.phase === 'disconnected' ? 'The OP-XY disconnected' : 'No OP-XY is connected';
+		const why = `${what}${s.why ? ` (${s.why})` : ''}.`;
+		return `Device note from the app: ${why} Device tools will fail until the user connects it with the connect key under the replica. Teaching and the replica still work. A new device note comes with the next message when that changes, so this one holds until then.`;
 	}
 	const parts: string[] = [];
 	const firmware = s.firmware
