@@ -10,7 +10,8 @@ import type { SimState } from './params';
  * whether the transport runs, and whether it records (armed for the first note, latched or
  * counting in): `record + play` reads the same on the screen, and a walkthrough once took it as
  * done the moment the track key before it was pressed. And which tracks are muted: a lesson's
- * `instrument + T3` left the screen as it was and passed before the user pressed anything.
+ * `instrument + T3` left the screen as it was and passed before the user pressed anything; and
+ * the open project's last save, for the same reason (`project → M2` passed at `project`).
  */
 export function musicMark(s: SimState): string {
 	const rec = s.areas.sequencer;
@@ -19,6 +20,10 @@ export function musicMark(s: SimState): string {
 		keys: s.tracks.map((t) => t.drumKey),
 		playing: s.transport.playing,
 		muted: [...s.tracks, ...s.aux].map((t) => (t.mix.muted ? 1 : 0)).join(''),
+		saved: `${s.project.name}|${
+			s.areas.system.projects.user.find((p) => p.name === s.project.name)?.versions.at(-1)?.label ??
+			''
+		}`,
 		recording: rec.armed ? 'armed' : rec.countIn ? 'count-in' : rec.recLatch ? 'on' : 'off',
 		// each step's notes and parameter locks: a lock leaves the screen reading the track's value
 		notes: s.tracks.map((t) => {

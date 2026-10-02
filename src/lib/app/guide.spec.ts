@@ -249,6 +249,19 @@ describe('a walkthrough that arms recording', () => {
 		expect(guide.status).toBe('done');
 	});
 
+	it('waits for the save itself, though the project page reads the same', async () => {
+		// project → M2 passed at project: the save leaves the screen as it was
+		const { sim, replica, guide } = setup();
+		const virtual = createVirtualOpxy({ sim });
+		const steps = virtual.rehearse('project → M2');
+		expect(steps[1].screen).toBe(steps[0].screen);
+		guide.start('save the project', steps);
+		await tap(replica, 'key.project');
+		expect(guide.status).toBe('running');
+		await tap(replica, 'key.m2');
+		expect(guide.status).toBe('done');
+	});
+
 	it('waits for record + play itself, though the screen reads the same', async () => {
 		const { createVirtualOpxy } = await import('$lib/app/virtual');
 		const sim = new OpxySim({ now: () => 0 });
