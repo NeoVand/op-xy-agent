@@ -22,7 +22,7 @@ import {
 	type ListenAnalysis,
 	type TrackTake
 } from '$lib/core/listen';
-import { loudness } from '$lib/core/listen/level';
+import { barLevels, loudness } from '$lib/core/listen/level';
 import { grooveReachAll } from '../groove-reach';
 import { lockReach } from '../lock-reach';
 import { BAR, lengthSettings, sceneLength } from '$lib/sim/areas/arrange/model';
@@ -1148,22 +1148,9 @@ export function createLab(options: LabOptions): LabSession {
 					? ` (${lufs - was >= 0 ? '+' : ''}${(lufs - was).toFixed(1)} dB)`
 					: '';
 			if (lufs !== null) was = lufs;
-			// and bar by bar, so a fade or a build can be heard as one (an agent fading a song's
-			// last scene could not confirm the fade from one figure a part)
-			const barSeconds = barSteps * per16;
-			const count = Math.floor(p.seconds / barSeconds + 1e-6);
-			const bars =
-				lufs !== null && count >= 2 && count <= 8
-					? `, by bar ${Array.from({ length: count }, (_, b) => {
-							const from = start + Math.round(b * barSeconds * rate);
-							const to = Math.min(end, start + Math.round((b + 1) * barSeconds * rate));
-							const level = loudness(
-								out.map((c) => c.subarray(from, to)),
-								rate
-							).integrated;
-							return level === null ? 'silent' : level.toFixed(1);
-						}).join(', ')}`
-					: '';
+			// and bar by bar, so a fade or a build can be heard as one
+			const byBar = lufs === null ? null : barLevels(out, rate, barSteps * per16, start, end);
+			const bars = byBar ? `, ${byBar}` : '';
 			return `entry ${p.entry}, scene ${p.scene}${p.bar > 1 ? ` from bar ${p.bar}` : ''} (${clock(p.start)}–${clock(p.start + p.seconds)}): ${lufs === null ? 'silent' : `${lufs.toFixed(1)} LUFS`}${change}${bars}`;
 		});
 		const ended =
@@ -1194,11 +1181,24 @@ export function createLab(options: LabOptions): LabSession {
 			? '\nnote: the metronome is on, so its click is in what you heard'
 			: '';
 		if (!o.tracks) {
-			const analysis = await renderOf(state, o.seconds ?? LISTEN_SECONDS);
+			const audio = await renderAudio(state, o.seconds ?? LISTEN_SECONDS);
+			const analysis = analyzeAudio(audio.channels, audio.sampleRate, {
+				expectedBpm: state.tempo.bpm
+			});
 			const summary = summarize(analysis, { source: f.name });
 			const key = keyNote(writtenKey(state), analysis.harmony?.key);
+			// bar by bar from its start, so a build within a scene is heard as one
+			const bars = barLevels(
+				audio.channels,
+				audio.sampleRate,
+				(BAR[lengthSettings(state).signature] * 15) / state.tempo.bpm
+			);
 			return {
-				text: summary.text + click + (key ? `\nnote: ${key}` : ''),
+				text:
+					summary.text +
+					(bars ? `\nloudness ${bars} (LUFS, from its first bar)` : '') +
+					click +
+					(key ? `\nnote: ${key}` : ''),
 				flags: summary.flags,
 				data: summary.data
 			};

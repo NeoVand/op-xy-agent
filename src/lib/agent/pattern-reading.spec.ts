@@ -316,7 +316,9 @@ describe('a chord named over the bass another part plays', () => {
 		);
 		const both = readPattern(two, [under]);
 		expect(both?.progression).toMatch(/^Cmaj7 F\b/);
-		expect(both?.withBass).toBe("with T3's bass as it plays now: Am9 Dm7");
+		expect(both?.withBass).toBe(
+			"with T3's bass as it plays now: Am9 Dm7 (rootless voicings: the bass gives each chord its root, so these are the chords heard)"
+		);
 		// a one-bar bass loops under two bars of chords (it was heard under the first bar alone)
 		const long: VirtualPattern = {
 			...at(

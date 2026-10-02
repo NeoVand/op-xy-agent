@@ -31,6 +31,8 @@ import {
 import { encodeCcValue, getTrack, resolveCc } from '$lib/core/opxy';
 import type { DeviceStack } from '$lib/device';
 import type { SimState } from '$lib/sim/params';
+import { BAR, lengthSettings } from '$lib/sim/areas/arrange/model';
+import { barLevels } from '$lib/core/listen/level';
 import { deviceSnapshot } from '../device-state';
 import type { ListenFrom, ListenHost } from '../listen-host';
 import {
@@ -469,9 +471,16 @@ async function offline(input: OfflineInput, ctx: ToolContext): Promise<ToolResul
 			const key = keyNote(writtenKey(state), analysis.harmony?.key);
 			const duck = mixDuckNote(state, analysis.pump !== null);
 			const legend = flagLegend(summary.flags);
+			// bar by bar from its start, so a build or a fade within a scene is heard as one
+			const bars = barLevels(
+				recording.channels,
+				recording.sampleRate,
+				(BAR[lengthSettings(state).signature] * 15) / expectedBpm
+			);
 			return {
 				content: [
 					summary.text,
+					...(bars ? [`loudness ${bars} (LUFS, from its first bar)`] : []),
 					...[...notes, ...(key ? [key] : []), ...(duck ? [duck] : [])].map((n) => `note: ${n}`),
 					...(legend ? [legend] : []),
 					`numbers: ${JSON.stringify(summary.data)}`

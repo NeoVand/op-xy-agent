@@ -1163,7 +1163,13 @@ export class Conductor {
 		const about = (l: string) =>
 			l.includes(':') ? l.slice(0, l.indexOf(':')) : l.replace(/\s\d.*$/, '');
 		const renewed = fresh.map(about);
-		const gone = before.filter((l) => !marked.includes(l) && !renewed.includes(about(l)));
+		// a track's patterns said one by one, then together once more than three changed ("T1: …"),
+		// are the same thing (four patterns written in turn read the first three as undone)
+		const sameThing = (a: string, b: string) =>
+			a === b || b.startsWith(`${a} pattern `) || a.startsWith(`${b} pattern `);
+		const gone = before.filter(
+			(l) => !marked.includes(l) && !renewed.some((r) => sameThing(about(l), r))
+		);
 		this.#reportedLines = marked;
 		const listed = [
 			...fresh.map((l) => `- ${l}`),

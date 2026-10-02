@@ -112,6 +112,8 @@ describe('routing', () => {
 		expect(route('how do I save my project to my computer?')).toContain('the-app');
 		// a jingle plays once, as a song does
 		expect(route('make an 8 second podcast intro jingle')).toContain('song-arrangement');
+		// a sound word in a request loads the sound skill ("too boomy, fix it" loaded none)
+		expect(route('the bass is too boomy, fix it')).toContain('shape-a-sound');
 		// a ringtone is a file too: the app's download
 		expect(route('make a 6 second ringtone that plays once')).toEqual(
 			expect.arrayContaining(['the-app', 'song-arrangement'])

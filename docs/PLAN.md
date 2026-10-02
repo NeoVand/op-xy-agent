@@ -571,6 +571,22 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   each part bar by bar (a fade checked by ear) and hears a song of one scene that plays once; the
   conductor says when an answer heard the music only before its changes; the shape's range;
   ringtones route the app and arrangement skills; a send's rough scale in the sound skill.
+- **Probe round thirty-nine (2026-10-02), 18 scenarios (`probe-scenarios-39.json`: re-checks (a
+  3/4 waltz of 4 bars, a guided lock, hats faded by ramp, a four-bar sixteenth gate, rootless jazz
+  chords over a bass, the bass alone in another key, a sparse melody's silence, a build checked in
+  the lab, a boomy bass fixed and heard) and new kinds: trip-hop asked in Russian, the tape track, a
+  16-bar drum song, a melody on the black keys, a shaker with quieter off-beats, the OP-XY as an
+  Ableton controller, arpeggiated chords, an undo, a Dilla feel):** two failed calls (the gate's
+  note limit, a grid miscount). Held: bars 4 of 3/4 are 48 steps, the ramp in one call, the gate's
+  ways round named and taken, the rests counted, the other-key caveat. Fixes: a guided lock while
+  the replica plays **lights stop first** (the user followed the keys and the lock landed a bar
+  late); a track whose patterns were said one by one and then together **no longer reads as
+  undone** (four patterns written in turn read the first three as "back as at the user's message");
+  rhythm restrikes the chord started last, held to the next (chords by name with no lengths lasted
+  a step, and a waltz's strikes played nothing); a scene heard alone, by listen or the lab, gives
+  its loudness bar by bar too (a build was checked by rendering each bar alone); rootless voicings
+  are said as such over the bass; a lean alone keeps the notes' drift (a second humanize set every
+  snare to the lean); boomy, boxy, tinny and the like route the sound skill.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval); multiply at `accidental 9`

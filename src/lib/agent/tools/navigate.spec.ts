@@ -404,6 +404,43 @@ describe('plan_steps with show', () => {
 		expect(second.silent).toBeUndefined();
 	});
 
+	it('lights stop first for a lock while the replica plays', async () => {
+		// a user told to stop followed the lit keys alone, and the lock landed a bar late
+		const { sim, run, guided } = setup(true);
+		const virtual = createVirtualOpxy({ sim });
+		virtual.writePattern(3, {
+			pattern: 1,
+			bars: 2,
+			notes: [1, 7, 23].map((step) => ({ step, note: 45, velocity: 100, length: 1 }))
+		});
+		virtual.transport('play');
+		const result = json(
+			await run(planStepsTool, {
+				show: false,
+				guide: true,
+				track: 3,
+				param: 'cutoff',
+				value: 70,
+				step: 7
+			})
+		);
+		expect(guided[0].steps[0].keys).toBe('stop');
+		expect(guided[0].steps.at(-1)?.keys).toBe('step 7 + turn E1');
+		expect(result.steps[0].keys).toBe('stop');
+		expect(result.caution).toMatch(/the walkthrough lights stop first/);
+		// stopped, it starts at the track
+		virtual.transport('stop');
+		await run(planStepsTool, {
+			show: false,
+			guide: true,
+			track: 3,
+			param: 'cutoff',
+			value: 70,
+			step: 7
+		});
+		expect(guided[1].steps[0].keys).not.toBe('stop');
+	});
+
 	it('hands the steps to the walkthrough with guide, and moves nothing itself', async () => {
 		const { sim, run, animated, guided } = setup(true);
 		const result = json(

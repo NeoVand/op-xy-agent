@@ -419,6 +419,11 @@ export const planStepsTool = defineTool({
 						]
 					: [])
 			];
+			// a lock while the replica plays: stop first, lit, as the step keys follow the playhead
+			// (a user told to stop followed the lit keys alone, and the lock landed a bar late)
+			const stopFirst =
+				locking && virtual.status().playing ? virtual.rehearse('stop').slice(0, 1) : [];
+			steps.unshift(...stopFirst);
 			if (!guide || steps.length === 0) {
 				return jsonResult(
 					{
@@ -442,18 +447,19 @@ export const planStepsTool = defineTool({
 					...(alreadyText ? { already: alreadyText } : {}),
 					...(unplayed(plan, goal) ? { unheard: unplayed(plan, goal) } : {}),
 					...planView(plan),
-					...(turn
+					...(turn || stopFirst.length
 						? {
 								steps: [
+									...stopFirst.map((s) => ({ keys: s.keys, screen: s.screen })),
 									...plan.steps.map(stepView),
-									{ keys: steps.at(-1)!.keys, until: 'the value changes' }
+									...(turn ? [{ keys: steps.at(-1)!.keys, until: 'the value changes' }] : [])
 								]
 							}
 						: {}),
-					...(locking && virtual.status().playing
+					...(stopFirst.length
 						? {
 								caution:
-									'The replica is playing, and its step keys follow the playhead from bar to bar, so the lit bar taps count from wherever it is: ask the user to stop first (or stop it yourself) so the lock lands on its step.'
+									'The replica is playing, and its step keys follow the playhead from bar to bar, so the walkthrough lights stop first: the lock lands on its step once the replica is stopped.'
 							}
 						: {}),
 					...(silentText ? { silent: silentText } : {}),

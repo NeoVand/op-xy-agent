@@ -421,21 +421,25 @@ describe('write_pattern one bar at a time', () => {
 		expect(stabs.note).toMatch(
 			/Restruck on the rhythm 8 times \(its 16 steps repeated 2 times over the pattern\) on steps 3, 7, 11, 15, 19, 23, 27, 31:/
 		);
-		// with chords given, in one write; a strike is cut where its chord ends, and digits are
-		// velocities
+		// with chords given, in one write: each chord held until the next starts, whatever its
+		// length (chords by name with none lasted a step), a strike cut where the next begins, and
+		// digits are velocities
 		await run(writePatternTool, {
 			track: 4,
 			bars: 1,
-			chords: '1:Am:6 9:F:8',
+			chords: '1:Am 7:F',
 			voicing: 'root',
 			rhythm: '9--- 3--- 9--- 3---'
 		});
 		const gated = virtual.readPattern(4);
-		expect(gated.notes.filter((n) => n.step === 5).map((n) => [n.length, n.velocity])).toEqual([
-			[2, 42],
-			[2, 42],
-			[2, 42]
+		expect(
+			gated.notes.filter((n) => n.step === 5).map((n) => [n.note, n.length, n.velocity])
+		).toEqual([
+			[57, 2, 42],
+			[60, 2, 42],
+			[64, 2, 42]
 		]);
+		expect(gated.notes.filter((n) => n.step === 13).map((n) => n.note)).toEqual([53, 57, 60]);
 		expect(gated.notes.filter((n) => n.step === 9).every((n) => n.velocity === 127)).toBe(true);
 		// past the note limit, the ways round it: a bar a pattern, or the tremolo LFO
 		await run(writePatternTool, {

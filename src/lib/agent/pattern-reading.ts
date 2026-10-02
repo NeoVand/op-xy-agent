@@ -493,9 +493,16 @@ export function readPattern(
 		}
 	}
 	// what the chords make over the other part's bass, apart, when any differs from its own name
+	// and when every chord takes its root from the bass, rootless voicings, said so (an agent's
+	// Dm9 G9 Cmaj9 A9 read Fmaj7 Bm7b5/F Em7 C#m7b5/G first, the chords it meant only here)
+	const rootless =
+		heard.length >= 2 &&
+		heard.every(
+			(h) => h.together !== undefined && h.together !== h.name && !h.together.includes('/')
+		);
 	const withBass =
 		heard.length >= 2 && heard.some((h) => h.together !== undefined && h.together !== h.name)
-			? `with ${[...bassTracks].map((t) => `T${t}'s`).join(' and ')} bass as it plays now: ${heard.map((h) => h.together ?? h.name).join(' ')}`
+			? `with ${[...bassTracks].map((t) => `T${t}'s`).join(' and ')} bass as it plays now: ${heard.map((h) => h.together ?? h.name).join(' ')}${rootless ? ' (rootless voicings: the bass gives each chord its root, so these are the chords heard)' : ''}`
 			: null;
 	// a line of single notes: the chord each bar's notes make (an agent named a bass's chords from
 	// what it meant to write, with nothing to check them by)

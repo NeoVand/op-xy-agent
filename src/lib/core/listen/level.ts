@@ -226,3 +226,28 @@ export function levelStats(channels: readonly ArrayLike<number>[], sampleRate: n
 		clipSeconds: clipFirst < 0 ? null : [clipFirst / sampleRate, clipLast / sampleRate]
 	};
 }
+
+/**
+ * A take's loudness bar by bar, for 2 to 8 whole bars ("by bar -21.0, -18.4, …"), so a build or a
+ * fade is heard as one (an agent checking a build rendered each bar alone, and one checking a fade
+ * had one figure a part); null for fewer or more bars.
+ */
+export function barLevels(
+	channels: readonly Float32Array[],
+	rate: number,
+	barSeconds: number,
+	from = 0,
+	to = channels[0]?.length ?? 0
+): string | null {
+	const count = Math.floor((to - from) / rate / barSeconds + 1e-6);
+	if (count < 2 || count > 8) return null;
+	return `by bar ${Array.from({ length: count }, (_, b) => {
+		const start = from + Math.round(b * barSeconds * rate);
+		const end = Math.min(to, from + Math.round((b + 1) * barSeconds * rate));
+		const level = loudness(
+			channels.map((c) => c.subarray(start, end)),
+			rate
+		).integrated;
+		return level === null ? 'silent' : level.toFixed(1);
+	}).join(', ')}`;
+}

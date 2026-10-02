@@ -1,0 +1,148 @@
+[
+	{
+		"name": "waltz-bars",
+		"about": "Re-check: bars in another meter count its bars.",
+		"steps": [{ "say": "make a 3/4 waltz with 4 bars of chords and a bass" }, { "why": true }]
+	},
+	{
+		"name": "teach-lock-again",
+		"about": "Re-check: a guided lock with no value holds its step.",
+		"steps": [
+			{ "say": "make a bassline on track 3" },
+			{ "say": "teach me to lock the cutoff on one step of the bass, light the keys" },
+			{ "follow": 4 },
+			{ "say": "did it work?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hats-fade-ramp",
+		"about": "Re-check: a velocity ramp on one sound.",
+		"steps": [
+			{ "say": "make a 4 bar beat" },
+			{ "say": "fade the hats out over the 4 bars, quieter and quieter" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "big-gate",
+		"about": "Re-check: a gate past the note limit, its ways round.",
+		"steps": [
+			{ "say": "write four-note chords on track 7 for 4 bars" },
+			{ "say": "gate them in sixteenths for all 4 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "rootless-jazz",
+		"about": "Re-check: a bass under rootless chords read as their root.",
+		"steps": [
+			{
+				"say": "write a walking-free bass on track 3 that plays the roots, and rootless jazz chords over it on track 4"
+			},
+			{ "say": "do the bass and chords fit?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-other-key",
+		"about": "Re-check: a line in another key than its chords.",
+		"steps": [
+			{ "say": "make chords and a bass in D minor" },
+			{ "say": "rewrite only the bass in E minor" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sparse-melody",
+		"about": "Re-check: how much of a resting line sounds.",
+		"steps": [
+			{ "say": "write a sparse melody on track 5 with lots of space" },
+			{ "say": "how much of it is silence?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lab-build-check",
+		"about": "Re-check: a build heard bar by bar in the lab.",
+		"steps": [
+			{
+				"say": "use the lab to make a 2 scene song whose second scene builds up bar by bar, and check by listening that it really gets louder"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "boomy-bass",
+		"about": "Re-check: a fix heard after it, not only before.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "the bass is too boomy, fix it and tell me how it sounds now" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "russian-triphop",
+		"about": "A request in Russian.",
+		"steps": [{ "say": "сделай медленный трип-хоп бит с басом" }, { "why": true }]
+	},
+	{
+		"name": "tape-track",
+		"about": "An auxiliary track question.",
+		"steps": [{ "say": "what does the tape track do and how do I use it?" }, { "why": true }]
+	},
+	{
+		"name": "beat-every-four",
+		"about": "A song of variations.",
+		"steps": [
+			{ "say": "make a 16 bar drum song that changes a little every 4 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "black-keys",
+		"about": "A melody by a scale rule.",
+		"steps": [{ "say": "make a melody that uses only the black keys" }, { "why": true }]
+	},
+	{
+		"name": "shaker-accents",
+		"about": "A velocity pattern on one sound.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "add a shaker in sixteenths, quieter on the off-beats" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "midi-controller",
+		"about": "A device question.",
+		"steps": [{ "say": "can I use the op-xy as a midi controller for ableton?" }, { "why": true }]
+	},
+	{
+		"name": "arp-chords",
+		"about": "The arpeggiator on chords.",
+		"steps": [
+			{ "say": "write chords on track 4" },
+			{ "say": "make the chords on track 4 arpeggiated" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "undo-last",
+		"about": "Undoing the agent's last change.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "make the bass an octave lower" },
+			{ "say": "actually, undo that last change" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "dilla-ghosts",
+		"about": "A style of feel.",
+		"steps": [
+			{ "say": "make a beat with ghost-note snares and a loose feel like J Dilla" },
+			{ "why": true }
+		]
+	}
+]

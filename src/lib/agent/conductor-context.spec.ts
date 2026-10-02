@@ -605,6 +605,37 @@ describe('the conductor grounds its answer', () => {
 		);
 	});
 
+	it('reads a track’s patterns said together after one by one as still there', async () => {
+		// four patterns written in turn read the first three as "back as at the user's message"
+		const use = (id: string, name: string, input: unknown): ScriptedTurn => ({
+			content: [{ type: 'tool_use', id, name, input }],
+			stop_reason: 'tool_use'
+		});
+		const write = (pattern: number) =>
+			use(`toolu_${pattern}`, 'write_pattern', {
+				track: 3,
+				pattern,
+				stay: pattern > 1,
+				notes: [{ step: pattern, note: 45 }]
+			});
+		const api = scriptedApi([write(1), write(2), write(3), write(4), answer('Done.')]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica: null,
+			virtual: createVirtualOpxy({ sim: new OpxySim({ now: () => 0 }) }),
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		await conductor.send('four bass patterns');
+		const list = (i: number) => JSON.stringify(api.messageRequests[i].body.messages.at(-1));
+		expect(list(4)).toMatch(/T3: patterns 1/);
+		expect(list(4)).not.toMatch(/no longer so|undone/);
+	});
+
 	it('says when the answer listened only before its changes', async () => {
 		// an agent heard a muddy mix, changed three things and described the fix unheard
 		const use = (id: string, name: string, input: unknown): ScriptedTurn => ({

@@ -641,7 +641,7 @@ export const writePatternTool = defineTool({
 					.array(z.string())
 					.optional()
 					.describe(
-						'On a drum track, the sounds it takes, by name or note ("closed hat"); default every sound'
+						'On a drum track, the sounds it takes, by name or note ("closed hat"); default every sound. Several ramp together, as one line in step order'
 					)
 			})
 			.optional()
@@ -652,7 +652,7 @@ export const writePatternTool = defineTool({
 			.string()
 			.optional()
 			.describe(
-				'A line of marks, as a grid line, that restrikes the notes: each strike plays the notes the pattern sounds on its step (x at their own velocity, X an accent, o soft, 1–9 that loud), - holds a strike on a step more, . is a rest; "..x- ..x- ..x- ..x-" turns held chords into eighth-note stabs on the off-beats. A line shorter than the pattern that divides it repeats. With notes or chords, it restrikes those; alone, the pattern as it is. Not with bar, and not on drum tracks, whose grid is their rhythm'
+				'A line of marks, as a grid line, that restrikes the notes: each strike plays the chord (or note) started last before it, held as the marks say until the next starts (x at their own velocity, X an accent, o soft, 1–9 that loud), - holds a strike on a step more, . is a rest; "..x- ..x- ..x- ..x-" turns chords into eighth-note stabs on the off-beats. A line shorter than the pattern that divides it repeats. With notes or chords, it restrikes those (their lengths aside); alone, the pattern as it is. Not with bar, and not on drum tracks, whose grid is their rhythm'
 			),
 		humanize: z
 			.object({
@@ -676,7 +676,7 @@ export const writePatternTool = defineTool({
 					.max(0.3)
 					.optional()
 					.describe(
-						'A steady lean on top, as part of a step: positive plays behind the beat (a laid-back snare, 0.05–0.1), negative ahead of it (pushing hats)'
+						'A steady lean on top, as part of a step: positive plays behind the beat (a laid-back snare, 0.05–0.1), negative ahead of it (pushing hats). Without timing, it moves the notes as they sit, their drift kept, so a second call can lean one sound loosened before'
 					),
 				sounds: z
 					.array(z.string())
@@ -1331,17 +1331,22 @@ export const writePatternTool = defineTool({
 			rhythmRepeats = Math.ceil(fill / n);
 			const source = [...notes];
 			const restruck: typeof notes = [];
+			// the chord at a step is the one started last, held until the next (chords written by
+			// name with no lengths lasted a step, and a waltz's strikes after them played nothing)
+			const onsets = [...new Set(source.map((x) => x.step))].sort((a, b) => a - b);
 			for (let k = 0; k * n < fill; k++) {
 				for (const strike of parsed.strikes) {
 					const step = strike.step + k * n;
-					const sounding = source.filter((x) => x.step <= step && step < x.step + x.length);
+					const on = onsets.filter((o) => o <= step).at(-1);
+					const next = onsets.find((o) => o > step) ?? Infinity;
+					const sounding = on === undefined ? [] : source.filter((x) => x.step === on);
 					if (sounding.length > 0) strikesHeard.push(step);
 					for (const x of sounding) {
 						restruck.push({
 							step,
 							note: x.note,
 							velocity: strike.mark === 'x' ? x.velocity : markVelocity(strike.mark, x.velocity),
-							length: Math.min(strike.hold, x.step + x.length - step)
+							length: Math.min(strike.hold, next - step)
 						});
 					}
 				}

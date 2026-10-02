@@ -29,6 +29,14 @@ describe('humanize', () => {
 		const ahead = humanizeNotes(hats, { late: -0.05 }, () => true, 3);
 		expect(ahead[0].offset ?? 0).toBe(0);
 		expect(ahead.slice(1).every((n) => n.offset === -0.05)).toBe(true);
+		// a lean alone on notes loosened before keeps their drift and moves it (a second call
+		// leaning the snares set every one to the lean)
+		const loose = humanizeNotes(hats, { timing: 0.1 }, () => true, 5);
+		const leaned = humanizeNotes(loose, { late: 0.05 }, () => true, 9);
+		leaned.forEach((n, i) => {
+			const was = loose[i].offset ?? 0;
+			expect(n.offset ?? 0).toBeCloseTo(n.step === 1 ? Math.max(0, was + 0.05) : was + 0.05, 3);
+		});
 	});
 
 	it('leaves the notes it does not pick, and velocities alone when asked for timing only', () => {

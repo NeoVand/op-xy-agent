@@ -593,6 +593,11 @@ describe('listen', () => {
 		const levels = (bars ?? []).slice(1).map(Number);
 		// each bar half as loud as the one before: about 6 dB down a bar
 		levels.slice(1).forEach((level, i) => expect(levels[i] - level).toBeGreaterThan(5));
+		// a scene heard alone says it too, from its first bar
+		const scene = await lab.listen(f, { scene: 1, seconds: 8 });
+		expect(scene.text).toMatch(
+			/\nloudness by bar -?[\d.]+, -?[\d.]+, -?[\d.]+, -?[\d.]+ \(LUFS, from its first bar\)/
+		);
 	});
 
 	it('joins the parts of a song through the master’s ceiling, as one render would', async () => {

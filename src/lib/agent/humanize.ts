@@ -66,8 +66,13 @@ export function humanizeNotes<T extends Loosened>(
 		const onBeat = (n.step - 1) % 4 === 0;
 		const reach = onBeat ? timing / 2 : timing;
 		const moved = timing > 0 || late !== 0;
+		// a lean alone moves the notes as they sit, their drift kept (a second call leaning the
+		// snares late set every one to the lean, and the first call's looseness was gone)
 		const drift = moved
-			? Math.max(-0.5, Math.min(0.5, (timing > 0 ? (random() * 2 - 1) * reach : 0) + late))
+			? Math.max(
+					-0.5,
+					Math.min(0.5, (timing > 0 ? (random() * 2 - 1) * reach : (n.offset ?? 0)) + late)
+				)
 			: (n.offset ?? 0);
 		// three decimals of a step (the sequencer's ticks are finer than that)
 		const offset = Math.round((n.step === 1 ? Math.max(0, drift) : drift) * 1000) / 1000;
