@@ -23,6 +23,10 @@ facts:
   - id: quantise-rule
     text: Nudging only works while the track's quantisation (`bar + turn E1`) is below 100.
     source: https://teenage.engineering/guides/op-xy/sequencer#step-sequencing
+  - id: quantise-at-playback
+    text: Since a nudged note keeps its offset under quantisation below 100, quantisation most likely acts as notes play rather than when they are recorded, so lowering it after a take lets the take's own timing back in. Not checked on a unit.
+    source: https://teenage.engineering/guides/op-xy/sequencer#step-sequencing
+    confidence: derived
   - id: quantise-default
     text: Decoded project files show quantisation at 100 in a new project, so turn it down before nudging.
     source: docs/research/10-xy-format.md#34-patternstruct-base-clones-walking

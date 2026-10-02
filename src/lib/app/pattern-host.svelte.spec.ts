@@ -44,6 +44,20 @@ describe('a pattern card on the replica', () => {
 		await expect.poll(() => virtual.readPattern(1, 1).notes.map((n) => n.step)).not.toContain(5);
 	});
 
+	it('keeps the pattern’s locks and step components when a hit is added', async () => {
+		const { sim, virtual, host } = setup();
+		const steps = sim.state.tracks[0].sequence.patterns[0].steps;
+		steps[8].locks = { cutoff: 40 };
+		steps[12].components.push({ kind: 'multiply', value: 3 });
+		const screen = render(PatternCard, { host, track: 1, pattern: 1 });
+		await userEvent.click(cell(screen.container, 'step 3, kick 1'));
+		await expect.poll(() => virtual.readPattern(1, 1).notes.map((n) => n.step)).toContain(3);
+		expect(virtual.readPattern(1, 1).stepLocks).toEqual([{ step: 9, values: { cutoff: 40 } }]);
+		expect(virtual.readPattern(1, 1).components).toEqual([
+			{ step: 13, kind: 'multiply', value: 3 }
+		]);
+	});
+
 	it('makes a hit harder with a drag up', async () => {
 		const { virtual, host } = setup();
 		const screen = render(PatternCard, { host, track: 1, pattern: 1 });

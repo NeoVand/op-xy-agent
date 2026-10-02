@@ -59,51 +59,62 @@ function sharedLabel(a: string, b: string): string {
 	return a.slice(0, end);
 }
 
+/** A page's reading as its head ("svf filter on") and its values ("cutoff 00", …). */
+function readingParts(text: string): { head: string; values: string[] } {
+	const at = text.indexOf(': ');
+	return at < 0
+		? { head: '', values: text.split(', ') }
+		: { head: text.slice(0, at), values: text.slice(at + 2).split(', ') };
+}
+
+/**
+ * What moved and what stayed between two readings of a page, or null for readings of another
+ * shape (an lfo of another type).
+ */
+function readingDiff(was: string, now: string): { moved: string[]; kept: string[] } | null {
+	const a = readingParts(was);
+	const b = readingParts(now);
+	if (a.head !== b.head && (!a.head || !b.head)) return null;
+	if (a.values.length !== b.values.length) return null;
+	const moved: string[] = [];
+	const kept: string[] = [];
+	if (a.head !== b.head) {
+		const label = sharedLabel(a.head, b.head);
+		moved.push(`${a.head} → ${b.head.slice(label.length)}`);
+	} else if (a.head) kept.push(a.head);
+	a.values.forEach((x, i) => {
+		const y = b.values[i];
+		if (x === y) {
+			kept.push(x);
+			return;
+		}
+		const label = sharedLabel(x, y);
+		moved.push(`${x} → ${y.slice(label.length)}`);
+	});
+	return moved.length > 0 ? { moved, kept } : null;
+}
+
 /**
  * Only what differs between two readings of a page: "cutoff 00 → 40", "svf filter on → off,
  * resonance 10 → 20". Readings of another shape (an lfo of another type) are given whole.
  */
 export function briefChange(was: string, now: string): string {
-	const whole = `${was} → ${now}`;
-	const split = (text: string) => {
-		const at = text.indexOf(': ');
-		return at < 0
-			? { head: '', body: text }
-			: { head: text.slice(0, at), body: text.slice(at + 2) };
-	};
-	const a = split(was);
-	const b = split(now);
-	if (a.head !== b.head && (!a.head || !b.head)) return whole;
-	const parts: string[] = [];
-	if (a.head !== b.head) {
-		const label = sharedLabel(a.head, b.head);
-		parts.push(`${a.head} → ${b.head.slice(label.length)}`);
-	}
-	const pa = a.body.split(', ');
-	const pb = b.body.split(', ');
-	if (pa.length !== pb.length) return whole;
-	pa.forEach((x, i) => {
-		const y = pb[i];
-		if (x === y) return;
-		const label = sharedLabel(x, y);
-		parts.push(`${x} → ${y.slice(label.length)}`);
-	});
-	return parts.length > 0 ? parts.join(', ') : whole;
+	return readingDiff(was, now)?.moved.join(', ') ?? `${was} → ${now}`;
 }
 
 /**
- * A page's change as the agent reads it: what moved, then the page as it reads now ("fx II 00 →
- * 45 (now aux 00, tape 99, fx I 00, fx II 45)"). Both whole readings, the page's name twice
- * ("sends: sends: aux 00…"), made the value that moved hard to find among the ones that did not.
+ * A page's change as the agent reads it: what moved, then what did not ("cutoff 00 → 15;
+ * unchanged: svf filter on, resonance 09, …"). Both whole readings, the page's name twice
+ * ("sends: sends: aux 00…"), hid the value that moved among the ones that did not; the moved
+ * value beside the page "now" left an agent unsure whether the others had moved too.
  */
 function pageChange(page: string, was: string | undefined, now: string): string {
 	if (was === undefined) return `— → ${now}`;
-	const brief = briefChange(was, now);
-	if (brief === `${was} → ${now}`) return brief;
+	const diff = readingDiff(was, now);
+	if (!diff) return `${was} → ${now}`;
 	// the reading's own name where it is the page's ("sends: aux 00…" on shift M3 sends)
-	const at = now.indexOf(': ');
-	const shown = at > 0 && page.endsWith(now.slice(0, at)) ? now.slice(at + 2) : now;
-	return `${brief} (now ${shown})`;
+	const kept = diff.kept.filter((part, i) => !(i === 0 && page.endsWith(part)));
+	return `${diff.moved.join(', ')}${kept.length ? `; unchanged: ${kept.join(', ')}` : ''}`;
 }
 
 /**
@@ -239,19 +250,16 @@ function sceneChanges(
 		// a fade's scenes differ by their levels alone, and four of them read "T1 p3, T3 p3"
 		const mixed = n === onScreen ? [] : sceneMix(a, b);
 		if (a && moved.length === 0 && mixed.length === 0) continue;
-		const list = [
+		// the patterns, then the mix after a semicolon ("T1 p2, T3 p2; T1, T3 at level 48")
+		const patterns =
 			moved.length > 8
 				? `${moved.slice(0, 8).join(', ')} … (${moved.length} tracks)`
-				: moved.join(', '),
-			...mixed
-		]
+				: moved.join(', ');
+		const mix = mixed.join(', ');
+		const list = [a || moved.length ? patterns : 'every track on pattern 1', mix]
 			.filter(Boolean)
-			.join(', ');
-		lines.push(
-			a
-				? `scene ${n}: ${list}`
-				: `scene ${n}: new, ${moved.length ? list : `every track on pattern 1${mixed.length ? `, ${list}` : ''}`}`
-		);
+			.join('; ');
+		lines.push(a ? `scene ${n}: ${list}` : `scene ${n}: new, ${list}`);
 	}
 	return lines;
 }
@@ -359,9 +367,13 @@ export function replicaChangeList(
 		if (soundChanged || playerChanged) {
 			const a = read.before.readSound(t + 1).pages;
 			const b = read.after.readSound(t + 1).pages;
+			// a drum track's M1 reads the key last touched, whose own values the key lines give (a plan
+			// that panned two hats read "M1 engine: drum key F3 → D#4", as if the sound had changed)
+			const keyPage = (page: string) =>
+				page === 'M1 engine' && was.engine === 'drum' && now.engine === 'drum';
 			for (const page of Object.keys(b)) {
 				const wanted = page === 'player' ? playerChanged : soundChanged && !newSound;
-				if (!wanted || a[page] === b[page]) continue;
+				if (!wanted || a[page] === b[page] || keyPage(page)) continue;
 				const key = pageKey(page);
 				add(
 					`${label} ${page}: ${pageChange(page, a[page], b[page])}`,
@@ -455,7 +467,16 @@ export function replicaChangeList(
 		const was = fx0[i];
 		const aux: ControlId[] = ['key.auxiliary'];
 		if (!was || was.type !== slot.type) add(`${name}: ${was?.type ?? '—'} → ${slot.type}`, aux);
-		else if (!same(was.params, slot.params)) add(`${name} (${slot.type}) settings changed`, aux);
+		else if (!same(was.params, slot.params)) {
+			// as its page reads ("FX I delay: dry 99 → 00"), where "settings changed" once left an
+			// agent unsure which of them it had set
+			const page = `${name} ${slot.type}`;
+			const a = read.before.readSound(1).fx?.[name];
+			const b = read.after.readSound(1).fx?.[name];
+			if (a && b && a !== b) {
+				add(`${page}: ${pageChange(page, a, b)}`, aux, `${page}: ${briefChange(a, b)}`);
+			} else add(`${name} (${slot.type}) settings changed`, aux);
+		}
 	});
 	if (!same(before.areas.mixer, after.areas.mixer)) {
 		add('the mixer’s master section changed', ['key.mix']);

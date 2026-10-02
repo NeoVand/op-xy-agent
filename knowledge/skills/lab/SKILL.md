@@ -45,7 +45,7 @@ lab.offer(fork, label)     // a take for the user to hear and keep (2–3 a run;
 lab.log(...values)         // or console.log
 
 fork.status()  fork.readPattern(track, pattern?)  fork.writePattern(track, { pattern?, bars?,
-  length?, scale?, notes: [{ step, note, velocity?, length? }] or "1:A2:4 5:C3+E3:2" })
+  length?, scale?, stay?, groove?, notes: [{ step, note, velocity?, length? }] or "1:A2:4" })
 fork.readArrangement()
 fork.writeArrangement({ scenes?: [{ scene, patterns: [{ track, pattern }] | number[] | null }],
   mix?: [{ track, level?, muted? }] }], song?: { order, loop } })  fork.readSound(track)  fork.setTempo(bpm)  fork.setMetronome(on)
@@ -60,9 +60,8 @@ auxiliary), patterns 1–16, scenes 1–99, steps 1–64 with bar 2 starting at 
 setting as plan_steps does and plays the navigator's key steps on the fork, so the value is reached
 the way a person would reach it; it throws, changing nothing, when the setting cannot be reached.
 `press` plays a combo in the key grammar (a turn takes its detents: `press('turn E2', 5)`) and
-returns what the screen shows. `diff` says what changed in the device's words ("T3 M3 filter:
-cutoff 70 → 40", "scene 2: new, T1 p2"); with another fork it says how this one differs from
-it.
+returns what the screen shows. `diff` says what changed in the device’s words ("T3 M3 filter:
+cutoff 70 → 40", "scene 2: new, T1 p2"); with another fork, how this one differs from it.
 
 `readPattern` gives `{ track, pattern, patterns, current, bars, length, scale, notes: [{ step,
 note, velocity, length, sound? }] }` (`patterns`: how many the track has; `current`: it plays).

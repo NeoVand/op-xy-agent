@@ -221,6 +221,9 @@ const patternWrite = z.strictObject({
 	bars: z.int().min(1).max(4).optional(),
 	length: z.int().min(1).max(64).optional(),
 	scale: trackScale.optional(),
+	// as write_pattern takes them (an agent's program failed on stay, which the tool has)
+	stay: z.boolean().optional(),
+	groove: z.int().min(-99).max(99).optional(),
 	// a list, or write_pattern's short form ("1:A2:4 5:C3+E3+G3:2:70"), which an agent carried over
 	notes: z.union([
 		z
@@ -235,7 +238,9 @@ const patternWrite = z.strictObject({
 						.optional(),
 					length: z.number().min(0.05).max(64).optional(),
 					// what readPattern says a drum note plays: notes read back are written as they are
-					sound: z.string().optional()
+					sound: z.string().optional(),
+					// and a live take's timing off the grid, as readPattern gives it
+					offset: z.number().min(-0.5).max(0.5).optional()
 				})
 			)
 			.max(120),
@@ -481,7 +486,14 @@ export function createLab(options: LabOptions): LabSession {
 				if (note === null || note < 0 || note > 127) {
 					throw new LabError(`writePattern: "${n.note}" is not a note (60, "C4", "F#3")`);
 				}
-				return { step: n.step, note, velocity: n.velocity ?? 100, length: n.length ?? 1 };
+				const offset = (n as { offset?: number }).offset;
+				return {
+					step: n.step,
+					note,
+					velocity: n.velocity ?? 100,
+					length: n.length ?? 1,
+					...(offset ? { offset } : {})
+				};
 			});
 			const last = notes.reduce((max, n) => Math.max(max, n.step), 1);
 			return virtual.writePattern(t, {
@@ -489,6 +501,8 @@ export function createLab(options: LabOptions): LabSession {
 				bars: w.bars ?? Math.ceil(last / 16),
 				length: w.length,
 				scale: w.scale,
+				...(w.stay ? { play: false } : {}),
+				...(w.groove !== undefined ? { groove: w.groove } : {}),
 				notes
 			});
 		}

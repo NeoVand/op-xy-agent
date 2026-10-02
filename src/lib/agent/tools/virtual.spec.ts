@@ -577,6 +577,57 @@ describe('write_pattern on drums', () => {
 		expect(virtual.readPattern(3, 4).bars).toBe(4);
 	});
 
+	it('copies a pattern from another track of its kind, and refuses one of another kind', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			grid: { kick: 'x... x... x... x...', snare: '.... x... .... x...' }
+		});
+		const copy = json(await run(writePatternTool, { track: 2, copy_track: 1 }));
+		expect(virtual.readPattern(2).notes.map((n) => `${n.step}:${n.note}`)).toEqual(
+			virtual.readPattern(1).notes.map((n) => `${n.step}:${n.note}`)
+		);
+		expect(copy.note).toMatch(
+			/Pattern 1 started from a copy of T1's pattern 1; T1's pattern 1 is as it was\. Its hits keep their keys, so T2's own kit plays them\./
+		);
+		// a variation: bar 1 of the copy written anew, T1 left alone
+		await run(writePatternTool, {
+			track: 2,
+			copy_track: 1,
+			bar: 1,
+			grid: { kick: 'x.x. x.x. x.x. x.x.' }
+		});
+		expect(virtual.readPattern(2).notes.filter((n) => n.note === 53)).toHaveLength(8);
+		expect(virtual.readPattern(1).notes.filter((n) => n.note === 53)).toHaveLength(4);
+		// drums onto a bass would play as other notes
+		const across = await run(writePatternTool, { track: 3, copy_track: 1 });
+		expect(across.isError).toBe(true);
+		expect(String(across.content)).toMatch(/T1 is a drum track and T3 is not one/);
+	});
+
+	it('keeps a pattern’s locks and a live take’s timing through writes that start from it', async () => {
+		const { sim, virtual, run } = setup();
+		await run(writePatternTool, { track: 3, bars: 2, notes: '1:A1:2 7:C2:2 17:E2:2 23:G2:2' });
+		const steps = () => sim.state.tracks[2].sequence.patterns[0].steps;
+		// a lock on step 7, as plan_steps with step leaves it
+		steps()[6].locks = { cutoff: 40 };
+		// bar 2 written alone: bar 1's lock stays
+		await run(writePatternTool, { track: 3, bar: 2, notes: '1:F2:2 7:A2:2' });
+		expect(virtual.readPattern(3).locks).toEqual([{ step: 7, values: ['cutoff 40'] }]);
+		// step 23 played a little late, as a live take leaves it; a transpose keeps that and the lock
+		steps()[22].notes[0].offset = 0.125;
+		const up = json(await run(writePatternTool, { track: 3, transpose: 12 }));
+		expect(virtual.readPattern(3).notes.find((n) => n.step === 23)?.offset).toBe(0.125);
+		expect(up.written.locks).toEqual(['step 7: cutoff 40']);
+		expect(up.written.offGrid).toMatch(/^1 note off the grid .*: step 23 \+0\.13$/);
+		// a whole rewrite drops them, and says so
+		const anew = json(await run(writePatternTool, { track: 3, notes: '1:D2:4' }));
+		expect(virtual.readPattern(3).locks).toBeUndefined();
+		expect(anew.note).toMatch(
+			/The locks on step 7 \(cutoff 40\) went with the notes this write replaced/
+		);
+	});
+
 	it('gives a pattern its own groove, confirmed and undone with it', async () => {
 		const { sim, env, run } = setup();
 		sim.state.tempo.groove = 0; // shuffle, at the tempo page's 0: straight

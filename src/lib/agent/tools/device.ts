@@ -792,6 +792,10 @@ export const playNotesTool = defineTool({
 					track: input.track,
 					bpm: Math.round(bpm * 10) / 10,
 					seconds: Math.round(totalMs / 100) / 10,
+					// a preview leaves nothing behind (an agent could not tell whether "play this" had
+					// been heard, or written anywhere)
+					heard:
+						"in the browser, the app's sound being on; a preview only, written to no pattern (write_pattern keeps it)",
 					...virtualNote(ctx.env)
 				},
 				`played ${played} step${played === 1 ? '' : 's'} on the replica`

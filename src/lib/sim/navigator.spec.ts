@@ -473,6 +473,10 @@ describe('the navigator: sampler keys', () => {
 		expect(keyIndexOf(sim.state, 1, 3)).toBe(2);
 		expect(keyIndexOf(sim.state, 1, 55)).toBe(2);
 		expect(keyIndexOf(sim.state, 1, 'kazoo')).toBeNull();
+		// as the pattern grid finds sounds: without the number (the lowest), or by what it is
+		expect(keyIndexOf(sim.state, 1, 'open hat')).toBe(10);
+		expect(keyIndexOf(sim.state, 1, 'snare')).toBe(2);
+		expect(keyIndexOf(sim.state, 1, '808 snare')).toBe(2);
 		const tune = planParam(sim.state, { track: 1, param: 'tune', key: 'snare 1', value: -2 });
 		expect(keys(tune)).toEqual(['key G3', 'turn E1 -20']);
 		expect(tune.screen).toBe('drum key G3: tune –2.00, play mode oneshot');

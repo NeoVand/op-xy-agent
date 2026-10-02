@@ -16,7 +16,7 @@ facts:
     text: A pattern is one track's sequence of notes or sounds and holds at most 120 notes.
     source: https://teenage.engineering/guides/op-xy/workflow#patterns-scenes-songs-and-projects
   - id: sixteen-patterns
-    text: Each track holds up to 16 patterns since OS 1.1.15 (the workflow chapter still says nine).
+    text: Each track holds up to 16 patterns (OS 1.1.15 raised it from nine, the number older TE texts still give).
     source: https://teenage.engineering/downloads/op-xy#1.1.15
     firmware_min: '1.1.15'
   - id: length
@@ -33,7 +33,7 @@ facts:
     text: A scene records which pattern each track plays, plus the track volumes and mutes, and lasts as long as its longest pattern; a project has 99 scenes.
     source: https://teenage.engineering/guides/op-xy/workflow#patterns-scenes-songs-and-projects
   - id: song
-    text: A song plays up to 96 scenes in order; a project holds up to 14 songs, one per white key (the workflow chapter says nine).
+    text: A song plays up to 96 scenes in order; a project holds up to 14 songs, one per white key (older TE texts say nine).
     source: https://teenage.engineering/guides/op-xy/arrange#song-mode
   - id: project
     text: A project contains the tracks with their patterns, scenes and songs; the unit stores thousands of projects.

@@ -42,6 +42,17 @@ export interface VirtualNote {
 	readonly length: number;
 	/** On a drum track, the sound on the note's key ("kick 1", "closed hat 2"), when reading. */
 	readonly sound?: string;
+	/**
+	 * Off the grid by this much of a step, −0.5 … 0.5 (a live take's timing, a nudge), when not 0:
+	 * read back, and kept by writes that start from the pattern.
+	 */
+	readonly offset?: number;
+}
+
+/** A step's parameter locks as stored, by parameter id ("cutoff": 40), for writes that keep them. */
+export interface StepLocks {
+	readonly step: number;
+	readonly values: Readonly<Record<string, number>>;
 }
 
 /** A track's pattern as it stands. */
@@ -64,6 +75,8 @@ export interface VirtualPattern {
 	readonly groove?: number;
 	/** Parameter locks on its steps, each value as its page shows it ("cutoff 80"), when any. */
 	readonly locks?: readonly { readonly step: number; readonly values: readonly string[] }[];
+	/** The same locks as stored, for a write that keeps them (a bar written alone, a transpose). */
+	readonly stepLocks?: readonly StepLocks[];
 }
 
 /**
@@ -76,7 +89,10 @@ export interface VirtualComponent {
 	readonly value: number;
 }
 
-/** What to write onto a pattern. It replaces the pattern's notes, locks and components. */
+/**
+ * What to write onto a pattern. It replaces the pattern's notes, locks and components with these
+ * (a write that keeps some passes them back: notes with their offsets, `locks`).
+ */
 export interface PatternWrite {
 	/** Pattern 1–16; patterns missing up to it are added empty. */
 	readonly pattern: number;
@@ -89,6 +105,8 @@ export interface PatternWrite {
 	readonly notes: readonly VirtualNote[];
 	/** Step components to put on its steps (each step holds a few at most). */
 	readonly components?: readonly VirtualComponent[];
+	/** Parameter locks to put on its steps, as readPattern's stepLocks give them (default none). */
+	readonly locks?: readonly StepLocks[];
 	/** Make it the pattern the track plays (default); false edits it in place (a pattern card). */
 	readonly play?: boolean;
 	/**

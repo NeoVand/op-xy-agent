@@ -52,6 +52,19 @@ describe('forks', () => {
 		expect(result.note).toMatch(/moves none of T1's notes/);
 	});
 
+	it('writes a part to come with stay, and a pattern’s own groove, as write_pattern does', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(3, { notes: '1:A1:4' });
+		f.writePattern(3, { pattern: 2, stay: true, groove: 40, notes: '1:C2:4' });
+		expect(f.status().tracks[2].current).toBe(1);
+		// on the device's detents, as the bar menu's E3 turns it
+		expect(f.readPattern(3, 2).groove).toBe(39);
+		// without stay, one scene plays what was written last
+		f.writePattern(3, { pattern: 3, notes: '1:E2:4' });
+		expect(f.status().tracks[2].current).toBe(3);
+	});
+
 	it('locks one step’s value with set and step', () => {
 		const { lab } = labOn();
 		const f = lab.fork();

@@ -41,11 +41,15 @@ export function patternHost(options: PatternHostOptions): PatternHost {
 		},
 		write(track, pattern, notes) {
 			const was = virtual.readPattern(track, pattern);
+			// a hit taken out or moved is all that changes: the pattern's step components and locks
+			// stay (a write replaces them, and a tap on a card once cleared every lock)
 			virtual.writePattern(track, {
 				pattern,
 				bars: was.bars,
 				length: was.length,
 				notes,
+				...(was.components?.length ? { components: was.components } : {}),
+				...(was.stepLocks?.length ? { locks: was.stepLocks } : {}),
 				play: false
 			});
 		},

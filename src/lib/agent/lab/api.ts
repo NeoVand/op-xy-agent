@@ -231,6 +231,10 @@ export interface PatternWrite {
 	readonly length?: number;
 	/** Track scale: how many sixteenths a step lasts, 1–8, 16 or 0.5 (default: unchanged). */
 	readonly scale?: number;
+	/** With one scene, leave the track on the pattern it plays (a part to come), as write_pattern's. */
+	readonly stay?: boolean;
+	/** This pattern's own groove, −99 (shuffle) … 99 (swing), as write_pattern's (0: the tempo page's). */
+	readonly groove?: number;
 	/**
 	 * At most 120, in any order; an empty list clears the pattern. Or one string, a word a note
 	 * ("1:A2:4 5:C3+E3:2"), as write_pattern takes it.
@@ -248,6 +252,8 @@ export interface PatternWrite {
 				readonly length?: number;
 				/** What readPattern says a drum note plays; ignored here (the note decides). */
 				readonly sound?: string;
+				/** Off the grid by this much of a step, −0.5 … 0.5, as readPattern gives a live take's. */
+				readonly offset?: number;
 		  }[];
 }
 

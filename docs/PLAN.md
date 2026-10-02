@@ -170,6 +170,26 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   whole track's (one sound alone on T2), "play this" means write and play, fades from stepped
   scene levels, one bar changed by a copy; the prompt: say which reading of a two-way request you
   took.
+- **Probe round fifteen (2026-10-02), 16 scenarios (`probe-scenarios-15.json`: re-checks of
+  round fourteen (hats panned, a delay on the snare alone, the user's own turns before the first
+  message, half time, "play this", a fade) and new ones: a key change for the last chorus, robotic
+  hats humanized, chords made offbeat stabs, a waltz, a counter-melody, an old radio, a beat copied
+  to T2 and varied, the brain explained, two answers undone, recording live):** the user's changes
+  before the first message, the scene levels of a fade and the lock reach all worked. Fixes:
+  **write_pattern kept nothing of a pattern it started from but the notes** — a bar written alone,
+  a transpose, a merge or a scale took every lock with them and flattened a live take's timing,
+  and a pattern card tap did the same to locks and step components; now notes keep their offset
+  (`VirtualNote.offset`, read back as `offGrid`), writes that start from a pattern keep its
+  locks (`stepLocks` / `PatternWrite.locks`) except on a bar written anew, and a rewrite that
+  drops locks says so. Also: write_pattern `copy_track` (a copy from another track of its kind);
+  the key planner finds drum keys as the grid does ("open hat" → "open hat 1"; `soundKeyOf`
+  shared); a drum track's touched-key M1 page is no change; page changes say what stayed
+  ("; unchanged: …") and FX pages say what moved ("FX I delay: dry 99 → 00"); scene lines put the
+  mix after a semicolon; the lab's writePattern takes `stay`, `groove` and offsets, and run_lab
+  gives readPattern's shape; inverted chords point to voicing root; play_notes says it was heard
+  and written nowhere; a demo says how the transport ended (`transportAtEnd`); note lists, sends,
+  delays and pans route to their skills; the skills: one-bar fade steps need one-bar patterns; the
+  manual: quantisation most likely acts as notes play (derived), the old pattern count reworded.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

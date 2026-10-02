@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "0ab0379b",
+	"bundle_hash": "60d1da8a",
 	"stats": {
 		"units": 166,
-		"facts": 1225,
+		"facts": 1226,
 		"procedures": 207,
 		"parameters": 207,
 		"verified_items": 260,
-		"words": 46537,
+		"words": 46583,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -1038,7 +1038,7 @@
 				},
 				{
 					"id": "sixteen-patterns",
-					"text": "Each track holds up to 16 patterns since OS 1.1.15 (the workflow chapter still says nine).",
+					"text": "Each track holds up to 16 patterns (OS 1.1.15 raised it from nine, the number older TE texts still give).",
 					"source": "https://teenage.engineering/downloads/op-xy#1.1.15",
 					"firmware_min": "1.1.15",
 					"verified_on": null,
@@ -1078,7 +1078,7 @@
 				},
 				{
 					"id": "song",
-					"text": "A song plays up to 96 scenes in order; a project holds up to 14 songs, one per white key (the workflow chapter says nine).",
+					"text": "A song plays up to 96 scenes in order; a project holds up to 14 songs, one per white key (older TE texts say nine).",
 					"source": "https://teenage.engineering/guides/op-xy/arrange#song-mode",
 					"firmware_min": null,
 					"verified_on": null,
@@ -4154,6 +4154,14 @@
 					"firmware_min": null,
 					"verified_on": null,
 					"confidence": "official"
+				},
+				{
+					"id": "quantise-at-playback",
+					"text": "Since a nudged note keeps its offset under quantisation below 100, quantisation most likely acts as notes play rather than when they are recorded, so lowering it after a take lets the take's own timing back in. Not checked on a unit.",
+					"source": "https://teenage.engineering/guides/op-xy/sequencer#step-sequencing",
+					"firmware_min": null,
+					"verified_on": null,
+					"confidence": "derived"
 				},
 				{
 					"id": "quantise-default",

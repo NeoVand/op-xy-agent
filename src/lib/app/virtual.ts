@@ -151,7 +151,9 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					note: n.note,
 					velocity: n.velocity,
 					length: n.length,
-					...(file ? { sound: soundName(file.name) } : {})
+					...(file ? { sound: soundName(file.name) } : {}),
+					// a live take's timing, which a transpose once flattened onto the grid
+					...(n.offset ? { offset: n.offset } : {})
 				};
 			})
 		);
@@ -172,6 +174,14 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 						return values.length ? [{ step: i + 1, values }] : [];
 					})
 				: [];
+		// and as stored, for a write that keeps them (a bar written alone once lost the others')
+		const stepLocks = p.steps
+			.slice(0, MAX_STEPS)
+			.flatMap((step, i) =>
+				step.locks && Object.keys(step.locks).length
+					? [{ step: i + 1, values: { ...step.locks } }]
+					: []
+			);
 		return {
 			track,
 			pattern: index + 1,
@@ -179,6 +189,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			current: index === seq.current,
 			...(components.length ? { components } : {}),
 			...(locks.length ? { locks } : {}),
+			...(stepLocks.length ? { stepLocks } : {}),
 			...(p.groove ? { groove: p.groove } : {}),
 			bars: p.bars,
 			length: p.length,
@@ -523,9 +534,16 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					note,
 					velocity: clampInt(n.velocity, 1, 127),
 					length: Math.max(0.05, Math.min(MAX_STEPS, n.length)),
-					offset: 0,
+					// a kept note's timing off the grid, half a step at most either way
+					offset: Number.isFinite(n.offset) ? Math.max(-0.5, Math.min(0.5, n.offset ?? 0)) : 0,
 					ownLength: true
 				});
+			}
+			// the locks a write keeps (it replaces the rest), on the pattern's steps alone
+			for (const lock of write.locks ?? []) {
+				if (!Number.isInteger(lock.step) || lock.step < 1 || lock.step > steps) continue;
+				const step = target.steps[lock.step - 1];
+				step.locks = { ...(step.locks ?? {}), ...lock.values };
 			}
 			for (const c of write.components ?? []) {
 				const step = target.steps[c.step - 1];

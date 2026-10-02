@@ -24,7 +24,7 @@ import { FX_NAMES, FX_TYPES } from './areas/auxiliary/state';
 import { activeRegion, tuneText, zoneOf } from './areas/sample/m1';
 import { keyNote } from './areas/sample/record';
 import { MAX_SLICES } from './areas/sample/slicer';
-import { SLICE_MODES, type Region } from './areas/sample/state';
+import { SLICE_MODES, soundKeyOf, soundName, type Region } from './areas/sample/state';
 import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
 import type { PresetEntry } from './areas/system/catalogue';
 import { PROJECT_SECTIONS } from './areas/system/settings';
@@ -885,7 +885,12 @@ export function keyIndexOf(s: SimState, track: number, key: number | string): nu
 	const bare = (file: string) => file.toLowerCase().replace(/\.[a-z0-9]+$/, '');
 	const files = s.areas.sample.tracks[track - 1]?.keys ?? [];
 	const at = files.findIndex((file) => file !== null && bare(file.name) === bare(name));
-	return at >= 0 ? at : null;
+	if (at >= 0) return at;
+	// then as the pattern grid finds a sound: without its number, or by what it is
+	return soundKeyOf(
+		files.map((file) => (file ? soundName(file.name) : null)),
+		name
+	);
 }
 
 /**
@@ -1120,7 +1125,10 @@ export function planParam(state: SimState, goal: ParamGoal): NavPlan {
 	if (engine === undefined) return rec.plan(false, `no instrument track ${track}`);
 	const key = goal.key === undefined ? null : keyIndexOf(state, track, goal.key);
 	if (goal.key !== undefined && key === null) {
-		return rec.plan(false, `no key "${goal.key}": give its name (G3), its sample's or 1–24`);
+		return rec.plan(
+			false,
+			`no key "${goal.key}" on T${track}: give the key's note (F3–E5), its sound as read_sound lists it ("snare 1"), or 1–24`
+		);
 	}
 	const region = regionParam(id);
 	if (region) return planRegion(rec, track, key, region, goal.value);

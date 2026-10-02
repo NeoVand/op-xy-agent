@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1225 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1226 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -153,12 +153,12 @@ that play scenes in order, all inside one project.
 
 Facts:
 - A pattern is one track's sequence of notes or sounds and holds at most 120 notes. [#pattern] [s1]
-- Each track holds up to 16 patterns since OS 1.1.15 (the workflow chapter still says nine). [#sixteen-patterns] (since 1.1.15) [s2]
+- Each track holds up to 16 patterns (OS 1.1.15 raised it from nine, the number older TE texts still give). [#sixteen-patterns] (since 1.1.15) [s2]
 - A pattern has up to four bars; with track scale it can last up to 64 bars. [#length] [s3]
 - Each pattern can carry its own sound unless sound link (arrange) holds one sound for the track. [#sound-per-pattern] [s4]
 - A pattern added since OS 1.1.25 starts with the player type the track is using. [#new-pattern-player] (since 1.1.25) [s5]
 - A scene records which pattern each track plays, plus the track volumes and mutes, and lasts as long as its longest pattern; a project has 99 scenes. [#scene] [s1]
-- A song plays up to 96 scenes in order; a project holds up to 14 songs, one per white key (the workflow chapter says nine). [#song] [s6]
+- A song plays up to 96 scenes in order; a project holds up to 14 songs, one per white key (older TE texts say nine). [#song] [s6]
 - A project contains the tracks with their patterns, scenes and songs; the unit stores thousands of projects. [#project] [s1]
 
 Related: [basics.workflow], [project.settings], [project.project-view]
@@ -711,6 +711,7 @@ Facts:
 - Holding a step and pressing `[-]` or `[+]` moves the step's notes earlier or later, off the step grid. [#how] [s1]
 - Each press is a fine adjustment; keeping `[-]` or `[+]` held moves faster. [#speed] [s1]
 - Nudging only works while the track's quantisation (`bar + turn E1`) is below 100. [#quantise-rule] [s1]
+- Since a nudged note keeps its offset under quantisation below 100, quantisation most likely acts as notes play rather than when they are recorded, so lowering it after a take lets the take's own timing back in. Not checked on a unit. [#quantise-at-playback] (derived) [s1]
 - Decoded project files show quantisation at 100 in a new project, so turn it down before nudging. [#quantise-default] (community-verified) [s2]
 
 Procedures:

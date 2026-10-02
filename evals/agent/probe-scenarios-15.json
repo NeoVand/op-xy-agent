@@ -1,0 +1,134 @@
+[
+	{
+		"name": "hats-left-2",
+		"about": "Re-check: a drum key panned on its own page, and the change it reads as.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "put the hi-hats on the left and the snare slightly right" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "delay-snare-only-2",
+		"about": "Re-check: one sound of a kit sent to the delay, the send being the track's.",
+		"steps": [{ "say": "make a beat" }, { "say": "put a delay on the snare only" }, { "why": true }]
+	},
+	{
+		"name": "what-did-i-change",
+		"about": "Re-check: the user's own turns before the first message, on a sound page.",
+		"steps": [
+			{ "press": ["track.3", "key.m3", "turn:encoder.1:15"] },
+			{ "say": "what did I just change?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "half-time-same-notes",
+		"about": "Re-check: the track scale alone, the notes kept.",
+		"steps": [
+			{ "say": "make a drum and bass beat at 172 bpm with a bassline" },
+			{ "say": "make the drums half time but keep the bass as it is" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "play-this-2",
+		"about": "Re-check: a melody to play, written and started.",
+		"steps": [
+			{ "say": "play this on track 4: E4 G4 A4 B4 A4 G4 E4 D4 in quarter notes" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fade-out-2",
+		"about": "Re-check: a fade from scene levels, told apart in the changes.",
+		"steps": [
+			{ "say": "make a 4 bar loop with drums, bass and chords" },
+			{ "say": "turn it into a song that plays the loop twice and then fades out over 4 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "key-change-last-chorus",
+		"about": "A key change for the last part: copies, transposed.",
+		"steps": [
+			{ "say": "make a song with a verse and a chorus, with chords and a bass" },
+			{ "say": "add a last chorus a whole step higher, like a key change" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "humanize-hats",
+		"about": "Feel: velocities varied on one line of a kit.",
+		"steps": [
+			{ "say": "make a house beat with sixteenth hats" },
+			{ "say": "the hats sound robotic, humanize them" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "offbeat-stabs",
+		"about": "A part's rhythm changed with its harmony kept.",
+		"steps": [
+			{ "say": "put Am F C G on track 4, a chord a bar" },
+			{ "say": "make them short stabs on the offbeats instead of long chords" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "waltz",
+		"about": "A change of meter: 3/4.",
+		"steps": [{ "say": "make a slow waltz in 3/4 with a bass and chords" }, { "why": true }]
+	},
+	{
+		"name": "counter-melody",
+		"about": "A part written against another part.",
+		"steps": [
+			{ "say": "write a simple melody on track 5 in C major, 2 bars" },
+			{ "say": "now add a counter-melody on track 6 that answers it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "old-radio",
+		"about": "A sound described by a picture: an old radio.",
+		"steps": [
+			{ "say": "make a chill beat with keys" },
+			{ "say": "make the keys sound like they're coming through an old radio" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "drums-to-track-2",
+		"about": "A part moved to another track of the same kind.",
+		"steps": [
+			{ "say": "make a beat on track 1" },
+			{ "say": "copy the beat to track 2 and make that one a busier variation" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "brain-question",
+		"about": "A fact question about an auxiliary track.",
+		"steps": [{ "say": "what does the brain track do and when would I use it?" }, { "why": true }]
+	},
+	{
+		"name": "undo-twice",
+		"about": "Two answers taken back in turn.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "add chords on track 7" },
+			{ "say": "add a lead melody on track 5" },
+			{ "say": "undo the last two things you did" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "record-live-lesson",
+		"about": "A how-to about live recording.",
+		"steps": [
+			{ "say": "how do I record a melody live while the beat plays, and fix the timing after?" },
+			{ "why": true }
+		]
+	}
+]

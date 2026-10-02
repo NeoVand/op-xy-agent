@@ -53,6 +53,18 @@ describe('replica changes', () => {
 		);
 	});
 
+	it('say what moved on an FX page, by name', () => {
+		const { sim, virtual, start } = setup();
+		const goal = settingGoal({ param: 'dry', value: 0, area: 'auxiliary', track: 15 }, 1);
+		if (typeof goal === 'string') throw new Error(goal);
+		const plan = virtual.plan({ settings: [goal] });
+		expect(plan.reached).toBe(true);
+		for (const step of plan.steps) playStep(sim, step);
+		expect(virtual.changesSince(start)).toContain(
+			'FX I delay: dry 99 → 00; unchanged: size 1/8 dotted, fine 50, feedback 50'
+		);
+	});
+
 	it('say a kit put on a drum track, key by key', () => {
 		const { virtual, start } = setup();
 		const audio = { sampleRate: 48000, channels: [new Float32Array(480)] };
@@ -75,9 +87,25 @@ describe('replica changes', () => {
 		for (const step of plan.steps) playStep(sim, step);
 		const lines = virtual.changesSince(start);
 		expect(lines.find((l) => l.startsWith('T3 M3 filter:'))).toMatch(
-			/^T3 M3 filter: cutoff 00 → 40 \(now svf filter on: cutoff 40, /
+			/^T3 M3 filter: cutoff 00 → 40; unchanged: svf filter on, resonance /
 		);
 		expect(lines.every((l) => l.startsWith('T3 '))).toBe(true);
+	});
+
+	it('read a drum key panned through the keys as the key’s own line, not the page it left', () => {
+		const { sim, virtual, start } = setup();
+		const goals = [
+			settingGoal({ param: 'pan', value: -60, track: 1, key: 'open hat' }, 1),
+			settingGoal({ param: 'pan', value: -60, track: 1, key: 'closed hat 1' }, 1)
+		];
+		if (goals.some((g) => typeof g === 'string')) throw new Error(String(goals));
+		const plan = virtual.plan({ settings: goals as Exclude<(typeof goals)[number], string>[] });
+		for (const step of plan.steps) playStep(sim, step);
+		const lines = virtual.changesSince(start);
+		expect(lines).toEqual([
+			'T1 key C#4 closed hat 1: pan 0 → -60',
+			'T1 key D#4 open hat 1: pan 0 → -60'
+		]);
 	});
 
 	it('read a sound by its pages wherever the screen stands, never the screen itself', () => {
@@ -90,7 +118,9 @@ describe('replica changes', () => {
 		expect(sim.state.areas.system.page).toBe('presets');
 		const lines = virtual.changesSince(start);
 		expect(lines.filter((l) => l.startsWith('T1 '))).toEqual([
-			expect.stringMatching(/^T1 M2 amp envelope: release 03 → 40 \(now attack .*, release 40\)$/)
+			expect.stringMatching(
+				/^T1 M2 amp envelope: release 03 → 40; unchanged: attack .*, sustain \d+$/
+			)
 		]);
 		sim.state.areas.system.power = { on: true, booting: true, elapsed: 0, since: 0 };
 		expect(virtual.changesSince(start)).toEqual(lines);
@@ -138,8 +168,8 @@ describe('replica changes', () => {
 		});
 		virtual.writeArrangement({ scenes: [fade(3, 48), fade(4, 16)] });
 		expect(virtual.changesSince(start)).toEqual([
-			'scene 3: new, T1 p2, T1, T3 at level 48',
-			'scene 4: new, T1 p2, T1, T3 at level 16'
+			'scene 3: new, T1 p2; T1, T3 at level 48',
+			'scene 4: new, T1 p2; T1, T3 at level 16'
 		]);
 		const next = virtual.checkpoint();
 		virtual.writeArrangement({
@@ -193,7 +223,7 @@ describe('replica changes', () => {
 		player.arp.speed = 3;
 		const lines = virtual.changedSince(next);
 		expect(lines.map((c) => c.line)).toEqual([
-			'T4 player: arpeggio player off → on, speed 1/8 → 1/16 (now arpeggio player on: speed 1/16, pattern up, range 1 oct, hold off)'
+			'T4 player: arpeggio player off → on, speed 1/8 → 1/16; unchanged: pattern up, range 1 oct, hold off'
 		]);
 		expect(lines[0].brief).toBe('T4 player: arpeggio player off → on, speed 1/8 → 1/16');
 		expect(lines[0].controls).toEqual(['track.4', 'key.player']);

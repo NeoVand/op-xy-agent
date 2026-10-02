@@ -45,6 +45,29 @@ export const FIRST_NOTE = 53;
 export const soundName = (file: string) =>
 	file.replace(/\.(wav|aiff?)$/i, '').replace(/^\d+\s+/, '');
 
+/**
+ * The key (0–23) a sound's name means, as an agent or a user says it: the name ("kick 1"), the name
+ * without its number ("open hat" for the lowest "open hat 1"), or what the sound is ("kick" for a
+ * made kit's "808 kick", "808 kick" for a new project's "kick 1"); null for none. `sounds` are the
+ * keys' sound names in key order, null for an empty key. The pattern grid and the key planner both
+ * find keys this way (the planner once refused "open hat", which the grid took).
+ */
+export function soundKeyOf(sounds: readonly (string | null)[], wanted: string): number | null {
+	const lower = wanted.trim().toLowerCase();
+	const named = sounds.flatMap((name, at) => (name ? [{ at, name: name.toLowerCase() }] : []));
+	const bare = (name: string) => name.replace(/\s+\d+$/, '');
+	const ends = (name: string, word: string) => bare(name).endsWith(` ${word}`);
+	const unstyled = bare(lower).replace(/^\S+\s+(?=\S)/, '');
+	return (
+		named.find((x) => x.name === lower)?.at ??
+		named.find((x) => x.name === bare(lower))?.at ??
+		named.find((x) => bare(x.name) === lower)?.at ??
+		named.find((x) => ends(x.name, bare(lower)))?.at ??
+		named.find((x) => bare(x.name) === unstyled)?.at ??
+		null
+	);
+}
+
 /** A sample file: what a key, zone or the synth sampler holds, and what the library lists. */
 export interface SampleFile {
 	/** Stable id: the handle a sound engine keys the audio buffer by. */

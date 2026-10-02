@@ -234,6 +234,9 @@ export const showOnReplicaTool = defineTool({
 		let ended: string | null = null;
 		// and what it did, before it is put back (a mute shown left an agent unsure it muted)
 		let did: readonly string[] = [];
+		// the transport at its end, which the screen does not show (record + play shown read as the
+		// sound page alone, and an agent could not tell the replica had armed)
+		let state: string | null = null;
 		try {
 			outcome = await handle.done;
 			if (outcome === 'finished') {
@@ -242,6 +245,18 @@ export const showOnReplicaTool = defineTool({
 				ended = reading ? (reading.list ?? reading.shows) : null;
 				try {
 					did = before ? (virtual?.changesSince(before) ?? []) : [];
+					const status = virtual?.status();
+					const track = status ? `T${status.selectedTrack}` : '';
+					state =
+						status?.recording === 'armed'
+							? `recording armed on ${track}: the first note played starts playback and the take`
+							: status?.recording === 'count-in'
+								? `${track} counting in to record`
+								: status?.recording === 'on'
+									? `recording on ${track}: what is played on the keys lands in its pattern`
+									: status?.playing
+										? 'playing'
+										: null;
 				} catch {
 					did = [];
 				}
@@ -268,6 +283,7 @@ export const showOnReplicaTool = defineTool({
 				...(startedFrom ? { startedFrom } : {}),
 				...(screens.length ? { steps: screens } : {}),
 				...(ended ? { screenAtEnd: ended } : {}),
+				...(state ? { transportAtEnd: state } : {}),
 				...(did.length ? { whileShown: did } : {}),
 				replica: putBack
 					? 'back where it was: the user can try it from there'

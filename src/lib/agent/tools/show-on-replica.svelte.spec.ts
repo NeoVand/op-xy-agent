@@ -73,6 +73,16 @@ describe('show_on_replica', () => {
 		expect(sim.state.tracks[1].mix.muted).toBe(false);
 	});
 
+	it('says how the transport ended, which the screen does not show', async () => {
+		const { rig, sim, show } = setup();
+		const pending = show('record + play');
+		await rig.time.advance(6000);
+		const result = JSON.parse(String((await pending).content));
+		expect(result.transportAtEnd).toMatch(/^recording armed on T1: the first note played starts/);
+		// and back as it was
+		expect(sim.state.transport.playing).toBe(false);
+	});
+
 	it('leaves what the user did when they take over while it plays', async () => {
 		const { rig, replica, sim, show } = setup();
 		const pending = show('mix → shift + T2');
