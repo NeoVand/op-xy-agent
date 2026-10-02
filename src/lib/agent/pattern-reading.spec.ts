@@ -24,6 +24,30 @@ describe('readPattern', () => {
 		expect(reading?.chords).toBeUndefined();
 	});
 
+	it('says which notes are outside the key named, and the mode one of them makes', () => {
+		// Dm7 G7: D F A C, G B D F — the B makes D minor dorian
+		const notes = [50, 53, 57, 60, 55, 59, 62, 65].map((note, i) => ({
+			step: i < 4 ? 1 : 9,
+			note,
+			length: 8
+		}));
+		const dorian = readPattern(pattern(notes), [], undefined, parseKey('D minor'));
+		expect(dorian?.outside).toBe(
+			'B is outside D minor: with it the notes are D dorian (key "D dorian" reads them so)'
+		);
+		expect(
+			readPattern(pattern(notes), [], undefined, parseKey('D dorian'))?.outside
+		).toBeUndefined();
+		// harmonic minor's leading note is in the key: no flag for E in F minor's C7
+		const c7 = [48, 52, 55, 58].map((note) => ({ step: 1, note, length: 16 }));
+		expect(readPattern(pattern(c7), [], undefined, parseKey('F minor'))?.outside).toBeUndefined();
+		// two strangers, no mode
+		const odd = [60, 61, 66].map((note, i) => ({ step: i * 4 + 1, note, length: 2 }));
+		expect(readPattern(pattern(odd), [], undefined, parseKey('C major'))?.outside).toBe(
+			'C# F# are outside C major'
+		);
+	});
+
 	it('names each chord where it starts, so a wrong one shows (G7, not Gm7)', () => {
 		const chord = (step: number, notes: number[]) =>
 			notes.map((note) => ({ step, note, length: 16 }));

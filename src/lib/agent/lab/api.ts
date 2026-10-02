@@ -235,11 +235,14 @@ export interface PatternWrite {
 	readonly stay?: boolean;
 	/** This pattern's own groove, −99 (shuffle) … 99 (swing), as write_pattern's (0: the tempo page's). */
 	readonly groove?: number;
+	/** Chords by name, as write_pattern takes them ("1:Am7 17:F"), voiced smoothly (or voicing root). */
+	readonly chords?: string;
+	readonly voicing?: 'smooth' | 'root';
 	/**
 	 * At most 120, in any order; an empty list clears the pattern. Or one string, a word a note
 	 * ("1:A2:4 5:C3+E3:2"), as write_pattern takes it.
 	 */
-	readonly notes:
+	readonly notes?:
 		| string
 		| readonly {
 				/** 1–64. */

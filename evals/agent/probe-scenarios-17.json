@@ -1,0 +1,124 @@
+[
+	{
+		"name": "swing-hats-only-2",
+		"about": "Re-check: hats taken out of a kit by a merge, swung on a track of their own.",
+		"steps": [
+			{ "say": "make a house beat" },
+			{ "say": "swing just the hats, keep the kick and clap straight" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fade-copy-bar",
+		"about": "Re-check: a fade in one-bar steps from copies of single bars.",
+		"steps": [
+			{ "say": "make a 4 bar loop with drums, bass and chords" },
+			{ "say": "add an ending that fades out over 4 bars, one bar quieter each" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "wrong-key-lesson",
+		"about": "A lesson where the user presses the wrong key, then asks.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "teach me how to mute the bass myself, light up the keys" },
+			{ "press": ["key.mix", "latch:key.shift", "track.4", "latch:key.shift"] },
+			{ "say": "did I do it right? the bass is still playing" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "impossible-asks",
+		"about": "Requests past the device's limits.",
+		"steps": [{ "say": "make a 6 bar drum pattern on track 1 at 400 bpm" }, { "why": true }]
+	},
+	{
+		"name": "aux-track-drums",
+		"about": "A request aimed at a track that cannot do it.",
+		"steps": [{ "say": "put a drum beat on track 9" }, { "why": true }]
+	},
+	{
+		"name": "more-space",
+		"about": "An ambiguous request: more space.",
+		"steps": [
+			{ "say": "make a busy techno beat with a bass and a lead" },
+			{ "say": "it needs more space" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "seven-eight",
+		"about": "A change of meter for a beat already written.",
+		"steps": [{ "say": "make a beat with a bass" }, { "say": "now make it 7/8" }, { "why": true }]
+	},
+	{
+		"name": "send-to-device",
+		"about": "Sending a project with no device connected.",
+		"steps": [{ "say": "make a beat" }, { "say": "send this to my op-xy" }, { "why": true }]
+	},
+	{
+		"name": "wobble-bass",
+		"about": "Sound design from a genre word.",
+		"steps": [{ "say": "make a dubstep wobble bass on track 3" }, { "why": true }]
+	},
+	{
+		"name": "two-chord-options",
+		"about": "Options offered as takes from the lab.",
+		"steps": [
+			{ "say": "make a lofi beat with a bass" },
+			{ "say": "give me two different chord progressions to choose from on track 7" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "song-from-the-bridge",
+		"about": "A long build over several turns, then playing from one part.",
+		"steps": [
+			{ "say": "make a verse: drums, bass and chords, 4 bars" },
+			{ "say": "now a chorus with a lead on top" },
+			{ "say": "add a bridge where the drums drop out" },
+			{ "say": "arrange it verse, chorus, verse, chorus, bridge, chorus" },
+			{ "say": "play it from the bridge" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "user-edits-then-double",
+		"about": "The user's own hits, then an edit built on them.",
+		"steps": [
+			{ "say": "make a simple beat" },
+			{ "press": ["key.instrument", "track.1", "step.7", "step.15"] },
+			{ "say": "I added some hits. now double the kick on the last beat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "surprise-me",
+		"about": "A vague creative request.",
+		"steps": [{ "say": "surprise me" }, { "why": true }]
+	},
+	{
+		"name": "what-key",
+		"about": "A question about what was made.",
+		"steps": [
+			{ "say": "make a chill beat with chords and a bass" },
+			{ "say": "what key and scale is this in, and what are the chords?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "make-it-faster",
+		"about": "An ambiguous 'faster': tempo or rhythm.",
+		"steps": [{ "say": "make a hip hop beat" }, { "say": "make it faster" }, { "why": true }]
+	},
+	{
+		"name": "download-midi",
+		"about": "The app's downloads, asked plainly.",
+		"steps": [
+			{ "say": "make a short beat with a melody" },
+			{ "say": "how do I download what you made?" },
+			{ "why": true }
+		]
+	}
+]

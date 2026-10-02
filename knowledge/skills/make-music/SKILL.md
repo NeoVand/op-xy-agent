@@ -40,7 +40,10 @@ settings, groove then swing ({param: "groove", value: "shuffle"}, {param: "swing
 replica shuffle moves every second sixteenth (steps 2, 4, 6…), so hits on the eighths do not swing;
 one track's own amount is the bar menu's groove, kept by its pattern on the same scale, so one part
 of a song swings alone when its scene plays a pattern with a groove of its own (write_pattern's
-groove sets it with the notes, without selecting the pattern). With no tempo given,
+groove sets it with the notes, without selecting the pattern). A groove is the whole pattern's, so
+to swing the hats alone, put them on T2 (a kit of its own) with a groove there. Robotic or stiff parts loosen with
+write_pattern's humanize alone (timing 0.05–0.1 of a step, velocity 8–15; sounds for one line of a
+kit), which puts notes a little off the grid as a player would. With no tempo given,
 pick one that suits the style (house 120–126, techno 128–135, hip hop and boom bap 85–95, lo-fi
 70–85, drum and bass 170–175); slow, ambient or a pad wants 60–80 (one chord a bar at 120 is not
 slow). A new project's metronome clicks on every beat: when you start playback of a beat or song you made,

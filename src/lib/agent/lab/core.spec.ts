@@ -65,6 +65,16 @@ describe('forks', () => {
 		expect(f.status().tracks[2].current).toBe(3);
 	});
 
+	it('writes chords by name, as write_pattern does', () => {
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(7, { bars: 2, chords: '1:Am 17:F' });
+		const notes = f.readPattern(7).notes;
+		expect(notes.filter((n) => n.step === 1).map((n) => n.note % 12)).toEqual([9, 0, 4]);
+		expect(notes.filter((n) => n.step === 17)).toHaveLength(3);
+		expect(() => f.writePattern(7, {} as never)).toThrow(/give notes .* or chords/);
+	});
+
 	it('locks one step’s value with set and step', () => {
 		const { lab } = labOn();
 		const f = lab.fork();

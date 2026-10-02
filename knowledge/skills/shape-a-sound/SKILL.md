@@ -33,7 +33,8 @@ Afterwards say what each change does, so they learn the sound and not just the r
 keys to make it on their own unit in order, from the plan's steps.
 
 An LFO's speed is synced first, a cycle of 1–8, 12, 16, 24 or 32 sixteenths (the key planner takes
-"sync 16", "1 bar", "2 bars" or "1/4"), then free, 0–99 (a number, or "free 20"). Free rates climb
+"sync 16", "1 bar", "2 bars" or "1/4"; sync 2 is an eighth, sync 4 a quarter, sync 8 a half, so a
+wobble in eighths is sync 2 and one in triplets has none), then free, 0–99 (a number, or "free 20"). Free rates climb
 steeply: on the replica free 10 is a cycle of about five seconds, 20 about one a second, 45 a fast
 wobble. A slow sweep is synced over a bar or two, or free below about 12.
 

@@ -178,6 +178,24 @@ describe('replica changes', () => {
 		expect(virtual.changesSince(next)).toEqual(['scene 3: T3 muted']);
 	});
 
+	it('say a track rests in a scene where it plays an empty pattern', () => {
+		const { virtual } = setup();
+		const kick = [1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 100, length: 1 }));
+		virtual.writePattern(1, { pattern: 1, bars: 1, notes: kick });
+		virtual.writePattern(5, {
+			pattern: 1,
+			bars: 1,
+			notes: [{ step: 1, note: 72, velocity: 90, length: 4 }]
+		});
+		virtual.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 1, pattern: 1 }] }] });
+		const start = virtual.checkpoint();
+		virtual.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 5, pattern: 0 }] }] });
+		expect(virtual.changesSince(start)).toEqual([
+			'T5 pattern 2: new and empty',
+			'scene 2: T5 rests (p1 → p2, empty)'
+		]);
+	});
+
 	it('say the song moving on once, not as each track switching pattern', () => {
 		const { sim, virtual } = setup();
 		const kick = [1, 5, 9, 13].map((step) => ({ step, note: 53, velocity: 100, length: 1 }));

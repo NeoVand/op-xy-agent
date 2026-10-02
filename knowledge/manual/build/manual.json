@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "25ec9e0e",
+	"bundle_hash": "0bdaf1f4",
 	"stats": {
 		"units": 166,
-		"facts": 1227,
+		"facts": 1228,
 		"procedures": 207,
 		"parameters": 207,
-		"verified_items": 260,
-		"words": 46647,
+		"verified_items": 261,
+		"words": 46683,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -9995,6 +9995,14 @@
 					"confidence": "derived"
 				},
 				{
+					"id": "tape-default",
+					"text": "In a new project every instrument track's tape send reads 99 (the other sends differ by sound); the tape is the normal path for a track's audio, so 99 there takes nothing away from the mix.",
+					"source": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"firmware_min": null,
+					"verified_on": "1.1.33",
+					"confidence": "verified"
+				},
+				{
 					"id": "fx",
 					"text": "FX I and FX II are the two send-effect tracks (auxiliary `T7` and `T8`); what the send does depends on the effect loaded there.",
 					"source": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",
@@ -10124,6 +10132,10 @@
 				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#tape",
 					"kind": "guide"
+				},
+				{
+					"url": "docs/research/30-presets-samples.md#11-a-new-projects-sounds",
+					"kind": "research"
 				},
 				{
 					"url": "https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii",

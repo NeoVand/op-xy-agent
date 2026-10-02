@@ -133,7 +133,7 @@ export function describeNoteChange(
 	const x = placed(before);
 	const y = placed(after);
 	if (!after) return before ? 'removed' : null;
-	if (!before) return `new, ${plural(y.length, 'note')}`;
+	if (!before) return y.length === 0 ? 'new and empty' : `new, ${plural(y.length, 'note')}`;
 	if (x.length !== y.length) {
 		const added = unmatched(y.map(where), x.map(where));
 		const removed = unmatched(x.map(where), y.map(where));

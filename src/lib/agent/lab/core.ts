@@ -66,7 +66,7 @@ import type {
 } from './api';
 import { applyProject } from './apply';
 import { diffReplica, type DiffSide } from './diff';
-import { compactNotes, PatternNotesError, type WrittenNote } from '../pattern-notes';
+import { compactChords, compactNotes, PatternNotesError, type WrittenNote } from '../pattern-notes';
 
 /** A program's mistake, in words it can act on. */
 export class LabError extends Error {
@@ -225,27 +225,33 @@ const patternWrite = z.strictObject({
 	stay: z.boolean().optional(),
 	groove: z.int().min(-99).max(99).optional(),
 	// a list, or write_pattern's short form ("1:A2:4 5:C3+E3+G3:2:70"), which an agent carried over
-	notes: z.union([
-		z
-			.array(
-				z.strictObject({
-					step: z.int().min(1).max(64),
-					note: z.union([z.int().min(0).max(127), z.string().min(2).max(4)]),
-					velocity: z
-						.int()
-						.min(1, { error: 'velocity is 1–127: a note at 0 would be silent, so leave it out' })
-						.max(127)
-						.optional(),
-					length: z.number().min(0.05).max(64).optional(),
-					// what readPattern says a drum note plays: notes read back are written as they are
-					sound: z.string().optional(),
-					// and a live take's timing off the grid, as readPattern gives it
-					offset: z.number().min(-0.5).max(0.5).optional()
-				})
-			)
-			.max(120),
-		z.string().max(4000)
-	])
+	notes: z
+		.union([
+			z
+				.array(
+					z.strictObject({
+						step: z.int().min(1).max(64),
+						note: z.union([z.int().min(0).max(127), z.string().min(2).max(4)]),
+						velocity: z
+							.int()
+							.min(1, { error: 'velocity is 1–127: a note at 0 would be silent, so leave it out' })
+							.max(127)
+							.optional(),
+						length: z.number().min(0.05).max(64).optional(),
+						// what readPattern says a drum note plays: notes read back are written as they are
+						sound: z.string().optional(),
+						// and a live take's timing off the grid, as readPattern gives it
+						offset: z.number().min(-0.5).max(0.5).optional()
+					})
+				)
+				.max(120),
+			z.string().max(4000)
+		])
+		.optional(),
+	// chords by name, as write_pattern takes them ("1:Am7 17:F"; an agent wrote a lab's chords out
+	// note by note, unsure the lab took names)
+	chords: z.string().max(2000).optional(),
+	voicing: z.enum(['smooth', 'root']).optional()
 });
 
 const arrangementWrite = z.strictObject({
@@ -472,9 +478,16 @@ export function createLab(options: LabOptions): LabSession {
 		function writePattern(track: number, write: PatternWrite) {
 			const t = check(track16, track, 'writePattern track');
 			const w = check(patternWrite, write, 'writePattern');
+			if (w.notes === undefined && w.chords === undefined) {
+				throw new LabError(
+					'writePattern: give notes (a list or "1:A2:4 5:C3+E3:2") or chords ("1:Am7 17:F")'
+				);
+			}
 			let given: readonly WrittenNote[];
 			try {
-				given = typeof w.notes === 'string' ? compactNotes(w.notes) : w.notes;
+				const notes = typeof w.notes === 'string' ? compactNotes(w.notes) : (w.notes ?? []);
+				const chords = w.chords ? compactChords(w.chords, { root: w.voicing === 'root' }) : [];
+				given = [...notes, ...chords];
 			} catch (error) {
 				if (error instanceof PatternNotesError)
 					throw new LabError(`writePattern: ${error.message}`);

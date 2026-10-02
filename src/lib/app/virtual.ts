@@ -190,6 +190,11 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			...(components.length ? { components } : {}),
 			...(locks.length ? { locks } : {}),
 			...(stepLocks.length ? { stepLocks } : {}),
+			...(!p.quantiseOn
+				? { quantise: 'off' as const }
+				: p.quantise !== 100
+					? { quantise: p.quantise }
+					: {}),
 			...(p.groove ? { groove: p.groove } : {}),
 			bars: p.bars,
 			length: p.length,
@@ -526,6 +531,10 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			if (write.scale !== undefined) target.scale = write.scale;
 			// the bar menu's groove, on the device's detents (60 is one, 61 is not)
 			if (write.groove !== undefined) target.groove = stepGroove(write.groove, 0);
+			if (write.quantise !== undefined) {
+				target.quantise = clampInt(write.quantise, 0, 100);
+				target.quantiseOn = true;
+			}
 			for (const n of write.notes) {
 				const step = target.steps[n.step - 1];
 				const note = clampInt(n.note, 0, 127);

@@ -45,7 +45,8 @@ lab.offer(fork, label)     // a take for the user to hear and keep (2–3 a run;
 lab.log(...values)         // or console.log
 
 fork.status()  fork.readPattern(track, pattern?)  fork.writePattern(track, { pattern?, bars?,
-  length?, scale?, stay?, groove?, notes: [{ step, note, velocity?, length? }] or "1:A2:4" })
+  length?, scale?, stay?, groove?, notes: [{ step, note, velocity?, length? }] or "1:A2:4",
+  or chords: "1:Am7" })
 fork.readArrangement()
 fork.writeArrangement({ scenes?: [{ scene, patterns: [{ track, pattern }] | number[] | null }],
   mix?: [{ track, level?, muted? }] }], song?: { order, loop } })  fork.readSound(track)  fork.setTempo(bpm)  fork.setMetronome(on)
@@ -55,10 +56,10 @@ fork.plan(setting)         // the steps set would play, without playing them
 fork.press(keys, clicks?)  fork.screen()  fork.diff(other?)
 ```
 
-A fork has the same calls the replica's own tools use, with the same numbers: tracks 1–16 (9–16
+A fork has the replica tools' own calls, with the same numbers: tracks 1–16 (9–16
 auxiliary), patterns 1–16, scenes 1–99, steps 1–64 with bar 2 starting at step 17. `set` takes a
 setting as plan_steps does and plays the navigator's key steps on the fork, so the value is reached
-the way a person would reach it; it throws, changing nothing, when the setting cannot be reached.
+as a person would reach it; it throws, changing nothing, when it cannot be reached.
 `press` plays a combo in the key grammar (a turn takes its detents: `press('turn E2', 5)`) and
 returns what the screen shows. `diff` says what changed in the device’s words ("T3 M3 filter:
 cutoff 70 → 40", "scene 2: new, T1 p2"); with another fork, how this one differs from it.

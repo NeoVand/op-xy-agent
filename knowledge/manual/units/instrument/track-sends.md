@@ -28,6 +28,11 @@ facts:
     text: The tape send makes the track's audio available to the tape track (auxiliary `T6`), which replays and mangles it.
     source: https://teenage.engineering/guides/op-xy/auxiliary#tape
     confidence: derived
+  - id: tape-default
+    text: In a new project every instrument track's tape send reads 99 (the other sends differ by sound); the tape is the normal path for a track's audio, so 99 there takes nothing away from the mix.
+    source: docs/research/30-presets-samples.md#11-a-new-projects-sounds
+    confidence: verified
+    verified_on: '1.1.33'
   - id: fx
     text: FX I and FX II are the two send-effect tracks (auxiliary `T7` and `T8`); what the send does depends on the effect loaded there.
     source: https://teenage.engineering/guides/op-xy/auxiliary#fx-i-and-fx-ii

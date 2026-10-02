@@ -649,6 +649,47 @@ describe('write_pattern on drums', () => {
 		expect(String(none.content)).toMatch(/pattern 2 has 1 bar, so there is no bar 2 to copy/);
 	});
 
+	it('loosens a pattern as a player would, the hats alone, and lets the notes play off the grid', async () => {
+		const { virtual, run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			grid: { kick: 'x... x... x... x...', 'closed hat': 'x.x. x.x. x.x. x.x.' }
+		});
+		const start = virtual.checkpoint();
+		const loose = json(
+			await run(writePatternTool, {
+				track: 1,
+				humanize: { timing: 0.1, velocity: 12, sounds: ['closed hat'] }
+			})
+		);
+		const notes = virtual.readPattern(1).notes;
+		const hats = notes.filter((n) => n.note === 61);
+		const kicks = notes.filter((n) => n.note === 53);
+		// the kicks as they were, the hats moved a little, none more than asked
+		expect(kicks.every((n) => !n.offset && n.velocity === 100)).toBe(true);
+		expect(hats.some((n) => n.offset)).toBe(true);
+		expect(
+			hats.every((n) => Math.abs(n.offset ?? 0) <= 0.1 && Math.abs(n.velocity - 100) <= 12)
+		).toBe(true);
+		// a hat on a beat drifts half as far, and none plays before the first step
+		expect(
+			hats.filter((n) => (n.step - 1) % 4 === 0).every((n) => Math.abs(n.offset ?? 0) <= 0.05)
+		).toBe(true);
+		expect((hats.find((n) => n.step === 1)?.offset ?? 0) >= 0).toBe(true);
+		expect(loose.note).toMatch(
+			/Loosened 8 notes: up to 0\.1 of a step off the grid \(the beats half that\), velocities up to 12 either way; the pattern's quantise 100 → 0/
+		);
+		expect(loose.written.quantise).toBe(0);
+		expect(loose.written.offGrid).toMatch(/notes? off the grid/);
+		expect(virtual.changesSince(start).join(' ')).toMatch(/quantise 100 → 0/);
+		// a sound the kit lacks is refused
+		const none = await run(writePatternTool, {
+			track: 1,
+			humanize: { timing: 0.1, sounds: ['kazoo'] }
+		});
+		expect(String(none.content)).toMatch(/"kazoo" is no sound of this track/);
+	});
+
 	it('gives a pattern its own groove, confirmed and undone with it', async () => {
 		const { sim, env, run } = setup();
 		sim.state.tempo.groove = 0; // shuffle, at the tempo page's 0: straight
@@ -1198,6 +1239,13 @@ describe('write_pattern, short', () => {
 			/kick has 31 \(run together: with a space after every four marks, a beat each, a miscount shows\)\./
 		);
 		expect(String(together.content)).not.toMatch(/open hat has/);
+		// rests past the end lose nothing, so they are dropped
+		const long = await run(writePatternTool, {
+			track: 1,
+			bars: 1,
+			grid: { kick: 'x... x... x... x... ....' }
+		});
+		expect(long.isError).toBeFalsy();
 		// a made kit's "kick", written as the new project's "kick 1"
 		sim.state.areas.sample.tracks[0].keys[0] = {
 			...sim.state.areas.sample.tracks[0].keys[0]!,

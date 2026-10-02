@@ -29,7 +29,10 @@ little between neighbouring sections and a lot at the big moments:
   lower (write_arrangement's mix, 74 is unity; 62, 48, 32, 16 is a four-step fade), the song not
   looping so it ends on the quietest. A scene lasts as long as its longest pattern, so a fade in
   one-bar steps takes one-bar patterns: write_pattern copy with copy_bar makes a bar of the section
-  a pattern of its own (one lab program does every track's at once and sets the scenes).
+  a pattern of its own (one lab program does every track's at once and sets the scenes). A smooth
+  fade instead locks each track's volume (shift `M2`'s volume) on the outro's steps, lower bar by
+  bar, with the bar menu's shape smoothing between the locks (area bar, param shape; the lab's set
+  with step places the locks).
 
 Four-bar scenes give a clear form; repeat a scene in the song rather than lengthening its patterns.
 A part left out of a section rests: pattern 0 for its track in that scene (an empty pattern).

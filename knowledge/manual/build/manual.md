@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1227 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1228 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -1778,11 +1778,12 @@ Facts:
 - Holding `shift` while `M3` is open brings up a white card of four send rows, worked by `E1`…`E4` from the top — aux out (a plug icon), tape (a reel icon), FX I and FX II; a row reads no send at zero. [#where] (verified 1.1.33) [s1]
 - Aux out feeds the external audio track (auxiliary `T5`), whose output leaves through the multi-out jack when that jack is set to audio. [#aux-out] (derived) [s2]
 - The tape send makes the track's audio available to the tape track (auxiliary `T6`), which replays and mangles it. [#tape] (derived) [s3]
-- FX I and FX II are the two send-effect tracks (auxiliary `T7` and `T8`); what the send does depends on the effect loaded there. [#fx] [s4]
-- Over MIDI, CC36–39 set the four sends in the same order. [#midi-ccs] (community-verified) [s5]
+- In a new project every instrument track's tape send reads 99 (the other sends differ by sound); the tape is the normal path for a track's audio, so 99 there takes nothing away from the mix. [#tape-default] (verified 1.1.33) [s4]
+- FX I and FX II are the two send-effect tracks (auxiliary `T7` and `T8`); what the send does depends on the effect loaded there. [#fx] [s5]
+- Over MIDI, CC36–39 set the four sends in the same order. [#midi-ccs] (community-verified) [s6]
 
 Procedures:
-- Send part of a track to the FX I effect [#fx-send] [s6]
+- Send part of a track to the FX I effect [#fx-send] [s7]
   Needs: instrument mode; the track is selected
   1. `M3`
   2. `shift + turn E3`
@@ -1791,14 +1792,14 @@ Parameters:
 
 | screen | control | name | range | default | CC | notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| M3 | `shift + turn E1` | aux out | – | – | 36 | s6 |
-| M3 | `shift + turn E2` | tape | – | – | 37 | s6 |
-| M3 | `shift + turn E3` | fx i | – | – | 38 | s6 |
-| M3 | `shift + turn E4` | fx ii | – | – | 39 | s6 |
+| M3 | `shift + turn E1` | aux out | – | – | 36 | s7 |
+| M3 | `shift + turn E2` | tape | – | – | 37 | s7 |
+| M3 | `shift + turn E3` | fx i | – | – | 38 | s7 |
+| M3 | `shift + turn E4` | fx ii | – | – | 39 | s7 |
 
 Related: [instrument.filter], [auxiliary.fx-sends], [auxiliary.tape], [auxiliary.external-audio], [mix.levels-pans-sends]
 
-Sources: s1 note 59 · s2 guide:auxiliary#external-audio · s3 guide:auxiliary#tape · s4 guide:auxiliary#fx-i-and-fx-ii · s5 note 20 · s6 guide:instrument#filter
+Sources: s1 note 59 · s2 guide:auxiliary#external-audio · s3 guide:auxiliary#tape · s4 note 30 · s5 guide:auxiliary#fx-i-and-fx-ii · s6 note 20 · s7 guide:instrument#filter
 
 ### LFO page and LFO types (M4) [instrument.lfo]
 current · OS ≥ 1.0.9 · changed in 1.0.15, 1.1.0, 1.1.3 · guide v1.1.15 · verified on 1.1.33

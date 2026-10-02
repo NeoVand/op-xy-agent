@@ -77,6 +77,11 @@ export interface VirtualPattern {
 	readonly locks?: readonly { readonly step: number; readonly values: readonly string[] }[];
 	/** The same locks as stored, for a write that keeps them (a bar written alone, a transpose). */
 	readonly stepLocks?: readonly StepLocks[];
+	/**
+	 * The bar menu's quantisation, 0–100, when not the new pattern's 100 (or "off"): how far notes
+	 * off the grid are pulled onto it as they play.
+	 */
+	readonly quantise?: number | 'off';
 }
 
 /**
@@ -107,6 +112,8 @@ export interface PatternWrite {
 	readonly components?: readonly VirtualComponent[];
 	/** Parameter locks to put on its steps, as readPattern's stepLocks give them (default none). */
 	readonly locks?: readonly StepLocks[];
+	/** The bar menu's quantisation, 0–100 (default: left as it is); setting it switches it on. */
+	readonly quantise?: number;
 	/** Make it the pattern the track plays (default); false edits it in place (a pattern card). */
 	readonly play?: boolean;
 	/**

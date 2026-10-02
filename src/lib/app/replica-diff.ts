@@ -203,6 +203,8 @@ function patternChanges(
 					parts.push(`track scale ${formatScale(was.scale)} → ${formatScale(now.scale)}`);
 				}
 				if (was.groove !== now.groove) parts.push(`groove ${was.groove} → ${now.groove}`);
+				const quant = (p: Pattern) => (p.quantiseOn ? String(p.quantise) : 'off');
+				if (quant(was) !== quant(now)) parts.push(`quantise ${quant(was)} → ${quant(now)}`);
 				parts.push(...extrasChange(was, now, track));
 				if (n !== shown && !same(was.player, now.player)) parts.push('its player changed');
 			} else if (now && now.length !== now.bars * 16) parts.push(`${now.length} steps`);
@@ -228,7 +230,9 @@ const trackName = (index: number) => (index < 8 ? `T${index + 1}` : `aux T${inde
 function sceneChanges(
 	before: readonly VirtualScene[],
 	after: readonly VirtualScene[],
-	onScreen: number | null = null
+	onScreen: number | null = null,
+	/** Whether a track's pattern (1-based) holds no notes, so a scene that plays it rests the track. */
+	empty: (track: number, pattern: number) => boolean = () => false
 ): string[] {
 	// one scene is only what the tracks play, which their own lines say
 	if (before.length <= 1 && after.length <= 1) return [];
@@ -243,10 +247,19 @@ function sceneChanges(
 			lines.push(`scene ${n}: cleared`);
 			continue;
 		}
+		// a track put on an empty pattern rests there, which "T5 p1 → p2" hid
 		const moved = b.patterns.flatMap((pattern, t) => {
-			if (a)
-				return a.patterns[t] === pattern ? [] : [`${trackName(t)} p${a.patterns[t]} → p${pattern}`];
-			return pattern === 1 ? [] : [`${trackName(t)} p${pattern}`];
+			const rests = empty(t, pattern);
+			if (a) {
+				if (a.patterns[t] === pattern) return [];
+				return [
+					rests
+						? `${trackName(t)} rests (p${a.patterns[t]} → p${pattern}, empty)`
+						: `${trackName(t)} p${a.patterns[t]} → p${pattern}`
+				];
+			}
+			if (pattern === 1 && !rests) return [];
+			return [rests ? `${trackName(t)} rests (p${pattern}, empty)` : `${trackName(t)} p${pattern}`];
 		});
 		// a fade's scenes differ by their levels alone, and four of them read "T1 p3, T3 p3"
 		const mixed = n === onScreen ? [] : sceneMix(a, b);
@@ -504,7 +517,14 @@ export function replicaChangeList(
 	// the scene on screen's mix is the mix lines' own, when it is the same scene before and after
 	const onScreen =
 		before.areas.arrange.scene === after.areas.arrange.scene ? after.areas.arrange.scene + 1 : null;
-	for (const line of sceneChanges(a0.scenes, a1.scenes, onScreen)) add(line, arrange);
+	// a pattern with no notes on a track that plays elsewhere, in the state after (0-based track,
+	// 1-based pattern): the track rests in that scene (a track never written is no rest)
+	const holds = (p: Pattern | undefined) => (p?.steps ?? []).some((st) => st.notes.length > 0);
+	const empty = (t: number, pattern: number) => {
+		const patterns = t < 16 ? trackSequence(after, t).patterns : [];
+		return patterns.some(holds) && !holds(patterns[pattern - 1]);
+	};
+	for (const line of sceneChanges(a0.scenes, a1.scenes, onScreen, empty)) add(line, arrange);
 	if (!same(a0.song, a1.song)) {
 		const order = (o: readonly number[]) =>
 			o.length > 12 ? `${o.slice(0, 12).join(' ')} … (${o.length} entries)` : o.join(' ');

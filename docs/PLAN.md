@@ -205,6 +205,21 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   arrangement say playback goes on; a demo that took notes off says so (`caution`); a new scene's
   mix starts from the one playing; the manual: prism ratio by value ranges, triplets from
   multiply (derived).
+- **Probe round seventeen (2026-10-02), 16 scenarios (`probe-scenarios-17.json`: re-checks (the hats
+  swung alone through a merge, a fade from single bars) and new ones: a lesson with a wrong key
+  pressed, limits past the device's (6 bars at 400 bpm), drums asked of track 9, "more space",
+  7/8, sending with no device, a wobble bass, two chord options, a song built over five turns and
+  played from the bridge, the user's own hits then an edit, "surprise me", the key of a build,
+  "faster", downloads):** the merge and copy_bar fixes held; eight calls failed, all on miscounted
+  grid lines, each fixed on the next call. Fixes: write_pattern `humanize` (timing and velocity,
+  per sound, deterministic; the pattern's quantise goes to 0 so notes play where they sit;
+  `quantise` read back and in the change lines); rests past a pattern's end are dropped, and the
+  grid description asks for groups of four with | between bars; readings list notes outside a key
+  the writer named and the mode one of them makes ("B is outside D minor: … D dorian"); scene lines
+  say a track rests on an empty pattern, and a new empty pattern reads "new and empty"; the lab's
+  writePattern takes chords by name; the skills: humanize, a groove is the whole pattern's (hats
+  alone on T2), a smooth fade from volume locks with the bar menu's shape, LFO sync note values;
+  the manual: a new project's tape sends at 99.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

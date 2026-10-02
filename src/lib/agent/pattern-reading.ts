@@ -40,6 +40,12 @@ export interface PatternReading {
 	 */
 	readonly spelled?: string;
 	/**
+	 * Notes outside the key the writer named, and the mode they make when one note sets it apart:
+	 * "B is outside D minor: with it the notes are D dorian". An agent labelled a dorian
+	 * progression D minor and found out only when the user asked.
+	 */
+	readonly outside?: string;
+	/**
 	 * Every note in write_pattern's own form, step:note:length:velocity, the notes of a step with
 	 * one length and velocity joined by + ("1:A1:2:95 17:G3+B3+E4:16:70"), spelled as the bars are.
 	 */
@@ -313,6 +319,36 @@ export function readPattern(
 	const spelled = respelled.length
 		? `${respelled.map((r) => r.name).join(' ')} read as ${respelled.map((r) => r.as).join(' ')}, as ${keyName ?? 'the reading'} spells ${respelled.length === 1 ? 'it' : 'them'} (the same note${respelled.length === 1 ? '' : 's'})`
 		: null;
+	// notes outside the key named (harmonic minor's leading note allowed), and the mode one such
+	// note makes of a plain major or minor
+	let outside: string | null = null;
+	if (meant) {
+		const diatonic = meant.mode === 'major' ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+		const allowed = new Set(diatonic.map((i) => (meant.pitchClass + i) % 12));
+		if (meant.mode === 'minor') allowed.add((meant.pitchClass + 11) % 12);
+		const out = [...new Set(p.notes.map((n) => n.note % 12))]
+			.filter((pc) => !allowed.has(pc))
+			.sort((a, b) => ((a - meant.tonic + 12) % 12) - ((b - meant.tonic + 12) % 12));
+		if (out.length > 0) {
+			const plain = meant.tonic === meant.pitchClass;
+			const step = out.length === 1 ? (out[0] - meant.tonic + 12) % 12 : -1;
+			const mode = !plain
+				? null
+				: meant.mode === 'minor'
+					? step === 9
+						? 'dorian'
+						: step === 1
+							? 'phrygian'
+							: null
+					: step === 10
+						? 'mixolydian'
+						: step === 6
+							? 'lydian'
+							: null;
+			const list = out.map((pc) => ascii(names[pc])).join(' ');
+			outside = `${list} ${out.length === 1 ? 'is' : 'are'} outside ${meant.label}${mode ? `: with ${out.length === 1 ? 'it' : 'them'} the notes are ${ascii(names[meant.tonic])} ${mode} (key "${ascii(names[meant.tonic])} ${mode}" reads them so)` : ''}`;
+		}
+	}
 	// the notes as a write gives them: a 64-note bassline read back as an object a note was five
 	// times its write, and an agent changing it bar by bar read all of it after every bar
 	const atStep = new Map<number, Map<string, number[]>>();
@@ -345,6 +381,7 @@ export function readPattern(
 		...(progression ? { progression } : {}),
 		...(outlines.length ? { outlines } : {}),
 		...(spelled ? { spelled } : {}),
+		...(outside ? { outside } : {}),
 		notes
 	};
 }
