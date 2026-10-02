@@ -78,6 +78,7 @@ import {
 	type WrittenNote
 } from '../pattern-notes';
 import { gridClash, gridKey } from '../grid-key';
+import { keepUnnamed } from '../scene-merge';
 import { parseKey } from '../pattern-reading';
 import { takeReads } from './take-reads';
 
@@ -716,13 +717,18 @@ export function createLab(options: LabOptions): LabSession {
 			const w = check(arrangementWrite, write, 'writeArrangement');
 			const order = w.song ? (w.song.order ?? w.song.scenes) : undefined;
 			if (w.song && !order) throw new LabError('writeArrangement: song needs its order (scenes)');
-			const scenes = w.scenes?.map(({ scene, patterns, mix }) => ({
-				scene,
-				patterns:
-					patterns?.map((p, i) => (typeof p === 'number' ? { track: i + 1, pattern: p } : p)) ??
-					null,
-				...(mix ? { mix } : {})
-			}));
+			// tracks a scene leaves out keep theirs there, as write_arrangement's do (a program resting
+			// one track in the drop's scene reset every other track there to pattern 1)
+			const scenes = keepUnnamed(
+				w.scenes?.map(({ scene, patterns, mix }) => ({
+					scene,
+					patterns:
+						patterns?.map((p, i) => (typeof p === 'number' ? { track: i + 1, pattern: p } : p)) ??
+						null,
+					...(mix ? { mix } : {})
+				})),
+				new Map(virtual.readArrangement().scenes.map((s) => [s.scene, s.patterns]))
+			);
 			return virtual.writeArrangement({
 				scenes,
 				song: order ? { order, loop: w.song?.loop ?? true } : undefined

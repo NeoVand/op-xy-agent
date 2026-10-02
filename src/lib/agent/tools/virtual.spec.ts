@@ -2058,6 +2058,33 @@ describe('write_pattern, short', () => {
 			grid: { 'conga 1': 'x... x... x... x...', 'conga 2': '..x. ..x. ..x. ..x.' }
 		});
 		expect(Object.keys(json(congas).written.grid)).toEqual(['low conga 1', 'high conga 1']);
+		// a made kit names both its kicks "kick": the number still counts them (it found the first)
+		const { virtual: v2, run: run2 } = setup();
+		const audio = { sampleRate: 48000, channels: [new Float32Array(480)] };
+		v2.loadKit(1, {
+			name: 'two kicks',
+			sounds: [
+				{ key: 53, name: 'kick', audio },
+				{ key: 54, name: 'kick', audio }
+			]
+		});
+		const kicks = await run2(writePatternTool, {
+			track: 1,
+			grid: { 'kick 1': 'x...', 'kick 2': '..x.' }
+		});
+		expect(kicks.isError).toBeFalsy();
+		expect(
+			v2
+				.readPattern(1)
+				.notes.filter((n) => n.step === 1)
+				.map((n) => n.note)
+		).toEqual([53]);
+		expect(
+			v2
+				.readPattern(1)
+				.notes.filter((n) => n.step === 3)
+				.map((n) => n.note)
+		).toEqual([54]);
 	});
 
 	it('says what it cannot read, and writes nothing', async () => {

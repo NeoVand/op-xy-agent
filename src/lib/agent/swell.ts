@@ -86,6 +86,40 @@ export function tailNote(
 }
 
 /**
+ * Chord stabs written short on a track whose amp sustain holds them up and whose release rings on
+ * past them into the next strike: they sound longer than written (two agents could not tell from a
+ * result whether their restruck chords sounded short). Null unless most strikes are chords of
+ * three notes or more, most notes 2 steps or less, the sustain 35 or more and the release ringing
+ * clearly (half its time, about −20 dB) past the next strike.
+ */
+export function ringNote(
+	track: number,
+	ampReading: string,
+	notes: readonly Held[],
+	scale: number,
+	bpm: number
+): string | null {
+	const sustain = Number(/\bsustain (\d+)/.exec(ampReading)?.[1] ?? NaN);
+	const m = /\brelease (\d+)/.exec(ampReading);
+	if (!m || !(sustain >= 35) || bpm <= 0 || notes.length < 6) return null;
+	const onsets = new Map<number, number>();
+	for (const n of notes) onsets.set(n.step, (onsets.get(n.step) ?? 0) + 1);
+	const starts = [...onsets.keys()].sort((a, b) => a - b);
+	const chords = starts.filter((at) => (onsets.get(at) ?? 0) >= 3).length;
+	if (starts.length < 3 || chords < starts.length / 2) return null;
+	const middle = (values: number[]) => values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
+	const length = middle(notes.map((n) => n.length));
+	if (length > 2) return null;
+	const step = (60 / bpm / 4) * scale;
+	const gap = middle(starts.slice(1).map((at, i) => at - starts[i])) * step;
+	const ring = stageSeconds('release', Number(m[1])) / 2;
+	const written = length * step;
+	if (ring < 0.25 || written + ring < gap * 1.2) return null;
+	const at = `${Math.round(bpm * 10) / 10} bpm`;
+	return `T${track}'s chords are written short (most ${length} step${length === 1 ? '' : 's'}, ${timeText(written)} at ${at}), but its amp sustain (${sustain}) holds them and its release (${m[1]} on its page) rings about ${timeText(ring)} past each, into the next strike ${timeText(gap)} later: they sound longer than written. For tight stabs, a shorter release ("amp release" with a time, such as "0.1 s") or a lower sustain.`;
+}
+
+/**
  * The tail notes of every instrument track with notes at the tempo now: a tempo change leaves a
  * release as long as it was (an agent slowed a pad from 150 to 70 bpm and said its changes would
  * ring less).

@@ -2,14 +2,14 @@
 	"schema_version": 1,
 	"reference_firmware": "1.1.33",
 	"guide_version": "1.1.15",
-	"bundle_hash": "5e35eca5",
+	"bundle_hash": "d8b81402",
 	"stats": {
 		"units": 166,
 		"facts": 1231,
 		"procedures": 207,
 		"parameters": 207,
 		"verified_items": 261,
-		"words": 46837,
+		"words": 46864,
 		"by_area": {
 			"basics": 8,
 			"hardware": 10,
@@ -30657,7 +30657,7 @@
 				"sequencer.parameter-locks",
 				"howto.wobble"
 			],
-			"body": "Acid lives in the filter: a bright snap at the start of each note that closes almost at once, with\nresonance singing at the cutoff. Program the line with some notes overlapping so they slide, and a\nfew locked accents where the filter opens further. Riding the cutoff live while the pattern loops is\nhalf the fun.",
+			"body": "Acid lives in the filter: a bright snap at the start of each note that closes almost at once, with\nresonance singing at the cutoff. Program the line with some notes overlapping so they slide (a note\nslides into the next only when it lasts past the next one's start; written end to end they only\ntouch, and the next starts anew), and a few locked accents where the filter opens further. Riding the cutoff live while the pattern loops is\nhalf the fun.",
 			"sources": [
 				{
 					"url": "docs/research/59-screen-profiling.md#23-filter-instrument-m3",

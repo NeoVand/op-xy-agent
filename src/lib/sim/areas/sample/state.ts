@@ -62,11 +62,13 @@ export function soundKeyOf(sounds: readonly (string | null)[], wanted: string): 
 	const unstyled = bare(lower).replace(/^\S+\s+(?=\S)/, '');
 	const nth = Number(/\s(\d+)$/.exec(lower)?.[1] ?? 0);
 	const kind = named.filter((x) => bare(x.name) === bare(lower) || ends(x.name, bare(lower)));
+	// the number counts the kind first where the kit has several of it (a made kit names both its
+	// kicks "kick", and "kick 2" found the first)
 	return (
 		named.find((x) => x.name === lower)?.at ??
+		(nth >= 1 && kind.length > 1 ? kind[nth - 1]?.at : undefined) ??
 		named.find((x) => x.name === bare(lower))?.at ??
 		named.find((x) => bare(x.name) === lower)?.at ??
-		(nth >= 1 ? kind[nth - 1]?.at : undefined) ??
 		named.find((x) => ends(x.name, bare(lower)))?.at ??
 		named.find((x) => bare(x.name) === unstyled)?.at ??
 		null

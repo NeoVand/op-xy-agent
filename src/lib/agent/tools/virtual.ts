@@ -10,8 +10,9 @@ import { noteName, parseNoteName } from '$lib/core/midi/notes';
 import { grooveReach } from '../groove-reach';
 import { humanizeNotes, seedOf } from '../humanize';
 import { slidesNote } from '../slides';
-import { swellNote, tailNote } from '../swell';
+import { ringNote, swellNote, tailNote } from '../swell';
 import { gridClash, gridKey } from '../grid-key';
+import { keepUnnamed } from '../scene-merge';
 import { voicesNote } from '../voices';
 import { envelopeTimes } from '$lib/sound/times';
 import { meterOf } from '$lib/sim/areas/arrange/model';
@@ -2076,6 +2077,15 @@ export const writePatternTool = defineTool({
 					virtual.status().bpm
 				);
 				if (tail) notes2.push(tail);
+				// stabs held up by the sustain and rung on by the release, longer than written
+				const ring = ringNote(
+					input.track,
+					pages['M2 amp envelope'] ?? '',
+					result.notes,
+					result.scale,
+					virtual.status().bpm
+				);
+				if (ring) notes2.push(ring);
 			}
 			// a component on a drum step reaches every sound there, as a lock does (a snare roll put
 			// on steps 15 and 16 rolled the hat on 15 too, and the agent could not tell)
@@ -2389,25 +2399,10 @@ export const writeArrangementTool = defineTool({
 			const before = new Map(virtual.status().tracks.map((t) => [t.track, t.patterns]));
 			// tracks a scene leaves out keep what that scene had (pattern 1 in a new scene), so one
 			// track changes alone: an agent restated every track to change one, wary of the rest
-			const had = new Map(virtual.readArrangement().scenes.map((s) => [s.scene, s.patterns]));
-			const scenes = input.scenes?.map(({ scene, patterns, mix }) => {
-				const old = had.get(scene);
-				if (patterns === null) {
-					// cleared: what follows for it in this call starts from pattern 1
-					had.delete(scene);
-					return { scene, patterns };
-				}
-				const named = new Set(patterns.map((p) => p.track));
-				const kept = (old ?? []).flatMap((pattern, i) =>
-					named.has(i + 1) || pattern === 1 ? [] : [{ track: i + 1, pattern }]
-				);
-				const all = [...patterns, ...kept];
-				had.set(
-					scene,
-					Array.from({ length: 16 }, (_, i) => all.find((p) => p.track === i + 1)?.pattern ?? 1)
-				);
-				return { scene, patterns: all, ...(mix ? { mix } : {}) };
-			});
+			const scenes = keepUnnamed(
+				input.scenes,
+				new Map(virtual.readArrangement().scenes.map((s) => [s.scene, s.patterns]))
+			);
 			const result = virtual.writeArrangement({
 				scenes,
 				song: input.song

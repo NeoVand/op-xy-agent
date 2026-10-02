@@ -1,0 +1,142 @@
+[
+	{
+		"name": "truck-driver",
+		"about": "Re-check: a key change read as two keys.",
+		"steps": [
+			{
+				"say": "write a pop chord progression on track 4 that goes up a half step for its second half, like a last chorus"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chords-up-high",
+		"about": "Re-check: chords placed above the bass by register.",
+		"steps": [
+			{ "say": "write a bassline on track 3" },
+			{ "say": "now write chords on track 4, high up and out of the bass's way" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "fx-one-chorus",
+		"about": "Re-check: an FX swapped, its senders named.",
+		"steps": [
+			{ "say": "make a beat with chords and a lead" },
+			{ "say": "change FX I to a chorus" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "pad-doubled",
+		"about": "Re-check: a release re-said after a tempo change.",
+		"steps": [
+			{ "say": "write a pad with long chords on track 8 at 100 bpm" },
+			{ "say": "make it twice as fast" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "eight-bar-chords",
+		"about": "Re-check: a part longer than a pattern.",
+		"steps": [
+			{ "say": "write 8 bars of chords on track 7, one chord per bar, all different" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "four-over-three",
+		"about": "Re-check: a polyrhythm by its meaning.",
+		"steps": [{ "say": "make a 4 over 3 polyrhythm with a kick and a cowbell" }, { "why": true }]
+	},
+	{
+		"name": "german-acid",
+		"about": "A request in German.",
+		"steps": [{ "say": "Mach einen Techno-Beat mit Acid-Bass" }, { "why": true }]
+	},
+	{
+		"name": "hindi-lofi",
+		"about": "A request in Hindi.",
+		"steps": [{ "say": "ड्रम और बास के साथ एक धीमा लो-फाई बीट बनाओ" }, { "why": true }]
+	},
+	{
+		"name": "punch-in-fx",
+		"about": "A device feature question.",
+		"steps": [{ "say": "what can I do with the punch-in effects?" }, { "why": true }]
+	},
+	{
+		"name": "heartbeat",
+		"about": "A beat from a picture.",
+		"steps": [{ "say": "make a beat that sounds like a heartbeat" }, { "why": true }]
+	},
+	{
+		"name": "bach-bass",
+		"about": "A bass in a classical style.",
+		"steps": [
+			{ "say": "write chords on track 4" },
+			{ "say": "now a bass line under them in the style of Bach" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "all-down-two",
+		"about": "One change across tracks.",
+		"steps": [
+			{ "say": "make a beat with a bass, chords and a melody" },
+			{ "say": "transpose everything down 2 semitones" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chords-copied-up",
+		"about": "A part copied to another track and moved.",
+		"steps": [
+			{ "say": "write chords on track 4" },
+			{ "say": "copy them to track 7 an octave higher" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "quiet-intro-drums",
+		"about": "A level in one part of a song.",
+		"steps": [
+			{ "say": "make a 3 scene song with an intro, a verse and a chorus" },
+			{ "say": "make the drums quieter in the intro" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "riser-drop",
+		"about": "A build effect.",
+		"steps": [
+			{ "say": "make a 2 scene song with a build and a drop" },
+			{ "say": "add a riser before the drop" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hats-panned",
+		"about": "One drum sound placed in the stereo field.",
+		"steps": [
+			{ "say": "make a beat with hats and a shaker" },
+			{ "say": "pan the hats left and the shaker right" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-track-six",
+		"about": "A player on chords.",
+		"steps": [
+			{ "say": "put chords on track 6 and run them through the arpeggiator" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "louder-chorus",
+		"about": "A song whose chorus lifts.",
+		"steps": [
+			{ "say": "make a song with an intro, a verse and a chorus, and make the chorus louder" },
+			{ "why": true }
+		]
+	}
+]

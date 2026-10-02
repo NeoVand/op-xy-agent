@@ -610,7 +610,10 @@ export const planStepsTool = defineTool({
 			: [];
 		// a lock on a drum track's step reaches every sound on it (an agent locked a send on the
 		// snare's steps and said the hats stayed dry)
-		const goals = 'settings' in goal ? goal.settings : 'param' in goal ? [goal] : [];
+		// one goal alone too, a page's value by its label as well as a parameter (an FX swapped alone
+		// said nothing of who sent to it)
+		const goals =
+			'settings' in goal ? goal.settings : 'param' in goal || 'label' in goal ? [goal] : [];
 		const locked = new Map<number, number[]>();
 		for (const g of goals) {
 			if (!('step' in g) || g.step === undefined) continue;

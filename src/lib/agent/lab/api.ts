@@ -319,8 +319,8 @@ export interface Fork {
 	readArrangement(): Arrangement;
 	/**
 	 * Sets scenes (`patterns` by track, or every track's as readArrangement gives them; pattern 0
-	 * rests a track; `null` clears a scene; tracks left out play pattern 1) and the song (`order`,
-	 * `loop`).
+	 * rests a track; `null` clears a scene; tracks left out keep theirs in that scene, pattern 1 in
+	 * a new one) and the song (`order`, `loop`).
 	 */
 	writeArrangement(write: ArrangementWrite): Arrangement;
 	/** An instrument track's whole sound (1–8), each page as its screen shows it. */

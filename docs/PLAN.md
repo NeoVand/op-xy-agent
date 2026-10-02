@@ -639,6 +639,20 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   (a second pattern, or track scale 2); an envelope's release set by time says which way the page
   runs; "already set" says nothing was turned; three against four names both meanings (a polymeter,
   or a polyrhythm in one 12-step cycle).
+- **Probe round forty-three (2026-10-02), 18 scenarios (`probe-scenarios-43.json`: re-checks (a key
+  change up a half step, chords placed high by register, FX I swapped for a chorus, a pad doubled in
+  tempo, eight bars of chords, four over three) and new kinds: acid techno asked in German, lo-fi in
+  Hindi, the punch-in effects, a heartbeat, a Bach-style bass, everything down two semitones, chords
+  copied up an octave, a quieter intro, a riser before a drop, hats and shaker panned, the
+  arpeggiator, a louder chorus):** one failed call. Held: eight bars at track scale 2, chords at C5,
+  the release re-said at 200 bpm, four over three in one 12-step cycle. Fixes: a made kit's two keys
+  both named "kick" are counted by number (**"kick 2" found the first**, and the grid was refused);
+  the lab's writeArrangement keeps the tracks a scene leaves out, as write_arrangement does (**a
+  program resting one track in the drop reset every other track there to pattern 1**); an FX swapped
+  as one goal says who sends to it; chord stabs held up by the sustain and rung on by the release
+  say they sound longer than written; "already" names the value it found; the acid recipe says a
+  note slides only when it lasts past the next one's start. The owner then turned the work to the
+  replica's fidelity (Phase G below): the agent rounds pause here.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval); multiply at `accidental 9`

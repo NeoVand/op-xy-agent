@@ -5572,8 +5572,9 @@ Where: modes instrument; screens M3, M2
 On the bass track pick the ladder filter, set a low cutoff, high resonance and a strong, short filter envelope, then play mode legato with a little portamento so that overlapping notes slide.
 
 Acid lives in the filter: a bright snap at the start of each note that closes almost at once, with
-resonance singing at the cutoff. Program the line with some notes overlapping so they slide, and a
-few locked accents where the filter opens further. Riding the cutoff live while the pattern loops is
+resonance singing at the cutoff. Program the line with some notes overlapping so they slide (a note
+slides into the next only when it lasts past the next one's start; written end to end they only
+touch, and the next starts anew), and a few locked accents where the filter opens further. Riding the cutoff live while the pattern loops is
 half the fun.
 
 Facts:

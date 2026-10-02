@@ -868,6 +868,17 @@ describe('plan_steps to the project settings', () => {
 		expect(swapped.fx).toMatch(
 			/^FX II's effect is every track's: (T\d \d+, )*T4 23(, T\d \d+)* send to it, through the lofi now; the rest send nothing\.$/
 		);
+		// one goal alone says it too (FX I swapped for a chorus said nothing)
+		const alone = json(
+			await run(planStepsTool, {
+				show: true,
+				area: 'auxiliary',
+				track: 15,
+				param: 'effect',
+				value: 'chorus'
+			})
+		);
+		expect(alone.fx).toMatch(/^(FX I's effect is every track's|No track sends to FX I yet)/);
 	});
 
 	it('says how to hear a sound shaped on a track with notes, alone', async () => {

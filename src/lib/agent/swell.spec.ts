@@ -1,7 +1,7 @@
 // A slow attack against the notes it sounds under: said when they end before it does, or reach
 // full level only near their end; nothing for notes that outlast it.
 import { describe, expect, it } from 'vitest';
-import { swellNote, tailNote } from './swell';
+import { ringNote, swellNote, tailNote } from './swell';
 
 const amp = (attack: number, release = 33) =>
 	`amp envelope: attack ${attack}, decay 96, sustain 99, release ${release}`;
@@ -51,5 +51,30 @@ describe('tailNote', () => {
 		// the same chord again: nothing of it is left to ring under another
 		const same = [...chord(1, [60, 64, 67]), ...chord(17, [60, 64, 67])];
 		expect(tailNote(7, amp(35, 30), same, 1, 120)).toBeNull();
+	});
+});
+
+describe('ringNote', () => {
+	// chord stabs a step long, every 3 steps, on a held-up sound with a long release
+	const stabs = [1, 4, 7, 10, 13, 16].flatMap((step) =>
+		[60, 64, 67].map((note) => ({ step, length: 1, note }))
+	);
+	const env = (sustain: number, release: number) =>
+		`amp envelope: attack 00, decay 30, sustain ${sustain}, release ${release}`;
+
+	it('says short chords ring on past the next strike', () => {
+		expect(ringNote(6, env(47, 60), stabs, 1, 120)).toMatch(
+			/^T6's chords are written short \(most 1 step, 0\.1 s at 120 bpm\), but its amp sustain \(47\) holds them and its release \(60 on its page\) rings about 0\.\d s past each, into the next strike 0\.4 s later: they sound longer than written\./
+		);
+	});
+
+	it('says nothing for a sound that dies on its own, a short release, held chords or single notes', () => {
+		// a pluck's low sustain: each stab dies by itself
+		expect(ringNote(4, env(11, 69), stabs, 1, 120)).toBeNull();
+		expect(ringNote(6, env(47, 95), stabs, 1, 120)).toBeNull();
+		const held = stabs.map((n) => ({ ...n, length: 3 }));
+		expect(ringNote(6, env(47, 60), held, 1, 120)).toBeNull();
+		const line = [1, 4, 7, 10, 13, 16].map((step) => ({ step, length: 1, note: 60 }));
+		expect(ringNote(6, env(47, 60), line, 1, 120)).toBeNull();
 	});
 });

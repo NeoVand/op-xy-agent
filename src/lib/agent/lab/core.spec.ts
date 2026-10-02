@@ -189,6 +189,13 @@ describe('forks', () => {
 		expect(changes).toContain('T1 plays pattern 2 (was 1)');
 		expect(changes.find((c) => c.startsWith('scene 2:'))).toBe('scene 2: new, T1 p2');
 		expect(changes).toContain('song: 1 → 1 2');
+		// a scene written again keeps the tracks it leaves out, as write_arrangement does (a program
+		// resting one track in the drop's scene reset the others to pattern 1)
+		f.writePattern(3, { pattern: 2, bars: 1, notes: [{ step: 1, note: 45 }], stay: true });
+		f.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 3, pattern: 2 }] }] });
+		f.writeArrangement({ scenes: [{ scene: 2, patterns: [{ track: 6, pattern: 0 }] }] });
+		const two = f.readArrangement().scenes.find((sc) => sc.scene === 2)!;
+		expect([two.patterns[0], two.patterns[2]]).toEqual([2, 2]);
 		// against another fork: what this one has that the other lacks
 		const g = lab.fork();
 		g.setTempo(96);
