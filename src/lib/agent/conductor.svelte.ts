@@ -23,6 +23,7 @@ import type {
 } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import type { DeviceStack } from '$lib/device';
 import type { ReplicaState } from '$lib/replica';
+import { PressLog } from './press-log';
 import { nextActivity, startActivity, type Activity } from './activity';
 import { attachmentProblem, userContent, type PreparedAttachment } from './attachments';
 import {
@@ -358,6 +359,9 @@ export class Conductor {
 	readonly #manualMode: 'full' | 'map';
 	/** The replica when the user's message arrived, and the changes last reported against it. */
 	#checkpoint: VirtualCheckpoint | null = null;
+	/** The user's own presses on the replica since the agent last finished, by the keys' names. */
+	#presses = new PressLog();
+	#stopPresses: (() => void) | null = null;
 	/** The replica when the agent last finished: what the user changed since is theirs to tell. */
 	#lastSeen: VirtualCheckpoint | null = null;
 	#reported = '';
@@ -464,6 +468,8 @@ export class Conductor {
 			abortDeviceWork: (reason) => this.#queue.abortAll(reason),
 			runSubagent: (type, description, ctx) => this.#runSubagent(type, description, ctx)
 		};
+		this.#stopPresses =
+			options.replica?.subscribe((event) => this.#presses.add(event, this.#now())) ?? null;
 	}
 
 	/** Builds a conductor and restores the last conversation (or starts a new one). */
@@ -484,6 +490,7 @@ export class Conductor {
 	 */
 	seeReplica(): void {
 		this.#lastSeen = this.#env.virtual?.checkpoint() ?? null;
+		this.#presses.clear();
 	}
 
 	/**
@@ -778,6 +785,8 @@ export class Conductor {
 		this.#listeners.clear();
 		this.#journal.onChange(null);
 		this.#queue.onChange(null);
+		this.#stopPresses?.();
+		this.#stopPresses = null;
 	}
 
 	// ─── internals ────────────────────────────────────────────────────────────────────────────
@@ -1197,8 +1206,14 @@ export class Conductor {
 		// could not tell whether recording was still on)
 		const now = `Now: ${playingNow(virtual)}`;
 		const recording = virtual.status().recording !== undefined;
+		// the keys they pressed, which a change of page or mode leaves no change line for (an agent
+		// asked "I pressed some buttons, where am I?" could say where, not what was pressed)
+		const pressed = this.#presses.list();
+		const keys = pressed.length
+			? `The user's own presses on the replica since then, in order: ${pressed.join(', ')}.`
+			: null;
 		if (lines.length === 0) {
-			const parts = [walk, recording ? now : null].filter(Boolean);
+			const parts = [keys, walk, recording || keys ? now : null].filter(Boolean);
 			return parts.length ? `<user-changes>\n${parts.join('\n')}\n</user-changes>` : null;
 		}
 		const since = this.#answered ? 'Since your last answer' : 'Since the chat opened';
@@ -1213,6 +1228,7 @@ export class Conductor {
 			playedOn.length
 				? `${byHand.length ? 'And as' : `${since}, as`} the replica played on: ${playedOn.join('; ')}.`
 				: null,
+			keys,
 			walk,
 			now
 		].filter(Boolean);
@@ -1368,6 +1384,7 @@ export class Conductor {
 			this.lastError = failed ? result.error : null;
 			this.#noteChanges();
 			this.#lastSeen = this.#env.virtual?.checkpoint() ?? null;
+			this.#presses.clear();
 			this.status = failed ? 'error' : 'idle';
 		} catch (error) {
 			const info = normalizeError(error);

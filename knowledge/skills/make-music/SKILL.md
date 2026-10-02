@@ -45,7 +45,7 @@ to swing the hats alone, put them on T2 (a kit of its own) with a groove there. 
 write_pattern's humanize alone (timing 0.05–0.1 of a step, velocity 8–15; sounds for one line of a
 kit), which puts notes a little off the grid as a player would. With no tempo given,
 pick one that suits the style (house 120–126, techno 128–135, hip hop and boom bap 85–95, lo-fi
-70–85, drum and bass 170–175); slow, ambient or a pad wants 60–80 (one chord a bar at 120 is not
+70–85, reggaeton 90–100, drum and bass 170–175); slow, ambient or a pad wants 60–80 (one chord a bar at 120 is not
 slow). A new project's metronome clicks on every beat: when you start playback of a beat or song you made,
 switch it off first (set_metronome) and say so in a few words; otherwise leave it alone (someone
 learning or playing along keeps time by it).
@@ -72,7 +72,8 @@ velocity into the next downbeat, toms at the end if you like; write the groove's
 the whole pattern, then the fill's bar alone with bar, rather than counting a 64-mark line; a fill
 every fourth bar is a one-bar groove, a copy of it with the fill (copy and bar), two scenes and the
 song 1 1 1 2), four-on-the-floor is a kick on every
-beat, a backbeat is the snare on 2 and 4, and a closed and an open hat do not share a step (a
+beat, a backbeat is the snare on 2 and 4, reggaeton's dembow is the kick on every beat under a snare
+or rim on steps 4, 7, 12 and 15 (three, three, two), and a closed and an open hat do not share a step (a
 drummer plays one or the other: write a steady closed-hat line with open hats on top if you like,
 and the grid leaves each closed hat under an open one out, as its result says; show the grid as it
 came back). Velocity per step is a step component

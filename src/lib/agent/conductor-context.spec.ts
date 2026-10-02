@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { createVirtualOpxy } from '$lib/app/virtual';
 import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { ReplicaState } from '$lib/replica';
 import { createAnthropicClient } from './client';
 import { askedTempo, Conductor } from './conductor.svelte';
 import { createNodeLabHost } from './lab/node';
@@ -162,6 +163,36 @@ describe('the conductor grounds its answer', () => {
 		await conductor.send('ok').catch(() => {});
 		const third = api.messageRequests[2]?.body.messages ?? [];
 		expect(JSON.stringify(third.slice(-2))).not.toContain('<user-changes>');
+	});
+
+	it('tells the next message which keys the user pressed on the replica', async () => {
+		// "I pressed some buttons and the screen looks different": a page change leaves no change line
+		const sim = new OpxySim({ now: () => 0 });
+		const virtual = createVirtualOpxy({ sim });
+		const replica = new ReplicaState();
+		replica.observe((event) => sim.input(event));
+		const api = scriptedApi([answer('You are in arrange mode.')]);
+		const conductor = await Conductor.create({
+			client: createAnthropicClient({ apiKey: KEY, fetch: api.fetch, maxRetries: 0 }),
+			device: null,
+			replica,
+			virtual,
+			manual: MANUAL,
+			store: createMemoryThreadStore(),
+			confirmWindowMs: 0,
+			autoApprove: true,
+			session: 'session-test'
+		});
+		for (const id of ['key.arrange', 'track.3'] as const) {
+			replica.press(id, 'pointer');
+			replica.release(id, 'pointer');
+		}
+		await conductor.send('where am I?');
+		const text = JSON.stringify(api.messageRequests[0].body.messages);
+		expect(text).toContain(
+			"The user's own presses on the replica since then, in order: arrange, T3."
+		);
+		conductor.dispose();
 	});
 
 	it('tells the first message what the user did before it, since the chat opened', async () => {

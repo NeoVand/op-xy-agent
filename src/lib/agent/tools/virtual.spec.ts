@@ -72,6 +72,8 @@ describe('write_pattern', () => {
 		const result = await run(writePatternTool, { track: 1, notes: [...kick, ...snare] });
 		expect(result.isError).toBeFalsy();
 		expect(json(result).written).toMatchObject({ track: 1, pattern: 1, bars: 1, noteCount: 6 });
+		// each sound's steps by number beside the grid (agents placed hits from the marks wrongly)
+		expect(json(result).written.hits).toBe('kick 1: 1 5 9 13; kick 2: 5 13');
 		expect(stepRow(sim)).toBe('w...w...w...w...');
 		const p = currentPattern(sim.state.tracks[0].sequence);
 		expect(p.steps[4].notes.map((n) => [n.note, n.velocity])).toEqual([
@@ -535,6 +537,10 @@ describe('write_pattern on drums', () => {
 		expect(result.written.notes).toBe(
 			'1:A3+C4+E4:16:100 17:A3+C4+F4:16:100 33:G3+C4+E4:16:100 49:G3+B3+D4:16:100'
 		);
+		// the strings' long release rings each chord on under the next (read as sus chords once)
+		expect(result.note).toMatch(
+			/T7's amp release takes \d+(\.\d)? s to die away \(120 bpm\), so each chord rings on under the next/
+		);
 		const bad = await run(writePatternTool, { track: 7, chords: '1:Hm7' });
 		expect(bad.isError).toBe(true);
 		expect(String(bad.content)).toMatch(/"Hm7" is not a chord name/);
@@ -829,7 +835,7 @@ describe('write_pattern on drums', () => {
 			})
 		);
 		expect(bass.note).toMatch(
-			/Its 48 steps loop on their own against T1's 64: while the scene repeats they drift and line up again every 192 steps \(12 bars\)/
+			/Its 48 steps loop on their own against T1.s 64: while the scene loops on its own they drift and line up again every 192 steps \(12 bars\); in a song, every entry \(the same scene again too\) starts every track on its first step/
 		);
 		expect(bass.note).toMatch(/on the first pass: their lengths differ/);
 	});
@@ -1286,6 +1292,19 @@ describe('write_arrangement', () => {
 			})
 		);
 		expect(result.addedEmpty).toEqual(['track 3: pattern 2, 3 (empty)']);
+	});
+
+	it('says when a scene cuts a shorter pattern’s last loop off in the song', async () => {
+		// two-bar chords under a three-bar melody, the scene four times: each entry restarts them
+		const { run } = setup();
+		await run(writePatternTool, { track: 7, bars: 2, notes: '1:C4+E4+G4:16 17:F4+A4+C5:16' });
+		await run(writePatternTool, { track: 5, bars: 3, notes: '1:C5:4 17:D5:4 33:E5:4' });
+		const song = json(
+			await run(writeArrangementTool, { song: { scenes: [1, 1, 1, 1], loop: false } })
+		);
+		expect(song.cutOff).toBe(
+			"scene 1 (3 bars): T7's 2 bars play 1.5 times, the last pass cut off when the song moves on: each song entry, the same scene again too, starts every track on its first step. Patterns that divide the scene's length play whole."
+		);
 	});
 
 	it('undoes to the scenes and song before', async () => {

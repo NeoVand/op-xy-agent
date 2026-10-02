@@ -254,7 +254,7 @@ describe('the key of a pattern with the parts alongside it', () => {
 });
 
 describe('a chord named over the bass another part plays', () => {
-	it('reads a rootless voicing as the chord its bass makes it', () => {
+	it('names a part’s own chords, and what they make over another track’s bass beside them', () => {
 		const at = (notes: [number, number, number][], track: number): VirtualPattern => ({
 			track,
 			pattern: 1,
@@ -273,9 +273,27 @@ describe('a chord named over the bass another part plays', () => {
 		const bass = at([[1, 45, 16]], 3);
 		expect(readPattern(keys)?.chords?.[0]).toMatch(/^step 1: Cmaj7 /);
 		const over = readPattern(keys, [bass]);
-		expect(over?.bars[0]).toMatch(/^Am9 /);
-		// and what its own notes make, which a part moved before its bass would read as
-		expect(over?.chords?.[0]).toBe("step 1: Am9 (C E G B over T3's A; its own notes make Cmaj7)");
+		// its own chord first: a strings part transposed before its bass read Bm7/A for B D F#
+		expect(over?.bars[0]).toMatch(/^Cmaj7 /);
+		expect(over?.chords?.[0]).toBe("step 1: Cmaj7 (C E G B; over T3's A it sounds as Am9)");
+		// a progression over the bass, apart from its own
+		const two = at(
+			[
+				...[60, 64, 67, 71].map((note) => [1, note, 8] as [number, number, number]),
+				...[60, 65, 69].map((note) => [9, note, 8] as [number, number, number])
+			],
+			4
+		);
+		const under = at(
+			[
+				[1, 45, 8],
+				[9, 50, 8]
+			],
+			3
+		);
+		const both = readPattern(two, [under]);
+		expect(both?.progression).toMatch(/^Cmaj7 F\b/);
+		expect(both?.withBass).toBe("with T3's bass as it plays now: Am9 Dm7");
 	});
 });
 

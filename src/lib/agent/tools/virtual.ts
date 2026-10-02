@@ -10,7 +10,7 @@ import { parseNoteName } from '$lib/core/midi/notes';
 import { grooveReach } from '../groove-reach';
 import { humanizeNotes, seedOf } from '../humanize';
 import { slidesNote } from '../slides';
-import { swellNote } from '../swell';
+import { swellNote, tailNote } from '../swell';
 import { gridKey } from '../grid-key';
 import { voicesNote } from '../voices';
 import { envelopeTimes } from '$lib/sound/times';
@@ -201,7 +201,7 @@ function patternView(
 		// notes off the grid (a live take), which neither the grid nor the notes form shows
 		...offGrid(p),
 		...(p.quantise !== undefined ? { quantise: p.quantise } : {}),
-		...(grid ? { grid } : {}),
+		...(grid ? { grid, hits: drumHits(p) ?? '' } : {}),
 		...('bars' in reading ? { reading } : {}),
 		...(notes
 			? { notes }
@@ -209,6 +209,32 @@ function patternView(
 				? {}
 				: { steps: [...byStep.entries()].map(([step, notes]) => ({ step, notes })) })
 	};
+}
+
+/**
+ * Each drum sound's steps by number, beside the grid ("kick 1: 1 7 9; snare 1: 5 11"): agents
+ * describing a 7/8 beat and a reggaeton hat line from the grid's marks put hits on the wrong steps.
+ * A long regular line reads "every 2 from 1 (32)".
+ */
+function drumHits(p: VirtualPattern): string | null {
+	const steps = new Map<string, number[]>();
+	for (const n of p.notes) {
+		if (!n.sound) continue;
+		const list = steps.get(n.sound) ?? [];
+		if (!list.includes(n.step)) list.push(n.step);
+		steps.set(n.sound, list);
+	}
+	if (steps.size === 0) return null;
+	const listed = (at: number[]): string => {
+		const sorted = [...at].sort((a, b) => a - b);
+		if (sorted.length <= 16) return sorted.join(' ');
+		const gap = sorted[1] - sorted[0];
+		const regular = sorted.every((s, i) => i === 0 || s - sorted[i - 1] === gap);
+		return regular
+			? `every ${gap} from ${sorted[0]} (${sorted.length})`
+			: `${sorted.slice(0, 12).join(' ')} … (${sorted.length} in all)`;
+	};
+	return [...steps.entries()].map(([sound, at]) => `${sound}: ${listed(at)}`).join('; ');
 }
 
 /** The notes that play off the grid, by how far: "3 notes off the grid (…): step 5 +0.10, …". */
@@ -1249,7 +1275,7 @@ export const writePatternTool = defineTool({
 						.slice(0, 4)
 						.join(', ');
 					notes2.push(
-						`Its ${own} steps loop on their own against ${lengths}: while the scene repeats they drift and line up again every ${together} steps (${Math.round((together / 16) * 100) / 100} bars); when the song moves to another scene, every track starts it on its first step.`
+						`Its ${own} steps loop on their own against ${lengths}: while the scene loops on its own they drift and line up again every ${together} steps (${Math.round((together / 16) * 100) / 100} bars); in a song, every entry (the same scene again too) starts every track on its first step, so there the scene's length cuts the shorter loops off.`
 					);
 				}
 			}
@@ -1295,6 +1321,16 @@ export const writePatternTool = defineTool({
 					virtual.status().bpm
 				);
 				if (swell) notes2.push(swell);
+				// a long release under changing chords (a pad's 3.2 s tail read as sus chords at
+				// every change, and the agent looked for the clash in the notes)
+				const tail = tailNote(
+					input.track,
+					pages['M2 amp envelope'] ?? '',
+					result.notes,
+					result.scale,
+					virtual.status().bpm
+				);
+				if (tail) notes2.push(tail);
 			}
 			// step components on steps with no notes, left out (an agent's rolls sat on rests)
 			if (bare.length > 0) {
@@ -1358,7 +1394,7 @@ export const readPatternTool = defineTool({
 	label: 'read pattern',
 	kind: 'read',
 	description:
-		'Read one pattern of one track on the replica: bars, length, track scale and every note (a drum track as its grid, any other also as notes in the form write_pattern takes, to edit and write back). Default: the pattern the track plays now. Changes nothing.',
+		"Read one pattern of one track on the replica: bars, length, track scale and every note (a drum track as its grid, any other also as notes in the form write_pattern takes, to edit and write back), with its step locks (each step's own values, such as a cutoff locked on step 17) and step components. Default: the pattern the track plays now. Changes nothing; use it to check what landed.",
 	input: z.object({
 		track: z.int().min(1).max(16).describe('Track 1–16'),
 		pattern: z.int().min(1).max(16).optional().describe('Pattern 1–16 (default: the one playing)')
@@ -1622,10 +1658,35 @@ export const writeArrangementTool = defineTool({
 			const resting = (shown?.patterns ?? []).flatMap((p, i) =>
 				p !== 1 && byPattern.get(i + 1)?.[p - 1] === 0 ? [`T${i + 1}`] : []
 			);
+			// in a song every entry starts every track over, so a scene longer than a pattern and not
+			// a whole number of its loops cuts its last loop off (an agent had to work out that two-
+			// bar chords in a three-bar scene restart halfway through their second pass)
+			const cut =
+				result.song.order.length > 1
+					? [...new Set(result.song.order)].flatMap((number) => {
+							const scene = result.scenes.find((sc) => sc.scene === number);
+							if (!scene) return [];
+							return scene.patterns.slice(0, 8).flatMap((pattern, i) => {
+								if (byPattern.get(i + 1)?.[pattern - 1] === 0) return [];
+								const p = virtual.readPattern(i + 1, pattern);
+								const bars = (p.length * p.scale) / (result.barSteps ?? 16);
+								const passes = scene.bars / bars;
+								if (bars <= 0 || Math.abs(passes - Math.round(passes)) < 1e-6) return [];
+								return [
+									`scene ${number} (${barsText(scene.bars)}): T${i + 1}'s ${barsText(bars)} play ${Math.round(passes * 100) / 100} times, the last pass cut off when the song moves on`
+								];
+							});
+						})
+					: [];
 			return jsonResult(
 				{
 					arrangement: arrangementView(result, virtual.status().bpm, byPattern),
 					...(added.length ? { addedEmpty: added } : {}),
+					...(cut.length
+						? {
+								cutOff: `${cut.join('; ')}: each song entry, the same scene again too, starts every track on its first step. Patterns that divide the scene's length play whole.`
+							}
+						: {}),
 					// while it plays (an agent could not tell whether a rewrite would restart or jump it)
 					note: `On the replica.${resting.length ? ` In scene ${result.scene}, the one on screen, ${resting.join(', ')} rest${resting.length === 1 ? 's' : ''} on an empty pattern: selecting ${resting.length === 1 ? 'it' : 'one'} there shows that pattern, empty.` : ''}${virtual.status().playing ? ' Playback goes on where it was, the scene on screen with its new patterns; transport play starts the song again from its first scene.' : ''}`
 				},

@@ -1,0 +1,151 @@
+[
+	{
+		"name": "pad-wider-width",
+		"about": "Re-check: the preset settings' stereo width.",
+		"steps": [
+			{ "say": "put a pad on track 8 and widen its stereo image as far as it goes" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "accents-open-filter",
+		"about": "Re-check: velocity → cutoff routing for accents.",
+		"steps": [
+			{ "say": "make a bassline on track 3 with some accented notes" },
+			{ "say": "make the accented notes open the filter more than the others" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "keyboard-on-channel-3",
+		"about": "Re-check: a track's midi channel, said another way.",
+		"steps": [
+			{ "say": "my midi keyboard sends on channel 3. set it up so it plays track 4" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "song-drift",
+		"about": "Re-check: patterns of different lengths in a repeating scene and a song.",
+		"steps": [
+			{
+				"say": "make a 2 bar chord loop on track 7 and a 3 bar melody on track 5, then a song that plays it four times"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-as-grid",
+		"about": "Re-check: the bars legend, read back.",
+		"steps": [
+			{ "say": "make a 2 bar bassline on track 3" },
+			{ "say": "show me what you wrote, step by step, so I can copy it by hand" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "half-second-release",
+		"about": "Re-check: an envelope stage by its time, through the sound skill.",
+		"steps": [
+			{ "say": "make the lead on track 5 fade out in about half a second after each note" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "factory-bass",
+		"about": "Re-check: a preset folder listed, a factory preset said to be a stand-in.",
+		"steps": [
+			{ "say": "make a bassline on track 3" },
+			{ "say": "try a different factory bass preset on it" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "sample-demo",
+		"about": "Re-check: a record-page demo says what the replica can't record.",
+		"steps": [
+			{ "say": "show me on the replica how to sample a sound onto the drum track" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "mellow-lead",
+		"about": "Re-check: a timbre word routes the sound skill.",
+		"steps": [
+			{ "say": "write a lead melody on track 5" },
+			{ "say": "make it sound more mellow" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "reggaeton",
+		"about": "A genre not tried yet.",
+		"steps": [{ "say": "make a reggaeton beat with a bass" }, { "why": true }]
+	},
+	{
+		"name": "seven-eight",
+		"about": "An odd time signature.",
+		"steps": [{ "say": "make a beat in 7/8" }, { "why": true }]
+	},
+	{
+		"name": "transpose-everything",
+		"about": "A project-wide edit.",
+		"steps": [
+			{ "say": "make a chord loop on track 7 and a bassline on track 3" },
+			{ "say": "transpose everything up two semitones" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "hats-louder-bar-4",
+		"about": "A velocity change in one bar only.",
+		"steps": [
+			{ "say": "make a 4 bar beat" },
+			{ "say": "make the hats louder only in bar 4" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "arp-the-chords",
+		"about": "The arpeggiator player.",
+		"steps": [
+			{ "say": "put some chords on track 7" },
+			{ "say": "arpeggiate them, upward, in 16ths" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "japanese-dnb",
+		"about": "A request in Japanese.",
+		"steps": [{ "say": "ドラムンベースのビートを作って、ベースも入れて" }, { "why": true }]
+	},
+	{
+		"name": "save-as-name",
+		"about": "Saving under a name the user gives.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "save this project as night drive" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "clash-fix",
+		"about": "A harmony problem to find and fix.",
+		"steps": [
+			{ "say": "make chords in C major on track 7 and a bassline on track 3" },
+			{ "say": "the bass clashes with the chords somewhere, can you find it and fix it?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "where-am-i",
+		"about": "The user presses keys and asks where they are.",
+		"steps": [
+			{ "press": ["key.arrange", "track.3"] },
+			{
+				"say": "I pressed some buttons and now the screen looks different. where am I, and how do I get back?"
+			},
+			{ "why": true }
+		]
+	}
+]

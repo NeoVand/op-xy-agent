@@ -334,6 +334,26 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   "rounder" routes to the sound skill, which now sets envelopes by time and names velocity →
   cutoff; device_status with nothing connected drops the device's clock notes; write_arrangement
   says a scene's mute rests a track too; the bars legend and merge are described.
+- **Probe round twenty-five (2026-10-02), 18 scenarios (`probe-scenarios-25.json`: re-checks (a pad
+  widened, accents opening the filter, a keyboard on channel 3, a 2-bar loop under a 3-bar melody in
+  a song, a bassline read back to copy by hand, a half-second fade, a factory bass, a sampling demo,
+  a mellower lead) and new kinds: reggaeton, 7/8, transposing everything, hats louder in bar 4 only,
+  arpeggiated chords, Japanese drum and bass, saving as "night drive", a bass clash to find, "where
+  am I?" after the user's own presses):** no failed calls; width, velocity routing, folder listing
+  and the stand-in notes held. Fixes: save as takes the copy's name and types it on the naming
+  screen (and "rename" renames), where "night drive" had saved as "project 2" and read back as set
+  already (actions are never already set); the system settings are reachable (com → M1: midi clock,
+  notes, active channel, keyboard velocity, pitchbend sides…), so the channel-3 keyboard's steps can
+  be checked; a chord reading names a part's own chords first and what they make over another
+  track's bass apart (a strings part transposed before its bass read Bm7/A for B D F#); a long amp
+  release under changing chords is said where notes are written and where the release is set (a
+  pad's 3.2 s tail blurred every change into sus chords); drum results list each sound's steps by
+  number beside the grid; a load that changes the play mode says so; write_arrangement says when a
+  song entry cuts a shorter pattern's loop off (each entry restarts every track, the same scene
+  again too); the next message lists the user's own presses on the replica ("arrange, T3", "shift +
+  M1", "step 5 + turn E1 +5"); the prompt asks for the user's language; envelope times read "the
+  page value 16 (of 0–99)"; the music skill knows the dembow; the sound skill asks for a listen
+  before and after a request about how something sounds.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

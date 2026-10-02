@@ -30,6 +30,12 @@ export interface PatternReading {
 	 */
 	readonly progression?: string;
 	/**
+	 * What the chords make over another track's bass as it plays now, when that differs from their
+	 * own names: "with T3's bass as it plays now: Bm7/A G7/F D7/C A7/G". Apart from the chords' own
+	 * names, which a part transposed before its bass read as, so the two did not contradict.
+	 */
+	readonly withBass?: string;
+	/**
 	 * A line of single notes, bar by bar: the chord each bar's notes make, where they make one ("bar
 	 * 1: Am (A C E)"), so the harmony a bassline or melody outlines can be checked.
 	 */
@@ -233,8 +239,16 @@ export function readPattern(
 		for (let s = n.step + 1; s < n.step + n.length && s <= slots; s++) sounding[s] = true;
 	}
 	const chords: string[] = [];
-	// each chord where it changes, for the progression: its plain name, root and whether inverted
-	const heard: { plain: string; name: string; root: number; suffix: string }[] = [];
+	// each chord where it changes, for the progression: its plain name, root and whether inverted,
+	// and what it makes over another track's bass
+	const heard: {
+		plain: string;
+		name: string;
+		root: number;
+		suffix: string;
+		together?: string;
+	}[] = [];
+	const bassTracks = new Set<number>();
 	let lastChord = '';
 	// the lowest note another part sounds under a step, below this one's: a bass the chord is over
 	const under = (step: number, below: number): { note: number; track: number } | null => {
@@ -283,11 +297,12 @@ export function readPattern(
 		}
 		// two notes are an interval, not a chord ("C5" would read as a note)
 		const alone = tones.length >= 3 ? chordName(notes) : null;
-		// named over the bass another track plays under it, as a musician hears it (a rootless Am9
-		// over the bass's A once read as Cmaj7)
+		// and over the bass another track plays under it, as a musician hears the two (a rootless
+		// Am9 over the bass's A reads Cmaj7 alone): said beside the part's own chord, not for it,
+		// since a strings part transposed before its bass read Bm7/A for plain B D F#
 		const bass = tones.length >= 3 ? under(step, notes[0]) : null;
 		const over = bass ? chordName([bass.note, ...notes]) : null;
-		const chord = over ?? alone;
+		const chord = alone ?? over;
 		if (!chord) {
 			// three notes or more that make no chord this names: in the progression as their notes,
 			// so it does not drop out unseen (an agent could not tell an A7♭9 was unnamed)
@@ -300,17 +315,22 @@ export function readPattern(
 		}
 		// the root as the key spells it ("Db", not "C#", in F minor)
 		const name = respellChord(ascii(chord.name), names);
-		// over another track's bass, and what its own notes make when that differs (a strings part
-		// shifted before its bass read Bm7/A for plain B D F#)
-		const own = alone ? respellChord(ascii(alone.name), names) : null;
+		const together = over ? respellChord(ascii(over.name), names) : null;
 		const with_ =
 			over && bass
-				? ` over T${bass.track}'s ${names[bass.note % 12]}${own && own !== respellChord(ascii(chord.name), names) ? `; its own notes make ${own}` : ''}`
+				? `; over T${bass.track}'s ${names[bass.note % 12]}${together !== name ? ` it sounds as ${together}` : ''}`
 				: '';
 		if (name !== lastChord) {
 			chords.push(`step ${step}: ${name} (${tones.join(' ')}${with_})`);
 			const plain = name.split('/')[0];
-			heard.push({ plain, name, root: chord.root, suffix: plain.slice(names[chord.root].length) });
+			heard.push({
+				plain,
+				name,
+				root: chord.root,
+				suffix: plain.slice(names[chord.root].length),
+				...(together ? { together } : {})
+			});
+			if (bass && over) bassTracks.add(bass.track);
 		}
 		lastChord = name;
 		return name;
@@ -327,6 +347,11 @@ export function readPattern(
 	const progression =
 		heard.length >= 2 && tonic !== undefined && keyName
 			? `${heard.map((h) => h.plain).join(' ')}: ${heard.map(degree).join(' ')} in ${keyName}${inverted.length ? `; ${inverted.join(', ')} ${inverted.length === 1 ? 'is an inversion' : 'are inversions'}, the same chord${inverted.length === 1 ? '' : 's'} over another of ${inverted.length === 1 ? 'its' : 'their'} notes` : ''}${unnamed.length ? `; ${unnamed.join(', ')} ${unnamed.length === 1 ? 'is' : 'are'} no chord the reading names` : ''}`
+			: null;
+	// what the chords make over the other part's bass, apart, when any differs from its own name
+	const withBass =
+		heard.length >= 2 && heard.some((h) => h.together !== undefined && h.together !== h.name)
+			? `with ${[...bassTracks].map((t) => `T${t}'s`).join(' and ')} bass as it plays now: ${heard.map((h) => h.together ?? h.name).join(' ')}`
 			: null;
 	// a line of single notes: the chord each bar's notes make (an agent named a bass's chords from
 	// what it meant to write, with nothing to check them by)
@@ -424,6 +449,7 @@ export function readPattern(
 		bars,
 		...(chords.length ? { chords } : {}),
 		...(progression ? { progression } : {}),
+		...(withBass ? { withBass } : {}),
 		...(outlines.length ? { outlines } : {}),
 		...(spelled ? { spelled } : {}),
 		...(outside ? { outside } : {}),

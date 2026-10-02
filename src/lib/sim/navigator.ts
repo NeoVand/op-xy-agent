@@ -26,8 +26,13 @@ import { keyNote } from './areas/sample/record';
 import { MAX_SLICES } from './areas/sample/slicer';
 import { SLICE_MODES, soundKeyOf, soundName, type Region } from './areas/sample/state';
 import { lockTarget, lockParam, type LockParam } from './areas/sequencer/locks';
-import type { PresetEntry } from './areas/system/catalogue';
-import { PRESET_SECTIONS, PROJECT_SECTIONS } from './areas/system/settings';
+import { NAME_CHARACTERS, NAME_MAX, type PresetEntry } from './areas/system/catalogue';
+import {
+	PITCHBEND_SECTION,
+	PRESET_SECTIONS,
+	PROJECT_SECTIONS,
+	SYSTEM_SECTIONS
+} from './areas/system/settings';
 import { autosaves, findProject, snapshot } from './areas/system/projects';
 import { HOLD_MS } from './areas/system/state';
 import { currentGroup, groups, presetKey, presetsIn, soundOf } from './areas/system/presets';
@@ -2587,6 +2592,52 @@ function savedAsIs(state: SimState): boolean {
 }
 
 /**
+ * A name as the naming screen can spell it (lower case, its characters, at most NAME_MAX), or why
+ * not: an agent asked to save as "night drive" saved under the offered name and said it had to.
+ */
+function nameFor(value: number | string): string | { why: string } {
+	const name = String(value).trim().toLowerCase().replace(/\s+/g, ' ');
+	if (name.length === 0) return { why: 'the name is empty' };
+	const odd = [...new Set([...name].filter((c) => !NAME_CHARACTERS.includes(c)))];
+	if (odd.length > 0) {
+		return {
+			why: `the naming screen has no ${odd.map((c) => `"${c}"`).join(', ')}: its characters are a–z, 0–9, space, - # ( )`
+		};
+	}
+	if (name.length > NAME_MAX) return { why: `a name holds at most ${NAME_MAX} characters` };
+	return name;
+}
+
+/**
+ * Types `name` on the naming screen, from the cursor on the offered name's last character: E1 back
+ * to the first, each character turned the short way round the set with E2, M2 on to the next (past
+ * the end it adds one), the rest deleted with M4. Null once the screen reads `name`, else why not.
+ */
+function typeName(rec: Recorder, name: string): string | null {
+	const n = () => rec.sim.state.areas.system.naming;
+	if (!n()) return 'the naming screen is not open';
+	if (n()!.cursor > 0) rec.do('turn E1', -n()!.cursor);
+	const size = NAME_CHARACTERS.length;
+	const want = [...name];
+	for (let i = 0; i < want.length; i++) {
+		if (i > 0) rec.do('M2');
+		const now = n()!.text[n()!.cursor] ?? NAME_CHARACTERS[0];
+		let turn = (NAME_CHARACTERS.indexOf(want[i]) - NAME_CHARACTERS.indexOf(now) + size) % size;
+		if (turn > size / 2) turn -= size;
+		if (turn !== 0) rec.do('turn E2', turn);
+	}
+	const extra = n()!.text.length - want.length;
+	if (extra > 0) {
+		rec.do('M2');
+		for (let k = 0; k < extra; k++) rec.do('M4');
+	}
+	return n()?.text === name ? null : `the naming screen reads "${n()?.text ?? ''}"`;
+}
+
+/** The keys of the naming screen, for a plan's note. */
+const NAMING_KEYS = 'E1 picks a character, E2 turns it, M2 the next, M4 deletes, M3 cancels';
+
+/**
  * Saving the project (`M2` on the project page) and saving a copy under a new name (`shift + M2`,
  * then `M1` on the naming screen): an agent asked for the save steps once and got none.
  */
@@ -2603,23 +2654,44 @@ const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>
 		action: true
 	},
 	'save as': {
-		plan(state) {
+		// the value, when given, is the copy's name, typed on the naming screen
+		plan(state, goal) {
 			const rec = new Recorder(copy(state));
 			const was = state.project.name;
+			const given = goal.value === undefined || goal.value === '' ? null : nameFor(goal.value);
+			if (given !== null && typeof given !== 'string') return rec.plan(false, given.why);
+			// done once the open project has the name and is stored as it stands
+			if (given === was) {
+				return savedAsIs(state)
+					? { ...rec.plan(true, `the open project is "${was}", saved as it stands`), action: true }
+					: rec.plan(
+							false,
+							`"${was}" is the open project's name already: save (M2) keeps its changes under it`
+						);
+			}
 			if (!toProjectView(rec)) return rec.plan(false, 'the project page did not open');
 			rec.do('shift + M2');
 			if (rec.sim.state.areas.system.page !== 'naming') {
 				return rec.plan(false, 'the naming screen did not open');
 			}
 			const offered = rec.sim.state.areas.system.naming?.text ?? '';
+			if (given !== null && given !== offered) {
+				const why = typeName(rec, given);
+				if (why) return rec.plan(false, why);
+			}
 			rec.do('M1');
 			const now = rec.sim.state.project.name;
 			const ok = now !== was && savedAsIs(rec.sim.state);
+			const refused = rec.sim.state.areas.system.naming?.notice;
 			const plan = rec.plan(
 				ok,
 				ok
-					? `saved as "${now}", the name the naming screen offers ("${offered}"): to type another, change it there before M1 (M2 next character, M4 deletes, M3 cancels)`
-					: 'the copy did not save'
+					? given !== null
+						? `saved as "${now}", typed on the naming screen (${NAMING_KEYS}); "${was}" stays as it was last saved`
+						: `saved as "${now}", the name the naming screen offers: for another, give the name as the value (${NAMING_KEYS})`
+					: refused
+						? `the naming screen refused it: ${refused}`
+						: 'the copy did not save'
 			);
 			return { ...plan, action: true };
 		},
@@ -2647,6 +2719,38 @@ const PROJECT_SAVE: Readonly<Record<'save' | 'save as' | 'new project', Special>
 		},
 		reads: () => false,
 		action: true
+	}
+};
+
+/** Renaming the open project (`M3` on the project page): the value is the new name, typed. */
+const PROJECT_RENAME: Special = {
+	plan(state, goal) {
+		const rec = new Recorder(copy(state));
+		const given = goal.value === undefined || goal.value === '' ? null : nameFor(goal.value);
+		if (given === null) return rec.plan(false, 'rename needs the new name as the value');
+		if (typeof given !== 'string') return rec.plan(false, given.why);
+		if (!toProjectView(rec)) return rec.plan(false, 'the project page did not open');
+		rec.do('M3');
+		if (rec.sim.state.areas.system.page !== 'naming') {
+			return rec.plan(false, 'the naming screen did not open');
+		}
+		const why = typeName(rec, given);
+		if (why) return rec.plan(false, why);
+		rec.do('M1');
+		const ok = rec.sim.state.project.name === given;
+		const refused = rec.sim.state.areas.system.naming?.notice;
+		return rec.plan(
+			ok,
+			ok
+				? `renamed "${state.project.name}" → "${given}" (${NAMING_KEYS}); a save (M2) stores it under the new name`
+				: refused
+					? `the naming screen refused it: ${refused}`
+					: 'the project was not renamed'
+		);
+	},
+	reads(state, goal) {
+		const given = goal.value === undefined ? null : nameFor(goal.value);
+		return typeof given === 'string' && state.project.name === given;
 	}
 };
 
@@ -2711,6 +2815,110 @@ const PROJECT_SETTING: Special = {
 	reads(state, goal) {
 		const at = projectRow(state, goal.label, goal.track);
 		return at !== null && hit(projectValue(state, at), goal.value);
+	}
+};
+
+/** The system settings' sections that hold settings (the battery, monitor and legal only show). */
+const SYSTEM_SET = ['system', 'keyboard', 'midi', 'clock', PITCHBEND_SECTION];
+
+/** Other names for a system setting's row. */
+const SYSTEM_ROW_NAMES: Readonly<Record<string, string>> = {
+	'active track channel': 'active channel',
+	'active midi channel': 'active channel',
+	'midi active channel': 'active channel',
+	'keyboard velocity': 'velocity',
+	'key velocity': 'velocity',
+	'velocity sensitivity': 'velocity',
+	'midi clock': 'clock',
+	'midi notes': 'notes',
+	'midi other': 'other',
+	echo: 'midi echo',
+	brightness: 'screen brightness',
+	'led brightness': 'led brightness',
+	autosave: 'auto save',
+	'pitchbend left': 'left sensitivity',
+	'pitchbend right': 'right sensitivity'
+};
+
+/** A system setting's row by its name: its section and place (com → M1; the rows' names are fixed). */
+function systemRow(label: string): { section: number; row: number } | null {
+	const want = SYSTEM_ROW_NAMES[word(label)] ?? word(label);
+	for (const [section, s] of SYSTEM_SECTIONS.entries()) {
+		if (!SYSTEM_SET.includes(s.label)) continue;
+		const row = s.rows(undefined as never).findIndex((r) => r.label.toLowerCase() === want);
+		if (row >= 0) return { section, row };
+	}
+	return null;
+}
+
+/** A system setting's value, as its page shows it. */
+const systemValue = (state: SimState, at: { section: number; row: number }) =>
+	SYSTEM_SECTIONS[at.section].rows(state)[at.row]?.value(state) ?? '';
+
+/**
+ * A system setting (com → M1; manual: com/system-settings, com/midi-settings): E1 picks the
+ * section, E2 the row and E3 turns its value; on the pitchbend section E2 and E3 turn its two sides.
+ * An agent asked to play track 4 from a keyboard on channel 3 could not check the steps it gave.
+ */
+const SYSTEM_SETTING: Special = {
+	plan(state, goal) {
+		const rec = new Recorder(copy(state));
+		const at = systemRow(goal.label);
+		if (!at) {
+			const rows = SYSTEM_SECTIONS.filter((x) => SYSTEM_SET.includes(x.label)).map(
+				(x) =>
+					`${x.label}: ${x
+						.rows(state)
+						.map((r) => r.label)
+						.join(', ')}`
+			);
+			return rec.plan(
+				false,
+				`the system settings have no "${goal.label}"; by section they hold ${rows.join('; ')}`
+			);
+		}
+		const s = () => rec.sim.state;
+		const sys = () => s().areas.system;
+		if (!(s().overlay === 'com' && sys().page === 'system-settings')) {
+			// controller and MTP mode take every key: only the user leaves them
+			if (sys().page === 'controller' || sys().page === 'mtp') {
+				return rec.plan(false, `the unit is in ${sys().page} mode: leave it first`);
+			}
+			if (s().overlay === 'com' && sys().page !== null) rec.do('com');
+			if (s().overlay !== 'com' || sys().page !== null) rec.do('com');
+			rec.do('M1');
+		}
+		if (sys().page !== 'system-settings') {
+			return rec.plan(false, 'the system settings did not open');
+		}
+		const cursor = () => sys().systemCursor;
+		if (cursor().section !== at.section) rec.do('turn E1', at.section - cursor().section);
+		const bend = SYSTEM_SECTIONS[at.section].label === PITCHBEND_SECTION;
+		const turn = bend ? (at.row === 0 ? 'turn E2' : 'turn E3') : 'turn E3';
+		if (!bend && cursor().row !== at.row) rec.do('turn E2', at.row - cursor().row);
+		if (hit(systemValue(s(), at), goal.value)) return rec.plan(true);
+		// the value: tried a detent at a time on a copy, each way, until it reads the goal
+		for (const way of [1, -1]) {
+			const trial = copy(s());
+			for (let n = 1; n <= 100; n++) {
+				const was = systemValue(trial.state, at);
+				play(trial, turn, way);
+				const now = systemValue(trial.state, at);
+				if (hit(now, goal.value)) {
+					rec.do(turn, way * n);
+					return rec.plan(true);
+				}
+				if (now === was) break;
+			}
+		}
+		return rec.plan(
+			false,
+			`${goal.label} never reads ${goal.value} (it reads ${systemValue(s(), at)})`
+		);
+	},
+	reads(state, goal) {
+		const at = systemRow(goal.label);
+		return at !== null && hit(systemValue(state, at), goal.value);
 	}
 };
 
@@ -2807,6 +3015,8 @@ function specialOf(goal: PageValueGoal): Special | null {
 			return label === 'effect' || label === 'fx type' ? EFFECT : null;
 		case 'arrange':
 			return ARRANGE[label] ?? null;
+		case 'com':
+			return systemRow(label) ? SYSTEM_SETTING : null;
 		case 'sample':
 			return label === 'even slices'
 				? SLICES.even
@@ -2821,6 +3031,7 @@ function specialOf(goal: PageValueGoal): Special | null {
 				return PROJECT_SAVE['save as'];
 			if (/^(new( project)?|start over|fresh project|clear (the )?project)$/.test(label))
 				return PROJECT_SAVE['new project'];
+			if (/^(re)?name( (the )?project)?$|^project name$/.test(label)) return PROJECT_RENAME;
 			return PROJECT_SETTING;
 		default:
 			return null;

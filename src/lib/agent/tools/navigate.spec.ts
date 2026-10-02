@@ -504,6 +504,62 @@ describe('plan_steps to the project settings', () => {
 		expect(copy.note).toMatch(/^saved as "project 2"/);
 	});
 
+	it('types the name a save as or a rename is given on the naming screen', async () => {
+		// "save this project as night drive" saved as "project 2", read back as "already night drive"
+		const { sim, run } = setup(true);
+		const named = json(
+			await run(planStepsTool, {
+				show: true,
+				area: 'project',
+				param: 'save as',
+				value: 'Night Drive'
+			})
+		);
+		expect(named).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(named.already).toBeUndefined();
+		expect(sim.state.project.name).toBe('night drive');
+		expect(named.note).toMatch(/^saved as "night drive", typed on the naming screen/);
+		const renamed = json(
+			await run(planStepsTool, { show: true, area: 'project', param: 'rename', value: 'dusk' })
+		);
+		expect(renamed).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(sim.state.project.name).toBe('dusk');
+		// a character the screen cannot spell is refused, with the ones it can
+		const odd = await run(planStepsTool, {
+			show: false,
+			area: 'project',
+			param: 'save as',
+			value: 'café'
+		});
+		expect(String(odd.content)).toMatch(/the naming screen has no \\"é\\"/);
+	});
+
+	it('reaches the system settings: a keyboard on channel 3 plays the selected track', async () => {
+		// an agent gave com → M1 steps from the manual, unable to check them
+		const { sim, run } = setup(true);
+		const channel = json(
+			await run(planStepsTool, {
+				show: true,
+				area: 'com',
+				param: 'active track channel',
+				value: 3
+			})
+		);
+		expect(channel).toMatchObject({ shown: true, arrived: true, reached: true });
+		expect(channel.steps.map((s: { keys: string }) => s.keys).slice(0, 2)).toEqual(['com', 'M1']);
+		expect(channel.screen).toBe('system settings: midi, active channel, 3');
+		expect(sim.state.areas.system.system.channel).toBe(3);
+		const velocity = json(
+			await run(planStepsTool, {
+				show: true,
+				area: 'com',
+				param: 'keyboard velocity',
+				value: 'soft'
+			})
+		);
+		expect(velocity.screen).toBe('system settings: keyboard, velocity, soft');
+	});
+
 	it('says where the notes slide once legato and portamento are set', async () => {
 		// an acid line whose notes ended where the next began, set to legato: none slides
 		const { virtual, run } = setup(true);
@@ -562,6 +618,10 @@ describe('plan_steps to the project settings', () => {
 			await run(planStepsTool, { show: true, track: 3, param: 'preset', value: 'bass/sonorous' })
 		);
 		expect(named.loaded.preset).toBe('bass/sonorous');
+		// the new project's bass is mono; prism's starting sound is poly
+		expect(named.playMode).toMatch(
+			/^T3 plays poly now \(it was mono\): notes that overlap sound together now/
+		);
 		expect(named.standIn).toMatch(
 			/^T3 bass\/sonorous: the replica knows TE's factory presets by name/
 		);
@@ -581,7 +641,9 @@ describe('plan_steps to the project settings', () => {
 		const result = json(
 			await run(planStepsTool, { show: true, track: 8, param: 'amp attack', value: '2 s' })
 		);
-		expect(result.times).toMatch(/^amp attack 2 s: 5\d is the nearest \(2(\.\d)? s\)$/);
+		expect(result.times).toMatch(
+			/^amp attack 2 s: the page value 5\d \(of 0–99\) is the nearest, 2(\.\d)? s$/
+		);
 		expect(sim.state.tracks[7].amp.attack).toBeGreaterThanOrEqual(52);
 		expect(sim.state.tracks[7].amp.attack).toBeLessThanOrEqual(54);
 	});

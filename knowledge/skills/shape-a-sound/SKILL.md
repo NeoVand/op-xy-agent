@@ -83,5 +83,7 @@ so say the sound there is its own). A parameter lock is no way round it, since a
 step's and every sound on that step takes it.
 
 When the sound matters, listen to it after you change it (the listening skill), and adjust: listen
-with its scene and the track (tracks) hears it alone even while stopped. When the user asks how it
-sounds, listen before you say.
+with its scene and the track (tracks) hears it alone even while stopped. A request about how
+something sounds (rounder, further away, sitting better with the kick) is checked by ear: listen
+before and after, and say what moved (its brightness, its level, its low end), not only what was set.
+When the user asks how it sounds, listen before you say.
