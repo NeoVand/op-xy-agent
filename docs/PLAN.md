@@ -841,6 +841,31 @@ Principles (from `VISION.md`): the LLM emits typed intent, deterministic code em
 device change is **propose → preview on replica → approve → apply → verify → journal**; firmware is
 first-class state; nothing dangerous (DFU, factory reset, project delete) exists as a tool.
 
+## Phase G — A verified replica (from 2026-10-02)
+
+The owner's words: the replica should be "an exact copy of how op-xy behaves", and "every capability
+needs to be fully verified". The agent's probe rounds pause after round 43; the agent is good enough
+for now, and pushing it further while the replica is incomplete makes no sense.
+
+The plan is note 67. Its inputs are the changelog audit (64), thirty videos (65) and the coverage
+matrix (66).
+
+- **G1 — The ledger.** Note 66's 271 rows go into `knowledge/opxy/fidelity.json`, each with status,
+  evidence ids, test and manual unit. A test refuses "verified" without a capture and a pinning
+  test, and a report counts the open rows.
+- **G2 — No-device work:** the answers already on disk (66 §6 S0), analysis scripts for Session 1,
+  and the likely fixes behind a switch.
+- **G3 — Session 1, behaviour** (note 67 §4, about 3½ hours with the owner's camera): locks, mix per
+  pattern or scene, clearing, the playhead, skips and pulse, step-component pages, players, the
+  brain, links, tape, punch-in, slices, the changelog checks, the first-heard sound, and the
+  owner's own samples over MTP end to end.
+- **G4 — Fix and pin** after each session: realign and index the captures, write notes 59 and 60,
+  fix the replica, pin each fix with a test citing its capture, update the manual and the ledger.
+- **G5 — Sessions 2–7:** sound, LEDs and hardware, unseen screens, timing, files, the live bridge
+  (note 67 §3), ordered by the ledger's open rows.
+- **G6 — Back to the agent:** once its tools rest on verified behaviour, its tools and skills are
+  matched to whatever changed (scene mixes, locks, slices, the brain), and the probe rounds resume.
+
 ## Phase F — Faithful emulator + expert agent (from 2026-09-28)
 
 Goal, in the owner's words: "the smartest possible agent when it comes to doing things on OP-XY".
