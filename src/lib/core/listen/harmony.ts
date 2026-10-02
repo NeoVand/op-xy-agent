@@ -112,9 +112,16 @@ export function spelledNote(names: readonly string[], note: number): string {
 export function respellChord(chord: string, names: readonly string[]): string {
 	const m = /^([A-G])([#b]?)(.*)$/.exec(chord);
 	if (!m) return chord;
-	const natural = PITCH_CLASSES.indexOf(m[1] as PitchClass);
-	const pc = (natural + (m[2] === '#' ? 1 : m[2] === 'b' ? 11 : 0)) % 12;
-	return `${names[pc]}${m[3]}`;
+	const pcOf = (letter: string, accidental: string) =>
+		(PITCH_CLASSES.indexOf(letter as PitchClass) +
+			(accidental === '#' ? 1 : accidental === 'b' ? 11 : 0)) %
+		12;
+	// the bass after a slash too ("Gm/A#" read in G minor is Gm/Bb)
+	const rest = m[3].replace(
+		/\/([A-G])([#b]?)$/,
+		(_, letter: string, accidental: string) => `/${names[pcOf(letter, accidental)]}`
+	);
+	return `${names[pcOf(m[1], m[2])]}${rest}`;
 }
 
 /** The range spectral peaks are taken from, hertz. */

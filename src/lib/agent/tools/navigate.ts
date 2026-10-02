@@ -640,6 +640,41 @@ export const planStepsTool = defineTool({
 			return line ? [line] : [];
 		});
 		const swells = [...new Set([...swellsByAttack, ...swellsByTempo])];
+		// a synced LFO speed as a note value and a rate (an agent set "1/8", read back "sync 2", and
+		// could not tell what it was: the screen's own count reads otherwise)
+		const NOTE_VALUES: Readonly<Record<number, string>> = {
+			1: 'a sixteenth',
+			2: 'an eighth',
+			3: 'a dotted eighth',
+			4: 'a quarter note',
+			5: 'five sixteenths',
+			6: 'a dotted quarter',
+			7: 'seven sixteenths',
+			8: 'a half note',
+			12: 'a dotted half',
+			16: 'a bar',
+			24: 'a bar and a half',
+			32: 'two bars'
+		};
+		const rates = [
+			...new Set(
+				goals.flatMap((g) =>
+					'param' in g && /^(lfo )?speed$/i.test(String(g.param).trim())
+						? [g.track ?? status.selectedTrack]
+						: []
+				)
+			)
+		].flatMap((track) => {
+			if (track < 1 || track > 8) return [];
+			const m = /\bspeed sync (\d+)/.exec(virtual.readSound(track).pages['M4 lfo'] ?? '');
+			if (!m) return [];
+			const n = Number(m[1]);
+			const bpm = virtual.status().bpm;
+			const perSecond = Math.round(((bpm / 60) * 4 * 100) / n) / 100;
+			return [
+				`T${track}'s LFO is synced at sync ${n}: a cycle every ${n} sixteenth${n === 1 ? '' : 's'}${NOTE_VALUES[n] ? ` (${NOTE_VALUES[n]})` : ''}, ${perSecond} a second at ${bpm} bpm.`
+			];
+		});
 		// a filter value set while the filter is off does nothing until it is on (an agent darkening
 		// a track found the filter off only by reading the sound first)
 		const filtered = new Set(
@@ -770,6 +805,7 @@ export const planStepsTool = defineTool({
 				...(tails.length ? { tail: tails.join(' ') } : {}),
 				...(ducks.length ? { duck: ducks.join(' ') } : {}),
 				...(filterOff.length ? { filterOff: filterOff.join(' ') } : {}),
+				...(rates.length ? { lfoRate: rates.join(' ') } : {}),
 				...(midi ? { unit: midi } : {}),
 				...(standIn ? { standIn } : {}),
 				...(modes.length ? { playMode: modes.join(' ') } : {}),

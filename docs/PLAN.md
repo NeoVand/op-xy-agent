@@ -415,6 +415,21 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   groove rule sits beside plan_steps' groove; the music skill names the new project's swelling pads
   and three against four as a polymeter; a transpose carries the key the pattern was written in
   (or its reading's), "B minor (A minor moved up 2 semitones)", where G D A Bm read as D major.
+- **Probe round thirty (2026-10-02), 18 scenarios (`probe-scenarios-30.json`: re-checks (a lab outro
+  from copies with a closing filter, a cleared track keeping its bars, a send routed to the device
+  skill alone, a swung house beat, three against four, a key change named) and new kinds: jungle,
+  Polish, a snare crescendo, a mute in one scene, "what's playing now", a humanized bass, a wobble,
+  a reversed fill, a factory reset question, chords read back, tap tempo, a 1-bar beat made 4):**
+  four failed calls, all grid miscounts. Fixes: a grid line of whole bars and then rests, short of
+  the pattern, plays its hits once and is silent after (a crash on bar 1 alone, open hats in bars
+  1–3 with "...." for bar 4, were refused), and the miscount error points at a one-bar line plus
+  bar and merge; reverse with bar mirrors that bar alone ("reverse just the fill"); the lab's step
+  locks take a pattern (switched to and back, the scenes kept) where an outro's copies took the
+  verse's locks; a slash chord's bass is spelled in the key (Gm/A# read in G minor is Gm/Bb); a
+  synced LFO speed reads as a note value and a rate ("sync 2: a cycle every 2 sixteenths, an
+  eighth"); a named key stays through writes that move no note (E dorian humanized read E minor);
+  the music skill's three against four was wrong (a hit every four steps only doubles the beat)
+  and now says an accented three-beat figure.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval).

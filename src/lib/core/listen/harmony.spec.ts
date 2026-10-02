@@ -202,6 +202,9 @@ describe('spelling', () => {
 		const fMinor = keySpelling(5, 'minor');
 		expect(respellChord('C#', fMinor)).toBe('Db');
 		expect(respellChord('G#m7', fMinor)).toBe('Abm7');
+		// and the bass after a slash (Gm/A# read in G minor)
+		expect(respellChord('Gm/A#', keySpelling(7, 'minor'))).toBe('Gm/Bb');
+		expect(respellChord('C#/G#', fMinor)).toBe('Db/Ab');
 		expect(respellChord('Fm', fMinor)).toBe('Fm');
 		expect(respellChord('Ebsus4', keySpelling(4, 'major'))).toBe('D#sus4');
 		expect(respellChord('N', fMinor)).toBe('N');

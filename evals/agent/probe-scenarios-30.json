@@ -1,0 +1,146 @@
+[
+	{
+		"name": "lab-outro-copies",
+		"about": "Re-check: the lab copies patterns and keeps their locks.",
+		"steps": [
+			{ "say": "make a 2 scene song, verse and chorus, with drums, bass and chords" },
+			{
+				"say": "use the lab to make an outro scene from copies of the chorus patterns, with the filter closing down over its bars"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "clear-keeps-bars",
+		"about": "Re-check: clearing a track keeps its bars.",
+		"steps": [
+			{ "say": "make a 4 bar chord loop on track 7" },
+			{ "say": "clear track 7, I'll play my own chords" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "send-project-router",
+		"about": "Re-check: sending a project routes the device skill only.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "send this project to my op-xy please" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "swing-on-sixteenths",
+		"about": "Re-check: the groove rule beside the groove setting.",
+		"steps": [{ "say": "make a swung house beat" }, { "why": true }]
+	},
+	{
+		"name": "three-four-poly",
+		"about": "Re-check: three against four as a polymeter.",
+		"steps": [
+			{ "say": "add a three against four clap pattern over a four on the floor kick" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "key-change-names",
+		"about": "Re-check: a transposed part's key named, not guessed.",
+		"steps": [
+			{ "say": "make chords and a melody in E minor" },
+			{ "say": "now move both up a minor third and tell me the new key" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "jungle-amen",
+		"about": "A breakbeat genre.",
+		"steps": [
+			{ "say": "make a jungle beat with chopped breaks feel and a sub bass" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "polish-request",
+		"about": "A request in Polish.",
+		"steps": [{ "say": "zrób spokojny beat z basem i akordami" }, { "why": true }]
+	},
+	{
+		"name": "velocity-ramp",
+		"about": "A crescendo across a bar.",
+		"steps": [
+			{ "say": "make a snare build-up that gets louder over the last bar of a 4 bar beat" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "mute-in-scene",
+		"about": "Muting a track in one scene only.",
+		"steps": [
+			{ "say": "make a song with two scenes with drums and bass" },
+			{ "say": "mute the bass in the second scene only" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "what-is-playing",
+		"about": "A state question while playing.",
+		"steps": [
+			{ "say": "make a beat with bass and chords and play it" },
+			{ "say": "what's playing right now, and which pattern is each track on?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "humanize-bass",
+		"about": "Humanize a pitched line.",
+		"steps": [
+			{ "say": "make a funky bassline on track 3" },
+			{ "say": "make it feel less quantized" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "lfo-wobble",
+		"about": "An LFO on the bass.",
+		"steps": [
+			{ "say": "make a dubstep wobble bass on track 3 in time with the tempo" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "reverse-fill",
+		"about": "Reversing a fill.",
+		"steps": [
+			{ "say": "make a beat with a tom fill in bar 4" },
+			{ "say": "reverse just the fill" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "factory-reset-question",
+		"about": "A risky question: device settings.",
+		"steps": [{ "say": "how do I factory reset my op-xy?" }, { "why": true }]
+	},
+	{
+		"name": "chord-names-read",
+		"about": "Reading back chords by name.",
+		"steps": [
+			{ "say": "write the chords Am F C G on track 7, one per bar" },
+			{ "say": "what chords did you write, exactly, with their notes?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "tempo-tap",
+		"about": "Tap tempo on the device.",
+		"steps": [{ "say": "can I tap the tempo on the op-xy?" }, { "why": true }]
+	},
+	{
+		"name": "make-it-longer",
+		"about": "Extending a pattern.",
+		"steps": [
+			{ "say": "make a 1 bar beat" },
+			{ "say": "make it 4 bars and vary the last bar" },
+			{ "why": true }
+		]
+	}
+]

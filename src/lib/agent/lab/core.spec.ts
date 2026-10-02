@@ -296,6 +296,26 @@ describe('commits', () => {
 		expect(() => f.writePattern(1, { pattern: 3, copy: 9 })).toThrow(/has no pattern 9 to copy/);
 	});
 
+	it('locks a step on another pattern than the one playing, and switches back', () => {
+		// an outro's copies took the verse's locks, and pointing the track at them rewrote a scene
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(3, { notes: '1:A1:4 5:C2:4 9:E2:4 13:G2:4' });
+		f.writePattern(3, { pattern: 2, copy: 1, stay: true });
+		const result = f.set({ param: 'cutoff', value: 40, track: 3, step: 5, pattern: 2 });
+		expect(result.reached).toBe(true);
+		expect(f.readPattern(3, 2).stepLocks?.map((l) => l.step)).toEqual([5]);
+		expect(f.readPattern(3, 1).stepLocks ?? []).toEqual([]);
+		// the track plays pattern 1 still
+		expect(f.status().tracks[2].current).toBe(1);
+		expect(() => f.set({ param: 'cutoff', value: 40, track: 3, pattern: 2 })).toThrow(
+			/pattern goes with step/
+		);
+		expect(() => f.set({ param: 'cutoff', value: 40, track: 3, step: 1, pattern: 5 })).toThrow(
+			/has no pattern 5/
+		);
+	});
+
 	it('refuses what is not a fork of this lab, and an empty label', () => {
 		const { lab } = labOn();
 		const other = labOn().lab.fork();

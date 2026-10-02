@@ -207,6 +207,11 @@ export interface Setting {
 	readonly key?: number | string;
 	/** A parameter lock: the pattern step (1–64) whose own value this sets, the track's kept. */
 	readonly step?: number;
+	/**
+	 * With step: the pattern whose step it locks, when not the one the track plays (the track is
+	 * switched to it and back, so what plays and the scenes stay as they were).
+	 */
+	readonly pattern?: number;
 }
 
 /** What `set` did, or what `plan` would do. */

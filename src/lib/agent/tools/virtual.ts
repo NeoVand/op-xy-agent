@@ -505,7 +505,7 @@ export const writePatternTool = defineTool({
 			.boolean()
 			.optional()
 			.describe(
-				'Alone, or with copy: the notes backwards, each ending where its mirror began (a melody in retrograde); on a drum track the hits mirror about the downbeat, so the beat stays on the beat and a fill at the end opens the bar; its locks and components go with their steps'
+				'Alone, or with copy: the notes backwards, each ending where its mirror began (a melody in retrograde); on a drum track the hits mirror about the downbeat, so the beat stays on the beat and a fill at the end opens the bar; its locks and components go with their steps. With bar, that bar alone (a fill reversed, the other bars kept)'
 			),
 		humanize: z
 			.object({
@@ -741,8 +741,8 @@ export const writePatternTool = defineTool({
 			!adding;
 		// reverse, alone or with copy: the notes backwards (an agent worked out a retrograde melody
 		// by hand, new step = 34 − step − length)
-		const reversing =
-			input.reverse === true && !given && input.grid === undefined && input.bar === undefined;
+		// with bar, that bar alone (an agent reversed a fill by working out its mirrored steps)
+		const reversing = input.reverse === true && !given && input.grid === undefined;
 		// humanize alone loosens the pattern as it is (an agent asked to humanize robotic hats could
 		// only vary velocities by hand, and nothing moved a note off the grid)
 		const humanizing =
@@ -886,10 +886,29 @@ export const writePatternTool = defineTool({
 		// and rests past the pattern's end lose nothing (a 7/8 bar's snare line ran two dots long)
 		const restsPast = (key: string, n: number) =>
 			n > fill && !/[xXo1-9]/.test((input.grid?.[key] ?? '').replace(/[\s|]/g, '').slice(fill));
+		// whole bars and then rests, short of the pattern: its hits once, silent after (a crash on bar
+		// 1 alone, "X... .... .... .... | ....", and open hats in bars 1 to 3 with "...." for bar 4
+		// were refused as miscounts)
+		const barThenRests = (key: string, n: number) => {
+			const whole = Math.floor(n / meter.bar) * meter.bar;
+			return (
+				n < fill &&
+				fill % n !== 0 &&
+				whole >= meter.bar &&
+				!/[xXo1-9]/.test((input.grid?.[key] ?? '').replace(/[\s|]/g, '').slice(whole))
+			);
+		};
+		const once = Object.entries(lineSteps)
+			.filter(([key, n]) => barThenRests(key, n))
+			.map(([key]) => key);
 		const uneven = Object.entries(lineSteps)
 			.filter(
 				([key, n]) =>
-					n !== fill && !(n < fill && fill % n === 0) && !restsOnly(key) && !restsPast(key, n)
+					n !== fill &&
+					!(n < fill && fill % n === 0) &&
+					!restsOnly(key) &&
+					!restsPast(key, n) &&
+					!barThenRests(key, n)
 			)
 			.map(([key, n]) => {
 				const line = input.grid?.[key] ?? '';
@@ -904,7 +923,7 @@ export const writePatternTool = defineTool({
 			});
 		if (uneven.length > 0) {
 			return errorResult(
-				`Nothing was written: grid lines that neither fill the pattern's ${fill} steps nor repeat into them: ${uneven.join(', ')}. Write each line as ${fill} marks, rests as dots (or a part of ${fill} that repeats into it, such as one bar of a longer pattern).`,
+				`Nothing was written: grid lines that neither fill the pattern's ${fill} steps nor repeat into them: ${uneven.join(', ')}. Write each line as ${fill} marks, rests as dots (or a part of ${fill} that repeats into it, such as one bar of a longer pattern). A line that changes in one bar only is easier as its one-bar line, which repeats, and then that bar alone with bar and merge.`,
 				'grid lines miscounted'
 			);
 		}
@@ -998,6 +1017,27 @@ export const writePatternTool = defineTool({
 				);
 			}
 		}
+		// a note of length L on step s, backwards, starts where its mirror ends: fill − s − L + 2;
+		// a drum hit mirrors about the downbeat instead, so hits on the beat stay on beats (a beat
+		// reversed note for note put every hat on the off-beat sixteenths)
+		const mirror = (step: number, length = 1) =>
+			drums
+				? ((fill + 1 - step) % fill) + 1
+				: Math.max(1, fill - step - Math.max(1, Math.round(length)) + 2);
+		// steps where a note starts move with it; other steps mirror plainly
+		const starts = new Map(notes.map((n) => [n.step, mirror(n.step, n.length)]));
+		const mirrored = (step: number) => starts.get(step) ?? Math.max(1, fill - step + 1);
+		if (reversing) {
+			notes.splice(
+				0,
+				notes.length,
+				...notes.map((n) => ({
+					...n,
+					step: mirror(n.step, n.length),
+					...(n.offset ? { offset: -n.offset } : {})
+				}))
+			);
+		}
 		if (current) {
 			const past = notes.find((n) => n.step > 16);
 			if (past) {
@@ -1020,27 +1060,6 @@ export const writePatternTool = defineTool({
 				notes.length,
 				...kept,
 				...notes.map((n) => ({ ...n, step: n.step + barFrom }))
-			);
-		}
-		// a note of length L on step s, backwards, starts where its mirror ends: fill − s − L + 2;
-		// a drum hit mirrors about the downbeat instead, so hits on the beat stay on beats (a beat
-		// reversed note for note put every hat on the off-beat sixteenths)
-		const mirror = (step: number, length = 1) =>
-			drums
-				? ((fill + 1 - step) % fill) + 1
-				: Math.max(1, fill - step - Math.max(1, Math.round(length)) + 2);
-		// steps where a note starts move with it; other steps mirror plainly
-		const starts = new Map(notes.map((n) => [n.step, mirror(n.step, n.length)]));
-		const mirrored = (step: number) => starts.get(step) ?? Math.max(1, fill - step + 1);
-		if (reversing) {
-			notes.splice(
-				0,
-				notes.length,
-				...notes.map((n) => ({
-					...n,
-					step: mirror(n.step, n.length),
-					...(n.offset ? { offset: -n.offset } : {})
-				}))
 			);
 		}
 		let loosened = 0;
@@ -1091,7 +1110,7 @@ export const writePatternTool = defineTool({
 				value: c.value ?? componentDefault(c.kind)
 			}));
 			const kept = current
-				? (current.components ?? []).filter((c) => !inBar(c.step))
+				? (current.components ?? []).filter((c) => reversing || !inBar(c.step))
 				: adding || (was && input.components === undefined)
 					? (whole?.components ?? [])
 					: [];
@@ -1105,12 +1124,26 @@ export const writePatternTool = defineTool({
 				(input.notes !== undefined || input.chords !== undefined || input.grid !== undefined);
 			const locks = (lockBase?.stepLocks ?? [])
 				.filter((l) => l.step <= span && !(anew && inBar(l.step)))
-				.map((l) => (reversing ? { ...l, step: mirrored(l.step) } : l));
+				.map((l) =>
+					!reversing
+						? l
+						: current
+							? inBar(l.step)
+								? { ...l, step: barFrom + mirrored(l.step - barFrom) }
+								: l
+							: { ...l, step: mirrored(l.step) }
+				);
 			// the components as they land: none takes its step's off, a later one of a kind replaces
 			// the earlier on its step, and one on a step with no notes is left out, as it does
 			// nothing (an agent's rolls sat on rests, out of its reach to take off)
 			const placed = reversing
-				? [...kept, ...given].map((c) => ({ ...c, step: mirrored(c.step) }))
+				? [...kept, ...given].map((c) =>
+						!current
+							? { ...c, step: mirrored(c.step) }
+							: inBar(c.step)
+								? { ...c, step: barFrom + mirrored(c.step - barFrom) }
+								: c
+					)
 				: [...kept, ...given];
 			const laid: { step: number; kind: string; value: number }[] = [];
 			for (const c of placed) {
@@ -1146,6 +1179,11 @@ export const writePatternTool = defineTool({
 					: {})
 			});
 			const notes2: string[] = [];
+			if (once.length > 0) {
+				notes2.push(
+					`${once.join(', ')}: whole bars and then rests, short of the pattern, so ${once.length === 1 ? 'its hits play' : 'their hits play'} once as written and the rest of the pattern is silent for ${once.length === 1 ? 'it' : 'them'}.`
+				);
+			}
 			if (scaleSteps !== 0 && inKey) {
 				notes2.push(
 					`Moved ${result.notes.length} note${result.notes.length === 1 ? '' : 's'} ${stepsInterval(scaleSteps)} along ${inKey.label}'s scale (${Math.abs(scaleSteps)} step${Math.abs(scaleSteps) === 1 ? '' : 's'}), so they stay in the key.`
@@ -1155,8 +1193,8 @@ export const writePatternTool = defineTool({
 				notes2.push(
 					drums
 						? // the rule in numbers (an agent could not tell where its fill's hits would land)
-							`Reversed about the downbeat: step 1 stays and step n goes to ${fill + 2} − n (${fill} → 2, 5 → ${fill - 3}), so the hits play last to first and those on a beat stay on beats.`
-						: 'Reversed: the notes play backwards, last to first.'
+							`Reversed ${input.bar !== undefined ? `bar ${input.bar} alone, the other bars kept, ` : ''}about the downbeat: ${input.bar !== undefined ? "the bar's " : ''}step 1 stays and step n goes to ${fill + 2} − n (${fill} → 2, 5 → ${fill - 3}), so the hits play last to first and those on a beat stay on beats.`
+						: `Reversed${input.bar !== undefined ? ` bar ${input.bar} alone, the other bars kept` : ''}: the notes play backwards, last to first.`
 				);
 			}
 			if (humanizing && input.humanize) {
@@ -1308,16 +1346,25 @@ export const writePatternTool = defineTool({
 							transpose
 						)
 					: null;
-			// the key this pattern is in now, for the next transpose
+			// a write that starts from the pattern and moves no note (humanize, a merge, a scale)
+			// keeps the key it was written in (an "E dorian" line humanized read back as E minor)
+			const stayed =
+				!input.key && !drums && transpose === 0 && scaleSteps === 0 && (was || existing)
+					? keysOf(virtual).get(keyFrom)
+					: undefined;
+			// the key this pattern is in now, for the next write
 			if (input.key && parseKey(input.key)) keysOf(virtual).set(slot, parseKey(input.key)!.label);
 			else if (carried) keysOf(virtual).set(slot, carried.key.label);
+			else if (stayed) keysOf(virtual).set(slot, stayed);
 			else if (given || input.grid !== undefined) keysOf(virtual).delete(slot);
 			const view = patternView(result, {
 				drumSteps: false,
 				alongside: partsAlongside(virtual, input.track, pattern),
 				meter: meterNow(virtual),
 				bpm: virtual.status().bpm,
-				meant: input.key ? parseKey(input.key) : (carried?.key ?? null),
+				meant: input.key
+					? parseKey(input.key)
+					: (carried?.key ?? (stayed ? parseKey(stayed) : null)),
 				written: writtenAccidentals(input.notes),
 				plain: velocity,
 				// the chords by the names given, where the notes are theirs

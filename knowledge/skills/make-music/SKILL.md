@@ -90,9 +90,10 @@ sound for the style (the shape-a-sound skill) and say what you set. Trap hat rol
 a step: put the multiply component on the hat steps that roll (its digit is how many quick hits), with
 their loudness rising or falling by step.
 
-Three against four is a polymeter: a 12-step line, a hit every four steps, on a track of its own
-drifts against the 16-step bar and lines up every three bars (even thirds of one bar, 5⅓ steps,
-no step gives).
+Three against four is a polymeter: a figure three beats long (a 12-step pattern accented on its
+first step, not a plain hit every four steps, which only doubles the beat) on a track of its own
+moves its accent a beat each bar and lines up every three bars; even thirds of one bar fall 5⅓
+steps apart, on no step.
 
 A part that varies as it plays (generative, evolving, never quite the same) takes step components
 (random notes, skip trigger, multiply: [sequencer.step-component-reference]), patterns of different

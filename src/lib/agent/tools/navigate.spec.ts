@@ -700,6 +700,17 @@ describe('plan_steps to the project settings', () => {
 		expect(folder.note).toMatch(/^"bass" is a folder of the preset browser, holding bass\/alloy, /);
 	});
 
+	it('says a synced LFO speed as a note value and a rate', async () => {
+		// "1/8" read back as "sync 2", and an agent could not tell what that was
+		const { run } = setup(true);
+		const result = json(
+			await run(planStepsTool, { show: true, track: 3, param: 'lfo speed', value: '1/8' })
+		);
+		expect(result.lfoRate).toBe(
+			"T3's LFO is synced at sync 2: a cycle every 2 sixteenths (an eighth), 4 a second at 120 bpm."
+		);
+	});
+
 	it('says when the steps switched an off filter on to set its cutoff', async () => {
 		// T7's strings in a new project have the filter off
 		const { run } = setup(true);

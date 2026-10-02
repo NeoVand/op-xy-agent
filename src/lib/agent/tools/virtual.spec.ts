@@ -86,6 +86,61 @@ describe('write_pattern', () => {
 		expect(changes()).toBeGreaterThan(0);
 	});
 
+	it('reverses one bar alone, the other bars kept', async () => {
+		// "reverse just the fill": an agent worked out the mirrored steps by hand
+		const { run } = setup();
+		await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			grid: {
+				kick: 'x... x... x... x...',
+				'low tom': '.... .... .... .... | .... .... x.x. xxxx'
+			}
+		});
+		const result = json(await run(writePatternTool, { track: 1, bar: 2, reverse: true }));
+		// bar 2's toms, 25 27 29 30 31 32, mirror about its downbeat: n → 18 − n within the bar
+		expect(result.written.hits).toMatch(/low tom 1: 18 19 20 21 23 25/);
+		// the kick's bar 1 is as it was; its bar 2 mirrors onto the same beats
+		expect(result.written.hits).toMatch(/kick 1: 1 5 9 13 17 21 25 29/);
+		expect(result.note).toMatch(/Reversed bar 2 alone, the other bars kept, about the downbeat/);
+	});
+
+	it('takes a whole bar and then rests as hits once, the rest silent', async () => {
+		// a crash on bar 1 alone, "X... .... .... .... | ....", was refused as a miscount
+		const { run } = setup();
+		const result = json(
+			await run(writePatternTool, {
+				track: 1,
+				bars: 2,
+				grid: { kick: 'x... x... x... x...', crash: 'X... .... .... .... | ....' }
+			})
+		);
+		expect(result.written.hits).toMatch(/crash 1: 1(;|$)/);
+		expect(result.note).toMatch(
+			/crash: whole bars and then rests, short of the pattern, so its hits play once/
+		);
+		// three bars of open hats and "...." for the fourth
+		const three = json(
+			await run(writePatternTool, {
+				track: 1,
+				bars: 4,
+				grid: {
+					'closed hat': 'x.x. x.x. x.x. x...',
+					'open hat': '.... .... .... ..x. | .... .... .... ..x. | .... .... .... ..x. | ....'
+				}
+			})
+		);
+		expect(three.written.hits).toMatch(/open hat 1: 15 31 47(;|$)/);
+		// a bar with hits after it is still a miscount
+		const off = await run(writePatternTool, {
+			track: 1,
+			bars: 2,
+			grid: { crash: 'X... .... .... .... | x...' }
+		});
+		expect(off.isError).toBe(true);
+		expect(String(off.content)).toMatch(/then that bar alone with bar and merge/);
+	});
+
 	it('lists a drum line’s hits by bar and beat beside the grid', async () => {
 		// "26 and 27" read by hand as the and of 3 and the beat after: they are 3e and 3&
 		const { run } = setup();
@@ -583,6 +638,14 @@ describe('write_pattern on drums', () => {
 		// and again from there
 		const again = json(await run(writePatternTool, { track: 7, transpose: 3 }));
 		expect(again.written.reading.key).toBe('D minor (B minor moved up 3 semitones)');
+		// a write that moves no note keeps the key named (E dorian humanized read back as E minor)
+		await run(writePatternTool, {
+			track: 5,
+			key: 'E dorian',
+			notes: '1:E4:2 3:F#4:2 5:G4:2 7:C#5:2'
+		});
+		const loose = json(await run(writePatternTool, { track: 5, humanize: { timing: 0.05 } }));
+		expect(loose.written.reading.key).toBe('E dorian (as written)');
 		// with no key named, the estimate moves as consistently
 		await run(writePatternTool, { track: 4, bars: 4, chords: '1:C 17:G 33:Am 49:F' });
 		const estimated = json(await run(writePatternTool, { track: 4, transpose: -2 }));

@@ -327,7 +327,10 @@ const setting = z.strictObject({
 	page: z.int().min(1).max(4).optional(),
 	key: settingValue.optional(),
 	// a parameter lock on one step, as plan_steps takes it (an agent's riser needed a cutoff per step)
-	step: z.int().min(1).max(64).optional()
+	step: z.int().min(1).max(64).optional(),
+	// with step, the pattern whose step it locks, when not the one the track plays (an outro's
+	// copies took the verse's locks, and pointing the track at them rewrote a scene)
+	pattern: patternNumber.optional()
 });
 
 const listenOptions = z.strictObject({
@@ -657,6 +660,74 @@ export function createLab(options: LabOptions): LabSession {
 		}
 
 		function set(input: Setting | readonly Setting[]): SetResult {
+			const all = Array.isArray(input)
+				? check(z.array(setting).min(1).max(16), input, 'set')
+				: [check(setting, input, 'set')];
+			if (all.some((s) => s.pattern !== undefined)) return setOnPatterns(all);
+			return setNow(all);
+		}
+
+		/**
+		 * Locks on another pattern's steps, as a person makes them: the track switched to that pattern
+		 * (the arrange page's pattern), the steps locked, the track switched back, so what plays and
+		 * every scene stay as they were.
+		 */
+		function setOnPatterns(all: readonly Setting[]): SetResult {
+			if (all.some((s) => s.pattern !== undefined && s.step === undefined)) {
+				throw new LabError("set: pattern goes with step (a lock on that pattern's step)");
+			}
+			const selected = virtual.status().selectedTrack;
+			const steps: string[] = [];
+			const notes: string[] = [];
+			const groups = new Map<string, Setting[]>();
+			for (const s of all) {
+				const key = s.pattern === undefined ? 'now' : `${s.track ?? selected}:${s.pattern}`;
+				groups.set(key, [...(groups.get(key) ?? []), s]);
+			}
+			const switchTo = (track: number, pattern: number) => {
+				const goal = settingGoal(
+					{ area: 'arrange', param: 'pattern', value: pattern, track },
+					selected
+				);
+				if (typeof goal === 'string') throw new LabError(`set: ${goal}`);
+				const p = virtual.plan(goal);
+				if (!p.reached)
+					throw new LabError(`set: track ${track} did not switch to pattern ${pattern}`);
+				for (const step of p.steps) playStep(sim, step);
+				steps.push(...p.steps.map(stepText));
+			};
+			for (const [key, group] of groups) {
+				const plain = group.map((g) => {
+					const rest: Setting = { ...g };
+					delete (rest as { pattern?: number }).pattern;
+					return rest;
+				});
+				if (key === 'now') {
+					const r = setNow(plain);
+					steps.push(...r.steps);
+					if (r.note) notes.push(r.note);
+					continue;
+				}
+				const [t, n] = key.split(':').map(Number);
+				const was = virtual.status().tracks[t - 1]?.current ?? 1;
+				const patterns = virtual.status().tracks[t - 1]?.patterns ?? 1;
+				if (n > patterns)
+					throw new LabError(`set: track ${t} has no pattern ${n} (it has ${patterns})`);
+				if (n !== was) switchTo(t, n);
+				const r = setNow(plain);
+				steps.push(...r.steps);
+				if (r.note) notes.push(r.note);
+				if (n !== was) switchTo(t, was);
+			}
+			return {
+				reached: true,
+				steps,
+				screen: screenOf(sim),
+				...(notes.length ? { note: notes.join(' ') } : {})
+			};
+		}
+
+		function setNow(input: readonly Setting[]): SetResult {
 			const { list, plan } = planned(input, 'set');
 			if (!plan.reached) {
 				const what = list.map((s) => `${s.track ? `track ${s.track} ` : ''}${s.param} ${s.value}`);
