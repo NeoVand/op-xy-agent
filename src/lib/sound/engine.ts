@@ -1,6 +1,6 @@
 /**
  * The virtual OP-XY's sound (Web Audio): eight instrument-track channels into a master bus with a
- * gentle limiter; two send effects (a new project's delay on FX I and reverb on FX II), returning
+ * gentle limiter; two send effects (FX I and FX II, any of the six, `fx.ts`), returning
  * through the auxiliary mixer strips T7 and T8; a metronome click; and the voices — 24 shared by all
  * tracks and stolen when needed, as on the device. Notes arrive live from the replica's keys or
  * scheduled ahead by the sequencer (`scheduler.ts`); the simulator's state arrives through `sync`,
@@ -17,7 +17,8 @@
  * the percussion pan take them as they start; mute, stutter and the melodic pan go to the punch-in
  * processor on each channel (`usePunch`); the effects on the sequencer's notes are the scheduler's.
  */
-import { TRACKS, type EngineId } from '$lib/core/opxy';
+import type { EngineId, FxEngineId } from '$lib/core/opxy';
+import { initialAuxiliary } from '$lib/sim/areas/auxiliary/state';
 import { soloed } from '$lib/sim/areas/mixer/meters';
 import { zoneOf } from '$lib/sim/areas/sample/m1';
 import { lockedRegion } from '$lib/sim/areas/sequencer/locks';
@@ -25,7 +26,7 @@ import type { Region as SampleRegion, SampleState } from '$lib/sim/areas/sample/
 import { defaultDrumKey, type SimState, type TrackState } from '$lib/sim/params';
 import { VOICE_LIMIT, victim } from './allocator';
 import { Channel } from './channel';
-import { createEffect, type SendEffect } from './fx';
+import { EffectSlot } from './fx';
 import { FIRST_DRUM_NOTE, kitSound } from './kit';
 import { softLimitCurve } from './limit';
 import {
@@ -152,7 +153,7 @@ function bufferAmp(settings: TrackState) {
 	const amp = envelopeSeconds(settings.amp);
 	return settings.amp.attack <= 0 ? { ...amp, attack: SAMPLE_ATTACK } : amp;
 }
-/** How long the send effects ring on after the last note (for idle detection). */
+/** How long the send effects ring on after the last note at least (for idle detection). */
 const FX_TAIL = 3.5;
 
 /** A note as a voice starts it: the request, and whether the punch-in soft attack holds. */
@@ -182,7 +183,7 @@ export class SoundEngine {
 	readonly #out: GainNode;
 	readonly #analyser: AnalyserNode;
 	readonly #meter: Float32Array<ArrayBuffer>;
-	readonly #effects: SendEffect[];
+	readonly #effects: EffectSlot[];
 	readonly #returns: { level: GainNode; pan: StereoPannerNode }[];
 	readonly #channels: Channel[];
 	readonly #limit: number;
@@ -259,13 +260,16 @@ export class SoundEngine {
 		limiter.connect(this.#analyser);
 		this.#out.connect(options.destination ?? context.destination);
 
-		// FX I and FX II, returning through the auxiliary mixer strips T7 and T8
-		const slots = [TRACKS[14]?.defaultEffect ?? 'delay', TRACKS[15]?.defaultEffect ?? 'reverb'];
-		this.#effects = slots.map((kind) => createEffect(kind, context, this.resources, 120));
+		// FX I and FX II (a new project's delay and reverb until `sync` says otherwise), returning
+		// through the auxiliary mixer strips T7 and T8; dry's share of the sends goes round them
+		this.#effects = initialAuxiliary().fx.map(
+			(slot) => new EffectSlot(context, this.resources, slot, 120)
+		);
 		this.#returns = this.#effects.map((fx) => {
 			const level = context.createGain();
 			const pan = context.createStereoPanner();
 			fx.output.connect(level).connect(pan).connect(this.#bus);
+			fx.bypass.connect(this.#bus);
 			return { level, pan };
 		});
 		const sends = [this.#effects[0].input, this.#effects[1].input] as const;
@@ -394,7 +398,12 @@ export class SoundEngine {
 	get quietAt(): number {
 		let end = this.#quiet;
 		for (const v of this.#voices) end = Math.max(end, v.end);
-		return end + FX_TAIL;
+		return end + Math.max(FX_TAIL, ...this.#effects.map((fx) => fx.tail));
+	}
+
+	/** The effects FX I and FX II run now. */
+	get effects(): FxEngineId[] {
+		return this.#effects.map((fx) => fx.kind);
 	}
 
 	/** Peak level of each instrument track right now, after its fader, 0–1. */
@@ -412,17 +421,19 @@ export class SoundEngine {
 
 	/**
 	 * Takes the simulator's state: mixer strips (with solo and the mix page's group levels), sends,
-	 * FX returns, the master EQ and level, preset volume, LFOs and tempo, and the filter and M1 of
-	 * notes already sounding. Cheap when nothing changed; call it every tick.
+	 * the FX slots' effects and values, FX returns, the master EQ and level, preset volume, LFOs and
+	 * tempo, and the filter and M1 of notes already sounding. Cheap when nothing changed; call it
+	 * every tick.
 	 */
 	sync(state: SimState, time = this.context.currentTime): void {
 		const { bpm } = state.tempo;
 		this.#playing = state.transport.playing;
 		if (bpm !== this.#bpm) {
 			this.#bpm = bpm;
-			for (const fx of this.#effects) fx.setTempo(bpm, time);
 			this.#sendGrid(time);
 		}
+		const fx = state.areas?.auxiliary?.fx;
+		this.#effects.forEach((slot, i) => slot.apply(fx?.[i] ?? null, bpm, time));
 		this.#punch.prune(time - 1);
 		// a punch-in processor that threw outputs silence: the channels go round it again
 		const punchHost = this.#punchHost;
@@ -666,6 +677,7 @@ export class SoundEngine {
 		this.#synth = null;
 		this.#punchHost?.dispose();
 		this.#punchHost = null;
+		for (const fx of this.#effects) fx.dispose();
 		this.#out.disconnect();
 	}
 

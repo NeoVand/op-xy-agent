@@ -2,7 +2,7 @@
  * What voices share within one audio context: PeriodicWaves (kept in a small LRU cache, since the
  * browser spends about half a megabyte on each), a loop of white noise, the synthesized kit and the
  * metronome rendered into AudioBuffers on first use, sample files' audio from the registry turned
- * into AudioBuffers, and the reverb's impulse.
+ * into AudioBuffers, and the reverb's impulses (one a room size).
  */
 import { DRUM_SOUNDS, renderClick, renderDrum, renderImpulse } from './kit';
 import { crossfadeLoop } from './dsp';
@@ -36,6 +36,8 @@ function reversed(context: BaseAudioContext, buffer: AudioBuffer): AudioBuffer {
 
 /** How many crossfaded copies of one buffer are kept (loop points or crossfade turned). */
 const CROSSFADE_CACHE = 4;
+/** How many reverb rooms besides the hall are kept (the reverb's size turned). */
+const ROOM_CACHE = 4;
 
 const isAudioBuffer = (source: SampleSource): source is AudioBuffer =>
 	typeof (source as AudioBuffer).getChannelData === 'function';
@@ -52,6 +54,7 @@ export class Resources {
 	#noise: AudioBuffer | null = null;
 	#clicks: [AudioBuffer, AudioBuffer] | null = null;
 	#impulse: AudioBuffer | null = null;
+	readonly #rooms = new Map<string, AudioBuffer>();
 
 	constructor(context: BaseAudioContext) {
 		this.context = context;
@@ -130,11 +133,33 @@ export class Resources {
 		return this.#clicks[accent ? 1 : 0];
 	}
 
-	/** The reverb's stereo impulse response. */
+	/** The reverb's stereo impulse response: the hall a new project's reverb rings (2.2 s). */
 	get impulse(): AudioBuffer {
 		const sr = this.context.sampleRate;
 		this.#impulse ??= toBuffer(this.context, renderImpulse(sr), sr);
 		return this.#impulse;
+	}
+
+	/**
+	 * The reverb's impulse for a room ringing `rt60` seconds, running on 0.4 s past it as the hall
+	 * does (the hall itself for 2.2 s); the last few rooms are kept, since size moves by detents.
+	 */
+	room(rt60: number): AudioBuffer {
+		const key = rt60.toFixed(3);
+		if (key === (2.2).toFixed(3)) return this.impulse;
+		const cached = this.#rooms.get(key);
+		if (cached) {
+			// most recently used moves to the end
+			this.#rooms.delete(key);
+			this.#rooms.set(key, cached);
+			return cached;
+		}
+		const sr = this.context.sampleRate;
+		const buffer = toBuffer(this.context, renderImpulse(sr, rt60 + 0.4, rt60), sr);
+		this.#rooms.set(key, buffer);
+		if (this.#rooms.size > ROOM_CACHE)
+			this.#rooms.delete(this.#rooms.keys().next().value as string);
+		return buffer;
 	}
 
 	/** A sample file's audio as an AudioBuffer (converted once), backwards when `reverse`. */

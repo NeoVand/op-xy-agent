@@ -865,6 +865,10 @@ matrix (66).
     - "loop until release" stops looping at the release and plays on to the region's end.
   - From the camera: portamento reads off, then plain numbers up to 127 (b1-2796…2803), on the
     page, in locks, in `.xy` lock lanes and in the glide law.
+  - From the FX pages: FX I and FX II play the effect their pages hold, any of the six, and follow
+    its four values (`sound/fx.ts`). A new project sounds as before. Every law is ours, to be
+    fitted in Session 2. Dry follows the guide's "between insert and send": at 99 a send, toward 0
+    an insert (the manual's old advice to keep it at 0 for a send is corrected).
   - Probe check (`probe-scenarios-44.json`, three scenarios, one failed call: a key-grammar slip).
     The agent:
     - set portamento to 127 and back to off;

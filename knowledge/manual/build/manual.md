@@ -1,6 +1,6 @@
 # OP-XY manual
 
-Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1235 facts, 207 procedures, 207 parameters.
+Our own reworded, agent-oriented manual for the teenage engineering OP-XY, written for OS 1.1.33. It is derived from TE's online guide (v1.1.15), the OS changelog and checks on a real unit; 166 units, 1237 facts, 207 procedures, 207 parameters.
 
 ## How to read this manual
 
@@ -3342,7 +3342,8 @@ Where: modes auxiliary; screens M1
 An echo for FX I or FX II; `M1` sets the repeat spacing as a note value, fine-tunes it, and sets the feedback and the amount of dry signal.
 
 Set the rough echo distance with size, then fine-tune it and choose how long the echoes keep coming
-back. For a classic send, keep dry at 0 so the FX track returns only the echoes. TE's guide calls the
+back. Dry at 99, as a new project has it, is the classic send; at 0 the echoes replace the sound.
+TE's guide calls the
 middle controls amount and fine and describes size as eight named steps from micro to insane; on
 1.1.33 the screen reads fine and feedback, and size shows note values, so the spacing follows the
 tempo.
@@ -3352,6 +3353,7 @@ Facts:
 - Size (`E1`) sets the spacing of the repeats and reads as a note value, such as 1/8 dotted. [#size] (verified 1.1.33) [s2]
 - The delay's columns read size, fine, feedback and dry — `E2` fine-tunes the spacing and `E3` sets the feedback. [#labels] (verified 1.1.33) [s2]
 - Dry (`E4`) sets the untreated signal against the echoes; at 0 only the repeats are heard. [#dry] [s1]
+- A new project keeps dry at 99, where each sending track keeps its own sound and the echoes come on top, as a send. Turned down, more of what a track sends is heard only through the delay, and at 0 a track sending at 99 is heard as repeats alone. The replica plays it this way; how the unit mixes in between is not yet measured. [#dry-ends] (derived) [s1]
 - Since OS 1.1.25 the delay stays steady when the tempo of an external clock wobbles. [#jitter] (since 1.1.25) [s3]
 
 Parameters:
@@ -3472,7 +3474,8 @@ Facts:
 - The reverb puts a sound in a space, anything from a small room to a cathedral. Use it to make a part stand out or to smooth the whole mix. [#what] [s1]
 - Modulation (`E2`) adds a slowly swelling, chorus-like movement to the reverb. [#modulation] [s1]
 - The reverb's columns read size, mod, tone and dry, so `E3` is the tone control and `E4` the dry level. [#labels] (verified 1.1.33) [s2]
-- The dry/wet control (`E4`) moves smoothly between send-style use, where only the reverb returns, and insert-style use, where dry signal passes through as well. [#send-insert] [s1]
+- The dry control (`E4`) moves smoothly between insert-style and send-style use. [#send-insert] [s1]
+- At 99, where a new project has it, the sending tracks keep their own sound and the reverb comes on top, a send. Toward 0, more of what they send is heard only through the reverb, an insert. Which end is which is our reading of the guide; the replica plays it this way, and it is not yet checked on a unit. [#dry-ends] (derived) [s1]
 
 Parameters:
 

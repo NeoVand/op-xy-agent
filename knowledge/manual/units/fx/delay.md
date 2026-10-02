@@ -31,6 +31,10 @@ facts:
   - id: dry
     text: Dry (`E4`) sets the untreated signal against the echoes; at 0 only the repeats are heard.
     source: https://teenage.engineering/guides/op-xy/fx#delay
+  - id: dry-ends
+    text: A new project keeps dry at 99, where each sending track keeps its own sound and the echoes come on top, as a send. Turned down, more of what a track sends is heard only through the delay, and at 0 a track sending at 99 is heard as repeats alone. The replica plays it this way; how the unit mixes in between is not yet measured.
+    source: https://teenage.engineering/guides/op-xy/fx#delay
+    confidence: derived
   - id: jitter
     text: Since OS 1.1.25 the delay stays steady when the tempo of an external clock wobbles.
     source: https://teenage.engineering/downloads/op-xy#1.1.25
@@ -75,7 +79,8 @@ related: [fx.overview, fx.reverb]
 ---
 
 Set the rough echo distance with size, then fine-tune it and choose how long the echoes keep coming
-back. For a classic send, keep dry at 0 so the FX track returns only the echoes. TE's guide calls the
+back. Dry at 99, as a new project has it, is the classic send; at 0 the echoes replace the sound.
+TE's guide calls the
 middle controls amount and fine and describes size as eight named steps from micro to insane; on
 1.1.33 the screen reads fine and feedback, and size shows note values, so the spacing follows the
 tempo.

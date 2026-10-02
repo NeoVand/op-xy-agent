@@ -27,8 +27,12 @@ facts:
     confidence: verified
     verified_on: '1.1.33'
   - id: send-insert
-    text: The dry/wet control (`E4`) moves smoothly between send-style use, where only the reverb returns, and insert-style use, where dry signal passes through as well.
+    text: The dry control (`E4`) moves smoothly between insert-style and send-style use.
     source: https://teenage.engineering/guides/op-xy/fx#reverb
+  - id: dry-ends
+    text: At 99, where a new project has it, the sending tracks keep their own sound and the reverb comes on top, a send. Toward 0, more of what they send is heard only through the reverb, an insert. Which end is which is our reading of the guide; the replica plays it this way, and it is not yet checked on a unit.
+    source: https://teenage.engineering/guides/op-xy/fx#reverb
+    confidence: derived
 parameters:
   - screen: M1
     encoder: E1

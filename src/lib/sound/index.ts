@@ -10,7 +10,14 @@ export { VOICE_LIMIT, busyAt, victim, type VoiceSlot } from './allocator';
 export { SoundEngine, type NoteRequest, type SoundEngineOptions } from './engine';
 export { SoundError } from './errors';
 export { Envelope, type EnvelopeRange, type ParamLike } from './envelope';
-export { createEffect, DELAY_SIXTEENTHS, type SendEffect } from './fx';
+export {
+	DELAY_NOTES,
+	EffectSlot,
+	createEffect,
+	keptDry,
+	type EffectSettings,
+	type SendEffect
+} from './fx';
 export { grooveJitter, grooveTime, grooveVelocity, maxEarlyShift, type Groove } from './groove';
 export {
 	DRUM_SOUNDS,
