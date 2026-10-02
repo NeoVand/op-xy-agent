@@ -1,0 +1,139 @@
+[
+	{
+		"name": "twelve-eight-blues",
+		"about": "Re-check: a grid in another meter, its bar in marks.",
+		"steps": [{ "say": "make a slow 12/8 blues groove with a bass" }, { "why": true }]
+	},
+	{
+		"name": "cut-to-two",
+		"about": "Re-check: a pattern cut as it is, by bars alone.",
+		"steps": [
+			{ "say": "make a 4 bar beat with a bass and chords" },
+			{ "say": "make everything just 2 bars long" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "counter-gaps",
+		"about": "Re-check: a counter-line read against the melody near it.",
+		"steps": [
+			{ "say": "write a melody on track 5 in D minor" },
+			{
+				"say": "add a counter melody on track 6 that fills the gaps in the melody, and tell me how often they play together"
+			},
+			{ "why": true }
+		]
+	},
+	{
+		"name": "humanize-snare",
+		"about": "Re-check: humanize by sound, offsets in ms.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "humanize only the snare and tell me how many ms each snare moved" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "teach-record-bass",
+		"about": "Re-check: an armed record says how notes are played here.",
+		"steps": [
+			{ "say": "teach me to record a bassline live on track 3, light the keys" },
+			{ "follow": 4 },
+			{ "say": "what do I do now?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "kick-too-quiet",
+		"about": "Re-check: one drum sound's level.",
+		"steps": [
+			{ "say": "make a beat" },
+			{ "say": "the kick is too quiet compared to the hats" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "smooth-fade",
+		"about": "Re-check: a smooth fade, its lock named and shape set.",
+		"steps": [{ "say": "make a 2 scene song that fades out smoothly at the end" }, { "why": true }]
+	},
+	{
+		"name": "video-sting",
+		"about": "Re-check: a piece that plays once.",
+		"steps": [{ "say": "make a 4 second sting for the end of my youtube video" }, { "why": true }]
+	},
+	{
+		"name": "swap-melody-bass",
+		"about": "Re-check: two tracks' parts swapped in one lab program.",
+		"steps": [
+			{ "say": "write a bass on track 3 and a melody on track 5" },
+			{ "say": "swap them: the melody on track 3 and the bass on track 5" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "portuguese-funk",
+		"about": "A request in Portuguese.",
+		"steps": [{ "say": "faça uma batida de funk carioca com baixo" }, { "why": true }]
+	},
+	{
+		"name": "trap-rolls",
+		"about": "Hat rolls, by step components or by hand.",
+		"steps": [{ "say": "make a trap beat with hi-hat rolls" }, { "why": true }]
+	},
+	{
+		"name": "battery-life",
+		"about": "A device fact question.",
+		"steps": [{ "say": "how long does the op-xy battery last?" }, { "why": true }]
+	},
+	{
+		"name": "what-key",
+		"about": "A question about what was made.",
+		"steps": [
+			{ "say": "make chords and a melody" },
+			{ "say": "what key is my song in?" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "bass-half-speed",
+		"about": "One track at another speed.",
+		"steps": [
+			{ "say": "make a beat with a bass" },
+			{ "say": "make only the bass play at half speed" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "crash-on-one",
+		"about": "A sound added at a place in a longer pattern.",
+		"steps": [
+			{ "say": "make a 4 bar beat" },
+			{ "say": "add a crash on the very first beat, only once every 4 bars" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "chords-offbeats",
+		"about": "A rhythm edit on chords.",
+		"steps": [
+			{ "say": "write chords on track 4" },
+			{ "say": "make the chords play only on the off-beats" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "change-key-midway",
+		"about": "The user changes the key after the fact.",
+		"steps": [
+			{ "say": "make a beat with bass and chords in A minor" },
+			{ "say": "actually, put everything in D minor instead" },
+			{ "why": true }
+		]
+	},
+	{
+		"name": "save-to-computer",
+		"about": "An app question.",
+		"steps": [{ "say": "how do I save my project to my computer?" }, { "why": true }]
+	}
+]

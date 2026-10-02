@@ -9,6 +9,8 @@
 interface Voiced {
 	readonly step: number;
 	readonly note: number;
+	/** In steps, when known: how long the note sounds. */
+	readonly length?: number;
 }
 
 /** A line: its notes and how many steps it runs before it repeats. */
@@ -77,8 +79,21 @@ function counterNote(
 ): string | null {
 	if (theirs.size < 4 || Math.abs(middle(mine) - middle(theirs)) > 12) return null;
 	const them = `T${other.track}'s`;
+	// the notes between: over one of the other's held notes, or in its rests (an agent asked how
+	// often two lines play together counted the lead's held notes by hand)
+	const starts = new Set(pairs.map((p) => p.step));
+	const between = [...mine.keys()].filter((step) => !starts.has(step));
+	const timed = other.notes.every((n) => n.length !== undefined);
+	const held = between.filter((step) => {
+		const at = ((step - 1) % other.length) + 1;
+		return other.notes.some((n) => n.step < at && at < n.step + (n.length ?? 0));
+	}).length;
+	const over =
+		timed && between.length > 0
+			? ` (${held} over its held notes, ${between.length - held} in its rests)`
+			: '';
 	if (pairs.length === 0) {
-		return `Against ${them} line: none of its ${mine.size} notes start with one of ${them}; all fall between them.`;
+		return `Against ${them} line: none of its ${mine.size} notes start with one of ${them}; all fall between them${over}.`;
 	}
 	const counts = new Map<string, number>();
 	for (const p of pairs) counts.set(generic(p.gap), (counts.get(generic(p.gap)) ?? 0) + 1);
@@ -88,7 +103,7 @@ function counterNote(
 		.join(', ');
 	const steps = pairs.map((p) => p.step);
 	const shown = steps.length > 8 ? `${steps.slice(0, 8).join(', ')}, …` : steps.join(', ');
-	return `Against ${them} line: ${pairs.length} of its ${mine.size} notes start with one of ${them} (${intervals}; steps ${shown}), the other ${mine.size - pairs.length} between them.`;
+	return `Against ${them} line: ${pairs.length} of its ${mine.size} notes start with one of ${them} (${intervals}; steps ${shown}), the other ${mine.size - pairs.length} between them${over}.`;
 }
 
 /**

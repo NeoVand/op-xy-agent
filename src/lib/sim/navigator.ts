@@ -16,7 +16,7 @@
 import { parseNoteName } from '$lib/core/midi/notes';
 import { KEYBOARD_FIRST_NOTE, parseKeys, targetIds, type KeySequence } from '$lib/core/opxy';
 import { musicMark } from './music-mark';
-import { OpxySim } from './opxy-sim.svelte';
+import { HeadlessSim, OpxySim } from './opxy-sim.svelte';
 import { buildFrame } from './frames';
 import { trackSequence } from './areas/arrange/model';
 import { shownBar, trackOctave } from './areas/sequencer/model';
@@ -481,7 +481,7 @@ export function findParam(
 
 /** A private copy of the simulator at `state`. */
 function copy(state: SimState): OpxySim {
-	return new OpxySim({ state: JSON.parse(JSON.stringify(state)) as SimState, now: () => 0 });
+	return new HeadlessSim({ state: JSON.parse(JSON.stringify(state)) as SimState, now: () => 0 });
 }
 
 const screenOf = (sim: OpxySim) => describeFrame(buildFrame(sim.state));

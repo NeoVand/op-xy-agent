@@ -108,6 +108,10 @@ describe('routing', () => {
 		// the app's own downloads
 		expect(route('how do I export this as a wav file?')).toContain('the-app');
 		expect(route('how do I get this as an audio file to send to a friend?')).toContain('the-app');
+		// the project card's download is saving to the computer too
+		expect(route('how do I save my project to my computer?')).toContain('the-app');
+		// a jingle plays once, as a song does
+		expect(route('make an 8 second podcast intro jingle')).toContain('song-arrangement');
 		// options to choose between by ear are the lab's takes
 		expect(route('give me three basslines to choose from')).toEqual(['lab', 'make-music']);
 		expect(route('make a punchy 909 kit and play a house beat with it')).toEqual([

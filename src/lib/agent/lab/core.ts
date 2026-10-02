@@ -30,7 +30,7 @@ import { KeyParseError, parseKeys } from '$lib/core/opxy';
 import { snapshot } from '$lib/sim/areas/system/projects';
 import { buildFrame } from '$lib/sim/frames';
 import { playStep, type NavPlan, type NavStep } from '$lib/sim/navigator';
-import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { HeadlessSim, OpxySim } from '$lib/sim/opxy-sim.svelte';
 import type { SimState } from '$lib/sim/params';
 import { describeFrame } from '$lib/sim/screen/render';
 import { TRACK_SCALES } from '$lib/sim/sequencer';
@@ -493,7 +493,7 @@ export function createLab(options: LabOptions): LabSession {
 	let rendered = 0;
 
 	const sideOf = (state: SimState): DiffSide => {
-		const sim = new OpxySim({ state, now: () => 0 });
+		const sim = new HeadlessSim({ state, now: () => 0 });
 		return { state: sim.state, virtual: options.virtual(sim) };
 	};
 
@@ -510,7 +510,7 @@ export function createLab(options: LabOptions): LabSession {
 		named: ReadonlyMap<string, string | null> = new Map()
 	): Fork {
 		const name = `fork ${++forks}`;
-		const sim = new OpxySim({ state, now: () => 0 });
+		const sim = new HeadlessSim({ state, now: () => 0 });
 		const virtual = options.virtual(sim);
 		const self: ForkRecord = {
 			name,
@@ -1013,7 +1013,7 @@ export function createLab(options: LabOptions): LabSession {
 			}
 			return sceneState(f.sim.state, scene);
 		}
-		const sim = new OpxySim({ state: JSON.parse(JSON.stringify(f.sim.state)), now: () => 0 });
+		const sim = new HeadlessSim({ state: JSON.parse(JSON.stringify(f.sim.state)), now: () => 0 });
 		options.virtual(sim).transport('play');
 		return sim.state;
 	}

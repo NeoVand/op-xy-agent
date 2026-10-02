@@ -178,6 +178,16 @@ export function numeral(root: number, suffix: string, tonic: number): string {
 export const FOUR_FOUR: BarMeter = { bar: 16, beats: [4, 4, 4, 4] };
 
 /**
+ * A compound meter's felt beat against the tempo, which counts quarters (an agent asked for a slow
+ * 12/8 blues could not tell whether "slow" was the quarter or the dotted quarter it hears).
+ */
+export function compoundPulse(signature: string): string {
+	return signature === '6/8' || signature === '12/8'
+		? ` Its felt beat is the dotted quarter, six steps: a pulse of N a minute is tempo N × 1.5 (a slow 12/8 blues at a pulse of 50 is tempo 75).`
+		: '';
+}
+
+/**
  * A pattern's steps that play (1…`length`) laid out bar by bar in `meter`: each beat's cells joined
  * by `cell`, the beats by `beat`. A waltz read in bars of sixteen once looked broken; and steps past
  * the length do not play, so they are not shown.

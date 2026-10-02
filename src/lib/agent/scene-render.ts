@@ -8,13 +8,16 @@
 import { estimateKey, type KeyEstimate } from '$lib/core/listen/harmony';
 import { holdScene, selectScene } from '$lib/sim/areas/arrange/model';
 import { snapshot } from '$lib/sim/areas/system/projects';
-import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { HeadlessSim } from '$lib/sim/opxy-sim.svelte';
 import type { SimState } from '$lib/sim/params';
 import type { LabRender } from './lab/core';
 
 /** `state` (a copy is made) playing scene `scene` (1–99) round and round from its start. */
 export function sceneState(state: SimState, scene: number): SimState {
-	const sim = new OpxySim({ state: JSON.parse(JSON.stringify(state)) as SimState, now: () => 0 });
+	const sim = new HeadlessSim({
+		state: JSON.parse(JSON.stringify(state)) as SimState,
+		now: () => 0
+	});
 	selectScene(sim.state, scene - 1);
 	holdScene(sim.state);
 	sim.press('key.play');

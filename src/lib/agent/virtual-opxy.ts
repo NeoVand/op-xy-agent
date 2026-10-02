@@ -83,6 +83,8 @@ export interface VirtualPattern {
 	 * off the grid are pulled onto it as they play.
 	 */
 	readonly quantise?: number | 'off';
+	/** The bar menu's shape, 1–99, when set: how far it glides from one lock to the next. */
+	readonly shape?: number;
 }
 
 /**
@@ -145,7 +147,8 @@ export interface VirtualArrangement {
 	readonly scene: number;
 	/**
 	 * What play runs: the song in its order, or one scene round and round (a scene was picked, which
-	 * holds it, or the song has one entry). While a song plays it is `song`.
+	 * holds it, or the song is one entry that loops; one that does not loop plays once, a song). While
+	 * a song plays it is `song`.
 	 */
 	readonly plays: 'song' | 'scene';
 	/** A scene waiting for the current one to end (shift + play, then the scene). */

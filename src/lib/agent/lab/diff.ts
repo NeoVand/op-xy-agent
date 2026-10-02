@@ -9,9 +9,9 @@ import { describeNoteChange } from '$lib/sim/pattern-change';
 import { noteName } from '$lib/core/midi/notes';
 import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
 import { AUX_NAMES, GROOVES, type SimState, type TrackState } from '$lib/sim/params';
-import { extrasChange } from '$lib/app/replica-diff';
+import { extrasChange, newPatternExtras } from '$lib/app/replica-diff';
 import { planPlace, playStep, pageValues, type Place } from '$lib/sim/navigator';
-import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { HeadlessSim, OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { buildFrame } from '$lib/sim/frames';
 import { describeFrame } from '$lib/sim/screen/render';
 import { trackSequence } from '$lib/sim/areas/arrange/model';
@@ -62,7 +62,10 @@ export function pageChange(label: string, before = '', after = ''): string | nul
 class PageReader {
 	readonly #sim: OpxySim;
 	constructor(state: SimState) {
-		this.#sim = new OpxySim({ state: JSON.parse(JSON.stringify(state)) as SimState, now: () => 0 });
+		this.#sim = new HeadlessSim({
+			state: JSON.parse(JSON.stringify(state)) as SimState,
+			now: () => 0
+		});
 	}
 	read(place: Place): string {
 		for (const step of planPlace(this.#sim.state, place).steps) playStep(this.#sim, step);
@@ -180,7 +183,11 @@ function patternChange(
 	const locks = (p: Pattern) => json(p.steps.map((s) => [s.locks, s.components]));
 	// each lock by its step and value, as the replica's changes say it
 	if (locks(x) !== locks(y)) parts.push(...extrasChange(x, y, track));
-	const known = new Set(['steps', 'bars', 'length', 'scale']);
+	// the bar menu's shape by the name the device and the replica's changes give it
+	if (x.smoothing !== y.smoothing) {
+		parts.push(`shape ${x.smoothing} → ${y.smoothing} (the glide between its locks)`);
+	}
+	const known = new Set(['steps', 'bars', 'length', 'scale', 'smoothing']);
 	for (const key of Object.keys(y) as (keyof Pattern)[]) {
 		if (known.has(key) || json(x[key]) === json(y[key])) continue;
 		const was = x[key];
@@ -215,8 +222,11 @@ function patternLines(a: SimState, b: SimState, t: number): string[] {
 		if (was && now && json(was) === json(now)) continue;
 		const label = `${trackName(t)} pattern ${i + 1}`;
 		if (!now) out.push(`${label}: removed`);
-		else if (!was) out.push(`${label}: new, ${patternText(now)}`);
-		else out.push(`${label}: ${patternChange(was, now, b.tracks[t], soundsOf(b, t))}`);
+		else if (!was) {
+			out.push(
+				`${label}: new, ${[patternText(now), ...newPatternExtras(now, b.tracks[t])].join(', ')}`
+			);
+		} else out.push(`${label}: ${patternChange(was, now, b.tracks[t], soundsOf(b, t))}`);
 	}
 	if (x.current !== y.current) {
 		out.push(`${trackName(t)} plays pattern ${y.current + 1} (was ${x.current + 1})`);

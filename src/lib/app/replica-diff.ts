@@ -14,7 +14,7 @@ import { lockLabel, lockParam } from '$lib/sim/areas/sequencer/locks';
 import { drumKeyChanges } from './drum-keys';
 import { brainSettings, KEYS, SCALES, type BrainSettings } from '$lib/sim/areas/auxiliary/state';
 import { trackSequence } from '$lib/sim/areas/arrange/model';
-import { formatScale } from '$lib/sim/sequencer';
+import { emptyPattern, formatScale } from '$lib/sim/sequencer';
 import { noteName } from '$lib/core/midi/notes';
 import { describeNoteChange } from '$lib/sim/pattern-change';
 import { FIRST_NOTE, soundName } from '$lib/sim/areas/sample/state';
@@ -174,6 +174,24 @@ export function extrasChange(was: Pattern, now: Pattern, track: TrackState | und
 	];
 }
 
+/**
+ * What a new pattern holds besides its notes, against an empty one: its locks, shape, groove and
+ * quantise (a fade's volume locks and shape read "new, 16 notes, 4 bars", and an agent could not
+ * tell they had landed).
+ */
+export function newPatternExtras(now: Pattern, track: TrackState | undefined): string[] {
+	const blank = emptyPattern();
+	const parts = extrasChange(blank, now, track);
+	if (now.smoothing !== blank.smoothing) {
+		parts.push(`shape ${now.smoothing} (the glide between its locks)`);
+	}
+	if (now.groove !== blank.groove) parts.push(`groove ${now.groove}`);
+	if (now.quantiseOn !== blank.quantiseOn || now.quantise !== blank.quantise) {
+		parts.push(`quantise ${now.quantiseOn ? now.quantise : 'off'}`);
+	}
+	return parts;
+}
+
 /** A pattern without its player, which the player page's line says (or "player changed"). */
 const unplayed = (p: Pattern | undefined) => (p ? { ...p, player: null } : p);
 
@@ -231,7 +249,10 @@ function patternChanges(
 				}
 				parts.push(...extrasChange(was, now, track));
 				if (n !== shown && !same(was.player, now.player)) parts.push('its player changed');
-			} else if (now && now.length !== now.bars * 16) parts.push(`${now.length} steps`);
+			} else if (now) {
+				if (now.length !== now.bars * 16) parts.push(`${now.length} steps`);
+				if (!was) parts.push(...newPatternExtras(now, track));
+			}
 			// what else a pattern holds (its scale, its groove…) when nothing named above changed
 			return `${label} pattern ${n}: ${parts.length ? parts.join(', ') : 'its settings changed'}`;
 		});

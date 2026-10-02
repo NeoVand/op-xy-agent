@@ -53,8 +53,10 @@ const KITS =
 	/\b(kits?|samples?|preset maker|one-?shots?|multi-?sample|sound ?font|sf2|sfz|slice|slices|slicing)\b/i;
 const LISTEN =
 	/\b(how does (it|this|that) sound|how do(es)? (it|they) sound|listen|too loud|too quiet|clipping|mix(ing)?)\b/i;
+// "save my project to my computer" is the project card's download too (the answer gave only the
+// device's MTP copy)
 const APP =
-	/\b(computer keyboard|this app|the app|manual page|export|bounce|wav|mp3|audio file|sound file|download (it|this|the song|my song))\b/i;
+	/\b(computer keyboard|this app|the app|manual page|export|bounce|wav|mp3|audio file|sound file|download (it|this|the song|my song)|(to|on|onto) (my|the) (computer|laptop|pc|mac))\b/i;
 const NEW =
 	/\b(just (got|bought|unboxed)|new to (this|the op-?xy|music)|where (do|should) i (start|begin)|never (used|made)|beginner|first time|no idea (how|what)|make something (cool|nice|fun)|i don'?t know (anything|much) about)\b/i;
 const GEAR =

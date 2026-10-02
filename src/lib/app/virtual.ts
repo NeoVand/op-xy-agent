@@ -43,7 +43,7 @@ import {
 	trackSequence
 } from '$lib/sim/areas/arrange/model';
 import { SCENES, SONG_LENGTH } from '$lib/sim/areas/arrange/state';
-import { OpxySim } from '$lib/sim/opxy-sim.svelte';
+import { HeadlessSim, OpxySim } from '$lib/sim/opxy-sim.svelte';
 import { drumKeysSet } from './drum-keys';
 import { replicaChangeList, replicaChanges } from './replica-diff';
 import {
@@ -218,6 +218,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 					? { quantise: p.quantise }
 					: {}),
 			...(p.groove ? { groove: p.groove } : {}),
+			...(p.smoothing ? { shape: p.smoothing } : {}),
 			bars: p.bars,
 			length: p.length,
 			scale: p.scale,
@@ -234,7 +235,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 	function screenAt(place: Place, shift = false): string {
 		const state = JSON.parse(JSON.stringify(s)) as SimState;
 		idle(state);
-		const copy = new OpxySim({ state, now: () => 0 });
+		const copy = new HeadlessSim({ state, now: () => 0 });
 		for (const step of planPlace(state, place).steps) playStep(copy, step);
 		if (shift) copy.input({ type: 'press', id: 'key.shift' });
 		return describeFrame(buildFrame(copy.state));
@@ -325,8 +326,12 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			];
 		});
 		const song = a.songs[a.song];
-		// a song of one entry is that scene round and round
-		const plays = song.order.length > 1 && (a.playing || !a.held) ? 'song' : 'scene';
+		// a song of one entry that loops is that scene round and round; with loop off it plays once
+		// and stops (a 4 second sting read "no song: scene 1 loops", and stopped after one pass)
+		const plays =
+			(song.order.length > 1 || (song.order.length === 1 && !song.loop)) && (a.playing || !a.held)
+				? 'song'
+				: 'scene';
 		const length = Math.max(1, sceneLength(s));
 		const at = s.transport.playing
 			? {
@@ -430,7 +435,8 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 			// pressed while it plays, the play key starts again from the top
 			sim.press('key.play');
 			const a = s.areas.arrange;
-			if (a.songs[a.song].order.length > 1) startSong(s);
+			const song = a.songs[a.song];
+			if (song.order.length > 1 || (song.order.length === 1 && !song.loop)) startSong(s);
 		},
 
 		setTempo(bpm) {
@@ -695,7 +701,7 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 				});
 				held = [...held, ...chord.terms.slice(0, -1)];
 				// where the sequence so far leaves a copy of the replica
-				const copy = new OpxySim({
+				const copy = new HeadlessSim({
 					state: JSON.parse(JSON.stringify(s)) as SimState,
 					now: () => 0
 				});
@@ -744,7 +750,10 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 		},
 
 		played(steps) {
-			const trial = new OpxySim({ state: JSON.parse(JSON.stringify(s)) as SimState, now: () => 0 });
+			const trial = new HeadlessSim({
+				state: JSON.parse(JSON.stringify(s)) as SimState,
+				now: () => 0
+			});
 			for (const step of steps) playStep(trial, step);
 			return { state: JSON.stringify(trial.state) };
 		},
@@ -757,13 +766,13 @@ export function createVirtualOpxy(options: VirtualOpxyOptions): VirtualOpxy {
 
 		changesSince(checkpoint) {
 			const was = JSON.parse(checkpoint.state) as SimState;
-			const before = createVirtualOpxy({ sim: new OpxySim({ state: was, now: () => 0 }) });
+			const before = createVirtualOpxy({ sim: new HeadlessSim({ state: was, now: () => 0 }) });
 			return replicaChanges(JSON.parse(checkpoint.state) as SimState, s, { before, after: api });
 		},
 
 		changedSince(checkpoint) {
 			const was = JSON.parse(checkpoint.state) as SimState;
-			const before = createVirtualOpxy({ sim: new OpxySim({ state: was, now: () => 0 }) });
+			const before = createVirtualOpxy({ sim: new HeadlessSim({ state: was, now: () => 0 }) });
 			return replicaChangeList(JSON.parse(checkpoint.state) as SimState, s, {
 				before,
 				after: api

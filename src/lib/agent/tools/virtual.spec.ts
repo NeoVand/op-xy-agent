@@ -373,6 +373,87 @@ describe('write_pattern one bar at a time', () => {
 		expect(shifted.filter((n) => n.step === 17).map((n) => n.note)).toEqual([46, 50, 53]);
 	});
 
+	it('swaps two tracks’ parts, each keeping its sound, and undoes the swap with another', async () => {
+		// "swap them: the melody on track 3 and the bass on track 5": an agent retyped both, twice
+		const { virtual, run, env } = setup();
+		await run(writePatternTool, { track: 3, notes: '1:A1:4 5:C2:4 9:E2:4 13:G2:4' });
+		await run(writePatternTool, { track: 5, bars: 2, notes: '1:E5:2 3:D5:2 5:C5:4 17:A4:8' });
+		const before = { t3: virtual.readSound(3).preset, t5: virtual.readSound(5).preset };
+		const swap = await run(writePatternTool, { track: 3, copy_track: 5, swap: true });
+		expect(swap.isError).toBeFalsy();
+		expect(virtual.readPattern(3).notes.map((n) => n.note)).toEqual([76, 74, 72, 69]);
+		expect(virtual.readPattern(3).bars).toBe(2);
+		expect(virtual.readPattern(5).notes.map((n) => n.note)).toEqual([33, 36, 40, 43]);
+		expect(virtual.readPattern(5).bars).toBe(1);
+		expect({ t3: virtual.readSound(3).preset, t5: virtual.readSound(5).preset }).toEqual(before);
+		expect(json(swap).note).toMatch(
+			/Swapped with T5: its pattern 1 holds this track's part as it was \(4 notes, 1 bar\), and each track keeps its own sound\./
+		);
+		expect(json(swap).note).not.toMatch(/doubling/);
+		// with anything else to change, or without another track, nothing is written
+		const mixed = await run(writePatternTool, {
+			track: 3,
+			copy_track: 5,
+			swap: true,
+			transpose: 12
+		});
+		expect(mixed.isError).toBe(true);
+		expect(String(mixed.content)).toMatch(/swap trades two tracks’ patterns as they are/);
+		expect((await run(writePatternTool, { track: 3, swap: true })).isError).toBe(true);
+		// its inverse is the same swap
+		const inverse = writePatternTool.inverse?.(
+			writePatternTool.input.parse({ track: 3, copy_track: 5, swap: true }),
+			null,
+			env
+		);
+		expect(inverse?.input).toMatchObject({ track: 3, copy_track: 5, swap: true });
+	});
+
+	it('restrikes held chords on a rhythm line, alone or with the chords given', async () => {
+		// "make the chords play only on the off-beats": an agent wrote sixteen stabs out by hand
+		const { virtual, run } = setup();
+		await run(writePatternTool, { track: 4, bars: 2, chords: '1:Am:16 17:F:16', voicing: 'root' });
+		const stabs = json(await run(writePatternTool, { track: 4, rhythm: '..x- ..x- ..x- ..x-' }));
+		const p = virtual.readPattern(4);
+		expect([...new Set(p.notes.map((n) => n.step))]).toEqual([3, 7, 11, 15, 19, 23, 27, 31]);
+		expect(new Set(p.notes.map((n) => n.length))).toEqual(new Set([2]));
+		expect(p.notes.filter((n) => n.step === 19).map((n) => n.note)).toEqual([53, 57, 60]);
+		expect(stabs.note).toMatch(
+			/Restruck on the rhythm 8 times \(steps 3, 7, 11, 15, 19, 23, 27, 31\)/
+		);
+		// with chords given, in one write; a strike is cut where its chord ends, and digits are
+		// velocities
+		await run(writePatternTool, {
+			track: 4,
+			bars: 1,
+			chords: '1:Am:6 9:F:8',
+			voicing: 'root',
+			rhythm: '9--- 3--- 9--- 3---'
+		});
+		const gated = virtual.readPattern(4);
+		expect(gated.notes.filter((n) => n.step === 5).map((n) => [n.length, n.velocity])).toEqual([
+			[2, 42],
+			[2, 42],
+			[2, 42]
+		]);
+		expect(gated.notes.filter((n) => n.step === 9).every((n) => n.velocity === 127)).toBe(true);
+		// a miscount, drums and bar are refused
+		const short = await run(writePatternTool, { track: 4, rhythm: 'x.x' });
+		expect(String(short.content)).toMatch(/the rhythm has 3 marks, which neither fill/);
+		expect((await run(writePatternTool, { track: 1, rhythm: 'x...' })).isError).toBe(true);
+		expect((await run(writePatternTool, { track: 4, bar: 1, rhythm: 'x...' })).isError).toBe(true);
+	});
+
+	it('reads back the bar menu’s shape, which a fade’s locks glide by', async () => {
+		const { sim, run } = setup();
+		await run(writePatternTool, { track: 3, notes: '1:A1:4 5:C2:4' });
+		expect(json(await run(readPatternTool, { track: 3 })).shape).toBeUndefined();
+		sim.state.tracks[2].sequence.patterns[0].smoothing = 60;
+		expect(json(await run(readPatternTool, { track: 3 })).shape).toBe(
+			'60 (the glide between its locks)'
+		);
+	});
+
 	it('cuts or lengthens the pattern as it is with bars or length alone', async () => {
 		// "cut everything down to the first 2 bars": an agent resent every note, unsure bars alone
 		// would keep them
@@ -391,9 +472,14 @@ describe('write_pattern one bar at a time', () => {
 		expect(cut.note).toMatch(
 			/Cut from 4 bars to 2 bars: the 4 notes past step 32 are gone \(undo brings them back\), the rest as they were\./
 		);
+		// the drums still run four bars, so the bass repeats under them until they are cut too
+		expect(cut.note).toMatch(
+			/T1 still runs longer, so this repeats under it for now \(the readings count every pass\): cut it too with bars 2 alone/
+		);
 		expect(virtual.readPattern(3).notes.map((n) => n.step)).toEqual([1, 9, 17, 25]);
 		const drums = json(await run(writePatternTool, { track: 1, bars: 2 }));
 		expect(drums.written.grid['kick 1']).toBe('x... .... x... .... | x... .... x... ....');
+		expect(drums.note).not.toMatch(/still runs? longer/);
 		// longer: the new bars empty, said, or filled again with repeat
 		const longer = json(await run(writePatternTool, { track: 3, bars: 3 }));
 		expect(longer.note).toMatch(/Lengthened from 2 bars to 3 bars: bar 3 is empty \(repeat: true/);
@@ -577,6 +663,18 @@ describe('patterns in another time signature', () => {
 		expect(miscounted.isError).toBe(true);
 		expect(String(miscounted.content)).toMatch(
 			/kick has 28 .*In 6\/8 a bar is 12 marks: \.\.\.\.\.\. \.\.\.\.\.\., with \| between bars\./
+		);
+		// a compound meter says its felt beat against the tempo, which counts quarters
+		const written = json(
+			await run(writePatternTool, {
+				track: 1,
+				bars: 2,
+				length: 24,
+				grid: { kick: 'x..... ......' }
+			})
+		);
+		expect(written.meter).toMatch(
+			/Its felt beat is the dotted quarter, six steps: a pulse of N a minute is tempo N × 1\.5/
 		);
 		// in 4/4 nothing more is said; a bar short and then a hit is a miscount, not rests after a bar
 		sim.state.areas.system.projectSettings.signature = 1;
@@ -785,6 +883,12 @@ describe('write_pattern on drums', () => {
 			/T3's line against these chords \(as T3 stands now: if it moves too, its own write reads it against these again\): /
 		);
 		await run(writePatternTool, { track: 7, transpose: -2 });
+		// and the line moved alone meets the chords as they stand, said in its reading
+		const bass = json(await run(writePatternTool, { track: 3, transpose: 5 }));
+		expect(bass.written.reading.againstChords).toMatch(
+			/\(against the chords as they stand now: if they move too, their own write reads this line against them again\)$/
+		);
+		await run(writePatternTool, { track: 3, transpose: -5 });
 		expect(chords.note).toMatch(
 			/T3's line against these chords: 17 of the 32 notes over T7's chords \(the line plays 4 times under them\) are chord tones; on a beat and outside the chord \(1 a half step above a chord tone, which rubs; .*\): .*bar 1 step 9: D2 over Em\/G \(E G B\), .*bar 4 step 5: G2 over D\/F# \(D F# A, a half step above its F#\)/
 		);
@@ -1835,6 +1939,25 @@ describe('live tools on the virtual OP-XY (no device connected)', () => {
 		expect(json(await run(transportTool, { action: 'play' })).from).toBe(
 			'the song from its first scene (1 2), 2 bars, 0:04 at 120 bpm, then it stops'
 		);
+	});
+
+	it('plays a song of one scene once when it does not loop, and says so', async () => {
+		// a 4 second sting, a song of scene 1 with loop off, read "no song: scene 1 loops"
+		const { sim, run } = setup();
+		await run(writePatternTool, { track: 1, bars: 1, grid: { kick: 'x... .... x... ....' } });
+		const arranged = json(await run(writeArrangementTool, { song: { scenes: [1], loop: false } }));
+		expect(arranged.arrangement.song.length).toBe('1 bar, 0:02 at 120 bpm, then it stops');
+		const played = json(await run(transportTool, { action: 'play' }));
+		expect(played.from).toBe(
+			'the song from its first scene (1), 1 bar, 0:02 at 120 bpm, then it stops'
+		);
+		for (let i = 0; i < 25; i++) sim.advance(100); // a bar at 120 BPM is 2 s
+		expect(sim.state.transport.playing).toBe(false);
+		// looping, the scene goes round and round, as a new project's does
+		await run(writeArrangementTool, { song: { scenes: [1], loop: true } });
+		expect(json(await run(transportTool, { action: 'play' })).from).toBe('scene 1, looping');
+		for (let i = 0; i < 25; i++) sim.advance(100);
+		expect(sim.state.transport.playing).toBe(true);
 	});
 
 	it('says once per conversation that no OP-XY is connected', async () => {

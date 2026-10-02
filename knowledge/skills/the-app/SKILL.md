@@ -12,9 +12,10 @@ description: Use when the user asks about this app itself - the manual pages, pl
   black keys on the row above; the Q row plays the upper twelve, with the black keys on the digits.
   `-` and `=` are `[-]` and `[+]`, Space is play or stop, and shift + 1–9 or 0 are the numbered black
   keys. The "keys" switch under the replica turns this off.
-- **The project card** (the "project" key under the replica): open or download a `.xy` project, load
-  the one the OP-XY has open, save to it, start a new project (the device's own "new project"), and
-  undo the last load. Its download row saves the song as audio ("song .wav": every scene of the song
+- **The project card** (the "project" key under the replica): open or download a `.xy` project (how
+  what was made here is saved to the computer; the OP-XY's own projects copy off it over MTP,
+  `com → M4`, as the manual's back-up recipe gives), load the one the OP-XY has open, save to it,
+  start a new project (the device's own "new project"), and undo the last load. Its download row saves the song as audio ("song .wav": every scene of the song
   rendered through the replica's own sound, a few seconds' work) or as MIDI ("song .mid", one track
   per OP-XY track); ⌘K's "download the song as midi" does the second. That is how to get a WAV of
   what was made here; the OP-XY itself has no bounce, so its own audio is recorded over USB.

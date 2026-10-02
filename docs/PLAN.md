@@ -527,10 +527,32 @@ root` and list their symbols; list pages read in full for the agent; a sound cop
   levels (velocity, the key's sample gain); the fade names its lock ("volume", shift `M2`'s) and
   sets shape; a jingle is a song with loop off (and routes the arrangement skill); swapping two
   tracks' parts is one lab program.
+- **Probe round thirty-seven (2026-10-02), 18 scenarios (`probe-scenarios-37.json`: re-checks (a
+  12/8 blues, a beat cut to 2 bars, a counter melody in the gaps, the snare alone humanized, a
+  guided live bass take, a kick too quiet, a smooth fade, a 4 second sting, a melody and a bass
+  swapped) and new kinds: funk carioca asked in Portuguese, trap hat rolls, battery life, the song's
+  key, a bass at half speed, a crash once every 4 bars, chords on the off-beats, the key changed
+  after the fact, saving to the computer):** two failed calls (a lab program past its 20 s, a grid
+  sent as code). Held: the 12/8 grid counted right at once, the cut by bars alone, the counter-line
+  reading, humanize by sound in ms, the take's keys, the drum level's two ways. Fixes: **headless
+  simulators** (`HeadlessSim`: plan copies, rehearsals, lab forks, diffs, renders) hold plain state
+  where the reactive one proxied every read in the browser, so the lab's locks and bar settings run
+  about 20 times faster there (a fade program's 16 locks and 4 shapes: 6.5 s → 0.3 s); a song of one
+  scene with loop off is a song, played once and said so (a sting read "no song: scene 1 loops");
+  write_pattern's `swap` trades two tracks' parts (both agents asked to swap retyped both) and
+  `rhythm` restrikes the notes on a line of marks (sixteen off-beat stabs were written by hand); a
+  new pattern's locks, shape, groove and quantise are in the change lists, read_pattern gives the
+  shape; a compound meter's felt beat against the tempo; a counter-line's notes between the other's
+  split into held notes and rests; a cut part says the longer parts it still repeats under; a line
+  moved alone says its chord reading is against the chords as they stand; every grid digit's
+  velocity listed; a drum step's component reaching every sound said up front; drifts under a
+  hundredth in three places; "save it to my computer" routes the app skill, which names the project
+  card's download beside the device's MTP copy.
 - **Open for the owner:** does a metronome-sourced duck pump on the unit with the click off (run
   sheet check p-duck); the device map names tempo `E3` "swing" where the manual says groove amount
   (rename with an alias in the key planner, then rerun the how-to eval); multiply at `accidental 9`
-  (TE's table prints 3 hits, likely a slip for 9; not checked on a unit).
+  (TE's table prints 3 hits, likely a slip for 9; not checked on a unit); a song of one scene with
+  loop off plays once and stops on the replica (the loop setting's meaning; not checked on a unit).
 - **2026-09-29/30:** Sonnet 5.5 as the default; `read_sound`, `send_project`, the demo run sheet;
   `import_midi` (a whole MIDI file as scenes and a song) after the Brother Louie failure.
 

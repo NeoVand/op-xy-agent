@@ -44,7 +44,7 @@ import {
 	type ParamGoal,
 	type Place
 } from './navigator';
-import { OpxySim } from './opxy-sim.svelte';
+import { HeadlessSim, OpxySim } from './opxy-sim.svelte';
 import { LFO_TYPES, defaultState, type PageNumber, type SimState } from './params';
 import type { PlayerType } from './sequencer';
 import type { ScreenFrame } from './screen/frame';
@@ -194,7 +194,7 @@ export class DeviceMapError extends Error {
 
 /** A private copy of the simulator at `state`. */
 function simAt(state: SimState): OpxySim {
-	return new OpxySim({ state: JSON.parse(JSON.stringify(state)) as SimState, now: () => 0 });
+	return new HeadlessSim({ state: JSON.parse(JSON.stringify(state)) as SimState, now: () => 0 });
 }
 
 const frameOf = (sim: OpxySim): ScreenFrame => buildFrame(sim.state);
@@ -217,7 +217,7 @@ class Fork {
 
 	/** A fresh copy of the simulator at the state. */
 	sim(): OpxySim {
-		return new OpxySim({ state: JSON.parse(this.json) as SimState, now: () => 0 });
+		return new HeadlessSim({ state: JSON.parse(this.json) as SimState, now: () => 0 });
 	}
 
 	/** A copy after `detents` of encoder `e`. */

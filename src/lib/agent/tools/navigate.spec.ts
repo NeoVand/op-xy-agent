@@ -164,6 +164,17 @@ describe('plan_steps', () => {
 		expect(shown.meter).toMatch(
 			/3\/4 now, a bar 12 steps: the patterns keep their steps \(a 64-step pattern runs 5.33 bars/
 		);
+		expect(shown.meter).not.toMatch(/felt beat/);
+		// a compound meter says its felt beat against the tempo (a slow 12/8 blues: which pulse?)
+		const compound = json(
+			await run(planStepsTool, {
+				show: true,
+				area: 'project',
+				param: 'time signature',
+				value: '12/8'
+			})
+		);
+		expect(compound.meter).toMatch(/Its felt beat is the dotted quarter, six steps/);
 	});
 
 	it('reads a shift layer’s value with shift held, as the user sees it turning', async () => {

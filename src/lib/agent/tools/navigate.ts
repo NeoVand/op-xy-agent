@@ -19,6 +19,7 @@ import {
 } from '$lib/sim/navigator';
 import { BAR } from '$lib/sim/areas/arrange/model';
 import { grooveReachAll } from '../groove-reach';
+import { compoundPulse } from '../pattern-reading';
 import { lockReach } from '../lock-reach';
 import { slidesNote } from '../slides';
 import { swellNote, swellsNow, tailNote } from '../swell';
@@ -557,7 +558,7 @@ export const planStepsTool = defineTool({
 		const steps = BAR[signature as TimeSignature];
 		const meter =
 			signature !== status.signature && steps
-				? `The time signature is ${signature} now, a bar ${steps} steps: the patterns keep their steps (a 64-step pattern runs ${Math.round((64 / steps) * 100) / 100} bars of it), so write them again in its bars; write_pattern's default length follows the meter.`
+				? `The time signature is ${signature} now, a bar ${steps} steps: the patterns keep their steps (a 64-step pattern runs ${Math.round((64 / steps) * 100) / 100} bars of it), so write them again in its bars; write_pattern's default length follows the meter.${compoundPulse(signature)}`
 				: null;
 		// a groove that hardly reaches the notes (shuffle moves the even sixteenths): said where it
 		// is set, not only when a pattern is written

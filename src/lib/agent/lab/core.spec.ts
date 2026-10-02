@@ -328,7 +328,24 @@ describe('commits', () => {
 		const result = f.set({ area: 'bar', param: 'shape', value: 60, track: 3, pattern: 2 });
 		expect(result.reached).toBe(true);
 		expect(f.status().tracks[2].current).toBe(1);
-		expect(lab.commit(f, 'smoothed').changes).toEqual(['T3 pattern 2: smoothing 0 → 60']);
+		expect(lab.commit(f, 'smoothed').changes).toEqual([
+			'T3 pattern 2: shape 0 → 60 (the glide between its locks)'
+		]);
+	});
+
+	it('says a new pattern’s locks and shape in its commit', () => {
+		// a fade's volume locks and shape read "new, 16 notes, 4 bars", and an agent could not
+		// tell they had landed
+		const { lab } = labOn();
+		const f = lab.fork();
+		f.writePattern(3, { notes: '1:A1:4 5:C2:4 9:E2:4 13:G2:4' });
+		f.writePattern(3, { pattern: 2, copy: 1, stay: true });
+		f.set({ param: 'volume', value: 70, track: 3, step: 1, pattern: 2 });
+		f.set({ param: 'volume', value: 40, track: 3, step: 9, pattern: 2 });
+		f.set({ area: 'bar', param: 'shape', value: 60, track: 3, pattern: 2 });
+		expect(lab.commit(f, 'fade').changes).toContain(
+			'T3 pattern 2: new, 4 notes, 1 bar, volume locked at 70 on step 1, volume locked at 40 on step 9, shape 60 (the glide between its locks)'
+		);
 	});
 
 	it('takes an envelope stage as a time, as plan_steps does', () => {

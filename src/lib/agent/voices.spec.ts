@@ -73,6 +73,17 @@ describe('voicesNote', () => {
 		expect(voicesNote(counter, melody)).toBe(
 			"Against T5's line: 2 of its 6 notes start with one of T5's (2 thirds; steps 1, 9), the other 4 between them."
 		);
+		// with the lead's lengths, the notes between are over its held notes or in its rests: held
+		// two steps from 1, 3, 5…, a note on 2, 4 and 6 is over a held note, one on 14 in a rest
+		const timed = { ...melody, notes: melody.notes.map((n) => ({ ...n, length: 2 })) };
+		const answer = {
+			track: 6,
+			length: 32,
+			notes: [2, 4, 6, 14].map((step) => ({ step, note: 69, length: 1 }))
+		};
+		expect(voicesNote(answer, timed)).toBe(
+			"Against T5's line: none of its 4 notes start with one of T5's; all fall between them (3 over its held notes, 1 in its rests)."
+		);
 		// two octaves below, a bass: no counter-line
 		const bass = { ...offbeat, notes: offbeat.notes.map((n) => ({ ...n, note: n.note - 24 })) };
 		expect(voicesNote(bass, melody)).toBeNull();

@@ -227,6 +227,45 @@ export function gridHits(grid: Readonly<Record<string, string>>): {
 	return { hits, steps };
 }
 
+/** A strike of a rhythm line: its step, how many steps it holds, and its mark. */
+export interface Strike {
+	readonly step: number;
+	readonly hold: number;
+	readonly mark: GridHit['mark'];
+}
+
+/**
+ * A rhythm line ("..x- ..x- ..x- ..x-") as strikes: x, X, o or a digit a strike, - holds the one
+ * before it a step more, . a rest; spaces and | are for reading. `steps` counts every mark.
+ */
+export function rhythmStrikes(line: string): { strikes: Strike[]; steps: number } {
+	const marks = line.replace(/[\s|]/g, '');
+	if (marks.length > MAX_STEPS) {
+		throw new PatternNotesError(
+			`rhythm: ${marks.length} steps, past the ${MAX_STEPS} a pattern holds`
+		);
+	}
+	const bad = marks.match(/[^xXo1-9.-]/);
+	if (bad) {
+		throw new PatternNotesError(
+			`rhythm: "${bad[0]}" is not a mark (x a strike, X an accent, o a soft one, 1–9 one that loud, - the strike before held on, . a rest)`
+		);
+	}
+	const strikes: Strike[] = [];
+	[...marks].forEach((mark, i) => {
+		if (mark === '.') return;
+		const last = strikes.at(-1);
+		if (mark === '-') {
+			if (last && last.step + last.hold === i + 1) {
+				strikes[strikes.length - 1] = { ...last, hold: last.hold + 1 };
+			}
+			return;
+		}
+		strikes.push({ step: i + 1, hold: 1, mark: mark as GridHit['mark'] });
+	});
+	return { strikes, steps: marks.length };
+}
+
 /**
  * A mark's velocity around `velocity` (the pattern's hit): an accent above it, a soft hit about
  * half, each where read_pattern reads it back as the same mark (X from 115, o up to 75).

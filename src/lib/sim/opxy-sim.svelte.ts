@@ -722,3 +722,22 @@ export class OpxySim {
 		s.picker = null;
 	}
 }
+
+/**
+ * A simulator nobody watches: a plan's copy, a rehearsal, a lab fork, a diff's "before". Its state
+ * is a plain object, where {@link OpxySim}'s is reactive, so in the browser its every read and
+ * write went through a proxy: the lab's locks and bar settings ran about eight times slower than in
+ * node, and a program locking a fade's volumes ran past its time limit. Never hand one to a view.
+ */
+export class HeadlessSim extends OpxySim {
+	constructor(options: OpxySimOptions = {}) {
+		super({ now: options.now });
+		// a plain own property over the reactive accessor the class field compiles to
+		Object.defineProperty(this, 'state', {
+			value: options.state ?? defaultState(),
+			writable: true,
+			enumerable: true,
+			configurable: true
+		});
+	}
+}
