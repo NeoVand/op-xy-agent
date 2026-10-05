@@ -19,6 +19,7 @@ are linked only in local development, never on the published site.
 	import type { IconSvgElement } from '@hugeicons/svelte';
 	import HugeIcon from '../HugeIcon.svelte';
 	import { tooltip } from '../tooltip';
+	import BrandMark from './BrandMark.svelte';
 	import { getPaletteState } from './palette-state.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 
@@ -56,11 +57,7 @@ are linked only in local development, never on the published site.
 
 <header class="header">
 	<a class="brand" href={resolve('/')} aria-label="op-xy agent, home">
-		<svg class="mark" viewBox="0 0 20 20" aria-hidden="true">
-			<rect x="0.5" y="0.5" width="19" height="19" rx="2.5" class="mark__tile" />
-			<circle cx="10" cy="10" r="5.8" class="mark__cap" />
-			<circle cx="10" cy="6.6" r="1.15" class="mark__led" />
-		</svg>
+		<BrandMark />
 		<span class="name">op-xy agent</span>
 	</a>
 
@@ -116,34 +113,6 @@ are linked only in local development, never on the published site.
 		border-radius: var(--xy-radius-tile);
 		color: var(--xy-fg);
 		text-decoration: none;
-	}
-
-	.mark {
-		width: 1.25rem;
-		height: 1.25rem;
-		flex: none;
-	}
-
-	.mark__tile {
-		fill: var(--xy-key-tile);
-		stroke: var(--xy-line-strong);
-		stroke-width: 1;
-	}
-
-	.mark__cap {
-		fill: var(--xy-key-cap);
-		stroke: rgb(0 0 0 / 0.35);
-		stroke-width: 1;
-	}
-
-	.mark__led {
-		fill: var(--xy-led-white);
-		filter: drop-shadow(0 0 1.5px rgb(255 255 255 / 0.9));
-	}
-
-	:global([data-theme='light']) .mark__led {
-		fill: var(--xy-ink);
-		filter: none;
 	}
 
 	.name {

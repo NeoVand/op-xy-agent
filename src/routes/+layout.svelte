@@ -5,7 +5,7 @@
 	import '@fontsource-variable/red-hat-mono';
 	import workSansLatin from '@fontsource-variable/work-sans/files/work-sans-latin-wght-normal.woff2?url';
 	import { onMount } from 'svelte';
-	import { dev } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { asset, resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -40,10 +40,16 @@
 	import AppHeader from '$lib/ui/shell/AppHeader.svelte';
 	import CommandPalette from '$lib/ui/shell/CommandPalette.svelte';
 	import { PaletteState, setPaletteState } from '$lib/ui/shell/palette-state.svelte';
+	import PhoneNote from '$lib/ui/shell/PhoneNote.svelte';
 	import StatusBar from '$lib/ui/shell/StatusBar.svelte';
 	import { ShellStatus, setShellStatus, type MidiState } from '$lib/ui/shell/status.svelte';
 
 	let { children } = $props();
+
+	// A phone (marked by app.html before the first paint) gets PhoneNote and nothing of the app: no
+	// page is mounted and nothing below starts. The prerendered pages carry both; hydrating, the
+	// branch the server did not take replaces the one it did.
+	const phone = browser && document.documentElement.dataset.device === 'phone';
 
 	const theme = new Theme();
 	setTheme(theme);
@@ -170,6 +176,7 @@
 	);
 
 	onMount(() => {
+		if (phone) return;
 		theme.sync();
 		status.detect();
 		const stop = device.start();
@@ -206,19 +213,31 @@
 	<link rel="preload" href={workSansLatin} as="font" type="font/woff2" crossorigin="anonymous" />
 </svelte:head>
 
-<a class="skip" href="#main">skip to content</a>
+{#if !browser || phone}
+	<PhoneNote />
+{/if}
 
-<div class="app">
-	<AppHeader />
-	<main id="main" class="main" tabindex="-1">
-		{@render children()}
-	</main>
-	<StatusBar {midi} device={deviceName} {firmware} {view} webMidi={status.webMidi} />
-</div>
+{#if !phone}
+	<a class="skip" href="#main">skip to content</a>
 
-<CommandPalette {palette} />
+	<div class="app">
+		<AppHeader />
+		<main id="main" class="main" tabindex="-1">
+			{@render children()}
+		</main>
+		<StatusBar {midi} device={deviceName} {firmware} {view} webMidi={status.webMidi} />
+	</div>
+
+	<CommandPalette {palette} />
+{/if}
 
 <style>
+	/* before the code arrives, a phone sees PhoneNote alone; then the app is not rendered at all */
+	:global(html[data-device='phone']) .app,
+	:global(html[data-device='phone']) .skip {
+		display: none;
+	}
+
 	.app {
 		display: flex;
 		flex-direction: column;

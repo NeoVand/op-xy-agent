@@ -4,7 +4,8 @@
 
 A browser app for learning, playing and programming the Teenage Engineering **OP-XY**. It pairs a
 replica of the instrument that you can play with an AI agent that knows the machine inside out. The
-agent teaches it, and it programs it for you.
+agent teaches it, and it programs it for you. It runs in a desktop browser; a phone gets a preview
+and the link to open on a computer.
 
 **[Open the app →](https://neovand.github.io/op-xy-agent/)** ·
 [the manual](https://neovand.github.io/op-xy-agent/manual) ·

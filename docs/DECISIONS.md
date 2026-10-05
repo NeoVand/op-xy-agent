@@ -147,3 +147,18 @@ consequences. Superseded entries stay, marked as such.
   skills under `knowledge/skills/`, evals `evals/agent/episodes.*`. The core prompt stops growing
   from single incidents; fixes go into skills, tools' contracts or code, and must move an eval. The
   full-manual mode stays available until retrieval matches it.
+
+## D13 — 2026-10-04 — Phones get a preview, not the app
+
+- **Context:** the app is built for a desktop browser: the replica wants a wide screen and a
+  computer keyboard, and the OP-XY connects over USB. On a phone it would only half work.
+- **Decision (owner):** a phone sees the README's screen recording playing in a frame, a note that
+  the app is for desktop browsers, and the page's link to share or copy, on every route. A phone is
+  a touch screen with no hover whose short side is under 600 CSS px, so tablets and touch laptops
+  keep the app.
+- **Consequences:** `src/app.html` marks a phone before the first paint (`data-device="phone"`); the
+  root layout then renders `PhoneNote` alone and starts nothing (no page, simulator, sound or
+  device). Every prerendered page carries the note, shown by CSS only on a phone, so it appears
+  before the app's code arrives. The recording is `static/preview/` (an MP4 and its poster,
+  ~0.4 MB against the GIF's 3.8 MB), rebuilt from `docs/images/demo.gif` by
+  `scripts/build-phone-preview.sh`; a computer never fetches it. Pinned by `e2e/phone.e2e.ts`.

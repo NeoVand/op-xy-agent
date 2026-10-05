@@ -24,6 +24,15 @@
 			} catch (e) {
 				// Storage blocked: stay on the default (dark) theme.
 			}
+			// A phone gets a preview and a note instead of the app, which needs a computer (PhoneNote,
+			// read by the root layout). A phone is a touch screen with no hover whose short side is
+			// under 600 px: tablets, and laptops with touch screens, keep the app.
+			if (
+				matchMedia('(hover: none) and (pointer: coarse)').matches &&
+				Math.min(screen.width, screen.height) < 600
+			) {
+				document.documentElement.dataset.device = 'phone';
+			}
 		</script>
 		%sveltekit.head%
 	</head>

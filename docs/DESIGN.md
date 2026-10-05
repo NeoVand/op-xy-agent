@@ -226,7 +226,9 @@ tile at twelve o'clock on the cap. `IconButton` at `lg` is one tile, true to sca
 **App shell.** Header `3.5rem`, status bar `2rem` (half a tile), agent column `24rem` (6 tiles). The
 device stage is framed at the body's exact **285 : 102** aspect (`--xy-body-aspect`), and text under
 it aligns to the device's own tile grid (4.41 mm in from the left, 17.09 mm from the right). One
-column below `68.75rem`; phones get 16px gutters and no horizontal scroll.
+column below `68.75rem`, with 16px gutters and no horizontal scroll. Phones don't get the app at
+all: `PhoneNote` shows the screen recording and says the app is for desktop browsers
+([D13](DECISIONS.md)).
 
 ## 6. Shape and depth
 
@@ -319,10 +321,12 @@ All live in `src/lib/ui/` and are exported from `$lib/ui`.
   tooltip (touch users won't see it).
 - **Icon** — our own 24-unit icons (`icons.ts`). Add new ones there, drawn in the same few-stroke
   style. No third-party or TE artwork.
-- **Shell** (`src/lib/ui/shell/`) — `AppHeader`, `StatusBar` (cells, not dot-joined strings),
-  `DeviceStage` (mounts the replica via `children`; takes `onconnect` from the device layer),
-  `DevicePlaceholder` (deliberately abstract until M2), `AgentPanel`, `ThemeToggle`, and the
-  `ShellStatus` context that the device layer will feed.
+- **Shell** (`src/lib/ui/shell/`) — `AppHeader`, `BrandMark` (the key-and-LED mark), `StatusBar`
+  (cells, not dot-joined strings), `DeviceStage` (mounts the replica via `children`; takes
+  `onconnect` from the device layer), `DevicePlaceholder` (deliberately abstract until M2),
+  `AgentPanel`, `ThemeToggle`, `PhoneNote` (what a phone gets instead of the app: the recording in
+  an anodised frame, the note, the link to share), and the `ShellStatus` context that the device
+  layer will feed.
 
 ## 9. Do and don't
 

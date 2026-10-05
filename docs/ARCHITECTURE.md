@@ -52,7 +52,8 @@ src/lib/
   manual/      (M4) our manual: schema, loader, search
   ui/          design tokens, primitives, shared components; shell/ is the app's frame (header,
                agent panel, the command palette: ⌘K, its commands from the site and from the page
-               shown, built in app/commands.ts, the manual's titles from /manual/index.json)
+               shown, built in app/commands.ts, the manual's titles from /manual/index.json), and
+               PhoneNote, what a phone gets instead of all of it (D13)
 src/routes/    pages: / (app), /presets (preset maker), /lab (device console, dev tool)
 test/fakes/    fakes shared by tests (e.g. FakeMIDIAccess with an emulated OP-XY)
 knowledge/     committed data the app imports via the `$knowledge` alias
